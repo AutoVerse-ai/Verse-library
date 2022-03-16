@@ -15,6 +15,6 @@ DryVR pipeline (this may not be ready yet, still needs work with mode names):
 
 
 Example:
-python generateGraph-new.py cartoy.c paperexamples/singlevehiclesat.json out.json
-./full_run paperexamples/singlevehiclesat.c paperexamples/singlevehiclesat.json output.json
+python generateGraph-new.py cartoy.c singlevehiclesat.json out.json #this toy example was just for looking at nesting, doesn't have an initial json
+./full_run singlevehiclesat.c singlevehiclesat.json output.json
 
