@@ -1,6 +1,13 @@
 # GraphGeneration
 working repo for graph generation
 
+generateGraph-new.py has the code that finds paths. It creates a mode for each path through the code and any "mode" in the code is just a variable, not a named mode. 
+
+
+generateGraph.py has the old code which only allows 2 levels of if statements and isn't as stable. Reads mode variable and sets vertices based on modes. Requires that an if statement checks the mode and the new mode is set within the if statement.
+
+
+
 Run within DryVR directory
 
 Usage:
