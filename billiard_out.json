@@ -1,0 +1,135 @@
+{
+    "initialVertex": 0,
+    "initialSet": [
+        [
+            1.5,
+            0.0,
+            1.0,
+            1.0
+        ],
+        [
+            1.51,
+            0.0,
+            1.0,
+            1.0
+        ]
+    ],
+    "unsafeSet": "@Allmode:posy>=12.0",
+    "timeHorizon": 16,
+    "directory": "examples/billiard",
+    "deterministic": true,
+    "variables": [
+        "posx",
+        "posy",
+        "vx",
+        "vy"
+    ],
+    "vertex": [
+        "NormalA",
+        "NormalB",
+        "NormalC",
+        "NormalD"
+    ],
+    "edge": [
+        [
+            0,
+            0
+        ],
+        [
+            0,
+            1
+        ],
+        [
+            0,
+            2
+        ],
+        [
+            0,
+            3
+        ],
+        [
+            1,
+            1
+        ],
+        [
+            1,
+            0
+        ],
+        [
+            1,
+            2
+        ],
+        [
+            1,
+            3
+        ],
+        [
+            2,
+            2
+        ],
+        [
+            2,
+            0
+        ],
+        [
+            2,
+            1
+        ],
+        [
+            2,
+            3
+        ],
+        [
+            3,
+            3
+        ],
+        [
+            3,
+            0
+        ],
+        [
+            3,
+            1
+        ],
+        [
+            3,
+            2
+        ]
+    ],
+    "guards": [
+        "And(posy<0,posy>=-0.01)",
+        "And(posx<0,posx>=-0.01)",
+        "And(posx<=5.01,posx>5)",
+        "And(posy>5,posy<=5.01)",
+        "And(posy<0,posy>=-0.01)",
+        "And(posx<0,posx>=-0.01)",
+        "And(posx<=5.01,posx>5)",
+        "And(posy>5,posy<=5.01)",
+        "And(posy<0,posy>=-0.01)",
+        "And(posx<0,posx>=-0.01)",
+        "And(posx<=5.01,posx>5)",
+        "And(posy>5,posy<=5.01)",
+        "And(posy<0,posy>=-0.01)",
+        "And(posx<0,posx>=-0.01)",
+        "And(posx<=5.01,posx>5)",
+        "And(posy>5,posy<=5.01)"
+    ],
+    "resets": [
+        "vy=-vy;posy=0",
+        "vx=-vx;posx=0",
+        "vx=-vx;posx=5",
+        "vy=-vy;posy=5",
+        "vy=-vy;posy=0",
+        "vx=-vx;posx=0",
+        "vx=-vx;posx=5",
+        "vy=-vy;posy=5",
+        "vy=-vy;posy=0",
+        "vx=-vx;posx=0",
+        "vx=-vx;posx=5",
+        "vy=-vy;posy=5",
+        "vy=-vy;posy=0",
+        "vx=-vx;posx=0",
+        "vx=-vx;posx=5",
+        "vy=-vy;posy=5"
+    ]
+}
