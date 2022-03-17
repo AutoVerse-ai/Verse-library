@@ -1,4 +1,7 @@
 # GraphGeneration
+NOTE: I made a mistake and uploaded the wrong file before I left town today. generateGraph-new.py is outdated! I am so sorry, but it doesn't have the updates the build the graph, it only computes the paths.
+
+
 working repo for graph generation
 
 generateGraph-new.py has the code that finds paths. It creates a mode for each path through the code and any "mode" in the code is just a variable, not a named mode. 
