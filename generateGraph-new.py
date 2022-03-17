@@ -1,4 +1,5 @@
-#Accidentally uploaded old code and left computer with newest code at home!!!! This is slightly old!
+#Accidentally uploaded old code and left computer with newest code at home!!!! 
+#This is quite old! It only computes a path, but doesn't distingusih between guards and resets
 
 import clang.cindex
 import typing
