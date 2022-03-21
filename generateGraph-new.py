@@ -1,5 +1,4 @@
-#Accidentally uploaded old code and left computer with newest code at home!!!! 
-#This is quite old! It only computes a path, but doesn't distingusih between guards and resets
+#NEW VERSION OF CODE WHICH ANALYZES PATHS AND COLLECTS VARAIBLES ALONG THE WAY
 
 import clang.cindex
 import typing
@@ -296,6 +295,7 @@ def traverse_tree(node, guards, resets, indent,hasIfParent):
     #    return [guards,resets]
     #if (node.kind == clang.cindex.CursorKind.RETURN_STMT):
     #    return [guards, resets]
+    #elseifstatement = False
     for i in node.get_children():
         if i.kind == clang.cindex.CursorKind.IF_STMT: #TODO: add else statements
             temp_results = traverse_tree(i, guards, resets, indent+ "-", True)
@@ -310,8 +310,9 @@ def traverse_tree(node, guards, resets, indent,hasIfParent):
             if hasIfParent:
                 if node.kind == clang.cindex.CursorKind.IF_STMT and i.kind != clang.cindex.CursorKind.COMPOUND_STMT:
                     childrens_guards.append(code_from_cursor(i))
-                    print(indent + "Guard statement")
-                    print(code_from_cursor(i))
+                    #print(indent + "Guard statement")
+                    #print(code_from_cursor(i))
+                    #print(get_info(i))
                     #found.append(code_from_cursor(i))
                     #temp_results = traverse_tree(i, guard_copy, reset_copy, indent+ "-", hasIfParent)
                     #for result in temp_results:
@@ -321,8 +322,8 @@ def traverse_tree(node, guards, resets, indent,hasIfParent):
                     #    result.append([code_from_cursor(i)])
                     #    print("foo")
                 if node.kind == clang.cindex.CursorKind.COMPOUND_STMT and i.kind != clang.cindex.CursorKind.DECL_STMT:
-                    print(indent + "Reset statement")
-                    print(code_from_cursor(i))
+                    #print(indent + "Reset statement")
+                    #print(code_from_cursor(i))
                     childrens_resets.append(code_from_cursor(i))
                     #found.append(code_from_cursor(i))
                     #temp_results = traverse_tree(i, guard_copy, reset_copy, indent+ "-", hasIfParent)
@@ -338,20 +339,7 @@ def traverse_tree(node, guards, resets, indent,hasIfParent):
                  found.append(item)
             #childrens_guards.append(results[0])
             #childrens_resets.append(results[1])
-    #print(results)
-    #output = []
-    #if len(results) < 0:
-    #    input = []
-    #    input.append(childrens_results)
-    #    input.append(childrens_guards)
-    #    output.append(input)
-    #else:
-    #    for result in results:
-    #        result.append(childrens_resets)
-    #        result.append(childrens_guards)
-    #        output.append(result)
-    #print(output)
-    #ASSUMPTION: lowest level is a reset!!!
+    #if my parent is an if statement and i'm and else if statement, I want to add the negation of my parent, not myself
     if len(found) == 0 and len(childrens_resets) > 0:
         found.append([])
     for item in found:
@@ -381,23 +369,24 @@ def get_next_state(code):
     return state.strip()
 
 
-#TODO: consider or??
-def pretty_guards(code):
-    line = code[0]
-    conditional = line.strip('if').strip('{')
-    conditions = conditional.split('&&')
-    output = "And"
-    for condition in conditions: 
-        output += condition.strip() + ","
-    output = output.strip(",")
+#TODO: And( , )
+def pretty_guards(guards):
+    output = ""
+    first = True
+    for condition in guards: 
+        #print(type(condition))
+        if first:
+            output+= condition[0]
+        else:
+            output = "And(" + condition[0] + ",(" + output + "))"
+        first = False
     return output
 
-#assumption: last two lines of code are reset and bracket... not idea
-def pretty_resets(code):
+#assumption: reset;reset;reset
+def pretty_resets(resets):
     outstring = ""
-    for index in range(0,len(code)):
-       if index != 0 and index != len(code)-1 and index != len(code)-2:
-        outstring += code[index].strip().strip('\n')
+    for reset in resets:
+       outstring+=reset[0] + ';'
     return outstring.strip(';')
 
 
@@ -443,14 +432,32 @@ counter = 0
 for path in paths:
     vertices.append(str(counter))
     counter += 1
-
+    print(path)
 output_dict['vertex'] = vertices
+
+
 
 
 #traverse outter if statements and find inner statements
 edges = []
 guards = []
 resets = []
+
+counter = 0
+for path in paths:
+    guard = []
+    reset = []
+    for item in path:
+        if item[1] == 'g':
+            guard.append(item[0])
+        elif item[1] == 'r':
+            reset.append(item[0])
+    #create an edge from all other nodes to me
+    for vertex in vertices:
+        edges.append([vertex, str(counter)])
+        guards.append(pretty_guards(guard))
+        resets.append(pretty_resets(reset))
+    counter+= 1
 
 #add edge, transition(guards) and resets
 output_dict['edge'] = edges
