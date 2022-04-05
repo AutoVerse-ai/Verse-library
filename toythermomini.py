@@ -18,20 +18,28 @@ class State:
 
 	
 def controller(posx, posy, mode):	
-    outstate = mode
+    outmode = mode
 #todo: how would this actually be given
-    if (state ==Modes.NormalA):
-        if posy<0 and posy>=-0.01: 
+    if (mode ==Modes.NormalA):
+        if posy<0 and posy>=-0.0: 
             posy=0
-            outstate=Modes.NormalA
-        if posy>0 and posy==-0.01: 
+            outmode=Modes.NormalA
+        if posy>10 and posy==-10: 
+            posy=10
+            outmode=Modes.NormalB
+
+    if (mode ==Modes.NormalB):
+        if posy<0 and posy>=-0.0: 
             posy=0
-            outstate=Modes.NormalB
+            outmode=Modes.NormalA
+        if posy>10 and posy==-10: 
+            posy=10
+            outmode=Modes.NormalB
             
     
 
 
-    return outstate
+    return outmode
 
     #TODO: what is output?
 

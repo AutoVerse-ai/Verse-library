@@ -56,10 +56,12 @@ class Reset(Statement):
 
     def parseReset(node, code):
         #assume reset is modeType = newMode
-        print(str(node.targets[0]))
-        if ("mode" in str(node.targets[0].id)):
-            modeType = node.targets[0]
-            mode = node.value
+        if isinstance(node.value, ast.Attribute):
+            #print("resets " + str(node.value.value.id))
+            #print("resets " + str(node.value.attr))
+            if ("Mode" in str(node.value.value.id)):
+                modeType = str(node.value.value.id)
+                mode = str(node.value.attr)
             return Reset(ast.get_source_segment(code, node), mode, modeType)
         return Reset(ast.get_source_segment(code, node), None, None)
 
@@ -160,7 +162,7 @@ if __name__ == "__main__":
 
     output_dict.update(input_json)
     
-
+    #TODO: create graph!
     
 
    
