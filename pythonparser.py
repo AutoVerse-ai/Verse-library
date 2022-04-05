@@ -66,7 +66,7 @@ def walktree(code, tree):
         if isinstance(node, ast.FunctionDef):
             if node.name == 'controller':
                 #print(node.body)
-                out = parsenodelist(code, node.body, False)
+                out = parsenodelist(code, node.body, False, [])
                 #args = node.args
                 #for arg in args:
                 #        vars.append(arg.arg)
@@ -74,24 +74,32 @@ def walktree(code, tree):
     print(vars)
     return out
 
-def parsenodelist(code, nodes, addResets):
+def parsenodelisttemp(code, nodes, addResets, pathsToMe):
     childrens_guards=[]
     childrens_resets=[]
     results = []
     found = []
+    #collected = []
+    newPathItems = []
+    pathsfromchild = []
     for childnode in nodes:
         if isinstance(childnode, ast.Assign) and addResets:
             reset = Reset.parseReset(childnode, code)
             print("found reset: " + reset.code)
             childrens_resets.append(reset)
+            newPathItems.append(reset)
         if isinstance(childnode, ast.If):
             guard = Guard.parseGuard(childnode, code)
             childrens_guards.append(guard)
+            tempnewPath = newPathItems.copy().append(guard)
             print("found if statement: " + guard.code)
-            tempresults = parsenodelist(code, childnode.body, True)
+            #parsenodelist returns a list of paths 
+
+            tempresults = parsenodelist(code, childnode.body, True, tempnewPath)
             for result in tempresults:
-                found.append(results)
+                pathsfromchild.append(result)
         #TODO - can add support for elif and else
+        ''''
     print("********")
     print("Begin ending iteration:")
     print("We have found this many items before: " + str(len(found)))
@@ -107,7 +115,7 @@ def parsenodelist(code, nodes, addResets):
     for item in childrens_resets:
         print(item.code)
     print("-------")
-
+'''
     if len(found) == 0 and len(childrens_resets) > 0:
         found.append([])
     for item in found:
@@ -117,7 +125,7 @@ def parsenodelist(code, nodes, addResets):
         results.append(item)
         for guard in childrens_guards:
             item.append(guard)
-        
+    '''       
     print("now we generated these results -----")
     for result in results:
         for item in result:
@@ -128,7 +136,48 @@ def parsenodelist(code, nodes, addResets):
                 
     print("----------")
     print("********")
-    return results
+    '''
+
+    for path in pathsToMe:
+        path.extend(newPathItems)
+    
+    return pathsToMe
+
+
+def parsenodelist(code, nodes, addResets, pathsToMe):
+    childrens_guards=[]
+    childrens_resets=[]
+    recoutput = []
+    #ifstatement = []
+    for childnode in nodes:
+        if isinstance(childnode, ast.Assign) and addResets:
+            reset = Reset.parseReset(childnode, code)
+            print("found reset: " + reset.code)
+            childrens_resets.append(reset)
+        if isinstance(childnode, ast.If):
+            guard = Guard.parseGuard(childnode, code)
+            childrens_guards.append(guard)
+            print("found if statement: " + guard.code)
+            #parsenodelist returns a list of paths 
+            tempresults = parsenodelist(code, childnode.body, True, [])
+            for result in tempresults:
+                recoutput.append([result, guard])
+                #ifstatement.append(guard)
+
+    
+    pathsafterme = [] 
+
+    if len(recoutput) == 0 and len(childrens_resets) > 0:
+        pathsafterme.append(childrens_resets)
+    else:
+        for path,ifstatement in recoutput:
+            newpath = path.copy()#recoutput[index].copy()
+            newpath.extend(childrens_resets)
+            newpath.append(ifstatement)#ifstatement[index])
+            pathsafterme.append(newpath)
+            
+    
+    return pathsafterme
 
 
 ##main code###
@@ -156,11 +205,11 @@ if __name__ == "__main__":
     #tree = ast.parse()
     results = walktree(code, tree)
     print("resultsssss:")
-    #for result in results:
-    #    for item in result:
-    #        item.print()
-    #    print()
-    print(results)
+    for result in results:
+        for item in result:
+            item.print()
+        print()
+    #print(results)
 
     #a = Analyzer()
     #a.visit(tree)
