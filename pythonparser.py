@@ -1,7 +1,7 @@
 #parse python file
 
 from cgitb import reset
-import clang.cindex
+#import clang.cindex
 import typing
 import json
 import sys
@@ -9,7 +9,7 @@ from typing import List, Tuple
 import re 
 import itertools
 import ast
-import pycfg
+#import pycfg
 #from cfg import CFG
 #import clang.cfg
 
@@ -46,37 +46,37 @@ class Reset(Statement):
 
 def walktree(code, tree):
     vars = []
+    out = []
     for node in ast.walk(tree): #don't think we want to walk the whole thing because lose ordering/depth
         if isinstance(node, ast.FunctionDef):
             if node.name == 'controller':
                 print(node.body)
-                parsenodelist(code, node.body)
+                out = parsenodelist(code, node.body, False)
                 #args = node.args
                 #for arg in args:
                 #        vars.append(arg.arg)
                         #todo: what to add for return values
     print(vars)
-    return vars
+    return out
 
-def parsenodelist(code, nodes):
+def parsenodelist(code, nodes, addResets):
     childrens_guards=[]
     childrens_resets=[]
     results = []
     found = []
     for childnode in nodes:
-        if isinstance(childnode, ast.Assign):
+        if isinstance(childnode, ast.Assign) and addResets:
             #found.append(str(childnode.targets[0].id)+'=' + str(childnode.value.id)) #TODO, does this work with a value?
-            print("found reset" + str(childnode.targets[0].id)+'=' + str(childnode.value.id))
-            childrens_resets.append(str(childnode.targets[0].id)+'=' + str(childnode.value.id))
+            print("found reset" + ast.get_source_segment(code, childnode))
+            childrens_resets.append(ast.get_source_segment(code, childnode))
         if isinstance(childnode, ast.If):
             childrens_guards.append(ast.get_source_segment(code, childnode.test))
             #childrens_guards.append(childnode.test.id)
             print("found if statement: " + ast.get_source_segment(code, childnode.test))
-            results = parsenodelist(code, childnode.body)
+            results = parsenodelist(code, childnode.body, True)
             for result in results:
                 found.append(results)
         #TODO - can add support for elif and else
-        print(type(childnode))
 
     if len(found) == 0 and len(childrens_resets) > 0:
         found.append([])
@@ -144,7 +144,11 @@ if __name__ == "__main__":
     code = f.read()
     tree = ast.parse(code)
     #tree = ast.parse()
-    walktree(code, tree)
+    results = walktree(code, tree)
+    print("resultsssss:")
+    for result in results:
+        print(result)
+        print()
 
     #a = Analyzer()
     #a.visit(tree)
