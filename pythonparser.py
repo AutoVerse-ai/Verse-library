@@ -1,5 +1,6 @@
 #parse python file
 
+#REQUIRES PYTHON 3.8!
 from cgitb import reset
 #import clang.cindex
 import typing
@@ -14,35 +15,49 @@ import ast
 #import clang.cfg
 
 class Statement:
-  def __init__(self, code, mode, modeType):
-    self.code = code
-    self.modeType = modeType
-    self.mode = mode
+    def __init__(self, code, mode, modeType):
+        self.code = code
+        self.modeType = modeType
+        self.mode = mode
 
     def __init__(self, code):
         self.code = code
         self.modeType = None
         self.mode = None
+    
+    def print(self):
+        print(self.code)
+
+
 
 class Guard(Statement):
     def __init__(self, code, mode, modeType):
-        super().__init__(self, code, mode, modeType)
+        super().__init__(code, mode, modeType)
 
     def __init__(self, code):
-        super().__init__(self, code)
+        super().__init__(code)
 
-    def isModeCheck():
-        return modeType != None
+    def isModeCheck(self):
+        return self.modeType != None
+
+    def parseGuard(node, code):
+        #TODO parse out mode and modeType
+        return Guard(ast.get_source_segment(code, node.test))
+        
 
 class Reset(Statement):
     def __init__(self, code, mode, modeType):
-        super().__init__(self, code, mode, modeType)
+        super().__init__(code, mode, modeType)
 
     def __init__(self, code):
-        super().__init__(self, code)
+        super().__init__(code)
 
-    def isModeUpdate():
-        return modeType != None
+    def isModeUpdate(self):
+        return self.modeType != None
+
+    def parseReset(node, code):
+        #TODO parse out mode and modeType
+        return Reset(ast.get_source_segment(code, node))
 
 def walktree(code, tree):
     vars = []
@@ -50,7 +65,7 @@ def walktree(code, tree):
     for node in ast.walk(tree): #don't think we want to walk the whole thing because lose ordering/depth
         if isinstance(node, ast.FunctionDef):
             if node.name == 'controller':
-                print(node.body)
+                #print(node.body)
                 out = parsenodelist(code, node.body, False)
                 #args = node.args
                 #for arg in args:
@@ -66,59 +81,54 @@ def parsenodelist(code, nodes, addResets):
     found = []
     for childnode in nodes:
         if isinstance(childnode, ast.Assign) and addResets:
-            #found.append(str(childnode.targets[0].id)+'=' + str(childnode.value.id)) #TODO, does this work with a value?
-            print("found reset" + ast.get_source_segment(code, childnode))
-            childrens_resets.append(ast.get_source_segment(code, childnode))
+            reset = Reset.parseReset(childnode, code)
+            print("found reset: " + reset.code)
+            childrens_resets.append(reset)
         if isinstance(childnode, ast.If):
-            childrens_guards.append(ast.get_source_segment(code, childnode.test))
-            #childrens_guards.append(childnode.test.id)
-            print("found if statement: " + ast.get_source_segment(code, childnode.test))
-            results = parsenodelist(code, childnode.body, True)
-            for result in results:
+            guard = Guard.parseGuard(childnode, code)
+            childrens_guards.append(guard)
+            print("found if statement: " + guard.code)
+            tempresults = parsenodelist(code, childnode.body, True)
+            for result in tempresults:
                 found.append(results)
         #TODO - can add support for elif and else
+    print("********")
+    print("Begin ending iteration:")
+    print("We have found this many items before: " + str(len(found)))
+    for item in found:
+        if isinstance(item, Statement):
+            print(item.code)
+        else:
+            print(item)
+    
+    print("And now we want to add these -----")
+    for item in childrens_guards:
+        print(item.code)
+    for item in childrens_resets:
+        print(item.code)
+    print("-------")
 
     if len(found) == 0 and len(childrens_resets) > 0:
         found.append([])
     for item in found:
         for reset in childrens_resets:
         #for item in found:
-            item.append([reset, 'r'])
+            item.append(reset)
         results.append(item)
         for guard in childrens_guards:
-            item.append([guard, 'g'])
+            item.append(guard)
+        
+    print("now we generated these results -----")
+    for result in results:
+        for item in result:
+            if isinstance(item, Statement):
+                print(item.code)
+            else:
+                print(item)
+                
+    print("----------")
+    print("********")
     return results
-
-def parsenodes(innode):
-    for node in innode:
-        #print(node)
-        if isinstance(node, ast.If):
-            print("found if")
-            print(node.body)
-        #walktree(node.body)
-        #walktree(node)
-            #print(node.name)
-
-class BinOpVisitor(ast.NodeVisitor):
-
-    def visit_BinOp(self, node):
-        print(f"found BinOp at line: {node.lineno}")
-        self.generic_visit(node)
-
-class Analyzer(ast.NodeVisitor):
-    def __init__(self):
-        self.stats = {'if': []}
-
-    def visit_If(self, node):
-        # Add the "s" attribute access here
-        print("If:", node.test.left)
-        self.stats["if"].append(node.body)
-        self.generic_visit(node)
-
-    def report(self):
-        pprint(self.stats)
-
-
 
 
 ##main code###
@@ -146,9 +156,11 @@ if __name__ == "__main__":
     #tree = ast.parse()
     results = walktree(code, tree)
     print("resultsssss:")
-    for result in results:
-        print(result)
-        print()
+    #for result in results:
+    #    for item in result:
+    #        item.print()
+    #    print()
+    print(results)
 
     #a = Analyzer()
     #a.visit(tree)
@@ -157,7 +169,7 @@ if __name__ == "__main__":
 
     #cfge = pycfg.PyCFGExtractor()
 
-    
+
     #for node in ast.walk(tree):
     #    print(node.__class__.__name__)
 
