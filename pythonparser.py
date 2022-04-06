@@ -91,9 +91,10 @@ def walktree(code, tree):
                 #print(type(node.args))
                 args = node.args.args
                 for arg in args:
-                    vars.append(arg.arg)
+                    if "mode" not in arg.arg:
+                        vars.append(arg.arg)
                         #todo: what to add for return values
-    return [out, args, mode_dict]
+    return [out, vars, mode_dict]
 
 
 
@@ -137,8 +138,28 @@ def resetString(resets):
     outstr = outstr.strip(";")
     return outstr
 
+def parseGuardCode(code):
+    #TODO: should be more general and handle or
+    parts = code.split("and")
+    out = code
+    if len(parts) > 1:
+        left = parseGuardCode(parts[0])
+        right = parseGuardCode(parts[1])
+        out = "And(" + left + "," + right + ")"
+    return out
+
 def guardString(guards):
-    return guards
+    output = ""
+    first = True
+    for guard in guards: 
+        #print(type(condition))
+        if first:
+            output+= parseGuardCode(guard.code)
+        else:
+            output = "And(" + parseGuardCode(guard.code) + ",(" + output + "))"
+        first = False
+    return output
+
 
 #modes are the list of all modes in the current vertex
 #vertices are all the vertexs
@@ -218,7 +239,6 @@ def createTransition(path, vertices, modes):
         for dest in destVertices:
             destindex = getIndex(dest, vertices)
             edges.append(Edge(sourceindex, destindex, guards, resets))
-    
     return edges
 
 ##main code###
@@ -244,8 +264,8 @@ if __name__ == "__main__":
     code = f.read()
     tree = ast.parse(code)
     #tree = ast.parse()
-    paths, vars, modes = walktree(code, tree)
-
+    paths, variables, modes = walktree(code, tree)
+    
     #print("Paths found:")
     #for result in paths:
     #    for item in result:
@@ -254,8 +274,8 @@ if __name__ == "__main__":
             #print(item.modeType)
     #    print()
 
-    print("Modes found: ")
-    print(modes)
+    #print("Modes found: ")
+    #print(modes)
 
     output_dict.update(input_json)
     
@@ -280,21 +300,21 @@ if __name__ == "__main__":
             guards.append(guardString(edge.guards))
             resets.append(resetString(edge.resets))
    
-    output_dict['vertex'] = vertices
+    output_dict['vertex'] = vertexStrings
     #print(vertices)
-    output_dict['variables'] = vars
+    output_dict['variables'] = variables
     # #add edge, transition(guards) and resets
     output_dict['edge'] = edges
-    #print(edges)
+    #print(len(edges))
     output_dict['guards'] = guards
-    #print(guards)
+    #print(len(guards))
     output_dict['resets'] = resets
-    print(resets)
+    #print(len(resets))
 
-    #output_json = json.dumps(output_dict, indent=4)
-    #outfile = open(output_file_name, "w")
-    #outfile.write(output_json)
-    #outfile.close()
+    output_json = json.dumps(output_dict, indent=4)
+    outfile = open(output_file_name, "w")
+    outfile.write(output_json)
+    outfile.close()
 
     print("wrote json to " + output_file_name)
 
