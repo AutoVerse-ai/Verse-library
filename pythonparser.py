@@ -14,6 +14,13 @@ import ast
 #from cfg import CFG
 #import clang.cfg
 
+class Edge:
+    def __init__(self, source, dest, guards, resets):
+        self.source = source
+        self.dest = dest
+        self.guards = guards
+        self.resets = resets
+
 class Statement:
     def __init__(self, code, mode, modeType):
         self.code = code
@@ -37,11 +44,11 @@ class Guard(Statement):
     def parseGuard(node, code):
         #assume guard is a strict comparision (modeType == mode)
         if isinstance(node.test, ast.Compare):
-            if ("mode" in str(node.test.left.id)):
-                modeType = str(node.test.left.id)
-                #TODO: get this to work
-                mode = str(node.test.comparators[0].attr)
-                return Guard(ast.get_source_segment(code, node.test), mode, modeType)
+            if isinstance(node.test.comparators[0], ast.Attribute):
+                if ("Mode" in str(node.test.comparators[0].value.id)):
+                    modeType = str(node.test.comparators[0].value.id)
+                    mode = str(node.test.comparators[0].attr)
+                    return Guard(ast.get_source_segment(code, node.test), mode, modeType)
         else:
             return Guard(ast.get_source_segment(code, node.test), None, None)
         
@@ -123,6 +130,96 @@ def parsenodelist(code, nodes, addResets, pathsToMe):
     
     return pathsafterme
 
+def resetString(resets):
+    outstr = ""
+    for reset in resets:
+        outstr+= reset.code + ";"
+    outstr = outstr.strip(";")
+    return outstr
+
+def guardString(guards):
+    return guards
+
+#modes are the list of all modes in the current vertex
+#vertices are all the vertexs
+def getIndex(modes, vertices):
+    #TODO: will this work if ordering is lost, will ordering be lost?
+    return vertices.index(tuple(modes))
+    #for index in range(0, len(vertices)):
+    #    allMatch = True
+    #    for mode in modes:
+    #        if not (mode in vertices[index]):
+    #            allMatch = False
+    #    if allMatch:
+    #        return index
+    return -1
+
+def createTransition(path, vertices, modes):
+    guards = []
+    resets = []
+    modeChecks = []
+    modeUpdates = []
+    for item in path:
+        if isinstance(item, Guard):
+            if not item.isModeCheck():
+                guards.append(item)
+            else:
+                modeChecks.append(item)
+        if isinstance(item, Reset):
+            if not item.isModeUpdate():
+                resets.append(item)
+            else:
+                modeUpdates.append(item)
+    unfoundSourceModeTypes = []
+    sourceModes = []
+    unfoundDestModeTypes = []
+    destModes = []
+    for modeType in modes.keys():
+        foundMode = False
+        for condition in modeChecks:
+            #print(condition.modeType)
+            #print(modeType)
+            if condition.modeType == modeType:
+                sourceModes.append(condition.mode)
+                foundMode = True
+        if foundMode == False:
+            unfoundSourceModeTypes.append(modeType)
+        foundMode = False
+        for condition in modeUpdates:
+            if condition.modeType == modeType:
+                destModes.append(condition.mode)
+                foundMode = True
+        if foundMode == False:
+            unfoundDestModeTypes.append(modeType)
+
+    unfoundModes = []
+    for modeType in unfoundSourceModeTypes:
+        unfoundModes.append(modes[modeType])
+    unfoundModeCombinations = itertools.product(*unfoundModes)
+    sourceVertices = []
+    for unfoundModeCombo in unfoundModeCombinations:
+        sourceVertex = sourceModes.copy()
+        sourceVertex.extend(unfoundModeCombo)
+        sourceVertices.append(sourceVertex)
+
+    unfoundModes = []
+    for modeType in unfoundDestModeTypes:
+        unfoundModes.append(modes[modeType])
+    unfoundModeCombinations = itertools.product(*unfoundModes)
+    destVertices = []
+    for unfoundModeCombo in unfoundModeCombinations:
+        destVertex = destModes.copy()
+        destVertex.extend(unfoundModeCombo)
+        destVertices.append(destVertex)
+
+    edges = []
+    for source in sourceVertices:
+        sourceindex = getIndex(source, vertices)
+        for dest in destVertices:
+            destindex = getIndex(dest, vertices)
+            edges.append(Edge(sourceindex, destindex, guards, resets))
+    
+    return edges
 
 ##main code###
 #print(sys.argv)
@@ -147,15 +244,15 @@ if __name__ == "__main__":
     code = f.read()
     tree = ast.parse(code)
     #tree = ast.parse()
-    results, vars, modes = walktree(code, tree)
+    paths, vars, modes = walktree(code, tree)
 
-    print("Paths found:")
-    for result in results:
-        for item in result:
-            item.print()
+    #print("Paths found:")
+    #for result in paths:
+    #    for item in result:
+            #item.print()
             #print(item.mode)
             #print(item.modeType)
-        print()
+    #    print()
 
     print("Modes found: ")
     print(modes)
@@ -163,19 +260,41 @@ if __name__ == "__main__":
     output_dict.update(input_json)
     
     #TODO: create graph!
-    
+    vertices = []
+    vertexStrings = []
+    for vertex in itertools.product(*modes.values()):
+        vertices.append(vertex)
+        vertexstring = vertex[0]
+        for index in range(1,len(vertex)):
+            vertexstring += ";" + vertex[index]
+        vertexStrings.append(vertexstring)
 
+    edges = []
+    guards = []
+    resets = []
+
+    for path in paths:
+        transitions = createTransition(path, vertices, modes)
+        for edge in transitions:
+            edges.append([edge.source, edge.dest])
+            guards.append(guardString(edge.guards))
+            resets.append(resetString(edge.resets))
    
+    output_dict['vertex'] = vertices
+    #print(vertices)
+    output_dict['variables'] = vars
     # #add edge, transition(guards) and resets
-    #output_dict['edge'] = edges
-    #output_dict['guards'] = guards
-    #output_dict['resets'] = resets
-    #output_dict['vertex'] = mode_list
+    output_dict['edge'] = edges
+    #print(edges)
+    output_dict['guards'] = guards
+    #print(guards)
+    output_dict['resets'] = resets
+    print(resets)
 
-    output_json = json.dumps(output_dict, indent=4)
-    outfile = open(output_file_name, "w")
-    outfile.write(output_json)
-    outfile.close()
+    #output_json = json.dumps(output_dict, indent=4)
+    #outfile = open(output_file_name, "w")
+    #outfile.write(output_json)
+    #outfile.close()
 
     print("wrote json to " + output_file_name)
 
