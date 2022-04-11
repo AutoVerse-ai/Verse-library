@@ -16,6 +16,9 @@ import ast
 
 from treelib import Node, Tree
 
+'''
+Edge class:
+'''
 class Edge:
     def __init__(self, source, dest, guards, resets):
         self.source = source
@@ -74,176 +77,119 @@ class Reset(Statement):
             return Reset(ast.get_source_segment(code, node), mode, modeType)
         return Reset(ast.get_source_segment(code, node), None, None)
 
-def walktree(code, tree):
-    vars = []
-    out = []
-    mode_dict = {}
-    for node in ast.walk(tree): #don't think we want to walk the whole thing because lose ordering/depth
-        if isinstance(node, ast.ClassDef):
-            if "Mode" in node.name:
-                modeType = str(node.name)
-                modes = []
-                for modeValue in node.body:
-                    modes.append(str(modeValue.targets[0].id))
-                mode_dict[modeType] = modes
-        if isinstance(node, ast.FunctionDef):
-            if node.name == 'controller':
-                #print(node.body)
-                out = parsenodelist(code, node.body, False, [])
-                #print(type(node.args))
-                args = node.args.args
-                for arg in args:
-                    if "mode" not in arg.arg:
-                        vars.append(arg.arg)
-                        #todo: what to add for return values
-    return [out, vars, mode_dict]
 
+class TransitionUtil:
+    def resetString(resets):
+        outstr = ""
+        for reset in resets:
+            outstr+= reset.code + ";"
+        outstr = outstr.strip(";")
+        return outstr
 
+    def parseGuardCode(code):
+        #TODO: should be more general and handle or
+        parts = code.split("and")
+        out = code
+        if len(parts) > 1:
+            left = TransitionUtil.parseGuardCode(parts[0])
+            right = TransitionUtil.parseGuardCode(parts[1])
+            out = "And(" + left + "," + right + ")"
+        return out
 
-def parsenodelist(code, nodes, addResets, pathsToMe):
-    childrens_guards=[]
-    childrens_resets=[]
-    recoutput = []
-
-    for childnode in nodes:
-        if isinstance(childnode, ast.Assign) and addResets:
-            reset = Reset.parseReset(childnode, code)
-            #print("found reset: " + reset.code)
-            childrens_resets.append(reset)
-        if isinstance(childnode, ast.If):
-            guard = Guard.parseGuard(childnode, code)
-            childrens_guards.append(guard)
-            #print("found if statement: " + guard.code)
-            tempresults = parsenodelist(code, childnode.body, True, [])
-            for result in tempresults:
-                recoutput.append([result, guard])
-
-    
-    pathsafterme = [] 
-
-    if len(recoutput) == 0 and len(childrens_resets) > 0:
-        pathsafterme.append(childrens_resets)
-    else:
-        for path,ifstatement in recoutput:
-            newpath = path.copy()
-            newpath.extend(childrens_resets)
-            newpath.append(ifstatement)
-            pathsafterme.append(newpath)
-            
-    
-    return pathsafterme
-
-def resetString(resets):
-    outstr = ""
-    for reset in resets:
-        outstr+= reset.code + ";"
-    outstr = outstr.strip(";")
-    return outstr
-
-def parseGuardCode(code):
-    #TODO: should be more general and handle or
-    parts = code.split("and")
-    out = code
-    if len(parts) > 1:
-        left = parseGuardCode(parts[0])
-        right = parseGuardCode(parts[1])
-        out = "And(" + left + "," + right + ")"
-    return out
-
-def guardString(guards):
-    output = ""
-    first = True
-    for guard in guards: 
-        #print(type(condition))
-        if first:
-            output+= parseGuardCode(guard.code)
-        else:
-            output = "And(" + parseGuardCode(guard.code) + ",(" + output + "))"
-        first = False
-    return output
-
-
-#modes are the list of all modes in the current vertex
-#vertices are all the vertexs
-def getIndex(modes, vertices):
-    #TODO: will this work if ordering is lost, will ordering be lost?
-    return vertices.index(tuple(modes))
-    #for index in range(0, len(vertices)):
-    #    allMatch = True
-    #    for mode in modes:
-    #        if not (mode in vertices[index]):
-    #            allMatch = False
-    #    if allMatch:
-    #        return index
-    return -1
-
-def createTransition(path, vertices, modes):
-    guards = []
-    resets = []
-    modeChecks = []
-    modeUpdates = []
-    for item in path:
-        if isinstance(item, Guard):
-            if not item.isModeCheck():
-                guards.append(item)
+    def guardString(guards):
+        output = ""
+        first = True
+        for guard in guards: 
+            #print(type(condition))
+            if first:
+                output+= TransitionUtil.parseGuardCode(guard.code)
             else:
-                modeChecks.append(item)
-        if isinstance(item, Reset):
-            if not item.isModeUpdate():
-                resets.append(item)
-            else:
-                modeUpdates.append(item)
-    unfoundSourceModeTypes = []
-    sourceModes = []
-    unfoundDestModeTypes = []
-    destModes = []
-    for modeType in modes.keys():
-        foundMode = False
-        for condition in modeChecks:
-            #print(condition.modeType)
-            #print(modeType)
-            if condition.modeType == modeType:
-                sourceModes.append(condition.mode)
-                foundMode = True
-        if foundMode == False:
-            unfoundSourceModeTypes.append(modeType)
-        foundMode = False
-        for condition in modeUpdates:
-            if condition.modeType == modeType:
-                destModes.append(condition.mode)
-                foundMode = True
-        if foundMode == False:
-            unfoundDestModeTypes.append(modeType)
+                output = "And(" + TransitionUtil.parseGuardCode(guard.code) + ",(" + output + "))"
+            first = False
+        return output
 
-    unfoundModes = []
-    for modeType in unfoundSourceModeTypes:
-        unfoundModes.append(modes[modeType])
-    unfoundModeCombinations = itertools.product(*unfoundModes)
-    sourceVertices = []
-    for unfoundModeCombo in unfoundModeCombinations:
-        sourceVertex = sourceModes.copy()
-        sourceVertex.extend(unfoundModeCombo)
-        sourceVertices.append(sourceVertex)
 
-    unfoundModes = []
-    for modeType in unfoundDestModeTypes:
-        unfoundModes.append(modes[modeType])
-    unfoundModeCombinations = itertools.product(*unfoundModes)
-    destVertices = []
-    for unfoundModeCombo in unfoundModeCombinations:
-        destVertex = destModes.copy()
-        destVertex.extend(unfoundModeCombo)
-        destVertices.append(destVertex)
+    #modes are the list of all modes in the current vertex
+    #vertices are all the vertexs
+    def getIndex(modes, vertices):
+        #TODO: will this work if ordering is lost, will ordering be lost?
+        return vertices.index(tuple(modes))
+        #for index in range(0, len(vertices)):
+        #    allMatch = True
+        #    for mode in modes:
+        #        if not (mode in vertices[index]):
+        #            allMatch = False
+        #    if allMatch:
+        #        return index
+        return -1
 
-    edges = []
-    for source in sourceVertices:
-        sourceindex = getIndex(source, vertices)
-        for dest in destVertices:
-            destindex = getIndex(dest, vertices)
-            edges.append(Edge(sourceindex, destindex, guards, resets))
-    return edges
+    def createTransition(path, vertices, modes):
+        guards = []
+        resets = []
+        modeChecks = []
+        modeUpdates = []
+        for item in path:
+            if isinstance(item, Guard):
+                if not item.isModeCheck():
+                    guards.append(item)
+                else:
+                    modeChecks.append(item)
+            if isinstance(item, Reset):
+                if not item.isModeUpdate():
+                    resets.append(item)
+                else:
+                    modeUpdates.append(item)
+        unfoundSourceModeTypes = []
+        sourceModes = []
+        unfoundDestModeTypes = []
+        destModes = []
+        for modeType in modes.keys():
+            foundMode = False
+            for condition in modeChecks:
+                #print(condition.modeType)
+                #print(modeType)
+                if condition.modeType == modeType:
+                    sourceModes.append(condition.mode)
+                    foundMode = True
+            if foundMode == False:
+                unfoundSourceModeTypes.append(modeType)
+            foundMode = False
+            for condition in modeUpdates:
+                if condition.modeType == modeType:
+                    destModes.append(condition.mode)
+                    foundMode = True
+            if foundMode == False:
+                unfoundDestModeTypes.append(modeType)
 
-class controller_ast():
+        unfoundModes = []
+        for modeType in unfoundSourceModeTypes:
+            unfoundModes.append(modes[modeType])
+        unfoundModeCombinations = itertools.product(*unfoundModes)
+        sourceVertices = []
+        for unfoundModeCombo in unfoundModeCombinations:
+            sourceVertex = sourceModes.copy()
+            sourceVertex.extend(unfoundModeCombo)
+            sourceVertices.append(sourceVertex)
+
+        unfoundModes = []
+        for modeType in unfoundDestModeTypes:
+            unfoundModes.append(modes[modeType])
+        unfoundModeCombinations = itertools.product(*unfoundModes)
+        destVertices = []
+        for unfoundModeCombo in unfoundModeCombinations:
+            destVertex = destModes.copy()
+            destVertex.extend(unfoundModeCombo)
+            destVertices.append(destVertex)
+
+        edges = []
+        for source in sourceVertices:
+            sourceindex = TransitionUtil.getIndex(source, vertices)
+            for dest in destVertices:
+                destindex = TransitionUtil.getIndex(dest, vertices)
+                edges.append(Edge(sourceindex, destindex, guards, resets))
+        return edges
+
+class Controller_ast():
     '''
     Initalizing function for a controller_ast object.
     Reads in the code and parses it to a python ast and statement tree.
@@ -347,11 +293,11 @@ class controller_ast():
         resets = []
 
         for path in self.paths:
-            transitions = createTransition(path, self.vertices, self.modes)
+            transitions = TransitionUtil.createTransition(path, self.vertices, self.modes)
             for edge in transitions:
                 edges.append([edge.source, edge.dest])
-                guards.append(guardString(edge.guards))
-                resets.append(resetString(edge.resets))
+                guards.append(TransitionUtil.guardString(edge.guards))
+                resets.append(TransitionUtil.resetString(edge.resets))
     
         output_dict['vertex'] = self.vertexStrings
         #print(vertices)
@@ -465,7 +411,7 @@ if __name__ == "__main__":
     code = f.read()
 
     #parse the controller code into our controller ast objct
-    controller_obj = controller_ast(code)
+    controller_obj = Controller_ast(code)
 
     #demonstrate you can check getNextModes after only initalizing
     paths = controller_obj.getNextModes("NormalA;Normal3")
