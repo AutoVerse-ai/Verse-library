@@ -17,7 +17,7 @@ import ast
 from treelib import Node, Tree
 
 '''
-Edge class:
+Edge class: utility class to hold the source, dest, guards, and resets for a transition
 '''
 class Edge:
     def __init__(self, source, dest, guards, resets):
@@ -26,6 +26,10 @@ class Edge:
         self.guards = guards
         self.resets = resets
 
+'''
+Statement super class. Holds the code and mode information for a statement. 
+If there is no mode information, mode and modeType are None.
+'''
 class Statement:
     def __init__(self, code, mode, modeType):
         self.code = code
@@ -37,15 +41,25 @@ class Statement:
         print(self.code)
 
 
-
+'''
+Guard class. Subclass of statement.
+'''
 class Guard(Statement):
     def __init__(self, code, mode, modeType):
         super().__init__(code, mode, modeType)
 
 
+    '''
+    Returns true if a guard is checking that we are in a mode. 
+    '''
     def isModeCheck(self):
         return self.modeType != None
 
+    '''
+    Helper function to parse a node that contains a guard. Parses out the code and mode.
+    Returns a Guard. 
+    TODO: needs to handle more complex guards.
+    '''
     def parseGuard(node, code):
         #assume guard is a strict comparision (modeType == mode)
         if isinstance(node.test, ast.Compare):
@@ -57,15 +71,23 @@ class Guard(Statement):
         else:
             return Guard(ast.get_source_segment(code, node.test), None, None)
         
-
+'''
+Reset class. Subclass of statement.
+'''
 class Reset(Statement):
     def __init__(self, code, mode, modeType):
         super().__init__(code, mode, modeType)
 
-
+    '''
+    Returns true if a reset is updating our mode. 
+    '''
     def isModeUpdate(self):
         return self.modeType != None
 
+    '''
+    Helper function to parse a node that contains a reset. Parses out the code and mode.
+    Returns a reset. 
+    '''
     def parseReset(node, code):
         #assume reset is modeType = newMode
         if isinstance(node.value, ast.Attribute):
@@ -78,7 +100,13 @@ class Reset(Statement):
         return Reset(ast.get_source_segment(code, node), None, None)
 
 
+'''
+Util class to handle building transitions given a path.
+'''
 class TransitionUtil:
+    '''
+    Takes in a list of reset objects. Returns a string in the format json expected.
+    '''
     def resetString(resets):
         outstr = ""
         for reset in resets:
@@ -86,8 +114,11 @@ class TransitionUtil:
         outstr = outstr.strip(";")
         return outstr
 
+    '''
+    Takes in guard code. Returns a string in the format json expected.
+    TODO: needs to handle more complex guards. 
+    '''
     def parseGuardCode(code):
-        #TODO: should be more general and handle or
         parts = code.split("and")
         out = code
         if len(parts) > 1:
@@ -96,6 +127,9 @@ class TransitionUtil:
             out = "And(" + left + "," + right + ")"
         return out
 
+    '''
+    Helper function for parseGuardCode. 
+    '''
     def guardString(guards):
         output = ""
         first = True
@@ -109,20 +143,20 @@ class TransitionUtil:
         return output
 
 
-    #modes are the list of all modes in the current vertex
-    #vertices are all the vertexs
+    '''
+    Helper function to get the index of the vertex for a set of modes.
+    Modes is a list of all modes in the current vertex.
+    Vertices is the list of vertices. 
+    TODO: needs to be tested on more complex examples to see if ordering stays and we can use index function
+    '''
     def getIndex(modes, vertices):
-        #TODO: will this work if ordering is lost, will ordering be lost?
         return vertices.index(tuple(modes))
-        #for index in range(0, len(vertices)):
-        #    allMatch = True
-        #    for mode in modes:
-        #        if not (mode in vertices[index]):
-        #            allMatch = False
-        #    if allMatch:
-        #        return index
-        return -1
 
+    '''
+    Function that creates transitions given a path. 
+    Will create multiple transitions if not all modeTypes are checked/set in the path. 
+    Returns a list of edges that correspond to the path.
+    '''
     def createTransition(path, vertices, modes):
         guards = []
         resets = []
@@ -217,10 +251,7 @@ class Controller_ast():
     Function to populate paths variable with all paths of the controller.
     '''
     def getAllPaths(self):
-        currentModes = []
-        for modeTypes in self.modes.values():
-            currentModes.extend(modeTypes)
-        self.paths = self.getNextModes(currentModes)
+        self.paths = self.getNextModes([], True)
         return self.paths
     
     '''
@@ -229,12 +260,12 @@ class Controller_ast():
     A path is a list of statements, all guards and resets along the path. They are in the order they are encountered in the code.
     TODO: should we not force all modes be listed? Or rerun for each unknown/don't care node? Or add them all to the list
     '''
-    def getNextModes(self, currentModes):
+    def getNextModes(self, currentModes, getAllPaths= False):
         #walk the tree and capture all paths that have modes that are listed. Path is a list of statements
         paths = []
         rootid = self.statementtree.root
         currnode = self.statementtree.get_node(rootid)
-        paths = self.walkstatements(currnode, currentModes)
+        paths = self.walkstatements(currnode, currentModes, getAllPaths)
         
         return paths 
 
@@ -242,16 +273,16 @@ class Controller_ast():
     Helper function to walk the statement tree from parentnode and find paths that are allowed in the currentMode.
     Returns a list of paths. 
     '''
-    def walkstatements(self, parentnode, currentModes):
+    def walkstatements(self, parentnode, currentModes, getAllPaths):
         nextsPaths = []
 
         for node in self.statementtree.children(parentnode.identifier):
             statement = node.data
             
             if isinstance(statement[0], Guard) and statement[0].isModeCheck():
-                    if statement[0].mode in currentModes:
+                    if getAllPaths or statement[0].mode in currentModes:
                         #print(statement.mode)
-                        newPaths = self.walkstatements(node, currentModes)
+                        newPaths = self.walkstatements(node, currentModes, getAllPaths)
                         for path in newPaths:
                             newpath = statement.copy()
                             newpath.extend(path)
@@ -260,7 +291,7 @@ class Controller_ast():
                             nextsPaths.append(statement)
         
             else:
-                newPaths =self.walkstatements(node, currentModes)
+                newPaths =self.walkstatements(node, currentModes, getAllPaths)
                 for path in newPaths:
                     newpath = statement.copy()
                     newpath.extend(path)
@@ -390,7 +421,6 @@ class Controller_ast():
 
 
 ##main code###
-#print(sys.argv)
 if __name__ == "__main__":
     #if len(sys.argv) < 4:
     #    print("incorrect usage. call createGraph.py program inputfile outputfilename")
@@ -426,8 +456,10 @@ if __name__ == "__main__":
     #attempt to write to json, fail because we haven't populated paths yet
     controller_obj.create_json(input_file_name, output_file_name)
 
+    #call function that gets all paths
     controller_obj.getAllPaths()
 
+    #write json with all paths
     controller_obj.create_json(input_file_name, output_file_name)
 
 
