@@ -247,7 +247,7 @@ class controller_ast():
     def __init__(self, code):
         self.code = code
         self.tree = ast.parse(code)
-        self.nodect= 1
+        #statement tree is a tree of nodes that contain a list in their data. The list contains a single guard or a list of resets
         self.statementtree, self.variables, self.modes = self.initalwalktree(code, tree)
         self.vertices = []
        
@@ -265,25 +265,30 @@ class controller_ast():
 
     def walkstatements(self, parentnode, currentModes):
         nextsPaths = []
+
         for node in self.statementtree.children(parentnode.identifier):
-            statement = node.tag
-            print(statement)
-            print(node)
-            if isinstance(statement, Guard) and statement.isModeCheck():
-                    if statement.mode in currentModes:
+            statement = node.data
+            
+            if isinstance(statement[0], Guard) and statement[0].isModeCheck():
+                    if statement[0].mode in currentModes:
+                        #print(statement.mode)
                         newPaths = self.walkstatements(node, currentModes)
                         for path in newPaths:
-                            nextsPaths.append(statement.extend(path))
+                            newpath = statement.copy()
+                            newpath.extend(path)
+                            nextsPaths.append(newpath)
                         if len(nextsPaths) == 0:
                             nextsPaths.append(statement)
         
             else:
                 newPaths =self.walkstatements(node, currentModes)
                 for path in newPaths:
-                    nextsPaths.append(statement.extend(path))
+                    newpath = statement.copy()
+                    newpath.extend(path)
+                    nextsPaths.append(newpath)
                 if len(nextsPaths) == 0:
                             nextsPaths.append(statement)
-        
+ 
         return nextsPaths
 
 
@@ -359,9 +364,8 @@ class controller_ast():
         #tree.show()
         if parent == None:
             s = Statement("root", None, None)
-            tree.create_node(s, self.nodect)
-            parent = self.nodect
-            self.nodect += 1
+            tree.create_node("root")
+            parent = tree.root
 
         for childnode in nodes:
             if isinstance(childnode, ast.Assign) and addResets:
@@ -373,11 +377,9 @@ class controller_ast():
                 childrens_guards.append(guard)
                 #print("found if statement: " + guard.code)
                 newTree = Tree()
-                temp_node_num = self.nodect
-                self.nodect += 1
-                newTree.create_node([guard], temp_node_num)
+                newTree.create_node(tag= guard.code, data = [guard])
                 #print(self.nodect)
-                tempresults = self.parsenodelist(code, childnode.body, True, newTree, temp_node_num)
+                tempresults = self.parsenodelist(code, childnode.body, True, newTree, newTree.root)
                 #for result in tempresults:
                 recoutput.append(tempresults)
 
@@ -385,9 +387,7 @@ class controller_ast():
         #pathsafterme = [] 
         if len(childrens_resets) > 0:
             #print("adding node:" + str(self.nodect) + "with parent:" + str(parent))
-            tree.create_node(childrens_resets, self.nodect, parent= parent)
-            parent = self.nodect
-            self.nodect += 1
+            tree.create_node(tag = childrens_resets[0].code, data = childrens_resets, parent= parent)
         for subtree in recoutput:
             #print("adding subtree:" + " to parent:" + str(parent))
             tree.paste(parent, subtree)
@@ -426,10 +426,12 @@ if __name__ == "__main__":
     variables = test.variables
     modes = test.modes
 
+    print("Results")
     for path in paths:
         for item in path:
             print(item.code)
         print()
+    print("Done")
     
     #print("Paths found:")
     #for result in paths:
