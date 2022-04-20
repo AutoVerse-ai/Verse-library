@@ -371,18 +371,22 @@ class ControllerAst():
                     for modeValue in node.body:
                         modes.append(str(modeValue.targets[0].id))
                     mode_dict[modeType] = modes
+            if isinstance(node, ast.ClassDef):
+                if "State" in node.name:
+                    for item in node.body:
+                        if isinstance(item, ast.FunctionDef):
+                            if "init" in item.name:
+                                for arg in item.args.args:
+                                    if "self" not in arg.arg:
+                                        if "mode" not in arg.arg:
+                                            vars.append(arg.arg)
+                                        else:
+                                            discrete_vars.append(arg.arg)
             if isinstance(node, ast.FunctionDef):
                 if node.name == 'controller':
                     #print(node.body)
                     statementtree = self.parsenodelist(code, node.body, False, Tree(), None)
                     #print(type(node.args))
-                    args = node.args.args
-                    for arg in args:
-                        if "mode" not in arg.arg:
-                            vars.append(arg.arg)
-                            #todo: what to add for return values
-                        else:
-                            discrete_vars.append(arg.arg)
         return [statementtree, vars, mode_dict, discrete_vars]
 
 
@@ -450,6 +454,8 @@ if __name__ == "__main__":
 
     #parse the controller code into our controller ast objct
     controller_obj = ControllerAst(code)
+
+    print(controller_obj.variables)
 
     #demonstrate you can check getNextModes after only initalizing
     paths = controller_obj.getNextModes("NormalA;Normal3")
