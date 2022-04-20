@@ -1,5 +1,4 @@
 from enum import Enum,auto
-import numpy as np
 
 class VehicleMode(Enum):
     Normal = auto()
@@ -10,7 +9,7 @@ class VehicleMode(Enum):
 class LaneMode(Enum):
     Lane0 = auto()
 
-def controller(x,y,theta,vehicle_mode, lane_mode):
+def controller(x,y,theta,v,vehicle_mode, lane_mode):
     output_vehicle_mode = vehicle_mode
     output_lane_mode = lane_mode
     if vehicle_mode == VehicleMode.Normal:
@@ -33,12 +32,13 @@ def controller(x,y,theta,vehicle_mode, lane_mode):
 from ourtool.agents.car_agent import CarAgent
 from ourtool.scenario.scenario import Scenario
 import matplotlib.pyplot as plt 
+import numpy as np
 
 if __name__ == "__main__":
     input_code_name = 'car_lane_switch.py'
     scenario = Scenario()
     
-    car = CarAgent(0, file_name=input_code_name)
+    car = CarAgent('ego', file_name=input_code_name)
     scenario.add_agent(car)
     
     # simulator = Simulator()
@@ -54,7 +54,7 @@ if __name__ == "__main__":
     while queue!=[]:
         node = queue.pop(0)
         traces = node.trace
-        agent_id = 0
+        agent_id = 'ego'
         # for agent_id in traces:
         trace = np.array(traces[agent_id])
         plt.plot(trace[:,0], trace[:,2], 'b')

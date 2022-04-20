@@ -1,21 +1,38 @@
-from typing import Dict
+from typing import Dict, List
+import copy
+
 from ourtool.agents.base_agent import BaseAgent
 from ourtool.automaton.guard import GuardExpression
 from pythonparser import Guard
 from pythonparser import Reset
 from ourtool.simulator.simulator import Simulator
-from typing import List
 
 class Scenario:
     def __init__(self):
         self.agent_dict = {}
         self.simulator = Simulator()
+        self.init_dict = {}
+        self.init_mode_dict = {}
 
     def add_agent(self, agent:BaseAgent):
         self.agent_dict[agent.id] = agent
 
-    def simulate(self, init_list, init_mode_list, agent_list:List[BaseAgent], transition_graph, time_horizon):
-        return self.simulator.simulate(init_list, init_mode_list, agent_list, transition_graph, time_horizon)
+    def set_init(self, init_list, init_mode_list):
+        assert len(init_list) == len(self.agent_dict)
+        assert len(init_mode_list) == len(self.agent_dict)
+        for i,agent_id in enumerate(self.agent_dict.keys()):
+            self.init_dict[agent_id] = copy.deepcopy(init_list[i])
+            self.init_mode_dict[agent_id] = copy.deepcopy(init_mode_list[i])
+
+    def simulate(self, time_horizon):
+        init_list = []
+        init_mode_list = []
+        agent_list = []
+        for agent_id in self.agent_dict:
+            init_list.append(self.init_dict[agent_id])
+            init_mode_list.append(self.init_mode_dict[agent_id])
+            agent_list.append(self.agent_dict[agent_id])
+        return self.simulator.simulate(init_list, init_mode_list, agent_list, self, time_horizon)
 
     def get_all_transition(self, state_dict):
         guard_hit = False

@@ -4,6 +4,13 @@ import numpy as np
 import copy
 
 class SimulationTreeNode:
+    """SimulationTreeNode class
+    A SimulationTreeNode stores the continous execution of the system without transition happening"""
+    trace: Dict
+    """The trace for each agent. 
+    The key of the dict is the agent id and the value of the dict is simulated traces for each agent"""
+    
+    init: Dict 
     def __init__(
         self,
         trace={},
@@ -17,7 +24,7 @@ class SimulationTreeNode:
         self.init:Dict = init
         self.mode:Dict = mode
         self.agent:Dict = agent
-        self.child: List[SimulationTreeNode] = child
+        self.child:List[SimulationTreeNode] = child
         self.start_time:float = start_time
 
 class Simulator:
@@ -94,14 +101,24 @@ class Simulator:
                     else:
                         next_node_trace[agent_idx] = truncated_trace[agent_idx]
                 
-                # Put the node in the child of current node. Put the new node in the queue
-                node.child.append(SimulationTreeNode(
+                tmp = SimulationTreeNode(
                     trace = next_node_trace,
                     init = next_node_init,
                     mode = next_node_mode,
                     agent = next_node_agent,
                     child = [],
                     start_time = next_node_start_time
-                ))
-            simulation_queue += node.child
+                )
+                node.child.append(tmp)
+                simulation_queue.append(tmp)
+                # Put the node in the child of current node. Put the new node in the queue
+            #     node.child.append(SimulationTreeNode(
+            #         trace = next_node_trace,
+            #         init = next_node_init,
+            #         mode = next_node_mode,
+            #         agent = next_node_agent,
+            #         child = [],
+            #         start_time = next_node_start_time
+            #     ))
+            # simulation_queue += node.child
         return self.simulation_tree_root
