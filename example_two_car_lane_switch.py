@@ -21,30 +21,30 @@ class State:
     def __init__(self):
         self.data = []
 
-def controller(ego_x, ego_y, ego_theta, ego_v, ego_vehicle_mode, ego_lane_mode, others_x, others_y, others_theta, others_v, others_vehicle_mode, others_lane_mode, map):
-    # output = ego
-    output_vehicle_mode = ego_vehicle_mode
-    output_lane_mode = ego_lane_mode
-    if ego_vehicle_mode == VehicleMode.Normal:
-        if ego_lane_mode == LaneMode.Lane0:
-            if others_x - ego_x > 3 and others_x - ego_x < 5 and map.can_swtich_left(ego_lane_mode):
-                output_vehicle_mode = VehicleMode.SwitchLeft
-                output_lane_mode = map.switch_left(ego_lane_mode)
-            if others_x - ego_x > 3 and others_x - ego_x < 5:
-                output_vehicle_mode = VehicleMode.SwitchRight
-    if ego_vehicle_mode == VehicleMode.SwitchLeft:
-        if ego_lane_mode == LaneMode.Lane0:
-            if ego_x - others_x > 10:
-                output_vehicle_mode = VehicleMode.Normal
-    if ego_vehicle_mode == VehicleMode.SwitchRight:
-        if ego_lane_mode == LaneMode.Lane0:
-            if ego_x - others_x > 10:
-                output_vehicle_mode = VehicleMode.Normal
+def controller(ego:State, other:State, map):
+    output = ego
+    if ego.vehicle_mode == VehicleMode.Normal:
+        if ego.lane_mode == LaneMode.Lane0:
+            if other.x - ego.x > 3 and other.x - ego.x < 5 and map.has_left(ego.lane_mode):
+                output.vehicle_mode = VehicleMode.SwitchLeft
+                output.lane_mode = map.left_lane(ego.lane_mode)
+            if other.x - ego.x > 3 and other.x - ego.x < 5:
+                output.vehicle_mode = VehicleMode.SwitchRight
+    if ego.vehicle_mode == VehicleMode.SwitchLeft:
+        if ego.lane_mode == LaneMode.Lane0:
+            if ego.x - other.x > 10:
+                output.vehicle_mode = VehicleMode.Normal
+    if ego.vehicle_mode == VehicleMode.SwitchRight:
+        if ego.lane_mode == LaneMode.Lane0:
+            if ego.x - other.x > 10:
+                output.vehicle_mode = VehicleMode.Normal
 
-    return output_vehicle_mode, output_lane_mode
+    return output
     
 from ourtool.agents.car_agent import CarAgent
 from ourtool.scenario.scenario import Scenario
+from user.sensor import SimpleSensor
+from user.map import SimpleMap
 import matplotlib.pyplot as plt 
 import numpy as np
 
@@ -56,6 +56,8 @@ if __name__ == "__main__":
     scenario.add_agent(car)
     car = CarAgent('car2', file_name=input_code_name)
     scenario.add_agent(car)
+    scenario.add_map(SimpleMap())
+    # scenario.set_sensor(SimpleSensor())
     scenario.set_init(
         [[0,0,0,1.0], [10,0,0,0.5]],
         [

@@ -239,7 +239,7 @@ class ControllerAst():
 
         self.code = code
         self.tree = ast.parse(code)
-        self.statementtree, self.variables, self.modes, self.discrete_variables = self.initalwalktree(code, self.tree)
+        self.statementtree, self.variables, self.modes, self.discrete_variables, self.state_object_dict, self.vars_dict = self.initalwalktree(code, self.tree)
         self.vertices = []
         self.vertexStrings = []
         for vertex in itertools.product(*self.modes.values()):
@@ -249,7 +249,6 @@ class ControllerAst():
                 vertexstring += "," + vertex[index]
             self.vertexStrings.append(vertexstring)
         self.paths = None
-
 
     '''
     Function to populate paths variable with all paths of the controller.
@@ -362,6 +361,8 @@ class ControllerAst():
         discrete_vars = []
         out = []
         mode_dict = {}
+        state_object_dict = {}
+        vars_dict = {}
         for node in ast.walk(tree): #don't think we want to walk the whole thing because lose ordering/depth
             # Get all the modes
             if isinstance(node, ast.ClassDef):
@@ -373,21 +374,43 @@ class ControllerAst():
                     mode_dict[modeType] = modes
             if isinstance(node, ast.ClassDef):
                 if "State" in node.name:
+                    state_object_dict[node.name] = {"cont":[],"disc":[]}
                     for item in node.body:
                         if isinstance(item, ast.FunctionDef):
                             if "init" in item.name:
                                 for arg in item.args.args:
                                     if "self" not in arg.arg:
                                         if "mode" not in arg.arg:
-                                            vars.append(arg.arg)
+                                            state_object_dict[node.name]['cont'].append(arg.arg)
+                                            # vars.append(arg.arg)
                                         else:
-                                            discrete_vars.append(arg.arg)
+                                            state_object_dict[node.name]['disc'].append(arg.arg)
+                                            # discrete_vars.append(arg.arg)
             if isinstance(node, ast.FunctionDef):
                 if node.name == 'controller':
                     #print(node.body)
                     statementtree = self.parsenodelist(code, node.body, False, Tree(), None)
                     #print(type(node.args))
-        return [statementtree, vars, mode_dict, discrete_vars]
+                    args = node.args.args
+                    for arg in args:
+                        if arg.annotation is None:
+                            continue
+                        arg_annotation = arg.annotation.id
+                        arg_name = arg.arg
+                        vars_dict[arg_name] = {'cont':[], 'disc':[]}
+                        for var in state_object_dict[arg_annotation]['cont']:
+                            vars.append(arg_name+"."+var)
+                            vars_dict[arg_name]['cont'].append(var)
+                        for var in state_object_dict[arg_annotation]['disc']:
+                            discrete_vars.append(arg_name+"."+var)
+                            vars_dict[arg_name]['disc'].append(var)
+
+                        # if "mode" not in arg.arg:
+                        #     vars.append(arg.arg)
+                        #     #todo: what to add for return values
+                        # else:
+                        #     discrete_vars.append(arg.arg)
+        return [statementtree, vars, mode_dict, discrete_vars, state_object_dict, vars_dict]
 
 
     '''
