@@ -226,11 +226,17 @@ class GuardExpression:
             expr = root.data
             # Check if the root is a function
             if 'map' in expr:
-                tmp = re.split('\(|\)',expr)
-                while "" in tmp:
-                    tmp.remove("")
-                for arg in tmp[1:]:
-                    expr = expr.replace(arg,f'"{disc_var_dict[arg]}"')
+                # tmp = re.split('\(|\)',expr)
+                # while "" in tmp:
+                #     tmp.remove("")
+                # for arg in tmp[1:]:
+                #     if arg in disc_var_dict:
+                #         expr = expr.replace(arg,f'"{disc_var_dict[arg]}"')
+                # res = eval(expr)
+                for arg in disc_var_dict:
+                    expr = expr.replace(arg, f'"{disc_var_dict[arg]}"')
+                for arg in cnts_var_dict:
+                    expr = expr.replace(arg, str(cnts_var_dict[arg]))    
                 res = eval(expr)
                 return res
             # Elif check if the root contain any discrete data

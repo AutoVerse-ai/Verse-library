@@ -11,5 +11,5 @@ class LaneSegment:
         if lane_parameter is not None:
             self.lane_parameter = lane_parameter
 
-    def get_geometry():
-        pass
+    def get_geometry(self):
+        return self.lane_parameter

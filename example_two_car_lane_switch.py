@@ -2,8 +2,6 @@ from enum import Enum,auto
 
 from ourtool.map.lane_map import LaneMap
 
-a = 1+2
-
 class VehicleMode(Enum):
     Normal = auto()
     SwitchLeft = auto()
@@ -13,6 +11,7 @@ class VehicleMode(Enum):
 class LaneMode(Enum):
     Lane0 = auto()
     Lane1 = auto()
+    Lane2 = auto()
 
 class State:
     x = 0.0
@@ -31,28 +30,24 @@ def controller(ego:State, other:State, lane_map):
         if other.x - ego.x > 3 and other.x - ego.x < 5 and ego.lane_mode == other.lane_mode:
             if lane_map.has_left(ego.lane_mode):
                 output.vehicle_mode = VehicleMode.SwitchLeft
-                # output.lane_mode = lane_map.left_lane(ego.lane_mode)
         if other.x - ego.x > 3 and other.x - ego.x < 5 and ego.lane_mode == other.lane_mode:
             if lane_map.has_right(ego.lane_mode):
                 output.vehicle_mode = VehicleMode.SwitchRight
-                # output.lane_mode = lane_map.right_lane(ego.lane_mode)
     if ego.vehicle_mode == VehicleMode.SwitchLeft:
-        if ego.y >= 2.5:
+        if ego.y >= lane_map.lane_geometry(ego.lane_mode)-0.5:
             output.vehicle_mode = VehicleMode.Normal
             output.lane_mode = lane_map.left_lane(ego.lane_mode)
-            output.y = ego.y-3
     if ego.vehicle_mode == VehicleMode.SwitchRight:
-        if ego.y <= -2.5:
+        if ego.y <= lane_map.lane_geometry(ego.lane_mode)+0.5:
             output.vehicle_mode = VehicleMode.Normal
             output.lane_mode = lane_map.right_lane(ego.lane_mode)
-            output.y = ego.y+3
     
     return output
     
 from ourtool.agents.car_agent import CarAgent
 from ourtool.scenario.scenario import Scenario
-from user.simple_sensor import SimpleSensor
-from user.simple_map import SimpleMap
+# from user.simple_sensor import SimpleSensor
+from user.simple_map import SimpleMap, SimpleMap2
 import matplotlib.pyplot as plt 
 import numpy as np
 
@@ -64,26 +59,35 @@ if __name__ == "__main__":
     scenario.add_agent(car)
     car = CarAgent('car2', file_name=input_code_name)
     scenario.add_agent(car)
-    scenario.add_map(SimpleMap())
+    scenario.add_map(SimpleMap2())
     # scenario.set_sensor(SimpleSensor())
     scenario.set_init(
-        [[0,0,0,1.0], [10,0,0,0.5]],
+        [[10,0,0,0.5], [0,-3,0,1.0]],
         [
-            (VehicleMode.Normal, LaneMode.Lane0),
-            (VehicleMode.Normal, LaneMode.Lane0)
+            (VehicleMode.Normal, LaneMode.Lane1),
+            (VehicleMode.Normal, LaneMode.Lane2)
         ]
     )
     # simulator = Simulator()
     traces = scenario.simulate(40)
 
+    plt.plot([0,40],[3,3],'g')
+    plt.plot([0,40],[0,0],'g')
+    plt.plot([0,40],[-3,-3],'g')
+
     queue = [traces]
     while queue!=[]:
         node = queue.pop(0)
         traces = node.trace
-        agent_id = 'ego'
         # for agent_id in traces:
+        agent_id = 'car2'
         trace = np.array(traces[agent_id])
-        plt.plot(trace[:,0], trace[:,2], 'b')
+        plt.plot(trace[:,1], trace[:,2], 'r')
+
+        agent_id = 'car1'
+        trace = np.array(traces[agent_id])
+        plt.plot(trace[:,1], trace[:,2], 'b')
+
         # if node.child != []:
         queue += node.child 
     plt.show()

@@ -1,6 +1,7 @@
 from ourtool.agents.base_agent import BaseAgent
 import numpy as np 
 from scipy.integrate import ode
+from ourtool.map.lane_map import LaneMap
 
 class CarAgent(BaseAgent):
     def __init__(self, id, code = None, file_name = None):
@@ -16,7 +17,7 @@ class CarAgent(BaseAgent):
         v_dot = a 
         return [x_dot, y_dot, theta_dot, v_dot]
 
-    def TC_simulate(self, mode, initialCondition, time_bound, map=None):
+    def TC_simulate(self, mode, initialCondition, time_bound, lane_map:LaneMap=None):
         mode = mode.split(',')
         vehicle_mode = mode[0]
         vehicle_lane = mode[1]
@@ -27,10 +28,11 @@ class CarAgent(BaseAgent):
 
         init = initialCondition
         trace = [[0]+init]
+        lane_parameter = lane_map.lane_geometry(vehicle_lane)
         if vehicle_mode == "Normal":
             for i in range(len(t)):
                 x,y,theta,v = init
-                d = -y
+                d = -y+lane_parameter
                 psi = -theta
                 steering = psi + np.arctan2(0.45*d, v)
                 steering = np.clip(steering, -0.61, 0.61)
@@ -43,7 +45,7 @@ class CarAgent(BaseAgent):
         elif vehicle_mode == "SwitchLeft":
             for i in range(len(t)):
                 x,y,theta,v = init
-                d = -y+1
+                d = -y+3+lane_parameter
                 psi = -theta
                 steering = psi + np.arctan2(0.45*d, v)
                 steering = np.clip(steering, -0.61, 0.61)
@@ -56,7 +58,7 @@ class CarAgent(BaseAgent):
         elif vehicle_mode == "SwitchRight":
             for i in range(len(t)):
                 x,y,theta,v = init
-                d = -y-1
+                d = -y-3+lane_parameter
                 psi = -theta
                 steering = psi + np.arctan2(0.45*d, v)
                 steering = np.clip(steering, -0.61, 0.61)

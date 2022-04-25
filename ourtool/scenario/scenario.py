@@ -1,5 +1,6 @@
 from typing import Dict, List
 import copy
+import itertools
 
 from ourtool.agents.base_agent import BaseAgent
 from ourtool.automaton.guard import GuardExpression
@@ -80,10 +81,10 @@ class Scenario:
             init_list.append(self.init_dict[agent_id])
             init_mode_list.append(self.init_mode_dict[agent_id])
             agent_list.append(self.agent_dict[agent_id])
-        return self.simulator.simulate(init_list, init_mode_list, agent_list, self, time_horizon)
+        return self.simulator.simulate(init_list, init_mode_list, agent_list, self, time_horizon, self.map)
 
     def get_all_transition(self, state_dict):
-        guard_hit = False
+        lane_map = self.map
         satisfied_guard = []
         for agent_id in state_dict:
             agent:BaseAgent = self.agent_dict[agent_id]
@@ -113,6 +114,7 @@ class Scenario:
                     # If the guard can be satisfied, handle resets
                     next_init = agent_state
                     dest = agent_mode.split(',')
+                    possible_dest = [[elem] for elem in dest]
                     for reset in reset_list:
                         # Specify the destination mode
                         if "mode" in reset:
@@ -120,54 +122,30 @@ class Scenario:
                                 if discrete_variable_ego in reset:
                                     break
                             tmp = reset.split('=')
-                            tmp = tmp[1].split('.')
-                            if tmp[0].strip(' ') in agent.controller.modes:
-                                dest[i] = tmp[1]
-                            
+                            if 'map' in tmp[1]:
+                                tmp = tmp[1]
+                                for var in discrete_variable_dict:
+                                    tmp = tmp.replace(var, f"'{discrete_variable_dict[var]}'")
+                                possible_dest[i] = eval(tmp)
+                            else:
+                                tmp = tmp[1].split('.')
+                                if tmp[0].strip(' ') in agent.controller.modes:
+                                    possible_dest[i] = [tmp[1]]                            
                         else: 
-                            for i, cts_variable in enumerate(agent.controller.variables):
-                                if cts_variable in reset:
+                            for i, cts_variable in enumerate(agent.controller.vars_dict['ego']['cont']):
+                                if "output."+cts_variable in reset:
                                     break 
                             tmp = reset.split('=')
-                            next_init[i] = float(tmp[1])
-                    dest = ','.join(dest)
-                    next_transition = (
-                        agent_id, agent_mode, dest, next_init, 
-                    )
-                    satisfied_guard.append(next_transition)
+                            tmp = tmp[1]
+                            for cts_variable in continuous_variable_dict:
+                                tmp = tmp.replace(cts_variable, str(continuous_variable_dict[cts_variable]))
+                            next_init[i] = eval(tmp)
+                    all_dest = itertools.product(*possible_dest)
+                    for dest in all_dest:
+                        dest = ','.join(dest)
+                        next_transition = (
+                            agent_id, agent_mode, dest, next_init, 
+                        )
+                        satisfied_guard.append(next_transition)
 
-                # guard_can_satisfy = guard_expression.execute_guard(discrete_variable_dict)
-                # if guard_can_satisfy:
-                #     python_guard_string = guard_expression.generate_guard_string_python()
-                #     # Substitute value into dryvr guard string
-                #     for i, variable in enumerate(agent.controller.variables):
-                #         python_guard_string = python_guard_string.replace(variable, str(agent_state[i]))
-                #     # Evaluate the guard strings 
-                #     res = eval(python_guard_string)
-                #     # if result is true, check reset and construct next mode             
-                #     if res:
-                #         next_init = agent_state
-                #         dest = agent_mode.split(',')
-                #         for reset in reset_list:
-                #             # Specify the destination mode
-                #             if "mode" in reset:
-                #                 for i, discrete_variable in enumerate(agent.controller.discrete_variables):
-                #                     if discrete_variable in reset:
-                #                         break
-                #                 tmp = reset.split('=')
-                #                 tmp = tmp[1].split('.')
-                #                 if tmp[0].strip(' ') in agent.controller.modes:
-                #                     dest[i] = tmp[1]
-                                
-                #             else: 
-                #                 for i, cts_variable in enumerate(agent.controller.variables):
-                #                     if cts_variable in reset:
-                #                         break 
-                #                 tmp = reset.split('=')
-                #                 next_init[i] = float(tmp[1])
-                #         dest = ','.join(dest)
-                #         next_transition = (
-                #             agent_id, agent_mode, dest, next_init, 
-                #         )
-                #         satisfied_guard.append(next_transition)
         return satisfied_guard
