@@ -1,5 +1,9 @@
 from enum import Enum,auto
 
+from ourtool.map.lane_map import LaneMap
+
+a = 1+2
+
 class VehicleMode(Enum):
     Normal = auto()
     SwitchLeft = auto()
@@ -18,33 +22,37 @@ class State:
     vehicle_mode:VehicleMode = VehicleMode.Normal
     lane_mode:LaneMode = LaneMode.Lane0
 
-    def __init__(self):
+    def __init__(self,x,y,theta,v,vehicle_mode:VehicleMode, lane_mode:LaneMode):
         self.data = []
 
-def controller(ego:State, other:State, map):
+def controller(ego:State, other:State, lane_map):
     output = ego
     if ego.vehicle_mode == VehicleMode.Normal:
-        if ego.lane_mode == LaneMode.Lane0:
-            if other.x - ego.x > 3 and other.x - ego.x < 5 and map.has_left(ego.lane_mode):
+        if other.x - ego.x > 3 and other.x - ego.x < 5 and ego.lane_mode == other.lane_mode:
+            if lane_map.has_left(ego.lane_mode):
                 output.vehicle_mode = VehicleMode.SwitchLeft
-                output.lane_mode = map.left_lane(ego.lane_mode)
-            if other.x - ego.x > 3 and other.x - ego.x < 5:
+                # output.lane_mode = lane_map.left_lane(ego.lane_mode)
+        if other.x - ego.x > 3 and other.x - ego.x < 5 and ego.lane_mode == other.lane_mode:
+            if lane_map.has_right(ego.lane_mode):
                 output.vehicle_mode = VehicleMode.SwitchRight
+                # output.lane_mode = lane_map.right_lane(ego.lane_mode)
     if ego.vehicle_mode == VehicleMode.SwitchLeft:
-        if ego.lane_mode == LaneMode.Lane0:
-            if ego.x - other.x > 10:
-                output.vehicle_mode = VehicleMode.Normal
+        if ego.y >= 2.5:
+            output.vehicle_mode = VehicleMode.Normal
+            output.lane_mode = lane_map.left_lane(ego.lane_mode)
+            output.y = ego.y-3
     if ego.vehicle_mode == VehicleMode.SwitchRight:
-        if ego.lane_mode == LaneMode.Lane0:
-            if ego.x - other.x > 10:
-                output.vehicle_mode = VehicleMode.Normal
-
+        if ego.y <= -2.5:
+            output.vehicle_mode = VehicleMode.Normal
+            output.lane_mode = lane_map.right_lane(ego.lane_mode)
+            output.y = ego.y+3
+    
     return output
     
 from ourtool.agents.car_agent import CarAgent
 from ourtool.scenario.scenario import Scenario
-from user.sensor import SimpleSensor
-from user.map import SimpleMap
+from user.simple_sensor import SimpleSensor
+from user.simple_map import SimpleMap
 import matplotlib.pyplot as plt 
 import numpy as np
 

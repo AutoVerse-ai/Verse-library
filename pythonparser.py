@@ -28,11 +28,12 @@ Statement super class. Holds the code and mode information for a statement.
 If there is no mode information, mode and modeType are None.
 '''
 class Statement:
-    def __init__(self, code, mode, modeType):
+    def __init__(self, code, mode, modeType, func = None, args = None):
         self.code = code
         self.modeType = modeType
         self.mode = mode
-
+        self.func = func 
+        self.args = args
     
     def print(self):
         print(self.code)
@@ -42,8 +43,9 @@ class Statement:
 Guard class. Subclass of statement.
 '''
 class Guard(Statement):
-    def __init__(self, code, mode, modeType):
-        super().__init__(code, mode, modeType)
+    def __init__(self, code, mode, modeType, inp_ast, func=None, args=None):
+        super().__init__(code, mode, modeType, func, args)
+        self.ast = inp_ast
 
 
     '''
@@ -64,18 +66,27 @@ class Guard(Statement):
                 if ("Mode" in str(node.test.comparators[0].value.id)):
                     modeType = str(node.test.comparators[0].value.id)
                     mode = str(node.test.comparators[0].attr)
-                    return Guard(ast.get_source_segment(code, node.test), mode, modeType)
+                    return Guard(ast.get_source_segment(code, node.test), mode, modeType, node.test)
             else:
-                return Guard(ast.get_source_segment(code, node.test), None, None)
-        else:
-            return Guard(ast.get_source_segment(code, node.test), None, None)
-        
+                return Guard(ast.get_source_segment(code, node.test), None, None, node.test)
+        elif isinstance(node.test, ast.BoolOp):
+            return Guard(ast.get_source_segment(code, node.test), None, None, node.test)
+        elif isinstance(node.test, ast.Call):
+            source_segment = ast.get_source_segment(code, node.test)
+            if "map" in source_segment:
+                func = node.test.func.value.id + '.' + node.test.func.attr 
+                args = []
+                for arg in node.test.args:
+                    args.append(arg.value.id + '.' + arg.attr)
+                return Guard(source_segment, None, None, node.test, func, args)
+
 '''
 Reset class. Subclass of statement.
 '''
 class Reset(Statement):
-    def __init__(self, code, mode, modeType):
+    def __init__(self, code, mode, modeType, inp_ast):
         super().__init__(code, mode, modeType)
+        self.ast = inp_ast
 
     '''
     Returns true if a reset is updating our mode. 
@@ -95,8 +106,8 @@ class Reset(Statement):
             if ("Mode" in str(node.value.value.id)):
                 modeType = str(node.value.value.id)
                 mode = str(node.value.attr)
-            return Reset(ast.get_source_segment(code, node), mode, modeType)
-        return Reset(ast.get_source_segment(code, node), None, None)
+            return Reset(ast.get_source_segment(code, node), mode, modeType, node)
+        return Reset(ast.get_source_segment(code, node), None, None, node)
 
 
 '''

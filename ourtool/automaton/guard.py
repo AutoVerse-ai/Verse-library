@@ -1,6 +1,7 @@
 import re
 from typing import List, Dict
 from ourtool.automaton.hybrid_io_automaton import HybridIoAutomaton
+from pythonparser import Guard
 
 class LogicTreeNode:
     def __init__(self, data, child = [], val = None, mode_guard = None):
@@ -10,11 +11,31 @@ class LogicTreeNode:
         self.mode_guard = mode_guard
 
 class GuardExpression:
-    def __init__(self, root:LogicTreeNode=None, logic_str:str=None):
+    def __init__(self, root:LogicTreeNode=None, logic_str:str=None, guard_list=None):
+        self._func_dict = {}
+
         self.logic_tree_root = root
         self.logic_string = logic_str
+
         if self.logic_tree_root is None and logic_str is not None:
             self.construct_tree_from_str(logic_str)
+        elif guard_list is not None:
+            self.construct_tree_from_list(guard_list)
+
+    def construct_tree_from_list(self, guard_list:List[Guard]):
+        # guard_list = ['('+elem.code+')' for elem in guard_list]   
+        tmp = []
+        func_count = 0
+        for guard in guard_list:
+            if guard.func is not None:
+                func_identifier = f'func{func_count}'
+                self._func_dict[func_identifier] = guard.code
+                tmp.append(f'({func_identifier})')
+            else:
+                tmp.append('('+guard.code+')')
+            
+        guard_str = ' and '.join(tmp)
+        self.construct_tree_from_str(guard_str)
 
     def logic_string_split(self, logic_string):
         # Input:
@@ -90,6 +111,14 @@ class GuardExpression:
                 start_idx = end_idx + 1
         while("" in res) :
             res.remove("")
+
+        # Put back functions
+        for i in range(len(res)):
+            for key in self._func_dict:
+                if key in res[i]:
+                    res[i] = res[i].replace(key, self._func_dict[key])
+            # if res[i] in self._func_dict:
+            #     res[i] = self._func_dict[res[i]]
         return res 
 
     def construct_tree_from_str(self, logic_string:str):
@@ -187,6 +216,63 @@ class GuardExpression:
                 return f"And({data1},{data2})"
             elif root.data == "or":
                 return f"Or({data1},{data2})"
+
+    def evaluate_guard(self, agent, continuous_variable_dict, discrete_variable_dict, lane_map):
+        res = self._evaluate_guard(self.logic_tree_root, agent, continuous_variable_dict, discrete_variable_dict, lane_map)
+        return res
+
+    def _evaluate_guard(self, root, agent, cnts_var_dict, disc_var_dict, lane_map):
+        if root.child == []:
+            expr = root.data
+            # Check if the root is a function
+            if 'map' in expr:
+                tmp = re.split('\(|\)',expr)
+                while "" in tmp:
+                    tmp.remove("")
+                for arg in tmp[1:]:
+                    expr = expr.replace(arg,f'"{disc_var_dict[arg]}"')
+                res = eval(expr)
+                return res
+            # Elif check if the root contain any discrete data
+            else:
+                is_mode_guard = False
+                for key in disc_var_dict:
+                    if key in expr:
+                        is_mode_guard = True
+                        val = disc_var_dict[key]
+                        for mode_name in agent.controller.modes:
+                            if val in agent.controller.modes[mode_name]:
+                                val = mode_name+'.'+val
+                                break
+                        expr = expr.replace(key, val)
+                if is_mode_guard:
+                    # Execute guard, assign type and  and return result
+                    root.mode_guard = True
+                    expr = expr.strip('(')
+                    expr = expr.strip(')')
+                    expr = expr.replace(' ','')
+                    expr = expr.split('==')
+                    res = expr[0] == expr[1]
+                    # res = eval(expr)
+                    root.val = res 
+                    return res
+                # Elif have cnts variable guard handle cnts variable guard
+                else:
+                    for key in cnts_var_dict:
+                       expr = expr.replace(key, str(cnts_var_dict[key]))
+                    res = eval(expr) 
+                    return res
+        # For the two children, call _execute_guard and collect result
+        res1 = self._evaluate_guard(root.child[0],agent,cnts_var_dict, disc_var_dict, lane_map)
+        res2 = self._evaluate_guard(root.child[1],agent,cnts_var_dict, disc_var_dict, lane_map)
+        # Evaluate result for current node
+        if root.data == "and":
+            res = res1 and res2 
+        elif root.data == "or":
+            res = res1 or res2
+        else:
+            raise ValueError(f"Invalid root data {root.data}")
+        return res       
 
     def execute_guard(self, discrete_variable_dict:Dict) -> bool:
         # This function will execute guard, and remove guard related to mode from the tree
