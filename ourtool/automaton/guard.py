@@ -1,7 +1,10 @@
 import re
 from typing import List, Dict
-from ourtool.automaton.hybrid_io_automaton import HybridIoAutomaton
-from pythonparser import Guard
+import pickle
+# from ourtool.automaton.hybrid_io_automaton import HybridIoAutomaton
+# from pythonparser import Guard
+import ast 
+import astunparse
 
 class LogicTreeNode:
     def __init__(self, data, child = [], val = None, mode_guard = None):
@@ -10,6 +13,7 @@ class LogicTreeNode:
         self.val = val
         self.mode_guard = mode_guard
 
+'''
 class GuardExpression:
     def __init__(self, root:LogicTreeNode=None, logic_str:str=None, guard_list=None):
         self._func_dict = {}
@@ -340,8 +344,109 @@ class GuardExpression:
                 root.mode_guard = root.child[0].mode_guard
                 root.child = root.child[0].child
             return True
+'''
+
+class GuardExpressionAst:
+    def __init__(self, guard_list):
+        self.ast_list = []
+        for guard in guard_list:
+            self.ast_list.append(guard.ast)
+
+    def evaluate_guard(self, agent, continuous_variable_dict, discrete_variable_dict, lane_map):
+        res = True
+        for node in self.ast_list:
+            tmp = self._evaluate_guard(node, agent, continuous_variable_dict, discrete_variable_dict, lane_map)
+            res = tmp and res
+            if not res:
+                break
+        return res
+
+    def _evaluate_guard(self, root, agent, cnts_var_dict, disc_var_dict, lane_map):
+        if isinstance(root, ast.Compare):
+            left = self._evaluate_guard(root.left, agent, cnts_var_dict, disc_var_dict, lane_map)
+            right = self._evaluate_guard(root.comparators[0], agent, cnts_var_dict, disc_var_dict, lane_map)
+            if isinstance(root.ops[0], ast.GtE):
+                return left>=right
+            elif isinstance(root.ops[0], ast.Gt):
+                return left>right 
+            elif isinstance(root.ops[0], ast.Lt):
+                return left<right
+            elif isinstance(root.ops[0], ast.LtE):
+                return left<=right
+            elif isinstance(root.ops[0], ast.Eq):
+                return left == right 
+            elif isinstance(root.ops[0], ast.NotEq):
+                return left != right 
+            else:
+                raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
+
+        elif isinstance(root, ast.BoolOp):
+            if isinstance(root.op, ast.And):
+                res = True
+                for val in root.values:
+                    tmp = self._evaluate_guard(val, agent, cnts_var_dict, disc_var_dict, lane_map)
+                    res = res and tmp
+                    if not res:
+                        break
+                return res
+            elif isinstance(root.op, ast.Or):
+                res = False
+                for val in root.values:
+                    tmp = self._evaluate_guard(val, agent, cnts_var_dict, disc_var_dict, lane_map)
+                    res = res or tmp
+                    if res:
+                        break
+                return res
+        elif isinstance(root, ast.BinOp):
+            left = self._evaluate_guard(root.left, agent, cnts_var_dict, disc_var_dict, lane_map)
+            right = self._evaluate_guard(root.right, agent, cnts_var_dict, disc_var_dict, lane_map)
+            if isinstance(root.op, ast.Sub):
+                return left - right
+            elif isinstance(root.op, ast.Add):
+                return left + right
+            else:
+                raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
+        elif isinstance(root, ast.Call):
+            expr = astunparse.unparse(root)
+            # Check if the root is a function
+            if 'map' in expr:
+                # tmp = re.split('\(|\)',expr)
+                # while "" in tmp:
+                #     tmp.remove("")
+                # for arg in tmp[1:]:
+                #     if arg in disc_var_dict:
+                #         expr = expr.replace(arg,f'"{disc_var_dict[arg]}"')
+                # res = eval(expr)
+                for arg in disc_var_dict:
+                    expr = expr.replace(arg, f'"{disc_var_dict[arg]}"')
+                for arg in cnts_var_dict:
+                    expr = expr.replace(arg, str(cnts_var_dict[arg]))    
+                res = eval(expr)
+                return res
+        elif isinstance(root, ast.Attribute):
+            expr = astunparse.unparse(root)
+            expr = expr.strip('\n')
+            if expr in disc_var_dict:
+                val = disc_var_dict[expr]
+                for mode_name in agent.controller.modes:
+                    if val in agent.controller.modes[mode_name]:
+                        val = mode_name+'.'+val
+                        break
+                return val
+            elif expr in cnts_var_dict:
+                val = cnts_var_dict[expr]
+                return val
+            elif root.value.id in agent.controller.modes:
+                return expr
+        elif isinstance(root, ast.Constant):
+            return root.value
+        else:
+            raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
 
 if __name__ == "__main__":
-    tmp = GuardExpression()
-    tmp.construct_tree_from_str('(other_x-ego_x<20) and other_x-ego_x>10 and other_vehicle_lane==ego_vehicle_lane')
+    with open('tmp.pickle','rb') as f:
+        guard_list = pickle.load(f)
+    tmp = GuardExpressionAst(guard_list)
+    # tmp.evaluate_guard()
+    # tmp.construct_tree_from_str('(other_x-ego_x<20) and other_x-ego_x>10 and other_vehicle_lane==ego_vehicle_lane')
     print("stop")

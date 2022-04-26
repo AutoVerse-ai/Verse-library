@@ -6,8 +6,8 @@ from ourtool.map.lane_segment import LaneSegment
 class LaneMap:
     def __init__(self, lane_seg_list:List[LaneSegment] = []):
         self.lane_segment_dict:Dict[str, LaneSegment] = {}
-        self.left_lane_dict:Dict[str, LaneSegment] = {}
-        self.right_lane_dict:Dict[str, LaneSegment] = {}
+        self.left_lane_dict:Dict[str, List[str]] = {}
+        self.right_lane_dict:Dict[str, List[str]] = {}
         for lane_seg in lane_seg_list:
             self.lane_segment_dict[lane_seg.id] = lane_seg
             self.left_lane_dict[lane_seg.id] = []

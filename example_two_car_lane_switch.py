@@ -46,7 +46,6 @@ def controller(ego:State, other:State, lane_map):
     
 from ourtool.agents.car_agent import CarAgent
 from ourtool.scenario.scenario import Scenario
-# from user.simple_sensor import SimpleSensor
 from user.simple_map import SimpleMap, SimpleMap2
 import matplotlib.pyplot as plt 
 import numpy as np
@@ -60,11 +59,10 @@ if __name__ == "__main__":
     car = CarAgent('car2', file_name=input_code_name)
     scenario.add_agent(car)
     scenario.add_map(SimpleMap2())
-    # scenario.set_sensor(SimpleSensor())
     scenario.set_init(
-        [[10,0,0,0.5], [0,-3,0,1.0]],
+        [[0,-3,0,1.0], [10,-3,0,0.5]],
         [
-            (VehicleMode.Normal, LaneMode.Lane1),
+            (VehicleMode.Normal, LaneMode.Lane2),
             (VehicleMode.Normal, LaneMode.Lane2)
         ]
     )

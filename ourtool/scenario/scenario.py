@@ -1,9 +1,10 @@
 from typing import Dict, List
 import copy
 import itertools
+import ast
 
 from ourtool.agents.base_agent import BaseAgent
-from ourtool.automaton.guard import GuardExpression
+from ourtool.automaton.guard import GuardExpressionAst
 from pythonparser import Guard
 from pythonparser import Reset
 from ourtool.simulator.simulator import Simulator
@@ -101,10 +102,11 @@ class Scenario:
                         guard_list.append(item)
                     elif isinstance(item, Reset):
                         reset_list.append(item.code)
-                guard_expression = GuardExpression(guard_list=guard_list)
-                
+                # guard_expression = GuardExpression(guard_list=guard_list)
+                guard_expression = GuardExpressionAst(guard_list)
                 # Map the values to variables using sensor
                 continuous_variable_dict, discrete_variable_dict = self.sensor.sense(self, agent, state_dict, self.map)
+                
                 '''Execute functions related to map to see if the guard can be satisfied'''
                 '''Check guards related to modes to see if the guards can be satisfied'''
                 '''Actually plug in the values to see if the guards can be satisfied'''
