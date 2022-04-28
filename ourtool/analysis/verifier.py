@@ -63,19 +63,18 @@ class Verifier:
                     node.trace[agent_id] = trace.tolist()
                     print("here")
 
-            trace_length = len(list(node.trace.values())[0])/2
-            transitions = []
-            for idx in range(0,trace_length,2):
+            trace_length = int(len(list(node.trace.values())[0])/2)
+            guard_hits = []
+            for idx in range(0,trace_length):
                 # For each trace, check with the guard to see if there's any possible transition
                 # Store all possible transition in a list
                 # A transition is defined by (agent, src_mode, dest_mode, corresponding reset, transit idx)
                 # Here we enforce that only one agent transit at a time
                 all_agent_state = {}
                 for agent_id in node.agent:
-                    all_agent_state[agent_id] = (node.trace[agent_id][idx:idx+2], node.mode[agent_id])
-                possible_transitions = transition_graph.get_all_transitions_set(all_agent_state)
+                    all_agent_state[agent_id] = (node.trace[agent_id][idx*2:idx*2+2], node.mode[agent_id])
+                guards, resets, is_contain = transition_graph.check_guard_hit(all_agent_state)
                 if possible_transitions != []:
-                    any_contained = False 
                     for agent_idx, src_mode, dest_mode, next_init, contained in possible_transitions:
                         transitions.append((agent_idx, src_mode, dest_mode, next_init, idx))
                         any_contained = any_contained or contained

@@ -1,9 +1,12 @@
+import enum
 import re
 from typing import List, Dict
 import pickle
 # from ourtool.automaton.hybrid_io_automaton import HybridIoAutomaton
 # from pythonparser import Guard
-import ast 
+import ast
+
+from pkg_resources import compatible_platforms 
 import astunparse
 
 class LogicTreeNode:
@@ -351,6 +354,113 @@ class GuardExpressionAst:
         self.ast_list = []
         for guard in guard_list:
             self.ast_list.append(guard.ast)
+
+    def evaluate_guard_cont(self, agent, continuous_variable_dict, lane_map):
+        res = True 
+        is_contained = True
+        # TODO 
+
+        return res, is_contained
+
+    # def _evaluate_guard_cont(self, root, agent, cont_var_dict, lane_map):
+    #     return False
+
+    def evaluate_guard_disc(self, agent, discrete_variable_dict, lane_map):
+        """
+        Evaluate guard that involves only discrete variables. 
+        """
+        res = True
+        for i, node in enumerate(self.ast_list):
+            tmp, self.ast_list[i] = self._evaluate_guard_disc(node, agent, discrete_variable_dict, lane_map)
+            res = res and tmp 
+        return res
+            
+    def _evaluate_guard_disc(self, root, agent, disc_var_dict, lane_map):
+        if isinstance(root, ast.Compare):
+            expr = astunparse.unparse(root)
+            if any([var in expr for var in disc_var_dict]):
+                left, root.left = self._evaluate_guard_disc(root.left, agent, disc_var_dict, lane_map)
+                right, root.comparators[0] = self._evaluate_guard_disc(root.comparators[0], agent, disc_var_dict, lane_map)
+                if isinstance(root.ops[0], ast.GtE):
+                    res = left>=right
+                elif isinstance(root.ops[0], ast.Gt):
+                    res = left>right 
+                elif isinstance(root.ops[0], ast.Lt):
+                    res = left<right
+                elif isinstance(root.ops[0], ast.LtE):
+                    res = left<=right
+                elif isinstance(root.ops[0], ast.Eq):
+                    res = left == right 
+                elif isinstance(root.ops[0], ast.NotEq):
+                    res = left != right 
+                else:
+                    raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
+                if res:
+                    root = ast.parse('True').body[0].value
+                else:
+                    root = ast.parse('False').body[0].value    
+                return res, root
+            else:
+                return True, root
+        elif isinstance(root, ast.BoolOp):
+            if isinstance(root.op, ast.And):
+                res = True
+                for i,val in enumerate(root.values):
+                    tmp,root.values[i] = self._evaluate_guard_disc(val, agent, disc_var_dict, lane_map)
+                    res = res and tmp
+                    if not res:
+                        break
+                return res, root
+            elif isinstance(root.op, ast.Or):
+                res = False
+                for val in root.values:
+                    tmp,val = self._evaluate_guard_disc(val, agent, disc_var_dict, lane_map)
+                    res = res or tmp
+                    if res:
+                        break
+                return res, root     
+        elif isinstance(root, ast.BinOp):
+            return True, root
+        elif isinstance(root, ast.Call):
+            expr = astunparse.unparse(root)
+            # Check if the root is a function
+            if any([var in expr for var in disc_var_dict]):
+                # tmp = re.split('\(|\)',expr)
+                # while "" in tmp:
+                #     tmp.remove("")
+                # for arg in tmp[1:]:
+                #     if arg in disc_var_dict:
+                #         expr = expr.replace(arg,f'"{disc_var_dict[arg]}"')
+                # res = eval(expr)
+                for arg in disc_var_dict:
+                    expr = expr.replace(arg, f'"{disc_var_dict[arg]}"')
+                res = eval(expr)
+                if isinstance(res, bool):
+                    if res:
+                        root = ast.parse('True').body[0].value
+                    else:
+                        root = ast.parse('False').body[0].value    
+                return res, root
+            else:
+                return True, root
+        elif isinstance(root, ast.Attribute):
+            expr = astunparse.unparse(root)
+            expr = expr.strip('\n')
+            if expr in disc_var_dict:
+                val = disc_var_dict[expr]
+                for mode_name in agent.controller.modes:
+                    if val in agent.controller.modes[mode_name]:
+                        val = mode_name+'.'+val
+                        break
+                return val, root
+            elif root.value.id in agent.controller.modes:
+                return expr, root
+            else:
+                return True, root
+        elif isinstance(root, ast.Constant):
+            return root.value, root
+        else:
+            raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
 
     def evaluate_guard(self, agent, continuous_variable_dict, discrete_variable_dict, lane_map):
         res = True

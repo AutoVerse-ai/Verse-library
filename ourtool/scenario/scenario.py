@@ -4,7 +4,6 @@ import itertools
 import ast
 
 import numpy as np
-from rsa import verify
 
 from ourtool.agents.base_agent import BaseAgent
 from ourtool.automaton.guard import GuardExpressionAst
@@ -18,44 +17,84 @@ class FakeSensor:
     def sense(self, scenario, agent, state_dict, lane_map):
         cnts = {}
         disc = {}
-        if agent.id == 'car1':
-            state = state_dict['car1'][0]
-            mode = state_dict['car1'][1].split(',')
-            cnts['ego.x'] = state[1]
-            cnts['ego.y'] = state[2]
-            cnts['ego.theta'] = state[3]
-            cnts['ego.v'] = state[4]
-            disc['ego.vehicle_mode'] = mode[0]
-            disc['ego.lane_mode'] = mode[1]
+        tmp = np.array(state_dict['car1'][0])
+        if tmp.ndim < 2:
+            if agent.id == 'car1':
+                state = state_dict['car1'][0]
+                mode = state_dict['car1'][1].split(',')
+                cnts['ego.x'] = state[1]
+                cnts['ego.y'] = state[2]
+                cnts['ego.theta'] = state[3]
+                cnts['ego.v'] = state[4]
+                disc['ego.vehicle_mode'] = mode[0]
+                disc['ego.lane_mode'] = mode[1]
 
-            state = state_dict['car2'][0]
-            mode = state_dict['car2'][1].split(',')
-            cnts['other.x'] = state[1]
-            cnts['other.y'] = state[2]
-            cnts['other.theta'] = state[3]
-            cnts['other.v'] = state[4]
-            disc['other.vehicle_mode'] = mode[0]
-            disc['other.lane_mode'] = mode[1]
-        elif agent.id == 'car2':
-            state = state_dict['car2'][0]
-            mode = state_dict['car2'][1].split(',')
-            cnts['ego.x'] = state[1]
-            cnts['ego.y'] = state[2]
-            cnts['ego.theta'] = state[3]
-            cnts['ego.v'] = state[4]
-            disc['ego.vehicle_mode'] = mode[0]
-            disc['ego.lane_mode'] = mode[1]
+                state = state_dict['car2'][0]
+                mode = state_dict['car2'][1].split(',')
+                cnts['other.x'] = state[1]
+                cnts['other.y'] = state[2]
+                cnts['other.theta'] = state[3]
+                cnts['other.v'] = state[4]
+                disc['other.vehicle_mode'] = mode[0]
+                disc['other.lane_mode'] = mode[1]
+            elif agent.id == 'car2':
+                state = state_dict['car2'][0]
+                mode = state_dict['car2'][1].split(',')
+                cnts['ego.x'] = state[1]
+                cnts['ego.y'] = state[2]
+                cnts['ego.theta'] = state[3]
+                cnts['ego.v'] = state[4]
+                disc['ego.vehicle_mode'] = mode[0]
+                disc['ego.lane_mode'] = mode[1]
 
-            state = state_dict['car1'][0]
-            mode = state_dict['car1'][1].split(',')
-            cnts['other.x'] = state[1]
-            cnts['other.y'] = state[2]
-            cnts['other.theta'] = state[3]
-            cnts['other.v'] = state[4]
-            disc['other.vehicle_mode'] = mode[0]
-            disc['other.lane_mode'] = mode[1]
-        return cnts, disc
+                state = state_dict['car1'][0]
+                mode = state_dict['car1'][1].split(',')
+                cnts['other.x'] = state[1]
+                cnts['other.y'] = state[2]
+                cnts['other.theta'] = state[3]
+                cnts['other.v'] = state[4]
+                disc['other.vehicle_mode'] = mode[0]
+                disc['other.lane_mode'] = mode[1]
+            return cnts, disc
+        else:
+            if agent.id == 'car1':
+                state = state_dict['car1'][0]
+                mode = state_dict['car1'][1].split(',')
+                cnts['ego.x'] = [state[0][1],state[1][1]]
+                cnts['ego.y'] = [state[0][2],state[1][2]]
+                cnts['ego.theta'] = [state[0][3],state[1][3]]
+                cnts['ego.v'] = [state[0][4],state[1][4]]
+                disc['ego.vehicle_mode'] = mode[0]
+                disc['ego.lane_mode'] = mode[1]
 
+                state = state_dict['car2'][0]
+                mode = state_dict['car2'][1].split(',')
+                cnts['other.x'] = [state[0][1],state[1][1]]
+                cnts['other.y'] = [state[0][2],state[1][2]]
+                cnts['other.theta'] = [state[0][3],state[1][3]]
+                cnts['other.v'] = [state[0][4],state[1][4]]
+                disc['other.vehicle_mode'] = mode[0]
+                disc['other.lane_mode'] = mode[1]
+            elif agent.id == 'car2':
+                state = state_dict['car2'][0]
+                mode = state_dict['car2'][1].split(',')
+                cnts['ego.x'] = [state[0][1],state[1][1]]
+                cnts['ego.y'] = [state[0][2],state[1][2]]
+                cnts['ego.theta'] = [state[0][3],state[1][3]]
+                cnts['ego.v'] = [state[0][4],state[1][4]]
+                disc['ego.vehicle_mode'] = mode[0]
+                disc['ego.lane_mode'] = mode[1]
+
+                state = state_dict['car1'][0]
+                mode = state_dict['car1'][1].split(',')
+                cnts['other.x'] = [state[0][1],state[1][1]]
+                cnts['other.y'] = [state[0][2],state[1][2]]
+                cnts['other.theta'] = [state[0][3],state[1][3]]
+                cnts['other.v'] = [state[0][4],state[1][4]]
+                disc['other.vehicle_mode'] = mode[0]
+                disc['other.lane_mode'] = mode[1]
+            return cnts, disc
+            
 class Scenario:
     def __init__(self):
         self.agent_dict = {}
@@ -102,6 +141,43 @@ class Scenario:
             init_mode_list.append(self.init_mode_dict[agent_id])
             agent_list.append(self.agent_dict[agent_id])
         return self.verifier.compute_full_reachtube(init_list, init_mode_list, agent_list, self, time_horizon, self.map)
+
+    def check_guard_hit(self, state_dict):
+        lane_map = self.map 
+        guard_hits = []
+        is_conatined = False        # TODO: Handle this
+        for agent_id in state_dict:
+            agent:BaseAgent = self.agent_dict[agent_id]
+            agent_state, agent_mode = state_dict[agent_id]
+        
+            t = agent_state[0]
+            agent_state = agent_state[1:]
+            paths = agent.controller.getNextModes(agent_mode)
+            for path in paths:
+                # Construct the guard expression
+                guard_list = []
+                reset_list = []
+                for item in path:
+                    if isinstance(item, Guard):
+                        guard_list.append(item)
+                    elif isinstance(item, Reset):
+                        reset_list.append(item)
+                # guard_expression = GuardExpression(guard_list=guard_list)
+                guard_expression = GuardExpressionAst(guard_list)
+                # Map the values to variables using sensor
+                continuous_variable_dict, discrete_variable_dict = self.sensor.sense(self, agent, state_dict, self.map)
+                
+                '''Execute functions related to map to see if the guard can be satisfied'''
+                '''Check guards related to modes to see if the guards can be satisfied'''
+                '''Actually plug in the values to see if the guards can be satisfied'''
+                # Check if the guard can be satisfied
+                guard_can_satisfied = guard_expression.evaluate_guard_disc(agent, discrete_variable_dict, self.map)
+                if not guard_can_satisfied:
+                    continue
+                guard_satisfied, is_contained = guard_expression.evaluate_guard_cont(agent, continuous_variable_dict, self.map)
+                if guard_satisfied:
+                    guard_hits.append(agent_id, guard_list, reset_list)
+        return guard_hits, is_conatined
 
     def get_all_transition(self, state_dict):
         lane_map = self.map
