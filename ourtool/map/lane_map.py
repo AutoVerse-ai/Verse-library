@@ -1,5 +1,6 @@
 from typing import Dict, List
 import copy
+from enum import Enum,auto
 
 from ourtool.map.lane_segment import LaneSegment
 
@@ -20,6 +21,8 @@ class LaneMap:
             self.right_lane_dict[lane_seg.id] = []
 
     def has_left(self, lane_idx):
+        if isinstance(lane_idx, Enum):
+            lane_idx = lane_idx.name
         if lane_idx not in self.lane_segment_dict:
             Warning(f'lane {lane_idx} not available')
             return False
@@ -28,12 +31,16 @@ class LaneMap:
 
     def left_lane(self, lane_idx):
         assert all((elem in self.left_lane_dict) for elem in self.lane_segment_dict)
+        if isinstance(lane_idx, Enum):
+            lane_idx = lane_idx.name
         if lane_idx not in self.left_lane_dict:
             raise ValueError(f"lane_idx {lane_idx} not in lane_segment_dict")
         left_lane_list = self.left_lane_dict[lane_idx]
         return copy.deepcopy(left_lane_list)
         
     def has_right(self, lane_idx):
+        if isinstance(lane_idx, Enum):
+            lane_idx = lane_idx.name
         if lane_idx not in self.lane_segment_dict:
             Warning(f'lane {lane_idx} not available')
             return False
@@ -42,10 +49,23 @@ class LaneMap:
 
     def right_lane(self, lane_idx):
         assert all((elem in self.right_lane_dict) for elem in self.lane_segment_dict)
+        if isinstance(lane_idx, Enum):
+            lane_idx = lane_idx.name
         if lane_idx not in self.right_lane_dict:
             raise ValueError(f"lane_idx {lane_idx} not in lane_segment_dict")
         right_lane_list = self.right_lane_dict[lane_idx]
         return copy.deepcopy(right_lane_list)
         
     def lane_geometry(self, lane_idx):
+        if isinstance(lane_idx, Enum):
+            lane_idx = lane_idx.name
         return self.lane_segment_dict[lane_idx].get_geometry()
+
+    def get_longitudinal_error(self, lane_idx, agent_state):
+        raise NotImplementedError
+    
+    def get_lateral_error(self, lane_idx, agent_state):
+        raise NotImplementedError
+
+    def get_altitude_error(self, lane_idx, agent_state):
+        raise NotImplementedError

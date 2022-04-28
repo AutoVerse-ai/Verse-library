@@ -3,11 +3,15 @@ import copy
 import itertools
 import ast
 
+import numpy as np
+from rsa import verify
+
 from ourtool.agents.base_agent import BaseAgent
 from ourtool.automaton.guard import GuardExpressionAst
 from pythonparser import Guard
 from pythonparser import Reset
-from ourtool.simulator.simulator import Simulator
+from ourtool.analysis.simulator import Simulator
+from ourtool.analysis.verifier import Verifier
 from ourtool.map.lane_map import LaneMap
 
 class FakeSensor:
@@ -56,6 +60,7 @@ class Scenario:
     def __init__(self):
         self.agent_dict = {}
         self.simulator = Simulator()
+        self.verifier = Verifier()
         self.init_dict = {}
         self.init_mode_dict = {}
         self.map = None
@@ -83,6 +88,20 @@ class Scenario:
             init_mode_list.append(self.init_mode_dict[agent_id])
             agent_list.append(self.agent_dict[agent_id])
         return self.simulator.simulate(init_list, init_mode_list, agent_list, self, time_horizon, self.map)
+
+    def verify(self, time_horizon):
+        init_list = []
+        init_mode_list = []
+        agent_list = []
+        for agent_id in self.agent_dict:
+            init = self.init_dict[agent_id]
+            tmp = np.array(init)
+            if tmp.ndim < 2:
+                init = [init, init]
+            init_list.append(init)
+            init_mode_list.append(self.init_mode_dict[agent_id])
+            agent_list.append(self.agent_dict[agent_id])
+        return self.verifier.compute_full_reachtube(init_list, init_mode_list, agent_list, self, time_horizon, self.map)
 
     def get_all_transition(self, state_dict):
         lane_map = self.map

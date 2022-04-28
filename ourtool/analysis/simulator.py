@@ -1,31 +1,10 @@
 from typing import List, Dict
-from ourtool.agents.base_agent import BaseAgent
-import numpy as np
 import copy
 
-class SimulationTreeNode:
-    """SimulationTreeNode class
-    A SimulationTreeNode stores the continous execution of the system without transition happening"""
-    trace: Dict
-    """The trace for each agent. 
-    The key of the dict is the agent id and the value of the dict is simulated traces for each agent"""
-    
-    init: Dict 
-    def __init__(
-        self,
-        trace={},
-        init={},
-        mode={},
-        agent={},
-        child=[],
-        start_time = 0
-    ):
-        self.trace:Dict = trace
-        self.init:Dict = init
-        self.mode:Dict = mode
-        self.agent:Dict = agent
-        self.child:List[SimulationTreeNode] = child
-        self.start_time:float = start_time
+import numpy as np
+
+from ourtool.agents.base_agent import BaseAgent
+from ourtool.analysis.analysis_tree_node import AnalysisTreeNode
 
 class Simulator:
     def __init__(self):
@@ -33,7 +12,7 @@ class Simulator:
 
     def simulate(self, init_list, init_mode_list, agent_list:List[BaseAgent], transition_graph, time_horizon, lane_map):
         # Setup the root of the simulation tree
-        root = SimulationTreeNode()
+        root = AnalysisTreeNode()
         for i, agent in enumerate(agent_list):
             root.init[agent.id] = init_list[i]
             init_mode = init_mode_list[i][0].name
@@ -46,7 +25,7 @@ class Simulator:
         simulation_queue.append(root)
         # Perform BFS through the simulation tree to loop through all possible transitions
         while simulation_queue != []:
-            node:SimulationTreeNode = simulation_queue.pop(0)
+            node:AnalysisTreeNode = simulation_queue.pop(0)
             print(node.mode)
             remain_time = time_horizon - node.start_time
             if remain_time <= 0:
@@ -88,7 +67,7 @@ class Simulator:
             # copy the traces that are not under transition
             for transition in transitions:
                 transit_agent_idx, src_mode, dest_mode, next_init, idx = transition
-                # next_node = SimulationTreeNode(trace = {},init={},mode={},agent={}, child = [], start_time = 0)
+                # next_node = AnalysisTreeNode(trace = {},init={},mode={},agent={}, child = [], start_time = 0)
                 next_node_mode = copy.deepcopy(node.mode) 
                 next_node_mode[transit_agent_idx] = dest_mode 
                 next_node_agent = node.agent 
@@ -101,7 +80,7 @@ class Simulator:
                     else:
                         next_node_trace[agent_idx] = truncated_trace[agent_idx]
                 
-                tmp = SimulationTreeNode(
+                tmp = AnalysisTreeNode(
                     trace = next_node_trace,
                     init = next_node_init,
                     mode = next_node_mode,
@@ -112,7 +91,7 @@ class Simulator:
                 node.child.append(tmp)
                 simulation_queue.append(tmp)
                 # Put the node in the child of current node. Put the new node in the queue
-            #     node.child.append(SimulationTreeNode(
+            #     node.child.append(AnalysisTreeNode(
             #         trace = next_node_trace,
             #         init = next_node_init,
             #         mode = next_node_mode,
