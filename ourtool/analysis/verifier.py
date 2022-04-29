@@ -61,24 +61,46 @@ class Verifier:
                     trace = np.array(cur_bloated_tube)
                     trace[:,0] += node.start_time
                     node.trace[agent_id] = trace.tolist()
-                    print("here")
+                    # print("here")
+            
+            # Check safety conditions here
 
-            trace_length = int(len(list(node.trace.values())[0])/2)
-            guard_hits = []
-            for idx in range(0,trace_length):
-                # For each trace, check with the guard to see if there's any possible transition
-                # Store all possible transition in a list
-                # A transition is defined by (agent, src_mode, dest_mode, corresponding reset, transit idx)
-                # Here we enforce that only one agent transit at a time
-                all_agent_state = {}
-                for agent_id in node.agent:
-                    all_agent_state[agent_id] = (node.trace[agent_id][idx*2:idx*2+2], node.mode[agent_id])
-                guards, resets, is_contain = transition_graph.check_guard_hit(all_agent_state)
-                if possible_transitions != []:
-                    for agent_idx, src_mode, dest_mode, next_init, contained in possible_transitions:
-                        transitions.append((agent_idx, src_mode, dest_mode, next_init, idx))
-                        any_contained = any_contained or contained
-                    if any_contained:
-                        break
-        pass
+            # Get all possible transitions to next mode
+            all_possible_transitions = transition_graph.get_all_transition_set(node)
+            max_end_idx = 0
+            for transition in all_possible_transitions:
+                transit_agent_idx, src_mode, dest_mode, next_init, idx = transition 
+                start_idx, end_idx = idx
+ 
+                truncated_trace = {}
+                for agent_idx in node.agent:
+                    truncated_trace[agent_idx] = node.trace[agent_idx][start_idx*2:]
+                if end_idx > max_end_idx:
+                    max_end_idx = end_idx
+                next_node_mode = copy.deepcopy(node.mode) 
+                next_node_mode[transit_agent_idx] = dest_mode 
+                next_node_agent = node.agent 
+                next_node_start_time = list(truncated_trace.values())[0][0][0]
+                next_node_init = {}
+                next_node_trace = {}
+                for agent_idx in next_node_agent:
+                    if agent_idx == transit_agent_idx:
+                        next_node_init[agent_idx] = next_init 
+                    else:
+                        next_node_trace[agent_idx] = truncated_trace[agent_idx]
+                
+                tmp = AnalysisTreeNode(
+                    trace = next_node_trace,
+                    init = next_node_init,
+                    mode = next_node_mode,
+                    agent = next_node_agent,
+                    child = [],
+                    start_time = next_node_start_time
+                )
+                node.child.append(tmp)
+                verification_queue.append(tmp)
 
+            """Truncate trace of current node based on max_end_idx"""
+            for agent_idx in node.agent:
+                node.trace[agent_idx] = node.trace[agent_idx][:(max_end_idx+1)*2]
+        

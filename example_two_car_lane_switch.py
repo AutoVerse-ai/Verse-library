@@ -71,6 +71,7 @@ if __name__ == "__main__":
         ]
     )
     # simulator = Simulator()
+    # traces = scenario.simulate(40)
     traces = scenario.verify(40)
 
     plt.plot([0, 40], [3, 3], 'g')
