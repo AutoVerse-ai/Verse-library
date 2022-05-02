@@ -220,6 +220,11 @@ class GuardExpressionAst:
                 expr = astunparse.unparse(node)
                 expr = expr.strip('\n')
                 return expr
+        elif isinstance(node, ast.UnaryOp):
+            # If is UnaryOp, 
+            value = self._generate_z3_expression_node(node.operand)
+            if isinstance(node.op, ast.USub):
+                return -value
         else:
             # For other cases, we can return the expression directly
             expr = astunparse.unparse(node)
@@ -327,6 +332,12 @@ class GuardExpressionAst:
                 return True, root
         elif isinstance(root, ast.Constant):
             return root.value, root
+        elif isinstance(root, ast.UnaryOp):
+            if isinstance(root.op, ast.USub):
+                res, root.operand = self._evaluate_guard_disc(root.operand, agent, disc_var_dict, lane_map)
+            else:
+                raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
+            return True, root
         else:
             raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
 

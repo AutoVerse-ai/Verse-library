@@ -69,7 +69,7 @@ if __name__ == "__main__":
     scenario.set_init(
         [
             [[10, 0, 0, 0.5],[10, 0, 0, 0.5]], 
-            [[0, -0.2, 0, 1.0],[0, 0.2, 0, 1.0]],
+            [[-0.5, -0.2, 0, 1.0],[0.5, 0.2, 0, 1.0]],
         ],
         [
             (VehicleMode.Normal, LaneMode.Lane1),
@@ -81,7 +81,7 @@ if __name__ == "__main__":
     traces = scenario.verify(40)
 
     fig = plt.figure()
-    fig = plot_tree(traces, 'car1', 1, [2], 'b', fig)
+    # fig = plot_tree(traces, 'car1', 1, [2], 'b', fig)
     fig = plot_tree(traces, 'car2', 1, [2], 'r', fig)
 
     plt.show()
