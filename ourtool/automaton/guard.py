@@ -5,6 +5,7 @@ import pickle
 # from ourtool.automaton.hybrid_io_automaton import HybridIoAutomaton
 # from pythonparser import Guard
 import ast
+import copy
 
 from z3 import *
 import sympy
@@ -22,7 +23,7 @@ class GuardExpressionAst:
     def __init__(self, guard_list):
         self.ast_list = []
         for guard in guard_list:
-            self.ast_list.append(guard.ast)
+            self.ast_list.append(copy.deepcopy(guard.ast))
         self.cont_variables = {}
         self.varDict = {'t':Real('t')}
 
@@ -241,6 +242,8 @@ class GuardExpressionAst:
             if any([var in expr for var in disc_var_dict]):
                 left, root.left = self._evaluate_guard_disc(root.left, agent, disc_var_dict, lane_map)
                 right, root.comparators[0] = self._evaluate_guard_disc(root.comparators[0], agent, disc_var_dict, lane_map)
+                if isinstance(left, bool) or isinstance(right, bool):
+                    return True, root
                 if isinstance(root.ops[0], ast.GtE):
                     res = left>=right
                 elif isinstance(root.ops[0], ast.Gt):
@@ -280,6 +283,9 @@ class GuardExpressionAst:
                         break
                 return res, root     
         elif isinstance(root, ast.BinOp):
+            # Check left and right in the binop and replace all attributes involving discrete variables
+            left, root.left = self._evaluate_guard_disc(root.left, agent, disc_var_dict, lane_map)
+            right, root.right = self._evaluate_guard_disc(root.right, agent, disc_var_dict, lane_map)
             return True, root
         elif isinstance(root, ast.Call):
             expr = astunparse.unparse(root)
@@ -300,6 +306,8 @@ class GuardExpressionAst:
                         root = ast.parse('True').body[0].value
                     else:
                         root = ast.parse('False').body[0].value    
+                else:
+                    root = ast.parse(str(res)).body[0].value
                 return res, root
             else:
                 return True, root

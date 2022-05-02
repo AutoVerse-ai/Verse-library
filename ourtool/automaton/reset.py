@@ -1,3 +1,5 @@
+import itertools
+
 import numpy as np 
 
 class ResetExpression:
@@ -74,5 +76,9 @@ class ResetExpression:
                     tmp = tmp[1].split('.')
                     if tmp[0].strip(' ') in agent.controller.modes:
                         possible_dest[i] = [tmp[1]]                            
-            
-        return possible_dest
+        all_dest = itertools.product(*possible_dest)
+        res = []
+        for dest in all_dest:
+            dest = ','.join(dest)
+            res.append(dest)
+        return res

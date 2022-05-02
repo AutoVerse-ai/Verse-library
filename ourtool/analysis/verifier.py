@@ -40,6 +40,7 @@ class Verifier:
             if remain_time <= 0:
                 continue 
             # For reachtubes not already computed
+            # TODO: can add parallalization for this loop
             for agent_id in node.agent:
                 if agent_id not in node.trace:
                     # Compute the trace starting from initial condition
@@ -101,6 +102,8 @@ class Verifier:
                 verification_queue.append(tmp)
 
             """Truncate trace of current node based on max_end_idx"""
-            for agent_idx in node.agent:
-                node.trace[agent_idx] = node.trace[agent_idx][:(max_end_idx+1)*2]
-        
+            """Only truncate when there's transitions"""
+            if all_possible_transitions:
+                for agent_idx in node.agent:
+                    node.trace[agent_idx] = node.trace[agent_idx][:(max_end_idx+1)*2]
+        return root

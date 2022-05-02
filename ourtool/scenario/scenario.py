@@ -146,7 +146,7 @@ class Scenario:
     def check_guard_hit(self, state_dict):
         lane_map = self.map 
         guard_hits = []
-        is_conatined = False        # TODO: Handle this
+        is_contained = False        # TODO: Handle this
         for agent_id in state_dict:
             agent:BaseAgent = self.agent_dict[agent_id]
             agent_state, agent_mode = state_dict[agent_id]
@@ -185,6 +185,8 @@ class Scenario:
         trace_length = int(len(list(node.trace.values())[0])/2)
         guard_hits = []
         guard_hit_bool = False
+
+        # TODO: can add parallalization for this loop
         for idx in range(0,trace_length):
             # For each trace, check with the guard to see if there's any possible transition
             # Store all possible transition in a list
@@ -206,26 +208,29 @@ class Scenario:
         reset_idx_dict = {}
         for hits, all_agent_state, hit_idx in guard_hits:
             for agent_id, guard_list, reset_list in hits:
-                dest,reset_rect = self.apply_reset(node.agent[agent_id], reset_list, all_agent_state)
+                dest_list,reset_rect = self.apply_reset(node.agent[agent_id], reset_list, all_agent_state)
                 if agent_id not in reset_dict:
                     reset_dict[agent_id] = {}
                     reset_idx_dict[agent_id] = {}
-                if dest not in reset_dict[agent_id]:
-                    reset_dict[agent_id][dest] = []
-                    reset_idx_dict[agent_id][dest] = []
-                reset_dict[agent_id][dest].append(reset_rect)
-                reset_idx_dict[agent_id][dest].append(hit_idx)
-        
+                for dest in dest_list:
+                    if dest not in reset_dict[agent_id]:
+                        reset_dict[agent_id][dest] = []
+                        reset_idx_dict[agent_id][dest] = []
+                    reset_dict[agent_id][dest].append(reset_rect)
+                    reset_idx_dict[agent_id][dest].append(hit_idx)
+            
         # Combine reset rects and construct transitions
         for agent in reset_dict:
             for dest in reset_dict[agent]:
                 combined_rect = None 
                 for rect in reset_dict[agent][dest]:
+                    rect = np.array(rect)
                     if combined_rect is None:
                         combined_rect = rect 
                     else:
                         combined_rect[0,:] = np.minimum(combined_rect[0,:], rect[0,:])
                         combined_rect[1,:] = np.maximum(combined_rect[1,:], rect[1,:])
+                combined_rect = combined_rect.tolist()
                 min_idx = min(reset_idx_dict[agent][dest])
                 max_idx = max(reset_idx_dict[agent][dest])
                 transition = (agent, node.mode[agent], dest, combined_rect, (min_idx, max_idx))

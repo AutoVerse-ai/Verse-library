@@ -1,8 +1,3 @@
-import matplotlib.pyplot as plt
-from ourtool.agents.car_agent import CarAgent
-import numpy as np
-from user.simple_map import SimpleMap, SimpleMap2
-from ourtool.scenario.scenario import Scenario
 from enum import Enum, auto
 
 from ourtool.map.lane_map import LaneMap
@@ -43,16 +38,24 @@ def controller(ego: State, other: State, lane_map):
             if lane_map.has_right(ego.lane_mode):
                 output.vehicle_mode = VehicleMode.SwitchRight
     if ego.vehicle_mode == VehicleMode.SwitchLeft:
-        if ego.y >= lane_map.lane_geometry(ego.lane_mode)-2.5:
+        if  lane_map.lane_geometry(ego.lane_mode) - ego.y <= -2.5:
             output.vehicle_mode = VehicleMode.Normal
             output.lane_mode = lane_map.left_lane(ego.lane_mode)
     if ego.vehicle_mode == VehicleMode.SwitchRight:
-        if ego.y <= lane_map.lane_geometry(ego.lane_mode)+2.5:
+        if lane_map.lane_geometry(ego.lane_mode)-ego.y >= 2.5:
             output.vehicle_mode = VehicleMode.Normal
             output.lane_mode = lane_map.right_lane(ego.lane_mode)
 
     return output
 
+
+from ourtool.agents.car_agent import CarAgent
+from ourtool.scenario.scenario import Scenario
+from user.simple_map import SimpleMap, SimpleMap2
+from plotter.plotter2D import plot_tree
+
+import matplotlib.pyplot as plt
+import numpy as np
 
 if __name__ == "__main__":
     input_code_name = 'example_two_car_lane_switch.py'
@@ -64,33 +67,42 @@ if __name__ == "__main__":
     scenario.add_agent(car)
     scenario.add_map(SimpleMap2())
     scenario.set_init(
-        [[10, 3, 0, 0.5], [0, 3, 0, 1.0]],
         [
-            (VehicleMode.Normal, LaneMode.Lane0),
-            (VehicleMode.Normal, LaneMode.Lane0)
+            [[10, 0, 0, 0.5],[10, 0, 0, 0.5]], 
+            [[0, -0.2, 0, 1.0],[0, 0.2, 0, 1.0]],
+        ],
+        [
+            (VehicleMode.Normal, LaneMode.Lane1),
+            (VehicleMode.Normal, LaneMode.Lane1)
         ]
     )
     # simulator = Simulator()
     # traces = scenario.simulate(40)
     traces = scenario.verify(40)
 
-    plt.plot([0, 40], [3, 3], 'g')
-    plt.plot([0, 40], [0, 0], 'g')
-    plt.plot([0, 40], [-3, -3], 'g')
+    fig = plt.figure()
+    fig = plot_tree(traces, 'car1', 1, [2], 'b', fig)
+    fig = plot_tree(traces, 'car2', 1, [2], 'r', fig)
 
-    queue = [traces]
-    while queue != []:
-        node = queue.pop(0)
-        traces = node.trace
-        # for agent_id in traces:
-        agent_id = 'car2'
-        trace = np.array(traces[agent_id])
-        plt.plot(trace[:, 1], trace[:, 2], 'r')
-
-        agent_id = 'car1'
-        trace = np.array(traces[agent_id])
-        plt.plot(trace[:, 1], trace[:, 2], 'b')
-
-        # if node.child != []:
-        queue += node.child
     plt.show()
+
+    # plt.plot([0, 40], [3, 3], 'g')
+    # plt.plot([0, 40], [0, 0], 'g')
+    # plt.plot([0, 40], [-3, -3], 'g')
+
+    # queue = [traces]
+    # while queue != []:
+    #     node = queue.pop(0)
+    #     traces = node.trace
+    #     # for agent_id in traces:
+    #     agent_id = 'car2'
+    #     trace = np.array(traces[agent_id])
+    #     plt.plot(trace[:, 1], trace[:, 2], 'r')
+
+    #     agent_id = 'car1'
+    #     trace = np.array(traces[agent_id])
+    #     plt.plot(trace[:, 1], trace[:, 2], 'b')
+
+    #     # if node.child != []:
+    #     queue += node.child
+    # plt.show()
