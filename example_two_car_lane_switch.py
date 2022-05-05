@@ -31,6 +31,10 @@ class State:
 def controller(ego: State, other: State, lane_map):
     output = ego
     if ego.vehicle_mode == VehicleMode.Normal:
+        # A simple example to demonstrate how our tool can handle change in controller
+        # if ego.x > 30 and ego.lane_mode == LaneMode.Lane0:
+        #     output.vehicle_mode = VehicleMode.SwitchRight
+        
         if other.x - ego.x > 3 and other.x - ego.x < 5 and ego.lane_mode == other.lane_mode:
             if lane_map.has_left(ego.lane_mode):
                 output.vehicle_mode = VehicleMode.SwitchLeft
@@ -69,7 +73,7 @@ if __name__ == "__main__":
     scenario.set_init(
         [
             [[10, 0, 0, 0.5],[10, 0, 0, 0.5]], 
-            [[-0.5, -0.2, 0, 1.0],[0.5, 0.2, 0, 1.0]],
+            [[-0.2, -0.2, 0, 1.0],[0.2, 0.2, 0, 1.0]],
         ],
         [
             (VehicleMode.Normal, LaneMode.Lane1),
@@ -81,7 +85,7 @@ if __name__ == "__main__":
     traces = scenario.verify(40)
 
     fig = plt.figure()
-    # fig = plot_tree(traces, 'car1', 1, [2], 'b', fig)
+    fig = plot_tree(traces, 'car1', 1, [2], 'b', fig)
     fig = plot_tree(traces, 'car2', 1, [2], 'r', fig)
 
     plt.show()

@@ -146,7 +146,7 @@ class Scenario:
     def check_guard_hit(self, state_dict):
         lane_map = self.map 
         guard_hits = []
-        is_contained = False        # TODO: Handle this
+        any_contained = False        # TODO: Handle this
         for agent_id in state_dict:
             agent:BaseAgent = self.agent_dict[agent_id]
             agent_state, agent_mode = state_dict[agent_id]
@@ -176,9 +176,10 @@ class Scenario:
                 if not guard_can_satisfied:
                     continue
                 guard_satisfied, is_contained = guard_expression.evaluate_guard_cont(agent, continuous_variable_dict, self.map)
+                any_contained = any_contained or is_contained
                 if guard_satisfied:
                     guard_hits.append((agent_id, guard_list, reset_list))
-        return guard_hits, is_contained
+        return guard_hits, any_contained
 
     def get_all_transition_set(self, node):
         possible_transitions = []
