@@ -1,35 +1,43 @@
 # GraphGeneration
-NOTE: I made a mistake and uploaded the wrong file before I left town today. generateGraph-new.py is outdated! I am so sorry, but it doesn't have the updates the build the graph, it only computes the paths.
+## Installation
+The package requires python 3.8+. All the required packages can be installed through
+
+```
+python3 -m pip install -r requirements.txt
+```
+
+## Examples
+The package comes with two controller examples
+- The first example consists a scenario with a single vehicle, which can perform lane switch based on its location. The 
+first example can be run by using command
+
+```
+python3 example_car_lane_switch.py
+```
+
+- The second example consists a scenario with two vehicles, which can perform lane switch based on their relative position.
+The second example can be run using command
+
+```
+python3 example_two_car_lane_switch.py
+```
+
+## Package Structure
+
+The source code of the package is contained in the src folder, which contains the following sub-directories.
+
+- **scene_verifier**, which contains building blocks for creating and analyzing scenarios.
+  
+  - **scene_verifier/scenario** contains code for the scenario base class. A scenario is constructed by several **agents** with continuous dynamics and controller, a **map** and a **sensor** defining how different agents interact with each other.
+  - **scene_verifier/agents** contains code for the agent base class in the scenario. 
+  - **scene_verifier/map** contains code for the lane map base class and corresponding utilities in the scenario.
+  - **scene_verifier/code_parser** contains code for converting the controller code to ASTs. 
+  - **scene_verifier/automaton** contains code implementing components in hybrid-automaton
+  - **scene_verifier/analysis** contains the **Simulator** and **Verifier** and related utilities for doing analysis of the scenario
+  - **scene_verifier/dryvr** dryvr for computing reachable sets
 
 
-working repo for graph generation
-
-generateGraph-new.py has the code that finds paths. It creates a mode for each path through the code and any "mode" in the code is just a variable, not a named mode. 
+- **example** contains example map, sensor and agents that we provided
 
 
-generateGraph.py has the old code which only allows 2 levels of if statements and isn't as stable. Reads mode variable and sets vertices based on modes. Requires that an if statement checks the mode and the new mode is set within the if statement.
-
-
-
-Run within DryVR directory
-
-Usage:
-
-model generation only:
-
-python generateGraph-new.py cfile.c jsonfilewithinitialinfo.json out.json
-
-
-DryVR pipeline (this may not be ready yet, still needs work with mode names):
-
-./fullrun cfile.c jsonfilewithinitialinfo.json out.json
-
-
-
-
-Example:
-
-python generateGraph-new.py cartoy.c singlevehiclesat.json out.json #this toy example was just for looking at nesting, doesn't have an initial json
-
-./full_run singlevehiclesat.c singlevehiclesat.json output.json
-
+- **plotter** contains code for visualizing the computed results

@@ -1,7 +1,5 @@
 from enum import Enum, auto
 
-from ourtool.map.lane_map import LaneMap
-
 
 class VehicleMode(Enum):
     Normal = auto()
@@ -53,13 +51,13 @@ def controller(ego: State, other: State, lane_map):
     return output
 
 
-from ourtool.agents.car_agent import CarAgent
-from ourtool.scenario.scenario import Scenario
-from user.simple_map import SimpleMap, SimpleMap2
-from plotter.plotter2D import plot_tree
+from src.example.example_agent.car_agent import CarAgent
+from src.scene_verifier.scenario.scenario import Scenario
+from src.example.example_map.simple_map import SimpleMap2
+from src.plotter.plotter2D import plot_tree
+from src.example.example_sensor.fake_sensor import FakeSensor2
 
 import matplotlib.pyplot as plt
-import numpy as np
 
 if __name__ == "__main__":
     input_code_name = 'example_two_car_lane_switch.py'
@@ -70,6 +68,7 @@ if __name__ == "__main__":
     car = CarAgent('car2', file_name=input_code_name)
     scenario.add_agent(car)
     scenario.add_map(SimpleMap2())
+    scenario.set_sensor(FakeSensor2())
     scenario.set_init(
         [
             [[10, 0, 0, 0.5],[10, 0, 0, 0.5]], 
