@@ -1,8 +1,0 @@
-{
-"unsafeSet": "",
-"initialSet": [[0,-0.2,0, "Normal"],[0,0.2,0, "Normal"]],
-"timeHorizon": 10,
-"directory": "examples/curve_controller_hybrid",
-"initialVertex":0,
-"deterministic":true
-}
