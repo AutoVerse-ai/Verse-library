@@ -1,12 +1,15 @@
 from typing import Dict, List
 import copy
-from enum import Enum,auto
+from enum import Enum
 
-from src.scene_verifier.map.lane_segment import LaneSegment
+import numpy as np
+
+from src.scene_verifier.map.lane_segment import AbstractLane
+from src.scene_verifier.map.lane import Lane
 
 class LaneMap:
-    def __init__(self, lane_seg_list:List[LaneSegment] = []):
-        self.lane_segment_dict:Dict[str, LaneSegment] = {}
+    def __init__(self, lane_seg_list:List[Lane] = []):
+        self.lane_segment_dict:Dict[str, Lane] = {}
         self.left_lane_dict:Dict[str, List[str]] = {}
         self.right_lane_dict:Dict[str, List[str]] = {}
         for lane_seg in lane_seg_list:
@@ -14,7 +17,7 @@ class LaneMap:
             self.left_lane_dict[lane_seg.id] = []
             self.right_lane_dict[lane_seg.id] = []
 
-    def add_lanes(self, lane_seg_list:List[LaneSegment]):
+    def add_lanes(self, lane_seg_list:List[AbstractLane]):
         for lane_seg in lane_seg_list:
             self.lane_segment_dict[lane_seg.id] = lane_seg
             self.left_lane_dict[lane_seg.id] = []
@@ -61,11 +64,15 @@ class LaneMap:
             lane_idx = lane_idx.name
         return self.lane_segment_dict[lane_idx].get_geometry()
 
-    def get_longitudinal_error(self, lane_idx, agent_state):
-        raise NotImplementedError
-    
-    def get_lateral_error(self, lane_idx, agent_state):
-        raise NotImplementedError
+    def get_longitudinal_error(self, lane_idx:str, agent_state) -> float:
+        lane = self.lane_segment_dict[lane_idx]
+        position = np.array([agent_state[0], agent_state[1]])
+        return lane.get_longitudinal_error(position)
+
+    def get_lateral_error(self, lane_idx:str, agent_state) -> float:
+        lane = self.lane_segment_dict[lane_idx]
+        position = np.array([agent_state[0], agent_state[1]])
+        return lane.get_longitudinal_error(position)
 
     def get_altitude_error(self, lane_idx, agent_state):
         raise NotImplementedError
