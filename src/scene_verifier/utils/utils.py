@@ -376,3 +376,9 @@ def solve_trinom(a, b, c):
         return (-b - np.sqrt(delta)) / (2 * a), (-b + np.sqrt(delta)) / (2 * a)
     else:
         return None, None
+
+def sample_rect(rect: List[List[float]]) -> List[float]:
+    # point = []
+    # for i in range(len(rect[0])):
+    res = np.random.uniform(rect[0], rect[1]).tolist()
+    return res

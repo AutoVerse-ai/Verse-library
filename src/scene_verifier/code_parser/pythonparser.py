@@ -406,6 +406,8 @@ class ControllerAst():
                     for arg in args:
                         if arg.annotation is None:
                             continue
+                        if arg.annotation.id not in state_object_dict:
+                            continue
                         arg_annotation = arg.annotation.id
                         arg_name = arg.arg
                         vars_dict[arg_name] = {'cont':[], 'disc':[]}

@@ -7,11 +7,11 @@ import numpy as np
 from src.scene_verifier.agents.base_agent import BaseAgent
 from src.scene_verifier.automaton.guard import GuardExpressionAst
 from src.scene_verifier.automaton.reset import ResetExpression
-from src.scene_verifier.code_parser.pythonparser import Guard
-from src.scene_verifier.code_parser.pythonparser import Reset
+from src.scene_verifier.code_parser.pythonparser import Guard, Reset
 from src.scene_verifier.analysis.simulator import Simulator
 from src.scene_verifier.analysis.verifier import Verifier
 from src.scene_verifier.map.lane_map import LaneMap
+from src.scene_verifier.utils.utils import *
 
 class Scenario:
     def __init__(self):
@@ -39,12 +39,12 @@ class Scenario:
             self.init_dict[agent_id] = copy.deepcopy(init_list[i])
             self.init_mode_dict[agent_id] = copy.deepcopy(init_mode_list[i])
 
-    def simulate(self, time_horizon):
+    def simulate_once(self, time_horizon):
         init_list = []
         init_mode_list = []
         agent_list = []
         for agent_id in self.agent_dict:
-            init_list.append(self.init_dict[agent_id])
+            init_list.append(sample_rect(self.init_dict[agent_id]))
             init_mode_list.append(self.init_mode_dict[agent_id])
             agent_list.append(self.agent_dict[agent_id])
         return self.simulator.simulate(init_list, init_mode_list, agent_list, self, time_horizon, self.map)

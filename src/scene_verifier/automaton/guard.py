@@ -429,6 +429,12 @@ class GuardExpressionAst:
                 return expr
         elif isinstance(root, ast.Constant):
             return root.value
+        elif isinstance(root, ast.UnaryOp):
+            val = self._evaluate_guard(root.operand, agent, cnts_var_dict, disc_var_dict, lane_map)
+            if isinstance(root.op, ast.USub):
+                return -val
+            else:
+                raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
         else:
             raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
 

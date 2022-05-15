@@ -64,15 +64,23 @@ class LaneMap:
             lane_idx = lane_idx.name
         return self.lane_segment_dict[lane_idx].get_geometry()
 
-    def get_longitudinal_error(self, lane_idx:str, agent_state) -> float:
+    def get_longitudinal(self, lane_idx:str, position:np.ndarray) -> float:
+        if not isinstance(position, np.ndarray):
+            position = np.array(position)
         lane = self.lane_segment_dict[lane_idx]
-        position = np.array([agent_state[0], agent_state[1]])
-        return lane.get_longitudinal_error(position)
+        return lane.get_longitudinal(position)
 
-    def get_lateral_error(self, lane_idx:str, agent_state) -> float:
+    def get_lateral(self, lane_idx:str, position:np.ndarray) -> float:
+        if not isinstance(position, np.ndarray):
+            position = np.array(position)
         lane = self.lane_segment_dict[lane_idx]
-        position = np.array([agent_state[0], agent_state[1]])
-        return lane.get_longitudinal_error(position)
+        return lane.get_lateral(position)
 
-    def get_altitude_error(self, lane_idx, agent_state):
+    def get_altitude(self, lane_idx, position:np.ndarray) -> float:
         raise NotImplementedError
+
+    def get_lane_heading(self, lane_idx:str, position: np.ndarray) -> float:
+        if not isinstance(position, np.ndarray):
+            position = np.array(position)
+        lane = self.lane_segment_dict[lane_idx]
+        return lane.get_heading(position)

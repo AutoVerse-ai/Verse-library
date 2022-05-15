@@ -17,10 +17,26 @@ class CarAgent(BaseAgent):
         v_dot = a 
         return [x_dot, y_dot, theta_dot, v_dot]
 
-    def TC_simulate(self, mode, initialCondition, time_bound, lane_map:LaneMap=None):
-        mode = mode.split(',')
+    def action_handler(self, mode, state, lane_map:LaneMap):
+        x,y,theta,v = state
         vehicle_mode = mode[0]
         vehicle_lane = mode[1]
+        lane_parameter = lane_map.lane_geometry(vehicle_lane)
+        if vehicle_mode == "Normal":
+            d = -y+lane_parameter
+        elif vehicle_mode == "SwitchLeft":
+            d = -y+3+lane_parameter
+        elif vehicle_mode == "SwitchRight":
+            d = -y-3+lane_parameter
+        
+        psi = -theta
+        steering = psi + np.arctan2(0.45*d, v)
+        steering = np.clip(steering, -0.61, 0.61)
+        a = 0
+        return steering, a  
+
+    def TC_simulate(self, mode, initialCondition, time_bound, lane_map:LaneMap=None):
+        mode = mode.split(',')
         time_step = 0.01
         time_bound = float(time_bound)
         number_points = int(np.ceil(time_bound/time_step))
@@ -28,44 +44,12 @@ class CarAgent(BaseAgent):
 
         init = initialCondition
         trace = [[0]+init]
-        lane_parameter = lane_map.lane_geometry(vehicle_lane)
-        if vehicle_mode == "Normal":
-            for i in range(len(t)):
-                x,y,theta,v = init
-                d = -y+lane_parameter
-                psi = -theta
-                steering = psi + np.arctan2(0.45*d, v)
-                steering = np.clip(steering, -0.61, 0.61)
-                a = 0
-                r = ode(self.dynamic)    
-                r.set_initial_value(init).set_f_params([steering, a])      
-                res:np.ndarray = r.integrate(r.t + time_step)
-                init = res.flatten().tolist()
-                trace.append([t[i] + time_step] + init) 
-        elif vehicle_mode == "SwitchLeft":
-            for i in range(len(t)):
-                x,y,theta,v = init
-                d = -y+3+lane_parameter
-                psi = -theta
-                steering = psi + np.arctan2(0.45*d, v)
-                steering = np.clip(steering, -0.61, 0.61)
-                a = 0
-                r = ode(self.dynamic)    
-                r.set_initial_value(init).set_f_params([steering, a])      
-                res:np.ndarray = r.integrate(r.t + time_step)
-                init = res.flatten().tolist()
-                trace.append([t[i] + time_step] + init) 
-        elif vehicle_mode == "SwitchRight":
-            for i in range(len(t)):
-                x,y,theta,v = init
-                d = -y-3+lane_parameter
-                psi = -theta
-                steering = psi + np.arctan2(0.45*d, v)
-                steering = np.clip(steering, -0.61, 0.61)
-                a = 0
-                r = ode(self.dynamic)    
-                r.set_initial_value(init).set_f_params([steering, a])      
-                res:np.ndarray = r.integrate(r.t + time_step)
-                init = res.flatten().tolist()
-                trace.append([t[i] + time_step] + init) 
+        for i in range(len(t)):
+            steering, a = self.action_handler(mode, init, lane_map)
+            r = ode(self.dynamic)    
+            r.set_initial_value(init).set_f_params([steering, a])      
+            res:np.ndarray = r.integrate(r.t + time_step)
+            init = res.flatten().tolist()
+            trace.append([t[i] + time_step] + init) 
+
         return np.array(trace)
