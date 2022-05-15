@@ -20,7 +20,7 @@ def plot(
 ):
     if fig is None:
         fig = plt.figure()
-    ax = plt.gca()
+    ax = fig.gca()
     x_min, x_max = x_lim
     y_min, y_max = y_lim
     for rect in data:
@@ -38,7 +38,7 @@ def plot(
     ax.set_ylim([y_min-1, y_max+1])
     return fig, (x_min, x_max), (y_min, y_max)
 
-def plot_tree(root, agent_id, x_dim: int=0, y_dim_list: List[int]=[1], color='b', fig = None):
+def plot_reachtube_tree(root, agent_id, x_dim: int=0, y_dim_list: List[int]=[1], color='b', fig = None):
     if fig is None:
         fig = plt.figure()
     
@@ -56,4 +56,29 @@ def plot_tree(root, agent_id, x_dim: int=0, y_dim_list: List[int]=[1], color='b'
 
         queue += node.child
 
+    return fig
+
+def plot_simulation_tree(root, agent_id, x_dim: int=0, y_dim_list: List[int]=[1], color='b', fig = None):
+    if fig is None:
+        fig = plt.figure()
+    ax = fig.gca()
+    queue = [root]
+    x_min, x_max = (float('inf'), -float('inf')) 
+    y_min, y_max = (float('inf'), -float('inf'))
+    while queue != []:
+        node = queue.pop(0)
+        traces = node.trace
+        trace = np.array(traces[agent_id])
+        for y_dim in y_dim_list:
+            ax.plot(trace[:,x_dim], trace[:,y_dim], color)
+            x_min = min(x_min, trace[:,x_dim].min())
+            x_max = max(x_max, trace[:,x_dim].max())
+
+            y_min = min(y_min, trace[:,y_dim].min())
+            y_max = max(y_max, trace[:,y_dim].max())
+
+        queue += node.child
+    ax.set_xlim([x_min-1, x_max+1])
+    ax.set_ylim([y_min-1, y_max+1])
+    
     return fig

@@ -54,7 +54,7 @@ def controller(ego: State, other: State, lane_map):
 from src.example.example_agent.car_agent import CarAgent
 from src.scene_verifier.scenario.scenario import Scenario
 from src.example.example_map.simple_map import SimpleMap2
-from src.plotter.plotter2D import plot_tree
+from src.plotter.plotter2D import plot_reachtube_tree
 from src.example.example_sensor.fake_sensor import FakeSensor2
 
 import matplotlib.pyplot as plt
@@ -84,8 +84,8 @@ if __name__ == "__main__":
     traces = scenario.verify(40)
 
     fig = plt.figure()
-    fig = plot_tree(traces, 'car1', 1, [2], 'b', fig)
-    fig = plot_tree(traces, 'car2', 1, [2], 'r', fig)
+    fig = plot_reachtube_tree(traces, 'car1', 1, [2], 'b', fig)
+    fig = plot_reachtube_tree(traces, 'car2', 1, [2], 'r', fig)
 
     plt.show()
 
