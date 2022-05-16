@@ -346,6 +346,20 @@ class GuardExpressionAst:
             lateral_high = max(delta0[0]*lane_seg.direction_lateral[0], delta1[0]*lane_seg.direction_lateral[0]) + \
                 max(delta0[1]*lane_seg.direction_lateral[1], delta1[1]*lane_seg.direction_lateral[1])
             return lateral_low, lateral_high
+        elif lane_seg.type == "Circular":
+            # Delta lower
+            delta0 = position[0,:] - lane_seg.center
+            # Delta upper
+            delta1 = position[1,:] - lane_seg.center
+
+            # r lower 
+            r0 = np.linalg.norm(delta0)
+            # r upper 
+            r1 = np.linalg.norm(delta1)
+
+            lateral_low = min(lane_seg.direction*r0, lane_seg.direction*r1)
+            lateral_high = max(lane_seg.direction*r0, lane_seg.direction*r1)
+            return lateral_low, lateral_high
         else:
             raise ValueError(f'Lane segment with type {lane_seg.type} is not supported')
 

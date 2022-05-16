@@ -7,12 +7,10 @@ class VehicleMode(Enum):
     SwitchRight = auto()
     Brake = auto()
 
-
 class LaneMode(Enum):
     Lane0 = auto()
     Lane1 = auto()
     Lane2 = auto()
-
 
 class State:
     x = 0.0
@@ -24,7 +22,6 @@ class State:
 
     def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: LaneMode):
         self.data = []
-
 
 def controller(ego: State, other: State, lane_map:LaneMap):
     output = ego
@@ -49,7 +46,7 @@ def controller(ego: State, other: State, lane_map:LaneMap):
 
 from src.example.example_agent.car_agent2 import CarAgent2
 from src.scene_verifier.scenario.scenario import Scenario
-from src.example.example_map.simple_map2 import SimpleMap3, SimpleMap4
+from src.example.example_map.simple_map2 import SimpleMap3, SimpleMap4, SimpleMap5, SimpleMap6, SimpleMap7
 from src.plotter.plotter2D import *
 from src.example.example_sensor.fake_sensor import FakeSensor2
 
@@ -64,20 +61,20 @@ if __name__ == "__main__":
     scenario.add_agent(car)
     car = CarAgent2('car2', file_name=input_code_name)
     scenario.add_agent(car)
-    scenario.add_map(SimpleMap4())
+    scenario.add_map(SimpleMap6())
     scenario.set_sensor(FakeSensor2())
     scenario.set_init(
         [
-            [[10, 0, 0, 0.5],[10, 0, 0, 0.5]], 
-            [[0, -0.2, 0, 1.0],[0.1, 0.2, 0, 1.0]],
+            [[15, 0, 0, 0.5],[15, 0, 0, 0.5]], 
+            [[-0.2, 0, 0, 1.0],[0.2, 0.05, 0, 1.0]],
         ],
         [
             (VehicleMode.Normal, LaneMode.Lane1),
             (VehicleMode.Normal, LaneMode.Lane1)
         ]
     )
-    # res_list = scenario.simulate_multi(40,10)
-    traces = scenario.verify(33)
+    # res_list = scenario.simulate_multi(40,1)
+    traces = scenario.verify(40)
 
     fig = plt.figure(2)
     fig = plot_reachtube_tree(traces, 'car1', 1, [2], 'b', fig)

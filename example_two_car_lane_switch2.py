@@ -49,7 +49,7 @@ def controller(ego: State, other: State, lane_map:LaneMap):
 
 from src.example.example_agent.car_agent2 import CarAgent2
 from src.scene_verifier.scenario.scenario import Scenario
-from src.example.example_map.simple_map2 import SimpleMap3, SimpleMap4
+from src.example.example_map.simple_map2 import SimpleMap3
 from src.plotter.plotter2D import *
 from src.example.example_sensor.fake_sensor import FakeSensor2
 

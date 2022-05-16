@@ -5,7 +5,7 @@ import numpy as np
 from src.scene_verifier.map.lane_segment import AbstractLane
 
 class Lane():
-    COMPOSATE = 3
+    COMPENSATE = 3
     def __init__(self, id, seg_list: List[AbstractLane]):
         self.id = id
         self.segment_list: List[AbstractLane] = seg_list
@@ -13,7 +13,7 @@ class Lane():
     def get_lane_segment(self, position:np.ndarray) -> AbstractLane:
         for segment in self.segment_list:
             logitudinal, lateral = segment.local_coordinates(position)
-            is_on = 0-Lane.COMPOSATE <= logitudinal < segment.length
+            is_on = 0-Lane.COMPENSATE <= logitudinal < segment.length
             if is_on:
                 return segment
         return None
