@@ -39,7 +39,14 @@ class Scenario:
             self.init_dict[agent_id] = copy.deepcopy(init_list[i])
             self.init_mode_dict[agent_id] = copy.deepcopy(init_mode_list[i])
 
-    def simulate_once(self, time_horizon):
+    def simulate_multi(self, time_horizon, num_sim):
+        res_list = []
+        for i in range(num_sim):
+            trace = self.simulate(time_horizon)
+            res_list.append(trace)
+        return res_list
+
+    def simulate(self, time_horizon):
         init_list = []
         init_mode_list = []
         agent_list = []
@@ -47,6 +54,7 @@ class Scenario:
             init_list.append(sample_rect(self.init_dict[agent_id]))
             init_mode_list.append(self.init_mode_dict[agent_id])
             agent_list.append(self.agent_dict[agent_id])
+        print(init_list)
         return self.simulator.simulate(init_list, init_mode_list, agent_list, self, time_horizon, self.map)
 
     def verify(self, time_horizon):
@@ -88,13 +96,18 @@ class Scenario:
                 # Map the values to variables using sensor
                 continuous_variable_dict, discrete_variable_dict = self.sensor.sense(self, agent, state_dict, self.map)
                 
-                '''Execute functions related to map to see if the guard can be satisfied'''
-                '''Check guards related to modes to see if the guards can be satisfied'''
-                '''Actually plug in the values to see if the guards can be satisfied'''
                 # Check if the guard can be satisfied
-                guard_can_satisfied = guard_expression.evaluate_guard_disc(agent, discrete_variable_dict, self.map)
+                # First Check if the discrete guards can be satisfied by actually evaluate the values 
+                # since there's no uncertainty. If there's functions, actually execute the functions
+                guard_can_satisfied = guard_expression.evaluate_guard_disc(agent, discrete_variable_dict, continuous_variable_dict, self.map)
                 if not guard_can_satisfied:
                     continue
+
+                # TODO: Handle hybrid guards that involves both continuous and discrete dynamics 
+                # Will have to limit the amount of hybrid guards that we want to handle. The difficulty will be handle function guards.
+                guard_can_satisfied = guard_expression.evaluate_guard_hybrid(agent, discrete_variable_dict, continuous_variable_dict, self.map)
+
+                # Handle guards realted only to continuous variables using SMT solvers. These types of guards can be pretty general
                 guard_satisfied, is_contained = guard_expression.evaluate_guard_cont(agent, continuous_variable_dict, self.map)
                 any_contained = any_contained or is_contained
                 if guard_satisfied:

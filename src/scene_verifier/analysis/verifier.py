@@ -30,6 +30,7 @@ class Verifier:
             init_mode =','.join(init_mode)
             root.mode[agent.id] = init_mode 
             root.agent[agent.id] = agent 
+            root.type = 'reachtube'
         self.reachtube_tree_root = root 
         verification_queue = []
         verification_queue.append(root)
@@ -96,7 +97,8 @@ class Verifier:
                     mode = next_node_mode,
                     agent = next_node_agent,
                     child = [],
-                    start_time = next_node_start_time
+                    start_time = next_node_start_time,
+                    type = 'reachtube'
                 )
                 node.child.append(tmp)
                 verification_queue.append(tmp)

@@ -12,7 +12,14 @@ class Simulator:
 
     def simulate(self, init_list, init_mode_list, agent_list:List[BaseAgent], transition_graph, time_horizon, lane_map):
         # Setup the root of the simulation tree
-        root = AnalysisTreeNode()
+        root = AnalysisTreeNode(
+            trace={},
+            init={},
+            mode={},
+            agent={},
+            child=[],
+            start_time = 0,
+        )
         for i, agent in enumerate(agent_list):
             root.init[agent.id] = init_list[i]
             init_mode = init_mode_list[i][0].name
@@ -20,6 +27,7 @@ class Simulator:
                 init_mode += (','+init_mode_list[i][j].name)
             root.mode[agent.id] = init_mode
             root.agent[agent.id] = agent
+            root.type = 'simtrace'
         self.simulation_tree_root = root
         simulation_queue = []
         simulation_queue.append(root)
@@ -86,7 +94,8 @@ class Simulator:
                     mode = next_node_mode,
                     agent = next_node_agent,
                     child = [],
-                    start_time = next_node_start_time
+                    start_time = next_node_start_time,
+                    type = 'simtrace'
                 )
                 node.child.append(tmp)
                 simulation_queue.append(tmp)

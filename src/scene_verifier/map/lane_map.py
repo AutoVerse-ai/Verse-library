@@ -84,3 +84,9 @@ class LaneMap:
             position = np.array(position)
         lane = self.lane_segment_dict[lane_idx]
         return lane.get_heading(position)
+
+    def get_lane_segment(self, lane_idx:str, position: np.ndarray) -> AbstractLane:
+        if not isinstance(position, np.ndarray):
+            position = np.array(position)
+        lane = self.lane_segment_dict[lane_idx]
+        return lane.get_lane_segment(position)

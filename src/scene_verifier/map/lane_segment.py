@@ -26,6 +26,7 @@ class AbstractLane(object):
 
     def __init__(self, id:str):
         self.id = id
+        self.type = None
 
     @abstractmethod
     def position(self, longitudinal: float, lateral: float) -> np.ndarray:
@@ -170,6 +171,7 @@ class StraightLane(AbstractLane):
         self.forbidden = forbidden
         self.priority = priority
         self.speed_limit = speed_limit
+        self.type = 'Straight'
 
     def position(self, longitudinal: float, lateral: float) -> np.ndarray:
         return self.start + longitudinal * self.direction + lateral * self.direction_lateral
