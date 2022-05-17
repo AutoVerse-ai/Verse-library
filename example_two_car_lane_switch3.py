@@ -66,19 +66,19 @@ if __name__ == "__main__":
     scenario.set_init(
         [
             [[15, 0, 0, 0.5],[15, 0, 0, 0.5]], 
-            [[-0.2, 0, 0, 1.0],[0.2, 0.05, 0, 1.0]],
+            [[0, -0.2, 0, 1.0],[0.05, 0.2, 0, 1.0]],
         ],
         [
             (VehicleMode.Normal, LaneMode.Lane1),
             (VehicleMode.Normal, LaneMode.Lane1)
         ]
     )
-    # res_list = scenario.simulate_multi(40,1)
+    # res_list = scenario.simulate_multi(40,10)
     traces = scenario.verify(40)
 
     fig = plt.figure(2)
-    fig = plot_reachtube_tree(traces, 'car1', 1, [2], 'b', fig)
-    fig = plot_reachtube_tree(traces, 'car2', 1, [2], 'r', fig)
+    fig = plot_reachtube_tree(traces, 'car1', 0, [2], 'b', fig)
+    fig = plot_reachtube_tree(traces, 'car2', 0, [2], 'r', fig)
     # for traces in res_list:
     #     fig = plot_simulation_tree(traces, 'car1', 1, [2], 'b', fig)
     #     fig = plot_simulation_tree(traces, 'car2', 1, [2], 'r', fig)

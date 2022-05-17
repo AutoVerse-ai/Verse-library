@@ -271,6 +271,7 @@ def calc_bloated_tube(
         Bloated reach tube
 
     """
+    print(initial_set)
     random.seed(4)
     cur_center = calcCenterPoint(initial_set[0], initial_set[1])
     cur_delta = calcDelta(initial_set[0], initial_set[1])
@@ -305,5 +306,5 @@ def calc_bloated_tube(
     final_tube = np.zeros((cur_reach_tube.shape[0]*2, cur_reach_tube.shape[2]))
     final_tube[0::2, :] = cur_reach_tube[:, 0, :]
     final_tube[1::2, :] = cur_reach_tube[:, 1, :]
-    print(final_tube.tolist()[-2], final_tube.tolist()[-1])
+    # print(final_tube.tolist()[-2], final_tube.tolist()[-1])
     return final_tube.tolist()
