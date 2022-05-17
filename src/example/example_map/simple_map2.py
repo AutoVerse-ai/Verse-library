@@ -171,7 +171,7 @@ class SimpleMap6(LaneMap):
         segment2 = StraightLane(
             'Seg2',
             [20,8], 
-            [20,100],
+            [20,30],
             3
         )
         lane0 = Lane('Lane0', [segment0, segment1, segment2])
@@ -193,7 +193,7 @@ class SimpleMap6(LaneMap):
         segment2 = StraightLane(
             'seg2',
             [23,5],
-            [23,100],
+            [23,30],
             3
         )
         lane1 = Lane('Lane1', [segment0, segment1, segment2])
@@ -215,7 +215,7 @@ class SimpleMap6(LaneMap):
         segment2 = StraightLane(
             'seg2',
             [26,2],
-            [26,100],
+            [26,30],
             3
         )
         lane2 = Lane('Lane2', [segment0, segment1, segment2])
@@ -225,32 +225,8 @@ class SimpleMap6(LaneMap):
         self.right_lane_dict[lane0.id].append(lane1.id)
         self.right_lane_dict[lane1.id].append(lane2.id)
 
-
-class SimpleMap7(LaneMap):
-    def __init__(self):
-        super().__init__()
-        segment0 = CircularLane(
-            'Seg0',
-            [0,5],
-            5,
-            np.pi*3/2,
-            np.pi*2,
-            False,
-            3
-        )
-        segment1 = StraightLane(
-            'Seg1',
-            [5,5],
-            [5,100],
-            width = 3
-        )
-        lane0 = Lane('Lane0',[segment0,segment1])
-        self.add_lanes([lane0])
-
-
-
 if __name__ == "__main__":
     test_map = SimpleMap3()
     print(test_map.left_lane_dict)
     print(test_map.right_lane_dict)
-    print(test_map.lane_segment_dict)
+    print(test_map.lane_dict)

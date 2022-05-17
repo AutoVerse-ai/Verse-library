@@ -280,7 +280,7 @@ class GuardExpressionAst:
             if isinstance(root.func, ast.Attribute):
                 func = root.func        
                 if func.value.id == 'lane_map':
-                    if func.attr == 'get_lateral':
+                    if func.attr == 'get_lateral_distance':
                         # Get function arguments
                         arg0_node = root.args[0]
                         arg1_node = root.args[1]
@@ -347,17 +347,16 @@ class GuardExpressionAst:
                 max(delta0[1]*lane_seg.direction_lateral[1], delta1[1]*lane_seg.direction_lateral[1])
             return lateral_low, lateral_high
         elif lane_seg.type == "Circular":
-            r0 = np.linalg.norm([position[0,0] - lane_seg.center[0], position[0,1] - lane_seg.center[1]])
-            r1 = np.linalg.norm([position[0,0] - lane_seg.center[0], position[1,1] - lane_seg.center[1]])
-            r2 = np.linalg.norm([position[1,0] - lane_seg.center[0], position[0,1] - lane_seg.center[1]])
-            r3 = np.linalg.norm([position[1,0] - lane_seg.center[0], position[1,1] - lane_seg.center[1]])
-            r4 = np.linalg.norm([position[0,0] - lane_seg.center[0], 0])
-            r5 = np.linalg.norm([position[1,0] - lane_seg.center[0], 0])
-            r6 = np.linalg.norm([0, position[0,1] - lane_seg.center[1]])
-            r7 = np.linalg.norm([0, position[1,1] - lane_seg.center[1]])
+            dx = np.max([position[0,0]-lane_seg.center[0],0,lane_seg.center[0]-position[1,0]])
+            dy = np.max([position[0,1]-lane_seg.center[1],0,lane_seg.center[1]-position[1,1]])
+            r_low = np.linalg.norm([dx, dy])
 
-            lateral_low = np.min([r0,r1,r2,r3,r4,r5,r6,r7])
-            lateral_high = np.max([r0,r1,r2,r3,r4,r5,r6,r7])
+            dx = np.max([np.abs(position[0,0]-lane_seg.center[0]),np.abs(position[1,0]-lane_seg.center[0])])
+            dy = np.max([np.abs(position[0,1]-lane_seg.center[1]),np.abs(position[1,1]-lane_seg.center[1])])
+            r_high = np.linalg.norm([dx, dy])
+            lateral_low = min(lane_seg.direction*(lane_seg.radius - r_high),lane_seg.direction*(lane_seg.radius - r_low))
+            lateral_high = max(lane_seg.direction*(lane_seg.radius - r_high),lane_seg.direction*(lane_seg.radius - r_low))
+            print(lateral_low, lateral_high)
             return lateral_low, lateral_high
         else:
             raise ValueError(f'Lane segment with type {lane_seg.type} is not supported')

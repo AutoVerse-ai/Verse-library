@@ -55,8 +55,8 @@ class Verifier:
                                         init,
                                         remain_time,
                                         node.agent[agent_id].TC_simulate,
-                                        'GLOBAL',
-                                        None,
+                                        'PW',
+                                        100,
                                         userConfig.SIMTRACENUM,
                                         lane_map = lane_map
                                         )
@@ -65,7 +65,7 @@ class Verifier:
                     node.trace[agent_id] = trace.tolist()
                     # print("here")
             
-            # Check safety conditions here
+            # TODO: Check safety conditions here
 
             # Get all possible transitions to next mode
             all_possible_transitions = transition_graph.get_all_transition_set(node)

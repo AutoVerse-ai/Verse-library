@@ -58,6 +58,24 @@ def plot_reachtube_tree(root, agent_id, x_dim: int=0, y_dim_list: List[int]=[1],
 
     return fig
 
+def plot_map(map, color = 'b', fig = None):
+    if fig is None:
+        fig = plt.figure()
+    ax = fig.gca()
+    for lane_idx in map.lane_dict:
+        lane = map.lane_dict[lane_idx]
+        for lane_seg in lane.segment_list:
+            if lane_seg.type == 'Straight':
+                ax.plot([lane_seg.start[0], lane_seg.end[0]],[lane_seg.start[1], lane_seg.end[1]], color) 
+            elif lane_seg.type == "Circular":
+                phase_array = np.linspace(start=lane_seg.start_phase, stop=lane_seg.end_phase, num=100)
+                x = np.cos(phase_array)*lane_seg.radius + lane_seg.center[0]
+                y = np.sin(phase_array)*lane_seg.radius + lane_seg.center[1]
+                ax.plot(x,y,color)
+            else:
+                raise ValueError(f'Unknown lane segment type {lane_seg.type}')
+    return fig
+
 def plot_simulation_tree(root, agent_id, x_dim: int=0, y_dim_list: List[int]=[1], color='b', fig = None):
     if fig is None:
         fig = plt.figure()

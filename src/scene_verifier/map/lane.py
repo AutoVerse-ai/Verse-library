@@ -29,7 +29,7 @@ class Lane():
         longitudinal, lateral = segment.local_coordinates(position)
         return longitudinal
 
-    def get_lateral(self, position:np.ndarray) -> float:
+    def get_lateral_distance(self, position:np.ndarray) -> float:
         segment = self.get_lane_segment(position)
         longitudinal, lateral = segment.local_coordinates(position)
         return lateral

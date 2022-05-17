@@ -26,11 +26,11 @@ class CarAgent2(BaseAgent):
         vehicle_lane = mode[1]
         vehicle_pos = np.array([x,y])
         if vehicle_mode == "Normal":
-            d = -lane_map.get_lateral(vehicle_lane, vehicle_pos)
+            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
         elif vehicle_mode == "SwitchLeft":
-            d = -lane_map.get_lateral(vehicle_lane, vehicle_pos) + 3
+            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos) + 3
         elif vehicle_mode == "SwitchRight":
-            d = -lane_map.get_lateral(vehicle_lane, vehicle_pos) - 3
+            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos) - 3
         psi = lane_map.get_lane_heading(vehicle_lane, vehicle_pos)-theta
         steering = psi + np.arctan2(0.45*d, v)
         steering = np.clip(steering, -0.61, 0.61)

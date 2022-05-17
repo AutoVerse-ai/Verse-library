@@ -26,4 +26,4 @@ if __name__ == "__main__":
     test_map = SimpleMap()
     print(test_map.left_lane_dict)
     print(test_map.right_lane_dict)
-    print(test_map.lane_segment_dict)
+    print(test_map.lane_dict)

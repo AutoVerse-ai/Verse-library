@@ -33,11 +33,11 @@ def controller(ego: State, other: State, lane_map:LaneMap):
             if lane_map.has_right(ego.lane_mode):
                 output.vehicle_mode = VehicleMode.SwitchRight
     if ego.vehicle_mode == VehicleMode.SwitchLeft:
-        if  lane_map.get_lateral(ego.lane_mode, [ego.x, ego.y]) >= 2.5:
+        if  lane_map.get_lateral_distance(ego.lane_mode, [ego.x, ego.y]) >= 2.5:
             output.vehicle_mode = VehicleMode.Normal
             output.lane_mode = lane_map.left_lane(ego.lane_mode)
     if ego.vehicle_mode == VehicleMode.SwitchRight:
-        if lane_map.get_lateral(ego.lane_mode, [ego.x, ego.y]) <= -2.5:
+        if lane_map.get_lateral_distance(ego.lane_mode, [ego.x, ego.y]) <= -2.5:
             output.vehicle_mode = VehicleMode.Normal
             output.lane_mode = lane_map.right_lane(ego.lane_mode)
 
@@ -46,7 +46,7 @@ def controller(ego: State, other: State, lane_map:LaneMap):
 
 from src.example.example_agent.car_agent2 import CarAgent2
 from src.scene_verifier.scenario.scenario import Scenario
-from src.example.example_map.simple_map2 import SimpleMap3, SimpleMap4, SimpleMap5, SimpleMap6, SimpleMap7
+from src.example.example_map.simple_map2 import SimpleMap3, SimpleMap4, SimpleMap5, SimpleMap6
 from src.plotter.plotter2D import *
 from src.example.example_sensor.fake_sensor import FakeSensor2
 
@@ -65,8 +65,8 @@ if __name__ == "__main__":
     scenario.set_sensor(FakeSensor2())
     scenario.set_init(
         [
-            [[15, 0, 0, 0.5],[15, 0, 0, 0.5]], 
-            [[0, -0.2, 0, 1.0],[0.05, 0.2, 0, 1.0]],
+            [[10, 0, 0, 0.5],[10, 0, 0, 0.5]], 
+            [[0, -0.2, 0, 1.0],[0.2, 0.2, 0, 1.0]],
         ],
         [
             (VehicleMode.Normal, LaneMode.Lane1),
@@ -74,13 +74,15 @@ if __name__ == "__main__":
         ]
     )
     # res_list = scenario.simulate_multi(40,10)
-    traces = scenario.verify(40)
+    # traces = scenario.verify(40)
 
-    fig = plt.figure(2)
-    fig = plot_reachtube_tree(traces, 'car1', 0, [2], 'b', fig)
-    fig = plot_reachtube_tree(traces, 'car2', 0, [2], 'r', fig)
+    # fig = plt.figure(2)
+    # fig = plot_reachtube_tree(traces, 'car1', 1, [2], 'b', fig)
+    # fig = plot_reachtube_tree(traces, 'car2', 1, [2], 'r', fig)
     # for traces in res_list:
     #     fig = plot_simulation_tree(traces, 'car1', 1, [2], 'b', fig)
     #     fig = plot_simulation_tree(traces, 'car2', 1, [2], 'r', fig)
+
+    fig = plot_map(SimpleMap6(), color='b')
 
     plt.show()

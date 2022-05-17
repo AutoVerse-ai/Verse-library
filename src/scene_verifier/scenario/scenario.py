@@ -130,6 +130,7 @@ class Scenario:
             for agent_id in node.agent:
                 all_agent_state[agent_id] = (node.trace[agent_id][idx*2:idx*2+2], node.mode[agent_id])
             hits, is_contain = self.check_guard_hit(all_agent_state)
+            # print(idx, is_contain)
             if hits != []:
                 guard_hits.append((hits, all_agent_state, idx))
                 guard_hit_bool = True
