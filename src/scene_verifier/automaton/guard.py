@@ -407,10 +407,12 @@ class GuardExpressionAst:
             phi0 = lane_seg.start_phase + wrap_to_pi(phi0 - lane_seg.start_phase)
             phi1 = lane_seg.start_phase + wrap_to_pi(phi1 - lane_seg.start_phase)
             longitudinal_low = min(
-                lane_seg.direction * (phi0 - lane_seg.start_phase)*lane_seg.radius
+                lane_seg.direction * (phi0 - lane_seg.start_phase)*lane_seg.radius,
+                lane_seg.direction * (phi1 - lane_seg.start_phase)*lane_seg.radius
             ) + lane_seg.longitudinal_start
             longitudinal_high = max(
-                lane_seg.direction * (phi0 - lane_seg.start_phase)*lane_seg.radius
+                lane_seg.direction * (phi0 - lane_seg.start_phase)*lane_seg.radius,
+                lane_seg.direction * (phi1 - lane_seg.start_phase)*lane_seg.radius
             ) + lane_seg.longitudinal_start
 
             assert longitudinal_high >= longitudinal_low

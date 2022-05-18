@@ -47,7 +47,7 @@ def controller(ego: State, other: State, lane_map:LaneMap):
     return output
 
 
-from src.example.example_agent.car_agent2 import CarAgent2
+from src.example.example_agent.car_agent import CarAgent
 from src.scene_verifier.scenario.scenario import Scenario
 from src.example.example_map.simple_map2 import SimpleMap3
 from src.plotter.plotter2D import *
@@ -60,9 +60,9 @@ if __name__ == "__main__":
     input_code_name = 'example_two_car_lane_switch2.py'
     scenario = Scenario()
 
-    car = CarAgent2('car1', file_name=input_code_name)
+    car = CarAgent('car1', file_name=input_code_name)
     scenario.add_agent(car)
-    car = CarAgent2('car2', file_name=input_code_name)
+    car = CarAgent('car2', file_name=input_code_name)
     scenario.add_agent(car)
     scenario.add_map(SimpleMap3())
     scenario.set_sensor(FakeSensor2())

@@ -44,7 +44,7 @@ def controller(ego:State, other:State, lane_map:LaneMap):
 
     return output
 
-from src.example.example_agent.car_agent2 import CarAgent2
+from src.example.example_agent.car_agent import CarAgent
 from src.scene_verifier.scenario.scenario import Scenario
 from src.example.example_map.simple_map2 import SimpleMap3, SimpleMap4, SimpleMap5, SimpleMap6
 from src.plotter.plotter2D import *
@@ -57,15 +57,15 @@ if __name__ == "__main__":
     input_code_name = 'example_two_car_lane_switch3.py'
     scenario = Scenario()
 
-    car = CarAgent2('car1', file_name=input_code_name)
+    car = CarAgent('car1', file_name=input_code_name)
     scenario.add_agent(car)
-    car = CarAgent2('car2', file_name=input_code_name)
+    car = CarAgent('car2', file_name=input_code_name)
     scenario.add_agent(car)
     scenario.add_map(SimpleMap6())
     scenario.set_sensor(FakeSensor2())
     scenario.set_init(
         [
-            [[10, 0, 0, 0.5],[10, 0, 0, 0.5]], 
+            [[23, 10, 1.57, 0.5],[23, 10, 1.57, 0.5]], 
             [[0, -0.2, 0, 1.0],[0.2, 0.2, 0, 1.0]],
         ],
         [
@@ -77,7 +77,7 @@ if __name__ == "__main__":
     traces = scenario.verify(40)
 
     fig = plt.figure(2)
-    fig = plot_map(SimpleMap6(), 'g', fig)
+    # fig = plot_map(SimpleMap6(), 'g', fig)
     fig = plot_reachtube_tree(traces, 'car1', 1, [2], 'b', fig)
     fig = plot_reachtube_tree(traces, 'car2', 1, [2], 'r', fig)
     # for traces in res_list:

@@ -1,6 +1,9 @@
-from src.scene_verifier.agents.base_agent import BaseAgent
+from typing import Tuple
+
 import numpy as np 
 from scipy.integrate import ode
+
+from src.scene_verifier.agents.base_agent import BaseAgent
 from src.scene_verifier.map.lane_map import LaneMap
 
 class CarAgent(BaseAgent):
@@ -17,25 +20,24 @@ class CarAgent(BaseAgent):
         v_dot = a 
         return [x_dot, y_dot, theta_dot, v_dot]
 
-    def action_handler(self, mode, state, lane_map:LaneMap):
+    def action_handler(self, mode, state, lane_map:LaneMap)->Tuple[float, float]:
         x,y,theta,v = state
         vehicle_mode = mode[0]
         vehicle_lane = mode[1]
-        lane_parameter = lane_map.lane_geometry(vehicle_lane)
+        vehicle_pos = np.array([x,y])
         if vehicle_mode == "Normal":
-            d = -y+lane_parameter
+            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
         elif vehicle_mode == "SwitchLeft":
-            d = -y+3+lane_parameter
+            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos) + 3
         elif vehicle_mode == "SwitchRight":
-            d = -y-3+lane_parameter
-        
-        psi = -theta
+            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos) - 3
+        psi = lane_map.get_lane_heading(vehicle_lane, vehicle_pos)-theta
         steering = psi + np.arctan2(0.45*d, v)
         steering = np.clip(steering, -0.61, 0.61)
         a = 0
         return steering, a  
 
-    def TC_simulate(self, mode, initialCondition, time_bound, lane_map:LaneMap=None):
+    def TC_simulate(self, mode, initialCondition, time_bound, lane_map:LaneMap=None)->np.ndarray:
         mode = mode.split(',')
         time_step = 0.01
         time_bound = float(time_bound)
