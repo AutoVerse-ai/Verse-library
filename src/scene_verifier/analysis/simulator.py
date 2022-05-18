@@ -75,6 +75,8 @@ class Simulator:
             # copy the traces that are not under transition
             for transition in transitions:
                 transit_agent_idx, src_mode, dest_mode, next_init, idx = transition
+                if dest_mode is None:
+                    continue
                 # next_node = AnalysisTreeNode(trace = {},init={},mode={},agent={}, child = [], start_time = 0)
                 next_node_mode = copy.deepcopy(node.mode) 
                 next_node_mode[transit_agent_idx] = dest_mode 

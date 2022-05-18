@@ -73,12 +73,16 @@ class Verifier:
             for transition in all_possible_transitions:
                 transit_agent_idx, src_mode, dest_mode, next_init, idx = transition 
                 start_idx, end_idx = idx
- 
+                
                 truncated_trace = {}
                 for agent_idx in node.agent:
                     truncated_trace[agent_idx] = node.trace[agent_idx][start_idx*2:]
                 if end_idx > max_end_idx:
                     max_end_idx = end_idx
+                
+                if dest_mode is None:
+                    continue
+                
                 next_node_mode = copy.deepcopy(node.mode) 
                 next_node_mode[transit_agent_idx] = dest_mode 
                 next_node_agent = node.agent 

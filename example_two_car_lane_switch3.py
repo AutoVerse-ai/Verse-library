@@ -9,6 +9,7 @@ class VehicleMode(Enum):
     Brake = auto()
 
 class LaneMode(Enum):
+    pass
     Lane0 = auto()
     Lane1 = auto()
     Lane2 = auto()
@@ -61,7 +62,7 @@ if __name__ == "__main__":
     scenario.add_agent(car)
     car = CarAgent('car2', file_name=input_code_name)
     scenario.add_agent(car)
-    scenario.add_map(SimpleMap6())
+    scenario.set_map(SimpleMap6())
     scenario.set_sensor(FakeSensor2())
     scenario.set_init(
         [

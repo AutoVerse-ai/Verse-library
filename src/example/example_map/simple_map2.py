@@ -4,6 +4,18 @@ from src.scene_verifier.map.lane import Lane
 
 import numpy as np
 
+class SimpleMap2(LaneMap):
+    def __init__(self):
+        super().__init__()
+        segment0 = StraightLane(
+            'seg0',
+            [0,0],
+            [100,0],
+            3
+        )
+        lane0 = Lane('Lane0', [segment0])
+        self.add_lanes([lane0])
+
 class SimpleMap3(LaneMap):
     def __init__(self):
         super().__init__()
@@ -30,54 +42,6 @@ class SimpleMap3(LaneMap):
         lane2 = Lane('Lane2', [segment2])
         # segment2 = LaneSegment('Lane1', 3)
         # self.add_lanes([segment1,segment2])
-        self.add_lanes([lane0, lane1, lane2])
-        self.left_lane_dict[lane1.id].append(lane0.id)
-        self.left_lane_dict[lane2.id].append(lane1.id)
-        self.right_lane_dict[lane0.id].append(lane1.id)
-        self.right_lane_dict[lane1.id].append(lane2.id)
-
-class SimpleMap4(LaneMap):
-    def __init__(self):
-        super().__init__()
-        segment0 = StraightLane(
-            'Seg0',
-            [0,3],
-            [30,3],
-            3
-        )
-        segment1 = StraightLane(
-            'Seg1',
-            [30,3], 
-            [50,23],
-            3
-        )
-        lane0 = Lane('Lane0', [segment0, segment1])
-        segment0 = StraightLane(
-            'seg0',
-            [0,0],
-            [33,0],
-            3
-        )
-        segment1 = StraightLane(
-            'seg0',
-            [33,0],
-            [53,20],
-            3
-        )
-        lane1 = Lane('Lane1', [segment0, segment1])
-        segment0 = StraightLane(
-            'seg0',
-            [0,-3],
-            [36,-3],
-            3
-        )
-        segment1 = StraightLane(
-            'seg0',
-            [36,-3],
-            [56,17],
-            3
-        )
-        lane2 = Lane('Lane2', [segment0, segment1])
         self.add_lanes([lane0, lane1, lane2])
         self.left_lane_dict[lane1.id].append(lane0.id)
         self.left_lane_dict[lane2.id].append(lane1.id)

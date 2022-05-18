@@ -1,6 +1,7 @@
 from typing import Tuple
 import copy
 import itertools
+import warnings
 
 import numpy as np
 
@@ -26,11 +27,26 @@ class Scenario:
     def set_sensor(self, sensor):
         self.sensor = sensor
 
-    def add_map(self, lane_map:LaneMap):
+    def set_map(self, lane_map:LaneMap):
         self.map = lane_map
+        # Update the lane mode field in the agent
+        for agent_id in self.agent_dict:
+            agent = self.agent_dict[agent_id]
+            self.update_agent_lane_mode(agent, lane_map)
 
     def add_agent(self, agent:BaseAgent):
+        if self.map is not None:
+            # Update the lane mode field in the agent
+            self.update_agent_lane_mode(agent, self.map)
         self.agent_dict[agent.id] = agent
+
+    def update_agent_lane_mode(self, agent: BaseAgent, lane_map: LaneMap):
+        for lane_id in lane_map.lane_dict:
+            if lane_id not in agent.controller.modes['LaneMode']:
+                agent.controller.modes['LaneMode'].append(lane_id)
+        mode_vals = list(agent.controller.modes.values())
+        agent.controller.vertices = list(itertools.product(*mode_vals))
+        agent.controller.vertexStrings = [','.join(elem) for elem in agent.controller.vertices]
 
     def set_init(self, init_list, init_mode_list):
         assert len(init_list) == len(self.agent_dict)
@@ -147,6 +163,9 @@ class Scenario:
                 if agent_id not in reset_dict:
                     reset_dict[agent_id] = {}
                     reset_idx_dict[agent_id] = {}
+                if not dest_list:
+                    warnings.warn(f"Guard hit for mode {node.mode[agent_id]} for agent {agent_id} without available next mode")
+                    dest_list.append(None)
                 for dest in dest_list:
                     if dest not in reset_dict[agent_id]:
                         reset_dict[agent_id][dest] = []
@@ -239,9 +258,13 @@ class Scenario:
                             for cts_variable in continuous_variable_dict:
                                 tmp = tmp.replace(cts_variable, str(continuous_variable_dict[cts_variable]))
                             next_init[i] = eval(tmp)
-                    all_dest = itertools.product(*possible_dest)
+                    all_dest = list(itertools.product(*possible_dest))
+                    if not all_dest:
+                        warnings.warn(f"Guard hit for mode {agent_mode} for agent {agent_id} without available next mode")
+                        all_dest.append(None)
                     for dest in all_dest:
-                        dest = ','.join(dest)
+                        if dest is not None:
+                            dest = ','.join(dest)
                         next_transition = (
                             agent_id, agent_mode, dest, next_init, 
                         )
