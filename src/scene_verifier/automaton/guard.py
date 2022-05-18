@@ -14,7 +14,7 @@ import numpy as np
 
 from src.scene_verifier.map.lane_map import LaneMap
 from src.scene_verifier.map.lane_segment import AbstractLane
-
+from src.scene_verifier.utils.utils import *
 class LogicTreeNode:
     def __init__(self, data, child = [], val = None, mode_guard = None):
         self.data = data 
@@ -315,6 +315,41 @@ class GuardExpressionAst:
                         # Replace the corresponding function call in ast
                         root = ast.parse(tmp_var_name).body[0].value
                         return True, root
+                    elif func.attr == 'get_longitudinal_position':
+                        # Get function arguments
+                        arg0_node = root.args[0]
+                        arg1_node = root.args[1]
+                        assert isinstance(arg0_node, ast.Attribute)
+                        arg0_var = arg0_node.value.id + '.' + arg0_node.attr
+                        vehicle_lane = disc_var_dict[arg0_var]
+                        assert isinstance(arg1_node, ast.List)
+                        arg1_lower = []
+                        arg1_upper = []
+                        for elt in arg1_node.elts:
+                            if isinstance(elt, ast.Attribute):
+                                var = elt.value.id + '.' + elt.attr
+                                arg1_lower.append(cont_var_dict[var][0])
+                                arg1_upper.append(cont_var_dict[var][1])   
+                        vehicle_pos = (arg1_lower, arg1_upper)
+
+                        # Get corresponding lane segments with respect to the set of vehicle pos
+                        lane_seg1 = lane_map.get_lane_segment(vehicle_lane, arg1_lower)
+                        lane_seg2 = lane_map.get_lane_segment(vehicle_lane, arg1_upper)
+
+                        # Compute the set of possible longitudinal values with respect to all possible segments
+                        longitudinal_set1 = self._handle_longitudinal_set(lane_seg1, np.array(vehicle_pos))
+                        longitudinal_set2 = self._handle_longitudinal_set(lane_seg2, np.array(vehicle_pos))
+
+                        # Use the union of two sets as the set of possible longitudinal positions
+                        longitudinal_set = [min(longitudinal_set1[0], longitudinal_set2[0]), max(longitudinal_set1[1], longitudinal_set2[1])]
+                        
+                        # Construct the tmp variable
+                        tmp_var_name = f'tmp_variable{len(cont_var_dict)+1}'
+                        # Add the tmp variable to the cont var dict
+                        cont_var_dict[tmp_var_name] = longitudinal_set
+                        # Replace the corresponding function call in ast
+                        root = ast.parse(tmp_var_name).body[0].value
+                        return True, root
                     else:
                         raise ValueError(f'Node type {func} from {astunparse.unparse(func)} is not supported')
                 else:
@@ -334,6 +369,55 @@ class GuardExpressionAst:
         else:
             raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
 
+    def _handle_longitudinal_set(self, lane_seg: AbstractLane, position: np.ndarray) -> List[float]:
+        if lane_seg.type == "Straight":
+            # Delta lower
+            delta0 = position[0,:] - lane_seg.start
+            # Delta upper
+            delta1 = position[1,:] - lane_seg.start
+
+            longitudinal_low = min(delta0[0]*lane_seg.direction[0], delta1[0]*lane_seg.direction[0]) + \
+                min(delta0[1]*lane_seg.direction[1], delta1[1]*lane_seg.direction[1])
+            longitudinal_high = max(delta0[0]*lane_seg.direction[0], delta1[0]*lane_seg.direction[0]) + \
+                max(delta0[1]*lane_seg.direction[1], delta1[1]*lane_seg.direction[1])
+            longitudinal_low += lane_seg.longitudinal_start
+            longitudinal_high += lane_seg.longitudinal_start
+
+            assert longitudinal_high >= longitudinal_low
+            return longitudinal_low, longitudinal_high            
+        elif lane_seg.type == "Circular":
+            # Delta lower
+            delta0 = position[0,:] - lane_seg.center
+            # Delta upper
+            delta1 = position[1,:] - lane_seg.center
+
+            phi0 = np.min([
+                np.arctan2(delta0[1], delta0[0]),
+                np.arctan2(delta0[1], delta1[0]),
+                np.arctan2(delta1[1], delta0[0]),
+                np.arctan2(delta1[1], delta1[0]),
+            ])
+            phi1 = np.max([
+                np.arctan2(delta0[1], delta0[0]),
+                np.arctan2(delta0[1], delta1[0]),
+                np.arctan2(delta1[1], delta0[0]),
+                np.arctan2(delta1[1], delta1[0]),
+            ])
+
+            phi0 = lane_seg.start_phase + wrap_to_pi(phi0 - lane_seg.start_phase)
+            phi1 = lane_seg.start_phase + wrap_to_pi(phi1 - lane_seg.start_phase)
+            longitudinal_low = min(
+                lane_seg.direction * (phi0 - lane_seg.start_phase)*lane_seg.radius
+            ) + lane_seg.longitudinal_start
+            longitudinal_high = max(
+                lane_seg.direction * (phi0 - lane_seg.start_phase)*lane_seg.radius
+            ) + lane_seg.longitudinal_start
+
+            assert longitudinal_high >= longitudinal_low
+            return longitudinal_low, longitudinal_high
+        else:
+            raise ValueError(f'Lane segment with type {lane_seg.type} is not supported')
+
     def _handle_lateral_set(self, lane_seg: AbstractLane, position: np.ndarray) -> List[float]:
         if lane_seg.type == "Straight":
             # Delta lower
@@ -345,6 +429,7 @@ class GuardExpressionAst:
                 min(delta0[1]*lane_seg.direction_lateral[1], delta1[1]*lane_seg.direction_lateral[1])
             lateral_high = max(delta0[0]*lane_seg.direction_lateral[0], delta1[0]*lane_seg.direction_lateral[0]) + \
                 max(delta0[1]*lane_seg.direction_lateral[1], delta1[1]*lane_seg.direction_lateral[1])
+            assert lateral_high >= lateral_low
             return lateral_low, lateral_high
         elif lane_seg.type == "Circular":
             dx = np.max([position[0,0]-lane_seg.center[0],0,lane_seg.center[0]-position[1,0]])
@@ -356,7 +441,8 @@ class GuardExpressionAst:
             r_high = np.linalg.norm([dx, dy])
             lateral_low = min(lane_seg.direction*(lane_seg.radius - r_high),lane_seg.direction*(lane_seg.radius - r_low))
             lateral_high = max(lane_seg.direction*(lane_seg.radius - r_high),lane_seg.direction*(lane_seg.radius - r_low))
-            print(lateral_low, lateral_high)
+            # print(lateral_low, lateral_high)
+            assert lateral_high >= lateral_low
             return lateral_low, lateral_high
         else:
             raise ValueError(f'Lane segment with type {lane_seg.type} is not supported')

@@ -102,7 +102,7 @@ class SimpleMap5(LaneMap):
         segment2 = StraightLane(
             'Seg2',
             [25,13], 
-            [100,13],
+            [50,13],
             3
         )
         lane0 = Lane('Lane0', [segment0, segment1, segment2])
@@ -121,7 +121,7 @@ class SimpleMap5(LaneMap):
         segment2 = StraightLane(
             'seg2',
             [27,10],
-            [100,10],
+            [50,10],
             3
         )
         lane1 = Lane('Lane1', [segment0, segment1, segment2])
@@ -140,7 +140,7 @@ class SimpleMap5(LaneMap):
         segment2 = StraightLane(
             'seg2',
             [29,7],
-            [100,7],
+            [50,7],
             3
         )
         lane2 = Lane('Lane2', [segment0, segment1, segment2])

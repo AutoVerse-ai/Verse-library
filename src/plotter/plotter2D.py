@@ -41,10 +41,10 @@ def plot(
 def plot_reachtube_tree(root, agent_id, x_dim: int=0, y_dim_list: List[int]=[1], color='b', fig = None):
     if fig is None:
         fig = plt.figure()
-    
+    ax = fig.gca()
     queue = [root]
-    x_lim = (float('inf'), -float('inf')) 
-    y_lim = (float('inf'), -float('inf'))
+    x_lim = ax.get_xlim()
+    y_lim = ax.get_ylim()
     while queue != []:
         node = queue.pop(0)
         traces = node.trace
@@ -81,8 +81,8 @@ def plot_simulation_tree(root, agent_id, x_dim: int=0, y_dim_list: List[int]=[1]
         fig = plt.figure()
     ax = fig.gca()
     queue = [root]
-    x_min, x_max = (float('inf'), -float('inf')) 
-    y_min, y_max = (float('inf'), -float('inf'))
+    x_min, x_max = ax.get_xlim()
+    y_min, y_max = ax.get_ylim()
     while queue != []:
         node = queue.pop(0)
         traces = node.trace

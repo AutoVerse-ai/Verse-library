@@ -64,11 +64,11 @@ class LaneMap:
             lane_idx = lane_idx.name
         return self.lane_dict[lane_idx].get_geometry()
 
-    def get_longitudinal(self, lane_idx:str, position:np.ndarray) -> float:
+    def get_longitudinal_position(self, lane_idx:str, position:np.ndarray) -> float:
         if not isinstance(position, np.ndarray):
             position = np.array(position)
         lane = self.lane_dict[lane_idx]
-        return lane.get_longitudinal(position)
+        return lane.get_longitudinal_position(position)
 
     def get_lateral_distance(self, lane_idx:str, position:np.ndarray) -> float:
         if not isinstance(position, np.ndarray):
@@ -89,4 +89,5 @@ class LaneMap:
         if not isinstance(position, np.ndarray):
             position = np.array(position)
         lane = self.lane_dict[lane_idx]
-        return lane.get_lane_segment(position)
+        seg_idx, segment = lane.get_lane_segment(position)
+        return segment

@@ -22,6 +22,7 @@ class AbstractLane(object):
     DEFAULT_WIDTH: float = 4
     VEHICLE_LENGTH: float = 5
     length: float = 0
+    longitudinal_start: float = 0
     line_types: List["LineType"]
 
     def __init__(self, id:str):
@@ -172,6 +173,7 @@ class StraightLane(AbstractLane):
         self.priority = priority
         self.speed_limit = speed_limit
         self.type = 'Straight'
+        self.longitudinal_start = 0
 
     def position(self, longitudinal: float, lateral: float) -> np.ndarray:
         return self.start + longitudinal * self.direction + lateral * self.direction_lateral
@@ -239,6 +241,7 @@ class CircularLane(AbstractLane):
         self.priority = priority
         self.speed_limit = speed_limit
         self.type = 'Circular'
+        self.longitudinal_start = 0
 
     def position(self, longitudinal: float, lateral: float) -> np.ndarray:
         phi = self.direction * longitudinal / self.radius + self.start_phase
