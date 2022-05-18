@@ -89,9 +89,9 @@ if __name__ == "__main__":
     scenario.set_sensor(FakeSensor2())
     scenario.set_init(
         [
-            [[10, 0, 0, 0.5],[10, 0, 0, 0.5]], 
-            [[-0.2, -0.2, 0, 1.0],[0.2, 0.2, 0, 1.0]],
-            [[20, 3, 0, 0], [20, 3, 0, 0]],
+            [10, 0, 0, 0.5], 
+            [-0.2, -0.2, 0, 1.0],
+            [20, 3, 0, 0],
         ],
         [
             (VehicleMode.Normal, LaneMode.Lane1),
@@ -100,8 +100,8 @@ if __name__ == "__main__":
         ]
     )
     # simulator = Simulator()
-    # traces = scenario.simulate(40)
-    traces = scenario.verify(40)
+    traces = scenario.simulate(40)
+    # traces = scenario.verify(40)
 
     fig = plt.figure()
     fig = plot_tree(traces, 'car1', 1, [2], 'b', fig)

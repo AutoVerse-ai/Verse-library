@@ -31,6 +31,7 @@ class CarAgent(BaseAgent):
         lane_parameter = lane_map.lane_geometry(vehicle_lane)
         if vehicle_mode == "Normal":
             for i in range(len(t)):
+                print(init)
                 x,y,theta,v = init
                 d = -y+lane_parameter
                 psi = -theta

@@ -10,4 +10,4 @@ class SignAgent(BaseAgent):
         number_points = int(np.ceil(float(time_horizon)/time_step))
         t = [i*time_step for i in range(0,number_points)]
         trace = [[0] + init] + [[i + time_step] + init for i in t]
-        return trace
+        return np.array(trace)
