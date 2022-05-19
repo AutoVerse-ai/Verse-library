@@ -31,6 +31,10 @@ def controller(ego:State, other:State, lane_map:LaneMap):
         and lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) < 3 \
         and ego.lane_mode == other.lane_mode:
             output.vehicle_mode = VehicleMode.Brake
-    
-    return output
+    elif ego.vehicle_mode == VehicleMode.Brake:
+        if lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) > 10 \
+            or ego.lane_mode != other.lane_mode:
+            output.vehicle_mode = VehicleMode.Normal
 
+    return output
+    
