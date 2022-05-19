@@ -15,9 +15,9 @@ class Verifier:
         self.verification_result = None 
 
     def compute_full_reachtube(
-        self, 
-        init_list, 
-        init_mode_list, 
+        self,
+        init_list: List[float],
+        init_mode_list: List[str],
         agent_list:List[BaseAgent], 
         transition_graph, 
         time_horizon, 
@@ -27,7 +27,6 @@ class Verifier:
         for i, agent in enumerate(agent_list):
             root.init[agent.id] = init_list[i]
             init_mode = [elem.name for elem in init_mode_list[i]]
-            init_mode =','.join(init_mode)
             root.mode[agent.id] = init_mode 
             root.agent[agent.id] = agent 
             root.type = 'reachtube'

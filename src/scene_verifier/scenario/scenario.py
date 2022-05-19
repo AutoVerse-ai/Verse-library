@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, List, Dict, Any
 import copy
 import itertools
 import warnings
@@ -199,7 +199,7 @@ class Scenario:
         rect = reset_expr.apply_reset_continuous(agent, continuous_variable_dict, self.map)
         return dest, rect
 
-    def get_all_transition(self, state_dict):
+    def get_all_transition(self, state_dict: Dict[str, Tuple[List[float], List[str]]]):
         lane_map = self.map
         satisfied_guard = []
         for agent_id in state_dict:
@@ -230,7 +230,7 @@ class Scenario:
                 if guard_satisfied:
                     # If the guard can be satisfied, handle resets
                     next_init = agent_state
-                    dest = agent_mode.split(',')
+                    dest = copy.deepcopy(agent_mode)
                     possible_dest = [[elem] for elem in dest]
                     for reset in reset_list:
                         # Specify the destination mode
@@ -263,8 +263,6 @@ class Scenario:
                         warnings.warn(f"Guard hit for mode {agent_mode} for agent {agent_id} without available next mode")
                         all_dest.append(None)
                     for dest in all_dest:
-                        if dest is not None:
-                            dest = ','.join(dest)
                         next_transition = (
                             agent_id, agent_mode, dest, next_init, 
                         )

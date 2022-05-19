@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, List
 
 import numpy as np 
 from scipy.integrate import ode
@@ -56,8 +56,7 @@ def controller(ego:State, other:State, lane_map:LaneMap):\n\
         a = 0
         return steering, a  
 
-    def TC_simulate(self, mode, initialCondition, time_bound, lane_map:LaneMap=None)->np.ndarray:
-        mode = mode.split(',')
+    def TC_simulate(self, mode: List[str], initialCondition, time_bound, lane_map:LaneMap=None)->np.ndarray:
         time_step = 0.05
         time_bound = float(time_bound)
         number_points = int(np.ceil(time_bound/time_step))
@@ -89,7 +88,7 @@ class CarAgent(BaseAgent):
         v_dot = a 
         return [x_dot, y_dot, theta_dot, v_dot]
 
-    def action_handler(self, mode, state, lane_map:LaneMap)->Tuple[float, float]:
+    def action_handler(self, mode: List[str], state, lane_map:LaneMap)->Tuple[float, float]:
         x,y,theta,v = state
         vehicle_mode = mode[0]
         vehicle_lane = mode[1]
@@ -114,8 +113,7 @@ class CarAgent(BaseAgent):
         steering = np.clip(steering, -0.61, 0.61)
         return steering, a  
 
-    def TC_simulate(self, mode, initialCondition, time_bound, lane_map:LaneMap=None)->np.ndarray:
-        mode = mode.split(',')
+    def TC_simulate(self, mode: List[str], initialCondition, time_bound, lane_map:LaneMap=None)->np.ndarray:
         time_step = 0.05
         time_bound = float(time_bound)
         number_points = int(np.ceil(time_bound/time_step))
