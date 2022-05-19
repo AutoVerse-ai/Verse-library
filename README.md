@@ -1,4 +1,4 @@
-# GraphGeneration
+# DryVR++
 ## Installation
 The package requires python 3.8+. All the required packages can be installed through
 

@@ -31,14 +31,14 @@ class State:
         self.data = []
 
 if __name__ == "__main__":
-    input_code_name = 'example_controller2.py'
+    input_code_name = 'example_controller1.py'
     scenario = Scenario()
 
     car = CarAgent('car1', file_name=input_code_name)
     scenario.add_agent(car)
     car = CarAgent('car2', file_name=input_code_name)
     scenario.add_agent(car)
-    tmp_map = SimpleMap2()
+    tmp_map = SimpleMap6()
     scenario.set_map(tmp_map)
     scenario.set_sensor(FakeSensor2())
     scenario.set_init(
@@ -47,20 +47,20 @@ if __name__ == "__main__":
             [[10, 0, 0, 0.5],[10, 0, 0, 0.5]], 
         ],
         [
-            (VehicleMode.Normal, LaneMode.Lane0),
-            (VehicleMode.Normal, LaneMode.Lane0),
+            (VehicleMode.Normal, LaneMode.Lane1),
+            (VehicleMode.Normal, LaneMode.Lane1),
         ]
     )
     res_list = scenario.simulate_multi(40,1)
     # traces = scenario.verify(40)
 
     fig = plt.figure(2)
-    # fig = plot_map(tmp_map, 'g', fig)
+    fig,x_lim,y_lim = plot_map(tmp_map, 'g', fig)
     # fig = plot_reachtube_tree(traces, 'car1', 1, [2], 'b', fig)
     # fig = plot_reachtube_tree(traces, 'car2', 1, [2], 'r', fig)
     for traces in res_list:
-        fig = plot_simulation_tree(traces, 'car1', 1, [2], 'b', fig)
-        fig = plot_simulation_tree(traces, 'car2', 1, [2], 'r', fig)
+        fig,x_lim,y_lim = plot_simulation_tree(traces, 'car1', 1, [2], 'b', fig,x_lim,y_lim)
+        fig,x_lim,y_lim = plot_simulation_tree(traces, 'car2', 1, [2], 'r', fig,x_lim,y_lim)
 
 
     plt.show()
