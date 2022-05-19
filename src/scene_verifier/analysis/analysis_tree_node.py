@@ -16,7 +16,8 @@ class AnalysisTreeNode:
         agent={},
         child=[],
         start_time = 0,
-        ndigits = 10
+        ndigits = 10,
+        type = 'simtrace'
     ):
         self.trace:Dict = trace
         self.init:Dict = init
@@ -24,3 +25,4 @@ class AnalysisTreeNode:
         self.agent:Dict = agent
         self.child:List[AnalysisTreeNode] = child
         self.start_time:float = round(start_time,ndigits)
+        self.type:str = type

@@ -20,7 +20,7 @@ def plot(
 ):
     if fig is None:
         fig = plt.figure()
-    ax = plt.gca()
+    ax = fig.gca()
     x_min, x_max = x_lim
     y_min, y_max = y_lim
     for rect in data:
@@ -38,13 +38,11 @@ def plot(
     ax.set_ylim([y_min-1, y_max+1])
     return fig, (x_min, x_max), (y_min, y_max)
 
-def plot_tree(root, agent_id, x_dim: int=0, y_dim_list: List[int]=[1], color='b', fig = None):
+def plot_reachtube_tree(root, agent_id, x_dim: int=0, y_dim_list: List[int]=[1], color='b', fig = None, x_lim = (float('inf'),-float('inf')),y_lim = (float('inf'),-float('inf'))):
     if fig is None:
         fig = plt.figure()
-    
+    ax = fig.gca()
     queue = [root]
-    x_lim = (float('inf'), -float('inf')) 
-    y_lim = (float('inf'), -float('inf'))
     while queue != []:
         node = queue.pop(0)
         traces = node.trace
@@ -56,4 +54,48 @@ def plot_tree(root, agent_id, x_dim: int=0, y_dim_list: List[int]=[1], color='b'
 
         queue += node.child
 
-    return fig
+    return fig,x_lim,y_lim
+
+def plot_map(map, color = 'b', fig = None, x_lim = (float('inf'),-float('inf')),y_lim = (float('inf'),-float('inf'))):
+    if fig is None:
+        fig = plt.figure()
+    ax = fig.gca()
+    for lane_idx in map.lane_dict:
+        lane = map.lane_dict[lane_idx]
+        for lane_seg in lane.segment_list:
+            if lane_seg.type == 'Straight':
+                ax.plot([lane_seg.start[0], lane_seg.end[0]],[lane_seg.start[1], lane_seg.end[1]], color) 
+            elif lane_seg.type == "Circular":
+                phase_array = np.linspace(start=lane_seg.start_phase, stop=lane_seg.end_phase, num=100)
+                x = np.cos(phase_array)*lane_seg.radius + lane_seg.center[0]
+                y = np.sin(phase_array)*lane_seg.radius + lane_seg.center[1]
+                ax.plot(x,y,color)
+            else:
+                raise ValueError(f'Unknown lane segment type {lane_seg.type}')
+    return fig, ax.get_xlim(), ax.get_ylim()
+
+def plot_simulation_tree(root, agent_id, x_dim: int=0, y_dim_list: List[int]=[1], color='b', fig = None, x_lim = (float('inf'),-float('inf')),y_lim = (float('inf'),-float('inf'))):
+    if fig is None:
+        fig = plt.figure()
+    ax = fig.gca()
+    x_min, x_max = x_lim
+    y_min, y_max = y_lim
+    
+    queue = [root]
+    while queue != []:
+        node = queue.pop(0)
+        traces = node.trace
+        trace = np.array(traces[agent_id])
+        for y_dim in y_dim_list:
+            ax.plot(trace[:,x_dim], trace[:,y_dim], color)
+            x_min = min(x_min, trace[:,x_dim].min())
+            x_max = max(x_max, trace[:,x_dim].max())
+
+            y_min = min(y_min, trace[:,y_dim].min())
+            y_max = max(y_max, trace[:,y_dim].max())
+
+        queue += node.child
+    ax.set_xlim([x_min-1, x_max+1])
+    ax.set_ylim([y_min-1, y_max+1])
+    
+    return fig, ax.get_xlim(), ax.get_ylim()

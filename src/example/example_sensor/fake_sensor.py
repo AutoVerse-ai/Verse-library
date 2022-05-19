@@ -38,27 +38,33 @@ class FakeSensor2:
             if agent.id == 'car1':
                 set_states_2d(cnts, disc, "ego", state_dict["car1"])
                 set_states_2d(cnts, disc, "other", state_dict["car2"])
-                set_states_2d(cnts, disc, "sign", state_dict["sign"])
+                if "sign" in state_dict:
+                    set_states_2d(cnts, disc, "sign", state_dict["sign"])
             elif agent.id == 'car2':
                 set_states_2d(cnts, disc, "other", state_dict["car1"])
                 set_states_2d(cnts, disc, "ego", state_dict["car2"])
-                set_states_2d(cnts, disc, "sign", state_dict["sign"])
+                if "sign" in state_dict:
+                    set_states_2d(cnts, disc, "sign", state_dict["sign"])
             elif agent.id == 'sign':
                 set_states_2d(cnts, disc, "ego", state_dict["sign"])
                 set_states_2d(cnts, disc, "other", state_dict["car2"])
-                set_states_2d(cnts, disc, "sign", state_dict["sign"])
+                if "sign" in state_dict:
+                    set_states_2d(cnts, disc, "sign", state_dict["sign"])
             return cnts, disc
         else:
             if agent.id == 'car1':
                 set_states_3d(cnts, disc, "ego", state_dict["car1"])
                 set_states_3d(cnts, disc, "other", state_dict["car2"])
-                set_states_3d(cnts, disc, "sign", state_dict["sign"])
+                if "sign" in state_dict:
+                    set_states_2d(cnts, disc, "sign", state_dict["sign"])
             elif agent.id == 'car2':
                 set_states_3d(cnts, disc, "other", state_dict["car1"])
                 set_states_3d(cnts, disc, "ego", state_dict["car2"])
-                set_states_3d(cnts, disc, "sign", state_dict["sign"])
+                if "sign" in state_dict:
+                    set_states_2d(cnts, disc, "sign", state_dict["sign"])
             elif agent.id == 'sign':
                 set_states_3d(cnts, disc, "ego", state_dict["sign"])
                 set_states_3d(cnts, disc, "other", state_dict["car2"])
-                set_states_3d(cnts, disc, "sign", state_dict["sign"])
+                if "sign" in state_dict:
+                    set_states_2d(cnts, disc, "sign", state_dict["sign"])
             return cnts, disc

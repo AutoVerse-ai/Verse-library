@@ -1,5 +1,11 @@
-from enum import Enum,auto
+# Introducing unittests for DryVR++ development process
+# Read more from https://docs.python.org/3/library/unittest.html
 
+# A scenario is created for testing
+from enum import Enum,auto
+import unittest
+
+# Defines the set of possible driving modes of a vehicle
 class VehicleMode(Enum):
     Normal = auto()
     SwitchLeft = auto()
@@ -9,6 +15,7 @@ class VehicleMode(Enum):
 class LaneMode(Enum):
     Lane0 = auto()
 
+# Defines continuous states
 class State:
     x = 0.0
     y = 0.0
@@ -39,7 +46,7 @@ def controller(ego:State):
                 output_vehicle_mode = VehicleMode.Normal
 
     return output_vehicle_mode, output_lane_mode
-        
+
 from src.example.example_agent.car_agent import CarAgent
 from src.scene_verifier.scenario.scenario import Scenario
 from src.example.example_map.simple_map import SimpleMap2
@@ -47,33 +54,30 @@ from src.example.example_sensor.fake_sensor import FakeSensor1
 import matplotlib.pyplot as plt
 import numpy as np
 
-if __name__ == "__main__":
-    input_code_name = 'example_car_lane_switch.py'
-    scenario = Scenario()
-    
-    car = CarAgent('ego', file_name=input_code_name)
-    scenario.add_agent(car)
-    scenario.add_map(SimpleMap2())
-    scenario.set_sensor(FakeSensor1())
-    
-    # simulator = Simulator()
-    scenario.set_init(
-        [[0,3,0,0.5]],
-        [(VehicleMode.Normal, LaneMode.Lane0)]
-    )
 
-    traces = scenario.simulate(
-        40
-    )
+class TestSimulatorMethods(unittest.TestCase):
+    def setUp(self):
+        self.scenario = Scenario()
+        self.car = CarAgent('ego', file_name='example_car_lane_switch.py')
+        #scenario.add_agent(car)
+        # self.scenario.add_map(SimpleMap2())
+        # self.scenario.set_sensor(FakeSensor1())
+        # self.scenario.set_init(
+        #     [[0, 3, 0, 0.5]],
+        #     [(VehicleMode.Normal, LaneMode.Lane0)]
+        # )
+        # self.traces = scenario.simulate(
+        #     10
+        # )
+        #
+        # self.queue = [traces]
 
-    queue = [traces]
-    while queue!=[]:
-        node = queue.pop(0)
-        traces = node.trace
-        agent_id = 'ego'
-        # for agent_id in traces:
-        trace = np.array(traces[agent_id])
-        plt.plot(trace[:,0], trace[:,2], 'b')
-        # if node.child != []:
-        queue += node.child 
-    plt.show()
+    def test_nothing(self):
+        self.assertEqual(5, 5)
+
+    def test_simulator(self):
+        self.assertEqual(self.car.id, 'ego', msg='Checking agent creation')
+
+
+if __name__ == '__main__':
+    unittest.main()

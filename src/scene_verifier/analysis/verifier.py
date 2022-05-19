@@ -30,6 +30,7 @@ class Verifier:
             init_mode =','.join(init_mode)
             root.mode[agent.id] = init_mode 
             root.agent[agent.id] = agent 
+            root.type = 'reachtube'
         self.reachtube_tree_root = root 
         verification_queue = []
         verification_queue.append(root)
@@ -54,8 +55,8 @@ class Verifier:
                                         init,
                                         remain_time,
                                         node.agent[agent_id].TC_simulate,
-                                        'GLOBAL',
-                                        None,
+                                        'PW',
+                                        100,
                                         userConfig.SIMTRACENUM,
                                         lane_map = lane_map
                                         )
@@ -64,7 +65,7 @@ class Verifier:
                     node.trace[agent_id] = trace.tolist()
                     # print("here")
             
-            # Check safety conditions here
+            # TODO: Check safety conditions here
 
             # Get all possible transitions to next mode
             all_possible_transitions = transition_graph.get_all_transition_set(node)
@@ -72,12 +73,16 @@ class Verifier:
             for transition in all_possible_transitions:
                 transit_agent_idx, src_mode, dest_mode, next_init, idx = transition 
                 start_idx, end_idx = idx
- 
+                
                 truncated_trace = {}
                 for agent_idx in node.agent:
                     truncated_trace[agent_idx] = node.trace[agent_idx][start_idx*2:]
                 if end_idx > max_end_idx:
                     max_end_idx = end_idx
+                
+                if dest_mode is None:
+                    continue
+                
                 next_node_mode = copy.deepcopy(node.mode) 
                 next_node_mode[transit_agent_idx] = dest_mode 
                 next_node_agent = node.agent 
@@ -96,7 +101,8 @@ class Verifier:
                     mode = next_node_mode,
                     agent = next_node_agent,
                     child = [],
-                    start_time = next_node_start_time
+                    start_time = next_node_start_time,
+                    type = 'reachtube'
                 )
                 node.child.append(tmp)
                 verification_queue.append(tmp)

@@ -9,9 +9,12 @@ import copy
 
 from z3 import *
 import sympy
-
 import astunparse
+import numpy as np
 
+from src.scene_verifier.map.lane_map import LaneMap
+from src.scene_verifier.map.lane_segment import AbstractLane
+from src.scene_verifier.utils.utils import *
 class LogicTreeNode:
     def __init__(self, data, child = [], val = None, mode_guard = None):
         self.data = data 
@@ -231,50 +234,271 @@ class GuardExpressionAst:
             expr = expr.strip('\n')
             return expr
 
-    def evaluate_guard_disc(self, agent, discrete_variable_dict, lane_map):
+    def evaluate_guard_hybrid(self, agent, discrete_variable_dict, continuous_variable_dict, lane_map:LaneMap):
+        """
+        Handle guard atomics that contains both continuous and hybrid variables
+        Especially, we want to handle function calls that need both continuous and 
+        discrete variables as input 
+        We will perform interval arithmetic based on the function calls to the input and replace the function calls
+        with temp constants with their values stored in the continuous variable dict
+        By doing this, all calls that need both continuous and discrete variables as input will now become only continuous
+        variables. We can then handle these using what we already have for the continous variables
+        """
+        res = True 
+        for i, node in enumerate(self.ast_list):
+            tmp, self.ast_list[i] = self._evaluate_guard_hybrid(node, agent, discrete_variable_dict, continuous_variable_dict, lane_map)
+            res = res and tmp 
+        return res
+
+    def _evaluate_guard_hybrid(self, root, agent, disc_var_dict, cont_var_dict, lane_map:LaneMap):
+        if isinstance(root, ast.Compare): 
+            expr = astunparse.unparse(root)
+            left, root.left = self._evaluate_guard_hybrid(root.left, agent, disc_var_dict, cont_var_dict, lane_map)
+            right, root.comparators[0] = self._evaluate_guard_hybrid(root.comparators[0], agent, disc_var_dict, cont_var_dict, lane_map)
+            return True, root
+        elif isinstance(root, ast.BoolOp):
+            if isinstance(root.op, ast.And):
+                res = True
+                for i, val in enumerate(root.values):
+                    tmp, root.values[i] = self._evaluate_guard_hybrid(val, agent, disc_var_dict, cont_var_dict, lane_map)
+                    res = res and tmp 
+                    if not res:
+                        break 
+                return res, root 
+            elif isinstance(root.op, ast.Or):
+                for val in root.values:
+                    tmp,val = self._evaluate_guard_hybrid(val, agent, disc_var_dict, cont_var_dict, lane_map)
+                    res = res or tmp
+                    if res:
+                        break
+                return res, root  
+        elif isinstance(root, ast.BinOp):
+            left, root.left = self._evaluate_guard_hybrid(root.left, agent, disc_var_dict, cont_var_dict, lane_map)
+            right, root.right = self._evaluate_guard_hybrid(root.right, agent, disc_var_dict, cont_var_dict, lane_map)
+            return True, root
+        elif isinstance(root, ast.Call):
+            if isinstance(root.func, ast.Attribute):
+                func = root.func        
+                if func.value.id == 'lane_map':
+                    if func.attr == 'get_lateral_distance':
+                        # Get function arguments
+                        arg0_node = root.args[0]
+                        arg1_node = root.args[1]
+                        assert isinstance(arg0_node, ast.Attribute)
+                        arg0_var = arg0_node.value.id + '.' + arg0_node.attr
+                        vehicle_lane = disc_var_dict[arg0_var]
+                        assert isinstance(arg1_node, ast.List)
+                        arg1_lower = []
+                        arg1_upper = []
+                        for elt in arg1_node.elts:
+                            if isinstance(elt, ast.Attribute):
+                                var = elt.value.id + '.' + elt.attr
+                                arg1_lower.append(cont_var_dict[var][0])
+                                arg1_upper.append(cont_var_dict[var][1])   
+                        vehicle_pos = (arg1_lower, arg1_upper)
+
+                        # Get corresponding lane segments with respect to the set of vehicle pos
+                        lane_seg1 = lane_map.get_lane_segment(vehicle_lane, arg1_lower)
+                        lane_seg2 = lane_map.get_lane_segment(vehicle_lane, arg1_upper)
+
+                        # Compute the set of possible lateral values with respect to all possible segments
+                        lateral_set1 = self._handle_lateral_set(lane_seg1, np.array(vehicle_pos))
+                        lateral_set2 = self._handle_lateral_set(lane_seg2, np.array(vehicle_pos))
+
+                        # Use the union of two sets as the set of possible lateral positions
+                        lateral_set = [min(lateral_set1[0], lateral_set2[0]), max(lateral_set1[1], lateral_set2[1])]
+                        
+                        # Construct the tmp variable
+                        tmp_var_name = f'tmp_variable{len(cont_var_dict)+1}'
+                        # Add the tmp variable to the cont var dict
+                        cont_var_dict[tmp_var_name] = lateral_set
+                        # Replace the corresponding function call in ast
+                        root = ast.parse(tmp_var_name).body[0].value
+                        return True, root
+                    elif func.attr == 'get_longitudinal_position':
+                        # Get function arguments
+                        arg0_node = root.args[0]
+                        arg1_node = root.args[1]
+                        assert isinstance(arg0_node, ast.Attribute)
+                        arg0_var = arg0_node.value.id + '.' + arg0_node.attr
+                        vehicle_lane = disc_var_dict[arg0_var]
+                        assert isinstance(arg1_node, ast.List)
+                        arg1_lower = []
+                        arg1_upper = []
+                        for elt in arg1_node.elts:
+                            if isinstance(elt, ast.Attribute):
+                                var = elt.value.id + '.' + elt.attr
+                                arg1_lower.append(cont_var_dict[var][0])
+                                arg1_upper.append(cont_var_dict[var][1])   
+                        vehicle_pos = (arg1_lower, arg1_upper)
+
+                        # Get corresponding lane segments with respect to the set of vehicle pos
+                        lane_seg1 = lane_map.get_lane_segment(vehicle_lane, arg1_lower)
+                        lane_seg2 = lane_map.get_lane_segment(vehicle_lane, arg1_upper)
+
+                        # Compute the set of possible longitudinal values with respect to all possible segments
+                        longitudinal_set1 = self._handle_longitudinal_set(lane_seg1, np.array(vehicle_pos))
+                        longitudinal_set2 = self._handle_longitudinal_set(lane_seg2, np.array(vehicle_pos))
+
+                        # Use the union of two sets as the set of possible longitudinal positions
+                        longitudinal_set = [min(longitudinal_set1[0], longitudinal_set2[0]), max(longitudinal_set1[1], longitudinal_set2[1])]
+                        
+                        # Construct the tmp variable
+                        tmp_var_name = f'tmp_variable{len(cont_var_dict)+1}'
+                        # Add the tmp variable to the cont var dict
+                        cont_var_dict[tmp_var_name] = longitudinal_set
+                        # Replace the corresponding function call in ast
+                        root = ast.parse(tmp_var_name).body[0].value
+                        return True, root
+                    else:
+                        raise ValueError(f'Node type {func} from {astunparse.unparse(func)} is not supported')
+                else:
+                    raise ValueError(f'Node type {func} from {astunparse.unparse(func)} is not supported')
+            else:
+                raise ValueError(f'Node type {root.func} from {astunparse.unparse(root.func)} is not supported')   
+        elif isinstance(root, ast.Attribute):
+            return True, root 
+        elif isinstance(root, ast.Constant):
+            return root.value, root 
+        elif isinstance(root, ast.UnaryOp):
+            if isinstance(root.op, ast.USub):
+                res, root.operand = self._evaluate_guard_hybrid(root.operand, agent, disc_var_dict, cont_var_dict, lane_map)
+            else:
+                raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
+            return True, root 
+        else:
+            raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
+
+    def _handle_longitudinal_set(self, lane_seg: AbstractLane, position: np.ndarray) -> List[float]:
+        if lane_seg.type == "Straight":
+            # Delta lower
+            delta0 = position[0,:] - lane_seg.start
+            # Delta upper
+            delta1 = position[1,:] - lane_seg.start
+
+            longitudinal_low = min(delta0[0]*lane_seg.direction[0], delta1[0]*lane_seg.direction[0]) + \
+                min(delta0[1]*lane_seg.direction[1], delta1[1]*lane_seg.direction[1])
+            longitudinal_high = max(delta0[0]*lane_seg.direction[0], delta1[0]*lane_seg.direction[0]) + \
+                max(delta0[1]*lane_seg.direction[1], delta1[1]*lane_seg.direction[1])
+            longitudinal_low += lane_seg.longitudinal_start
+            longitudinal_high += lane_seg.longitudinal_start
+
+            assert longitudinal_high >= longitudinal_low
+            return longitudinal_low, longitudinal_high            
+        elif lane_seg.type == "Circular":
+            # Delta lower
+            delta0 = position[0,:] - lane_seg.center
+            # Delta upper
+            delta1 = position[1,:] - lane_seg.center
+
+            phi0 = np.min([
+                np.arctan2(delta0[1], delta0[0]),
+                np.arctan2(delta0[1], delta1[0]),
+                np.arctan2(delta1[1], delta0[0]),
+                np.arctan2(delta1[1], delta1[0]),
+            ])
+            phi1 = np.max([
+                np.arctan2(delta0[1], delta0[0]),
+                np.arctan2(delta0[1], delta1[0]),
+                np.arctan2(delta1[1], delta0[0]),
+                np.arctan2(delta1[1], delta1[0]),
+            ])
+
+            phi0 = lane_seg.start_phase + wrap_to_pi(phi0 - lane_seg.start_phase)
+            phi1 = lane_seg.start_phase + wrap_to_pi(phi1 - lane_seg.start_phase)
+            longitudinal_low = min(
+                lane_seg.direction * (phi0 - lane_seg.start_phase)*lane_seg.radius,
+                lane_seg.direction * (phi1 - lane_seg.start_phase)*lane_seg.radius
+            ) + lane_seg.longitudinal_start
+            longitudinal_high = max(
+                lane_seg.direction * (phi0 - lane_seg.start_phase)*lane_seg.radius,
+                lane_seg.direction * (phi1 - lane_seg.start_phase)*lane_seg.radius
+            ) + lane_seg.longitudinal_start
+
+            assert longitudinal_high >= longitudinal_low
+            return longitudinal_low, longitudinal_high
+        else:
+            raise ValueError(f'Lane segment with type {lane_seg.type} is not supported')
+
+    def _handle_lateral_set(self, lane_seg: AbstractLane, position: np.ndarray) -> List[float]:
+        if lane_seg.type == "Straight":
+            # Delta lower
+            delta0 = position[0,:] - lane_seg.start
+            # Delta upper
+            delta1 = position[1,:] - lane_seg.start
+
+            lateral_low = min(delta0[0]*lane_seg.direction_lateral[0], delta1[0]*lane_seg.direction_lateral[0]) + \
+                min(delta0[1]*lane_seg.direction_lateral[1], delta1[1]*lane_seg.direction_lateral[1])
+            lateral_high = max(delta0[0]*lane_seg.direction_lateral[0], delta1[0]*lane_seg.direction_lateral[0]) + \
+                max(delta0[1]*lane_seg.direction_lateral[1], delta1[1]*lane_seg.direction_lateral[1])
+            assert lateral_high >= lateral_low
+            return lateral_low, lateral_high
+        elif lane_seg.type == "Circular":
+            dx = np.max([position[0,0]-lane_seg.center[0],0,lane_seg.center[0]-position[1,0]])
+            dy = np.max([position[0,1]-lane_seg.center[1],0,lane_seg.center[1]-position[1,1]])
+            r_low = np.linalg.norm([dx, dy])
+
+            dx = np.max([np.abs(position[0,0]-lane_seg.center[0]),np.abs(position[1,0]-lane_seg.center[0])])
+            dy = np.max([np.abs(position[0,1]-lane_seg.center[1]),np.abs(position[1,1]-lane_seg.center[1])])
+            r_high = np.linalg.norm([dx, dy])
+            lateral_low = min(lane_seg.direction*(lane_seg.radius - r_high),lane_seg.direction*(lane_seg.radius - r_low))
+            lateral_high = max(lane_seg.direction*(lane_seg.radius - r_high),lane_seg.direction*(lane_seg.radius - r_low))
+            # print(lateral_low, lateral_high)
+            assert lateral_high >= lateral_low
+            return lateral_low, lateral_high
+        else:
+            raise ValueError(f'Lane segment with type {lane_seg.type} is not supported')
+
+    def evaluate_guard_disc(self, agent, discrete_variable_dict, continuous_variable_dict, lane_map):
         """
         Evaluate guard that involves only discrete variables. 
         """
         res = True
         for i, node in enumerate(self.ast_list):
-            tmp, self.ast_list[i] = self._evaluate_guard_disc(node, agent, discrete_variable_dict, lane_map)
+            tmp, self.ast_list[i] = self._evaluate_guard_disc(node, agent, discrete_variable_dict, continuous_variable_dict, lane_map)
             res = res and tmp 
         return res
             
-    def _evaluate_guard_disc(self, root, agent, disc_var_dict, lane_map):
+    def _evaluate_guard_disc(self, root, agent, disc_var_dict, cont_var_dict, lane_map):
+        """
+        Recursively called function to evaluate guard with only discrete variables
+        The function will evaluate all guards with discrete variables and replace the nodes with discrete guards by
+        boolean constants
+        
+        :params:
+        :return: The return value will be a tuple. The first element in the tuple will either be a boolean value or a the evaluated value of of an expression involving guard
+        The second element in the tuple will be the updated ast node 
+        """
         if isinstance(root, ast.Compare):
             expr = astunparse.unparse(root)
-            if any([var in expr for var in disc_var_dict]):
-                left, root.left = self._evaluate_guard_disc(root.left, agent, disc_var_dict, lane_map)
-                right, root.comparators[0] = self._evaluate_guard_disc(root.comparators[0], agent, disc_var_dict, lane_map)
-                if isinstance(left, bool) or isinstance(right, bool):
-                    return True, root
-                if isinstance(root.ops[0], ast.GtE):
-                    res = left>=right
-                elif isinstance(root.ops[0], ast.Gt):
-                    res = left>right 
-                elif isinstance(root.ops[0], ast.Lt):
-                    res = left<right
-                elif isinstance(root.ops[0], ast.LtE):
-                    res = left<=right
-                elif isinstance(root.ops[0], ast.Eq):
-                    res = left == right 
-                elif isinstance(root.ops[0], ast.NotEq):
-                    res = left != right 
-                else:
-                    raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
-                if res:
-                    root = ast.parse('True').body[0].value
-                else:
-                    root = ast.parse('False').body[0].value    
-                return res, root
-            else:
+            left, root.left = self._evaluate_guard_disc(root.left, agent, disc_var_dict, cont_var_dict, lane_map)
+            right, root.comparators[0] = self._evaluate_guard_disc(root.comparators[0], agent, disc_var_dict, cont_var_dict, lane_map)
+            if isinstance(left, bool) or isinstance(right, bool):
                 return True, root
+            if isinstance(root.ops[0], ast.GtE):
+                res = left>=right
+            elif isinstance(root.ops[0], ast.Gt):
+                res = left>right 
+            elif isinstance(root.ops[0], ast.Lt):
+                res = left<right
+            elif isinstance(root.ops[0], ast.LtE):
+                res = left<=right
+            elif isinstance(root.ops[0], ast.Eq):
+                res = left == right 
+            elif isinstance(root.ops[0], ast.NotEq):
+                res = left != right 
+            else:
+                raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
+            if res:
+                root = ast.parse('True').body[0].value
+            else:
+                root = ast.parse('False').body[0].value    
+            return res, root
         elif isinstance(root, ast.BoolOp):
             if isinstance(root.op, ast.And):
                 res = True
                 for i,val in enumerate(root.values):
-                    tmp,root.values[i] = self._evaluate_guard_disc(val, agent, disc_var_dict, lane_map)
+                    tmp,root.values[i] = self._evaluate_guard_disc(val, agent, disc_var_dict, cont_var_dict, lane_map)
                     res = res and tmp
                     if not res:
                         break
@@ -282,20 +506,20 @@ class GuardExpressionAst:
             elif isinstance(root.op, ast.Or):
                 res = False
                 for val in root.values:
-                    tmp,val = self._evaluate_guard_disc(val, agent, disc_var_dict, lane_map)
+                    tmp,val = self._evaluate_guard_disc(val, agent, disc_var_dict, cont_var_dict, lane_map)
                     res = res or tmp
                     if res:
                         break
                 return res, root     
         elif isinstance(root, ast.BinOp):
             # Check left and right in the binop and replace all attributes involving discrete variables
-            left, root.left = self._evaluate_guard_disc(root.left, agent, disc_var_dict, lane_map)
-            right, root.right = self._evaluate_guard_disc(root.right, agent, disc_var_dict, lane_map)
+            left, root.left = self._evaluate_guard_disc(root.left, agent, disc_var_dict, cont_var_dict, lane_map)
+            right, root.right = self._evaluate_guard_disc(root.right, agent, disc_var_dict, cont_var_dict, lane_map)
             return True, root
         elif isinstance(root, ast.Call):
             expr = astunparse.unparse(root)
             # Check if the root is a function
-            if any([var in expr for var in disc_var_dict]):
+            if any([var in expr for var in disc_var_dict]) and all([var not in expr for var in cont_var_dict]):
                 # tmp = re.split('\(|\)',expr)
                 # while "" in tmp:
                 #     tmp.remove("")
@@ -334,7 +558,7 @@ class GuardExpressionAst:
             return root.value, root
         elif isinstance(root, ast.UnaryOp):
             if isinstance(root.op, ast.USub):
-                res, root.operand = self._evaluate_guard_disc(root.operand, agent, disc_var_dict, lane_map)
+                res, root.operand = self._evaluate_guard_disc(root.operand, agent, disc_var_dict, cont_var_dict, lane_map)
             else:
                 raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
             return True, root
@@ -429,6 +653,12 @@ class GuardExpressionAst:
                 return expr
         elif isinstance(root, ast.Constant):
             return root.value
+        elif isinstance(root, ast.UnaryOp):
+            val = self._evaluate_guard(root.operand, agent, cnts_var_dict, disc_var_dict, lane_map)
+            if isinstance(root.op, ast.USub):
+                return -val
+            else:
+                raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
         else:
             raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
 
