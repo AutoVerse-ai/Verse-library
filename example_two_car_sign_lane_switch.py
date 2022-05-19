@@ -68,12 +68,12 @@ def controller(ego: State, other: State, sign: State, lane_map):
     return output
 
 
-from src.example.example_agent.car_agent import CarAgent
-from src.example.example_agent.sign_agent import SignAgent
-from src.scene_verifier.scenario.scenario import Scenario
-from src.example.example_map.simple_map2 import SimpleMap3
-from src.plotter.plotter2D import plot_reachtube_tree, plot_simulation_tree
-from src.example.example_sensor.fake_sensor import FakeSensor2
+from dryvrpy.example.example_agent.car_agent import CarAgent
+from dryvrpy.example.example_agent.sign_agent import SignAgent
+from dryvrpy.scene_verifier.scenario.scenario import Scenario
+from dryvrpy.example.example_map.simple_map2 import SimpleMap3
+from dryvrpy.plotter.plotter2D import plot_reachtube_tree, plot_simulation_tree
+from dryvrpy.example.example_sensor.fake_sensor import FakeSensor2
 
 import matplotlib.pyplot as plt
 
@@ -92,7 +92,7 @@ if __name__ == "__main__":
     scenario.set_init(
         [
             [[10, 0, 0, 0.5],[10, 0, 0, 0.5]], 
-            [[0, -0.2, 0, 1.0],[0.2, -0.2, 0, 1.0]],
+            [[0, -0.2, 0, 1.0],[0.2, 0.2, 0, 1.0]],
             [[20, 0, 0, 0],[20, 0, 0, 0]],
         ],
         [
