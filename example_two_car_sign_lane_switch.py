@@ -29,20 +29,21 @@ class State:
     lane_mode: LaneMode
     obj_mode: LaneObjectMode
 
-    def __init__(self, x: float = 0, y: float = 0, theta: float = 0, v: float = 0, vehicle_mode: VehicleMode = VehicleMode.Normal, lane_mode: LaneMode = LaneMode.Lane0, obj_mode: LaneObjectMode = LaneObjectMode.Vehicle):
-        self.data = []
-        self.x = x
-        self.y = y
-        self.theta = theta
-        self.v = v
-        self.vehicle_mode = vehicle_mode
-        self.lane_mode = lane_mode
-        self.obj_mode = obj_mode
+    def __init__(self, x: float = 0, y: float = 0, theta: float = 0, v: float = 0, vehicle_mode: VehicleMode = VehicleMode.Normal, lane_mode: LaneMode = LaneMode.Lane0, type: LaneObjectMode = LaneObjectMode.Vehicle):
+        pass
+        # self.data = []
+        # self.x = x
+        # self.y = y
+        # self.theta = theta
+        # self.v = v
+        # self.vehicle_mode = vehicle_mode
+        # self.lane_mode = lane_mode
+        # self.obj_mode = obj_mode
 
 def controller(ego: State, other: State, sign: State, lane_map):
     output = copy.deepcopy(ego)
     if ego.vehicle_mode == VehicleMode.Normal:
-        if sign.x - ego.x < 3 and sign.x - ego.x > 0 and ego.lane_mode == sign.lane_mode:
+        if sign.type == LaneObjectMode.Obstacle and sign.x - ego.x < 3 and sign.x - ego.x > 0 and ego.lane_mode == sign.lane_mode:
             output.vehicle_mode = VehicleMode.SwitchLeft
             return output
         if lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) > 3 \
@@ -95,9 +96,9 @@ if __name__ == "__main__":
             [[20, 0, 0, 0],[20, 0, 0, 0]],
         ],
         [
-            (VehicleMode.Normal, LaneMode.Lane1),
-            (VehicleMode.Normal, LaneMode.Lane1),
-            (VehicleMode.Normal, LaneMode.Lane1),
+            (VehicleMode.Normal, LaneMode.Lane2, LaneObjectMode.Vehicle),
+            (VehicleMode.Normal, LaneMode.Lane1, LaneObjectMode.Vehicle),
+            (VehicleMode.Normal, LaneMode.Lane1, LaneObjectMode.Obstacle),
         ]
     )
     # simulator = Simulator()

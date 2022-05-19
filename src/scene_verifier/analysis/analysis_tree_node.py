@@ -20,8 +20,8 @@ class AnalysisTreeNode:
         type = 'simtrace'
     ):
         self.trace:Dict = trace
-        self.init:Dict = init
-        self.mode:Dict = mode
+        self.init: Dict[str, List[float]] = init
+        self.mode: Dict[str, List[str]] = mode
         self.agent:Dict = agent
         self.child:List[AnalysisTreeNode] = child
         self.start_time:float = round(start_time,ndigits)

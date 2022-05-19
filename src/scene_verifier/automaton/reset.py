@@ -1,4 +1,4 @@
-import itertools
+import itertools, copy
 
 import numpy as np 
 
@@ -59,7 +59,7 @@ class ResetExpression:
 
     def get_dest(self, agent, agent_state, discrete_variable_dict, lane_map) -> str:
         agent_mode = agent_state[1]
-        dest = agent_mode.split(',')
+        dest = copy.deepcopy(agent_mode)
         possible_dest = [[elem] for elem in dest]
         for reset in self.expr_list:
             if "mode" in reset:
@@ -79,6 +79,5 @@ class ResetExpression:
         all_dest = itertools.product(*possible_dest)
         res = []
         for dest in all_dest:
-            dest = ','.join(dest)
             res.append(dest)
         return res

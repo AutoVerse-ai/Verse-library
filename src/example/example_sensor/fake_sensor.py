@@ -20,14 +20,14 @@ def sets(d, thing, attrs, vals):
 def set_states_2d(cnts, disc, thing, val):
     state, mode = val
     sets(cnts, thing, ["x", "y", "theta", "v"], state[1:5])
-    sets(disc, thing, ["vehicle_mode", "lane_mode"], mode.split(","))
+    sets(disc, thing, ["vehicle_mode", "lane_mode", "type"], mode)
 
 def set_states_3d(cnts, disc, thing, val):
     state, mode = val
     transp = np.transpose(np.array(state)[:, 1:5])
     assert len(transp) == 4
     sets(cnts, thing, ["x", "y", "theta", "v"], transp)
-    sets(disc, thing, ["vehicle_mode", "lane_mode"], mode.split(","))
+    sets(disc, thing, ["vehicle_mode", "lane_mode", "type"], mode)
 
 class FakeSensor2:
     def sense(self, scenario, agent, state_dict, lane_map):
