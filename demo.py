@@ -54,13 +54,13 @@ if __name__ == "__main__":
     res_list = scenario.simulate_multi(40,1)
     # traces = scenario.verify(40)
 
-    fig = plt.figure(2)
-    fig,x_lim,y_lim = plot_map(tmp_map, 'g', fig)
+    # fig = plt.figure(2)
+    # fig,x_lim,y_lim = plot_map(tmp_map, 'g', fig)
     # fig = plot_reachtube_tree(traces, 'car1', 1, [2], 'b', fig)
     # fig = plot_reachtube_tree(traces, 'car2', 1, [2], 'r', fig)
     for traces in res_list:
-        fig,x_lim,y_lim = plot_simulation_tree(traces, 'car1', 1, [2], 'b', fig,x_lim,y_lim)
-        fig,x_lim,y_lim = plot_simulation_tree(traces, 'car2', 1, [2], 'r', fig,x_lim,y_lim)
-
+        generate_simulation_anime(traces, tmp_map)
+        # fig,x_lim,y_lim = plot_simulation_tree(traces, 'car1', 1, [2], 'b', fig,x_lim,y_lim)
+        # fig,x_lim,y_lim = plot_simulation_tree(traces, 'car2', 1, [2], 'r', fig,x_lim,y_lim)
 
     plt.show()

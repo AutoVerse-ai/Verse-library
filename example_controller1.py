@@ -2,6 +2,13 @@ from enum import Enum, auto
 import copy
 from src.scene_verifier.map.lane_map import LaneMap
 
+class LaneObjectMode(Enum):
+    Vehicle = auto()
+    Ped = auto()        # Pedestrians
+    Sign = auto()       # Signs, stop signs, merge, yield etc.
+    Signal = auto()     # Traffic lights
+    Obstacle = auto()   # Static (to road/lane) obstacles
+
 class VehicleMode(Enum):
     Normal = auto()
     SwitchLeft = auto()

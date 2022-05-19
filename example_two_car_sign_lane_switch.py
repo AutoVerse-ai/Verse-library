@@ -81,7 +81,7 @@ if __name__ == "__main__":
     input_code_name = sys.argv[0]
     scenario = Scenario()
 
-    car = CarAgent('car1', file_name=input_code_name)
+    car = CarAgent('car1', file_name="example_controller3.py")
     scenario.add_agent(car)
     car = CarAgent('car2', file_name=input_code_name)
     scenario.add_agent(car)
@@ -90,23 +90,23 @@ if __name__ == "__main__":
     scenario.set_sensor(FakeSensor2())
     scenario.set_init(
         [
-            [[10, -3, 0, 0.5],[10, -3, 0, 0.5]], 
-            [[-0.2, -0.2, 0, 1.0],[-0.2, -0.2, 0, 1.0]],
-            [[20, 3, 0, 0],[20, 3, 0, 0]],
+            [[10, 0, 0, 0.5],[10, 0, 0, 0.5]], 
+            [[0, -0.2, 0, 1.0],[0.2, -0.2, 0, 1.0]],
+            [[20, 0, 0, 0],[20, 0, 0, 0]],
         ],
         [
-            (VehicleMode.Normal, LaneMode.Lane2),
+            (VehicleMode.Normal, LaneMode.Lane1),
             (VehicleMode.Normal, LaneMode.Lane1),
             (VehicleMode.Normal, LaneMode.Lane1),
         ]
     )
     # simulator = Simulator()
-    # traces = scenario.simulate(40)
-    traces = scenario.verify(40)
+    traces = scenario.simulate(40)
+    # traces = scenario.verify(40)
 
     fig = plt.figure()
-    fig, xlim, ylim = plot_reachtube_tree(traces, 'car1', 1, [2], 'b', fig)
-    fig, xlim, ylim = plot_reachtube_tree(traces, 'car2', 1, [2], 'r', fig, xlim, ylim)
+    fig, xlim, ylim = plot_simulation_tree(traces, 'car1', 1, [2], 'b', fig)
+    fig, xlim, ylim = plot_simulation_tree(traces, 'car2', 1, [2], 'r', fig, xlim, ylim)
 
     plt.show()
 

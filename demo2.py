@@ -51,16 +51,18 @@ if __name__ == "__main__":
             (VehicleMode.Normal, LaneMode.Lane1),
         ]
     )
-    res_list = scenario.simulate_multi(10,10)
+    res_list = scenario.simulate_multi(10,1)
     # traces = scenario.verify(10)
 
-    fig = plt.figure(2)
+    # fig = plt.figure(2)
     # fig,x_lim,y_lim = plot_map(tmp_map, 'g', fig)
     # fig,x_lim,y_lim = plot_reachtube_tree(traces, 'car1', 0, [1], 'b', fig)
     # fig,x_lim,y_lim = plot_reachtube_tree(traces, 'car2', 0, [1], 'r', fig,x_lim,y_lim)
     for traces in res_list:
-        fig,x_lim,y_lim = plot_simulation_tree(traces, 'car1', 0, [1], 'b', fig)
-        fig,x_lim,y_lim = plot_simulation_tree(traces, 'car2', 0, [1], 'r', fig, x_lim, y_lim)
+        # fig,x_lim,y_lim = plot_simulation_tree(traces, 'car1', 0, [1], 'b', fig)
+        # fig,x_lim,y_lim = plot_simulation_tree(traces, 'car2', 0, [1], 'r', fig, x_lim, y_lim)
+        generate_simulation_anime(traces, tmp_map)
+
 
 
     plt.show()

@@ -6,6 +6,8 @@ import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np 
 from typing import List 
+from PIL import Image, ImageDraw
+import io
 
 colors = ['red', 'green', 'blue', 'yellow', 'black']
 
@@ -99,3 +101,54 @@ def plot_simulation_tree(root, agent_id, x_dim: int=0, y_dim_list: List[int]=[1]
     ax.set_ylim([y_min-1, y_max+1])
     
     return fig, ax.get_xlim(), ax.get_ylim()
+
+def generate_simulation_anime(root, map):
+    timed_point_dict = {}
+    stack = [root]
+    x_min, x_max = float('inf'), -float('inf')
+    y_min, y_max = float('inf'), -float('inf')
+    while stack != []:
+        node = stack.pop()
+        traces = node.trace
+        for agent_id in traces:
+            trace = traces[agent_id]
+            color = 'b'
+            if agent_id == 'car2':
+                color = 'r'
+            for i in range(len(trace)):
+                x_min = min(x_min, trace[i][1])
+                x_max = max(x_max, trace[i][1])
+                y_min = min(y_min, trace[i][2])
+                y_max = max(y_max, trace[i][2])
+                if round(trace[i][0],5) not in timed_point_dict:
+                    timed_point_dict[round(trace[i][0],5)] = [(trace[i][1:],color)]
+                else:
+                    timed_point_dict[round(trace[i][0],5)].append((trace[i][1:],color))
+        stack += node.child
+
+    frames = []
+    fig = plt.figure()
+    for time_point in timed_point_dict:
+        point_list = timed_point_dict[time_point]
+        plt.xlim((x_min-1, x_max+1))
+        plt.ylim((y_min-1, y_max+1))
+        plot_map(map,color = 'g', fig = fig)
+        for data in point_list:
+            point = data[0]
+            color = data[1]
+            ax = plt.gca()
+            ax.plot([point[0]], [point[1]], markerfacecolor = color, markeredgecolor = color, marker = '.', markersize = 20)
+            x_tail = point[0]
+            y_tail = point[1]
+            dx = np.cos(point[2])*point[3]
+            dy = np.sin(point[2])*point[3]
+            ax.arrow(x_tail, y_tail, dx, dy, head_width = 1, head_length = 0.5)
+        plt.pause(0.05)
+        plt.clf()
+    #     img_buf = io.BytesIO()
+    #     plt.savefig(img_buf, format = 'png')
+    #     im = Image.open(img_buf)
+    #     frames.append(im)
+    #     plt.clf()
+    # frame_one = frames[0]
+    # frame_one.save(fn, format = "GIF", append_images = frames, save_all = True, duration = 100, loop = 0)
