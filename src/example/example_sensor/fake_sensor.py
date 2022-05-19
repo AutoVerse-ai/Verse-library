@@ -50,6 +50,7 @@ class FakeSensor2:
                 set_states_2d(cnts, disc, "other", state_dict["car2"])
                 if "sign" in state_dict:
                     set_states_2d(cnts, disc, "sign", state_dict["sign"])
+            print(cnts, disc)
             return cnts, disc
         else:
             if agent.id == 'car1':
@@ -67,4 +68,5 @@ class FakeSensor2:
                 set_states_3d(cnts, disc, "other", state_dict["car2"])
                 if "sign" in state_dict:
                     set_states_2d(cnts, disc, "sign", state_dict["sign"])
+            print(cnts, disc)
             return cnts, disc
