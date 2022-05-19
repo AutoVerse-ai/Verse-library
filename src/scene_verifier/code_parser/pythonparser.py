@@ -250,7 +250,7 @@ class ControllerAst():
 
         self.code = code
         self.tree = ast.parse(code)
-        self.statementtree, self.variables, self.modes, self.discrete_variables, self.state_object_dict, self.vars_dict = self.initalwalktree(code, self.tree)
+        self.statementtree, self.variables, self.modes, self.discrete_variables, self.state_object_dict, self.vars_dict, self.type_vars = self.initalwalktree(code, self.tree)
         self.vertices = []
         self.vertexStrings = []
         for vertex in itertools.product(*self.modes.values()):
@@ -274,7 +274,7 @@ class ControllerAst():
     A path is a list of statements, all guards and resets along the path. They are in the order they are encountered in the code.
     TODO: should we not force all modes be listed? Or rerun for each unknown/don't care node? Or add them all to the list
     '''
-    def getNextModes(self, currentModes, getAllPaths= False):
+    def getNextModes(self, currentModes: List[str], getAllPaths= False) -> List[str]:
         #walk the tree and capture all paths that have modes that are listed. Path is a list of statements
         paths = []
         rootid = self.statementtree.root
@@ -370,6 +370,7 @@ class ControllerAst():
     def initalwalktree(self, code, tree):
         vars = []
         discrete_vars = []
+        type_vars = []
         out = []
         mode_dict = {}
         state_object_dict = {}
@@ -385,13 +386,15 @@ class ControllerAst():
                     mode_dict[modeType] = modes
             if isinstance(node, ast.ClassDef):
                 if "State" in node.name:
-                    state_object_dict[node.name] = {"cont":[],"disc":[]}
+                    state_object_dict[node.name] = {"cont":[],"disc":[], "type": []}
                     for item in node.body:
                         if isinstance(item, ast.FunctionDef):
                             if "init" in item.name:
                                 for arg in item.args.args:
                                     if "self" not in arg.arg:
-                                        if "mode" not in arg.arg:
+                                        if "type" == arg.arg:
+                                            state_object_dict[node.name]["type"].append(arg.arg)
+                                        elif "mode" not in arg.arg:
                                             state_object_dict[node.name]['cont'].append(arg.arg)
                                             # vars.append(arg.arg)
                                         else:
@@ -410,20 +413,23 @@ class ControllerAst():
                             continue
                         arg_annotation = arg.annotation.id
                         arg_name = arg.arg
-                        vars_dict[arg_name] = {'cont':[], 'disc':[]}
+                        vars_dict[arg_name] = {'cont':[], 'disc':[], "type": []}
                         for var in state_object_dict[arg_annotation]['cont']:
                             vars.append(arg_name+"."+var)
                             vars_dict[arg_name]['cont'].append(var)
                         for var in state_object_dict[arg_annotation]['disc']:
                             discrete_vars.append(arg_name+"."+var)
                             vars_dict[arg_name]['disc'].append(var)
+                        for var in state_object_dict[arg_annotation]['type']:
+                            type_vars.append(arg_name+"."+var)
+                            vars_dict[arg_name]['type'].append(var)
 
                         # if "mode" not in arg.arg:
                         #     vars.append(arg.arg)
                         #     #todo: what to add for return values
                         # else:
                         #     discrete_vars.append(arg.arg)
-        return [statementtree, vars, mode_dict, discrete_vars, state_object_dict, vars_dict]
+        return [statementtree, vars, mode_dict, discrete_vars, state_object_dict, vars_dict, type_vars]
 
 
     '''
