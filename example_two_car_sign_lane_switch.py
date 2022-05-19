@@ -41,26 +41,26 @@ class State:
 
 def controller(ego: State, other: State, sign: State, lane_map):
     output = copy.deepcopy(ego)
-    if sign.y - ego.y < 3 and sign.lane_mode == ego.lane_mode:
-        output.vehicle_mode = VehicleMode.SwitchLeft
-        return output
     if ego.vehicle_mode == VehicleMode.Normal:
-        # A simple example to demonstrate how our tool can handle change in controller
-        # if ego.x > 30 and ego.lane_mode == LaneMode.Lane0:
-        #     output.vehicle_mode = VehicleMode.SwitchRight
-        
-        if other.x - ego.x > 3 and other.x - ego.x < 5 and ego.lane_mode == other.lane_mode:
+        if sign.x - ego.x < 3 and sign.x - ego.x > 0 and ego.lane_mode == sign.lane_mode:
+            output.vehicle_mode = VehicleMode.SwitchLeft
+            return output
+        if lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) > 3 \
+        and lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) < 5 \
+        and ego.lane_mode == other.lane_mode:
             if lane_map.has_left(ego.lane_mode):
                 output.vehicle_mode = VehicleMode.SwitchLeft
-        if other.x - ego.x > 3 and other.x - ego.x < 5 and ego.lane_mode == other.lane_mode:
+        if lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) > 3 \
+        and lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) < 5 \
+        and ego.lane_mode == other.lane_mode:
             if lane_map.has_right(ego.lane_mode):
                 output.vehicle_mode = VehicleMode.SwitchRight
     if ego.vehicle_mode == VehicleMode.SwitchLeft:
-        if  lane_map.lane_geometry(ego.lane_mode) - ego.y <= -2.5:
+        if  lane_map.get_lateral_distance(ego.lane_mode, [ego.x, ego.y]) >= 2.5:
             output.vehicle_mode = VehicleMode.Normal
             output.lane_mode = lane_map.left_lane(ego.lane_mode)
     if ego.vehicle_mode == VehicleMode.SwitchRight:
-        if lane_map.lane_geometry(ego.lane_mode)-ego.y >= 2.5:
+        if lane_map.get_lateral_distance(ego.lane_mode, [ego.x, ego.y]) <= -2.5:
             output.vehicle_mode = VehicleMode.Normal
             output.lane_mode = lane_map.right_lane(ego.lane_mode)
 
@@ -70,14 +70,14 @@ def controller(ego: State, other: State, sign: State, lane_map):
 from src.example.example_agent.car_agent import CarAgent
 from src.example.example_agent.sign_agent import SignAgent
 from src.scene_verifier.scenario.scenario import Scenario
-from src.example.example_map.simple_map import SimpleMap2
-from src.plotter.plotter2D import plot_tree
+from src.example.example_map.simple_map2 import SimpleMap3
+from src.plotter.plotter2D import plot_reachtube_tree, plot_simulation_tree
 from src.example.example_sensor.fake_sensor import FakeSensor2
 
 import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
-    input_code_name = 'example_two_car_lane_switch.py'
+    input_code_name = 'example_two_car_sign_lane_switch.py'
     scenario = Scenario()
 
     car = CarAgent('car1', file_name=input_code_name)
@@ -85,18 +85,18 @@ if __name__ == "__main__":
     car = CarAgent('car2', file_name=input_code_name)
     scenario.add_agent(car)
     scenario.add_agent(SignAgent("sign", file_name=input_code_name))
-    scenario.add_map(SimpleMap2())
+    scenario.set_map(SimpleMap3())
     scenario.set_sensor(FakeSensor2())
     scenario.set_init(
         [
-            [10, 0, 0, 0.5], 
-            [-0.2, -0.2, 0, 1.0],
-            [20, 3, 0, 0],
+            [[10, -3, 0, 0.5],[10, -3, 0, 0.5]], 
+            [[-0.2, -0.2, 0, 1.0],[-0.2, -0.2, 0, 1.0]],
+            [[20, 3, 0, 0],[20, 3, 0, 0]],
         ],
         [
-            (VehicleMode.Normal, LaneMode.Lane1),
-            (VehicleMode.Normal, LaneMode.Lane1),
             (VehicleMode.Normal, LaneMode.Lane2),
+            (VehicleMode.Normal, LaneMode.Lane1),
+            (VehicleMode.Normal, LaneMode.Lane1),
         ]
     )
     # simulator = Simulator()
@@ -104,8 +104,8 @@ if __name__ == "__main__":
     # traces = scenario.verify(40)
 
     fig = plt.figure()
-    fig = plot_tree(traces, 'car1', 1, [2], 'b', fig)
-    fig = plot_tree(traces, 'car2', 1, [2], 'r', fig)
+    fig, xlim, ylim = plot_simulation_tree(traces, 'car1', 1, [2], 'b', fig)
+    fig, xlim, ylim = plot_simulation_tree(traces, 'car2', 1, [2], 'r', fig, xlim, ylim)
 
     plt.show()
 
