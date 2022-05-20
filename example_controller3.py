@@ -13,6 +13,13 @@ class LaneMode(Enum):
     Lane1 = auto()
     Lane2 = auto()
 
+class LaneObjectMode(Enum):
+    Vehicle = auto()
+    Ped = auto()        # Pedestrians
+    Sign = auto()       # Signs, stop signs, merge, yield etc.
+    Signal = auto()     # Traffic lights
+    Obstacle = auto()   # Static (to road/lane) obstacles
+
 class State:
     x = 0.0
     y = 0.0
