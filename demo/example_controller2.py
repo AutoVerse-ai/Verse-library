@@ -1,6 +1,5 @@
 from enum import Enum, auto
 import copy
-from dryvr_plus_plus.scene_verifier.map.lane_map import LaneMap
 
 class VehicleMode(Enum):
     Normal = auto()
@@ -24,7 +23,7 @@ class State:
     def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: LaneMode):
         self.data = []
 
-def controller(ego:State, other:State, lane_map:LaneMap):
+def controller(ego:State, other:State, lane_map):
     output = copy.deepcopy(ego)
     if ego.vehicle_mode == VehicleMode.Normal:
         if lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) > 0 \

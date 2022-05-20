@@ -34,11 +34,11 @@ if __name__ == "__main__":
     input_code_name = 'example_controller2.py'
     scenario = Scenario()
 
-    car = NPCAgent('car1', file_name=input_code_name)
+    car = NPCAgent('car1')
     scenario.add_agent(car)
     car = CarAgent('car2', file_name=input_code_name)
     scenario.add_agent(car)
-    tmp_map = SimpleMap3()
+    tmp_map = SimpleMap6()
     scenario.set_map(tmp_map)
     scenario.set_sensor(FakeSensor2())
     scenario.set_init(
@@ -51,17 +51,17 @@ if __name__ == "__main__":
             (VehicleMode.Normal, LaneMode.Lane1),
         ]
     )
-    # res_list = scenario.simulate_multi(10,10)
-    traces = scenario.verify(10)
+    res_list = scenario.simulate_multi(10,10)
+    # traces = scenario.verify(10)
 
     fig = plt.figure(2)
     # fig = plot_map(tmp_map, 'g', fig)
-    fig = plot_reachtube_tree(traces, 'car1', 0, [1], 'b', fig, (1000,-1000), (1000,-1000))
-    fig = plot_reachtube_tree(traces, 'car2', 0, [1], 'r', fig)
-    # for traces in res_list:
-    #     fig = plot_simulation_tree(traces, 'car1', 0, [1], 'b', fig, (1000,-1000), (1000,-1000))
-    #     fig = plot_simulation_tree(traces, 'car2', 0, [1], 'r', fig)
-    #     # generate_simulation_anime(traces, tmp_map)
+    # fig = plot_reachtube_tree(traces, 'car1', 0, [1], 'b', fig, (1000,-1000), (1000,-1000))
+    # fig = plot_reachtube_tree(traces, 'car2', 0, [1], 'r', fig)
+    for traces in res_list:
+        fig = plot_simulation_tree(traces, 'car1', 0, [1], 'b', fig, (1000,-1000), (1000,-1000))
+        fig = plot_simulation_tree(traces, 'car2', 0, [1], 'r', fig)
+        # generate_simulation_anime(traces, tmp_map)
 
 
 

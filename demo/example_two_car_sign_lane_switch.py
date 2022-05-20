@@ -27,7 +27,7 @@ class State:
     v: float
     vehicle_mode: VehicleMode
     lane_mode: LaneMode
-    obj_mode: LaneObjectMode
+    type: LaneObjectMode
 
     def __init__(self, x: float = 0, y: float = 0, theta: float = 0, v: float = 0, vehicle_mode: VehicleMode = VehicleMode.Normal, lane_mode: LaneMode = LaneMode.Lane0, type: LaneObjectMode = LaneObjectMode.Vehicle):
         pass
@@ -91,12 +91,12 @@ if __name__ == "__main__":
     scenario.set_sensor(FakeSensor2())
     scenario.set_init(
         [
-            [[10, 0, 0, 0.5],[10, 0, 0, 0.5]], 
             [[0, -0.2, 0, 1.0],[0.2, 0.2, 0, 1.0]],
+            [[10, 0, 0, 0.5],[10, 0, 0, 0.5]], 
             [[20, 0, 0, 0],[20, 0, 0, 0]],
         ],
         [
-            (VehicleMode.Normal, LaneMode.Lane2, LaneObjectMode.Vehicle),
+            (VehicleMode.Normal, LaneMode.Lane1, LaneObjectMode.Vehicle),
             (VehicleMode.Normal, LaneMode.Lane1, LaneObjectMode.Vehicle),
             (VehicleMode.Normal, LaneMode.Lane1, LaneObjectMode.Obstacle),
         ]
@@ -111,23 +111,3 @@ if __name__ == "__main__":
 
     plt.show()
 
-    # plt.plot([0, 40], [3, 3], 'g')
-    # plt.plot([0, 40], [0, 0], 'g')
-    # plt.plot([0, 40], [-3, -3], 'g')
-
-    # queue = [traces]
-    # while queue != []:
-    #     node = queue.pop(0)
-    #     traces = node.trace
-    #     # for agent_id in traces:
-    #     agent_id = 'car2'
-    #     trace = np.array(traces[agent_id])
-    #     plt.plot(trace[:, 1], trace[:, 2], 'r')
-
-    #     agent_id = 'car1'
-    #     trace = np.array(traces[agent_id])
-    #     plt.plot(trace[:, 1], trace[:, 2], 'b')
-
-    #     # if node.child != []:
-    #     queue += node.child
-    # plt.show()
