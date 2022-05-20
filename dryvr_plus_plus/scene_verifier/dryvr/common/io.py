@@ -4,7 +4,7 @@ This file contains IO functions for DryVR
 
 import six
 
-from dryvrpy.scene_verifier.dryvr.common.utils import DryVRInput, RrtInput, checkVerificationInput, checkSynthesisInput
+from dryvr_plus_plus.scene_verifier.dryvr.common.utils import DryVRInput, RrtInput, checkVerificationInput, checkSynthesisInput
 
 
 def writeReachTubeFile(result, path):

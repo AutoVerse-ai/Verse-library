@@ -4,8 +4,8 @@ from enum import Enum
 
 import numpy as np
 
-from dryvrpy.scene_verifier.map.lane_segment import AbstractLane
-from dryvrpy.scene_verifier.map.lane import Lane
+from dryvr_plus_plus.scene_verifier.map.lane_segment import AbstractLane
+from dryvr_plus_plus.scene_verifier.map.lane import Lane
 
 class LaneMap:
     def __init__(self, lane_seg_list:List[Lane] = []):

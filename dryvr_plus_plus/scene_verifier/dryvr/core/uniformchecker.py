@@ -4,8 +4,8 @@ This file contains uniform checker class for DryVR
 import sympy
 from z3 import *
 
-from dryvrpy.common.constant import *
-from dryvrpy.common.utils import handleReplace, neg
+from dryvr_plus_plus.common.constant import *
+from dryvr_plus_plus.common.utils import handleReplace, neg
 
 
 class UniformChecker:

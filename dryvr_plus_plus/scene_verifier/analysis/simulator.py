@@ -3,8 +3,8 @@ import copy
 
 import numpy as np
 
-from dryvrpy.scene_verifier.agents.base_agent import BaseAgent
-from dryvrpy.scene_verifier.analysis.analysis_tree_node import AnalysisTreeNode
+from dryvr_plus_plus.scene_verifier.agents.base_agent import BaseAgent
+from dryvr_plus_plus.scene_verifier.analysis.analysis_tree_node import AnalysisTreeNode
 
 class Simulator:
     def __init__(self):

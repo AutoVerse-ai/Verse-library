@@ -1,6 +1,6 @@
-from dryvrpy.scene_verifier.map.lane_map import LaneMap
-from dryvrpy.scene_verifier.map.lane_segment import LaneSegment, StraightLane, CircularLane
-from dryvrpy.scene_verifier.map.lane import Lane
+from dryvr_plus_plus.scene_verifier.map.lane_map import LaneMap
+from dryvr_plus_plus.scene_verifier.map.lane_segment import LaneSegment, StraightLane, CircularLane
+from dryvr_plus_plus.scene_verifier.map.lane import Lane
 
 import numpy as np
 

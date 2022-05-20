@@ -3,8 +3,8 @@ from typing import Tuple, List
 import numpy as np 
 from scipy.integrate import ode
 
-from dryvrpy.scene_verifier.agents.base_agent import BaseAgent
-from dryvrpy.scene_verifier.map.lane_map import LaneMap
+from dryvr_plus_plus.scene_verifier.agents.base_agent import BaseAgent
+from dryvr_plus_plus.scene_verifier.map.lane_map import LaneMap
 
 class NPCAgent(BaseAgent):
     def __init__(self, id, code = None, file_name = None):

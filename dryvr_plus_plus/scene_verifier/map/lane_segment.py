@@ -3,7 +3,7 @@ import numpy as np
 from abc import ABCMeta, abstractmethod
 from typing import Tuple, List, Optional, Union
 
-from dryvrpy.scene_verifier.utils.utils import wrap_to_pi, Vector, get_class_path, class_from_path,to_serializable
+from dryvr_plus_plus.scene_verifier.utils.utils import wrap_to_pi, Vector, get_class_path, class_from_path,to_serializable
 
 class LineType:
 

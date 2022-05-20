@@ -1,4 +1,4 @@
-from dryvrpy.scene_verifier.automaton.hybrid_automaton import HybridAutomaton
+from dryvr_plus_plus.scene_verifier.automaton.hybrid_automaton import HybridAutomaton
 
 class HybridIoAutomaton(HybridAutomaton):
     def __init__(

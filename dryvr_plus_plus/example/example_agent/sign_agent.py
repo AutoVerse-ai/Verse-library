@@ -1,4 +1,4 @@
-from dryvrpy.scene_verifier.agents.base_agent import BaseAgent
+from dryvr_plus_plus.scene_verifier.agents.base_agent import BaseAgent
 import numpy as np
 
 class SignAgent(BaseAgent):

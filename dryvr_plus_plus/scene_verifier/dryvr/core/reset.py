@@ -4,7 +4,7 @@ This file contains reset class for DryVR
 
 import sympy
 
-from dryvrpy.common.utils import randomPoint
+from dryvr_plus_plus.common.utils import randomPoint
 
 
 class Reset:

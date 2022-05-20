@@ -5,14 +5,14 @@ import warnings
 
 import numpy as np
 
-from dryvrpy.scene_verifier.agents.base_agent import BaseAgent
-from dryvrpy.scene_verifier.automaton.guard import GuardExpressionAst
-from dryvrpy.scene_verifier.automaton.reset import ResetExpression
-from dryvrpy.scene_verifier.code_parser.pythonparser import Guard, Reset
-from dryvrpy.scene_verifier.analysis.simulator import Simulator
-from dryvrpy.scene_verifier.analysis.verifier import Verifier
-from dryvrpy.scene_verifier.map.lane_map import LaneMap
-from dryvrpy.scene_verifier.utils.utils import *
+from dryvr_plus_plus.scene_verifier.agents.base_agent import BaseAgent
+from dryvr_plus_plus.scene_verifier.automaton.guard import GuardExpressionAst
+from dryvr_plus_plus.scene_verifier.automaton.reset import ResetExpression
+from dryvr_plus_plus.scene_verifier.code_parser.pythonparser import Guard, Reset
+from dryvr_plus_plus.scene_verifier.analysis.simulator import Simulator
+from dryvr_plus_plus.scene_verifier.analysis.verifier import Verifier
+from dryvr_plus_plus.scene_verifier.map.lane_map import LaneMap
+from dryvr_plus_plus.scene_verifier.utils.utils import *
 
 class Scenario:
     def __init__(self):

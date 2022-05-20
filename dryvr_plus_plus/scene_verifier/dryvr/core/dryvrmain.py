@@ -4,19 +4,19 @@ This file contains a single function that verifies model
 from __future__ import print_function
 import time
 
-import dryvrpy.common.config as userConfig
-from dryvrpy.common.io import parseVerificationInputFile, parseRrtInputFile, writeRrtResultFile
-from dryvrpy.common.utils import buildModeStr, isIpynb, overloadConfig
-from dryvrpy.core.distance import DistChecker
-from dryvrpy.core.dryvrcore import *
-from dryvrpy.core.goalchecker import GoalChecker
-from dryvrpy.core.graph import Graph
-from dryvrpy.core.guard import Guard
-from dryvrpy.core.initialset import InitialSet
-from dryvrpy.core.initialsetstack import InitialSetStack, GraphSearchNode
-from dryvrpy.core.reachtube import ReachTube
-from dryvrpy.core.reset import Reset
-from dryvrpy.core.uniformchecker import UniformChecker
+import dryvr_plus_plus.common.config as userConfig
+from dryvr_plus_plus.common.io import parseVerificationInputFile, parseRrtInputFile, writeRrtResultFile
+from dryvr_plus_plus.common.utils import buildModeStr, isIpynb, overloadConfig
+from dryvr_plus_plus.core.distance import DistChecker
+from dryvr_plus_plus.core.dryvrcore import *
+from dryvr_plus_plus.core.goalchecker import GoalChecker
+from dryvr_plus_plus.core.graph import Graph
+from dryvr_plus_plus.core.guard import Guard
+from dryvr_plus_plus.core.initialset import InitialSet
+from dryvr_plus_plus.core.initialsetstack import InitialSetStack, GraphSearchNode
+from dryvr_plus_plus.core.reachtube import ReachTube
+from dryvr_plus_plus.core.reset import Reset
+from dryvr_plus_plus.core.uniformchecker import UniformChecker
 # from dryvr_plus_plus.tube_computer.backend.reachabilityengine import ReachabilityEngine
 # from dryvr_plus_plus.tube_computer.backend.initialset import InitialSet
 

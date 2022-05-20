@@ -1,4 +1,4 @@
-from dryvrpy.scene_verifier.code_parser.pythonparser import ControllerAst
+from dryvr_plus_plus.scene_verifier.code_parser.pythonparser import ControllerAst
 
 class BaseAgent:
     def __init__(self, id, code = None, file_name = None):  

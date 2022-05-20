@@ -9,10 +9,10 @@ import numpy as np
 import igraph
 
 
-from dryvrpy.scene_verifier.dryvr.common.constant import *
-from dryvrpy.scene_verifier.dryvr.common.io import writeReachTubeFile
-from dryvrpy.scene_verifier.dryvr.common.utils import randomPoint, calcDelta, calcCenterPoint, trimTraces
-from dryvrpy.scene_verifier.dryvr.discrepancy.Global_Disc import get_reachtube_segment
+from dryvr_plus_plus.scene_verifier.dryvr.common.constant import *
+from dryvr_plus_plus.scene_verifier.dryvr.common.io import writeReachTubeFile
+from dryvr_plus_plus.scene_verifier.dryvr.common.utils import randomPoint, calcDelta, calcCenterPoint, trimTraces
+from dryvr_plus_plus.scene_verifier.dryvr.discrepancy.Global_Disc import get_reachtube_segment
 # from scene_verifier.dryvr.tube_computer.backend.reachabilityengine import ReachabilityEngine
 # from scene_verifier.dryvr.tube_computer.backend.initialset import InitialSet
 

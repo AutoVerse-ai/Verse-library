@@ -47,10 +47,10 @@ def controller(ego:State):
 
     return output_vehicle_mode, output_lane_mode
 
-from dryvrpy.example.example_agent.car_agent import CarAgent
-from dryvrpy.scene_verifier.scenario.scenario import Scenario
-from dryvrpy.example.example_map.simple_map import SimpleMap2
-from dryvrpy.example.example_sensor.fake_sensor import FakeSensor1
+from dryvr_plus_plus.example.example_agent.car_agent import CarAgent
+from dryvr_plus_plus.scene_verifier.scenario.scenario import Scenario
+from dryvr_plus_plus.example.example_map.simple_map import SimpleMap2
+from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor1
 import matplotlib.pyplot as plt
 import numpy as np
 

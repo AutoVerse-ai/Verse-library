@@ -2,7 +2,7 @@
 This file contains uniform checker class for DryVR
 """
 
-from dryvrpy.common.utils import handleReplace, neg
+from dryvr_plus_plus.common.utils import handleReplace, neg
 from z3 import *
 
 
