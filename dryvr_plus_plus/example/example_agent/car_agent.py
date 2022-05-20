@@ -5,34 +5,12 @@ from scipy.integrate import ode
 
 from dryvr_plus_plus.scene_verifier.agents.base_agent import BaseAgent
 from dryvr_plus_plus.scene_verifier.map.lane_map import LaneMap
+from dryvr_plus_plus.scene_verifier.code_parser.pythonparser import EmptyAst
 
 class NPCAgent(BaseAgent):
     def __init__(self, id, code = None, file_name = None):
-        npc_code_str = "\
-class VehicleMode(Enum):\n\
-    Normal = auto()\n\
-\n\
-class LaneMode(Enum):\n\
-    Lane0 = auto()\n\
-    Lane1 = auto()\n\
-    Lane2 = auto()\n\
-\n\
-class State:\n\
-    x = 0.0\n\
-    y = 0.0\n\
-    theta = 0.0\n\
-    v = 0.0\n\
-    vehicle_mode: VehicleMode = VehicleMode.Normal\n\
-    lane_mode: LaneMode = LaneMode.Lane0\n\
-\n\
-    def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: LaneMode):\n\
-        self.data = []\n\
-\n\
-def controller(ego:State, other:State, lane_map:LaneMap):\n\
-    output = copy.deepcopy(ego)\n\
-    return output\n\
-        "
-        super().__init__(id, npc_code_str, None)
+        self.id = id
+        self.controller = EmptyAst()
 
     @staticmethod
     def dynamic(t, state, u):

@@ -86,7 +86,7 @@ if __name__ == "__main__":
     scenario.add_agent(car)
     car = CarAgent('car2', file_name=input_code_name)
     scenario.add_agent(car)
-    scenario.add_agent(SignAgent("sign", file_name="null_controller.py"))
+    scenario.add_agent(SignAgent("sign"))
     scenario.set_map(SimpleMap3())
     scenario.set_sensor(FakeSensor2())
     scenario.set_init(
@@ -106,8 +106,8 @@ if __name__ == "__main__":
     # traces = scenario.verify(40)
 
     fig = plt.figure()
-    fig, xlim, ylim = plot_simulation_tree(traces, 'car1', 1, [2], 'b', fig)
-    fig, xlim, ylim = plot_simulation_tree(traces, 'car2', 1, [2], 'r', fig, xlim, ylim)
+    fig = plot_simulation_tree(traces, 'car1', 1, [2], 'b', fig)
+    fig = plot_simulation_tree(traces, 'car2', 1, [2], 'r', fig)
 
     plt.show()
 

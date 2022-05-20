@@ -1,9 +1,11 @@
 from dryvr_plus_plus.scene_verifier.agents.base_agent import BaseAgent
 import numpy as np
+from dryvr_plus_plus.scene_verifier.code_parser.pythonparser import EmptyAst
 
 class SignAgent(BaseAgent):
-    def __init__(self, id, code = None, file_name = None):
-        super().__init__(id, code, file_name)
+    def __init__(self, id):
+        self.id = id
+        self.controller = EmptyAst()
 
     def TC_simulate(self, mode, init, time_horizon, map=None):
         time_step = 0.01

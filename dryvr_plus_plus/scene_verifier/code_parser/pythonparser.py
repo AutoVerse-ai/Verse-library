@@ -255,9 +255,7 @@ class ControllerAst():
         self.vertexStrings = []
         for vertex in itertools.product(*self.modes.values()):
             self.vertices.append(vertex)
-            vertexstring = vertex[0]
-            for index in range(1,len(vertex)):
-                vertexstring += "," + vertex[index]
+            vertexstring = ','.join(vertex)
             self.vertexStrings.append(vertexstring)
         self.paths = None
 
@@ -375,6 +373,7 @@ class ControllerAst():
         mode_dict = {}
         state_object_dict = {}
         vars_dict = {}
+        statementtree = Tree()
         for node in ast.walk(tree): #don't think we want to walk the whole thing because lose ordering/depth
             # Get all the modes
             if isinstance(node, ast.ClassDef):
@@ -473,6 +472,28 @@ class ControllerAst():
         
         return tree
 
+class EmptyAst(ControllerAst):
+    def __init__(self):
+        super().__init__(code="True", file_name=None)
+        self.discrete_variables = []
+        self.modes = {
+            'NullMode':['Null'],
+            'LaneMode':['Normal']
+        }
+        self.paths = None
+        self.state_object_dict = {
+            'State':{
+                'cont':[],
+                'disc':[],
+                'type':[]
+            }
+        }
+        self.type_vars = []
+        self.variables = []
+        self.vars_dict = []
+        self.vertexStrings = ['Null,Normal']
+        self.vertices=[('Null','Normal')]
+        self.statementtree.create_node("root")
 
 ##main code###
 if __name__ == "__main__":
