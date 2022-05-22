@@ -84,11 +84,22 @@ def plot_map(map, color = 'b', fig = None, x_lim = None,y_lim = None):
         lane = map.lane_dict[lane_idx]
         for lane_seg in lane.segment_list:
             if lane_seg.type == 'Straight':
-                ax.plot([lane_seg.start[0], lane_seg.end[0]],[lane_seg.start[1], lane_seg.end[1]], color) 
+                start1 = lane_seg.start + lane_seg.width/2 * lane_seg.direction_lateral
+                end1 = lane_seg.end + lane_seg.width/2 * lane_seg.direction_lateral
+                ax.plot([start1[0], end1[0]],[start1[1], end1[1]], color) 
+                start2 = lane_seg.start - lane_seg.width/2 * lane_seg.direction_lateral
+                end2 = lane_seg.end - lane_seg.width/2 * lane_seg.direction_lateral
+                ax.plot([start2[0], end2[0]],[start2[1], end2[1]], color) 
             elif lane_seg.type == "Circular":
                 phase_array = np.linspace(start=lane_seg.start_phase, stop=lane_seg.end_phase, num=100)
-                x = np.cos(phase_array)*lane_seg.radius + lane_seg.center[0]
-                y = np.sin(phase_array)*lane_seg.radius + lane_seg.center[1]
+                r1 = lane_seg.radius - lane_seg.width/2
+                x = np.cos(phase_array)*r1 + lane_seg.center[0]
+                y = np.sin(phase_array)*r1 + lane_seg.center[1]
+                ax.plot(x,y,color)
+
+                r2 = lane_seg.radius + lane_seg.width/2
+                x = np.cos(phase_array)*r2 + lane_seg.center[0]
+                y = np.sin(phase_array)*r2 + lane_seg.center[1]
                 ax.plot(x,y,color)
             else:
                 raise ValueError(f'Unknown lane segment type {lane_seg.type}')
@@ -126,11 +137,15 @@ def plot_simulation_tree(root, agent_id, x_dim: int=0, y_dim_list: List[int]=[1]
     
     return fig
 
-def generate_simulation_anime(root, map):
+def generate_simulation_anime(root, map, fig = None):
+    if fig is None:
+        fig = plt.figure()
+    fig = plot_map(map, 'g', fig)
     timed_point_dict = {}
     stack = [root]
+    ax = fig.gca()
     x_min, x_max = float('inf'), -float('inf')
-    y_min, y_max = float('inf'), -float('inf')
+    y_min, y_max = ax.get_ylim()
     while stack != []:
         node = stack.pop()
         traces = node.trace
@@ -151,11 +166,10 @@ def generate_simulation_anime(root, map):
         stack += node.child
 
     frames = []
-    fig = plt.figure()
     for time_point in timed_point_dict:
         point_list = timed_point_dict[time_point]
-        plt.xlim((x_min-1, x_max+1))
-        plt.ylim((y_min-1, y_max+1))
+        plt.xlim((x_min-2, x_max+2))
+        plt.ylim((y_min-2, y_max+2))
         plot_map(map,color = 'g', fig = fig)
         for data in point_list:
             point = data[0]

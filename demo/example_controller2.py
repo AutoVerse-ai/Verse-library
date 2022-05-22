@@ -1,6 +1,13 @@
 from enum import Enum, auto
 import copy
 
+class LaneObjectMode(Enum):
+    Vehicle = auto()
+    Ped = auto()        # Pedestrians
+    Sign = auto()       # Signs, stop signs, merge, yield etc.
+    Signal = auto()     # Traffic lights
+    Obstacle = auto()   # Static (to road/lane) obstacles
+
 class VehicleMode(Enum):
     Normal = auto()
     SwitchLeft = auto()
@@ -21,19 +28,29 @@ class State:
     lane_mode: LaneMode = LaneMode.Lane0
 
     def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: LaneMode):
-        self.data = []
+        pass
 
 def controller(ego:State, other:State, lane_map):
     output = copy.deepcopy(ego)
     if ego.vehicle_mode == VehicleMode.Normal:
-        if lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) > 0 \
-        and lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) < 3 \
+        if lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) > 3 \
+        and lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) < 5 \
         and ego.lane_mode == other.lane_mode:
-            output.vehicle_mode = VehicleMode.Brake
-    elif ego.vehicle_mode == VehicleMode.Brake:
-        if lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) > 10 \
-            or ego.lane_mode != other.lane_mode:
+            if lane_map.has_left(ego.lane_mode):
+                output.vehicle_mode = VehicleMode.SwitchLeft
+        if lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) > 3 \
+        and lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) < 5 \
+        and ego.lane_mode == other.lane_mode:
+            if lane_map.has_right(ego.lane_mode):
+                output.vehicle_mode = VehicleMode.SwitchRight
+    if ego.vehicle_mode == VehicleMode.SwitchLeft:
+        if  lane_map.get_lateral_distance(ego.lane_mode, [ego.x, ego.y]) >= 2.5:
             output.vehicle_mode = VehicleMode.Normal
+            output.lane_mode = lane_map.left_lane(ego.lane_mode)
+    if ego.vehicle_mode == VehicleMode.SwitchRight:
+        if lane_map.get_lateral_distance(ego.lane_mode, [ego.x, ego.y]) <= -2.5:
+            output.vehicle_mode = VehicleMode.Normal
+            output.lane_mode = lane_map.right_lane(ego.lane_mode)
 
     return output
-    
+

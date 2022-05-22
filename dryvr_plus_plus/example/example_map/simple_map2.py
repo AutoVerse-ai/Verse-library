@@ -13,7 +13,7 @@ class SimpleMap2(LaneMap):
             [100,0],
             3
         )
-        lane0 = Lane('Lane0', [segment0])
+        lane0 = Lane('Lane1', [segment0])
         self.add_lanes([lane0])
 
 class SimpleMap3(LaneMap):
@@ -22,21 +22,21 @@ class SimpleMap3(LaneMap):
         segment0 = StraightLane(
             'Seg0',
             [0,3],
-            [100,3],
+            [50,3],
             3
         )
         lane0 = Lane('Lane0', [segment0])
         segment1 = StraightLane(
             'seg0',
             [0,0],
-            [100,0],
+            [50,0],
             3
         )
         lane1 = Lane('Lane1', [segment1])
         segment2 = StraightLane(
             'seg0',
             [0,-3],
-            [100,-3],
+            [50,-3],
             3
         )
         lane2 = Lane('Lane2', [segment2])
