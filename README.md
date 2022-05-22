@@ -1,25 +1,24 @@
 # DryVR++
 ## Installation
-The package requires python 3.8+. All the required packages can be installed through
+The package requires python 3.8+. The package can be installed using pip
 
 ```
-python3 -m pip install -r requirements.txt
+python3 -m pip install -e .
 ```
 
 ## Examples
-The package comes with two controller examples
-- The first example consists a scenario with a single vehicle, which can perform lane switch based on its location. The 
-first example can be run by using command
+The package comes with two controller examples inside folder ```demo/```
+- The first example consists a scenario with two vehicles. The second vehicle will brake and stop when it detect the first vehicle in front. The first example can be run by using command
 
 ```
-python3 example_car_lane_switch.py
+python3 demo1.py
 ```
 
 - The second example consists a scenario with two vehicles, which can perform lane switch based on their relative position.
 The second example can be run using command
 
 ```
-python3 example_two_car_lane_switch.py
+python3 demo2.py
 ```
 
 ## Package Structure
