@@ -58,7 +58,7 @@ import numpy as np
 class TestSimulatorMethods(unittest.TestCase):
     def setUp(self):
         self.scenario = Scenario()
-        self.car = CarAgent('ego', file_name='example_car_lane_switch.py')
+        self.car = CarAgent('ego', file_name='example_controller1.py')
         #scenario.add_agent(car)
         # self.scenario.add_map(SimpleMap2())
         # self.scenario.set_sensor(FakeSensor1())
