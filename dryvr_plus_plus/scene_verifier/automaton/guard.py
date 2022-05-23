@@ -8,7 +8,6 @@ import ast
 import copy
 
 from z3 import *
-import sympy
 import astunparse
 import numpy as np
 
@@ -47,18 +46,8 @@ class GuardExpressionAst:
         # This magic line here is because SymPy will evaluate == to be False
         # Therefore we are not be able to get free symbols from it
         # Thus we need to replace "==" to something else
-        sympy_guard_str = guard_str.replace("==", ">=")
-        for vars in self.cont_variables:
-            sympy_guard_str = sympy_guard_str.replace(vars, self.cont_variables[vars])
 
-        symbols = list(sympy.sympify(sympy_guard_str, evaluate=False).free_symbols)
-        symbols = [str(s) for s in symbols]
-        tmp = list(self.cont_variables.values())
-        symbols_map = {}
-        for s in symbols:
-            if s in tmp:
-                key = list(self.cont_variables.keys())[list(self.cont_variables.values()).index(s)]
-                symbols_map[s] = key
+        symbols_map = {v: k for k, v in self.cont_variables.items()}
 
         for vars in reversed(self.cont_variables):
             guard_str = guard_str.replace(vars, self.cont_variables[vars])
