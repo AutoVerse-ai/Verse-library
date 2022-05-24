@@ -51,55 +51,18 @@ class GuardExpressionAst:
 
         for vars in reversed(self.cont_variables):
             guard_str = guard_str.replace(vars, self.cont_variables[vars])
-        guard_str = self._handleReplace(guard_str)
-        cur_solver.add(eval(guard_str))  # TODO use an object instead of `eval` a string
+        # XXX `locals` should override `globals` right?
+        cur_solver.add(eval(guard_str, globals(), self.varDict))  # TODO use an object instead of `eval` a string
         return cur_solver, symbols_map
-
-    def _handleReplace(self, input_str):
-        """
-        Replace variable in inputStr to self.varDic["variable"]
-        For example:
-            input
-                And(y<=0,t>=0.2,v>=-0.1)
-            output: 
-                And(self.varDic["y"]<=0,self.varDic["t"]>=0.2,self.varDic["v"]>=-0.1)
-        
-        Args:
-            input_str (str): original string need to be replaced
-            keys (list): list of variable strings
-
-        Returns:
-            str: a string that all variables have been replaced into a desire form
-
-        """
-        idxes = []
-        i = 0
-        original = input_str
-        keys = list(self.varDict.keys())
-
-        keys.sort(key=lambda s: len(s))
-        for key in keys[::-1]:
-            for i in range(len(input_str)):
-                if input_str[i:].startswith(key):
-                    idxes.append((i, i + len(key)))
-                    input_str = input_str[:i] + "@" * len(key) + input_str[i + len(key):]
-
-        idxes = sorted(idxes)
-
-        input_str = original
-        for idx in idxes[::-1]:
-            key = input_str[idx[0]:idx[1]]
-            target = 'self.varDict["' + key + '"]'
-            input_str = input_str[:idx[0]] + target + input_str[idx[1]:]
-        return input_str
 
     def evaluate_guard_cont(self, agent, continuous_variable_dict, lane_map):
         res = False
         is_contained = False
 
         for cont_vars in continuous_variable_dict:
-            self.cont_variables[cont_vars] = cont_vars.replace('.','_')
-            self.varDict[cont_vars.replace('.','_')] = Real(cont_vars.replace('.','_'))
+            underscored = cont_vars.replace('.','_')
+            self.cont_variables[cont_vars] = underscored
+            self.varDict[underscored] = Real(underscored)
 
         z3_string = self.generate_z3_expression() 
         if isinstance(z3_string, bool):
@@ -111,8 +74,8 @@ class GuardExpressionAst:
         cur_solver, symbols = self._build_guard(z3_string, agent)
         cur_solver.push()
         for symbol in symbols:
-            cur_solver.add(self.varDict[symbol] >= continuous_variable_dict[symbols[symbol]][0])
-            cur_solver.add(self.varDict[symbol] <= continuous_variable_dict[symbols[symbol]][1])
+            start, end = continuous_variable_dict[symbols[symbol]]
+            cur_solver.add(self.varDict[symbol] >= start, self.varDict[symbol] <= end)
         if cur_solver.check() == sat:
             # The reachtube hits the guard
             cur_solver.pop()
@@ -122,8 +85,8 @@ class GuardExpressionAst:
             tmp_solver = Solver()
             tmp_solver.add(Not(cur_solver.assertions()[0]))
             for symbol in symbols:
-                tmp_solver.add(self.varDict[symbol] >= continuous_variable_dict[symbols[symbol]][0])
-                tmp_solver.add(self.varDict[symbol] <= continuous_variable_dict[symbols[symbol]][1])
+                start, end = continuous_variable_dict[symbols[symbol]]
+                tmp_solver.add(self.varDict[symbol] >= start, self.varDict[symbol] <= end)
             if tmp_solver.check() == unsat:
                 print("Full intersect, break")
                 is_contained = True
