@@ -58,8 +58,10 @@ import numpy as np
 class TestSimulatorMethods(unittest.TestCase):
     def setUp(self):
         self.scenario = Scenario()
-        self.car = CarAgent('ego', file_name='example_car_lane_switch.py')
-        #scenario.add_agent(car)
+        self.car = CarAgent('ego', file_name='example_controller1.py')
+        self.car2 = CarAgent('other', file_name='example_controller1.py')
+        self.scenario.add_agent(self.car)
+        self.scenario.add_agent(self.car2)
         # self.scenario.add_map(SimpleMap2())
         # self.scenario.set_sensor(FakeSensor1())
         # self.scenario.set_init(
@@ -75,8 +77,16 @@ class TestSimulatorMethods(unittest.TestCase):
     def test_nothing(self):
         self.assertEqual(5, 5)
 
-    def test_simulator(self):
+    def test_carid(self):
         self.assertEqual(self.car.id, 'ego', msg='Checking agent creation')
+
+    def test_carinscene(self):
+        # Ego agent was added
+        self.assertEqual(self.scenario.agent_dict['ego'], self.car, msg='Checking adding agent to scenario dict')
+
+    def test_scenedictsize(self):
+        # Check size of scene agent dictionary 
+        self.assertEqual(len(self.scenario.agent_dict), 2, msg='Checking adding agent to scenario dict')
 
 
 if __name__ == '__main__':
