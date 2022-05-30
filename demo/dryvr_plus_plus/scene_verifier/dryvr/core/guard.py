@@ -47,14 +47,17 @@ class Guard:
         # Thus we need to replace "==" to something else
         sympy_guard_str = guard_str.replace("==", ">=")
 
-        symbols = list(sympy.sympify(sympy_guard_str, evaluate=False).free_symbols)
+        symbols = list(sympy.sympify(
+            sympy_guard_str, evaluate=False).free_symbols)
         symbols = [str(s) for s in symbols]
-        symbols_idx = {s: self.variables.index(s) + 1 for s in symbols if s in self.variables}
+        symbols_idx = {s: self.variables.index(
+            s) + 1 for s in symbols if s in self.variables}
         if 't' in symbols:
             symbols_idx['t'] = 0
 
         guard_str = handleReplace(guard_str, list(self.varDic.keys()))
-        cur_solver.add(eval(guard_str))  # TODO use an object instead of `eval` a string
+        # TODO use an object instead of `eval` a string
+        cur_solver.add(eval(guard_str))
         return cur_solver, symbols_idx
 
     def guard_sim_trace(self, trace, guard_str):
@@ -97,8 +100,10 @@ class Guard:
             upper = trace[idx + 1]
             cur_solver.push()
             for symbol in symbols:
-                cur_solver.add(self.varDic[symbol] >= min(lower[symbols[symbol]], upper[symbols[symbol]]))
-                cur_solver.add(self.varDic[symbol] <= max(lower[symbols[symbol]], upper[symbols[symbol]]))
+                cur_solver.add(self.varDic[symbol] >= min(
+                    lower[symbols[symbol]], upper[symbols[symbol]]))
+                cur_solver.add(self.varDic[symbol] <= max(
+                    lower[symbols[symbol]], upper[symbols[symbol]]))
             if cur_solver.check() == sat:
                 cur_solver.pop()
                 guard_set[idx] = upper
@@ -163,8 +168,10 @@ class Guard:
             lower_bound = tube[i]
             upper_bound = tube[i + 1]
             for symbol in symbols:
-                cur_solver.add(self.varDic[symbol] >= lower_bound[symbols[symbol]])
-                cur_solver.add(self.varDic[symbol] <= upper_bound[symbols[symbol]])
+                cur_solver.add(self.varDic[symbol] >=
+                               lower_bound[symbols[symbol]])
+                cur_solver.add(self.varDic[symbol] <=
+                               upper_bound[symbols[symbol]])
             if cur_solver.check() == sat:
                 # The reachtube hits the guard
                 cur_solver.pop()
@@ -175,8 +182,10 @@ class Guard:
                 tmp_solver = Solver()
                 tmp_solver.add(Not(cur_solver.assertions()[0]))
                 for symbol in symbols:
-                    tmp_solver.add(self.varDic[symbol] >= lower_bound[symbols[symbol]])
-                    tmp_solver.add(self.varDic[symbol] <= upper_bound[symbols[symbol]])
+                    tmp_solver.add(
+                        self.varDic[symbol] >= lower_bound[symbols[symbol]])
+                    tmp_solver.add(
+                        self.varDic[symbol] <= upper_bound[symbols[symbol]])
                 if tmp_solver.check() == unsat:
                     print("Full intersect, break")
                     break
@@ -189,8 +198,10 @@ class Guard:
                     init_upper = guard_set_upper[0][1:]
                     for j in range(1, len(guard_set_lower)):
                         for k in range(1, len(guard_set_lower[0])):
-                            init_lower[k - 1] = min(init_lower[k - 1], guard_set_lower[j][k])
-                            init_upper[k - 1] = max(init_upper[k - 1], guard_set_upper[j][k])
+                            init_lower[k - 1] = min(init_lower[k - 1],
+                                                    guard_set_lower[j][k])
+                            init_upper[k - 1] = max(init_upper[k - 1],
+                                                    guard_set_upper[j][k])
                     # Return next initial Set, the result tube, and the true transit time
                     return [init_lower, init_upper], tube[:i], guard_set_lower[0][0]
 
@@ -202,11 +213,13 @@ class Guard:
             init_upper = guard_set_upper[0][1:]
             for j in range(1, len(guard_set_lower)):
                 for k in range(1, len(guard_set_lower[0])):
-                    init_lower[k - 1] = min(init_lower[k - 1], guard_set_lower[j][k])
-                    init_upper[k - 1] = max(init_upper[k - 1], guard_set_upper[j][k])
+                    init_lower[k - 1] = min(init_lower[k - 1],
+                                            guard_set_lower[j][k])
+                    init_upper[k - 1] = max(init_upper[k - 1],
+                                            guard_set_upper[j][k])
             # TODO: Treat tau as a special clock variable that don't have variation
             # init_upper[0] = init_lower[0]
-            
+
             # Return next initial Set, the result tube, and the true transit time
             return [init_lower, init_upper], tube[:i], guard_set_lower[0][0]
 
