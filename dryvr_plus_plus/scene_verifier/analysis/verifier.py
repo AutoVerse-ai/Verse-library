@@ -35,7 +35,7 @@ class Verifier:
         verification_queue.append(root)
         while verification_queue != []:
             node:AnalysisTreeNode = verification_queue.pop(0)
-            print(node.mode)
+            print(node.mode, node.start_time)
             remain_time = time_horizon - node.start_time 
             if remain_time <= 0:
                 continue 
@@ -68,6 +68,8 @@ class Verifier:
 
             # Get all possible transitions to next mode
             all_possible_transitions = transition_graph.get_all_transition_set(node)
+            if all_possible_transitions == None:
+                break
             max_end_idx = 0
             for transition in all_possible_transitions:
                 transit_agent_idx, src_mode, dest_mode, next_init, idx = transition 

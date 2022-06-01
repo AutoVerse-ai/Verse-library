@@ -1,6 +1,6 @@
 import enum
 import re
-from typing import List, Dict
+from typing import List, Dict, Optional, Tuple, Any
 import pickle
 # from scene_verifier.automaton.hybrid_io_automaton import HybridIoAutomaton
 # from pythonparser import Guard
@@ -234,7 +234,7 @@ class GuardExpressionAst:
             expr = expr.strip('\n')
             return expr
 
-    def evaluate_guard_hybrid(self, agent, discrete_variable_dict, continuous_variable_dict, lane_map:LaneMap):
+    def evaluate_guard_hybrid(self, agent, discrete_variable_dict, continuous_variable_dict, lane_map:LaneMap) -> Optional[bool]:
         """
         Handle guard atomics that contains both continuous and hybrid variables
         Especially, we want to handle function calls that need both continuous and 
@@ -246,21 +246,33 @@ class GuardExpressionAst:
         """
         res = True 
         for i, node in enumerate(self.ast_list):
-            tmp, self.ast_list[i] = self._evaluate_guard_hybrid(node, agent, discrete_variable_dict, continuous_variable_dict, lane_map)
+            sub_res = self._evaluate_guard_hybrid(node, agent, discrete_variable_dict, continuous_variable_dict, lane_map)
+            if sub_res == None:
+                return None
+            tmp, self.ast_list[i] = sub_res
             res = res and tmp 
         return res
 
-    def _evaluate_guard_hybrid(self, root, agent, disc_var_dict, cont_var_dict, lane_map:LaneMap):
+    def _evaluate_guard_hybrid(self, root, agent, disc_var_dict, cont_var_dict, lane_map:LaneMap) -> Optional[Tuple[bool, ast.expr]]:
         if isinstance(root, ast.Compare): 
             expr = astunparse.unparse(root)
-            left, root.left = self._evaluate_guard_hybrid(root.left, agent, disc_var_dict, cont_var_dict, lane_map)
-            right, root.comparators[0] = self._evaluate_guard_hybrid(root.comparators[0], agent, disc_var_dict, cont_var_dict, lane_map)
+            sub_res = self._evaluate_guard_hybrid(root.left, agent, disc_var_dict, cont_var_dict, lane_map)
+            if sub_res == None:
+                return None
+            left, root.left = sub_res
+            sub_res = self._evaluate_guard_hybrid(root.comparators[0], agent, disc_var_dict, cont_var_dict, lane_map)
+            if sub_res == None:
+                return None
+            right, root.comparators[0] = sub_res
             return True, root
         elif isinstance(root, ast.BoolOp):
             if isinstance(root.op, ast.And):
                 res = True
                 for i, val in enumerate(root.values):
-                    tmp, root.values[i] = self._evaluate_guard_hybrid(val, agent, disc_var_dict, cont_var_dict, lane_map)
+                    sub_res = self._evaluate_guard_hybrid(val, agent, disc_var_dict, cont_var_dict, lane_map)
+                    if sub_res == None:
+                        return None
+                    tmp, root.values[i] = sub_res
                     res = res and tmp 
                     if not res:
                         break 
@@ -273,8 +285,14 @@ class GuardExpressionAst:
                         break
                 return res, root  
         elif isinstance(root, ast.BinOp):
-            left, root.left = self._evaluate_guard_hybrid(root.left, agent, disc_var_dict, cont_var_dict, lane_map)
-            right, root.right = self._evaluate_guard_hybrid(root.right, agent, disc_var_dict, cont_var_dict, lane_map)
+            sub_res = self._evaluate_guard_hybrid(root.left, agent, disc_var_dict, cont_var_dict, lane_map)
+            if sub_res == None:
+                return None
+            left, root.left = sub_res
+            sub_res = self._evaluate_guard_hybrid(root.right, agent, disc_var_dict, cont_var_dict, lane_map)
+            if sub_res == None:
+                return None
+            right, root.right = sub_res
             return True, root
         elif isinstance(root, ast.Call):
             if isinstance(root.func, ast.Attribute):
@@ -300,6 +318,11 @@ class GuardExpressionAst:
                         # Get corresponding lane segments with respect to the set of vehicle pos
                         lane_seg1 = lane_map.get_lane_segment(vehicle_lane, arg1_lower)
                         lane_seg2 = lane_map.get_lane_segment(vehicle_lane, arg1_upper)
+
+                        if None in [lane_seg1, lane_seg2]:
+                            print(vehicle_pos)
+                            print("\x1b[31mbshhhhhh\x1b[0m")
+                            return None
 
                         # Compute the set of possible lateral values with respect to all possible segments
                         lateral_set1 = self._handle_lateral_set(lane_seg1, np.array(vehicle_pos))
@@ -336,6 +359,11 @@ class GuardExpressionAst:
                         lane_seg1 = lane_map.get_lane_segment(vehicle_lane, arg1_lower)
                         lane_seg2 = lane_map.get_lane_segment(vehicle_lane, arg1_upper)
 
+                        if None in [lane_seg1, lane_seg2]:
+                            print(vehicle_pos)
+                            print("\x1b[31mbshhhhhh\x1b[0m")
+                            return None
+
                         # Compute the set of possible longitudinal values with respect to all possible segments
                         longitudinal_set1 = self._handle_longitudinal_set(lane_seg1, np.array(vehicle_pos))
                         longitudinal_set2 = self._handle_longitudinal_set(lane_seg2, np.array(vehicle_pos))
@@ -362,7 +390,10 @@ class GuardExpressionAst:
             return root.value, root 
         elif isinstance(root, ast.UnaryOp):
             if isinstance(root.op, ast.USub):
-                res, root.operand = self._evaluate_guard_hybrid(root.operand, agent, disc_var_dict, cont_var_dict, lane_map)
+                sub_res = self._evaluate_guard_hybrid(root.operand, agent, disc_var_dict, cont_var_dict, lane_map)
+                if sub_res == None:
+                    return None
+                res, root.operand = sub_res
             else:
                 raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
             return True, root 

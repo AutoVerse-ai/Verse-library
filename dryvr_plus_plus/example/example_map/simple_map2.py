@@ -25,28 +25,22 @@ class SimpleMap3(LaneMap):
             [50,3],
             3
         )
-        lane0 = Lane('Lane0', [segment0])
         segment1 = StraightLane(
             'seg0',
             [0,0],
             [50,0],
             3
         )
-        lane1 = Lane('Lane1', [segment1])
         segment2 = StraightLane(
             'seg0',
             [0,-3],
             [50,-3],
             3
         )
-        lane2 = Lane('Lane2', [segment2])
+        lane = Lane('Lane1', [segment0, segment1, segment2])
         # segment2 = LaneSegment('Lane1', 3)
         # self.add_lanes([segment1,segment2])
-        self.add_lanes([lane0, lane1, lane2])
-        self.left_lane_dict[lane1.id].append(lane0.id)
-        self.left_lane_dict[lane2.id].append(lane1.id)
-        self.right_lane_dict[lane0.id].append(lane1.id)
-        self.right_lane_dict[lane1.id].append(lane2.id)
+        self.add_lanes([lane])
 
 class SimpleMap5(LaneMap):
     def __init__(self):

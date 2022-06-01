@@ -68,11 +68,11 @@ def controller(ego: State, other: State, sign: State, lane_map):
     return output
 
 
-from dryvr_plus_plus.example.example_agent.car_agent import CarAgent
+from dryvr_plus_plus.example.example_agent.car_agent import CarAgent, WeirdCarAgent
 from dryvr_plus_plus.example.example_agent.sign_agent import SignAgent
 from dryvr_plus_plus.scene_verifier.scenario.scenario import Scenario
 from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap3
-from dryvr_plus_plus.plotter.plotter2D import plot_reachtube_tree, plot_simulation_tree
+from dryvr_plus_plus.plotter.plotter2D import plot_reachtube_tree, plot_simulation_tree, plot_map
 from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor2
 
 import matplotlib.pyplot as plt
@@ -84,15 +84,16 @@ if __name__ == "__main__":
 
     car = CarAgent('car1', file_name="example_controller3.py")
     scenario.add_agent(car)
-    car = CarAgent('car2', file_name=input_code_name)
+    car = WeirdCarAgent('car2', file_name=input_code_name)
     scenario.add_agent(car)
     scenario.add_agent(SignAgent("sign"))
-    scenario.set_map(SimpleMap3())
+    map = SimpleMap3()
+    scenario.set_map(map)
     scenario.set_sensor(FakeSensor2())
     scenario.set_init(
         [
             [[0, -0.2, 0, 1.0],[0.2, 0.2, 0, 1.0]],
-            [[10, 0, 0, 0.5],[10, 0, 0, 0.5]], 
+            [[9.8, -0.2, 0, 0.5],[10.2, 0.2, 0, 0.5]], 
             [[20, 0, 0, 0],[20, 0, 0, 0]],
         ],
         [
@@ -102,12 +103,16 @@ if __name__ == "__main__":
         ]
     )
     # simulator = Simulator()
-    traces = scenario.simulate(40)
-    # traces = scenario.verify(40)
-
     fig = plt.figure()
-    fig = plot_simulation_tree(traces, 'car1', 1, [2], 'b', fig)
-    fig = plot_simulation_tree(traces, 'car2', 1, [2], 'r', fig)
+
+    # traces = scenario.simulate(40)
+    # fig = plot_simulation_tree(traces, 'car1', 1, [2], 'b', fig)
+    # fig = plot_simulation_tree(traces, 'car2', 1, [2], 'r', fig)
+
+    traces = scenario.verify(40)
+    fig = plot_reachtube_tree(traces, 'car1', 1, [2], '#0000ff02', fig)
+    fig = plot_reachtube_tree(traces, 'car2', 1, [2], '#00ff0002', fig)
+    plot_map(map, "#000", fig)
 
     plt.show()
 

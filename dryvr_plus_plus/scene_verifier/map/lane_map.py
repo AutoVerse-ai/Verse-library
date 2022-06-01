@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 import copy
 from enum import Enum
 
@@ -64,16 +64,20 @@ class LaneMap:
             lane_idx = lane_idx.name
         return self.lane_dict[lane_idx].get_geometry()
 
-    def get_longitudinal_position(self, lane_idx:str, position:np.ndarray) -> float:
+    def get_longitudinal_position(self, lane_idx:str, position:np.ndarray) -> Optional[float]:
         if not isinstance(position, np.ndarray):
             position = np.array(position)
         lane = self.lane_dict[lane_idx]
+        if not lane:
+            return None
         return lane.get_longitudinal_position(position)
 
-    def get_lateral_distance(self, lane_idx:str, position:np.ndarray) -> float:
+    def get_lateral_distance(self, lane_idx:str, position:np.ndarray) -> Optional[float]:
         if not isinstance(position, np.ndarray):
             position = np.array(position)
         lane = self.lane_dict[lane_idx]
+        if not lane:
+            return None
         return lane.get_lateral_distance(position)
 
     def get_altitude(self, lane_idx, position:np.ndarray) -> float:

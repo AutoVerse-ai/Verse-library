@@ -35,7 +35,7 @@ def plot(
         lb = rect[0]
         ub = rect[1]
         for y_dim in y_dim_list:
-            rect_patch = patches.Rectangle((lb[x_dim], lb[y_dim]), ub[x_dim]-lb[x_dim], ub[y_dim]-lb[y_dim], color = color)
+            rect_patch = patches.Rectangle((lb[x_dim], lb[y_dim]), ub[x_dim]-lb[x_dim], ub[y_dim]-lb[y_dim], color = color, ec="black")
             ax.add_patch(rect_patch)
             x_min = min(lb[x_dim], x_min)
             y_min = min(lb[y_dim], y_min)
@@ -60,6 +60,8 @@ def plot_reachtube_tree(root, agent_id, x_dim: int=0, y_dim_list: List[int]=[1],
     while queue != []:
         node = queue.pop(0)
         traces = node.trace
+        if agent_id not in traces:
+            continue
         trace = traces[agent_id]
         data = []
         for i in range(0,len(trace),2):
