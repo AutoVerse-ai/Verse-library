@@ -114,9 +114,8 @@ class CarAgent(BaseAgent):
 class WeirdCarAgent(CarAgent):
     def __init__(self, id, code = None, file_name = None):
         super().__init__(id, code, file_name)
-        self.steered = 0
         self.gain = 0.2
-        self.iter = 50
+        self.thres = 0.8
 
     def action_handler(self, mode: List[str], state, lane_map: LaneMap) -> Tuple[float, float]:
         vehicle_mode = mode[0]
@@ -126,19 +125,12 @@ class WeirdCarAgent(CarAgent):
         
     def _action_handler(self, mode: List[str], state, lane_map: LaneMap) -> Tuple[float, float]:
         vehicle_mode = mode[0]
-        if abs(self.steered) > self.iter:
+        theta = state[2]
+        if abs(theta) > self.thres:
             return 0, 0
-        if vehicle_mode == "SwitchLeft":
-            if self.steered < 0:
-                self.steered = 100
-                return 0, 0
-            self.steered += 1
+        if vehicle_mode == "SwitchLeft" and theta >= 0:
             return self.gain, 0
-        elif vehicle_mode == "SwitchRight":
-            if self.steered > 0:
-                self.steered = 100
-                return 0, 0
-            self.steered -= 1
+        elif vehicle_mode == "SwitchRight" and theta <= 0:
             return -self.gain, 0
         else:
             return 0, 0
