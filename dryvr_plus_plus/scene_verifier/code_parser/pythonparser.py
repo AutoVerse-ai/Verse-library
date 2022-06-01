@@ -6,12 +6,36 @@ from cgitb import reset
 import typing
 import json
 import sys
-from typing import List, Tuple
-import re 
+from typing import List, Tuple, Dict
+import re
 import itertools
 import ast
 
 from treelib import Node, Tree
+
+class SimVarSet:
+    """Variable/member set needed for simulation/verification for some object"""
+    cont: List[str]     # Continuous variables
+    disc: List[str]     # Discrete variables
+    def __init__(self):
+        self.cont = []
+        self.disc = []
+
+    def add_cont(self, s: str):
+        self.cont.append(s)
+
+    def add_disc(self, s: str):
+        self.disc.append(s)
+
+class ParseVarSet(SimVarSet):
+    """Variable/member set encountered during parsing for some object"""
+    static: List[str]   # Static data in object
+    def __init__(self):
+        super().__init__()
+        self.static = []
+
+    def add_static(self, s: str):
+        self.static.append(s)
 
 '''
 Edge class: utility class to hold the source, dest, guards, and resets for a transition
@@ -24,7 +48,7 @@ class Edge:
         self.resets = resets
 
 '''
-Statement super class. Holds the code and mode information for a statement. 
+Statement super class. Holds the code and mode information for a statement.
 If there is no mode information, mode and modeType are None.
 '''
 class Statement:
@@ -32,9 +56,9 @@ class Statement:
         self.code = code
         self.modeType = modeType
         self.mode = mode
-        self.func = func 
+        self.func = func
         self.args = args
-    
+
     def print(self):
         print(self.code)
 
@@ -49,14 +73,14 @@ class Guard(Statement):
 
 
     '''
-    Returns true if a guard is checking that we are in a mode. 
+    Returns true if a guard is checking that we are in a mode.
     '''
     def isModeCheck(self):
         return self.modeType != None
 
     '''
     Helper function to parse a node that contains a guard. Parses out the code and mode.
-    Returns a Guard. 
+    Returns a Guard.
     TODO: needs to handle more complex guards.
     '''
     def parseGuard(node, code):
@@ -74,7 +98,7 @@ class Guard(Statement):
         elif isinstance(node.test, ast.Call):
             source_segment = ast.get_source_segment(code, node.test)
             if "map" in source_segment:
-                func = node.test.func.value.id + '.' + node.test.func.attr 
+                func = node.test.func.value.id + '.' + node.test.func.attr
                 args = []
                 for arg in node.test.args:
                     args.append(arg.value.id + '.' + arg.attr)
@@ -89,14 +113,14 @@ class Reset(Statement):
         self.ast = inp_ast
 
     '''
-    Returns true if a reset is updating our mode. 
+    Returns true if a reset is updating our mode.
     '''
     def isModeUpdate(self):
         return self.modeType != None
 
     '''
     Helper function to parse a node that contains a reset. Parses out the code and mode.
-    Returns a reset. 
+    Returns a reset.
     '''
     def parseReset(node, code):
         #assume reset is modeType = newMode
@@ -126,7 +150,7 @@ class TransitionUtil:
 
     '''
     Takes in guard code. Returns a string in the format json expected.
-    TODO: needs to handle more complex guards. 
+    TODO: needs to handle more complex guards.
     '''
     def parseGuardCode(code):
         parts = code.split("and")
@@ -138,12 +162,12 @@ class TransitionUtil:
         return out
 
     '''
-    Helper function for parseGuardCode. 
+    Helper function for parseGuardCode.
     '''
     def guardString(guards):
         output = ""
         first = True
-        for guard in guards: 
+        for guard in guards:
             #print(type(condition))
             if first:
                 output+= TransitionUtil.parseGuardCode(guard.code)
@@ -156,15 +180,15 @@ class TransitionUtil:
     '''
     Helper function to get the index of the vertex for a set of modes.
     Modes is a list of all modes in the current vertex.
-    Vertices is the list of vertices. 
+    Vertices is the list of vertices.
     TODO: needs to be tested on more complex examples to see if ordering stays and we can use index function
     '''
     def getIndex(modes, vertices):
         return vertices.index(tuple(modes))
 
     '''
-    Function that creates transitions given a path. 
-    Will create multiple transitions if not all modeTypes are checked/set in the path. 
+    Function that creates transitions given a path.
+    Will create multiple transitions if not all modeTypes are checked/set in the path.
     Returns a list of edges that correspond to the path.
     '''
     def createTransition(path, vertices, modes):
@@ -240,13 +264,19 @@ class ControllerAst():
     Statement tree is a tree of nodes that contain a list in their data. The list contains a single guard or a list of resets.
     Variables (inputs to the controller) are collected.
     Modes are collected from all enums that have the word "mode" in them.
-    Vertices are generated by taking the products of mode types. 
+    Vertices are generated by taking the products of mode types.
     '''
+    variables: List[Tuple[str, str]]
+    discrete_variables: List[Tuple[str, str]]
+    type_vars: List[Tuple[str, str]]
+    vars_dict: Dict[str, ParseVarSet]
+    state_object_dict: Dict[str, ParseVarSet]
+    modes: Dict[str, List[str]]
     def __init__(self, code = None, file_name = None):
         assert code is not None or file_name is not None
         if file_name is not None:
             with open(file_name,'r') as f:
-                code = f.read()        
+                code = f.read()
 
         self.code = code
         self.tree = ast.parse(code)
@@ -265,9 +295,9 @@ class ControllerAst():
     def getAllPaths(self):
         self.paths = self.getNextModes([], True)
         return self.paths
-    
+
     '''
-    getNextModes takes in a list of current modes. It should include all modes. 
+    getNextModes takes in a list of current modes. It should include all modes.
     getNextModes returns a list of paths that can be followed when in the given mode.
     A path is a list of statements, all guards and resets along the path. They are in the order they are encountered in the code.
     TODO: should we not force all modes be listed? Or rerun for each unknown/don't care node? Or add them all to the list
@@ -278,19 +308,19 @@ class ControllerAst():
         rootid = self.statementtree.root
         currnode = self.statementtree.get_node(rootid)
         paths = self.walkstatements(currnode, currentModes, getAllPaths)
-        
-        return paths 
+
+        return paths
 
     '''
     Helper function to walk the statement tree from parentnode and find paths that are allowed in the currentMode.
-    Returns a list of paths. 
+    Returns a list of paths.
     '''
     def walkstatements(self, parentnode, currentModes, getAllPaths):
         nextsPaths = []
 
         for node in self.statementtree.children(parentnode.identifier):
             statement = node.data
-            
+
             if isinstance(statement[0], Guard) and statement[0].isModeCheck():
                 if getAllPaths or statement[0].mode in currentModes:
                     #print(statement.mode)
@@ -301,7 +331,7 @@ class ControllerAst():
                         nextsPaths.append(newpath)
                     if len(nextsPaths) == 0:
                         nextsPaths.append(statement)
-    
+
             else:
                 newPaths =self.walkstatements(node, currentModes, getAllPaths)
                 for path in newPaths:
@@ -310,13 +340,13 @@ class ControllerAst():
                     nextsPaths.append(newpath)
                 if len(nextsPaths) == 0:
                             nextsPaths.append(statement)
- 
+
         return nextsPaths
 
 
     '''
     Function to create a json of the full graph.
-    Requires that paths class variables has been set. 
+    Requires that paths class variables has been set.
     '''
     def create_json(self, input_file_name, output_file_name):
         if not self.paths:
@@ -341,7 +371,7 @@ class ControllerAst():
                 edges.append([edge.source, edge.dest])
                 guards.append(TransitionUtil.guardString(edge.guards))
                 resets.append(TransitionUtil.resetString(edge.resets))
-    
+
         output_dict['vertex'] = self.vertexStrings
         #print(vertices)
         output_dict['variables'] = self.variables
@@ -362,43 +392,37 @@ class ControllerAst():
 
     #inital tree walk, parse into a tree of resets/modes
     '''
-    Function called by init function. Walks python ast and parses to a statement tree. 
+    Function called by init function. Walks python ast and parses to a statement tree.
     Returns a statement tree (nodes contain a list of either a single guard or muliple resets), the variables, and a mode dictionary
     '''
     def initalwalktree(self, code, tree):
-        vars = []
-        discrete_vars = []
-        type_vars = []
-        out = []
-        mode_dict = {}
-        state_object_dict = {}
-        vars_dict = {}
+        vars: List[Tuple[str, str]] = []
+        discrete_vars: List[Tuple[str, str]] = []
+        type_vars: List[Tuple[str, str]] = []
+        mode_dict: Dict[str, List[str]] = {}
+        state_object_dict: Dict[str, ParseVarSet] = {}
+        vars_dict: Dict[str, ParseVarSet] = {}
         statementtree = Tree()
         for node in ast.walk(tree): #don't think we want to walk the whole thing because lose ordering/depth
             # Get all the modes
             if isinstance(node, ast.ClassDef):
                 if "Mode" in node.name:
-                    modeType = str(node.name)
-                    modes = []
-                    for modeValue in node.body:
-                        modes.append(str(modeValue.targets[0].id))
-                    mode_dict[modeType] = modes
+                    mode_dict[node.name] = [str(modeValue.targets[0].id) for modeValue in node.body]
             if isinstance(node, ast.ClassDef):
                 if "State" in node.name:
-                    state_object_dict[node.name] = {"cont":[],"disc":[], "type": []}
+                    state_object_dict[node.name] = ParseVarSet()
                     for item in node.body:
                         if isinstance(item, ast.FunctionDef):
                             if "init" in item.name:
                                 for arg in item.args.args:
-                                    if "self" not in arg.arg:
-                                        if "type" == arg.arg:
-                                            state_object_dict[node.name]["type"].append(arg.arg)
-                                        elif "mode" not in arg.arg:
-                                            state_object_dict[node.name]['cont'].append(arg.arg)
-                                            # vars.append(arg.arg)
+                                    var_name = arg.arg
+                                    if "self" not in var_name:
+                                        if "type" == var_name:
+                                            state_object_dict[node.name].add_static(var_name)
+                                        elif "mode" not in var_name:
+                                            state_object_dict[node.name].add_cont(var_name)
                                         else:
-                                            state_object_dict[node.name]['disc'].append(arg.arg)
-                                            # discrete_vars.append(arg.arg)
+                                            state_object_dict[node.name].add_disc(var_name)
             if isinstance(node, ast.FunctionDef):
                 if node.name == 'controller':
                     #print(node.body)
@@ -412,22 +436,16 @@ class ControllerAst():
                             continue
                         arg_annotation = arg.annotation.id
                         arg_name = arg.arg
-                        vars_dict[arg_name] = {'cont':[], 'disc':[], "type": []}
-                        for var in state_object_dict[arg_annotation]['cont']:
-                            vars.append(arg_name+"."+var)
-                            vars_dict[arg_name]['cont'].append(var)
-                        for var in state_object_dict[arg_annotation]['disc']:
-                            discrete_vars.append(arg_name+"."+var)
-                            vars_dict[arg_name]['disc'].append(var)
-                        for var in state_object_dict[arg_annotation]['type']:
-                            type_vars.append(arg_name+"."+var)
-                            vars_dict[arg_name]['type'].append(var)
-
-                        # if "mode" not in arg.arg:
-                        #     vars.append(arg.arg)
-                        #     #todo: what to add for return values
-                        # else:
-                        #     discrete_vars.append(arg.arg)
+                        vars_dict[arg_name] = ParseVarSet()
+                        for var in state_object_dict[arg_annotation].cont:
+                            vars.append((arg_name, var))
+                            vars_dict[arg_name].add_cont(var)
+                        for var in state_object_dict[arg_annotation].disc:
+                            discrete_vars.append((arg_name, var))
+                            vars_dict[arg_name].add_disc(var)
+                        for var in state_object_dict[arg_annotation].static:
+                            type_vars.append((arg_name, var))
+                            vars_dict[arg_name].add_static(var)
         return [statementtree, vars, mode_dict, discrete_vars, state_object_dict, vars_dict, type_vars]
 
 
@@ -460,16 +478,16 @@ class ControllerAst():
                 #for result in tempresults:
                 recoutput.append(tempresults)
 
-        
-        #pathsafterme = [] 
+
+        #pathsafterme = []
         if len(childrens_resets) > 0:
             #print("adding node:" + str(self.nodect) + "with parent:" + str(parent))
             tree.create_node(tag = childrens_resets[0].code, data = childrens_resets, parent= parent)
         for subtree in recoutput:
             #print("adding subtree:" + " to parent:" + str(parent))
             tree.paste(parent, subtree)
-                
-        
+
+
         return tree
 
 class EmptyAst(ControllerAst):
@@ -482,11 +500,7 @@ class EmptyAst(ControllerAst):
         }
         self.paths = None
         self.state_object_dict = {
-            'State':{
-                'cont':[],
-                'disc':[],
-                'type':[]
-            }
+            'State': ParseVarSet(),
         }
         self.type_vars = []
         self.variables = []
@@ -522,7 +536,7 @@ if __name__ == "__main__":
 
     #demonstrate you can check getNextModes after only initalizing
     paths = controller_obj.getNextModes("NormalA;Normal3")
-   
+
     print("Results")
     for path in paths:
         for item in path:
@@ -540,6 +554,6 @@ if __name__ == "__main__":
     controller_obj.create_json(input_file_name, output_file_name)
 
 
-    
-    
+
+
 

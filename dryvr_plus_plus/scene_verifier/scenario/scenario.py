@@ -94,7 +94,7 @@ class Scenario:
         for agent_id in state_dict:
             agent:BaseAgent = self.agent_dict[agent_id]
             agent_state, agent_mode = state_dict[agent_id]
-        
+
             t = agent_state[0]
             agent_state = agent_state[1:]
             paths = agent.controller.getNextModes(agent_mode)
@@ -111,15 +111,15 @@ class Scenario:
                 guard_expression = GuardExpressionAst(guard_list)
                 # Map the values to variables using sensor
                 continuous_variable_dict, discrete_variable_dict = self.sensor.sense(self, agent, state_dict, self.map)
-                
+
                 # Check if the guard can be satisfied
-                # First Check if the discrete guards can be satisfied by actually evaluate the values 
+                # First Check if the discrete guards can be satisfied by actually evaluate the values
                 # since there's no uncertainty. If there's functions, actually execute the functions
                 guard_can_satisfied = guard_expression.evaluate_guard_disc(agent, discrete_variable_dict, continuous_variable_dict, self.map)
                 if not guard_can_satisfied:
                     continue
 
-                # TODO: Handle hybrid guards that involves both continuous and discrete dynamics 
+                # TODO: Handle hybrid guards that involves both continuous and discrete dynamics
                 # Will have to limit the amount of hybrid guards that we want to handle. The difficulty will be handle function guards.
                 guard_can_satisfied = guard_expression.evaluate_guard_hybrid(agent, discrete_variable_dict, continuous_variable_dict, self.map)
                 if guard_can_satisfied == None:
@@ -177,15 +177,15 @@ class Scenario:
                         reset_idx_dict[agent_id][dest] = []
                     reset_dict[agent_id][dest].append(reset_rect)
                     reset_idx_dict[agent_id][dest].append(hit_idx)
-            
+
         # Combine reset rects and construct transitions
         for agent in reset_dict:
             for dest in reset_dict[agent]:
-                combined_rect = None 
+                combined_rect = None
                 for rect in reset_dict[agent][dest]:
                     rect = np.array(rect)
                     if combined_rect is None:
-                        combined_rect = rect 
+                        combined_rect = rect
                     else:
                         combined_rect[0,:] = np.minimum(combined_rect[0,:], rect[0,:])
                         combined_rect[1,:] = np.maximum(combined_rect[1,:], rect[1,:])
@@ -226,7 +226,7 @@ class Scenario:
                 guard_expression = GuardExpressionAst(guard_list)
                 # Map the values to variables using sensor
                 continuous_variable_dict, discrete_variable_dict = self.sensor.sense(self, agent, state_dict, self.map)
-                
+
                 '''Execute functions related to map to see if the guard can be satisfied'''
                 '''Check guards related to modes to see if the guards can be satisfied'''
                 '''Actually plug in the values to see if the guards can be satisfied'''
@@ -241,7 +241,7 @@ class Scenario:
                         # Specify the destination mode
                         reset = reset.code
                         if "mode" in reset:
-                            for i, discrete_variable_ego in enumerate(agent.controller.vars_dict['ego']['disc']):
+                            for i, discrete_variable_ego in enumerate(agent.controller.vars_dict['ego'].disc):
                                 if discrete_variable_ego in reset:
                                     break
                             tmp = reset.split('=')
@@ -253,11 +253,11 @@ class Scenario:
                             else:
                                 tmp = tmp[1].split('.')
                                 if tmp[0].strip(' ') in agent.controller.modes:
-                                    possible_dest[i] = [tmp[1]]                            
-                        else: 
-                            for i, cts_variable in enumerate(agent.controller.vars_dict['ego']['cont']):
+                                    possible_dest[i] = [tmp[1]]
+                        else:
+                            for i, cts_variable in enumerate(agent.controller.vars_dict['ego'].cont):
                                 if "output."+cts_variable in reset:
-                                    break 
+                                    break
                             tmp = reset.split('=')
                             tmp = tmp[1]
                             for cts_variable in continuous_variable_dict:
@@ -269,7 +269,7 @@ class Scenario:
                         all_dest.append(None)
                     for dest in all_dest:
                         next_transition = (
-                            agent_id, agent_mode, dest, next_init, 
+                            agent_id, agent_mode, dest, next_init,
                         )
                         satisfied_guard.append(next_transition)
 
