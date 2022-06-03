@@ -317,25 +317,15 @@ class ControllerAst():
         for node in self.statementtree.children(parentnode.identifier):
             statement = node.data
 
-            if isinstance(statement[0], Guard) and statement[0].isModeCheck():
-                if getAllPaths or statement[0].mode in currentModes:
-                    #print(statement.mode)
-                    newPaths = self.walkstatements(node, currentModes, getAllPaths)
-                    for path in newPaths:
-                        newpath = statement.copy()
-                        newpath.extend(path)
-                        nextsPaths.append(newpath)
-                    if len(nextsPaths) == 0:
-                        nextsPaths.append(statement)
-
-            else:
-                newPaths =self.walkstatements(node, currentModes, getAllPaths)
+            guard_check_mode = isinstance(statement[0], Guard) and statement[0].isModeCheck()
+            if not (guard_check_mode and not (getAllPaths or statement[0].mode in currentModes)):
+                newPaths = self.walkstatements(node, currentModes, getAllPaths)
                 for path in newPaths:
                     newpath = statement.copy()
                     newpath.extend(path)
                     nextsPaths.append(newpath)
                 if len(nextsPaths) == 0:
-                            nextsPaths.append(statement)
+                    nextsPaths.append(statement)
 
         return nextsPaths
 

@@ -66,10 +66,7 @@ class GuardExpressionAst:
 
         z3_string = self.generate_z3_expression() 
         if isinstance(z3_string, bool):
-            if z3_string:
-                return True, True 
-            else:
-                return False, False
+            return z3_string, z3_string 
 
         cur_solver, symbols = self._build_guard(z3_string, agent)
         cur_solver.push()
