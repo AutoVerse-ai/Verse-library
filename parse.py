@@ -73,56 +73,55 @@ class Function:
         return VarSubstituter(args).visit(ret)
 
 def proc(node: ast.AST, scope: Scope):
-    match node:
-        case ast.Module(body=nodes):
-            for node in nodes:
-                proc(node, scope)
-        case ast.For(_) | ast.While(_):
-            raise NotImplementedError("loops not supported")
-        case ast.If(_):
-            node.test = proc(node.test, scope)
-            for node in node.body:      # FIXME properly handle branching
-                proc(node, scope)
-            for node in node.orelse:
-                proc(node, scope)
-        case ast.Assign(targets=targets, value=val):
-            match targets:
-                case [ast.Name(id=name)]:
-                    scope.set(name, proc(val, scope))
-                case [ast.Attribute(_)]:
-                    raise NotImplementedError("assign.attr")
-                case _ if len(targets) > 1:
-                    raise NotImplementedError("unpacking not supported")
-        case ast.Name(id=name, ctx=ast.Load()):
-            return scope.lookup(name)
-        case ast.FunctionDef(name):
-            scope.set(name, Function.from_func_def(node, scope))
-        case ast.ClassDef(_):
-            pass
-        case ast.UnaryOp(op, operand):
-            return ast.UnaryOp(op, proc(operand, scope))
-        case ast.BinOp(left, op, right):
-            return ast.BinOp(proc(left, scope), op, proc(right, scope))
-        case ast.BoolOp(op, vals):
-            return ast.BoolOp(op, [proc(val, scope) for val in vals])
-        case ast.Compare(left, op, right):
-            if len(op) > 1 or len(right) > 1:
-                raise NotImplementedError("too many comparisons")
-            return ast.Compare(proc(left, scope), op, [proc(right[0], scope)])
-        case ast.Call(fun, args):
-            scope.dump()
-            fun = proc(fun, scope)
-            if not isinstance(fun, Function):
-                raise Exception("???")
-            return fun.apply([proc(a, scope) for a in args])
-        case ast.List(elts):
-            return ast.List([proc(e, scope) for e in elts])
-        case ast.Tuple(elts):
-            return ast.Tuple([proc(e, scope) for e in elts])
-        case ast.Return(value=val):
-            return proc(val, scope)
-        case ast.Constant(value=val):
-            return node         # XXX simplification?
+    if isinstance(node, ast.Module):
+        for node in node.body:
+            proc(node, scope)
+    elif isinstance(node, ast.For) or isinstance(node, ast.While):
+        raise NotImplementedError("loops not supported")
+    elif isinstance(node, ast.If):
+        node.test = proc(node.test, scope)
+        for node in node.body:      # FIXME properly handle branching
+            proc(node, scope)
+        for node in node.orelse:
+            proc(node, scope)
+    elif isinstance(node, ast.Assign):
+        if len(node.targets) == 1:
+            target = node.targets[0]
+            if isinstance(target, ast.Name):
+                scope.set(target.id, proc(node.value, scope))
+            elif isinstance(target, ast.Attribute):
+                raise NotImplementedError("assign.attr")
+        else:
+            raise NotImplementedError("unpacking not supported")
+    elif isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
+        return scope.lookup(node.id)
+    elif isinstance(node, ast.FunctionDef):
+        scope.set(node.name, Function.from_func_def(node, scope))
+    elif isinstance(node, ast.ClassDef):
+        pass
+    elif isinstance(node, ast.UnaryOp):
+        return ast.UnaryOp(node.op, proc(node.operand, scope))
+    elif isinstance(node, ast.BinOp):
+        return ast.BinOp(proc(node.left, scope), node.op, proc(node.right, scope))
+    elif isinstance(node, ast.BoolOp):
+        return ast.BoolOp(node.op, [proc(val, scope) for val in node.values])
+    elif isinstance(node, ast.Compare):
+        if len(node.ops) > 1 or len(node.comparators) > 1:
+            raise NotImplementedError("too many comparisons")
+        return ast.Compare(proc(node.left, scope), node.ops, [proc(node.comparators[0], scope)])
+    elif isinstance(node, ast.Call):
+        fun = proc(node.func, scope)
+        if not isinstance(fun, Function):
+            raise Exception("???")
+        return fun.apply([proc(a, scope) for a in node.args])
+    elif isinstance(node, ast.List):
+        return ast.List([proc(e, scope) for e in node.elts])
+    elif isinstance(node, ast.Tuple):
+        return ast.Tuple([proc(e, scope) for e in node.elts])
+    elif isinstance(node, ast.Return):
+        return proc(node.value, scope)
+    elif isinstance(node, ast.Constant):
+        return node         # XXX simplification?
 
 def parse(fn: str):
     with open(fn) as f:
