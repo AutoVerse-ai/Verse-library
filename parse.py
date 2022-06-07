@@ -1,6 +1,42 @@
 import ast, copy
-from typing import List, Dict, Union, Optional, TypeAlias
+from typing import List, Dict, Union, Optional, TypeAlias, Any
+from dataclasses import dataclass
+from enum import Enum, auto
 
+class ReductionType(Enum):
+    Any = auto()
+    All = auto()
+    Max = auto()
+    Min = auto()
+    Sum = auto()
+
+    @staticmethod
+    def from_str(s: str) -> "ReductionType":
+        return {
+            "any": ReductionType.Any,
+            "all": ReductionType.All,
+            "max": ReductionType.Max,
+            "min": ReductionType.Min,
+            "sum": ReductionType.Sum,
+        }[s]
+
+@dataclass
+class Reduction:
+    op: ReductionType
+    expr: ast.expr
+    it: str
+    value: ast.AST
+
+class If:
+    test: ast.expr
+    true: ast.expr
+    false: Optional[ast.expr]
+    def __init__(self, test, true, false=None):
+        self.test = test
+        self.true = true
+        self.false = false
+
+@dataclass
 class Lambda:
     args: List[str]
     body: ast.expr
@@ -25,7 +61,25 @@ class Lambda:
         args = {k: v for k, v in zip(self.args, args)}
         return VarSubstituter(args).visit(ret)
 
-ScopeValue: TypeAlias = Union[ast.AST, Lambda, Dict[str, "ScopeValue"]]   # TODO
+ast_dump = lambda node, dump=False: ast.dump(node, indent=2) if dump else ast.unparse(node)
+
+def ir_dump(node, dump=False):
+    if isinstance(node, Lambda):
+        return f"<Lambda args: {node.args} body: {ir_dump(node.body, dump)}>"
+    if isinstance(node, ast.If):
+        return f"<{{{ast_dump(node, dump)}}}>"
+    if isinstance(node, Reduction):
+        return f"<Reduction {node.op}({ast_dump(node.expr, dump)} for {node.it} in {ast_dump(node.value, dump)}>"
+    # if isinstance(node, If):
+    #     if node.false == None:
+    #         return f"<If test: {node.test} true: {ir_dump(node.true)}>"
+    #     return f"<If test: {node.test} true: {ir_dump(node.true)} false: {ir_dump(node.false)}>"
+    elif isinstance(node, dict):
+        return "<Object " + " ".join(f"{k}: {ir_dump(v, dump)}" for k, v in node.items()) + ">"
+    else:
+        return ast_dump(node, dump)
+
+ScopeValue: TypeAlias = Union[ast.AST, If, Lambda, Dict[str, "ScopeValue"]]   # TODO
 class Scope:
     scopes: List[Dict[str, ScopeValue]]
     def __init__(self):
@@ -51,16 +105,9 @@ class Scope:
         self.scopes[0][key] = val
 
     def dump(self, dump=False):
-        def ir_dump(node):
-            if isinstance(node, Lambda):
-                return f"<Lambda args: {node.args} body: {ir_dump(node.body)}>"
-            elif isinstance(node, dict):
-                return "<Object " + " ".join(f"{k}: {ir_dump(v)}" for k, v in node.items()) + ">"
-            else:
-                return ast.dump(node, indent=2) if dump else ast.unparse(node)
         for scope in self.scopes:
             for k, node in scope.items():
-                print(f"{k}: {ir_dump(node)}")
+                print(f"{k}: {ir_dump(node, dump)}")
             print("===")
 
 class VarSubstituter(ast.NodeTransformer):
@@ -75,10 +122,44 @@ class VarSubstituter(ast.NodeTransformer):
         self.generic_visit(node)
         return node         # XXX needed?
 
-def proc(node: ast.AST, scope: Scope):
+def merge_if(test, true, false, scope: Dict[str, ScopeValue]):
+    for var in set(true.keys()).union(set(false.keys())):
+        if true.get(var) != None and false.get(var) != None:
+            assert isinstance(true.get(var), dict) == isinstance(false.get(var), dict)
+        if isinstance(true.get(var), dict):
+            if not isinstance(scope.get(var), dict):
+                if var in scope:
+                    print("???", var, scope[var])
+                scope[var] = {}
+            merge_if(test, true.get(var, {}), false.get(var, {}), scope[var])
+        else:
+            if true.get(var) == None:
+                scope[var] = ast.If(ast.UnaryOp(ast.Not(), test), [false.get(var)], [])
+            elif false.get(var) == None:
+                scope[var] = ast.If(test, [true.get(var)], [])
+            else:
+                scope[var] = ast.If(test, [true.get(var)], [false.get(var)])
+
+def proc_assign(target: ast.AST, val, scope: Scope):
+    if isinstance(target, ast.Name):
+        if isinstance(val, ast.AST):
+            scope.set(target.id, proc(val, scope))
+        else:
+            scope.set(target.id, val)
+    elif isinstance(target, ast.Attribute):
+        if proc(target.value, scope) == None:
+            proc_assign(target.value, {}, scope)
+        obj = proc(target.value, scope)
+        obj[target.attr] = val
+    else:
+        raise NotImplementedError("assign.others")
+
+def proc(node: ast.AST, scope: Scope) -> Any:
     if isinstance(node, ast.Module):
         for node in node.body:
             proc(node, scope)
+
+    # Data massaging
     elif isinstance(node, ast.For) or isinstance(node, ast.While):
         raise NotImplementedError("loops not supported")
     elif isinstance(node, ast.If):
@@ -91,33 +172,17 @@ def proc(node: ast.AST, scope: Scope):
         false_scope.push()
         for false in node.orelse:
             proc(false, false_scope)
-        true_top, false_top = true_scope.scopes[0], false_scope.scopes[0]
-        for var in set(true_top.keys()).union(set(false_top.keys())):
-            scope.set(var, ast.IfExp(test, body=true_top.get(var), orelse=false_top.get(var)))
+        merge_if(test, true_scope.scopes[0], false_scope.scopes[0], scope.scopes[0])
+
+    # Definition/Assignment
     elif isinstance(node, ast.Assign):
         if len(node.targets) == 1:
-            target = node.targets[0]
-            if isinstance(target, ast.Name):
-                if isinstance(node.value, ast.AST):
-                    scope.set(target.id, proc(node.value, scope))
-                else:
-                    scope.set(target.id, node.value)
-            elif isinstance(target, ast.Attribute):
-                if proc(target.value, scope) == None:
-                    assign_target = copy.deepcopy(target.value)
-                    assign_target.ctx = ast.Store()
-                    sub_assign = ast.Assign([assign_target], {})
-                    proc(sub_assign, scope)
-                obj = proc(target.value, scope)
-                obj[target.attr] = node.value
-            else:
-                raise NotImplementedError("assign.others")
+            proc_assign(node.targets[0], node.value, scope)
         else:
             raise NotImplementedError("unpacking not supported")
     elif isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
         return scope.lookup(node.id)
     elif isinstance(node, ast.Attribute) and isinstance(node.ctx, ast.Load):
-        print(ast.unparse(node))
         obj = proc(node.value, scope)
         return obj[node.attr]
     elif isinstance(node, ast.FunctionDef):
@@ -126,6 +191,8 @@ def proc(node: ast.AST, scope: Scope):
         return Lambda.from_ast(node, scope)
     elif isinstance(node, ast.ClassDef):
         pass
+
+    # Expressions
     elif isinstance(node, ast.UnaryOp):
         return ast.UnaryOp(node.op, proc(node.operand, scope))
     elif isinstance(node, ast.BinOp):
@@ -138,15 +205,40 @@ def proc(node: ast.AST, scope: Scope):
         return ast.Compare(proc(node.left, scope), node.ops, [proc(node.comparators[0], scope)])
     elif isinstance(node, ast.Call):
         fun = proc(node.func, scope)
-        if not isinstance(fun, Lambda):
-            raise Exception("???")
-        return fun.apply([proc(a, scope) for a in node.args])
+        if isinstance(fun, Lambda):
+            return fun.apply([proc(a, scope) for a in node.args])
+        if isinstance(node.func, ast.Name):
+            name = node.func.id
+            if name not in ["any", "all"]:#, "max", "min", "sum"]:
+                raise NotImplementedError(f"builtin function? {name}")
+            if len(node.args) != 1 or not isinstance(node.args[0], ast.GeneratorExp):
+                raise NotImplementedError("reduction on non-generators")
+            gen = node.args[0]
+            if len(gen.generators) != 1:
+                raise NotImplementedError("multiple generator clauses")
+            op = ReductionType.from_str(name)
+            expr = gen.elt
+            gen = gen.generators[0]
+            target, ifs, iter = gen.target, gen.ifs, gen.iter
+            def cond_trans(e: ast.expr, c: ast.expr) -> ast.expr:
+                if op == ReductionType.Any:
+                    return ast.BoolOp(ast.And(), [e, c])
+                else:
+                    return ast.BoolOp(ast.Or, [e, ast.UnaryOp(ast.Not(), c)])
+            expr = cond_trans(expr, ast.BoolOp(ast.And(), ifs))
+            if not isinstance(target, ast.Name):
+                raise NotImplementedError("complex generator target")
+            return Reduction(op, expr, target.id, proc(iter, scope))
+    elif isinstance(node, ast.Return):
+        return proc(node.value, scope) if node.value != None else None
+    elif isinstance(node, ast.IfExp):
+        return ast.If(node.test, [node.body], [node.orelse])
+
+    # Literals
     elif isinstance(node, ast.List):
         return ast.List([proc(e, scope) for e in node.elts])
     elif isinstance(node, ast.Tuple):
         return ast.Tuple([proc(e, scope) for e in node.elts])
-    elif isinstance(node, ast.Return):
-        return proc(node.value, scope)
     elif isinstance(node, ast.Constant):
         return node         # XXX simplification?
     else:
@@ -158,7 +250,8 @@ def parse(fn: str):
     root = ast.parse(cont, fn)
     scope = Scope()
     proc(root, scope)
-    scope.dump()
+    scope.dump(True)
+    print(ir_dump(scope.lookup("controller").body["mode"].test))
 
 if __name__ == "__main__":
     import sys
