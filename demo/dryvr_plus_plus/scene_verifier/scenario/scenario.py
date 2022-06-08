@@ -82,6 +82,7 @@ class Scenario:
         for agent_id in self.agent_dict:
             init = self.init_dict[agent_id]
             tmp = np.array(init)
+            print(tmp)
             if tmp.ndim < 2:
                 init = [init, init]
             init_list.append(init)

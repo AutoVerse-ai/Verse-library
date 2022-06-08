@@ -109,10 +109,10 @@ if __name__ == "__main__":
 
     fig = plt.figure()
     fig = plot_map(SimpleMap3(), 'g', fig)
-    fig = plot_simulation_tree(traces, 'car1', 1, [2], 'b', fig)
-    fig = plot_simulation_tree(traces, 'car2', 1, [2], 'r', fig)
-    # fig = plot_reachtube_tree(traces, 'car1', 1, [2], 'b', fig)
-    # fig = plot_reachtube_tree(traces, 'car2', 1, [2], 'r', fig)
+    # fig = plot_simulation_tree(traces, 'car1', 1, [2], 'b', fig)
+    # fig = plot_simulation_tree(traces, 'car2', 1, [2], 'r', fig)
+    fig = plot_reachtube_tree(traces, 'car1', 1, [2], 'b', fig)
+    fig = plot_reachtube_tree(traces, 'car2', 1, [2], 'r', fig)
 
     # generate_simulation_anime(traces, SimpleMap3(), fig)
     plt.show()

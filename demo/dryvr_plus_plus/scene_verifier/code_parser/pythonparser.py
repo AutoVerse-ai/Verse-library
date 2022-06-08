@@ -456,7 +456,7 @@ class ControllerAst():
                         #     #todo: what to add for return values
                         # else:
                         #     discrete_vars.append(arg.arg)
-        statementtree.show()
+        # statementtree.show()
         return [statementtree, vars, mode_dict, discrete_vars, state_object_dict, vars_dict, type_vars]
 
     '''
@@ -476,12 +476,12 @@ class ControllerAst():
         for childnode in nodes:
             if isinstance(childnode, ast.Assign) and addResets:
                 reset = Reset.parseReset(childnode, code)
-                print("found reset: " + reset.code)
+                # print("found reset: " + reset.code)
                 childrens_resets.append(reset)
             if isinstance(childnode, ast.If):
                 guard = Guard.parseGuard(childnode, code)
                 childrens_guards.append(guard)
-                print("found if statement: " + guard.code)
+                # print("found if statement: " + guard.code)
                 newTree = Tree()
                 newTree.create_node(tag=guard.code, data=[guard])
                 # print(self.nodect)
