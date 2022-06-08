@@ -3,7 +3,7 @@ from dryvr_plus_plus.scene_verifier.scenario.scenario import Scenario
 from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap2, SimpleMap3, SimpleMap5, SimpleMap6
 from dryvr_plus_plus.plotter.plotter2D import *
 from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor2
-
+import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 import numpy as np
 from enum import Enum, auto
