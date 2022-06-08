@@ -4,18 +4,19 @@ from dataclasses import dataclass
 from enum import Enum, auto
 
 def dbg(msg, *rest):
-    print(f"\x1b[31m{msg}\x1b[m", end="")
+    print(f"\x1b\x5b31m{msg}\x1b\x5bm", end="")
     for i, a in enumerate(rest[:5]):
-        print(f" \x1b[3{i+2}m{a}\x1b[m", end="")
+        print(f" \x1b\x5b3{i+2}m{a}\x1b\x5bm", end="")
     if rest[5:]:
         print("", rest[5:])
     else:
         print()
 
-ScopeValue: TypeAlias = Union[ast.AST, "CondVal", "Lambda", Dict[str, "ScopeValue"]]   # TODO
+ScopeValue: TypeAlias = Union[ast.AST, "CondVal", "Lambda", Dict[str, "ScopeValue"]]
 
 @dataclass
-class CondValElem:
+class CondValCase:
+    """A single case of a conditional value. Values in `cond` are implicitly `and`ed together"""
     cond: List[ScopeValue]
     val: ScopeValue
 
@@ -26,7 +27,8 @@ class CondValElem:
 
 @dataclass
 class CondVal:
-    elems: List[CondValElem]
+    """A conditional value. Actual value is the combined result from all the cases"""
+    elems: List[CondValCase]
 
 class ReductionType(Enum):
     Any = auto()
@@ -47,6 +49,8 @@ class ReductionType(Enum):
 
 @dataclass
 class Reduction:
+    """A simple reduction. Must be a reduction function (see `ReductionType`) applied to a generator
+    with a single clause over a iterable"""
     op: ReductionType
     expr: ast.expr
     it: str
@@ -59,6 +63,7 @@ class Reduction:
 
 @dataclass
 class Lambda:
+    """A closure. Comes from either a `lambda` or a `def`ed function"""
     args: List[str]
     body: ast.expr
     def __init__(self, args, body):
@@ -105,12 +110,8 @@ def ir_dump(node, dump=False):
         return ast_dump(node, dump)
 
 def ir_eq(a: Optional[ScopeValue], b: Optional[ScopeValue]) -> bool:
-    return ir_dump(a) == ir_dump(b)
-
-def sv_eq(a: Optional[ScopeValue], b: Optional[ScopeValue]) -> bool:
-    if isinstance(a, ast.AST) and isinstance(b, ast.AST):
-        return ir_eq(a, b)
-    return a == b
+    """Equality check on the "IR" nodes"""
+    return ir_dump(a) == ir_dump(b)     # FIXME Proper equality checks; dump needed cuz asts are dumb
 
 class Scope:
     scopes: List[Dict[str, ScopeValue]]
@@ -152,7 +153,7 @@ class ArgSubstituter(ast.NodeTransformer):
         if node.arg in self.args:
             return self.args[node.arg]
         self.generic_visit(node)
-        return node         # XXX needed?
+        return node
 
 def merge_if(test: ast.expr, trues: Scope, falses: Scope, scope: Scope):
     # `true`, `false` and `scope` should have the same level
@@ -172,7 +173,7 @@ def merge_if_single(test, true: Dict[str, ScopeValue], false: Dict[str, ScopeVal
             s[k] = v
     for var in set(true.keys()).union(set(false.keys())):
         var_true, var_false = true.get(var), false.get(var)
-        if sv_eq(var_true, var_false):
+        if ir_eq(var_true, var_false):
             continue
         if var_true != None and var_false != None:
             assert isinstance(var_true, dict) == isinstance(var_false, dict)
@@ -199,12 +200,12 @@ def merge_if_val(test, true: Optional[ScopeValue], false: Optional[ScopeValue], 
                 elem.cond.append(test)
             return val
         else:
-            return CondVal([CondValElem([test], val)])
+            return CondVal([CondValCase([test], val)])
     def as_cv(a):
         if a == None:
             return None
         if not isinstance(a, CondVal):
-            return CondVal([CondValElem([], a)])
+            return CondVal([CondValCase([], a)])
         return a
     true, false, orig = as_cv(true), as_cv(false), as_cv(orig)
     dbg("merge convert", ir_dump(true), ir_dump(false), ir_dump(orig))
@@ -216,22 +217,13 @@ def merge_if_val(test, true: Optional[ScopeValue], false: Optional[ScopeValue], 
                 false.elems.remove(orig_cve)
 
     dbg("merge diff", ir_dump(true), ir_dump(false), ir_dump(orig))
-    if true != None and len(true.elems) == 0:
-        true = None
-    if false != None and len(false.elems) == 0:
-        false = None
-    if true == None and false == None:
+    true_emp, false_emp = true == None or len(true.elems) == 0, false == None or len(false.elems) == 0
+    if true_emp and false_emp:
         raise Exception("no need for merge?")
-    elif true == None:
+    elif true_emp:
         ret = merge_cond(ast.UnaryOp(ast.Not(), test), false)
-    elif false == None:
+    elif false_emp:
         ret = merge_cond(test, true)
-    elif sv_eq(false, orig):
-        if isinstance(orig, CondVal):
-            ret = CondVal(merge_cond(test, true).elems + orig.elems)
-        else:
-            assert orig != None
-            ret = CondVal(merge_cond(test, true).elems + [CondValElem([], orig)])
     else:
         merge_true, merge_false = merge_cond(test, true), merge_cond(ast.UnaryOp(ast.Not(), test), false)
         ret = CondVal(merge_true.elems + merge_false.elems)
@@ -255,6 +247,8 @@ def proc_assign(target: ast.AST, val, scope: Scope):
     else:
         raise NotImplementedError("assign.others")
 
+# NOTE `ast.arg` used as a placeholder for idents we don't know the value of.
+# This is fine as it's never used in expressions
 def proc(node: ast.AST, scope: Scope) -> Any:
     if isinstance(node, ast.Module):
         for node in node.body:
@@ -268,7 +262,6 @@ def proc(node: ast.AST, scope: Scope) -> Any:
         test = proc(node.test, scope)
         true_scope = copy.deepcopy(scope)
         for true in node.body:
-            dbg("true", true)
             proc(true, true_scope)
         false_scope = copy.deepcopy(scope)
         for false in node.orelse:
@@ -322,7 +315,7 @@ def proc(node: ast.AST, scope: Scope) -> Any:
             return ret
         if isinstance(node.func, ast.Name):
             name = node.func.id
-            if name not in ["any", "all"]:#, "max", "min", "sum"]:
+            if name not in ["any", "all"]:#, "max", "min", "sum"]:      # TODO
                 raise NotImplementedError(f"builtin function? {name}")
             if len(node.args) != 1 or not isinstance(node.args[0], ast.GeneratorExp):
                 raise NotImplementedError("reduction on non-generators")
@@ -368,7 +361,6 @@ def parse(fn: str):
     scope = Scope()
     proc(root, scope)
     scope.dump()
-    # print(ir_dump(scope.lookup("controller").body["mode"].test))
 
 if __name__ == "__main__":
     import sys
