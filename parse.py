@@ -3,6 +3,9 @@ from typing import List, Dict, Union, Optional, TypeAlias, Any
 from dataclasses import dataclass
 from enum import Enum, auto
 
+class Argument():
+    pass
+
 class ReductionType(Enum):
     Any = auto()
     All = auto()
@@ -49,7 +52,7 @@ class Lambda:
         args = [a.arg for a in tree.args.args]
         scope.push()
         for a in args:
-            scope.set(a, ast.Name(a, ctx=ast.Load()))
+            scope.set(a, ast.arg(a))
         ret = None
         for node in tree.body:
             ret = proc(node, scope)
@@ -59,7 +62,7 @@ class Lambda:
     def apply(self, args: List[ast.expr]) -> ast.expr:
         ret = copy.deepcopy(self.body)
         args = {k: v for k, v in zip(self.args, args)}
-        return VarSubstituter(args).visit(ret)
+        return ArgSubstituter(args).visit(ret)
 
 ast_dump = lambda node, dump=False: ast.dump(node, indent=2) if dump else ast.unparse(node)
 
@@ -110,15 +113,15 @@ class Scope:
                 print(f"{k}: {ir_dump(node, dump)}")
             print("===")
 
-class VarSubstituter(ast.NodeTransformer):
+class ArgSubstituter(ast.NodeTransformer):
     args: Dict[str, ast.expr]
     def __init__(self, args):
         super().__init__()
         self.args = args
 
-    def visit_Name(self, node):
-        if isinstance(node.ctx, ast.Load) and node.id in self.args:
-            return self.args[node.id]
+    def visit_arg(self, node):
+        if node.arg in self.args:
+            return self.args[node.arg]
         self.generic_visit(node)
         return node         # XXX needed?
 
@@ -158,7 +161,8 @@ def proc(node: ast.AST, scope: Scope) -> Any:
     if isinstance(node, ast.Module):
         for node in node.body:
             proc(node, scope)
-
+    elif isinstance(node, ast.arg):
+        return node
     # Data massaging
     elif isinstance(node, ast.For) or isinstance(node, ast.While):
         raise NotImplementedError("loops not supported")
@@ -184,6 +188,8 @@ def proc(node: ast.AST, scope: Scope) -> Any:
         return scope.lookup(node.id)
     elif isinstance(node, ast.Attribute) and isinstance(node.ctx, ast.Load):
         obj = proc(node.value, scope)
+        if isinstance(obj, ast.arg):
+            return node
         return obj[node.attr]
     elif isinstance(node, ast.FunctionDef):
         scope.set(node.name, Lambda.from_ast(node, scope))
@@ -207,6 +213,10 @@ def proc(node: ast.AST, scope: Scope) -> Any:
         fun = proc(node.func, scope)
         if isinstance(fun, Lambda):
             return fun.apply([proc(a, scope) for a in node.args])
+        if isinstance(fun, ast.Attribute):
+            ret = copy.deepcopy(node)
+            ret.args = [proc(a, scope) for a in ret.args]
+            return ret
         if isinstance(node.func, ast.Name):
             name = node.func.id
             if name not in ["any", "all"]:#, "max", "min", "sum"]:
@@ -220,15 +230,21 @@ def proc(node: ast.AST, scope: Scope) -> Any:
             expr = gen.elt
             gen = gen.generators[0]
             target, ifs, iter = gen.target, gen.ifs, gen.iter
+            if not isinstance(target, ast.Name):
+                raise NotImplementedError("complex generator target")
             def cond_trans(e: ast.expr, c: ast.expr) -> ast.expr:
                 if op == ReductionType.Any:
                     return ast.BoolOp(ast.And(), [e, c])
                 else:
                     return ast.BoolOp(ast.Or, [e, ast.UnaryOp(ast.Not(), c)])
+            scope.push()
+            scope.set(target.id, ast.arg(target.id))
+            expr = proc(expr, scope)
+            scope.pop()
             expr = cond_trans(expr, ast.BoolOp(ast.And(), ifs))
-            if not isinstance(target, ast.Name):
-                raise NotImplementedError("complex generator target")
             return Reduction(op, expr, target.id, proc(iter, scope))
+        print(ast.dump(node))
+        print(proc(node.func.value, scope))
     elif isinstance(node, ast.Return):
         return proc(node.value, scope) if node.value != None else None
     elif isinstance(node, ast.IfExp):
