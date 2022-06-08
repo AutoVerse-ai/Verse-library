@@ -122,6 +122,8 @@ class Scenario:
                 # TODO: Handle hybrid guards that involves both continuous and discrete dynamics 
                 # Will have to limit the amount of hybrid guards that we want to handle. The difficulty will be handle function guards.
                 guard_can_satisfied = guard_expression.evaluate_guard_hybrid(agent, discrete_variable_dict, continuous_variable_dict, self.map)
+                if not guard_can_satisfied:
+                    continue
 
                 # Handle guards realted only to continuous variables using SMT solvers. These types of guards can be pretty general
                 guard_satisfied, is_contained = guard_expression.evaluate_guard_cont(agent, continuous_variable_dict, self.map)
@@ -220,7 +222,10 @@ class Scenario:
                 # guard_expression = GuardExpression(guard_list=guard_list)
                 guard_expression = GuardExpressionAst(guard_list)
                 # Map the values to variables using sensor
-                continuous_variable_dict, discrete_variable_dict = self.sensor.sense(self, agent, state_dict, self.map)
+                continuous_variable_dict, discrete_variable_dict, length_dict = self.sensor.sense(self, agent, state_dict, self.map)
+                
+                # Unroll all the any/all functions in the guard
+                guard_expression.parse_any_all(continuous_variable_dict, discrete_variable_dict, length_dict)
                 
                 '''Execute functions related to map to see if the guard can be satisfied'''
                 '''Check guards related to modes to see if the guards can be satisfied'''

@@ -55,7 +55,7 @@ def _parse_elt(root, cont_var_dict, disc_var_dict, iter_name_list, targ_name_lis
                 tmp_variable_name = f"{iter_name}_{iter_pos}.{node.attr}"
 
                 # Replace variables in the etl by using tmp variables
-                root = AttributeNameSubstituter(tmp_variable_name, node).visit(root)
+                root = ValueSubstituter(tmp_variable_name, node).visit(root)
 
                 # Find the value of the tmp variable in the cont/disc_var_dict
                 # Add the tmp variables into the cont/disc_var_dict
@@ -83,7 +83,7 @@ def _parse_elt(root, cont_var_dict, disc_var_dict, iter_name_list, targ_name_lis
                 tmp_variable_name = f"{iter_name}_{iter_pos}"
 
                 # Replace variables in the etl by using tmp variables
-                root = AttributeNameSubstituter(tmp_variable_name, node).visit(root)
+                root = ValueSubstituter(tmp_variable_name, node).visit(root)
 
                 # Find the value of the tmp variable in the cont/disc_var_dict
                 # Add the tmp variables into the cont/disc_var_dict
@@ -99,16 +99,16 @@ def _parse_elt(root, cont_var_dict, disc_var_dict, iter_name_list, targ_name_lis
     # Return the modified node
     return root
 
-class AttributeNameSubstituter(ast.NodeTransformer):
-    def __init__(self, name:str, node):
+class ValueSubstituter(ast.NodeTransformer):
+    def __init__(self, val:str, node):
         super().__init__()
-        self.name = name
+        self.val = val
         self.node = node
     
     def visit_Attribute(self, node: ast.Attribute) -> Any:
         if node == self.node:
             return ast.Name(
-                id = self.name, 
+                id = self.val, 
                 ctx = ast.Load()
             )
         return node
@@ -116,35 +116,31 @@ class AttributeNameSubstituter(ast.NodeTransformer):
     def visit_Name(self, node: ast.Attribute) -> Any:
         if node == self.node:
             return ast.Name(
-                id = self.name,
+                id = self.val,
                 ctx = ast.Load
             )
         return node
-
-class FunctionCallSubstituter(ast.NodeTransformer):
-    def __init__(self, values:List[ast.Expr], node):
-        super().__init__()
-        self.values = values 
-        self.node = node
 
     def visit_Call(self, node: ast.Call) -> Any:
         if node == self.node:
             if node.func.id == 'any':
                 return ast.BoolOp(
-                op = ast.Or(),
-                values = self.values
+                    op = ast.Or(),
+                    values = self.val
             )
             elif node.func.id == 'all':
-                raise NotImplementedError
+                return ast.BoolOp(
+                    op = ast.And(),
+                    values = self.val
+                )
         return node
 
-def parse_any(
+def parse_any_all(
     node: ast.Call, 
     cont_var_dict: Dict[str, float], 
     disc_var_dict: Dict[str, float], 
     len_dict: Dict[str, int]
 ) -> ast.BoolOp:
-    
     parse_arg = node.args[0]
     if isinstance(parse_arg, ast.GeneratorExp):
         iter_name_list = []
@@ -167,27 +163,56 @@ def parse_any(
             parsed_elt = _parse_elt(changed_elt, cont_var_dict, disc_var_dict, iter_name_list, targ_name_list, iter_pos_list)
             # Add the expanded elt into the list 
             expand_elt_ast_list.append(parsed_elt)
-        # Create the new boolop (or) node based on the list of expanded elt
-        return FunctionCallSubstituter(expand_elt_ast_list, node).visit(node)
-    pass
+        # Create the new boolop (and/or) node based on the list of expanded elt
+        return ValueSubstituter(expand_elt_ast_list, node).visit(node)
+    else:
+        return node
+
+class NodeSubstituter(ast.NodeTransformer):
+    def __init__(self, old_node, new_node):
+        super().__init__()
+        self.old_node = old_node 
+        self.new_node = new_node
+
+    def visit_Call(self, node: ast.Call) -> Any:
+        if node == self.old_node:
+            return self.new_node 
+        else:
+            return node
+
+def unroll_any_all(root, cont_var_dict: Dict[str, float], disc_var_dict: Dict[str, float], len_dict: Dict[str, int]) -> None: 
+    i = 0
+    while i < sum(1 for _ in ast.walk(root)):
+        # TODO: Find a faster way to access nodes in the tree
+        node = list(ast.walk(root))[i]
+        if isinstance(node, ast.Call) and\
+            isinstance(node.func, ast.Name) and\
+            (node.func.id=='any' or node.func.id=='all'):
+            new_node = parse_any_all(node, cont_var_dict, disc_var_dict, len_dict)
+            root = NodeSubstituter(node, new_node).visit(root)
+        i += 1
+    return root 
 
 if __name__ == "__main__":
-    others = [State(), State()]
+    others = [State(), State(), State(), State()]
+
     ego = State()
-    code_any = "any((other.x -ego.x > 5 and other.type==Vehicle) for other in others)"
+    code_any = "any((any(other.y < 100 for other in others) and other.x -ego.x > 5 and other.type==Vehicle) for other in others)"
+    # code_any = "all((other.x -ego.x > 5 and other.type==Vehicle) for other in others)"
     ast_any = ast.parse(code_any).body[0].value
     cont_var_dict = {
-        "others.x":[1,2],
-        "others.y":[3,4],
+        "others.x":[1,2,4,5],
+        "others.y":[3,4,5,6],
         "ego.x":5,
         "ego.y":2
     }
     disc_var_dict = {
-        "others.type":['Vehicle','Sign'],
+        "others.type":['Vehicle','Sign','Vehicle','Obs'],
         "ego.type":'Ped'
     }
     len_dict = {
-        "others":2
+        "others":len(others)
     }
-    res = parse_any(ast_any, cont_var_dict, disc_var_dict, len_dict)
-    print(ast_any)
+    res = unroll_any_all(ast_any, cont_var_dict, disc_var_dict, len_dict)
+    print(astunparse.unparse(ast_any))
+    print(astunparse.unparse(res))
