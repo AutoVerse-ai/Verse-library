@@ -8,16 +8,19 @@ import matplotlib.pyplot as plt
 import numpy as np
 from enum import Enum, auto
 
+
 class VehicleMode(Enum):
     Normal = auto()
     SwitchLeft = auto()
     SwitchRight = auto()
     Brake = auto()
 
+
 class LaneMode(Enum):
     Lane0 = auto()
     Lane1 = auto()
     Lane2 = auto()
+
 
 class State:
     x = 0.0
@@ -29,6 +32,7 @@ class State:
 
     def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: LaneMode):
         self.data = []
+
 
 if __name__ == "__main__":
     input_code_name = 'example_controller2.py'
@@ -43,24 +47,30 @@ if __name__ == "__main__":
     scenario.set_sensor(FakeSensor2())
     scenario.set_init(
         [
-            [[0, -0.2, 0, 1.0],[0.1, 0.2, 0, 1.0]],
-            [[10, 0, 0, 0.5],[10, 0, 0, 0.5]], 
+            [[0, -0.2, 0, 1.0], [0.1, 0.2, 0, 1.0]],
+            [[10, 0, 0, 0.5], [10, 0, 0, 0.5]],
         ],
         [
             (VehicleMode.Normal, LaneMode.Lane1),
             (VehicleMode.Normal, LaneMode.Lane1),
         ]
     )
-    # res_list = scenario.simulate_multi(40,1)
-    traces = scenario.verify(40)
+    # # res_list = scenario.simulate_multi(40,1)
+    # traces = scenario.verify(40)
 
-    fig = plt.figure(2)
-    fig = plot_map(tmp_map, 'g', fig)
-    fig = plot_reachtube_tree(traces, 'car1', 1, [2], 'b', fig)
-    fig = plot_reachtube_tree(traces, 'car2', 1, [2], 'r', fig)
-    # for traces in res_list:
-    #     generate_simulation_anime(traces, tmp_map, fig)
-    #     # fig,x_lim,y_lim = plot_simulation_tree(traces, 'car1', 1, [2], 'b', fig,x_lim,y_lim)
-    #     # fig,x_lim,y_lim = plot_simulation_tree(traces, 'car2', 1, [2], 'r', fig,x_lim,y_lim)
+    # fig = plt.figure(2)
+    # fig = plot_map(tmp_map, 'g', fig)
+    # fig = plot_reachtube_tree(traces, 'car1', 1, [2], 'b', fig)
+    # fig = plot_reachtube_tree(traces, 'car2', 1, [2], 'r', fig)
+    # # for traces in res_list:
+    # #     generate_simulation_anime(traces, tmp_map, fig)
+    # #     # fig,x_lim,y_lim = plot_simulation_tree(traces, 'car1', 1, [2], 'b', fig,x_lim,y_lim)
+    # #     # fig,x_lim,y_lim = plot_simulation_tree(traces, 'car2', 1, [2], 'r', fig,x_lim,y_lim)
 
-    plt.show()
+    # plt.show()
+
+# this is for plot-based visualization
+    traces = scenario.simulate(40)
+    fig = go.Figure()
+    fig = plotly_simulation_anime(traces, tmp_map, fig)
+    fig.show()

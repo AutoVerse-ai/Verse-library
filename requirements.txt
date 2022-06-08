@@ -10,3 +10,4 @@ astunparse~=1.6.3
 treelib~=1.6.1
 z3-solver~=4.8.17.0
 igraph~=0.9.10
+plotly~=5.8.0
