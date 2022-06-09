@@ -110,7 +110,10 @@ class Scenario:
                 # guard_expression = GuardExpression(guard_list=guard_list)
                 guard_expression = GuardExpressionAst(guard_list)
                 # Map the values to variables using sensor
-                continuous_variable_dict, discrete_variable_dict = self.sensor.sense(self, agent, state_dict, self.map)
+                continuous_variable_dict, discrete_variable_dict, length_dict = self.sensor.sense(self, agent, state_dict, self.map)
+                
+                # Unroll all the any/all functions in the guard
+                guard_expression.parse_any_all(continuous_variable_dict, discrete_variable_dict, length_dict)
                 
                 # Check if the guard can be satisfied
                 # First Check if the discrete guards can be satisfied by actually evaluate the values 
@@ -196,7 +199,7 @@ class Scenario:
 
     def apply_reset(self, agent, reset_list, all_agent_state) -> Tuple[str, np.ndarray]:
         reset_expr = ResetExpression(reset_list)
-        continuous_variable_dict, discrete_variable_dict = self.sensor.sense(self, agent, all_agent_state, self.map)
+        continuous_variable_dict, discrete_variable_dict, _ = self.sensor.sense(self, agent, all_agent_state, self.map)
         dest = reset_expr.get_dest(agent, all_agent_state[agent.id], discrete_variable_dict, self.map)
         rect = reset_expr.apply_reset_continuous(agent, continuous_variable_dict, self.map)
         return dest, rect

@@ -70,6 +70,31 @@ def plot_reachtube_tree(root, agent_id, x_dim: int=0, y_dim_list: List[int]=[1],
 
     return fig
 
+def plot_reachtube_tree_branch(root, agent_id, x_dim: int=0, y_dim_list: List[int]=[1], color='b', fig = None, x_lim = None, y_lim = None):
+    if fig is None:
+        fig = plt.figure()
+    
+    ax = fig.gca()
+    if x_lim is None:
+        x_lim = ax.get_xlim()
+    if y_lim is None:
+        y_lim = ax.get_ylim()
+
+    stack = [root]
+    while stack != []:
+        node = stack.pop()
+        traces = node.trace
+        trace = traces[agent_id]
+        data = []
+        for i in range(0,len(trace),2):
+            data.append([trace[i], trace[i+1]])
+        fig, x_lim, y_lim = plot(data, x_dim, y_dim_list, color, fig, x_lim, y_lim)
+
+        if node.child:
+            stack += [node.child[0]]
+
+    return fig
+
 def plot_map(map, color = 'b', fig = None, x_lim = None,y_lim = None):
     if fig is None:
         fig = plt.figure()

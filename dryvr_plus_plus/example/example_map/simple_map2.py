@@ -22,21 +22,21 @@ class SimpleMap3(LaneMap):
         segment0 = StraightLane(
             'Seg0',
             [0,3],
-            [50,3],
+            [100,3],
             3
         )
         lane0 = Lane('Lane0', [segment0])
         segment1 = StraightLane(
             'seg0',
             [0,0],
-            [50,0],
+            [100,0],
             3
         )
         lane1 = Lane('Lane1', [segment1])
         segment2 = StraightLane(
             'seg0',
             [0,-3],
-            [50,-3],
+            [100,-3],
             3
         )
         lane2 = Lane('Lane2', [segment2])
@@ -47,6 +47,57 @@ class SimpleMap3(LaneMap):
         self.left_lane_dict[lane2.id].append(lane1.id)
         self.right_lane_dict[lane0.id].append(lane1.id)
         self.right_lane_dict[lane1.id].append(lane2.id)
+
+class SimpleMap4(LaneMap):
+    def __init__(self):
+        super().__init__()
+        segment0 = StraightLane(
+            'Seg0',
+            [0,3],
+            [100,3],
+            3
+        )
+        lane0 = Lane('Lane0', [segment0])
+        segment1 = StraightLane(
+            'seg0',
+            [0,0],
+            [100,0],
+            3
+        )
+        lane1 = Lane('Lane1', [segment1])
+        segment2 = StraightLane(
+            'seg0',
+            [0,-3],
+            [100,-3],
+            3
+        )
+        lane2 = Lane('Lane2', [segment2])
+        segment3 = StraightLane(
+            'seg3',
+            [0,-6],
+            [100,-6],
+            3
+        )
+        lane3 = Lane('Lane3', [segment3])
+        segment4 = StraightLane(
+            'Seg4',
+            [0,6],
+            [100,6],
+            3
+        )
+        lane4 = Lane('Lane4', [segment4])
+
+        # segment2 = LaneSegment('Lane1', 3)
+        # self.add_lanes([segment1,segment2])
+        self.add_lanes([lane0, lane1, lane2, lane3, lane4])
+        self.left_lane_dict[lane0.id].append(lane4.id)
+        self.left_lane_dict[lane1.id].append(lane0.id)
+        self.left_lane_dict[lane2.id].append(lane1.id)
+        self.left_lane_dict[lane3.id].append(lane2.id)
+        self.right_lane_dict[lane4.id].append(lane0.id)
+        self.right_lane_dict[lane0.id].append(lane1.id)
+        self.right_lane_dict[lane1.id].append(lane2.id)
+        self.right_lane_dict[lane2.id].append(lane3.id)
 
 class SimpleMap5(LaneMap):
     def __init__(self):

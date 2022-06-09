@@ -56,7 +56,9 @@ class ValueSubstituter(ast.NodeTransformer):
 
     def visit_Call(self, node: ast.Call) -> Any:
         if node == self.node:
-            if node.func.id == 'any':
+            if len(self.val) == 1:
+                return self.val[0]
+            elif node.func.id == 'any':
                 return ast.BoolOp(
                     op = ast.Or(),
                     values = self.val
@@ -67,6 +69,7 @@ class ValueSubstituter(ast.NodeTransformer):
                     values = self.val
                 )
         return node
+
 
 class GuardExpressionAst:
     def __init__(self, guard_list):
@@ -243,7 +246,10 @@ class GuardExpressionAst:
                         else:
                             return False
                     z3_str.append(tmp)
-                z3_str = 'And('+','.join(z3_str)+')'
+                if len(z3_str) == 1:
+                    z3_str = z3_str[0]
+                else:
+                    z3_str = 'And('+','.join(z3_str)+')'
                 return z3_str
             elif isinstance(node.op, ast.Or):
                 z3_str = []
@@ -255,7 +261,10 @@ class GuardExpressionAst:
                         else:
                             continue
                     z3_str.append(tmp)
-                z3_str = 'Or('+','.join(z3_str)+')'
+                if len(z3_str) == 1:
+                    z3_str = z3_str[0]
+                else:
+                    z3_str = 'Or('+','.join(z3_str)+')'
                 return z3_str
             # If string, construct string
             # If bool, check result and discard/evaluate result according to operator
@@ -312,11 +321,10 @@ class GuardExpressionAst:
                         break 
                 return res, root 
             elif isinstance(root.op, ast.Or):
+                res = False
                 for val in root.values:
                     tmp,val = self._evaluate_guard_hybrid(val, agent, disc_var_dict, cont_var_dict, lane_map)
                     res = res or tmp
-                    if res:
-                        break
                 return res, root  
         elif isinstance(root, ast.BinOp):
             left, root.left = self._evaluate_guard_hybrid(root.left, agent, disc_var_dict, cont_var_dict, lane_map)
@@ -406,6 +414,8 @@ class GuardExpressionAst:
             return True, root 
         elif isinstance(root, ast.Constant):
             return root.value, root 
+        elif isinstance(root, ast.Name):
+            return True, root
         elif isinstance(root, ast.UnaryOp):
             if isinstance(root.op, ast.USub):
                 res, root.operand = self._evaluate_guard_hybrid(root.operand, agent, disc_var_dict, cont_var_dict, lane_map)
@@ -554,8 +564,6 @@ class GuardExpressionAst:
                 for val in root.values:
                     tmp,val = self._evaluate_guard_disc(val, agent, disc_var_dict, cont_var_dict, lane_map)
                     res = res or tmp
-                    if res:
-                        break
                 return res, root     
         elif isinstance(root, ast.BinOp):
             # Check left and right in the binop and replace all attributes involving discrete variables
@@ -608,6 +616,17 @@ class GuardExpressionAst:
             else:
                 raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
             return True, root
+        elif isinstance(root, ast.Name):
+            expr = root.id
+            if expr in disc_var_dict:
+                val = disc_var_dict[expr]
+                for mode_name in agent.controller.modes:
+                    if val in agent.controller.modes[mode_name]:
+                        val = mode_name + '.' + val 
+                        break 
+                return val, root
+            else:
+                return True, root 
         else:
             raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
 
