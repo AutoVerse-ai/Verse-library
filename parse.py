@@ -1,9 +1,13 @@
 import ast, copy
-from typing import List, Dict, Union, Optional, TypeAlias, Any
+from typing import List, Dict, Union, Optional, TypeAlias, Any, Tuple
 from dataclasses import dataclass, field
 from enum import Enum, auto
 
+debug = True
+
 def dbg(msg, *rest):
+    if not debug:
+        return rest
     print(f"\x1b\x5b31m{msg}\x1b\x5bm", end="")
     for i, a in enumerate(rest[:5]):
         print(f" \x1b\x5b3{i+2}m{a}\x1b\x5bm", end="")
@@ -11,17 +15,30 @@ def dbg(msg, *rest):
         print("", rest[5:])
     else:
         print()
+    return rest
 
 def not_ir_ast(a) -> bool:
     """Is not some type that can be used in AST substitutions"""
-    return isinstance(a, (ModeDef, ParseVarSet, ast.arg))
+    return isinstance(a, (ModeDef, StateDef, ast.arg))
+
+def fully_cond(a) -> bool:
+    """Check that the values in the whole tree is based on some conditions"""
+    if isinstance(a, CondVal):
+        return not dbg("cv", all(len(e.cond) == 0 for e in a.elems))
+    if isinstance(a, dict):
+        return dbg("obj", all(fully_cond(o) for o in a.values()))
+    if isinstance(a, Lambda):
+        return dbg("lambda", fully_cond(a.body))
+    if not_ir_ast(a):
+        return True
+    return False
 
 @dataclass
 class ModeDef:
     modes: List[str] = field(default_factory=list)
 
 @dataclass
-class ParseVarSet:
+class StateDef:
     """Variable/member set needed for simulation/verification for some object"""
     cont: List[str] = field(default_factory=list)     # Continuous variables
     disc: List[str] = field(default_factory=list)     # Discrete variables
@@ -79,30 +96,39 @@ class Reduction:
 @dataclass
 class Lambda:
     """A closure. Comes from either a `lambda` or a `def`ed function"""
-    args: List[str]
+    args: List[Tuple[str, Optional[str]]]
     body: ast.expr
-    def __init__(self, args, body):
-        self.args = args
-        self.body = body
 
     @staticmethod
     def from_ast(tree: Union[ast.FunctionDef, ast.Lambda], scope: "Scope") -> "Lambda":
-        args = [a.arg for a in tree.args.args]
+        args = []
+        for a in tree.args.args:
+            if a.annotation != None:
+                if isinstance(a.annotation, ast.Constant):
+                    typ = a.annotation.value
+                elif isinstance(a.annotation, ast.Name):
+                    typ = a.annotation.id
+                else:
+                    raise TypeError("weird annotation?")
+                args.append((a.arg, typ))
+            else:
+                args.append((a.arg, None))
         scope.push()
-        for a in args:
+        for a, _ in args:
             scope.set(a, ast.arg(a))
         ret = None
         if isinstance(tree, ast.FunctionDef):
             for node in tree.body:
                 ret = proc(node, scope)
-        else:
+        elif isinstance(tree, ast.Lambda):
             ret = proc(tree.body, scope)
         scope.pop()
+        assert ret != None, "Empty function"
         return Lambda(args, ret)
 
     def apply(self, args: List[ast.expr]) -> ast.expr:
         ret = copy.deepcopy(self.body)
-        return ArgSubstituter({k: v for k, v in zip(self.args, args)}).visit(ret)
+        return ArgSubstituter({k: v for (k, _), v in zip(self.args, args)}).visit(ret)
 
 ast_dump = lambda node, dump=False: ast.dump(node, indent=2) if dump else ast.unparse(node)
 
@@ -110,8 +136,8 @@ def ir_dump(node, dump=False):
     if node == None:
         return "None"
     if isinstance(node, ast.arg):
-        return "Hole"
-    if isinstance(node, (ModeDef, ParseVarSet)):
+        return f"Hole({node.arg})"
+    if isinstance(node, (ModeDef, StateDef)):
         return f"<{node}>"
     if isinstance(node, Lambda):
         return f"<Lambda args: {node.args} body: {ir_dump(node.body, dump)}>"
@@ -132,8 +158,10 @@ def ir_eq(a: Optional[ScopeValue], b: Optional[ScopeValue]) -> bool:
     """Equality check on the "IR" nodes"""
     return ir_dump(a) == ir_dump(b)     # FIXME Proper equality checks; dump needed cuz asts are dumb
 
+ScopeLevel: TypeAlias = Dict[str, ScopeValue]
+
 class Scope:
-    scopes: List[Dict[str, ScopeValue]]
+    scopes: List[ScopeLevel]
     def __init__(self):
         self.scopes = [{}]
 
@@ -156,11 +184,18 @@ class Scope:
                 return
         self.scopes[0][key] = val
 
+    @staticmethod
+    def dump_scope(scope: ScopeLevel, dump=False):
+        print("+++")
+        for k, node in scope.items():
+            print(f"{k}: {ir_dump(node, dump)}")
+        print("---")
+
     def dump(self, dump=False):
+        print("{{{")
         for scope in self.scopes:
-            for k, node in scope.items():
-                print(f"{k}: {ir_dump(node, dump)}")
-            print("===")
+            Scope.dump_scope(scope, dump)
+        print("}}}")
 
 class ArgSubstituter(ast.NodeTransformer):
     args: Dict[str, ast.expr]
@@ -179,7 +214,7 @@ def merge_if(test: ast.expr, trues: Scope, falses: Scope, scope: Scope):
     for true, false in zip(trues.scopes, falses.scopes):
         merge_if_single(test, true, false, scope)
 
-def merge_if_single(test, true: Dict[str, ScopeValue], false: Dict[str, ScopeValue], scope: Union[Scope, Dict[str, ScopeValue]]):
+def merge_if_single(test, true: ScopeLevel, false: ScopeLevel, scope: Union[Scope, ScopeLevel]):
     dbg("merge if single", ir_dump(test), true.keys(), false.keys())
     def lookup(s, k):
         if isinstance(s, Scope):
@@ -333,7 +368,7 @@ def proc(node: ast.AST, scope: Scope) -> Any:
             scope.set(node.name, ModeDef(grab_names(node.body)))
         elif node.name.endswith("State"):
             names = grab_names(node.body)
-            state_vars = ParseVarSet()
+            state_vars = StateDef()
             for name in names:
                 if "type" == name:
                     state_vars.static.append(name)
@@ -405,17 +440,47 @@ def proc(node: ast.AST, scope: Scope) -> Any:
     else:
         raise NotImplementedError(str(node.__class__))
 
-def parse(fn: str):
-    with open(fn) as f:
-        cont = f.read()
-    root = ast.parse(cont, fn)
+def parse(code: Optional[str] = None, fn: Optional[str] = None):
+    if code != None:
+        if fn != None:
+            root = ast.parse(code, fn)
+        else:
+            root = ast.parse(code)
+    elif fn != None:
+        with open(fn) as f:
+            cont = f.read()
+        root = ast.parse(cont, fn)
+    else:
+        raise TypeError("need at least one of `code` and `fn`")
     scope = Scope()
     proc(root, scope)
+    top = scope.scopes[0]
     scope.dump()
+    assert fully_cond(top)
+    return top
+
+@dataclass
+class ControllerIR:
+    controller: Lambda
+    state_defs: Dict[str, StateDef]
+    mode_defs: Dict[str, ModeDef]
+
+    @staticmethod
+    def from_scope(scope: ScopeLevel) -> "ControllerIR":
+        if 'controller' not in scope or not isinstance(scope["controller"], Lambda):
+            raise TypeError("can't find controller")
+        controller = scope['controller']
+        state_defs, mode_defs = {}, {}
+        for var, val in scope.items():
+            if isinstance(val, ModeDef):
+                mode_defs[var] = val
+            elif isinstance(val, StateDef):
+                state_defs[var] = val
+        return ControllerIR(controller, state_defs, mode_defs)
 
 if __name__ == "__main__":
     import sys
     if len(sys.argv) != 2:
         print("usage: parse.py <file.py>")
         sys.exit(1)
-    parse(sys.argv[1])
+    Scope.dump_scope(parse(fn=sys.argv[1]))
