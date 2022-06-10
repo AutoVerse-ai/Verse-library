@@ -301,18 +301,32 @@ def proc_assign(target: ast.AST, val, scope: Scope):
     else:
         raise NotImplementedError("assign.others")
 
+def is_main_check(node: ast.If) -> bool:
+    check_comps = lambda a, b: (isinstance(a, ast.Name) and a.id == "__name__"
+                                and isinstance(b, ast.Constant) and b.value == "__main__")
+    return (isinstance(node.test, ast.Compare)
+        and len(node.test.ops) == 1
+        and isinstance(node.test.ops[0], ast.Eq)
+        and (check_comps(node.test.left, node.test.comparators[0])
+             or check_comps(node.test.comparators[0], node.test.left)))
+
+START_OF_MAIN = "--start-of-main--"
+
 # NOTE `ast.arg` used as a placeholder for idents we don't know the value of.
 # This is fine as it's never used in expressions
 def proc(node: ast.AST, scope: Scope) -> Any:
     if isinstance(node, ast.Module):
         for node in node.body:
-            proc(node, scope)
+            if proc(node, scope) == START_OF_MAIN:
+                break
     elif not_ir_ast(node):
         return node
     # Data massaging
     elif isinstance(node, ast.For) or isinstance(node, ast.While):
         raise NotImplementedError("loops not supported")
     elif isinstance(node, ast.If):
+        if is_main_check(node):
+            return START_OF_MAIN
         test = proc(node.test, scope)
         true_scope = copy.deepcopy(scope)
         for true in node.body:
