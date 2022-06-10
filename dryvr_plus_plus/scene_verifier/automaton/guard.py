@@ -28,8 +28,10 @@ class NodeSubstituter(ast.NodeTransformer):
 
     def visit_Call(self, node: ast.Call) -> Any:
         if node == self.old_node:
+            self.generic_visit(node)
             return self.new_node 
         else:
+            self.generic_visit(node)
             return node
 
 class ValueSubstituter(ast.NodeTransformer):
@@ -39,6 +41,7 @@ class ValueSubstituter(ast.NodeTransformer):
         self.node = node
     
     def visit_Attribute(self, node: ast.Attribute) -> Any:
+        # Substitute attribute node in the ast
         if node == self.node:
             return ast.Name(
                 id = self.val, 
@@ -47,6 +50,7 @@ class ValueSubstituter(ast.NodeTransformer):
         return node
 
     def visit_Name(self, node: ast.Attribute) -> Any:
+        # Substitute name node in the ast
         if node == self.node:
             return ast.Name(
                 id = self.val,
@@ -55,19 +59,24 @@ class ValueSubstituter(ast.NodeTransformer):
         return node
 
     def visit_Call(self, node: ast.Call) -> Any:
+        # Substitute call node in the ast
         if node == self.node:
             if len(self.val) == 1:
+                self.generic_visit(node)
                 return self.val[0]
             elif node.func.id == 'any':
+                self.generic_visit(node)
                 return ast.BoolOp(
                     op = ast.Or(),
                     values = self.val
             )
             elif node.func.id == 'all':
+                self.generic_visit(node)
                 return ast.BoolOp(
                     op = ast.And(),
                     values = self.val
                 )
+        self.generic_visit(node)
         return node
 
 
@@ -811,6 +820,9 @@ class GuardExpressionAst:
 
                     # Find the value of the tmp variable in the cont/disc_var_dict
                     # Add the tmp variables into the cont/disc_var_dict
+                    # NOTE: At each time step, for each agent, the variable value mapping and their 
+                    # sequence in the list is single. Therefore, for the same key, we will always rewrite 
+                    # its content. 
                     variable_name = iter_name + '.' + node.attr
                     variable_val = None
                     if variable_name in cont_var_dict:
@@ -820,7 +832,7 @@ class GuardExpressionAst:
                         variable_val = disc_var_dict[variable_name][iter_pos]
                         disc_var_dict[tmp_variable_name] = variable_val
 
-            if isinstance(node, ast.Name):
+            elif isinstance(node, ast.Name):
                 if node.id in targ_name_list:
                     node:ast.Name
                     # Find corresponding targ_name in the targ_name_list

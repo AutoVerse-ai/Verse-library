@@ -1,10 +1,11 @@
-from dryvr_plus_plus.example.example_agent.car_agent import CarAgent
+from dryvr_plus_plus.example.example_agent.car_agent import CarAgent, NPCAgent
 from dryvr_plus_plus.example.example_agent.car_agent import CarAgent
 from dryvr_plus_plus.scene_verifier.scenario.scenario import Scenario
 from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap2, SimpleMap3, SimpleMap5, SimpleMap6
 from dryvr_plus_plus.plotter.plotter2D import *
 from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor3
 
+import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import numpy as np
 from enum import Enum, auto
@@ -46,11 +47,11 @@ if __name__ == "__main__":
 
     car = CarAgent('car1', file_name=input_code_name)
     scenario.add_agent(car)
-    car = CarAgent('car2', file_name=input_code_name)
+    car = NPCAgent('car2')
     scenario.add_agent(car)
-    car = CarAgent('car3', file_name=input_code_name)
+    car = NPCAgent('car3')
     scenario.add_agent(car)
-    car = CarAgent('car4', file_name=input_code_name)
+    car = NPCAgent('car4')
     scenario.add_agent(car)
     tmp_map = SimpleMap3()
     scenario.set_map(tmp_map)
@@ -74,7 +75,7 @@ if __name__ == "__main__":
 
     # fig = plt.figure(2)
     # fig = plot_map(tmp_map, 'g', fig)
-    # fig = plot_reachtube_tree(traces, 'car1', 0, [1], 'b', fig)
+    # fig = plot_reachtube_tree(traces, 'car1', 1, [2], 'b', fig)
     # fig = plot_reachtube_tree(traces, 'car2', 1, [2], 'r', fig)
     # fig = plot_reachtube_tree(traces, 'car3', 1, [2], 'r', fig)
     # fig = plot_reachtube_tree(traces, 'car4', 1, [2], 'r', fig)
@@ -84,8 +85,8 @@ if __name__ == "__main__":
     # fig = plot_simulation_tree(traces, 'car2', 1, [2], 'r', fig)
     # fig = plot_simulation_tree(traces, 'car3', 1, [2], 'r', fig)
     # fig = plot_simulation_tree(traces, 'car4', 1, [2], 'r', fig)
-        
     # plt.show()
+        
 
     fig = go.Figure()
     fig = plotly_simulation_anime(traces, tmp_map, fig)

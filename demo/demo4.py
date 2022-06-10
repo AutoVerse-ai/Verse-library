@@ -5,7 +5,7 @@ from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap2, SimpleMa
 from dryvr_plus_plus.plotter.plotter2D import *
 from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor3
 
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import numpy as np
 from enum import Enum, auto
@@ -84,12 +84,12 @@ if __name__ == "__main__":
 
     # fig = plt.figure(2)
     # fig = plot_map(tmp_map, 'g', fig)
-    # # fig = plot_reachtube_tree(traces, 'car1', 1, [2], 'b', fig)
-    # # fig = plot_reachtube_tree(traces, 'car2', 1, [2], 'r', fig)
-    # # fig = plot_reachtube_tree(traces, 'car3', 1, [2], 'r', fig)
-    # # fig = plot_reachtube_tree(traces, 'car4', 1, [2], 'r', fig)
-    # # fig = plot_reachtube_tree(traces, 'car5', 1, [2], 'r', fig)
-    # # fig = plot_reachtube_tree(traces, 'car6', 1, [2], 'r', fig)
+    # fig = plot_reachtube_tree(traces, 'car1', 1, [2], 'b', fig)
+    # fig = plot_reachtube_tree(traces, 'car2', 1, [2], 'r', fig)
+    # fig = plot_reachtube_tree(traces, 'car3', 1, [2], 'r', fig)
+    # fig = plot_reachtube_tree(traces, 'car4', 1, [2], 'r', fig)
+    # fig = plot_reachtube_tree(traces, 'car5', 1, [2], 'r', fig)
+    # fig = plot_reachtube_tree(traces, 'car6', 1, [2], 'r', fig)
     # for traces in res_list:
     # #     generate_simulation_anime(traces, tmp_map, fig)
     #     fig = plot_simulation_tree(traces, 'car1', 1, [2], 'b', fig)
