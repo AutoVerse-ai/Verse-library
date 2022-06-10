@@ -44,7 +44,7 @@ class StateDef:
     disc: List[str] = field(default_factory=list)     # Discrete variables
     static: List[str] = field(default_factory=list)   # Static data in object
 
-ScopeValue: TypeAlias = Union[ast.AST, "CondVal", "Lambda", Dict[str, "ScopeValue"]]
+ScopeValue: TypeAlias = Union[ast.AST, ModeDef, StateDef, "CondVal", "Lambda", Dict[str, "ScopeValue"]]
 
 @dataclass
 class CondValCase:
@@ -239,6 +239,7 @@ def merge_if_single(test, true: ScopeLevel, false: ScopeLevel, scope: Union[Scop
                 dbg("if.merge.obj.init")
                 assign(scope, var, {})
             var_true_emp, var_false_emp, var_scope = true.get(var, {}), false.get(var, {}), lookup(scope, var)
+            print(isinstance(var_true_emp, dict), isinstance(var_false_emp, dict), isinstance(var_scope, dict))
             assert isinstance(var_true_emp, dict) and isinstance(var_false_emp, dict) and isinstance(var_scope, dict)
             merge_if_single(test, var_true_emp, var_false_emp, var_scope)
         else:
@@ -289,7 +290,9 @@ def proc_assign(target: ast.AST, val, scope: Scope):
     dbg("proc_assign", ast.unparse(target), val)
     if isinstance(target, ast.Name):
         if isinstance(val, ast.AST):
-            scope.set(target.id, proc(val, scope))
+            val = proc(val, scope)
+            if val != None:
+                scope.set(target.id, val)
         else:
             scope.set(target.id, val)
     elif isinstance(target, ast.Attribute):
@@ -297,7 +300,12 @@ def proc_assign(target: ast.AST, val, scope: Scope):
             dbg("proc.assign.obj.init")
             proc_assign(target.value, {}, scope)
         obj = proc(target.value, scope)
-        obj[target.attr] = val
+        if isinstance(val, ast.AST):
+            val = proc(val, scope)
+            if val != None:
+                obj[target.attr] = val
+        else:
+            obj[target.attr] = val
     else:
         raise NotImplementedError("assign.others")
 
@@ -410,8 +418,11 @@ def proc(node: ast.AST, scope: Scope) -> Any:
         if isinstance(fun, Lambda):
             return fun.apply([proc(a, scope) for a in node.args])
         if isinstance(fun, ast.Attribute):
-            ret = copy.deepcopy(node)
-            ret.args = [proc(a, scope) for a in ret.args]
+            if isinstance(fun.value, ast.Name) and fun.value.id == "copy" and fun.attr == "deepcopy":
+                ret = None
+            else:
+                ret = copy.deepcopy(node)
+                ret.args = [proc(a, scope) for a in ret.args]
             return ret
         if isinstance(node.func, ast.Name):
             name = node.func.id
