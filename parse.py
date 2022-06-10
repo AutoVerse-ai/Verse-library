@@ -1,6 +1,6 @@
 import ast, copy
 from typing import List, Dict, Union, Optional, TypeAlias, Any
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum, auto
 
 def dbg(msg, *rest):
@@ -11,6 +11,21 @@ def dbg(msg, *rest):
         print("", rest[5:])
     else:
         print()
+
+def not_ir_ast(a) -> bool:
+    """Is not some type that can be used in AST substitutions"""
+    return isinstance(a, (ModeDef, ParseVarSet, ast.arg))
+
+@dataclass
+class ModeDef:
+    modes: List[str] = field(default_factory=list)
+
+@dataclass
+class ParseVarSet:
+    """Variable/member set needed for simulation/verification for some object"""
+    cont: List[str] = field(default_factory=list)     # Continuous variables
+    disc: List[str] = field(default_factory=list)     # Discrete variables
+    static: List[str] = field(default_factory=list)   # Static data in object
 
 ScopeValue: TypeAlias = Union[ast.AST, "CondVal", "Lambda", Dict[str, "ScopeValue"]]
 
@@ -94,6 +109,10 @@ ast_dump = lambda node, dump=False: ast.dump(node, indent=2) if dump else ast.un
 def ir_dump(node, dump=False):
     if node == None:
         return "None"
+    if isinstance(node, ast.arg):
+        return "Hole"
+    if isinstance(node, (ModeDef, ParseVarSet)):
+        return f"<{node}>"
     if isinstance(node, Lambda):
         return f"<Lambda args: {node.args} body: {ir_dump(node.body, dump)}>"
     if isinstance(node, CondVal):
@@ -253,7 +272,7 @@ def proc(node: ast.AST, scope: Scope) -> Any:
     if isinstance(node, ast.Module):
         for node in node.body:
             proc(node, scope)
-    elif isinstance(node, ast.arg):
+    elif not_ir_ast(node):
         return node
     # Data massaging
     elif isinstance(node, ast.For) or isinstance(node, ast.While):
@@ -284,7 +303,8 @@ def proc(node: ast.AST, scope: Scope) -> Any:
         return scope.lookup(node.id)
     elif isinstance(node, ast.Attribute) and isinstance(node.ctx, ast.Load):
         obj = proc(node.value, scope)
-        if isinstance(obj, ast.arg):
+        # TODO since we know what the mode and state types contain we can do some typo checking
+        if not_ir_ast(obj):
             return node
         return obj[node.attr]
     elif isinstance(node, ast.FunctionDef):
@@ -292,7 +312,38 @@ def proc(node: ast.AST, scope: Scope) -> Any:
     elif isinstance(node, ast.Lambda):
         return Lambda.from_ast(node, scope)
     elif isinstance(node, ast.ClassDef):
-        scope.set(node.name, ast.arg(node.name))
+        def grab_names(nodes: List[ast.stmt]):
+            names = []
+            for node in nodes:
+                if isinstance(node, ast.Assign):
+                    if len(node.targets) > 1:
+                        raise NotImplementedError("multiple mode/state names at once")
+                    if isinstance(node.targets[0], ast.Name):
+                        names.append(node.targets[0].id)
+                    else:
+                        raise NotImplementedError("non ident as mode/state name")
+                elif isinstance(node, ast.AnnAssign):
+                    if isinstance(node.target, ast.Name):
+                        names.append(node.target.id)
+                    else:
+                        raise NotImplementedError("non ident as mode/state name")
+            return names
+
+        if node.name.endswith("Mode"):
+            scope.set(node.name, ModeDef(grab_names(node.body)))
+        elif node.name.endswith("State"):
+            names = grab_names(node.body)
+            state_vars = ParseVarSet()
+            for name in names:
+                if "type" == name:
+                    state_vars.static.append(name)
+                elif "mode" not in name:
+                    state_vars.cont.append(name)
+                else:
+                    state_vars.disc.append(name)
+            scope.set(node.name, state_vars)
+        else:
+            scope.set(node.name, ast.arg(node.name))
 
     # Expressions
     elif isinstance(node, ast.UnaryOp):
