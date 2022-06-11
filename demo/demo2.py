@@ -56,8 +56,8 @@ if __name__ == "__main__":
         ]
     )
     # res_list = scenario.simulate_multi(40,1)
-    # traces = scenario.verify(15)
-    traces = scenario.simulate(40)
+    traces = scenario.verify(40)
+    # traces = scenario.simulate(40)
 
     # fig = plt.figure(2)
     # fig = plot_map(tmp_map, 'g', fig)
@@ -73,14 +73,14 @@ if __name__ == "__main__":
     # fig = go.Figure()
     # fig = plotly_simulation_tree(traces, 'car1', 1, [2], 'b', fig)
     # fig.show()
-    fig = go.Figure()
-    fig = plotly_simulation_anime(traces, tmp_map, fig)
-    fig.show()
-
     # fig = go.Figure()
-    # fig = plotly_reachtube_tree_v2(traces, 'car1', 1, [2], 'blue', fig)
-    # # fig = plotly_reachtube_tree_v2(traces, 'car2', 1, [2], 'red', fig)
+    # fig = plotly_simulation_anime(traces, tmp_map, fig)
     # fig.show()
+
+    fig = go.Figure()
+    fig = plotly_reachtube_tree_v2(traces, 'car1', 1, [2], 'blue', fig)
+    fig = plotly_reachtube_tree_v2(traces, 'car2', 1, [2], 'red', fig)
+    fig.show()
     # fig = go.Figure()
     # fig = generate_reachtube_anime(
     #     traces, 'car1', 1, [2], 'blue', fig, map=tmp_map)

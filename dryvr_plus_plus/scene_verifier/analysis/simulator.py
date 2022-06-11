@@ -89,7 +89,7 @@ class Simulator:
                     continue
                 # next_node = AnalysisTreeNode(trace = {},init={},mode={},agent={}, child = [], start_time = 0)
                 next_node_mode = copy.deepcopy(node.mode)
-                next_node_mode[transit_agent_idx] = dest_mode
+                next_node_mode[transit_agent_idx] = list(dest_mode)
                 next_node_agent = node.agent
                 next_node_start_time = list(truncated_trace.values())[0][0][0]
                 next_node_init = {}

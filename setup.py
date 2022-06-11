@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='dryvr_plus_plus',
@@ -9,7 +9,7 @@ setup(
     maintainer='Yangge Li, Katherine Braught, Haoqing Zhu',
     maintainer_email='{li213, braught2, haoqing3}@illinois.edu',
     license='Apache-2.0',
-    packages=setuptools.find_packages(exclude=["tests", "demo"]),
+    packages=find_packages(exclude=["tests", "demo"]),
     python_requires='>=3.8',
     install_requires=[
         "numpy~=1.22.1",
@@ -24,6 +24,7 @@ setup(
         "treelib~=1.6.1",
         "z3-solver~=4.8.17.0",
         "igraph~=0.9.10",
+        "plotly~=5.8.0"
     ],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',

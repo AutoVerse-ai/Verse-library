@@ -4,6 +4,7 @@ This file consist main plotter code for DryVR reachtube output
 
 from __future__ import annotations
 from audioop import reverse
+from re import A
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,7 +14,10 @@ import plotly.graph_objects as go
 from typing import List
 from PIL import Image, ImageDraw
 import io
+import operator
 from collections import OrderedDict
+
+from torch import layout
 from dryvr_plus_plus.scene_verifier.analysis.analysis_tree_node import AnalysisTreeNode
 
 colors = ['red', 'green', 'blue', 'yellow', 'black']
@@ -177,6 +181,7 @@ def generate_reachtube_anime(root, agent_id, x_dim: int = 0, y_dim_list: List[in
             "visible": True,
             "xanchor": "right"
         },
+        "method": "update",
         "transition": {"duration": duration, "easing": "cubic-in-out"},
         "pad": {"b": 10, "t": 50},
         "len": 0.9,
@@ -217,7 +222,7 @@ def generate_reachtube_anime(root, agent_id, x_dim: int = 0, y_dim_list: List[in
             "x": trace_x,
             "y": trace_y,
             "mode": "markers + text",
-            "text": [(round(trace_theta[i]/pi*180, 2), round(trace_v[i], 2)) for i in range(len(trace_theta))],
+            "text": [(round(trace_theta[i]/pi*180, 2), round(trace_v[i], 3)) for i in range(len(trace_theta))],
             "textposition": "bottom center",
             # "marker": {
             #     "sizemode": "area",
@@ -306,6 +311,7 @@ def plotly_reachtube_tree_v2(root, agent_id, x_dim: int = 0, y_dim_list: List[in
     bg_color = ['rgba(31,119,180,1)', 'rgba(255,127,14,0.2)', 'rgba(44,160,44,0.2)', 'rgba(214,39,40,0.2)', 'rgba(148,103,189,0.2)',
                 'rgba(140,86,75,0.2)', 'rgba(227,119,194,0.2)', 'rgba(127,127,127,0.2)', 'rgba(188,189,34,0.2)', 'rgba(23,190,207,0.2)']
     queue = [root]
+    show_legend = False
     while queue != []:
         node = queue.pop(0)
         traces = node.trace
@@ -347,26 +353,26 @@ def plotly_reachtube_tree_v2(root, agent_id, x_dim: int = 0, y_dim_list: List[in
         trace_y_even = np.array([trace[i][2] for i in range(1, max_id+1, 2)])
         fig.add_trace(go.Scatter(x=trace_x_odd.tolist()+trace_x_odd[::-1].tolist(), y=trace_y_odd.tolist()+trace_y_even[::-1].tolist(), mode='lines',
                                  fill='toself',
-                                 fillcolor=bg_color[0],
+                                 fillcolor=color,
                                  line_color='rgba(255,255,255,0)',
-                                 showlegend=True
+                                 showlegend=show_legend
                                  ))
         fig.add_trace(go.Scatter(x=trace_x_even.tolist()+trace_x_even[::-1].tolist(), y=trace_y_odd.tolist()+trace_y_even[::-1].tolist(), mode='lines',
                                  fill='toself',
-                                 fillcolor=bg_color[0],
+                                 fillcolor=color,
                                  line_color='rgba(255,255,255,0)',
-                                 showlegend=True))
+                                 showlegend=show_legend))
         fig.add_trace(go.Scatter(x=trace_x_odd.tolist()+trace_x_even[::-1].tolist(), y=trace_y_odd.tolist()+trace_y_even[::-1].tolist(), mode='lines',
                                  fill='toself',
-                                 fillcolor=bg_color[0],
+                                 fillcolor=color,
                                  line_color='rgba(255,255,255,0)',
-                                 showlegend=True
+                                 showlegend=show_legend
                                  ))
         fig.add_trace(go.Scatter(x=trace_x_even.tolist()+trace_x_odd[::-1].tolist(), y=trace_y_odd.tolist()+trace_y_even[::-1].tolist(), mode='lines',
                                  fill='toself',
-                                 fillcolor=bg_color[0],
+                                 fillcolor=color,
                                  line_color='rgba(255,255,255,0)',
-                                 showlegend=True))
+                                 showlegend=show_legend))
         # fig.add_trace(go.Scatter(x=trace_x_odd.tolist(), y=trace_y_odd.tolist(), mode='lines',
         #                          #  fill='toself',
         #                          #  fillcolor=bg_color[0],
@@ -495,9 +501,14 @@ def plotly_reachtube_tree_v2(root, agent_id, x_dim: int = 0, y_dim_list: List[in
                                  #  fill='toself',
                                  #  line=dict(dash="dot"),
                                  line_color="black",
-                                 text=[range(0, max_id+1)],
-                                 name='lines',
-                                 showlegend=False))
+                                 marker={
+            "sizemode": "area",
+            "sizeref": 200000,
+            "size": 2
+        },
+            text=[range(0, max_id+1)],
+            name='lines',
+            showlegend=False))
         queue += node.child
     # fig.update_traces(line_dash="dash")
     return fig
@@ -776,34 +787,44 @@ def plotly_simulation_anime(root, map=None, fig=None):
     # fig = plot_map(map, 'g', fig)
     timed_point_dict = {}
     stack = [root]
+    print("plot")
+    # print(root.mode)
     x_min, x_max = float('inf'), -float('inf')
     y_min, y_max = float('inf'), -float('inf')
+    segment_start = set()
+    # previous_mode = {}
+    # for agent_id in root.mode:
+    #     previous_mode[agent_id] = []
+
     while stack != []:
         node = stack.pop()
         traces = node.trace
         for agent_id in traces:
             trace = np.array(traces[agent_id])
+            segment_start.add(round(trace[0][0], 2))
             for i in range(len(trace)):
                 x_min = min(x_min, trace[i][1])
                 x_max = max(x_max, trace[i][1])
                 y_min = min(y_min, trace[i][2])
                 y_max = max(y_max, trace[i][2])
+                # print(round(trace[i][0], 2))
                 if round(trace[i][0], 2) not in timed_point_dict:
                     timed_point_dict[round(trace[i][0], 2)] = [
-                        trace[i][1:].tolist()]
+                        {agent_id: trace[i][1:].tolist()}]
                 else:
                     init = False
                     for record in timed_point_dict[round(trace[i][0], 2)]:
-                        if record == trace[i][1:].tolist():
+                        if list(record.values())[0] == trace[i][1:].tolist():
                             init = True
                             break
                     if init == False:
                         timed_point_dict[round(trace[i][0], 2)].append(
-                            trace[i][1:].tolist())
+                            {agent_id: trace[i][1:].tolist()})
             time = round(trace[i][0], 2)
         stack += node.child
     # fill in most of layout
-    # print(time)
+    print(segment_start)
+    # print(timed_point_dict.keys())
     duration = int(600/time)
     fig_dict["layout"]["xaxis"] = {
         "range": [(x_min-10), (x_max+10)],
@@ -859,12 +880,20 @@ def plotly_simulation_anime(root, map=None, fig=None):
     }
     # make data
     point_list = timed_point_dict[0]
-    # print(point_list)
+    x_list = []
+    y_list = []
+    text_list = []
+    for data in point_list:
+        trace = list(data.values())[0]
+        # print(trace)
+        x_list.append(trace[0])
+        y_list.append(trace[1])
+        text_list.append((round(trace[3], 2), round(trace[2]/pi*180, 2)))
     data_dict = {
-        "x": [data[0] for data in point_list],
-        "y": [data[1] for data in point_list],
+        "x": x_list,
+        "y": y_list,
         "mode": "markers + text",
-        "text": [(round(data[3], 2), round(data[2]/pi*180, 2)) for data in point_list],
+        "text": text_list,
         "textposition": "bottom center",
         # "marker": {
         #     "sizemode": "area",
@@ -877,20 +906,30 @@ def plotly_simulation_anime(root, map=None, fig=None):
 
     # make frames
     for time_point in timed_point_dict:
+        # print(time_point)
         frame = {"data": [], "layout": {
             "annotations": []}, "name": str(time_point)}
-        # print(timed_point_dict[time_point])
+        # print(timed_point_dict[time_point][0])
         point_list = timed_point_dict[time_point]
         # point_list = list(OrderedDict.fromkeys(timed_point_dict[time_point]))
-        trace_x = [data[0] for data in point_list]
-        trace_y = [data[1] for data in point_list]
-        trace_theta = [data[2] for data in point_list]
-        trace_v = [data[3] for data in point_list]
+        # todokeyi
+        trace_x = []
+        trace_y = []
+        trace_theta = []
+        trace_v = []
+        for data in point_list:
+            trace = list(data.values())[0]
+            # print(trace)
+            trace_x.append(trace[0])
+            trace_y.append(trace[1])
+            trace_theta.append(trace[2])
+            trace_v.append(trace[3])
         data_dict = {
             "x": trace_x,
             "y": trace_y,
             "mode": "markers + text",
-            "text": [(round(trace_theta[i]/pi*180, 2), round(trace_v[i], 2)) for i in range(len(trace_theta))],
+            "text": [(round(trace_theta[i]/pi*180, 2), round(trace_v[i], 3)) for i in range(len(trace_theta))],
+            "textfont": dict(size=14, color="black"),
             "textposition": "bottom center",
             # "marker": {
             #     "sizemode": "area",
@@ -904,7 +943,7 @@ def plotly_simulation_anime(root, map=None, fig=None):
             ax = np.cos(trace_theta[i])*trace_v[i]
             ay = np.sin(trace_theta[i])*trace_v[i]
             # print(trace_x[i]+ax, trace_y[i]+ay)
-            annotations_dict = {"x": trace_x[i]+ax+0.1, "y": trace_y[i]+ay,
+            annotations_dict = {"x": trace_x[i]+ax, "y": trace_y[i]+ay,
                                 # "xshift": ax, "yshift": ay,
                                 "ax": trace_x[i], "ay": trace_y[i],
                                 "arrowwidth": 2,
@@ -917,6 +956,25 @@ def plotly_simulation_anime(root, map=None, fig=None):
                                 "arrowhead": 1,
                                 "arrowcolor": "black"}
             frame["layout"]["annotations"].append(annotations_dict)
+
+            # if (time_point in segment_start) and (operator.ne(previous_mode[agent_id], node.mode[agent_id])):
+            #     annotations_dict = {"x": trace_x[i], "y": trace_y[i],
+            #                         # "xshift": ax, "yshift": ay,
+            #                         # "ax": trace_x[i], "ay": trace_y[i],
+            #                         # "arrowwidth": 2,
+            #                         # "arrowside": 'end',
+            #                         "showarrow": False,
+            #                         # "arrowsize": 1,
+            #                         # "xref": 'x', "yref": 'y',
+            #                         # "axref": 'x', "ayref": 'y',
+            #                         "text": str(node.mode[agent_id][0]),
+            #                         # "arrowhead": 1,
+            #                         # "arrowcolor": "black"
+            #                         }
+            #     frame["layout"]["annotations"].append(annotations_dict)
+            #     print(frame["layout"]["annotations"])
+            # i += 1
+            # previous_mode[agent_id] = node.mode[agent_id]
 
         fig_dict["frames"].append(frame)
         slider_step = {"args": [
@@ -936,32 +994,72 @@ def plotly_simulation_anime(root, map=None, fig=None):
     fig = plotly_map(map, 'g', fig)
     i = 0
     queue = [root]
+    previous_mode = {}
+    agent_list = []
+    for agent_id in root.mode:
+        previous_mode[agent_id] = []
+        agent_list.append(agent_id)
+    text_pos = 'middle center'
     while queue != []:
         node = queue.pop(0)
         traces = node.trace
-        print(node.mode)
+        # print(node.mode)
         # [[time,x,y,theta,v]...]
+        i = 0
         for agent_id in traces:
             trace = np.array(traces[agent_id])
             # print(trace)
             trace_y = trace[:, 2].tolist()
             trace_x = trace[:, 1].tolist()
             # theta = [i/pi*180 for i in trace[:, 3]]
-            color = 'green'
-            if agent_id == 'car2':
-                color = 'red'
+            i = agent_list.index(agent_id)
+            color = colors[i % 5]
             fig.add_trace(go.Scatter(x=trace[:, 1], y=trace[:, 2],
                                      mode='lines',
                                      line_color=color,
-                                     text=[(round(trace[i, 3]/pi*180, 2), round(trace[i, 4], 2))
+                                     text=[(round(trace[i, 3]/pi*180, 2), round(trace[i, 4], 3))
                                            for i in range(len(trace_y))],
                                      showlegend=False)
                           #  name='lines')
                           )
-            i += 1
+            if previous_mode[agent_id] != node.mode[agent_id]:
+                theta = trace[0, 3]
+                veh_mode = node.mode[agent_id][0]
+                if veh_mode == 'Normal':
+                    text_pos = 'middle center'
+                elif veh_mode == 'Brake':
+                    if theta >= -pi/2 and theta <= pi/2:
+                        text_pos = 'middle left'
+                    else:
+                        text_pos = 'middle right'
+                elif veh_mode == 'SwitchLeft':
+                    if theta >= -pi/2 and theta <= pi/2:
+                        text_pos = 'top center'
+                    else:
+                        text_pos = 'bottom center'
+                elif veh_mode == 'SwitchRight':
+                    if theta >= -pi/2 and theta <= pi/2:
+                        text_pos = 'bottom center'
+                    else:
+                        text_pos = 'top center'
+                fig.add_trace(go.Scatter(x=[trace[0, 1]], y=[trace[0, 2]],
+                                         mode='markers+text',
+                                         line_color='rgba(255,255,255,0.3)',
+                                         text=str(agent_id)+': ' +
+                                         str(node.mode[agent_id][0]),
+                                         textposition=text_pos,
+                                         textfont=dict(
+                    #  family="sans serif",
+                    size=10,
+                                             color="grey"),
+                                         showlegend=False,
+                                         ))
+                # i += 1
+                previous_mode[agent_id] = node.mode[agent_id]
         queue += node.child
     # fig.update_traces(mode='lines')
-
+    # fig.update_annotations(textfont=dict(size=14, color="black"))
+    # print(fig.frames[0].layout["annotations"])
     return fig
     # fig.show()
 
