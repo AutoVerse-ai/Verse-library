@@ -622,6 +622,8 @@ class GuardExpressionAst:
         elif isinstance(root, ast.UnaryOp):
             if isinstance(root.op, ast.USub):
                 res, root.operand = self._evaluate_guard_disc(root.operand, agent, disc_var_dict, cont_var_dict, lane_map)
+            elif isinstance(root.op, ast.Not):
+                raise NotImplementedError
             else:
                 raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
             return True, root
@@ -731,6 +733,8 @@ class GuardExpressionAst:
             val = self._evaluate_guard(root.operand, agent, cnts_var_dict, disc_var_dict, lane_map)
             if isinstance(root.op, ast.USub):
                 return -val
+            if isinstance(root.op, ast.Not):
+                return not val
             else:
                 raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
         elif isinstance(root, ast.Name):
