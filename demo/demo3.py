@@ -42,7 +42,7 @@ class State:
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/example_controller6.py'
+    input_code_name = './example_controller4.py'
     scenario = Scenario()
 
     car = CarAgent('car1', file_name=input_code_name)
@@ -70,25 +70,18 @@ if __name__ == "__main__":
             (VehicleMode.Normal, LaneMode.Lane1),
         ]
     )
-    traces = scenario.simulate(70)
-    # traces = scenario.verify(60)
+    # traces = scenario.simulate(70)
+    traces = scenario.verify(60)
 
-    # fig = plt.figure(2)
-    # fig = plot_map(tmp_map, 'g', fig)
-    # fig = plot_reachtube_tree(traces, 'car1', 1, [2], 'b', fig)
-    # fig = plot_reachtube_tree(traces, 'car2', 1, [2], 'r', fig)
-    # fig = plot_reachtube_tree(traces, 'car3', 1, [2], 'r', fig)
-    # fig = plot_reachtube_tree(traces, 'car4', 1, [2], 'r', fig)
-    # for traces in res_list:
-    # #     generate_simulation_anime(traces, tmp_map, fig)
-    # fig = plot_simulation_tree(traces, 'car1', 1, [2], 'b', fig)
-    # fig = plot_simulation_tree(traces, 'car2', 1, [2], 'r', fig)
-    # fig = plot_simulation_tree(traces, 'car3', 1, [2], 'r', fig)
-    # fig = plot_simulation_tree(traces, 'car4', 1, [2], 'r', fig)
-    # plt.show()
-        
+    fig = plt.figure(2)
+    fig = plot_map(tmp_map, 'g', fig)
+    fig = plot_reachtube_tree(traces, 'car1', 1, [2], 'b', fig)
+    fig = plot_reachtube_tree(traces, 'car2', 1, [2], 'r', fig)
+    fig = plot_reachtube_tree(traces, 'car3', 1, [2], 'r', fig)
+    fig = plot_reachtube_tree(traces, 'car4', 1, [2], 'r', fig)
+    # plt.show()    
 
-    fig = go.Figure()
-    fig = plotly_simulation_anime(traces, tmp_map, fig)
-    fig.show()
+    # fig = go.Figure()
+    # fig = plotly_simulation_anime(traces, tmp_map, fig)
+    # fig.show()
 

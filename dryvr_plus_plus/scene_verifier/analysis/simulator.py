@@ -46,27 +46,13 @@ class Simulator:
                     trace[:,0] += node.start_time
                     node.trace[agent_id] = trace.tolist()
 
-            trace_length = len(list(node.trace.values())[0])
-            transitions = []
-            for idx in range(trace_length):
-                # For each trace, check with the guard to see if there's any possible transition
-                # Store all possible transition in a list
-                # A transition is defined by (agent, src_mode, dest_mode, corresponding reset, transit idx)
-                # Here we enforce that only one agent transit at a time
-                all_agent_state = {}
-                for agent_id in node.agent:
-                    all_agent_state[agent_id] = (node.trace[agent_id][idx], node.mode[agent_id])
-                possible_transitions = transition_graph.get_all_transition(all_agent_state)
-                if possible_transitions != []:
-                    for agent_idx, src_mode, dest_mode, next_init in possible_transitions:
-                        transitions.append((agent_idx, src_mode, dest_mode, next_init, idx))
-                    break
+            transitions, transition_idx = transition_graph.get_transition_simulate_new(node)
 
             # truncate the computed trajectories from idx and store the content after truncate
             truncated_trace = {}
             for agent_idx in node.agent:
-                truncated_trace[agent_idx] = node.trace[agent_idx][idx:]
-                node.trace[agent_idx] = node.trace[agent_idx][:idx+1]
+                truncated_trace[agent_idx] = node.trace[agent_idx][transition_idx:]
+                node.trace[agent_idx] = node.trace[agent_idx][:transition_idx+1]
 
             # For each possible transition, construct the new node. 
             # Obtain the new initial condition for agent having transition

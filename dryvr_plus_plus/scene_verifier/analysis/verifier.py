@@ -67,7 +67,7 @@ class Verifier:
             # TODO: Check safety conditions here
 
             # Get all possible transitions to next mode
-            all_possible_transitions = transition_graph.get_all_transition_set(node)
+            all_possible_transitions = transition_graph.get_transition_verify_new(node)
             max_end_idx = 0
             for transition in all_possible_transitions:
                 transit_agent_idx, src_mode, dest_mode, next_init, idx = transition 
