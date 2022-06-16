@@ -1,9 +1,13 @@
+from turtle import speed
 from typing import List
 import numpy as np
 from abc import ABCMeta, abstractmethod
 from typing import Tuple, List, Optional, Union
+import copy
+from sympy import false
 
-from dryvr_plus_plus.scene_verifier.utils.utils import wrap_to_pi, Vector, get_class_path, class_from_path,to_serializable
+from dryvr_plus_plus.scene_verifier.utils.utils import wrap_to_pi, Vector, get_class_path, class_from_path, to_serializable
+
 
 class LineType:
 
@@ -13,6 +17,7 @@ class LineType:
     STRIPED = 1
     CONTINUOUS = 2
     CONTINUOUS_LINE = 3
+
 
 class AbstractLane(object):
 
@@ -25,7 +30,7 @@ class AbstractLane(object):
     longitudinal_start: float = 0
     line_types: List["LineType"]
 
-    def __init__(self, id:str):
+    def __init__(self, id: str):
         self.id = id
         self.type = None
 
@@ -137,18 +142,19 @@ class AbstractLane(object):
         angle = np.abs(wrap_to_pi(heading - self.heading_at(s)))
         return abs(r) + max(s - self.length, 0) + max(0 - s, 0) + heading_weight*angle
 
+
 class StraightLane(AbstractLane):
 
     """A lane going in straight line."""
 
     def __init__(self,
-                 id: str, 
+                 id: str,
                  start: Vector,
                  end: Vector,
                  width: float = AbstractLane.DEFAULT_WIDTH,
                  line_types: Tuple[LineType, LineType] = None,
                  forbidden: bool = False,
-                 speed_limit: float = 20,
+                 speed_limit: List[Tuple[float, float]] = None,
                  priority: int = 0) -> None:
         """
         New straight lane.
@@ -164,14 +170,19 @@ class StraightLane(AbstractLane):
         self.start = np.array(start)
         self.end = np.array(end)
         self.width = width
-        self.heading = np.arctan2(self.end[1] - self.start[1], self.end[0] - self.start[0])
+        self.heading = np.arctan2(
+            self.end[1] - self.start[1], self.end[0] - self.start[0])
         self.length = np.linalg.norm(self.end - self.start)
         self.line_types = line_types or [LineType.STRIPED, LineType.STRIPED]
         self.direction = (self.end - self.start) / self.length
-        self.direction_lateral = np.array([-self.direction[1], self.direction[0]])
+        self.direction_lateral = np.array(
+            [-self.direction[1], self.direction[0]])
         self.forbidden = forbidden
         self.priority = priority
-        self.speed_limit = speed_limit
+        if speed_limit != None:
+            self.speed_limit = sorted(speed_limit, key=lambda elem: elem[0])
+        else:
+            self.speed_limit = None
         self.type = 'Straight'
         self.longitudinal_start = 0
 
@@ -189,6 +200,54 @@ class StraightLane(AbstractLane):
         longitudinal = np.dot(delta, self.direction)
         lateral = np.dot(delta, self.direction_lateral)
         return float(longitudinal), float(lateral)
+
+    def speed_limit_at(self, longitudinal: float) -> float:
+        # print(self.speed_limit)
+        if longitudinal >= self.speed_limit[-1][0]:
+            # print(longitudinal, self.speed_limit[-1][1])
+            return self.speed_limit[-1][1]
+        prev_limit = self.speed_limit[0][1]
+        for (start, limit) in self.speed_limit:
+            if longitudinal <= start:
+                # print(longitudinal, prev_limit)
+                return prev_limit
+            prev_limit = limit
+
+        return -1
+    # in format for polty filling mode
+
+    def get_all_speed(self):
+        end_longitudinal, end_lateral = self.local_coordinates(self.end)
+        ret_x = []
+        ret_y = []
+        ret_v = []
+        x_y = np.ndarray(shape=2)
+        seg_pos = []
+        speed_limit = copy.deepcopy(self.speed_limit)
+        speed_limit.append(tuple([end_longitudinal, self.speed_limit[-1][1]]))
+        for i in range(len(self.speed_limit)):
+            seg_start = speed_limit[i][0]
+            limit = speed_limit[i][1]
+            if end_longitudinal < seg_start:
+                break
+            seg_pos = []
+            seg_end = min(end_longitudinal, speed_limit[i+1][0])
+            x_y = self.position(seg_start, self.width/2)
+            seg_pos.append(x_y.tolist())
+            x_y = self.position(seg_end, self.width/2)
+            seg_pos.append(x_y.tolist())
+            x_y = self.position(seg_end, -self.width/2)
+            seg_pos.append(x_y.tolist())
+            x_y = self.position(seg_start, -self.width/2)
+            seg_pos.append(x_y.tolist())
+            ret_x.append([pos[0] for pos in seg_pos])
+            ret_y.append([pos[1] for pos in seg_pos])
+            ret_v.append(limit)
+        # print('get_all_speed')
+        # print(ret_x)
+        # print(ret_y)
+        # print(ret_v)
+        return ret_x, ret_y, ret_v
 
     @classmethod
     def from_config(cls, config: dict):
@@ -216,7 +275,7 @@ class CircularLane(AbstractLane):
     """A lane going in circle arc."""
 
     def __init__(self,
-                 id, 
+                 id,
                  center: Vector,
                  radius: float,
                  start_phase: float,
@@ -225,7 +284,7 @@ class CircularLane(AbstractLane):
                  width: float = AbstractLane.DEFAULT_WIDTH,
                  line_types: List[LineType] = None,
                  forbidden: bool = False,
-                 speed_limit: float = 20,
+                 speed_limit: List[Tuple[float, float]] = None,
                  priority: int = 0) -> None:
         super().__init__(id)
         self.center = np.array(center)
@@ -239,7 +298,7 @@ class CircularLane(AbstractLane):
         self.forbidden = forbidden
         self.length = radius*(end_phase - start_phase) * self.direction
         self.priority = priority
-        self.speed_limit = speed_limit
+        self.speed_limit = sorted(speed_limit, key=lambda elem: elem[0])
         self.type = 'Circular'
         self.longitudinal_start = 0
 
@@ -263,6 +322,12 @@ class CircularLane(AbstractLane):
         longitudinal = self.direction*(phi - self.start_phase)*self.radius
         lateral = self.direction*(self.radius - r)
         return longitudinal, lateral
+
+    def speed_limit_at(self, longitudinal: float) -> float:
+        for (start, limit) in self.speed_limit:
+            if longitudinal <= start:
+                return limit
+        return -1
 
     @classmethod
     def from_config(cls, config: dict):
@@ -288,13 +353,13 @@ class CircularLane(AbstractLane):
 
 
 class LaneSegment:
-    def __init__(self, id, lane_parameter = None):
+    def __init__(self, id, lane_parameter=None):
         self.id = id
         # self.left_lane:List[str] = left_lane
-        # self.right_lane:List[str] = right_lane 
+        # self.right_lane:List[str] = right_lane
         # self.next_segment:int = next_segment
 
-        self.lane_parameter = None 
+        self.lane_parameter = None
         if lane_parameter is not None:
             self.lane_parameter = lane_parameter
 

@@ -1,3 +1,4 @@
+from ctypes.wintypes import PINT
 from typing import Dict, List
 import copy
 from enum import Enum
@@ -93,3 +94,12 @@ class LaneMap:
         lane = self.lane_dict[lane_idx]
         seg_idx, segment = lane.get_lane_segment(position)
         return segment
+
+    def get_speed_limit(self, lane_idx: str, position: np.ndarray) -> AbstractLane:
+        if not isinstance(position, np.ndarray):
+            position = np.array(position)
+        lane = self.lane_dict[lane_idx]
+        limit = lane.get_speed_limit(position)
+        # print(limit)
+        # print(position)
+        return limit

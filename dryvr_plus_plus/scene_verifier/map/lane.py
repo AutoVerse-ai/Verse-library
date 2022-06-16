@@ -45,3 +45,9 @@ class Lane():
         seg_idx, segment = self.get_lane_segment(position)
         longitudinal, lateral = segment.local_coordinates(position)
         return lateral
+
+    def get_speed_limit(self, position: np.ndarray) -> float:
+        seg_idx, segment = self.get_lane_segment(position)
+        longitudinal, lateral = segment.local_coordinates(position)
+        return segment.speed_limit_at(longitudinal)
+

@@ -1,6 +1,6 @@
 from dryvr_plus_plus.example.example_agent.car_agent import CarAgent
 from dryvr_plus_plus.scene_verifier.scenario.scenario import Scenario
-from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap2, SimpleMap3, SimpleMap5, SimpleMap6
+from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap2, SimpleMap3, SimpleMap5, SimpleMap6, SimpleMap3_v2
 from dryvr_plus_plus.plotter.plotter2D import *
 from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor2
 import plotly.graph_objects as go
@@ -14,6 +14,7 @@ class VehicleMode(Enum):
     SwitchLeft = auto()
     SwitchRight = auto()
     Brake = auto()
+    Accelerate = auto()
 
 
 class LaneMode(Enum):
@@ -35,14 +36,14 @@ class State:
 
 
 if __name__ == "__main__":
-    input_code_name = 'example_controller2.py'
+    input_code_name = 'example_controller5.py'
     scenario = Scenario()
 
     car = CarAgent('car1', file_name=input_code_name)
     scenario.add_agent(car)
     car = CarAgent('car2', file_name=input_code_name)
     scenario.add_agent(car)
-    tmp_map = SimpleMap3()
+    tmp_map = SimpleMap3_v2()
     scenario.set_map(tmp_map)
     scenario.set_sensor(FakeSensor2())
     scenario.set_init(
@@ -55,10 +56,15 @@ if __name__ == "__main__":
             (VehicleMode.Normal, LaneMode.Lane1),
         ]
     )
-    # res_list = scenario.simulate_multi(40,1)
-
-    # traces = scenario.simulate(40)
-
+    # traces = scenario.verify(30)
+    # # fig = go.Figure()
+    # # fig = plotly_reachtube_tree_v2(traces, 'car1', 1, [2], 'blue', fig)
+    # # fig = plotly_reachtube_tree_v2(traces, 'car2', 1, [2], 'red', fig)
+    # # fig.show()
+    # fig = go.Figure()
+    # fig = generate_reachtube_anime(traces, tmp_map, fig)
+    # # # fig = plotly_reachtube_tree_v2(traces, 'car2', 1, [2], 'red', fig)
+    # fig.show()
     # fig = plt.figure(2)
     # fig = plot_map(tmp_map, 'g', fig)
     # # fig = plot_simulation_tree(traces, 'car1', 1, [2], 'b', fig)
@@ -70,21 +76,11 @@ if __name__ == "__main__":
     # fig = generate_simulation_anime(traces, tmp_map, fig)
     # plt.show()
 
+    traces = scenario.simulate(30)
     # fig = go.Figure()
     # fig = plotly_simulation_tree(traces, 'car1', 1, [2], 'b', fig)
     # fig.show()
-    # traces = scenario.simulate(40)
-    # fig = go.Figure()
-    # # fig = plotly_simulation_anime(traces, tmp_map, fig)
-    # fig.show()
-
-    # fig = go.Figure()
-    # fig = plotly_reachtube_tree_v2(traces, 'car1', 1, [2], 'blue', fig)
-    # fig = plotly_reachtube_tree_v2(traces, 'car2', 1, [2], 'red', fig)
-    # fig.show()
-    traces = scenario.verify(5)
     fig = go.Figure()
-    fig = generate_reachtube_anime(traces, tmp_map, fig)
-    # fig = plotly_simulation_anime(traces, tmp_map, fig)
-    # # fig = plotly_reachtube_tree_v2(traces, 'car2', 1, [2], 'red', fig)
+    fig = plotly_simulation_anime(traces, tmp_map, fig)
+    # fig = plotly_map(tmp_map, fig=fig)
     fig.show()

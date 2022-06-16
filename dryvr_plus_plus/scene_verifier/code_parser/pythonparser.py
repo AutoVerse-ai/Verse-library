@@ -68,6 +68,7 @@ class Guard(Statement):
     '''
     def parseGuard(node, code):
         # assume guard is a strict comparision (modeType == mode)
+        # keyi mark: may support more comparision
         if isinstance(node.test, ast.Compare):  # ==
             if isinstance(node.test.comparators[0], ast.Attribute):
                 if ("Mode" in str(node.test.comparators[0].value.id)):
@@ -467,7 +468,7 @@ class ControllerAst():
         childrens_guards = []
         childrens_resets = []
         recoutput = []
-        # tree.show()
+        tree.show()
         if parent == None:
             s = Statement("root", None, None)
             tree.create_node("root")

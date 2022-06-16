@@ -75,6 +75,6 @@ if __name__ == "__main__":
     fig = go.Figure()
     for traces in res_list:
         # plotly_map(tmp_map, 'g', fig)
-        # fig = plotly_simulation_tree(traces, 'car2', 1, [2], 'r', fig)
-        fig = plotly_simulation_anime(traces, tmp_map, fig)
+        fig = plotly_simulation_tree(traces, 'car2', 1, [2], 'r', fig)
+        # fig = plotly_simulation_anime(traces, tmp_map, fig)
     fig.show()
