@@ -42,7 +42,7 @@ class State:
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/example_controller6.py'
+    input_code_name = './example_controller7.py'
     scenario = Scenario()
 
     car = CarAgent('car1', file_name=input_code_name)
@@ -60,7 +60,7 @@ if __name__ == "__main__":
     scenario.set_sensor(FakeSensor3())
     scenario.set_init(
         [
-            [[0, -0.2, 0, 1.0],[0.01, 0.2, 0, 1.0]],
+            [[0, -0.0, 0, 1.0],[0.0, 0.0, 0, 1.0]],
             [[10, 0, 0, 0.5],[10, 0, 0, 0.5]], 
             [[30, 0, 0, 0.5],[30, 0, 0, 0.5]], 
             [[10, 3, 0, 0.5],[10, 3, 0, 0.5]], 

@@ -35,8 +35,8 @@ class Verifier:
         verification_queue.append(root)
         while verification_queue != []:
             node:AnalysisTreeNode = verification_queue.pop(0)
-            print(node.mode)
-            remain_time = time_horizon - node.start_time 
+            print(node.start_time, node.mode)
+            remain_time = round(time_horizon - node.start_time,10) 
             if remain_time <= 0:
                 continue 
             # For reachtubes not already computed
@@ -65,7 +65,8 @@ class Verifier:
                     # print("here")
             
             # TODO: Check safety conditions here
-
+            if node.trace['car1'][-1][0] > 50.01:
+                print("stop here")
             # Get all possible transitions to next mode
             all_possible_transitions = transition_graph.get_transition_verify_new(node)
             max_end_idx = 0
@@ -100,7 +101,7 @@ class Verifier:
                     mode = next_node_mode,
                     agent = next_node_agent,
                     child = [],
-                    start_time = next_node_start_time,
+                    start_time = round(next_node_start_time,10),
                     type = 'reachtube'
                 )
                 node.child.append(tmp)

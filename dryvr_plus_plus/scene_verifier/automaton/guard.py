@@ -347,8 +347,12 @@ class GuardExpressionAst:
                         # Get function arguments
                         arg0_node = root.args[0]
                         arg1_node = root.args[1]
-                        assert isinstance(arg0_node, ast.Attribute)
-                        arg0_var = arg0_node.value.id + '.' + arg0_node.attr
+                        if isinstance(arg0_node, ast.Attribute):
+                            arg0_var = arg0_node.value.id + '.' + arg0_node.attr
+                        elif isinstance(arg0_node, ast.Name):
+                            arg0_var = arg0_node.id
+                        else:
+                            raise ValueError(f"Node type {type(arg0_node)} is not supported")
                         vehicle_lane = disc_var_dict[arg0_var]
                         assert isinstance(arg1_node, ast.List)
                         arg1_lower = []
@@ -356,8 +360,12 @@ class GuardExpressionAst:
                         for elt in arg1_node.elts:
                             if isinstance(elt, ast.Attribute):
                                 var = elt.value.id + '.' + elt.attr
-                                arg1_lower.append(cont_var_dict[var][0])
-                                arg1_upper.append(cont_var_dict[var][1])   
+                            elif isinstance(elt, ast.Name):
+                                var = elt.id
+                            else:
+                                raise ValueError(f"Node type {type(elt)} is not supported")
+                            arg1_lower.append(cont_var_dict[var][0])
+                            arg1_upper.append(cont_var_dict[var][1])   
                         vehicle_pos = (arg1_lower, arg1_upper)
 
                         # Get corresponding lane segments with respect to the set of vehicle pos
@@ -382,8 +390,13 @@ class GuardExpressionAst:
                         # Get function arguments
                         arg0_node = root.args[0]
                         arg1_node = root.args[1]
-                        assert isinstance(arg0_node, ast.Attribute)
-                        arg0_var = arg0_node.value.id + '.' + arg0_node.attr
+                        # assert isinstance(arg0_node, ast.Attribute)
+                        if isinstance(arg0_node, ast.Attribute):
+                            arg0_var = arg0_node.value.id + '.' + arg0_node.attr
+                        elif isinstance(arg0_node, ast.Name):
+                            arg0_var = arg0_node.id
+                        else:
+                            raise ValueError(f"Node type {type(arg0_node)} is not supported")
                         vehicle_lane = disc_var_dict[arg0_var]
                         assert isinstance(arg1_node, ast.List)
                         arg1_lower = []
@@ -391,8 +404,12 @@ class GuardExpressionAst:
                         for elt in arg1_node.elts:
                             if isinstance(elt, ast.Attribute):
                                 var = elt.value.id + '.' + elt.attr
-                                arg1_lower.append(cont_var_dict[var][0])
-                                arg1_upper.append(cont_var_dict[var][1])   
+                            elif isinstance(elt, ast.Name):
+                                var = elt.id
+                            else:
+                                raise ValueError(f"Node type {type(elt)} is not supported")
+                            arg1_lower.append(cont_var_dict[var][0])
+                            arg1_upper.append(cont_var_dict[var][1])   
                         vehicle_pos = (arg1_lower, arg1_upper)
 
                         # Get corresponding lane segments with respect to the set of vehicle pos
@@ -428,6 +445,11 @@ class GuardExpressionAst:
         elif isinstance(root, ast.UnaryOp):
             if isinstance(root.op, ast.USub):
                 res, root.operand = self._evaluate_guard_hybrid(root.operand, agent, disc_var_dict, cont_var_dict, lane_map)
+            elif isinstance(root.op, ast.Not):
+                res, root.operand = self._evaluate_guard_hybrid(root.operand, agent, disc_var_dict, cont_var_dict, lane_map)
+                if not res:
+                    root.operand = ast.parse('False').body[0].value
+                    return True, ast.parse('True').body[0].value
             else:
                 raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
             return True, root 
@@ -623,7 +645,10 @@ class GuardExpressionAst:
             if isinstance(root.op, ast.USub):
                 res, root.operand = self._evaluate_guard_disc(root.operand, agent, disc_var_dict, cont_var_dict, lane_map)
             elif isinstance(root.op, ast.Not):
-                raise NotImplementedError
+                res, root.operand = self._evaluate_guard_disc(root.operand, agent, disc_var_dict, cont_var_dict, lane_map)
+                if not res:
+                    root.operand = ast.parse('False').body[0].value
+                    return True, ast.parse('True').body[0].value
             else:
                 raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
             return True, root
@@ -643,7 +668,7 @@ class GuardExpressionAst:
 
     def evaluate_guard(self, agent, continuous_variable_dict, discrete_variable_dict, lane_map):
         res = True
-        for node in self.ast_list:
+        for i, node in enumerate(self.ast_list):
             tmp = self._evaluate_guard(node, agent, continuous_variable_dict, discrete_variable_dict, lane_map)
             res = tmp and res
             if not res:
@@ -698,7 +723,8 @@ class GuardExpressionAst:
         elif isinstance(root, ast.Call):
             expr = astunparse.unparse(root)
             # Check if the root is a function
-            if 'map' in expr:
+            if isinstance(root.func, ast.Attribute) and "map" in root.func.value.id:
+            # if 'map' in expr:
                 # tmp = re.split('\(|\)',expr)
                 # while "" in tmp:
                 #     tmp.remove("")
@@ -711,6 +737,10 @@ class GuardExpressionAst:
                 for arg in cnts_var_dict:
                     expr = expr.replace(arg, str(cnts_var_dict[arg]))    
                 res = eval(expr)
+                for mode_name in agent.controller.modes:
+                    if res in agent.controller.modes[mode_name]:
+                        res = mode_name+'.'+res
+                        break
                 return res
         elif isinstance(root, ast.Attribute):
             expr = astunparse.unparse(root)

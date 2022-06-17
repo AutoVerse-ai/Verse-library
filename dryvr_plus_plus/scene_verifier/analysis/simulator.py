@@ -1,5 +1,6 @@
 from typing import List, Dict
 import copy
+import itertools
 
 import numpy as np
 
@@ -32,7 +33,7 @@ class Simulator:
         # Perform BFS through the simulation tree to loop through all possible transitions
         while simulation_queue != []:
             node:AnalysisTreeNode = simulation_queue.pop(0)
-            print(node.mode)
+            print(node.start_time, node.mode)
             remain_time = time_horizon - node.start_time
             if remain_time <= 0:
                 continue
@@ -54,26 +55,30 @@ class Simulator:
                 truncated_trace[agent_idx] = node.trace[agent_idx][transition_idx:]
                 node.trace[agent_idx] = node.trace[agent_idx][:transition_idx+1]
 
+            # Generate the transition combinations if multiple agents can transit at the same time step
+            transition_list = list(transitions.values())
+            all_transition_combinations = itertools.product(*transition_list)
+
             # For each possible transition, construct the new node. 
             # Obtain the new initial condition for agent having transition
             # copy the traces that are not under transition
-            for transition in transitions:
-                transit_agent_idx, src_mode, dest_mode, next_init, idx = transition
-                if dest_mode is None:
-                    continue
-                # next_node = AnalysisTreeNode(trace = {},init={},mode={},agent={}, child = [], start_time = 0)
+            for transition_combination in all_transition_combinations:
                 next_node_mode = copy.deepcopy(node.mode) 
-                next_node_mode[transit_agent_idx] = dest_mode 
                 next_node_agent = node.agent 
                 next_node_start_time = list(truncated_trace.values())[0][0][0]
                 next_node_init = {}
                 next_node_trace = {}
+                for transition in transition_combination:
+                    transit_agent_idx, src_mode, dest_mode, next_init, idx = transition
+                    if dest_mode is None:
+                        continue
+                    # next_node = AnalysisTreeNode(trace = {},init={},mode={},agent={}, child = [], start_time = 0)
+                    next_node_mode[transit_agent_idx] = dest_mode 
+                    next_node_init[transit_agent_idx] = next_init 
                 for agent_idx in next_node_agent:
-                    if agent_idx == transit_agent_idx:
-                        next_node_init[agent_idx] = next_init 
-                    else:
+                    if agent_idx not in next_node_init:
                         next_node_trace[agent_idx] = truncated_trace[agent_idx]
-                
+                    
                 tmp = AnalysisTreeNode(
                     trace = next_node_trace,
                     init = next_node_init,
