@@ -1,3 +1,4 @@
+# Example agent.
 from typing import Tuple, List
 
 import numpy as np 
@@ -23,6 +24,8 @@ class NPCAgent(BaseAgent):
         return [x_dot, y_dot, theta_dot, v_dot]
 
     def action_handler(self, mode, state, lane_map:LaneMap)->Tuple[float, float]:
+        ''' Computes steering and acceleration based on current lane, target lane and
+            current state using a Stanley controller-like rule'''
         x,y,theta,v = state
         vehicle_mode = mode[0]
         vehicle_lane = mode[1]
