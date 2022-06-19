@@ -85,6 +85,7 @@ if __name__ == "__main__":
     # Longer term: We should initialize by writing expressions like "-2 \leq myball1.x \leq 5"
     # "-2 \leq myball1.x + myball2.x \leq 5"
     traces = bouncingBall.simulate(10)
+    # There should be a print({traces}) function
     fig = go.Figure()
     fig = plotly_simulation_anime(traces, tmp_map, fig)
     fig.show()

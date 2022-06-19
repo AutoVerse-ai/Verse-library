@@ -52,3 +52,5 @@ class BallAgent(BaseAgent):
 
 if __name__ == '__main__':
     aball = BallAgent('red_ball',file_name="/Users/mitras/Dpp/GraphGeneration/demo/ball_bounces.py")
+    trace = aball.TC_simulate({'none'},[5, 10, 2, 2],10)
+    print(trace)
