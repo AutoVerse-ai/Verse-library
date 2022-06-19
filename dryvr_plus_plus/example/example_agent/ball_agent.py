@@ -46,8 +46,6 @@ class BallAgent(BaseAgent):
             r.set_initial_value(init)
             res:np.ndarray = r.integrate(r.t + time_step)
             init = res.flatten().tolist()
-            if init[3] < 0:
-                init[3] = 0
             trace.append([t[i] + time_step] + init)
 
         return np.array(trace)
