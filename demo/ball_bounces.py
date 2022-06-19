@@ -60,9 +60,9 @@ if __name__ == "__main__":
     ball_controller = '/Users/mitras/Dpp/GraphGeneration/demo/ball_bounces.py'
     bouncingBall = Scenario()
     myball1 = BallAgent('red-ball', file_name=ball_controller)
-#    myball2 = BallAgent('green-ball', file_name=ball_controller)
+    myball2 = BallAgent('green-ball', file_name=ball_controller)
     bouncingBall.add_agent(myball1)
-#    bouncingBall.add_agent(myball2)
+    bouncingBall.add_agent(myball2)
     #
     tmp_map = SimpleMap3()
     bouncingBall.set_map(tmp_map)
@@ -74,17 +74,18 @@ if __name__ == "__main__":
     bouncingBall.set_init(
         [
             [[5, 10, 2, 2], [5, 10, 2, 2]],
-#            [[15, 1, 1, -2], [15, 1, 1, -2]],
+            [[15, 1, 1, -2], [15, 1, 1, -2]]
         ],
         [
             (BallMode.Normal, LaneMode.Lane0),
- #           (BallMode.Normal, LaneMode.Lane0),
+            (BallMode.Normal, LaneMode.Lane0)
         ]
     )
     # WE should be able to initialize each of the balls separately
+    # this may be the cause for the VisibleDeprecationWarning
     # Longer term: We should initialize by writing expressions like "-2 \leq myball1.x \leq 5"
     # "-2 \leq myball1.x + myball2.x \leq 5"
-    traces = bouncingBall.simulate(10)
+    traces = bouncingBall.simulate(20)
     # There should be a print({traces}) function
     fig = go.Figure()
     fig = plotly_simulation_anime(traces, tmp_map, fig)
