@@ -13,10 +13,16 @@ class BallAgent(BaseAgent):
     '''Dynamics of a frictionless billiard ball
         on a 2D-plane'''
     def __init__(self, id, code = None, file_name = None):
+        '''Contructor for tha agent
+            EXACTLY one of the following should be given
+            file_name: name of the controller
+            code: pyhton string ddefning the controller
+            '''
+        # Calling the constructor of tha base class
         super().__init__(id, code, file_name)
 
     @staticmethod
-    def dynamic(t, state, u):
+    def dynamic(t, state):
         '''Defines the RHS of the ODE used to simulate trajectories'''
         x, y, vx, vy = state
         x_dot = vx
@@ -26,8 +32,9 @@ class BallAgent(BaseAgent):
         return [x_dot, y_dot, vx_dot, vy_dot]
 
     def TC_simulate(self, mode: List[str], initialCondition, time_bound, lane_map:LaneMap=None)->np.ndarray:
+        # P1. Should TC_simulate really be part of the agent definition or should it be something more generic?
         time_step = 0.05
-        # Looks like this should be a global parameter; some config file should be setting this.
+        # P2. Looks like this should be a global parameter; some config file should be setting this.
         time_bound = float(time_bound)
         number_points = int(np.ceil(time_bound/time_step))
         t = [round(i*time_step,10) for i in range(0,number_points)]
@@ -36,7 +43,7 @@ class BallAgent(BaseAgent):
         trace = [[0]+init]
         for i in range(len(t)):
             r = ode(self.dynamic)
-            r.set_initial_value(init).set_f_params([steering, a])
+            r.set_initial_value(init)
             res:np.ndarray = r.integrate(r.t + time_step)
             init = res.flatten().tolist()
             if init[3] < 0:
@@ -46,4 +53,4 @@ class BallAgent(BaseAgent):
         return np.array(trace)
 
 if __name__ == '__main__':
-    aball = BallAgent('red_ball',file_name=input_code_name)
+    aball = BallAgent('red_ball',file_name="/Users/mitras/Dpp/GraphGeneration/demo/ball_bounces.py")
