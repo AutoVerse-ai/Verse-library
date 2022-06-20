@@ -111,34 +111,47 @@ def generate_reachtube_anime(root, map=None, fig=None):
     x_min, x_max = float('inf'), -float('inf')
     y_min, y_max = float('inf'), -float('inf')
     print("reachtude")
+    end_time = 0
     while stack != []:
         node = stack.pop()
         traces = node.trace
         for agent_id in traces:
             trace = np.array(traces[agent_id])
-            print(trace)
-            for i in range(len(trace)):
+            if trace[0][0] > 0:
+                trace = trace[4:]
+            # print(trace)
+            end_time = trace[-1][0]
+            for i in range(0, len(trace), 2):
                 x_min = min(x_min, trace[i][1])
                 x_max = max(x_max, trace[i][1])
                 y_min = min(y_min, trace[i][2])
                 y_max = max(y_max, trace[i][2])
-                if round(trace[i][0], 2) not in timed_point_dict:
-                    timed_point_dict[round(trace[i][0], 2)] = [
-                        trace[i][1:].tolist()]
+                # if round(trace[i][0], 2) not in timed_point_dict:
+                #     timed_point_dict[round(trace[i][0], 2)] = [
+                #         trace[i][1:].tolist()]
+                # else:
+                #     init = False
+                #     for record in timed_point_dict[round(trace[i][0], 2)]:
+                #         if record == trace[i][1:].tolist():
+                #             init = True
+                #             break
+                #     if init == False:
+                #         timed_point_dict[round(trace[i][0], 2)].append(
+                #             trace[i][1:].tolist())
+                time_point = round(trace[i][0], 2)
+                rect = [trace[i][1:].tolist(), trace[i+1][1:].tolist()]
+                if time_point not in timed_point_dict:
+                    timed_point_dict[time_point] = {agent_id: [rect]}
                 else:
-                    init = False
-                    for record in timed_point_dict[round(trace[i][0], 2)]:
-                        if record == trace[i][1:].tolist():
-                            init = True
-                            break
-                    if init == False:
-                        timed_point_dict[round(trace[i][0], 2)].append(
-                            trace[i][1:].tolist())
-            time = round(trace[i][0], 2)
+                    if agent_id in timed_point_dict[time_point].keys():
+                        timed_point_dict[time_point][agent_id].append(rect)
+                    else:
+                        timed_point_dict[time_point][agent_id] = [rect]
+
         stack += node.child
     # fill in most of layout
-    # print(time)
-    duration = int(600/time)
+    # print(end_time)
+    duration = int(100/end_time)
     fig_dict["layout"]["xaxis"] = {
         "range": [(x_min-10), (x_max+10)],
         "title": "x position"}
@@ -193,69 +206,74 @@ def generate_reachtube_anime(root, map=None, fig=None):
         "steps": []
     }
     # make data
-    point_list = timed_point_dict[0]
-    # print("reachtude")
-    # print(point_list)
-    data_dict = {
-        "x": [data[0] for data in point_list],
-        "y": [data[1] for data in point_list],
-        "mode": "markers + text",
-        "text": [(round(data[3], 2), round(data[2]/pi*180, 2)) for data in point_list],
-        "textposition": "bottom center",
-        # "marker": {
-        #     "sizemode": "area",
-        #     "sizeref": 200000,
-        #     "size": 2
-        # },
-        "name": "Current Position"
-    }
-    fig_dict["data"].append(data_dict)
+    agent_dict = timed_point_dict[0]  # {agent1:[rect1,..], ...}
+    x_list = []
+    y_list = []
+    text_list = []
+    for agent_id, rect_list in agent_dict.items():
+        for rect in rect_list:
+            # trace = list(data.values())[0]
+            print(rect)
+            x_list.append((rect[0][0]+rect[1][0])/2)
+            y_list.append((rect[0][1]+rect[1][1])/2)
+            text_list.append(
+                ('{:.2f}'.format((rect[0][2]+rect[1][2])/pi*90), '{:.3f}'.format(rect[0][3]+rect[1][3])))
+    # data_dict = {
+    #     "x": x_list,
+    #     "y": y_list,
+    #     "mode": "markers + text",
+    #     "text": text_list,
+    #     "textposition": "bottom center",
+    #     # "marker": {
+    #     #     "sizemode": "area",
+    #     #     "sizeref": 200000,
+    #     #     "size": 2
+    #     # },
+    #     "name": "Current Position"
+    # }
+    # fig_dict["data"].append(data_dict)
 
     # make frames
     for time_point in timed_point_dict:
         frame = {"data": [], "layout": {
-            "annotations": []}, "name": str(time_point)}
-        # print(timed_point_dict[time_point])
-        point_list = timed_point_dict[time_point]
-        # point_list = list(OrderedDict.fromkeys(timed_point_dict[time_point]))
-        trace_x = [data[0] for data in point_list]
-        trace_y = [data[1] for data in point_list]
-        trace_theta = [data[2] for data in point_list]
-        trace_v = [data[3] for data in point_list]
-        data_dict = {
-            "x": trace_x,
-            "y": trace_y,
-            "mode": "markers + text",
-            "text": [(round(trace_theta[i]/pi*180, 2), round(trace_v[i], 3)) for i in range(len(trace_theta))],
-            "textposition": "bottom center",
-            # "marker": {
-            #     "sizemode": "area",
-            #     "sizeref": 200000,
-            #     "size": 2
-            # },
-            "name": "current position"
-        }
-        frame["data"].append(data_dict)
-        # print(trace_x)
-        for i in range(len(trace_x)):
-            pass
-            # ax = np.cos(trace_theta[i])*trace_v[i]
-            # ay = np.sin(trace_theta[i])*trace_v[i]
-            # print(trace_x[i]+ax, trace_y[i]+ay)
-            # annotations_dict = {"x": trace_x[i]+ax+0.1, "y": trace_y[i]+ay,
-            #                     # "xshift": ax, "yshift": ay,
-            #                     "ax": trace_x[i], "ay": trace_y[i],
-            #                     "arrowwidth": 2,
-            #                     # "arrowside": 'end',
-            #                     "showarrow": True,
-            #                     # "arrowsize": 1,
-            #                     "xref": 'x', "yref": 'y',
-            #                     "axref": 'x', "ayref": 'y',
-            #                     # "text": "erver",
-            #                     "arrowhead": 1,
-            #                     "arrowcolor": "black"}
-            # frame["layout"]["annotations"].append(annotations_dict)
+            "annotations": [], "shapes": []}, "name": str(time_point)}
+        agent_dict = timed_point_dict[time_point]
+        trace_x = []
+        trace_y = []
+        trace_theta = []
+        trace_v = []
+        for agent_id, rect_list in agent_dict.items():
+            for rect in rect_list:
+                trace_x.append((rect[0][0]+rect[1][0])/2)
+                trace_y.append((rect[0][1]+rect[1][1])/2)
+                trace_theta.append((rect[0][2]+rect[1][2])/2)
+                trace_v.append((rect[0][3]+rect[1][3])/2)
+                shape_dict = {
+                    "type": 'rect',
+                    "x0": rect[0][0],
+                    "y0": rect[0][1],
+                    "x1": rect[1][0],
+                    "y1": rect[1][1],
+                    "fillcolor": 'rgba(255,255,255,0.5)',
+                    "line": dict(color='rgba(255,255,255,0)'),
 
+                }
+                frame["layout"]["shapes"].append(shape_dict)
+        # data_dict = {
+        #     "x": trace_x,
+        #     "y": trace_y,
+        #     "mode": "markers + text",
+        #     "text": [('{:.2f}'.format(trace_theta[i]/pi*180), '{:.3f}'.format(trace_v[i])) for i in range(len(trace_theta))],
+        #     "textposition": "bottom center",
+        #     # "marker": {
+        #     #     "sizemode": "area",
+        #     #     "sizeref": 200000,
+        #     #     "size": 2
+        #     # },
+        #     "name": "current position"
+        # }
+        # frame["data"].append(data_dict)
+        # print(trace_x)
         fig_dict["frames"].append(frame)
         slider_step = {"args": [
             [time_point],
@@ -272,8 +290,10 @@ def generate_reachtube_anime(root, map=None, fig=None):
 
     fig = go.Figure(fig_dict)
     # fig = plotly_map(map, 'g', fig)
+    i = 1
     for agent_id in traces:
-        fig = plotly_reachtube_tree_v2(root, agent_id, 1, [2], 'blue', fig)
+        fig = plotly_reachtube_tree_v2(root, agent_id, 1, [2], i, fig)
+        i += 2
 
     return fig
 
@@ -305,7 +325,7 @@ def plotly_reachtube_tree(root, agent_id, x_dim: int = 0, y_dim_list: List[int] 
     return fig
 
 
-def plotly_reachtube_tree_v2(root, agent_id, x_dim: int = 0, y_dim_list: List[int] = [1], color='blue', fig=None, x_lim=None, y_lim=None):
+def plotly_reachtube_tree_v2(root, agent_id, x_dim: int = 0, y_dim_list: List[int] = [1], color=0, fig=None, x_lim=None, y_lim=None):
     if fig is None:
         fig = go.Figure()
 
@@ -359,24 +379,24 @@ def plotly_reachtube_tree_v2(root, agent_id, x_dim: int = 0, y_dim_list: List[in
         trace_y_even = np.array([trace[i][2] for i in range(1, max_id+1, 2)])
         fig.add_trace(go.Scatter(x=trace_x_odd.tolist()+trace_x_odd[::-1].tolist(), y=trace_y_odd.tolist()+trace_y_even[::-1].tolist(), mode='lines',
                                  fill='toself',
-                                 fillcolor=color,
+                                 fillcolor=bg_color[color],
                                  line_color='rgba(255,255,255,0)',
                                  showlegend=show_legend
                                  ))
         fig.add_trace(go.Scatter(x=trace_x_even.tolist()+trace_x_even[::-1].tolist(), y=trace_y_odd.tolist()+trace_y_even[::-1].tolist(), mode='lines',
                                  fill='toself',
-                                 fillcolor=color,
+                                 fillcolor=bg_color[color],
                                  line_color='rgba(255,255,255,0)',
                                  showlegend=show_legend))
         fig.add_trace(go.Scatter(x=trace_x_odd.tolist()+trace_x_even[::-1].tolist(), y=trace_y_odd.tolist()+trace_y_even[::-1].tolist(), mode='lines',
                                  fill='toself',
-                                 fillcolor=color,
+                                 fillcolor=bg_color[color],
                                  line_color='rgba(255,255,255,0)',
                                  showlegend=show_legend
                                  ))
         fig.add_trace(go.Scatter(x=trace_x_even.tolist()+trace_x_odd[::-1].tolist(), y=trace_y_odd.tolist()+trace_y_even[::-1].tolist(), mode='lines',
                                  fill='toself',
-                                 fillcolor=color,
+                                 fillcolor=bg_color[color],
                                  line_color='rgba(255,255,255,0)',
                                  showlegend=show_legend))
         # fig.add_trace(go.Scatter(x=trace_x_odd.tolist(), y=trace_y_odd.tolist(), mode='lines',
@@ -875,17 +895,18 @@ def plotly_simulation_anime(root, map=None, fig=None):
                 y_min = min(y_min, trace[i][2])
                 y_max = max(y_max, trace[i][2])
                 # print(round(trace[i][0], 2))
-                if round(trace[i][0], 2) not in timed_point_dict:
-                    timed_point_dict[round(trace[i][0], 2)] = [
+                time_point = round(trace[i][0], 2)
+                if time_point not in timed_point_dict:
+                    timed_point_dict[time_point] = [
                         {agent_id: trace[i][1:].tolist()}]
                 else:
                     init = False
-                    for record in timed_point_dict[round(trace[i][0], 2)]:
+                    for record in timed_point_dict[time_point]:
                         if list(record.values())[0] == trace[i][1:].tolist():
                             init = True
                             break
                     if init == False:
-                        timed_point_dict[round(trace[i][0], 2)].append(
+                        timed_point_dict[time_point].append(
                             {agent_id: trace[i][1:].tolist()})
             time = round(trace[i][0], 2)
         stack += node.child

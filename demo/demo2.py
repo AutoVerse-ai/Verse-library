@@ -82,7 +82,7 @@ if __name__ == "__main__":
     # fig = plotly_reachtube_tree_v2(traces, 'car1', 1, [2], 'blue', fig)
     # fig = plotly_reachtube_tree_v2(traces, 'car2', 1, [2], 'red', fig)
     # fig.show()
-    traces = scenario.verify(5)
+    traces = scenario.verify(20)
     fig = go.Figure()
     fig = generate_reachtube_anime(traces, tmp_map, fig)
     # fig = plotly_simulation_anime(traces, tmp_map, fig)
