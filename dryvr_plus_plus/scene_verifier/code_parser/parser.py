@@ -1,5 +1,6 @@
 import ast, copy
-from typing import List, Dict, Union, Optional, TypeAlias, Any, Tuple
+import astunparse
+from typing import List, Dict, Union, Optional, Any, Tuple
 from dataclasses import dataclass, field
 from enum import Enum, auto
 
@@ -44,7 +45,7 @@ class StateDef:
     disc: List[str] = field(default_factory=list)     # Discrete variables
     static: List[str] = field(default_factory=list)   # Static data in object
 
-ScopeValue: TypeAlias = Union[ast.AST, "CondVal", "Lambda", Dict[str, "ScopeValue"]]
+ScopeValue = Union[ast.AST, "CondVal", "Lambda", Dict[str, "ScopeValue"]]
 
 @dataclass
 class CondValCase:
@@ -130,9 +131,9 @@ class Lambda:
         ret = copy.deepcopy(self.body)
         return ArgSubstituter({k: v for (k, _), v in zip(self.args, args)}).visit(ret)
 
-ast_dump = lambda node, dump=False: ast.dump(node, indent=2) if dump else ast.unparse(node)
+ast_dump = lambda node, dump=False: ast.dump(node) if dump else astunparse.unparse(node)
 
-ScopeLevel: TypeAlias = Dict[str, ScopeValue]
+ScopeLevel = Dict[str, ScopeValue]
 
 class ArgSubstituter(ast.NodeTransformer):
     args: Dict[str, ast.expr]
@@ -231,7 +232,7 @@ class Env():
         self.scopes[0][key] = val
 
     def add_hole(self, name: str):
-        self.set(name, ast.arg(name))
+        self.set(name, ast.arg(name, None))
 
     @staticmethod
     def dump_scope(env: ScopeLevel, dump=False):
@@ -362,7 +363,7 @@ def merge_if_val(test, true: Optional[ScopeValue], false: Optional[ScopeValue], 
     return ret
 
 def proc_assign(target: ast.AST, val, env: Env):
-    dbg("proc_assign", ast.unparse(target), val)
+    dbg("proc_assign", astunparse.unparse(target), val)
     if isinstance(target, ast.Name):
         if isinstance(val, ast.AST):
             val = proc(val, env)
@@ -435,7 +436,7 @@ def proc(node: ast.AST, env: Env) -> Any:
         # TODO since we know what the mode and state types contain we can do some typo checking
         if not_ir_ast(obj):
             # return node
-            return ast.arg(f"{obj.arg}.{node.attr}")
+            return ast.arg(f"{obj.arg}.{node.attr}", None)
         return obj[node.attr]
     elif isinstance(node, ast.FunctionDef):
         env.set(node.name, Lambda.from_ast(node, env))
@@ -546,4 +547,4 @@ if __name__ == "__main__":
         sys.exit(1)
     e = Env.parse(fn=sys.argv[1])
     e.dump()
-    print(ControllerIR.dump(e.to_ir().controller.body, True))
+    print(ControllerIR.dump(e.to_ir().controller.body, False))
