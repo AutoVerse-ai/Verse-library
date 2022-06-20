@@ -40,11 +40,18 @@ def controller(ego:State, others:State):
         output.vy = -ego.vy
         output.y=0
     if ego.x>20:
+        # Q. If I change this to ego.x >= 20 then the model does not work.
+        # I suspect this is because the same transition can be take many, many times.
+        # We need to figure out a clean solution
         output.vx = -ego.vx
         output.x=20
     if ego.y>20:
         output.vy = -ego.vy
         output.y=20
+  '''  if ego.x - others[1].x < 1 and ego.y - others[1].y < 1:
+        output.vy = -ego.vy
+        output.vx = -ego.vx'''
+  # We would like to be able to write something like this, but currently not allowed. 
     return output
 
 
