@@ -4,6 +4,7 @@ from dryvr_plus_plus.scene_verifier.scenario.scenario import Scenario
 from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap2, SimpleMap3, SimpleMap5, SimpleMap6
 from dryvr_plus_plus.plotter.plotter2D import *
 from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor3
+from dryvr_plus_plus.scene_verifier.sensor.base_sensor import BaseSensor
 
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
@@ -57,7 +58,6 @@ if __name__ == "__main__":
     # scenario.add_agent(car)
     tmp_map = SimpleMap3()
     scenario.set_map(tmp_map)
-    scenario.set_sensor(FakeSensor3())
     scenario.set_init(
         [
             [[0, -0.0, 0, 1.0],[0.0, 0.0, 0, 1.0]],
@@ -72,25 +72,19 @@ if __name__ == "__main__":
             (VehicleMode.Normal, LaneMode.Lane0),
         ]
     )
-    traces = scenario.simulate(70)
-    # traces = scenario.verify(60)
+    # traces = scenario.simulate(70)
+    traces = scenario.verify(60)
 
-    # fig = plt.figure(2)
-    # fig = plot_map(tmp_map, 'g', fig)
-    # fig = plot_reachtube_tree(traces, 'car1', 1, [2], 'b', fig)
-    # fig = plot_reachtube_tree(traces, 'car2', 1, [2], 'r', fig)
-    # fig = plot_reachtube_tree(traces, 'car3', 1, [2], 'r', fig)
-    # fig = plot_reachtube_tree(traces, 'car4', 1, [2], 'r', fig)
-    # for traces in res_list:
-    # #     generate_simulation_anime(traces, tmp_map, fig)
-    # fig = plot_simulation_tree(traces, 'car1', 1, [2], 'b', fig)
-    # fig = plot_simulation_tree(traces, 'car2', 1, [2], 'r', fig)
-    # fig = plot_simulation_tree(traces, 'car3', 1, [2], 'r', fig)
-    # fig = plot_simulation_tree(traces, 'car4', 1, [2], 'r', fig)
-    # plt.show()
+    fig = plt.figure(2)
+    fig = plot_map(tmp_map, 'g', fig)
+    fig = plot_reachtube_tree(traces, 'car1', 1, [2], 'b', fig)
+    fig = plot_reachtube_tree(traces, 'car2', 1, [2], 'r', fig)
+    fig = plot_reachtube_tree(traces, 'car3', 1, [2], 'r', fig)
+    fig = plot_reachtube_tree(traces, 'car4', 1, [2], 'r', fig)
+    plt.show()
         
 
-    fig = go.Figure()
-    fig = plotly_simulation_anime(traces, tmp_map, fig)
-    fig.show()
+    # fig = go.Figure()
+    # fig = plotly_simulation_anime(traces, tmp_map, fig)
+    # fig.show()
 

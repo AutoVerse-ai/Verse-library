@@ -4,6 +4,7 @@ from dryvr_plus_plus.scene_verifier.scenario.scenario import Scenario
 from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap2, SimpleMap3, SimpleMap4, SimpleMap5, SimpleMap6
 from dryvr_plus_plus.plotter.plotter2D import *
 from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor3
+from dryvr_plus_plus.scene_verifier.sensor.base_sensor import BaseSensor
 
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
@@ -60,7 +61,6 @@ if __name__ == "__main__":
     scenario.add_agent(car)
     tmp_map = SimpleMap4()
     scenario.set_map(tmp_map)
-    scenario.set_sensor(FakeSensor3())
     scenario.set_init(
         [
             [[0, -0.2, 0, 1.0],[0.05, 0.2, 0, 1.0]],

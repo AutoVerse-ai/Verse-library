@@ -55,7 +55,6 @@ if __name__ == "__main__":
     scenario.add_agent(car)
     tmp_map = SimpleMap3()
     scenario.set_map(tmp_map)
-    scenario.set_sensor(FakeSensor3())
     scenario.set_init(
         [
             [[0, -0.2, 0, 1.0],[0.01, 0.2, 0, 1.0]],

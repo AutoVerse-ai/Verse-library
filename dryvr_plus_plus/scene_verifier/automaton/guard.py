@@ -86,7 +86,7 @@ class GuardExpressionAst:
         for guard in guard_list:
             self.ast_list.append(copy.deepcopy(guard.ast))
         self.cont_variables = {}
-        self.varDict = {'t':Real('t')}
+        self.varDict = {}
 
     def _build_guard(self, guard_str, agent):
         """
@@ -187,7 +187,6 @@ class GuardExpressionAst:
             cur_solver.pop()
             res = True
             
-            # TODO: If the reachtube completely fall inside guard, break
             tmp_solver = Solver()
             tmp_solver.add(Not(cur_solver.assertions()[0]))
             for symbol in symbols:
@@ -292,6 +291,11 @@ class GuardExpressionAst:
             value = self._generate_z3_expression_node(node.operand)
             if isinstance(node.op, ast.USub):
                 return -value
+            elif isinstance(node.op, ast.Not):
+                z3_str = 'Not('+value+')'
+                return z3_str
+            else:
+                raise NotImplementedError(f"UnaryOp {node.op} is not supported")
         else:
             # For other cases, we can return the expression directly
             expr = astunparse.unparse(node)
@@ -621,6 +625,10 @@ class GuardExpressionAst:
                     else:
                         root = ast.parse('False').body[0].value    
                 else:
+                    for mode_name in agent.controller.modes:
+                        if res in agent.controller.modes[mode_name]:
+                            res = mode_name+'.'+res
+                            break
                     root = ast.parse(str(res)).body[0].value
                 return res, root
             else:

@@ -15,6 +15,8 @@ from dryvr_plus_plus.scene_verifier.analysis.verifier import Verifier
 from dryvr_plus_plus.scene_verifier.map.lane_map import LaneMap
 from dryvr_plus_plus.scene_verifier.utils.utils import *
 from dryvr_plus_plus.scene_verifier.analysis.analysis_tree_node import AnalysisTreeNode
+from dryvr_plus_plus.scene_verifier.sensor.base_sensor import BaseSensor
+from dryvr_plus_plus.scene_verifier.map.lane_map import LaneMap
 
 class Scenario:
     def __init__(self):
@@ -23,8 +25,8 @@ class Scenario:
         self.verifier = Verifier()
         self.init_dict = {}
         self.init_mode_dict = {}
-        self.map = None
-        self.sensor = None
+        self.map = LaneMap()
+        self.sensor = BaseSensor()
 
     def set_sensor(self, sensor):
         self.sensor = sensor
@@ -44,7 +46,7 @@ class Scenario:
 
     def update_agent_lane_mode(self, agent: BaseAgent, lane_map: LaneMap):
         for lane_id in lane_map.lane_dict:
-            if lane_id not in agent.controller.modes['LaneMode']:
+            if 'LaneMode' in agent.controller.modes and lane_id not in agent.controller.modes['LaneMode']:
                 agent.controller.modes['LaneMode'].append(lane_id)
         mode_vals = list(agent.controller.modes.values())
         agent.controller.vertices = list(itertools.product(*mode_vals))

@@ -4,15 +4,15 @@ from typing import List
 # from dryvr_plus_plus.scene_verifier.map.lane import Lane
 
 class BallMode(Enum):
-    # TODO: Any model should have at least one mode
+    # NOTE: Any model should have at least one mode
     Normal = auto()
     # TODO: The one mode of this automation is called "Normal" and auto assigns it an integer value.
     # Ultimately for simple models we would like to write
     # E.g., Mode = makeMode(Normal, bounce,...)
 
-class LaneMode(Enum):
-    Lane0 = auto()
-    # TODO: For now this is a dummy notion of Lane
+# class LaneMode(Enum):
+#     Lane0 = auto()
+#     #For now this is a dummy notion of Lane
 
 class State:
     '''Defines the state variables of the model
@@ -23,8 +23,7 @@ class State:
     vx = 0.0
     vy = 0.0
     mode: BallMode
-    lane_mode: LaneMode
-    def __init__(self, x, y, vx, vy, ball_mode:BallMode, lane_mode:LaneMode):
+    def __init__(self, x, y, vx, vy, ball_mode:BallMode):
         pass
 
 def controller(ego:State, others:State):
@@ -59,42 +58,35 @@ def controller(ego:State, others:State):
 from dryvr_plus_plus.example.example_agent.ball_agent import BallAgent
 from dryvr_plus_plus.scene_verifier.scenario.scenario import Scenario
 from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap3
-from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor4
 from dryvr_plus_plus.plotter.plotter2D import *
 import plotly.graph_objects as go
+from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor4
+from dryvr_plus_plus.scene_verifier.sensor.base_sensor import BaseSensor
 
 if __name__ == "__main__":
-    ball_controller = 'ball_bounces.py'
+    ball_controller = './ball_bounces.py'
     bouncingBall = Scenario()
     myball1 = BallAgent('red-ball', file_name=ball_controller)
     myball2 = BallAgent('green-ball', file_name=ball_controller)
     bouncingBall.add_agent(myball1)
     bouncingBall.add_agent(myball2)
-    #
-    tmp_map = SimpleMap3()
-    bouncingBall.set_map(tmp_map)
-    # TODO: If there is no useful map, then we should not have to write this.
-    # Default to some empty map
-    bouncingBall.set_sensor(FakeSensor4())
-    # TODO: There should be a way to default to some well-defined sensor
-    # for any model, without having to write an explicit sensor
     bouncingBall.set_init(
         [
             [[5, 10, 2, 2], [5, 10, 2, 2]],
             [[15, 1, 1, -2], [15, 1, 1, -2]]
         ],
         [
-            (BallMode.Normal, LaneMode.Lane0),
-            (BallMode.Normal, LaneMode.Lane0)
+            (BallMode.Normal,),
+            (BallMode.Normal,)
         ]
     )
     # TODO: WE should be able to initialize each of the balls separately
     # this may be the cause for the VisibleDeprecationWarning
     # TODO: Longer term: We should initialize by writing expressions like "-2 \leq myball1.x \leq 5"
     # "-2 \leq myball1.x + myball2.x \leq 5"
-    traces = bouncingBall.simulate(20)
+    traces = bouncingBall.simulate(40)
     # TODO: There should be a print({traces}) function
     fig = go.Figure()
-    fig = plotly_simulation_anime(traces, tmp_map, fig)
+    fig = plotly_simulation_anime(traces, fig=fig)
     fig.show()
 

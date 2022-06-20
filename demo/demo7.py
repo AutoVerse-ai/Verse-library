@@ -6,6 +6,7 @@ from dryvr_plus_plus.scene_verifier.scenario.scenario import Scenario
 from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap2, SimpleMap3, SimpleMap4, SimpleMap5, SimpleMap6
 from dryvr_plus_plus.plotter.plotter2D import *
 from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor3
+from dryvr_plus_plus.scene_verifier.sensor.base_sensor import BaseSensor
 
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
@@ -45,7 +46,7 @@ class State:
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/example_controller8.py'
+    input_code_name = './example_controller8.py'
     scenario = Scenario()
 
     car = CarAgent('car1', file_name=input_code_name)
@@ -66,7 +67,6 @@ if __name__ == "__main__":
     scenario.add_agent(car)
     tmp_map = SimpleMap4()
     scenario.set_map(tmp_map)
-    scenario.set_sensor(FakeSensor3())
     scenario.set_init(
         [
             [[0, -0.0, 0, 1.0],[0.0, 0.0, 0, 1.0]],
@@ -89,7 +89,7 @@ if __name__ == "__main__":
             (VehicleMode.Normal, LaneMode.Lane3),
         ]
     )
-    traces = scenario.simulate(20)
+    traces = scenario.simulate(80)
     # traces = scenario.verify(15)
 
     # fig = plt.figure(2)

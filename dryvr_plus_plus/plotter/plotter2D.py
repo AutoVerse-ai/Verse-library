@@ -499,7 +499,8 @@ def plotly_simulation_anime(root, map=None, fig=None):
     fig_dict["layout"]["sliders"] = [sliders_dict]
 
     fig = go.Figure(fig_dict)
-    fig = plotly_map(map, 'g', fig)
+    if map is not None:
+        fig = plotly_map(map, 'g', fig)
     i = 0
     queue = [root]
     while queue != []:
