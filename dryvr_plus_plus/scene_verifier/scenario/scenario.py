@@ -253,7 +253,10 @@ class Scenario:
                                 tmp = tmp[1]
                                 for var in discrete_variable_dict:
                                     tmp = tmp.replace(var, f"'{discrete_variable_dict[var]}'")
-                                possible_dest[i] = eval(tmp)
+                                res = eval(tmp)
+                                if not isinstance(res, list):
+                                    res = [res]
+                                possible_dest[i] = res 
                             else:
                                 tmp = tmp[1].split('.')
                                 if tmp[0].strip(' ') in agent.controller.modes:

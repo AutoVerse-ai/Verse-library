@@ -54,22 +54,17 @@ if __name__ == "__main__":
             (VehicleMode.Normal, LaneMode.Lane1),
         ]
     )
-    # # res_list = scenario.simulate_multi(40,1)
-    # traces = scenario.verify(40)
+    # res_list = scenario.simulate(40)
+    traces = scenario.verify(40)
 
-    # fig = plt.figure(2)
-    # fig = plot_map(tmp_map, 'g', fig)
-    # fig = plot_reachtube_tree(traces, 'car1', 1, [2], 'b', fig)
-    # fig = plot_reachtube_tree(traces, 'car2', 1, [2], 'r', fig)
-    # # for traces in res_list:
-    # #     generate_simulation_anime(traces, tmp_map, fig)
-    # #     # fig,x_lim,y_lim = plot_simulation_tree(traces, 'car1', 1, [2], 'b', fig,x_lim,y_lim)
-    # #     # fig,x_lim,y_lim = plot_simulation_tree(traces, 'car2', 1, [2], 'r', fig,x_lim,y_lim)
+    fig = plt.figure(2)
+    fig = plot_map(tmp_map, 'g', fig)
+    fig = plot_reachtube_tree(traces, 'car1', 1, [2], 'b', fig)
+    fig = plot_reachtube_tree(traces, 'car2', 1, [2], 'r', fig)
+    plt.show()
 
-    # plt.show()
-
-# this is for plot-based visualization
-    traces = scenario.simulate(40)
-    fig = go.Figure()
-    fig = plotly_simulation_anime(traces, tmp_map, fig)
-    fig.show()
+    # # this is for plot-based visualization
+    # traces = scenario.simulate(40)
+    # fig = go.Figure()
+    # fig = plotly_simulation_anime(traces, tmp_map, fig)
+    # fig.show()

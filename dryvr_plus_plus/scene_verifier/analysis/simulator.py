@@ -34,7 +34,7 @@ class Simulator:
         while simulation_queue != []:
             node:AnalysisTreeNode = simulation_queue.pop(0)
             print(node.start_time, node.mode)
-            remain_time = time_horizon - node.start_time
+            remain_time = round(time_horizon - node.start_time,10)
             if remain_time <= 0:
                 continue
             # For trace not already simulated
@@ -48,6 +48,10 @@ class Simulator:
                     node.trace[agent_id] = trace.tolist()
 
             transitions, transition_idx = transition_graph.get_transition_simulate_new(node)
+
+            # If there's no transitions (returned transitions is empty), continue
+            if not transitions:
+                continue
 
             # truncate the computed trajectories from idx and store the content after truncate
             truncated_trace = {}

@@ -65,8 +65,7 @@ class Verifier:
                     # print("here")
             
             # TODO: Check safety conditions here
-            if node.trace['car1'][-1][0] > 50.01:
-                print("stop here")
+
             # Get all possible transitions to next mode
             all_possible_transitions = transition_graph.get_transition_verify_new(node)
             max_end_idx = 0
