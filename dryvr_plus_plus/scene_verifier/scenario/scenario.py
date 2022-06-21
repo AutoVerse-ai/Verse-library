@@ -1,4 +1,4 @@
-from typing import Tuple, List, Dict, Any, Optional
+from typing import Tuple, List, Dict, Any
 import copy
 import itertools
 import warnings
@@ -87,7 +87,7 @@ class Scenario:
             agent_list.append(self.agent_dict[agent_id])
         return self.verifier.compute_full_reachtube(init_list, init_mode_list, agent_list, self, time_horizon, self.map)
 
-    def check_guard_hit(self, state_dict) -> Optional[Tuple[List[Tuple[str, List[Guard], List[Reset]]], bool]]:
+    def check_guard_hit(self, state_dict):
         lane_map = self.map 
         guard_hits = []
         any_contained = False        # TODO: Handle this
@@ -122,8 +122,6 @@ class Scenario:
                 # TODO: Handle hybrid guards that involves both continuous and discrete dynamics
                 # Will have to limit the amount of hybrid guards that we want to handle. The difficulty will be handle function guards.
                 guard_can_satisfied = guard_expression.evaluate_guard_hybrid(agent, discrete_variable_dict, continuous_variable_dict, self.map)
-                if guard_can_satisfied == None:
-                    return None
 
                 # Handle guards realted only to continuous variables using SMT solvers. These types of guards can be pretty general
                 guard_satisfied, is_contained = guard_expression.evaluate_guard_cont(agent, continuous_variable_dict, self.map)
@@ -132,7 +130,7 @@ class Scenario:
                     guard_hits.append((agent_id, guard_list, reset_list))
         return guard_hits, any_contained
 
-    def get_all_transition_set(self, node) -> Optional[List[Tuple[str, str, float, List[List[float]], Tuple[int, int]]]]:
+    def get_all_transition_set(self, node):
         possible_transitions = []
         trace_length = int(len(list(node.trace.values())[0])/2)
         guard_hits = []
@@ -147,10 +145,7 @@ class Scenario:
             all_agent_state = {}
             for agent_id in node.agent:
                 all_agent_state[agent_id] = (node.trace[agent_id][idx*2:idx*2+2], node.mode[agent_id])
-            hits = self.check_guard_hit(all_agent_state)
-            if hits == None:
-                return None
-            hits, is_contain = hits
+            hits, is_contain = self.check_guard_hit(all_agent_state)
             # print(idx, is_contain)
             if hits != []:
                 guard_hits.append((hits, all_agent_state, idx))

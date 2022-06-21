@@ -20,8 +20,8 @@ class Lane():
     def get_lane_segment(self, position:np.ndarray) -> AbstractLane:
         for seg_idx, segment in enumerate(self.segment_list):
             logitudinal, lateral = segment.local_coordinates(position)
-            width = segment.width_at(logitudinal)
-            if -width / 2 <= lateral <= width / 2 and -Lane.COMPENSATE <= logitudinal < segment.length:
+            is_on = 0-Lane.COMPENSATE <= logitudinal < segment.length
+            if is_on:
                 return seg_idx, segment
         return -1,None
 
