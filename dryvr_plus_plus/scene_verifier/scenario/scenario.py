@@ -65,8 +65,8 @@ class Scenario:
             trace = self.simulate(time_horizon)
             res_list.append(trace)
         return res_list
-
-    def simulate(self, time_horizon):
+    
+    def simulate(self, time_horizon, time_step):
         init_list = []
         init_mode_list = []
         agent_list = []
@@ -75,9 +75,9 @@ class Scenario:
             init_mode_list.append(self.init_mode_dict[agent_id])
             agent_list.append(self.agent_dict[agent_id])
         print(init_list)
-        return self.simulator.simulate(init_list, init_mode_list, agent_list, self, time_horizon, self.map)
+        return self.simulator.simulate(init_list, init_mode_list, agent_list, self, time_horizon, time_step, self.map)
 
-    def verify(self, time_horizon):
+    def verify(self, time_horizon, time_step):
         init_list = []
         init_mode_list = []
         agent_list = []
@@ -89,7 +89,7 @@ class Scenario:
             init_list.append(init)
             init_mode_list.append(self.init_mode_dict[agent_id])
             agent_list.append(self.agent_dict[agent_id])
-        return self.verifier.compute_full_reachtube(init_list, init_mode_list, agent_list, self, time_horizon, self.map)
+        return self.verifier.compute_full_reachtube(init_list, init_mode_list, agent_list, self, time_horizon, time_step, self.map)
 
     def check_guard_hit(self, state_dict):
         lane_map = self.map 

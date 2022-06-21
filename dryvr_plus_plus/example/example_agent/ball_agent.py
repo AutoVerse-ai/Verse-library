@@ -31,10 +31,9 @@ class BallAgent(BaseAgent):
         vy_dot = 0
         return [x_dot, y_dot, vx_dot, vy_dot]
 
-    def TC_simulate(self, mode: List[str], initialCondition, time_bound, lane_map:LaneMap=None)->np.ndarray:
-        # P1. Should TC_simulate really be part of the agent definition or should it be something more generic?
-        time_step = 0.05
-        # P2. Looks like this should be a global parameter; some config file should be setting this.
+    def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step, lane_map:LaneMap=None)->np.ndarray:
+        # TODO: P1. Should TC_simulate really be part of the agent definition or should it be something more generic?
+        # TODO: P2. Looks like this should be a global parameter; some config file should be setting this.
         time_bound = float(time_bound)
         number_points = int(np.ceil(time_bound/time_step))
         t = [round(i*time_step,10) for i in range(0,number_points)]

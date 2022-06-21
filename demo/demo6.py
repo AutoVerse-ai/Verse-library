@@ -30,17 +30,17 @@ class LaneMode(Enum):
     Lane2 = auto()
     Lane3 = auto()
 
-class State:
-    x = 0.0
-    y = 0.0
-    theta = 0.0
-    v = 0.0
-    vehicle_mode: VehicleMode = VehicleMode.Normal
-    lane_mode: LaneMode = LaneMode.Lane0
-    type: LaneObjectMode = LaneObjectMode.Vehicle
+# class State:
+#     x = 0.0
+#     y = 0.0
+#     theta = 0.0
+#     v = 0.0
+#     vehicle_mode: VehicleMode = VehicleMode.Normal
+#     lane_mode: LaneMode = LaneMode.Lane0
+#     type: LaneObjectMode = LaneObjectMode.Vehicle
 
-    def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: LaneMode, type: LaneObjectMode):
-        pass
+#     def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: LaneMode, type: LaneObjectMode):
+#         pass
 
 
 if __name__ == "__main__":
@@ -83,8 +83,8 @@ if __name__ == "__main__":
             (VehicleMode.Normal, LaneMode.Lane3),
         ]
     )
-    # traces = scenario.simulate(80)
-    traces = scenario.verify(50)
+    # traces = scenario.simulate(80, 0.05)
+    traces = scenario.verify(50, 0.05)
 
     fig = plt.figure(2)
     fig = plot_map(tmp_map, 'g', fig)

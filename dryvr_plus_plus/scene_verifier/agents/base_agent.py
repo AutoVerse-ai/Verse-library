@@ -5,5 +5,5 @@ class BaseAgent:
         self.controller = ControllerAst(code, file_name)
         self.id = id
 
-    def TC_simulate(self, mode, initialSet, time_horizon, map=None):
+    def TC_simulate(self, mode, initialSet, time_horizon, time_step, map=None):
         raise NotImplementedError

@@ -21,6 +21,7 @@ class Verifier:
         agent_list:List[BaseAgent], 
         transition_graph, 
         time_horizon, 
+        time_step, 
         lane_map
     ):
         root = AnalysisTreeNode()
@@ -53,6 +54,7 @@ class Verifier:
                     cur_bloated_tube = calc_bloated_tube(mode,
                                         init,
                                         remain_time,
+                                        time_step, 
                                         node.agent[agent_id].TC_simulate,
                                         'PW',
                                         100,
