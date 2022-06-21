@@ -1,8 +1,15 @@
 import ast, copy
 import astunparse
 from typing import List, Dict, Union, Optional, Any, Tuple
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from enum import Enum, auto
+
+# HACK ?
+import sys
+if sys.version_info.minor == 10:
+    ast_unparse = ast.unparse
+else:
+    ast_unparse = astunparse.unparse
 
 debug = True
 
@@ -72,15 +79,18 @@ class ReductionType(Enum):
 
     @staticmethod
     def from_str(s: str) -> "ReductionType":
-        return {
-            "any": ReductionType.Any,
-            "all": ReductionType.All,
-            "max": ReductionType.Max,
-            "min": ReductionType.Min,
-            "sum": ReductionType.Sum,
-        }[s]
+        return getattr(ReductionType, s.title())
 
-@dataclass
+    def __str__(self) -> str:
+        return {
+            ReductionType.Any: "any",
+            ReductionType.All: "all",
+            ReductionType.Max: "max",
+            ReductionType.Min: "min",
+            ReductionType.Sum: "sum",
+        }[self]
+
+@dataclass(unsafe_hash=True)
 class Reduction:
     """A simple reduction. Must be a reduction function (see `ReductionType`) applied to a generator
     with a single clause over a iterable"""
@@ -93,6 +103,11 @@ class Reduction:
         if o == None:
             return False
         return self.op == o.op and self.it == o.it and ControllerIR.ir_eq(self.expr, o.expr) and ControllerIR.ir_eq(self.value, o.value)
+
+    def __repr__(self) -> str:
+        return f"Reduction('{self.op}', expr={ast_unparse(self.expr)}, it='{self.it}', value={ast_unparse(self.value)}"
+
+Reduction._fields = [f.name for f in fields(Reduction)]
 
 @dataclass
 class Lambda:
@@ -131,7 +146,7 @@ class Lambda:
         ret = copy.deepcopy(self.body)
         return ArgSubstituter({k: v for (k, _), v in zip(self.args, args)}).visit(ret)
 
-ast_dump = lambda node, dump=False: ast.dump(node) if dump else astunparse.unparse(node)
+ast_dump = lambda node, dump=False: ast.dump(node) if dump else ast_unparse(node)
 
 ScopeLevel = Dict[str, ScopeValue]
 
@@ -363,7 +378,7 @@ def merge_if_val(test, true: Optional[ScopeValue], false: Optional[ScopeValue], 
     return ret
 
 def proc_assign(target: ast.AST, val, env: Env):
-    dbg("proc_assign", astunparse.unparse(target), val)
+    dbg("proc_assign", ast_unparse(target), val)
     if isinstance(target, ast.Name):
         if isinstance(val, ast.AST):
             val = proc(val, env)
@@ -518,7 +533,7 @@ def proc(node: ast.AST, env: Env) -> Any:
                 if op == ReductionType.Any:
                     return ast.BoolOp(ast.And(), [e, c])
                 else:
-                    return ast.BoolOp(ast.Or, [e, ast.UnaryOp(ast.Not(), c)])
+                    return ast.BoolOp(ast.Or(), [e, ast.UnaryOp(ast.Not(), c)])
             env.push()
             env.add_hole(target.id)
             expr = proc(expr, env)
