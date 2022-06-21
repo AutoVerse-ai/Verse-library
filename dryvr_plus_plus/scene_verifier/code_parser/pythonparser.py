@@ -249,7 +249,7 @@ class ControllerAst():
 
         self.code = code
         self.tree = ast.parse(code)
-        self.statementtree, self.variables, self.modes, self.discrete_variables, self.state_object_dict, self.vars_dict, self.type_vars = self.initalwalktree(code, self.tree)
+        self.statementtree, self.variables, self.modes, self.discrete_variables, self.state_object_dict, self.vars_dict = self.initalwalktree(code, self.tree)
         self.vertices = []
         self.vertexStrings = []
         for vertex in itertools.product(*self.modes.values()):
@@ -367,7 +367,6 @@ class ControllerAst():
     def initalwalktree(self, code, tree):
         vars = []
         discrete_vars = []
-        type_vars = []
         out = []
         mode_dict = {}
         state_object_dict = {}
@@ -390,9 +389,7 @@ class ControllerAst():
                             if "init" in item.name:
                                 for arg in item.args.args:
                                     if "self" not in arg.arg:
-                                        if "type" == arg.arg:
-                                            state_object_dict[node.name]["type"].append(arg.arg)
-                                        elif "mode" not in arg.arg:
+                                        if "mode" not in arg.arg:
                                             state_object_dict[node.name]['cont'].append(arg.arg)
                                             # vars.append(arg.arg)
                                         else:
@@ -431,11 +428,8 @@ class ControllerAst():
                         for var in state_object_dict[arg_annotation]['disc']:
                             discrete_vars.append(arg_name+"."+var)
                             vars_dict[arg_name]['disc'].append(var)
-                        for var in state_object_dict[arg_annotation]['type']:
-                            type_vars.append(arg_name+"."+var)
-                            vars_dict[arg_name]['type'].append(var)
-
-        return [statementtree, vars, mode_dict, discrete_vars, state_object_dict, vars_dict, type_vars]
+                        
+        return [statementtree, vars, mode_dict, discrete_vars, state_object_dict, vars_dict]
 
 
     '''
@@ -495,7 +489,6 @@ class EmptyAst(ControllerAst):
                 'type':[]
             }
         }
-        self.type_vars = []
         self.variables = []
         self.vars_dict = []
         self.vertexStrings = ['Null,Normal']
