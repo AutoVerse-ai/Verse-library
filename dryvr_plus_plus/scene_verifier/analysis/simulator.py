@@ -11,12 +11,13 @@ class Simulator:
     def __init__(self):
         self.simulation_tree_root = None
 
-    def simulate(self, init_list, init_mode_list, agent_list:List[BaseAgent], transition_graph, time_horizon, time_step, lane_map):
+    def simulate(self, init_list, init_mode_list, static_list, agent_list:List[BaseAgent], transition_graph, time_horizon, time_step, lane_map):
         # Setup the root of the simulation tree
         root = AnalysisTreeNode(
             trace={},
             init={},
             mode={},
+            static={},
             agent={},
             child=[],
             start_time = 0,
@@ -25,6 +26,8 @@ class Simulator:
             root.init[agent.id] = init_list[i]
             init_mode = [elem.name for elem in init_mode_list[i]]
             root.mode[agent.id] = init_mode
+            init_static = [elem.name for elem in static_list[i]]
+            root.static[agent.id] = init_static
             root.agent[agent.id] = agent
             root.type = 'simtrace'
         self.simulation_tree_root = root
@@ -68,6 +71,7 @@ class Simulator:
             # copy the traces that are not under transition
             for transition_combination in all_transition_combinations:
                 next_node_mode = copy.deepcopy(node.mode) 
+                next_node_static = copy.deepcopy(node.static)
                 next_node_agent = node.agent 
                 next_node_start_time = list(truncated_trace.values())[0][0][0]
                 next_node_init = {}
@@ -87,6 +91,7 @@ class Simulator:
                     trace = next_node_trace,
                     init = next_node_init,
                     mode = next_node_mode,
+                    static = next_node_static,
                     agent = next_node_agent,
                     child = [],
                     start_time = next_node_start_time,

@@ -81,9 +81,7 @@ class ValueSubstituter(ast.NodeTransformer):
 
 class GuardExpressionAst:
     def __init__(self, guard_list):
-        self.ast_list = []
-        for guard in guard_list:
-            self.ast_list.append(copy.deepcopy(guard.ast))
+        self.ast_list = copy.deepcopy(guard_list)
         self.cont_variables = {}
         self.varDict = {}
 
@@ -574,7 +572,9 @@ class GuardExpressionAst:
                     else:
                         root = ast.parse('False').body[0].value    
                 else:
+                    # TODO-PARSER: Handle This
                     for mode_name in agent.controller.modes:
+                        # TODO-PARSER: Handle This
                         if res in agent.controller.modes[mode_name]:
                             res = mode_name+'.'+res
                             break
@@ -587,11 +587,14 @@ class GuardExpressionAst:
             expr = expr.strip('\n')
             if expr in disc_var_dict:
                 val = disc_var_dict[expr]
+                # TODO-PARSER: Handle This
                 for mode_name in agent.controller.modes:
+                    # TODO-PARSER: Handle This
                     if val in agent.controller.modes[mode_name]:
                         val = mode_name+'.'+val
                         break
                 return val, root
+            # TODO-PARSER: Handle This
             elif root.value.id in agent.controller.modes:
                 return expr, root
             else:
@@ -613,7 +616,9 @@ class GuardExpressionAst:
             expr = root.id
             if expr in disc_var_dict:
                 val = disc_var_dict[expr]
+                # TODO-PARSER: Handle This
                 for mode_name in agent.controller.modes:
+                    # TODO-PARSER: Handle This
                     if val in agent.controller.modes[mode_name]:
                         val = mode_name + '.' + val 
                         break 
@@ -694,7 +699,9 @@ class GuardExpressionAst:
                 for arg in cnts_var_dict:
                     expr = expr.replace(arg, str(cnts_var_dict[arg]))    
                 res = eval(expr)
+                # TODO-PARSER: Handle This
                 for mode_name in agent.controller.modes:
+                    # TODO-PARSER: Handle This
                     if res in agent.controller.modes[mode_name]:
                         res = mode_name+'.'+res
                         break
@@ -704,7 +711,9 @@ class GuardExpressionAst:
             expr = expr.strip('\n')
             if expr in disc_var_dict:
                 val = disc_var_dict[expr]
+                # TODO-PARSER: Handle This
                 for mode_name in agent.controller.modes:
+                    # TODO-PARSER: Handle This
                     if val in agent.controller.modes[mode_name]:
                         val = mode_name+'.'+val
                         break
@@ -712,6 +721,8 @@ class GuardExpressionAst:
             elif expr in cnts_var_dict:
                 val = cnts_var_dict[expr]
                 return val
+
+            # TODO-PARSER: Handle This
             elif root.value.id in agent.controller.modes:
                 return expr
         elif isinstance(root, ast.Constant):
@@ -731,7 +742,9 @@ class GuardExpressionAst:
                 return val 
             elif variable in disc_var_dict:
                 val = disc_var_dict[variable]
+                # TODO-PARSER: Handle This
                 for mode_name in agent.controller.modes:
+                    # TODO-PARSER: Handle This
                     if val in agent.controller.modes[mode_name]:
                         val = mode_name+'.'+val
                         break

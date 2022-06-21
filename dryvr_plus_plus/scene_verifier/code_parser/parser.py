@@ -2,9 +2,9 @@ import ast, copy
 from typing import List, Dict, Union, Optional, Any, Tuple
 from dataclasses import dataclass, field, fields
 from enum import Enum, auto
-import astunparser
+import dryvr_plus_plus.scene_verifier.code_parser.astunparser as astunparser
 
-debug = True
+debug = False
 
 def dbg(msg, *rest):
     if not debug:
@@ -196,6 +196,18 @@ class ControllerIR:
     def ir_eq(a: Optional[ScopeValue], b: Optional[ScopeValue]) -> bool:
         """Equality check on the "IR" nodes"""
         return ControllerIR.dump(a) == ControllerIR.dump(b)     # FIXME Proper equality checks; dump needed cuz asts are dumb
+
+    def getNextModes(self) -> List[Any]:
+        controller_body = self.controller.body 
+        paths = []
+        for variable in controller_body:
+            cond_val: CondVal = controller_body[variable]
+            for case in cond_val.elems:
+                val = case.val 
+                guard = case.cond
+                reset = (variable, val)
+                paths.append((guard, reset))
+        return paths 
 
 @dataclass
 class Env():
@@ -553,10 +565,14 @@ def proc(node: ast.AST, env: Env) -> Any:
         raise NotImplementedError(str(node.__class__))
 
 if __name__ == "__main__":
-    import sys
-    if len(sys.argv) != 2:
-        print("usage: parse.py <file.py>")
-        sys.exit(1)
-    e = Env.parse(fn=sys.argv[1])
+    # import sys
+    # if len(sys.argv) != 2:
+    #     print("usage: parse.py <file.py>")
+    #     sys.exit(1)
+    # fn = sys.argv[1]
+    fn = "./demo/ball_bounces.py"
+    # fn = "./demo/example_two_car_sign_lane_switch.py"
+    e = Env.parse(fn=fn)
+    tmp = e.to_ir()
     e.dump()
     print(ControllerIR.dump(e.to_ir().controller.body, False))

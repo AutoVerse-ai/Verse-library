@@ -14,14 +14,19 @@ class ResetExpression:
     def apply_reset_continuous(self, agent, continuous_variable_dict, lane_map):
         agent_state_lower = []
         agent_state_upper = []
+
+        # TODO-PARSER: Handle This
         for var in agent.controller.vars_dict['ego'].cont:
             agent_state_lower.append(continuous_variable_dict['ego.'+var][0])
             agent_state_upper.append(continuous_variable_dict['ego.'+var][1])
+
+        # TODO-PARSER: Handle This
         assert len(agent_state_lower) == len(agent_state_upper) == len(agent.controller.vars_dict['ego'].cont)
         for expr in self.expr_list:
             if 'mode' not in expr:
                 tmp = expr.split('=')
                 lhs, rhs = tmp[0], tmp[1]
+                # TODO-PARSER: Handle This
                 for lhs_idx, cts_variable in enumerate(agent.controller.vars_dict['ego'].cont):
                     if "output."+cts_variable == lhs:
                         break
@@ -63,6 +68,7 @@ class ResetExpression:
         possible_dest = [[elem] for elem in dest]
         for reset in self.expr_list:
             if "mode" in reset:
+                # TODO-PARSER: Handle This
                 for i, discrete_variable_ego in enumerate(agent.controller.vars_dict['ego'].disc):
                     if discrete_variable_ego in reset:
                         break
@@ -77,6 +83,7 @@ class ResetExpression:
                     possible_dest[i] = res 
                 else:
                     tmp = tmp[1].split('.')
+                    # TODO-PARSER: Handle This
                     if tmp[0].strip(' ') in agent.controller.modes:
                         possible_dest[i] = [tmp[1]]
         all_dest = itertools.product(*possible_dest)

@@ -33,7 +33,7 @@ class State:
     def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: LaneMode, type: LaneObjectMode):
         pass
 
-def controller(ego:State, others:State, lane_map):
+def controller(ego:State, others:List[State], lane_map):
     output = copy.deepcopy(ego)
     if ego.vehicle_mode == VehicleMode.Normal:
         # Switch left if left lane is empty
