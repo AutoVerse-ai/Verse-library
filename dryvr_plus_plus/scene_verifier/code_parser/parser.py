@@ -45,7 +45,7 @@ class StateDef:
     disc: List[str] = field(default_factory=list)     # Discrete variables
     static: List[str] = field(default_factory=list)   # Static data in object
 
-ScopeValue = Union[ast.AST, "CondVal", "Lambda", Dict[str, "ScopeValue"]]
+ScopeValue = Union[ast.AST, "CondVal", "Lambda", "Reduction", Dict[str, "ScopeValue"]]
 
 @dataclass
 class CondValCase:
@@ -282,6 +282,10 @@ class Env():
         if isinstance(sv, Lambda):
             sv.body = Env.trans_args(sv.body)
             return sv
+        if isinstance(sv, Reduction):
+            sv.expr = Env.trans_args(sv.expr)
+            sv.value = Env.trans_args(sv.value)
+            return sv
 
     def to_ir(self):
         top = self.scopes[0]
@@ -322,12 +326,12 @@ def merge_if_single(test, true: ScopeLevel, false: ScopeLevel, scope: Union[Env,
                 dbg("if.merge.obj.init")
                 assign(scope, var, {})
             var_true_emp, var_false_emp, var_scope = true.get(var, {}), false.get(var, {}), lookup(scope, var)
-            print(isinstance(var_true_emp, dict), isinstance(var_false_emp, dict), isinstance(var_scope, dict))
+            dbg(isinstance(var_true_emp, dict), isinstance(var_false_emp, dict), isinstance(var_scope, dict))
             assert isinstance(var_true_emp, dict) and isinstance(var_false_emp, dict) and isinstance(var_scope, dict)
             merge_if_single(test, var_true_emp, var_false_emp, var_scope)
         else:
             if_val = merge_if_val(test, var_true, var_false, lookup(scope, var))
-            print(ControllerIR.dump(if_val))
+            dbg(ControllerIR.dump(if_val))
             assign(scope, var, if_val)
         dbg("merged", var, ControllerIR.dump(lookup(scope, var)))
 
@@ -531,7 +535,7 @@ def proc(node: ast.AST, env: Env) -> Any:
             env.add_hole(target.id)
             expr = proc(expr, env)
             env.pop()
-            expr = cond_trans(expr, ast.BoolOp(ast.And(), ifs))
+            expr = cond_trans(expr, ast.BoolOp(ast.And(), ifs)) if len(ifs) > 0 else expr
             return Reduction(op, expr, target.id, proc(iter, env))
     elif isinstance(node, ast.Return):
         return proc(node.value, env) if node.value != None else None
