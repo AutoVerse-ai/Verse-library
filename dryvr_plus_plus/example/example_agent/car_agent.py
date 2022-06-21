@@ -37,8 +37,7 @@ class NPCAgent(BaseAgent):
         a = 0
         return steering, a  
 
-    def TC_simulate(self, mode: List[str], initialCondition, time_bound, lane_map:LaneMap=None)->np.ndarray:
-        time_step = 0.05
+    def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step, lane_map:LaneMap=None)->np.ndarray:
         time_bound = float(time_bound)
         number_points = int(np.ceil(time_bound/time_step))
         t = [i*time_step for i in range(0,number_points)]
@@ -95,8 +94,7 @@ class CarAgent(BaseAgent):
         steering = np.clip(steering, -0.61, 0.61)
         return steering, a  
 
-    def TC_simulate(self, mode: List[str], initialCondition, time_bound, lane_map:LaneMap=None)->np.ndarray:
-        time_step = 0.05
+    def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step, lane_map:LaneMap=None)->np.ndarray:
         time_bound = float(time_bound)
         number_points = int(np.ceil(time_bound/time_step))
         t = [round(i*time_step,10) for i in range(0,number_points)]

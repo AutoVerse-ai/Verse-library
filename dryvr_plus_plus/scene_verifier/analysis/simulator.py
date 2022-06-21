@@ -11,7 +11,7 @@ class Simulator:
     def __init__(self):
         self.simulation_tree_root = None
 
-    def simulate(self, init_list, init_mode_list, agent_list:List[BaseAgent], transition_graph, time_horizon, lane_map):
+    def simulate(self, init_list, init_mode_list, agent_list:List[BaseAgent], transition_graph, time_horizon, time_step, lane_map):
         # Setup the root of the simulation tree
         root = AnalysisTreeNode(
             trace={},
@@ -43,7 +43,7 @@ class Simulator:
                     # Simulate the trace starting from initial condition
                     mode = node.mode[agent_id]
                     init = node.init[agent_id]
-                    trace = node.agent[agent_id].TC_simulate(mode, init, remain_time,lane_map)
+                    trace = node.agent[agent_id].TC_simulate(mode, init, remain_time, time_step, lane_map)
                     trace[:,0] += node.start_time
                     node.trace[agent_id] = trace.tolist()
 

@@ -29,19 +29,6 @@ class LaneMode(Enum):
     Lane1 = auto()
     Lane2 = auto()
 
-class State:
-    x = 0.0
-    y = 0.0
-    theta = 0.0
-    v = 0.0
-    vehicle_mode: VehicleMode = VehicleMode.Normal
-    lane_mode: LaneMode = LaneMode.Lane0
-    type: LaneObjectMode = LaneObjectMode.Vehicle
-
-    def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: LaneMode, type: LaneObjectMode):
-        pass
-
-
 if __name__ == "__main__":
     input_code_name = './example_controller7.py'
     scenario = Scenario()
@@ -72,8 +59,8 @@ if __name__ == "__main__":
             (VehicleMode.Normal, LaneMode.Lane0),
         ]
     )
-    # traces = scenario.simulate(70)
-    traces = scenario.verify(60)
+    # traces = scenario.simulate(70, 0.05)
+    traces = scenario.verify(60, 0.05)
 
     fig = plt.figure(2)
     fig = plot_map(tmp_map, 'g', fig)

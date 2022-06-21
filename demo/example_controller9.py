@@ -26,7 +26,6 @@ class State:
     y = 0.0
     theta = 0.0
     v = 0.0
-    clock = 0.0
     vehicle_mode: VehicleMode = VehicleMode.Normal
     lane_mode: LaneMode = LaneMode.Lane0
     type_mode: LaneObjectMode = LaneObjectMode.Vehicle
@@ -38,9 +37,8 @@ def controller(ego:State, others:List[State], lane_map):
     output = copy.deepcopy(ego)
     # Detect the stop sign
     if ego.vehicle_mode == VehicleMode.Normal:
-        if any(ego.x - other.x < 5 and ego.x - other.x > -1 and other.type_mode==LaneObjectMode.Sign for other in others):
+        if any(other.x - ego.x < 5 and other.x - ego.x > -1 and other.type_mode==LaneObjectMode.Sign for other in others):
             output.vehicle_mode = VehicleMode.Brake 
-            output.clock = 0
     if ego.vehicle_mode == VehicleMode.Brake:
         if ego.v <= 0:
             output.vehicle_mode = VehicleMode.Stop

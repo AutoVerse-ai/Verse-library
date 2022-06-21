@@ -69,8 +69,8 @@ if __name__ == "__main__":
             (VehicleMode.Normal, LaneMode.Lane1, LaneObjectMode.Vehicle),
         ]
     )
-    traces = scenario.simulate(70)
-    # traces = scenario.verify(70)
+    traces = scenario.simulate(70, 0.05)
+    # traces = scenario.verify(70, 0.05)
 
     # fig = plt.figure(2)
     # fig = plot_map(tmp_map, 'g', fig)

@@ -69,7 +69,7 @@ if __name__ == "__main__":
 
     # plt.show()
 
-    traces = scenario.simulate(10)
+    traces = scenario.simulate(10, 0.01)
     fig = go.Figure()
     # fig = plotly_map(tmp_map, 'g', fig)
     # fig = plotly_simulation_tree(
