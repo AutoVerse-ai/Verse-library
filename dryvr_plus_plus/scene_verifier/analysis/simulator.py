@@ -1,5 +1,6 @@
 from typing import List, Dict
 import copy
+import itertools
 
 import numpy as np
 
@@ -10,7 +11,7 @@ class Simulator:
     def __init__(self):
         self.simulation_tree_root = None
 
-    def simulate(self, init_list, init_mode_list, agent_list:List[BaseAgent], transition_graph, time_horizon, lane_map):
+    def simulate(self, init_list, init_mode_list, agent_list:List[BaseAgent], transition_graph, time_horizon, time_step, lane_map):
         # Setup the root of the simulation tree
         root = AnalysisTreeNode(
             trace={},
@@ -32,8 +33,8 @@ class Simulator:
         # Perform BFS through the simulation tree to loop through all possible transitions
         while simulation_queue != []:
             node:AnalysisTreeNode = simulation_queue.pop(0)
-            print(node.mode)
-            remain_time = time_horizon - node.start_time
+            print(node.start_time, node.mode)
+            remain_time = round(time_horizon - node.start_time,10)
             if remain_time <= 0:
                 continue
             # For trace not already simulated
@@ -42,52 +43,46 @@ class Simulator:
                     # Simulate the trace starting from initial condition
                     mode = node.mode[agent_id]
                     init = node.init[agent_id]
-                    trace = node.agent[agent_id].TC_simulate(mode, init, remain_time,lane_map)
+                    trace = node.agent[agent_id].TC_simulate(mode, init, remain_time, time_step, lane_map)
                     trace[:,0] += node.start_time
                     node.trace[agent_id] = trace.tolist()
 
-            trace_length = len(list(node.trace.values())[0])
-            transitions = []
-            for idx in range(trace_length):
-                # For each trace, check with the guard to see if there's any possible transition
-                # Store all possible transition in a list
-                # A transition is defined by (agent, src_mode, dest_mode, corresponding reset, transit idx)
-                # Here we enforce that only one agent transit at a time
-                all_agent_state = {}
-                for agent_id in node.agent:
-                    all_agent_state[agent_id] = (node.trace[agent_id][idx], node.mode[agent_id])
-                possible_transitions = transition_graph.get_all_transition(all_agent_state)
-                if possible_transitions != []:
-                    for agent_idx, src_mode, dest_mode, next_init in possible_transitions:
-                        transitions.append((agent_idx, src_mode, dest_mode, next_init, idx))
-                    break
+            transitions, transition_idx = transition_graph.get_transition_simulate_new(node)
+
+            # If there's no transitions (returned transitions is empty), continue
+            if not transitions:
+                continue
 
             # truncate the computed trajectories from idx and store the content after truncate
             truncated_trace = {}
             for agent_idx in node.agent:
-                truncated_trace[agent_idx] = node.trace[agent_idx][idx:]
-                node.trace[agent_idx] = node.trace[agent_idx][:idx+1]
+                truncated_trace[agent_idx] = node.trace[agent_idx][transition_idx:]
+                node.trace[agent_idx] = node.trace[agent_idx][:transition_idx+1]
+
+            # Generate the transition combinations if multiple agents can transit at the same time step
+            transition_list = list(transitions.values())
+            all_transition_combinations = itertools.product(*transition_list)
 
             # For each possible transition, construct the new node. 
             # Obtain the new initial condition for agent having transition
             # copy the traces that are not under transition
-            for transition in transitions:
-                transit_agent_idx, src_mode, dest_mode, next_init, idx = transition
-                if dest_mode is None:
-                    continue
-                # next_node = AnalysisTreeNode(trace = {},init={},mode={},agent={}, child = [], start_time = 0)
+            for transition_combination in all_transition_combinations:
                 next_node_mode = copy.deepcopy(node.mode) 
-                next_node_mode[transit_agent_idx] = dest_mode 
                 next_node_agent = node.agent 
                 next_node_start_time = list(truncated_trace.values())[0][0][0]
                 next_node_init = {}
                 next_node_trace = {}
+                for transition in transition_combination:
+                    transit_agent_idx, src_mode, dest_mode, next_init, idx = transition
+                    if dest_mode is None:
+                        continue
+                    # next_node = AnalysisTreeNode(trace = {},init={},mode={},agent={}, child = [], start_time = 0)
+                    next_node_mode[transit_agent_idx] = dest_mode 
+                    next_node_init[transit_agent_idx] = next_init 
                 for agent_idx in next_node_agent:
-                    if agent_idx == transit_agent_idx:
-                        next_node_init[agent_idx] = next_init 
-                    else:
+                    if agent_idx not in next_node_init:
                         next_node_trace[agent_idx] = truncated_trace[agent_idx]
-                
+                    
                 tmp = AnalysisTreeNode(
                     trace = next_node_trace,
                     init = next_node_init,

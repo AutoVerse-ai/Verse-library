@@ -21,6 +21,7 @@ class Verifier:
         agent_list:List[BaseAgent], 
         transition_graph, 
         time_horizon, 
+        time_step, 
         lane_map
     ):
         root = AnalysisTreeNode()
@@ -35,8 +36,8 @@ class Verifier:
         verification_queue.append(root)
         while verification_queue != []:
             node:AnalysisTreeNode = verification_queue.pop(0)
-            print(node.mode)
-            remain_time = time_horizon - node.start_time 
+            print(node.start_time, node.mode)
+            remain_time = round(time_horizon - node.start_time,10) 
             if remain_time <= 0:
                 continue 
             # For reachtubes not already computed
@@ -53,6 +54,7 @@ class Verifier:
                     cur_bloated_tube = calc_bloated_tube(mode,
                                         init,
                                         remain_time,
+                                        time_step, 
                                         node.agent[agent_id].TC_simulate,
                                         'PW',
                                         100,
@@ -67,7 +69,7 @@ class Verifier:
             # TODO: Check safety conditions here
 
             # Get all possible transitions to next mode
-            all_possible_transitions = transition_graph.get_all_transition_set(node)
+            all_possible_transitions = transition_graph.get_transition_verify_new(node)
             max_end_idx = 0
             for transition in all_possible_transitions:
                 transit_agent_idx, src_mode, dest_mode, next_init, idx = transition 
@@ -100,7 +102,7 @@ class Verifier:
                     mode = next_node_mode,
                     agent = next_node_agent,
                     child = [],
-                    start_time = next_node_start_time,
+                    start_time = round(next_node_start_time,10),
                     type = 'reachtube'
                 )
                 node.child.append(tmp)

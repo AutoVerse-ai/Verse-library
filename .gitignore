@@ -6,3 +6,5 @@ venv/
 .DS_Store
 **.egg-info/
 .VSCodeCounter/
+dist/dryvr_plus_plus-0.1-py3.8.egg
+tmp/

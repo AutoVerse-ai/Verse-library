@@ -5,6 +5,15 @@ The package requires python 3.8+. The package can be installed using pip
 ```
 python3 -m pip install -e .
 ```
+To update the dependencies, setup.py or requirement.txt can be used.
+
+```
+python3 setup.py install
+```
+or
+```
+pip install -r requirements.txt
+```
 
 ## Examples
 The package comes with two controller examples inside folder ```demo/```

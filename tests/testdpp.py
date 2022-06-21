@@ -62,7 +62,7 @@ class TestSimulatorMethods(unittest.TestCase):
         self.car2 = CarAgent('other', file_name='example_controller1.py')
         self.scenario.add_agent(self.car)
         self.scenario.add_agent(self.car2)
-        # self.scenario.add_map(SimpleMap2())
+        self.scenario.add_map(SimpleMap2())
         # self.scenario.set_sensor(FakeSensor1())
         # self.scenario.set_init(
         #     [[0, 3, 0, 0.5]],

@@ -171,7 +171,6 @@ class Guard:
                 guard_set_lower.append(lower_bound)
                 guard_set_upper.append(upper_bound)
 
-                # TODO: If the reachtube completely fall inside guard, break
                 tmp_solver = Solver()
                 tmp_solver.add(Not(cur_solver.assertions()[0]))
                 for symbol in symbols:
@@ -204,7 +203,6 @@ class Guard:
                 for k in range(1, len(guard_set_lower[0])):
                     init_lower[k - 1] = min(init_lower[k - 1], guard_set_lower[j][k])
                     init_upper[k - 1] = max(init_upper[k - 1], guard_set_upper[j][k])
-            # TODO: Treat tau as a special clock variable that don't have variation
             # init_upper[0] = init_lower[0]
             
             # Return next initial Set, the result tube, and the true transit time

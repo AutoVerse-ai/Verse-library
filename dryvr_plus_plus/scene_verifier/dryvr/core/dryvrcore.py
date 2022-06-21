@@ -245,6 +245,7 @@ def calc_bloated_tube(
         mode_label,
         initial_set,
         time_horizon,
+        time_step,
         sim_func,
         bloating_method,
         kvalue,
@@ -275,11 +276,11 @@ def calc_bloated_tube(
     random.seed(4)
     cur_center = calcCenterPoint(initial_set[0], initial_set[1])
     cur_delta = calcDelta(initial_set[0], initial_set[1])
-    traces = [sim_func(mode_label, cur_center, time_horizon, lane_map)]
+    traces = [sim_func(mode_label, cur_center, time_horizon, time_step, lane_map)]
     # Simulate SIMTRACENUM times to learn the sensitivity
     for _ in range(sim_trace_num):
         new_init_point = randomPoint(initial_set[0], initial_set[1])
-        traces.append(sim_func(mode_label, new_init_point, time_horizon, lane_map))
+        traces.append(sim_func(mode_label, new_init_point, time_horizon, time_step, lane_map))
 
     # Trim the trace to the same length
     traces = trimTraces(traces)
@@ -294,11 +295,9 @@ def calc_bloated_tube(
 
     # The major
     if bloating_method == GLOBAL:
-        # TODO: Replace this with ReachabilityEngine.get_reachtube_segment
         cur_reach_tube: np.ndarray = get_reachtube_segment(np.array(traces), np.array(cur_delta), "PWGlobal")
         # cur_reach_tube: np.ndarray = ReachabilityEngine.get_reachtube_segment_wrapper(np.array(traces), np.array(cur_delta))
     elif bloating_method == PW:
-        # TODO: Replace this with ReachabilityEngine.get_reachtube_segment
         cur_reach_tube: np.ndarray = get_reachtube_segment(np.array(traces), np.array(cur_delta), "PW")
         # cur_reach_tube: np.ndarray = ReachabilityEngine.get_reachtube_segment_wrapper(np.array(traces), np.array(cur_delta))
     else:
