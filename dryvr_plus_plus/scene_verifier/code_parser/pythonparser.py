@@ -414,10 +414,15 @@ class ControllerAst():
                             arg_annotation = arg.annotation.id
                         # Handle case when input is a list of variables 
                         elif isinstance(arg.annotation, ast.Subscript):
-                            if arg.annotation.slice.value.id not in state_object_dict:
-                                continue 
-                            arg_annotation = arg.annotation.slice.value.id
-                        
+                            if isinstance(arg.annotation.slice, ast.Index):
+                                if arg.annotation.slice.value.id not in state_object_dict:
+                                    continue 
+                                arg_annotation = arg.annotation.slice.value.id
+                            elif isinstance(arg.annotation.slice, ast.Name):
+                                if arg.annotation.slice.id not in state_object_dict:
+                                    continue
+                                arg_annotation = arg.annotation.slice.id
+                            
                         arg_name = arg.arg
                         vars_dict[arg_name] = {'cont':[], 'disc':[], "type": []}
                         for var in state_object_dict[arg_annotation]['cont']:
