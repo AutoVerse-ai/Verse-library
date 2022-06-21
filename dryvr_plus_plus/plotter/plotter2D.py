@@ -76,8 +76,32 @@ def plot_reachtube_tree(root, agent_id, x_dim: int = 0, y_dim_list: List[int] = 
 
     return fig
 
+def plot_reachtube_tree_branch(root, agent_id, x_dim: int=0, y_dim_list: List[int]=[1], color='b', fig = None, x_lim = None, y_lim = None):
+    if fig is None:
+        fig = plt.figure()
+    
+    ax = fig.gca()
+    if x_lim is None:
+        x_lim = ax.get_xlim()
+    if y_lim is None:
+        y_lim = ax.get_ylim()
 
-def plot_map(map, color='b', fig=None, x_lim=None, y_lim=None):
+    stack = [root]
+    while stack != []:
+        node = stack.pop()
+        traces = node.trace
+        trace = traces[agent_id]
+        data = []
+        for i in range(0,len(trace),2):
+            data.append([trace[i], trace[i+1]])
+        fig, x_lim, y_lim = plot(data, x_dim, y_dim_list, color, fig, x_lim, y_lim)
+
+        if node.child:
+            stack += [node.child[0]]
+
+    return fig
+
+def plot_map(map, color = 'b', fig = None, x_lim = None,y_lim = None):
     if fig is None:
         fig = plt.figure()
 
@@ -277,7 +301,7 @@ def plotly_simulation_tree(root, agent_id, x_dim: int = 0, y_dim_list: List[int]
     while queue != []:
         node = queue.pop(0)
         traces = node.trace
-        print(node.mode)
+        # print(node.mode)
         # [[time,x,y,theta,v]...]
         trace = np.array(traces[agent_id])
         # print(trace)
@@ -475,13 +499,14 @@ def plotly_simulation_anime(root, map=None, fig=None):
     fig_dict["layout"]["sliders"] = [sliders_dict]
 
     fig = go.Figure(fig_dict)
-    fig = plotly_map(map, 'g', fig)
+    if map is not None:
+        fig = plotly_map(map, 'g', fig)
     i = 0
     queue = [root]
     while queue != []:
         node = queue.pop(0)
         traces = node.trace
-        print(node.mode)
+        # print(node.mode)
         # [[time,x,y,theta,v]...]
         for agent_id in traces:
             trace = np.array(traces[agent_id])
@@ -490,7 +515,7 @@ def plotly_simulation_anime(root, map=None, fig=None):
             trace_x = trace[:, 1].tolist()
             # theta = [i/pi*180 for i in trace[:, 3]]
             color = 'green'
-            if agent_id == 'car2':
+            if agent_id == 'car1':
                 color = 'red'
             fig.add_trace(go.Scatter(x=trace[:, 1], y=trace[:, 2],
                                      mode='lines',

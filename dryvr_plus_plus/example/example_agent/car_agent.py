@@ -1,3 +1,4 @@
+# Example agent.
 from typing import Tuple, List
 
 import numpy as np 
@@ -23,6 +24,8 @@ class NPCAgent(BaseAgent):
         return [x_dot, y_dot, theta_dot, v_dot]
 
     def action_handler(self, mode, state, lane_map:LaneMap)->Tuple[float, float]:
+        ''' Computes steering and acceleration based on current lane, target lane and
+            current state using a Stanley controller-like rule'''
         x,y,theta,v = state
         vehicle_mode = mode[0]
         vehicle_lane = mode[1]
@@ -81,8 +84,9 @@ class CarAgent(BaseAgent):
         elif vehicle_mode == "Brake":
             d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
             a = -1    
-            if v<=0.02:
-                a = 0
+        elif vehicle_mode == "Accel":
+            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
+            a = 1
         elif vehicle_mode == 'Stop':
             d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
             a = 0
@@ -95,7 +99,7 @@ class CarAgent(BaseAgent):
         time_step = 0.05
         time_bound = float(time_bound)
         number_points = int(np.ceil(time_bound/time_step))
-        t = [i*time_step for i in range(0,number_points)]
+        t = [round(i*time_step,10) for i in range(0,number_points)]
 
         init = initialCondition
         trace = [[0]+init]

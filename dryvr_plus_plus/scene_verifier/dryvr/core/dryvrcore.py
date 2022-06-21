@@ -294,11 +294,9 @@ def calc_bloated_tube(
 
     # The major
     if bloating_method == GLOBAL:
-        # TODO: Replace this with ReachabilityEngine.get_reachtube_segment
         cur_reach_tube: np.ndarray = get_reachtube_segment(np.array(traces), np.array(cur_delta), "PWGlobal")
         # cur_reach_tube: np.ndarray = ReachabilityEngine.get_reachtube_segment_wrapper(np.array(traces), np.array(cur_delta))
     elif bloating_method == PW:
-        # TODO: Replace this with ReachabilityEngine.get_reachtube_segment
         cur_reach_tube: np.ndarray = get_reachtube_segment(np.array(traces), np.array(cur_delta), "PW")
         # cur_reach_tube: np.ndarray = ReachabilityEngine.get_reachtube_segment_wrapper(np.array(traces), np.array(cur_delta))
     else:

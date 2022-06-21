@@ -199,7 +199,6 @@ def verify(data, sim_function, param_config=None):
                                                      )
 
                 # Use the guard to calculate the next initial set
-                # TODO: Made this function return multiple next_init
                 next_init, truncated_result, transit_time = guard.guard_reachtube(
                     cur_bloated_tube,
                     cur_guard_str,
@@ -209,7 +208,6 @@ def verify(data, sim_function, param_config=None):
                     continue
 
                 # Reset the next initial set
-                # TODO: Made this function handle multiple next_init
                 next_init = reset.reset_set(cur_reset_str, next_init[0], next_init[1])
 
                 # Build next mode stack
@@ -220,7 +218,6 @@ def verify(data, sim_function, param_config=None):
                     start_time=transit_time+cur_mode_stack.start_time
                 )
                 next_mode_stack.parent = cur_mode_stack
-                # TODO: Append all next_init into the next_mode_stack
                 next_mode_stack.stack.append(InitialSet(next_init[0], next_init[1]))
                 next_mode_stack.bloated_tube.append(
                     cur_mode_stack.bloated_tube[0] + '->' + buildModeStr(graph, cur_successor))

@@ -73,12 +73,11 @@ class Guard(Statement):
             return Guard(ast.get_source_segment(code, node.test), None, None, node.test)
         elif isinstance(node.test, ast.Call):
             source_segment = ast.get_source_segment(code, node.test)
-            if "map" in source_segment:
-                func = node.test.func.value.id + '.' + node.test.func.attr 
-                args = []
-                for arg in node.test.args:
-                    args.append(arg.value.id + '.' + arg.attr)
-                return Guard(source_segment, None, None, node.test, func, args)
+            # func = node.test.func.id 
+            # args = []
+            # for arg in node.test.args:
+            #     args.append(arg.value.id + '.' + arg.attr)
+            return Guard(source_segment, None, None, node.test)
 
 '''
 Reset class. Subclass of statement.
@@ -408,9 +407,22 @@ class ControllerAst():
                     for arg in args:
                         if arg.annotation is None:
                             continue
-                        if arg.annotation.id not in state_object_dict:
-                            continue
-                        arg_annotation = arg.annotation.id
+                        # Handle case when input is a single variable
+                        if isinstance(arg.annotation, ast.Name):
+                            if arg.annotation.id not in state_object_dict:
+                                continue
+                            arg_annotation = arg.annotation.id
+                        # Handle case when input is a list of variables 
+                        elif isinstance(arg.annotation, ast.Subscript):
+                            if isinstance(arg.annotation.slice, ast.Index):
+                                if arg.annotation.slice.value.id not in state_object_dict:
+                                    continue 
+                                arg_annotation = arg.annotation.slice.value.id
+                            elif isinstance(arg.annotation.slice, ast.Name):
+                                if arg.annotation.slice.id not in state_object_dict:
+                                    continue
+                                arg_annotation = arg.annotation.slice.id
+                            
                         arg_name = arg.arg
                         vars_dict[arg_name] = {'cont':[], 'disc':[], "type": []}
                         for var in state_object_dict[arg_annotation]['cont']:
@@ -423,11 +435,6 @@ class ControllerAst():
                             type_vars.append(arg_name+"."+var)
                             vars_dict[arg_name]['type'].append(var)
 
-                        # if "mode" not in arg.arg:
-                        #     vars.append(arg.arg)
-                        #     #todo: what to add for return values
-                        # else:
-                        #     discrete_vars.append(arg.arg)
         return [statementtree, vars, mode_dict, discrete_vars, state_object_dict, vars_dict, type_vars]
 
 
