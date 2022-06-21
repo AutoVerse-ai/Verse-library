@@ -98,7 +98,7 @@ class Reduction:
         return self.op == o.op and self.it == o.it and ControllerIR.ir_eq(self.expr, o.expr) and ControllerIR.ir_eq(self.value, o.value)
 
     def __repr__(self) -> str:
-        return f"Reduction('{self.op}', expr={astunparser.unparse(self.expr)}, it='{self.it}', value={astunparser.unparse(self.value)}"
+        return f"Reduction('{self.op}', expr={astunparser.unparse(self.expr)}, it='{self.it}', value={astunparser.unparse(self.value)})"
 
 Reduction._fields = [f.name for f in fields(Reduction)]
 
@@ -106,7 +106,7 @@ Reduction._fields = [f.name for f in fields(Reduction)]
 class Lambda:
     """A closure. Comes from either a `lambda` or a `def`ed function"""
     args: List[Tuple[str, Optional[str]]]
-    body: ast.expr
+    body: Optional[ast.expr]
 
     @staticmethod
     def from_ast(tree: Union[ast.FunctionDef, ast.Lambda], env: "Env") -> "Lambda":
@@ -132,12 +132,22 @@ class Lambda:
         elif isinstance(tree, ast.Lambda):
             ret = proc(tree.body, env)
         env.pop()
-        assert ret != None, "Empty function"
+        # assert ret != None, "Empty function"
         return Lambda(args, ret)
+
+    @staticmethod
+    def empty() -> "Lambda":
+        return Lambda(args=[], body=ast.Constant({}))
 
     def apply(self, args: List[ast.expr]) -> ast.expr:
         ret = copy.deepcopy(self.body)
         return ArgSubstituter({k: v for (k, _), v in zip(self.args, args)}).visit(ret)
+
+@dataclass
+class Assert:
+    cond: ast.expr
+    label: Optional[str]
+    pre: List[ast.expr] = field(default_factory=list)
 
 ast_dump = lambda node, dump=False: ast.dump(node) if dump else astunparser.unparse(node)
 
@@ -158,6 +168,8 @@ class ArgSubstituter(ast.NodeTransformer):
 @dataclass
 class ControllerIR:
     controller: Lambda
+    unsafe: Lambda
+    asserts: List[Assert]
     state_defs: Dict[str, StateDef]
     mode_defs: Dict[str, ModeDef]
 
@@ -167,7 +179,7 @@ class ControllerIR:
 
     @staticmethod
     def empty() -> "ControllerIR":
-        return ControllerIR(Lambda(args=[], body=ast.Constant({})), {}, {})
+        return ControllerIR(Lambda.empty(), Lambda.empty(), [], {}, {})
 
     @staticmethod
     def dump(node, dump=False):
@@ -202,6 +214,7 @@ class Env():
     state_defs: Dict[str, StateDef] = field(default_factory=dict)
     mode_defs: Dict[str, ModeDef] = field(default_factory=dict)
     scopes: List[ScopeLevel] = field(default_factory=lambda: [{}])
+    asserts: List[Assert] = field(default_factory=list)
 
     @staticmethod
     def parse(code: Optional[str] = None, fn: Optional[str] = None):
@@ -293,8 +306,9 @@ class Env():
         if 'controller' not in top or not isinstance(top['controller'], Lambda):
             raise TypeError("can't find controller")
         controller = Env.trans_args(top['controller'])
-        assert isinstance(controller, Lambda)
-        return ControllerIR(controller, self.state_defs, self.mode_defs)
+        unsafe = Env.trans_args(top['unsafe'])
+        assert isinstance(controller, Lambda) and isinstance(unsafe, Lambda)
+        return ControllerIR(controller, unsafe, self.asserts, self.state_defs, self.mode_defs)
 
 def merge_if(test: ast.expr, trues: Env, falses: Env, env: Env):
     # `true`, `false` and `env` should have the same level
@@ -488,6 +502,10 @@ def proc(node: ast.AST, env: Env) -> Any:
                     state_vars.disc.append(name)
             env.state_defs[node.name] = state_vars
         env.add_hole(node.name)
+    elif isinstance(node, ast.Assert):
+        if not isinstance(node.msg, ast.Constant):
+            raise NotImplementedError("dynamic string in assert")
+        env.asserts.append(Assert(proc(node.test, env), node.msg.s))
 
     # Expressions
     elif isinstance(node, ast.UnaryOp):
@@ -557,6 +575,7 @@ if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("usage: parse.py <file.py>")
         sys.exit(1)
-    e = Env.parse(fn=sys.argv[1])
-    e.dump()
-    print(ControllerIR.dump(e.to_ir().controller.body, False))
+    ir = Env.parse(fn=sys.argv[1]).to_ir()
+    print(ControllerIR.dump(ir.controller.body, False))
+    for a in ir.asserts:
+        print(f"assert {ControllerIR.dump(a.cond, False)}, '{a.label}'")
