@@ -98,7 +98,7 @@ class Scenario:
         for agent_id in state_dict:
             agent:BaseAgent = self.agent_dict[agent_id]
             agent_state, agent_mode = state_dict[agent_id]
-        
+
             t = agent_state[0]
             agent_state = agent_state[1:]
             paths = agent.controller.getNextModes(agent_mode)
@@ -120,7 +120,7 @@ class Scenario:
                 guard_expression.parse_any_all(continuous_variable_dict, discrete_variable_dict, length_dict)
                 
                 # Check if the guard can be satisfied
-                # First Check if the discrete guards can be satisfied by actually evaluate the values 
+                # First Check if the discrete guards can be satisfied by actually evaluate the values
                 # since there's no uncertainty. If there's functions, actually execute the functions
                 guard_can_satisfied = guard_expression.evaluate_guard_disc(agent, discrete_variable_dict, continuous_variable_dict, self.map)
                 if not guard_can_satisfied:
@@ -180,15 +180,15 @@ class Scenario:
                         reset_idx_dict[agent_id][dest] = []
                     reset_dict[agent_id][dest].append(reset_rect)
                     reset_idx_dict[agent_id][dest].append(hit_idx)
-            
+
         # Combine reset rects and construct transitions
         for agent in reset_dict:
             for dest in reset_dict[agent]:
-                combined_rect = None 
+                combined_rect = None
                 for rect in reset_dict[agent][dest]:
                     rect = np.array(rect)
                     if combined_rect is None:
-                        combined_rect = rect 
+                        combined_rect = rect
                     else:
                         combined_rect[0,:] = np.minimum(combined_rect[0,:], rect[0,:])
                         combined_rect[1,:] = np.maximum(combined_rect[1,:], rect[1,:])
@@ -247,7 +247,7 @@ class Scenario:
                         # Specify the destination mode
                         reset = reset.code
                         if "mode" in reset:
-                            for i, discrete_variable_ego in enumerate(agent.controller.vars_dict['ego']['disc']):
+                            for i, discrete_variable_ego in enumerate(agent.controller.vars_dict['ego'].disc):
                                 if discrete_variable_ego in reset:
                                     break
                             tmp = reset.split('=')
@@ -262,11 +262,11 @@ class Scenario:
                             else:
                                 tmp = tmp[1].split('.')
                                 if tmp[0].strip(' ') in agent.controller.modes:
-                                    possible_dest[i] = [tmp[1]]                            
-                        else: 
-                            for i, cts_variable in enumerate(agent.controller.vars_dict['ego']['cont']):
+                                    possible_dest[i] = [tmp[1]]
+                        else:
+                            for i, cts_variable in enumerate(agent.controller.vars_dict['ego'].cont):
                                 if "output."+cts_variable in reset:
-                                    break 
+                                    break
                             tmp = reset.split('=')
                             tmp = tmp[1]
                             for cts_variable in continuous_variable_dict:
@@ -278,7 +278,7 @@ class Scenario:
                         all_dest.append(None)
                     for dest in all_dest:
                         next_transition = (
-                            agent_id, agent_mode, dest, next_init, 
+                            agent_id, agent_mode, dest, next_init,
                         )
                         satisfied_guard.append(next_transition)
 

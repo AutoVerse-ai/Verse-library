@@ -112,3 +112,27 @@ class CarAgent(BaseAgent):
             trace.append([t[i] + time_step] + init) 
 
         return np.array(trace)
+
+class WeirdCarAgent(CarAgent):
+    def __init__(self, id, code = None, file_name = None):
+        super().__init__(id, code, file_name)
+        self.gain = 0.2
+        self.thres = 0.8
+
+    def action_handler(self, mode: List[str], state, lane_map: LaneMap) -> Tuple[float, float]:
+        vehicle_mode = mode[0]
+        steering, a = self._action_handler(mode, state, lane_map)
+        # print("agnt", vehicle_mode, state, steering, a)
+        return steering, a
+        
+    def _action_handler(self, mode: List[str], state, lane_map: LaneMap) -> Tuple[float, float]:
+        vehicle_mode = mode[0]
+        theta = state[2]
+        if abs(theta) > self.thres:
+            return 0, 0
+        if vehicle_mode == "SwitchLeft" and theta >= 0:
+            return self.gain, 0
+        elif vehicle_mode == "SwitchRight" and theta <= 0:
+            return -self.gain, 0
+        else:
+            return 0, 0
