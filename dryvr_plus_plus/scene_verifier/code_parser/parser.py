@@ -1,15 +1,8 @@
 import ast, copy
-import astunparse
 from typing import List, Dict, Union, Optional, Any, Tuple
 from dataclasses import dataclass, field, fields
 from enum import Enum, auto
-
-# HACK ?
-import sys
-if sys.version_info.minor == 10:
-    ast_unparse = ast.unparse
-else:
-    ast_unparse = astunparse.unparse
+import astunparser
 
 debug = True
 
@@ -105,7 +98,7 @@ class Reduction:
         return self.op == o.op and self.it == o.it and ControllerIR.ir_eq(self.expr, o.expr) and ControllerIR.ir_eq(self.value, o.value)
 
     def __repr__(self) -> str:
-        return f"Reduction('{self.op}', expr={ast_unparse(self.expr)}, it='{self.it}', value={ast_unparse(self.value)}"
+        return f"Reduction('{self.op}', expr={astunparser.unparse(self.expr)}, it='{self.it}', value={astunparser.unparse(self.value)}"
 
 Reduction._fields = [f.name for f in fields(Reduction)]
 
@@ -146,7 +139,7 @@ class Lambda:
         ret = copy.deepcopy(self.body)
         return ArgSubstituter({k: v for (k, _), v in zip(self.args, args)}).visit(ret)
 
-ast_dump = lambda node, dump=False: ast.dump(node) if dump else ast_unparse(node)
+ast_dump = lambda node, dump=False: ast.dump(node) if dump else astunparser.unparse(node)
 
 ScopeLevel = Dict[str, ScopeValue]
 
@@ -378,7 +371,7 @@ def merge_if_val(test, true: Optional[ScopeValue], false: Optional[ScopeValue], 
     return ret
 
 def proc_assign(target: ast.AST, val, env: Env):
-    dbg("proc_assign", ast_unparse(target), val)
+    dbg("proc_assign", astunparser.unparse(target), val)
     if isinstance(target, ast.Name):
         if isinstance(val, ast.AST):
             val = proc(val, env)
