@@ -64,8 +64,16 @@ from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor4
 from dryvr_plus_plus.scene_verifier.sensor.base_sensor import BaseSensor
 
 if __name__ == "__main__":
-    ball_controller = './ball_bounces.py'
+    ''' Defining and using a  scenario involves the following 5 easy steps:
+        1. creating a basic scenario object with Scenario()
+        2. defining the agents that will populate the object, here we have two ball agents
+        3. adding the agents to the scenario using .add_agent()
+        4. initializing the agents for this scenario. 
+            Note that agents are only initialized *in* a scenario, not individually outside a scenario
+        5. genetating the simulation traces or computing the reachable states    
+    '''
     bouncingBall = Scenario()
+    ball_controller = './ball_bounces.py'
     myball1 = BallAgent('red-ball', file_name=ball_controller)
     myball2 = BallAgent('green-ball', file_name=ball_controller)
     bouncingBall.add_agent(myball1)
