@@ -49,6 +49,7 @@ if __name__ == "__main__":
     input_code_name = './example_controller8.py'
     scenario = Scenario()
 
+
     car = CarAgent('car1', file_name=input_code_name)
     scenario.add_agent(car)
     car = NPCAgent('car2')

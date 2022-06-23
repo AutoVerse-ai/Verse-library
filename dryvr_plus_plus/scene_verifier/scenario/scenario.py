@@ -141,6 +141,8 @@ class Scenario:
                 reset = path[1]
                 guard_expression = GuardExpressionAst(guard_list)
 
+                # copy.deepcopy(guard_expression.ast_list[0].operand)
+                # can_satisfy = guard_expression.fast_pre_process(discrete_variable_dict)
                 continuous_variable_updater = guard_expression.parse_any_all_new(cont_var_dict_template, discrete_variable_dict, len_dict)
                 if agent_id not in agent_guard_dict:
                     agent_guard_dict[agent_id] = [(guard_expression, continuous_variable_updater, copy.deepcopy(discrete_variable_dict), reset)]
@@ -156,62 +158,76 @@ class Scenario:
                 state_dict = {}
                 for tmp in node.agent:
                     state_dict[tmp] = (node.trace[tmp][idx], node.mode[tmp], node.static[tmp])
-                agent_state, agent_mode = state_dict[agent_id]
+                agent_state, agent_mode, agent_static = state_dict[agent_id]
                 agent_state = agent_state[1:]
                 continuous_variable_dict, _, _ = self.sensor.sense(self, agent, state_dict, self.map)
-                for guard_expression, continuous_variable_updater, discrete_variable_dict, reset_list in agent_guard_dict[agent_id]:
+                all_resets = {}
+                for guard_expression, continuous_variable_updater, discrete_variable_dict, reset in agent_guard_dict[agent_id]:
                     new_cont_var_dict = copy.deepcopy(continuous_variable_dict)
                     # new_disc_var_dict = copy.deepcopy(discrete_variable_dict)
                     one_step_guard:GuardExpressionAst = copy.deepcopy(guard_expression)
                     self.apply_cont_var_updater(new_cont_var_dict, continuous_variable_updater)
                     # self.apply_disc_var_updater(new_disc_var_dict, discrete_variable_updater)
                     guard_satisfied = one_step_guard.evaluate_guard(agent, new_cont_var_dict, discrete_variable_dict, self.map)
+                    # Collect all the hit guards for this agent at this time step
                     if guard_satisfied:
                         # If the guard can be satisfied, handle resets
-                        next_init = agent_state
-                        dest = copy.deepcopy(agent_mode)
-                        possible_dest = [[elem] for elem in dest]
-                        for reset in reset_list:
-                            # Specify the destination mode
-                            reset = reset.code
-                            if "mode" in reset:
-                                # TODO-PARSER: update how how we get the discrete_variables of ego
-                                for i, discrete_variable_ego in enumerate(agent.controller.vars_dict['ego']['disc']):
-                                    if discrete_variable_ego in reset:
-                                        break
-                                tmp = reset.split('=')
-                                if 'map' in tmp[1]:
-                                    tmp = tmp[1]
-                                    for var in discrete_variable_dict:
-                                        tmp = tmp.replace(var, f"'{discrete_variable_dict[var]}'")
-                                    res = eval(tmp)
-                                    if not isinstance(res, list):
-                                        res = [res]
-                                    possible_dest[i] = res 
-                                else:
-                                    tmp = tmp[1].split('.')
-                                    # TODO-PARSER: update how we access the modes
-                                    if tmp[0].strip(' ') in agent.controller.modes:
-                                        possible_dest[i] = [tmp[1]]                            
-                            else: 
-                                # TODO-PARSER: update how we get cont_variables
-                                for i, cts_variable in enumerate(agent.controller.vars_dict['ego']['cont']):
-                                    if "output."+cts_variable in reset:
-                                        break 
-                                tmp = reset.split('=')
-                                tmp = tmp[1]
-                                for cts_variable in continuous_variable_dict:
-                                    tmp = tmp.replace(cts_variable, str(continuous_variable_dict[cts_variable]))
-                                next_init[i] = eval(tmp)
-                        all_dest = list(itertools.product(*possible_dest))
-                        if not all_dest:
-                            warnings.warn(f"Guard hit for mode {agent_mode} for agent {agent_id} without available next mode")
-                            all_dest.append(None)
-                        for dest in all_dest:
-                            next_transition = (
-                                agent_id, agent_mode, dest, next_init, 
-                            )
-                            satisfied_guard.append(next_transition)
+                        reset_expr = ResetExpression(reset)
+
+                        if reset_expr.var not in all_resets:
+                            all_resets[reset_expr.var] = [reset_expr]
+                        else:
+                            all_resets[reset_expr.var].append(reset_expr)
+                
+                iter_list = []
+                for reset_var in all_resets:
+                    iter_list.append(range(len(all_resets[reset_var])))
+                pos_list = list(itertools.product(*iter_list))
+                if len(pos_list)==1 and pos_list[0]==():
+                    continue
+                for i in range(len(pos_list)):
+                    pos = pos_list[i]
+                    next_init = copy.deepcopy(agent_state)
+                    dest = copy.deepcopy(agent_mode)
+                    possible_dest = [[elem] for elem in dest]
+                    for j, reset_idx in enumerate(pos):
+                        reset_variable = list(all_resets.keys())[j]
+                        reset_expr:ResetExpression = all_resets[reset_variable][reset_idx]
+                        ego_type = agent.controller.ego_type
+                        expr = reset_expr.expr 
+                        if "mode" in reset_variable:
+                            for var_loc, discrete_variable_ego in enumerate(agent.controller.state_defs[ego_type].disc):
+                                if discrete_variable_ego == reset_variable:
+                                    break
+                            if 'map' in expr:
+                                for var in discrete_variable_dict:
+                                    expr = expr.replace(var, f"'{discrete_variable_dict[var]}'")
+                                for var in continuous_variable_dict:
+                                    expr = expr.replace(var, str(continuous_variable_dict[var]))
+                                res = eval(expr)
+                                if not isinstance(res, list):
+                                    res = [res]
+                                possible_dest[var_loc] = res
+                            else:
+                                if reset_variable in agent.controller.state_defs[ego_type].disc:
+                                    expr = expr.strip('\n')
+                                    possible_dest[var_loc] = [expr.strip('\n').split('.')[1]]   
+                        else:
+                            for var_loc, cont_variable in enumerate(agent.controller.state_defs[ego_type].cont):
+                                if cont_variable == reset_variable:
+                                    break 
+                            for cont_variable in continuous_variable_dict:
+                                expr = expr.replace(cont_variable, f"({continuous_variable_dict[cont_variable]})")
+                            next_init[var_loc] = eval(expr)
+                    all_dest = list(itertools.product(*possible_dest))
+                    if not all_dest:
+                        warnings.warn(f"Guard hit for mode {agent_mode} for agent {agent_id} without available next mode")
+                        all_dest.append(None)
+                    for dest in all_dest:
+                        next_transition = (
+                            agent_id, agent_mode, dest, next_init, 
+                        )
+                        satisfied_guard.append(next_transition)
             if satisfied_guard != []:
                 for agent_idx, src_mode, dest_mode, next_init in satisfied_guard:
                     if agent_idx not in transitions:
@@ -220,115 +236,6 @@ class Scenario:
                         transitions[agent_idx].append((agent_idx, src_mode, dest_mode, next_init, idx))
                 break
         return transitions, idx
-
-    def get_transition_simulate_new_old_parser(self, node:AnalysisTreeNode) -> Tuple[Dict[str, List[Tuple[float]]], float]:
-        lane_map = self.map
-        trace_length = len(list(node.trace.values())[0])
-
-        # For each agent
-        agent_guard_dict:Dict[str,List[GuardExpressionAst]] = {}
-
-        for agent_id in node.agent:
-            # Get guard
-            agent:BaseAgent = self.agent_dict[agent_id]
-            agent_mode = node.mode[agent_id]
-            # TODO-PARSER: update how we get all next modes
-            # The getNextModes function will return 
-            paths = agent.controller.getNextModes(agent_mode)
-            state_dict = {}
-            for tmp in node.agent:
-                state_dict[tmp] = (node.trace[tmp][0], node.mode[tmp])
-            cont_var_dict_template, discrete_variable_dict, len_dict = self.sensor.sense(self, agent, state_dict, self.map)
-            for path in paths:
-                guard_list = []
-                reset_list = []
-                for item in path:
-                    if isinstance(item, Guard):
-                        guard_list.append(item)
-                    elif isinstance(item, Reset):
-                        reset_list.append(item)
-                guard_expression = GuardExpressionAst(guard_list)
-
-                continuous_variable_updater = guard_expression.parse_any_all_new(cont_var_dict_template, discrete_variable_dict, len_dict)
-                if agent_id not in agent_guard_dict:
-                    agent_guard_dict[agent_id] = [(guard_expression, continuous_variable_updater, copy.deepcopy(discrete_variable_dict), reset_list)]
-                else:
-                    agent_guard_dict[agent_id].append((guard_expression, continuous_variable_updater, copy.deepcopy(discrete_variable_dict), reset_list))
-
-        transitions = {}
-        # TODO: We can probably rewrite how guard hit are detected and resets are handled for simulation
-        for idx in range(trace_length):
-            satisfied_guard = []
-            for agent_id in agent_guard_dict:
-                agent:BaseAgent = self.agent_dict[agent_id]
-                state_dict = {}
-                for tmp in node.agent:
-                    state_dict[tmp] = (node.trace[tmp][idx], node.mode[tmp])
-                agent_state, agent_mode = state_dict[agent_id]
-                agent_state = agent_state[1:]
-                continuous_variable_dict, _, _ = self.sensor.sense(self, agent, state_dict, self.map)
-                for guard_expression, continuous_variable_updater, discrete_variable_dict, reset_list in agent_guard_dict[agent_id]:
-                    new_cont_var_dict = copy.deepcopy(continuous_variable_dict)
-                    # new_disc_var_dict = copy.deepcopy(discrete_variable_dict)
-                    one_step_guard:GuardExpressionAst = copy.deepcopy(guard_expression)
-                    self.apply_cont_var_updater(new_cont_var_dict, continuous_variable_updater)
-                    # self.apply_disc_var_updater(new_disc_var_dict, discrete_variable_updater)
-                    guard_satisfied = one_step_guard.evaluate_guard(agent, new_cont_var_dict, discrete_variable_dict, self.map)
-                    if guard_satisfied:
-                        # If the guard can be satisfied, handle resets
-                        next_init = agent_state
-                        dest = copy.deepcopy(agent_mode)
-                        possible_dest = [[elem] for elem in dest]
-                        for reset in reset_list:
-                            # Specify the destination mode
-                            reset = reset.code
-                            if "mode" in reset:
-                                # TODO-PARSER: update how how we get the discrete_variables of ego
-                                for i, discrete_variable_ego in enumerate(agent.controller.vars_dict['ego']['disc']):
-                                    if discrete_variable_ego in reset:
-                                        break
-                                tmp = reset.split('=')
-                                if 'map' in tmp[1]:
-                                    tmp = tmp[1]
-                                    for var in discrete_variable_dict:
-                                        tmp = tmp.replace(var, f"'{discrete_variable_dict[var]}'")
-                                    res = eval(tmp)
-                                    if not isinstance(res, list):
-                                        res = [res]
-                                    possible_dest[i] = res 
-                                else:
-                                    tmp = tmp[1].split('.')
-                                    # TODO-PARSER: update how we access the modes
-                                    if tmp[0].strip(' ') in agent.controller.modes:
-                                        possible_dest[i] = [tmp[1]]                            
-                            else: 
-                                # TODO-PARSER: update how we get cont_variables
-                                for i, cts_variable in enumerate(agent.controller.vars_dict['ego']['cont']):
-                                    if "output."+cts_variable in reset:
-                                        break 
-                                tmp = reset.split('=')
-                                tmp = tmp[1]
-                                for cts_variable in continuous_variable_dict:
-                                    tmp = tmp.replace(cts_variable, str(continuous_variable_dict[cts_variable]))
-                                next_init[i] = eval(tmp)
-                        all_dest = list(itertools.product(*possible_dest))
-                        if not all_dest:
-                            warnings.warn(f"Guard hit for mode {agent_mode} for agent {agent_id} without available next mode")
-                            all_dest.append(None)
-                        for dest in all_dest:
-                            next_transition = (
-                                agent_id, agent_mode, dest, next_init, 
-                            )
-                            satisfied_guard.append(next_transition)
-            if satisfied_guard != []:
-                for agent_idx, src_mode, dest_mode, next_init in satisfied_guard:
-                    if agent_idx not in transitions:
-                        transitions[agent_idx] = [(agent_idx, src_mode, dest_mode, next_init, idx)]
-                    else:
-                        transitions[agent_idx].append((agent_idx, src_mode, dest_mode, next_init, idx))
-                break
-        return transitions, idx
-
 
     def get_transition_verify_new(self, node:AnalysisTreeNode):
         lane_map = self.map 

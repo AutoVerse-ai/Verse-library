@@ -10,9 +10,6 @@ class BallMode(Enum):
     Normal = auto()
     
 class State:
-    '''Defines the state variables of the model
-        Both discrete and continuous variables
-    '''
     x:float
     y = 0.0
     vx = 0.0
