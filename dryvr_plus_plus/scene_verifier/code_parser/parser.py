@@ -84,7 +84,7 @@ class ReductionType(Enum):
         }[self]
 
 @dataclass(unsafe_hash=True)
-class Reduction(ast.AST):
+class Reduction(ast.expr):
     """A simple reduction. Must be a reduction function (see `ReductionType`) applied to a generator
     with a single clause over a iterable"""
     op: ReductionType
@@ -168,6 +168,14 @@ class ControllerIR:
     controller: Lambda
     state_defs: Dict[str, StateDef]
     mode_defs: Dict[str, ModeDef]
+
+    @classmethod
+    def EmptyControllerIR(cls):
+        controller = Lambda(args = [('ego', 'State'),('others', 'State')], body = {})
+        state_defs = {'State':StateDef(cont=[], disc=[], static=[])}
+        mode_defs = {'NullMode':ModeDef(modes=['Null'])}
+        return cls(controller, state_defs, mode_defs)
+
 
     @staticmethod
     def parse(code: Optional[str] = None, fn: Optional[str] = None) -> "ControllerIR":

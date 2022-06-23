@@ -1,7 +1,8 @@
 # Example agent.
 from typing import Tuple, List
 
-import numpy as np 
+import numpy as np
+from pkg_resources import EmptyProvider 
 from scipy.integrate import ode
 
 from dryvr_plus_plus.scene_verifier.agents.base_agent import BaseAgent
@@ -11,10 +12,7 @@ from dryvr_plus_plus.scene_verifier.code_parser.parser import ControllerIR, Stat
 class NPCAgent(BaseAgent):
     def __init__(self, id):
         self.id = id
-        controller = Lambda(args = [('ego', 'State'),('others', 'State')], body = {})
-        state_defs = {'State':StateDef(cont=[], disc=[], static=[])}
-        mode_defs = {'NullMode':ModeDef(modes=['Null'])}
-        self.controller = ControllerIR(controller, state_defs, mode_defs)
+        self.controller:ControllerIR = ControllerIR.EmptyControllerIR()
 
     @staticmethod
     def dynamic(t, state, u):
