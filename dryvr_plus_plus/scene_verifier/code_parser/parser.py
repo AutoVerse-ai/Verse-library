@@ -1,4 +1,5 @@
 import ast, copy
+from types import NoneType
 from typing import List, Dict, Union, Optional, Any, Tuple
 from dataclasses import dataclass, field, fields
 from enum import Enum, auto
@@ -103,10 +104,22 @@ class Reduction:
 Reduction._fields = [f.name for f in fields(Reduction)]
 
 @dataclass
+class Assert:
+    cond: ast.expr
+    label: Optional[str]
+    pre: List[ast.expr] = field(default_factory=list)
+
+    def __eq__(self, o) -> bool:
+        if o == None:
+            return False
+        return len(self.pre) == len(o.pre) and all(ControllerIR.ir_eq(a, b) for a, b in zip(self.pre, o.pre)) and ControllerIR.ir_eq(self.cond, o.cond)
+
+@dataclass
 class Lambda:
     """A closure. Comes from either a `lambda` or a `def`ed function"""
     args: List[Tuple[str, Optional[str]]]
     body: Optional[ast.expr]
+    asserts: List[Assert]
 
     @staticmethod
     def from_ast(tree: Union[ast.FunctionDef, ast.Lambda], env: "Env") -> "Lambda":
@@ -131,27 +144,33 @@ class Lambda:
                 ret = proc(node, env)
         elif isinstance(tree, ast.Lambda):
             ret = proc(tree.body, env)
+        asserts = env.scopes[0].asserts
         env.pop()
         # assert ret != None, "Empty function"
-        return Lambda(args, ret)
+        return Lambda(args, ret, asserts)
 
     @staticmethod
     def empty() -> "Lambda":
-        return Lambda(args=[], body=ast.Constant({}))
+        return Lambda(args=[], body=ast.Constant({}), asserts=[])
 
-    def apply(self, args: List[ast.expr]) -> ast.expr:
+    def apply(self, args: List[ast.expr]) -> Tuple[List[Assert], ast.expr]:
         ret = copy.deepcopy(self.body)
-        return ArgSubstituter({k: v for (k, _), v in zip(self.args, args)}).visit(ret)
-
-@dataclass
-class Assert:
-    cond: ast.expr
-    label: Optional[str]
-    pre: List[ast.expr] = field(default_factory=list)
+        subst = ArgSubstituter({k: v for (k, _), v in zip(self.args, args)})
+        ret = subst.visit(ret)
+        def visit_assert(a: Assert):
+            a = copy.deepcopy(a)
+            pre = [subst.visit(p) for p in a.pre]
+            cond = subst.visit(a.cond)
+            return Assert(cond, a.label, pre)
+        asserts = [visit_assert(a) for a in self.asserts]
+        return asserts, ret
 
 ast_dump = lambda node, dump=False: ast.dump(node) if dump else astunparser.unparse(node)
 
-ScopeLevel = Dict[str, ScopeValue]
+@dataclass
+class ScopeLevel:
+    v: Dict[str, ScopeValue] = field(default_factory=dict)
+    asserts: List[Assert] = field(default_factory=list)
 
 class ArgSubstituter(ast.NodeTransformer):
     args: Dict[str, ast.expr]
@@ -168,7 +187,7 @@ class ArgSubstituter(ast.NodeTransformer):
 @dataclass
 class ControllerIR:
     controller: Lambda
-    unsafe: Lambda
+    unsafe: Optional[Lambda]
     asserts: List[Assert]
     state_defs: Dict[str, StateDef]
     mode_defs: Dict[str, ModeDef]
@@ -190,9 +209,11 @@ class ControllerIR:
         if isinstance(node, (ModeDef, StateDef)):
             return f"<{node}>"
         if isinstance(node, Lambda):
-            return f"<Lambda args: {node.args} body: {ControllerIR.dump(node.body, dump)}>"
+            return f"<Lambda args: {node.args} body: {ControllerIR.dump(node.body, dump)} asserts: {ControllerIR.dump(node.asserts, dump)}>"
         if isinstance(node, CondVal):
             return f"<CondVal{''.join(f' [{ControllerIR.dump(e.val, dump)} if {ControllerIR.dump(e.cond, dump)}]' for e in node.elems)}>"
+        if isinstance(node, Assert):
+            return f"<Assert {[ControllerIR.dump(a, dump) for a in node.pre]} => {ControllerIR.dump(node.cond, dump)}, \"{node.label}\">"
         if isinstance(node, ast.If):
             return f"<{{{ast_dump(node, dump)}}}>"
         if isinstance(node, Reduction):
@@ -213,8 +234,7 @@ class ControllerIR:
 class Env():
     state_defs: Dict[str, StateDef] = field(default_factory=dict)
     mode_defs: Dict[str, ModeDef] = field(default_factory=dict)
-    scopes: List[ScopeLevel] = field(default_factory=lambda: [{}])
-    asserts: List[Assert] = field(default_factory=list)
+    scopes: List[ScopeLevel] = field(default_factory=lambda: [ScopeLevel()])
 
     @staticmethod
     def parse(code: Optional[str] = None, fn: Optional[str] = None):
@@ -234,31 +254,39 @@ class Env():
         return env
 
     def push(self):
-        self.scopes = [{}] + self.scopes
+        self.scopes = [ScopeLevel()] + self.scopes
 
     def pop(self):
         self.scopes = self.scopes[1:]
 
     def lookup(self, key):
         for env in self.scopes:
-            if key in env:
-                return env[key]
+            if key in env.v:
+                return env.v[key]
         return None
 
     def set(self, key, val):
         for env in self.scopes:
-            if key in env:
-                env[key] = val
+            if key in env.v:
+                env.v[key] = val
                 return
-        self.scopes[0][key] = val
+        self.scopes[0].v[key] = val
 
     def add_hole(self, name: str):
         self.set(name, ast.arg(name, None))
 
+    def add_assert(self, expr, label):
+        self.scopes[0].asserts.append(Assert(expr, label))
+
     @staticmethod
     def dump_scope(env: ScopeLevel, dump=False):
         print("+++")
-        for k, node in env.items():
+        print(".asserts:")
+        for a in env.asserts:
+            pre = f"if {[astunparser.unparse(p) for p in a.pre]}" if a.pre != None else ""
+            label = ", \"{a.label}\"" if a.label != None else ""
+            print(f"  {pre}assert {astunparser.unparse(a.cond)}{label}")
+        for k, node in env.v.items():
             print(f"{k}: {ControllerIR.dump(node, dump)}")
         print("---")
 
@@ -301,21 +329,39 @@ class Env():
             return sv
 
     def to_ir(self):
-        top = self.scopes[0]
+        top = self.scopes[0].v
         assert fully_cond(top)
         if 'controller' not in top or not isinstance(top['controller'], Lambda):
             raise TypeError("can't find controller")
         controller = Env.trans_args(top['controller'])
-        unsafe = Env.trans_args(top['unsafe'])
-        assert isinstance(controller, Lambda) and isinstance(unsafe, Lambda)
-        return ControllerIR(controller, unsafe, self.asserts, self.state_defs, self.mode_defs)
+        unsafe = Env.trans_args(top['unsafe']) if 'unsafe' in top else None
+        assert isinstance(controller, Lambda) and isinstance(unsafe, (Lambda, NoneType))
+        return ControllerIR(controller, unsafe, self.scopes[0].asserts, self.state_defs, self.mode_defs)
+
+ScopeValueMap = Dict[str, ScopeValue]
 
 def merge_if(test: ast.expr, trues: Env, falses: Env, env: Env):
     # `true`, `false` and `env` should have the same level
     for true, false in zip(trues.scopes, falses.scopes):
-        merge_if_single(test, true, false, env)
+        merge_if_single(test, true.v, false.v, env)
+    env.scopes[0].asserts = merge_assert(test, trues.scopes[0].asserts, falses.scopes[0].asserts, env.scopes[0].asserts)
 
-def merge_if_single(test, true: ScopeLevel, false: ScopeLevel, scope: Union[Env, ScopeLevel]):
+def merge_assert(test: ast.expr, trues: List[Assert], falses: List[Assert], orig: List[Assert]):
+    def merge_cond(test, asserts):
+        for a in asserts:
+            a.pre.append(test)
+        return asserts
+    dbg("assert merge", ControllerIR.dump(trues), ControllerIR.dump(falses), ControllerIR.dump(orig))
+    for o in orig:
+        if o in trues:
+            trues.remove(o)
+        if o in falses:
+            falses.remove(o)
+    dbg("assert merge diff", ControllerIR.dump(trues), ControllerIR.dump(falses), ControllerIR.dump(orig))
+    m_trues, m_falses = merge_cond(test, trues), merge_cond(ast.UnaryOp(ast.Not(), test), falses)
+    return m_trues + m_falses + orig
+
+def merge_if_single(test, true: ScopeValueMap, false: ScopeValueMap, scope: Union[Env, ScopeValueMap]):
     dbg("merge if single", ControllerIR.dump(test), true.keys(), false.keys())
     def lookup(s, k):
         if isinstance(s, Env):
@@ -505,7 +551,7 @@ def proc(node: ast.AST, env: Env) -> Any:
     elif isinstance(node, ast.Assert):
         if not isinstance(node.msg, ast.Constant):
             raise NotImplementedError("dynamic string in assert")
-        env.asserts.append(Assert(proc(node.test, env), node.msg.s))
+        env.add_assert(proc(node.test, env), node.msg.s)
 
     # Expressions
     elif isinstance(node, ast.UnaryOp):
@@ -521,7 +567,9 @@ def proc(node: ast.AST, env: Env) -> Any:
     elif isinstance(node, ast.Call):
         fun = proc(node.func, env)
         if isinstance(fun, Lambda):
-            return fun.apply([proc(a, env) for a in node.args])
+            asserts, ret = fun.apply([proc(a, env) for a in node.args])
+            env.scopes[0].asserts.extend(asserts)
+            return ret
         if isinstance(fun, ast.arg):
             if fun.arg == "copy.deepcopy":
                 ret = None
@@ -575,7 +623,9 @@ if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("usage: parse.py <file.py>")
         sys.exit(1)
-    ir = Env.parse(fn=sys.argv[1]).to_ir()
+    e = Env.parse(fn=sys.argv[1])
+    e.dump()
+    ir = e.to_ir()
     print(ControllerIR.dump(ir.controller.body, False))
     for a in ir.asserts:
         print(f"assert {ControllerIR.dump(a.cond, False)}, '{a.label}'")
