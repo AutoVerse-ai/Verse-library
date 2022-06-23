@@ -6,12 +6,15 @@ from scipy.integrate import ode
 
 from dryvr_plus_plus.scene_verifier.agents.base_agent import BaseAgent
 from dryvr_plus_plus.scene_verifier.map.lane_map import LaneMap
-from dryvr_plus_plus.scene_verifier.code_parser.pythonparser import EmptyAst
+from dryvr_plus_plus.scene_verifier.code_parser.parser import ControllerIR, StateDef, ModeDef, Lambda
 
 class NPCAgent(BaseAgent):
     def __init__(self, id):
         self.id = id
-        self.controller = EmptyAst()
+        controller = Lambda(args = [('ego', 'State'),('others', 'State')], body = {})
+        state_defs = {'State':StateDef(cont=[], disc=[], static=[])}
+        mode_defs = {'NullMode':ModeDef(modes=['Null'])}
+        self.controller = ControllerIR(controller, state_defs, mode_defs)
 
     @staticmethod
     def dynamic(t, state, u):

@@ -3,9 +3,9 @@ from types import NoneType
 from typing import List, Dict, Union, Optional, Any, Tuple
 from dataclasses import dataclass, field, fields
 from enum import Enum, auto
-import astunparser
+import dryvr_plus_plus.scene_verifier.code_parser.astunparser as astunparser
 
-debug = True
+debug = False
 
 def dbg(msg, *rest):
     if not debug:
@@ -85,7 +85,7 @@ class ReductionType(Enum):
         }[self]
 
 @dataclass(unsafe_hash=True)
-class Reduction:
+class Reduction(ast.AST):
     """A simple reduction. Must be a reduction function (see `ReductionType`) applied to a generator
     with a single clause over a iterable"""
     op: ReductionType
@@ -100,6 +100,14 @@ class Reduction:
 
     def __repr__(self) -> str:
         return f"Reduction('{self.op}', expr={astunparser.unparse(self.expr)}, it='{self.it}', value={astunparser.unparse(self.value)})"
+
+    def __deepcopy__(self, memo):
+        cls = self.__class__ 
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            setattr(result, k, copy.deepcopy(v, memo))
+        return result
 
 Reduction._fields = [f.name for f in fields(Reduction)]
 
@@ -230,6 +238,29 @@ class ControllerIR:
         """Equality check on the "IR" nodes"""
         return ControllerIR.dump(a) == ControllerIR.dump(b)     # FIXME Proper equality checks; dump needed cuz asts are dumb
 
+    def getNextModes(self) -> List[Any]:
+        controller_body = self.controller.body 
+        paths = []
+        for variable in controller_body:
+            cond_val: CondVal = controller_body[variable]
+            for case in cond_val.elems:
+                val = case.val 
+                guard = case.cond
+                reset = (variable, val)
+                paths.append((guard, reset))
+        return paths 
+
+    @property 
+    def ego_type(self):
+        ego_type = None 
+        for tmp in self.controller.args:
+            if tmp[0] == 'ego':
+                ego_type = tmp[1]
+                break 
+        if ego_type is None:
+            raise ValueError('Ego not found')
+        return ego_type
+
 @dataclass
 class Env():
     state_defs: Dict[str, StateDef] = field(default_factory=dict)
@@ -301,12 +332,16 @@ class Env():
         """Finish up parsing to turn `ast.arg` placeholders into `ast.Name`s so that the trees can be easily evaluated later"""
         class ArgTransformer(ast.NodeTransformer):
             def visit_arg(self, node):
-                return ast.Name(node.arg, ctx=ast.Load())
+                if '.' in node.arg:
+                    cls_name, attr = node.arg.split('.')
+                    return ast.Attribute(value=ast.Name(id=cls_name, ctx=ast.Load()), attr = attr, ctx=ast.Load())
+                else:
+                    return ast.Name(node.arg, ctx=ast.Load())
 
-            def visit_Attribute(self, node):
-                if isinstance(node.value, ast.Name):
-                    return ast.Name(f"{node.value.id}.{node.attr}", ctx=ast.Load())
-                return node
+            # def visit_Attribute(self, node):
+            #     # if isinstance(node.value, ast.Name):
+            #     #     return ast.Name(f"{node.value.id}.{node.attr}", ctx=ast.Load())
+            #     return node
 
         if isinstance(sv, dict):
             for k, v in sv.items():
@@ -619,11 +654,15 @@ def proc(node: ast.AST, env: Env) -> Any:
         raise NotImplementedError(str(node.__class__))
 
 if __name__ == "__main__":
-    import sys
-    if len(sys.argv) != 2:
-        print("usage: parse.py <file.py>")
-        sys.exit(1)
-    e = Env.parse(fn=sys.argv[1])
+    # import sys
+    # if len(sys.argv) != 2:
+    #     print("usage: parse.py <file.py>")
+    #     sys.exit(1)
+    # fn = sys.argv[1]
+    fn = "./demo/example_controller8.py"
+    # fn = "./demo/example_two_car_sign_lane_switch.py"
+    e = Env.parse(fn=fn)
+    tmp = e.to_ir()
     e.dump()
     ir = e.to_ir()
     print(ControllerIR.dump(ir.controller.body, False))

@@ -33,33 +33,38 @@ class State:
     def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: LaneMode, type: LaneObjectMode):
         pass
 
-def controller(ego:State, others:List[State], lane_map):
+def car_front(ego, others, lane_map, thresh_far, thresh_close):
+    return any((lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) > thresh_close \
+            and lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) < thresh_far \
+            and ego.lane_mode == other.lane_mode) for other in others)
+
+def car_left(ego, others, lane_map):
+    return any((lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) < 8 and \
+                 lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) >-3 and \
+                 other.lane_mode==lane_map.left_lane(ego.lane_mode)) for other in others)
+
+def car_right(ego, others, lane_map):
+    return any((lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) < 8 and \
+                 lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) >-3 and \
+                 other.lane_mode==lane_map.right_lane(ego.lane_mode)) for other in others)
+
+def controller(ego:State, others:State, lane_map):
     output = copy.deepcopy(ego)
     if ego.vehicle_mode == VehicleMode.Normal:
         # Switch left if left lane is empty
-        if any((lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) > 3 \
-            and lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) < 5 \
-            and ego.lane_mode == other.lane_mode) for other in others):
+        if car_front(ego, others, lane_map, 5, 3):
             if lane_map.has_left(ego.lane_mode) and \
-             not any((lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) < 8 and \
-                 lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) >-3 and \
-                 other.lane_mode==lane_map.left_lane(ego.lane_mode)) for other in others):
+             not car_left(ego, others, lane_map):
                 output.vehicle_mode = VehicleMode.SwitchLeft
         
         # Switch right if right lane is empty
-        if any((lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) > 3 \
-            and lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) < 5 \
-            and ego.lane_mode == other.lane_mode) for other in others):
+        if car_front(ego, others, lane_map, 5, 3):
             if lane_map.has_right(ego.lane_mode) and \
-             not any((lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) < 8 and \
-                 lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) >-3 and \
-                 other.lane_mode==lane_map.right_lane(ego.lane_mode)) for other in others):
+             not car_right(ego, others, lane_map):
                 output.vehicle_mode = VehicleMode.SwitchRight
         
         # If really close just brake
-        if any((lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) < 3 \
-            and lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) > -0.5 \
-            and ego.lane_mode == other.lane_mode) for other in others):
+        if car_front(ego, others, lane_map, 3, -0.5):
                 output.vehicle_mode = VehicleMode.Stop 
                 output.v = 0.1
 
