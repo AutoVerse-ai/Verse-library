@@ -42,35 +42,35 @@ class State:
 
 
 if __name__ == "__main__":
-    input_code_name = './example_controller4.py'
+    input_code_name = './demo/example_controller4.py'
     scenario = Scenario()
 
     car = CarAgent('car1', file_name=input_code_name)
     scenario.add_agent(car)
     car = NPCAgent('car2')
     scenario.add_agent(car)
-    car = NPCAgent('car3')
-    scenario.add_agent(car)
-    car = NPCAgent('car4')
-    scenario.add_agent(car)
+    # car = NPCAgent('car3')
+    # scenario.add_agent(car)
+    # car = NPCAgent('car4')
+    # scenario.add_agent(car)
     tmp_map = SimpleMap3()
     scenario.set_map(tmp_map)
     scenario.set_init(
         [
             [[0, -0.2, 0, 1.0],[0.01, 0.2, 0, 1.0]],
             [[10, 0, 0, 0.5],[10, 0, 0, 0.5]], 
-            [[20, 3, 0, 0.5],[20, 3, 0, 0.5]], 
-            [[30, 0, 0, 0.5],[30, 0, 0, 0.5]], 
+            # [[20, 3, 0, 0.5],[20, 3, 0, 0.5]], 
+            # [[30, 0, 0, 0.5],[30, 0, 0, 0.5]], 
         ],
         [
             (VehicleMode.Normal, LaneMode.Lane1, LaneObjectMode.Vehicle),
             (VehicleMode.Normal, LaneMode.Lane1, LaneObjectMode.Vehicle),
-            (VehicleMode.Normal, LaneMode.Lane0, LaneObjectMode.Vehicle),
-            (VehicleMode.Normal, LaneMode.Lane1, LaneObjectMode.Vehicle),
+            # (VehicleMode.Normal, LaneMode.Lane0, LaneObjectMode.Vehicle),
+            # (VehicleMode.Normal, LaneMode.Lane1, LaneObjectMode.Vehicle),
         ]
     )
-    traces = scenario.simulate(70, 0.05)
-    # traces = scenario.verify(70, 0.05)
+    # traces = scenario.simulate(70, 0.05)
+    traces = scenario.verify(70, 0.05)
 
     # fig = plt.figure(2)
     # fig = plot_map(tmp_map, 'g', fig)

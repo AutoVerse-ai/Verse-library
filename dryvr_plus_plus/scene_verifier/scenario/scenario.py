@@ -2,9 +2,9 @@ from typing import Tuple, List, Dict, Any
 import copy
 import itertools
 import warnings
+from collections import defaultdict
 
 import numpy as np
-from sympy import Q
 
 from dryvr_plus_plus.scene_verifier.agents.base_agent import BaseAgent
 from dryvr_plus_plus.scene_verifier.automaton.guard import GuardExpressionAst
@@ -90,6 +90,7 @@ class Scenario:
     def verify(self, time_horizon, time_step):
         init_list = []
         init_mode_list = []
+        static_list = []
         agent_list = []
         for agent_id in self.agent_dict:
             init = self.init_dict[agent_id]
@@ -98,14 +99,36 @@ class Scenario:
                 init = [init, init]
             init_list.append(init)
             init_mode_list.append(self.init_mode_dict[agent_id])
+            static_list.append(self.static_dict[agent_id])
             agent_list.append(self.agent_dict[agent_id])
-        return self.verifier.compute_full_reachtube(init_list, init_mode_list, agent_list, self, time_horizon, time_step, self.map)
+        return self.verifier.compute_full_reachtube(init_list, init_mode_list, static_list, agent_list, self, time_horizon, time_step, self.map)
 
-    def apply_reset(self, agent, reset_list, all_agent_state) -> Tuple[str, np.ndarray]:
-        reset_expr = ResetExpression(reset_list)
-        continuous_variable_dict, discrete_variable_dict, _ = self.sensor.sense(self, agent, all_agent_state, self.map)
-        dest = reset_expr.get_dest(agent, all_agent_state[agent.id], discrete_variable_dict, self.map)
-        rect = reset_expr.apply_reset_continuous(agent, continuous_variable_dict, self.map)
+    def apply_reset(self, agent: BaseAgent, reset_list, all_agent_state) -> Tuple[str, np.ndarray]:
+        # reset_expr = ResetExpression(reset_list)
+        # continuous_variable_dict, discrete_variable_dict, _ = self.sensor.sense(self, agent, all_agent_state, self.map)
+        # dest = reset_expr.get_dest(agent, all_agent_state[agent.id], discrete_variable_dict, self.map)
+        # rect = reset_expr.apply_reset_continuous(agent, continuous_variable_dict, self.map)
+        # return dest, rect
+        dest = []
+        rect = []
+        
+        agent_state, agent_mode, agent_static = all_agent_state[agent.id]
+
+        # First get the transition destinations
+        dest = copy.deepcopy(agent_mode)
+        possible_dest = [[elem] for elem in dest]
+        ego_type = agent.controller.ego_type
+        for reset in reset_list:
+            reset_variable = reset.var
+            expr = reset.expr
+            if "mode" in reset_variable:
+                for var_loc, discrete_variable_ego in enumerate(agent.controller.state_defs[ego_type].disc):
+                    if discrete_variable_ego == reset_variable:
+                        break
+                if 'map' in expr:
+                    for var in discrete_variable_dict
+
+        # Then get the transition updated rect
         return dest, rect
 
     def apply_cont_var_updater(self,cont_var_dict, updater):
@@ -131,11 +154,11 @@ class Scenario:
             agent_mode = node.mode[agent_id]
             # TODO-PARSER: update how we get all next modes
             # The getNextModes function will return 
-            paths = agent.controller.getNextModes()
             state_dict = {}
             for tmp in node.agent:
                 state_dict[tmp] = (node.trace[tmp][0], node.mode[tmp], node.static[tmp])
             cont_var_dict_template, discrete_variable_dict, len_dict = self.sensor.sense(self, agent, state_dict, self.map)
+            paths = agent.controller.getNextModes()
             for path in paths:
                 guard_list = path[0]
                 reset = path[1]
@@ -251,16 +274,11 @@ class Scenario:
             
             cont_var_dict_template, discrete_variable_dict, length_dict = self.sensor.sense(self, agent, state_dict, self.map)
             # TODO-PARSER: Get equivalent for this function
-            paths = agent.controller.getNextModes(agent_mode)
+            paths = agent.controller.getNextModes()
             for path in paths:
                 # Construct the guard expression
-                guard_list = []
-                reset_list = []
-                for item in path:
-                    if isinstance(item, Guard):
-                        guard_list.append(item)
-                    elif isinstance(item, Reset):
-                        reset_list.append(item)
+                guard_list = path[0]
+                reset = path[1]
                 guard_expression = GuardExpressionAst(guard_list)
                 
                 cont_var_updater = guard_expression.parse_any_all_new(cont_var_dict_template, discrete_variable_dict, length_dict)
@@ -269,9 +287,9 @@ class Scenario:
                 if not guard_can_satisfied:
                     continue
                 if agent_id not in agent_guard_dict:
-                    agent_guard_dict[agent_id] = [(guard_expression, cont_var_updater, copy.deepcopy(discrete_variable_dict), reset_list)]
+                    agent_guard_dict[agent_id] = [(guard_expression, cont_var_updater, copy.deepcopy(discrete_variable_dict), reset)]
                 else:
-                    agent_guard_dict[agent_id].append((guard_expression, cont_var_updater, copy.deepcopy(discrete_variable_dict), reset_list))
+                    agent_guard_dict[agent_id].append((guard_expression, cont_var_updater, copy.deepcopy(discrete_variable_dict), reset))
 
         trace_length = int(len(list(node.trace.values())[0])/2)
         guard_hits = []
@@ -285,10 +303,11 @@ class Scenario:
             
             for agent_id in agent_guard_dict:
                 agent:BaseAgent = self.agent_dict[agent_id]
-                agent_state, agent_mode = state_dict[agent_id]
+                agent_state, agent_mode, agent_static = state_dict[agent_id]
                 agent_state = agent_state[1:]
                 continuous_variable_dict, _, _ = self.sensor.sense(self, agent, state_dict, self.map)
-                for guard_expression, continuous_variable_updater, discrete_variable_dict, reset_list in agent_guard_dict[agent_id]:
+                resets = defaultdict(list)
+                for guard_expression, continuous_variable_updater, discrete_variable_dict, reset in agent_guard_dict[agent_id]:
                     new_cont_var_dict = copy.deepcopy(continuous_variable_dict)
                     one_step_guard:GuardExpressionAst = copy.deepcopy(guard_expression)
 
@@ -298,8 +317,17 @@ class Scenario:
                         continue
                     guard_satisfied, is_contained = one_step_guard.evaluate_guard_cont(agent, new_cont_var_dict, self.map)
                     any_contained = any_contained or is_contained
+                    # TODO: Can we also store the cont and disc var dict so we don't have to call sensor again?
                     if guard_satisfied:
-                        hits.append((agent_id, guard_list, reset_list))
+                        reset_expr = ResetExpression(reset)
+                        resets[reset_expr.var].append(reset_expr)
+                # Perform combination over all possible resets to generate all possible real resets
+                combined_reset_list = list(itertools.product(*resets.values()))
+                if len(combined_reset_list)==1 and combined_reset_list[0]==():
+                    continue
+                for i in range(len(combined_reset_list)):
+                    # a list of reset expression
+                    hits.append((agent_id, guard_expression, combined_reset_list[i]))
             if hits != []:
                 guard_hits.append((hits, state_dict, idx))
                 guard_hit_bool = True 
@@ -312,6 +340,7 @@ class Scenario:
         reset_idx_dict = {}
         for hits, all_agent_state, hit_idx in guard_hits:
             for agent_id, guard_list, reset_list in hits:
+                # TODO: Need to change this function to handle the new reset expression and then I am done 
                 dest_list,reset_rect = self.apply_reset(node.agent[agent_id], reset_list, all_agent_state)
                 if agent_id not in reset_dict:
                     reset_dict[agent_id] = {}

@@ -13,6 +13,7 @@ from dryvr_plus_plus.scene_verifier.map.lane_map import LaneMap
 from dryvr_plus_plus.scene_verifier.map.lane_segment import AbstractLane
 from dryvr_plus_plus.scene_verifier.utils.utils import *
 from dryvr_plus_plus.scene_verifier.code_parser.parser import Reduction, ReductionType
+from dryvr_plus_plus.scene_verifier.agents.base_agent import BaseAgent
 
 class LogicTreeNode:
     def __init__(self, data, child = [], val = None, mode_guard = None):
@@ -108,7 +109,7 @@ class GuardExpressionAst:
         # Therefore we are not be able to get free symbols from it
         # Thus we need to replace "==" to something else
 
-        symbols_map = {v: k for k, v in self.cont_variables.items()}
+        symbols_map = {v: k for k, v in self.cont_variables.items() if k in guard_str}
 
         for vars in reversed(self.cont_variables):
             guard_str = guard_str.replace(vars, self.cont_variables[vars])
@@ -502,7 +503,7 @@ class GuardExpressionAst:
             res = res and tmp 
         return res
             
-    def _evaluate_guard_disc(self, root, agent, disc_var_dict, cont_var_dict, lane_map):
+    def _evaluate_guard_disc(self, root, agent:BaseAgent, disc_var_dict, cont_var_dict, lane_map):
         """
         Recursively called function to evaluate guard with only discrete variables
         The function will evaluate all guards with discrete variables and replace the nodes with discrete guards by
@@ -578,9 +579,9 @@ class GuardExpressionAst:
                         root = ast.parse('False').body[0].value    
                 else:
                     # TODO-PARSER: Handle This
-                    for mode_name in agent.controller.modes:
+                    for mode_name in agent.controller.mode_defs:
                         # TODO-PARSER: Handle This
-                        if res in agent.controller.modes[mode_name]:
+                        if res in agent.controller.mode_defs[mode_name].modes:
                             res = mode_name+'.'+res
                             break
                     root = ast.parse(str(res)).body[0].value
@@ -593,14 +594,14 @@ class GuardExpressionAst:
             if expr in disc_var_dict:
                 val = disc_var_dict[expr]
                 # TODO-PARSER: Handle This
-                for mode_name in agent.controller.modes:
+                for mode_name in agent.controller.mode_defs:
                     # TODO-PARSER: Handle This
-                    if val in agent.controller.modes[mode_name]:
+                    if val in agent.controller.mode_defs[mode_name].modes:
                         val = mode_name+'.'+val
                         break
                 return val, root
             # TODO-PARSER: Handle This
-            elif root.value.id in agent.controller.modes:
+            elif root.value.id in agent.controller.mode_defs:
                 return expr, root
             else:
                 return True, root
@@ -622,9 +623,9 @@ class GuardExpressionAst:
             if expr in disc_var_dict:
                 val = disc_var_dict[expr]
                 # TODO-PARSER: Handle This
-                for mode_name in agent.controller.modes:
+                for mode_name in agent.controller.mode_defs:
                     # TODO-PARSER: Handle This
-                    if val in agent.controller.modes[mode_name]:
+                    if val in agent.controller.mode_defs[mode_name].modes:
                         val = mode_name + '.' + val 
                         break 
                 return val, root
