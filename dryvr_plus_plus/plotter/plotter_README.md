@@ -5,8 +5,8 @@ Now the latest version is placed in plotter2D_new.py. All functions in the plott
 ## Current work & Todo
 - **Animation with trails** supported in test_simu_anime() and will be tested further.
 - **Modified accelerating mode** modified, will be tested
-- **new quadrotor agent**
-- **different color for segments of trace** ongoing. Color choice ?
+- **new quadrotor agent** next
+- **different color for segments of trace** done.
 
 ## Functions
 Belows are the functions currently used. Some of the functions in the file are deprecated.

@@ -21,7 +21,21 @@ from collections import OrderedDict
 from torch import layout
 from dryvr_plus_plus.scene_verifier.analysis.analysis_tree_node import AnalysisTreeNode
 
-colors = ['red', 'green', 'blue', 'yellow', 'black']
+colors = [['#CC0000', '#FF0000', '#FF3333', '#FF6666', '#FF9999'],
+          ['#CC6600', '#FF8000', '#FF9933', '#FFB266', '#FFCC99'],
+          ['#CCCC00', '#FFFF00', '#FFFF33', '#FFFF66', '#FFFF99'],
+          ['#66CC00', '#80FF00', '#99FF33', '#B2FF66', '#CCFF99'],
+          ['#00CC00', '#00FF00', '#33FF33', '#66FF66', '#99FF99'],
+          ['#00CC66', '#00FF80', '#33FF99', '#66FFB2', '#99FFCC'],
+          ['#00CCCC', '#00FFFF', '#33FFFF', '#66FFFF', '#99FFFF'],
+          ['#0066CC', '#0080FF', '#3399FF', '#66B2FF', '#99CCFF'],
+          ['#0000CC', '#0000FF', '#3333FF', '#6666FF', '#9999FF'],
+          ['#6600CC', '#7F00FF', '#9933FF', '#B266FF', '#CC99FF'],
+          ['#CC00CC', '#FF00FF', '#FF33FF', '#FF66FF', '#FF99FF'],
+          ['#CC0066', '#FF007F', '#FF3399', '#FF66B2', '#FF99CC']
+          ]
+scheme_dict = {'red': 0, 'orange': 1, 'yellow': 2, 'yellowgreen': 3, 'lime': 4,
+               'springgreen': 5, 'cyan': 6, 'cyanblue': 7, 'blue': 8, 'purple': 9, 'magenta': 10, 'pink': 11}
 bg_color = ['rgba(31,119,180,1)', 'rgba(255,127,14,0.2)', 'rgba(44,160,44,0.2)', 'rgba(214,39,40,0.2)', 'rgba(148,103,189,0.2)',
             'rgba(140,86,75,0.2)', 'rgba(227,119,194,0.2)', 'rgba(127,127,127,0.2)', 'rgba(188,189,34,0.2)', 'rgba(23,190,207,0.2)']
 color_cnt = 0
@@ -577,15 +591,14 @@ def draw_simulation_tree(root, map=None, fig=None, x_dim: int = 1, y_dim=2, map_
     return fig
 
 
-def draw_simulation_tree_single(root: AnalysisTreeNode, agent_id, fig: go.Figure() = go.Figure(), x_dim: int = 1, y_dim: int = 2, color_id=None, map_type='lines'):
-    global color_cnt, bg_color
-    fig = draw_map(map=map, fig=fig, fill_type=map_type)
-    if color_id is None:
-        color_id = color_cnt
-    fg_color = ['rgb(31,119,180)', 'rgb(255,127,14)', 'rgb(44,160,44)', 'rgb(214,39,40)', 'rgb(148,103,189)',
-                'rgb(140,86,75)', 'rgb(227,119,194)', 'rgb(127,127,127)', 'rgb(188,189,34)', 'rgb(23,190,207)']
+def draw_simulation_tree_single(root: AnalysisTreeNode, agent_id, fig: go.Figure() = go.Figure(), x_dim: int = 1, y_dim: int = 2, color=None, map_type='lines'):
+    global color_cnt
+    # fig = draw_map(map=map, fig=fig, fill_type=map_type)
     queue = [root]
-
+    color_id = 0
+    if color == None:
+        color = list(scheme_dict.keys())[color_cnt]
+        color_cnt = (color_cnt+1) % 12
     while queue != []:
         node = queue.pop(0)
         traces = node.trace
@@ -609,13 +622,13 @@ def draw_simulation_tree_single(root: AnalysisTreeNode, agent_id, fig: go.Figure
         #                          showlegend=False))
         fig.add_trace(go.Scatter(x=trace[:, x_dim], y=trace[:, y_dim],
                                  mode='lines',
-                                 line_color=fg_color[color_id],
+                                 line_color=colors[scheme_dict[color]
+                                                   ][color_id],
                                  text=[('{:.2f}'.format(trace[i, x_dim]), '{:.2f}'.format(
                                      trace[i, y_dim])) for i in range(len(trace))],
                                  name='lines'))
-        color_id = (color_id+1) % 10
+        color_id = (color_id+1) % 5
         queue += node.child
-    color_cnt = color_id
     return fig
 
 
@@ -1141,15 +1154,15 @@ def general_simu_anime(root, map=None, fig=None, x_dim: int = 1, y_dim=2, map_ty
             trace_x = trace[:, x_dim].tolist()
             # theta = [i/pi*180 for i in trace[:, 3]]
             i = agent_list.index(agent_id)
-            color = colors[i % 5]
-            fig.add_trace(go.Scatter(x=trace[:, x_dim], y=trace[:, y_dim],
-                                     mode='lines',
-                                     line_color=color,
-                                     text=[('{:.2f}'.format(trace_x[i]), '{:.2f}'.format(
-                                         trace_y[i])) for i in range(len(trace_x))],
-                                     showlegend=False)
-                          #  name='lines')
-                          )
+            # color = colors[i % 5]
+            # fig.add_trace(go.Scatter(x=trace[:, x_dim], y=trace[:, y_dim],
+            #                          mode='lines',
+            #                          line_color=color,
+            #                          text=[('{:.2f}'.format(trace_x[i]), '{:.2f}'.format(
+            #                              trace_y[i])) for i in range(len(trace_x))],
+            #                          showlegend=False)
+            #               #  name='lines')
+            #               )
             if previous_mode[agent_id] != node.mode[agent_id]:
                 veh_mode = node.mode[agent_id][0]
                 if veh_mode == 'Normal':
@@ -1415,56 +1428,56 @@ def test_simu_anime(root, map=None, fig=None, x_dim: int = 1, y_dim=2, map_type=
         previous_mode[agent_id] = []
         agent_list.append(agent_id)
     text_pos = 'middle center'
-    # while queue != []:
-    #     node = queue.pop(0)
-    #     traces = node.trace
-    #     # print(node.mode)
-    #     # [[time,x,y,theta,v]...]
-    #     i = 0
-    #     for agent_id in traces:
-    #         trace = np.array(traces[agent_id])
-    #         # print(trace)
-    #         trace_y = trace[:, y_dim].tolist()
-    #         trace_x = trace[:, x_dim].tolist()
-    #         # theta = [i/pi*180 for i in trace[:, 3]]
-    #         i = agent_list.index(agent_id)
-    #         color = colors[i % 5]
-    #         fig.add_trace(go.Scatter(x=trace[:, x_dim], y=trace[:, y_dim],
-    #                                  mode='lines',
-    #                                  line_color=color,
-    #                                  text=[('{:.2f}'.format(trace_x[i]), '{:.2f}'.format(
-    #                                      trace_y[i])) for i in range(len(trace_x))],
-    #                                  showlegend=False)
-    #                       #  name='lines')
-    #                       )
-    #         if previous_mode[agent_id] != node.mode[agent_id]:
-    #             veh_mode = node.mode[agent_id][0]
-    #             if veh_mode == 'Normal':
-    #                 text_pos = 'middle center'
-    #             elif veh_mode == 'Brake':
-    #                 text_pos = 'middle left'
-    #             elif veh_mode == 'Accelerate':
-    #                 text_pos = 'middle right'
-    #             elif veh_mode == 'SwitchLeft':
-    #                 text_pos = 'top center'
-    #             elif veh_mode == 'SwitchRight':
-    #                 text_pos = 'bottom center'
+    while queue != []:
+        node = queue.pop(0)
+        traces = node.trace
+        # print(node.mode)
+        # [[time,x,y,theta,v]...]
+        i = 0
+        for agent_id in traces:
+            trace = np.array(traces[agent_id])
+            # print(trace)
+            trace_y = trace[:, y_dim].tolist()
+            trace_x = trace[:, x_dim].tolist()
+            # theta = [i/pi*180 for i in trace[:, 3]]
+            i = agent_list.index(agent_id)
+            # color = colors[i % 5]
+            # fig.add_trace(go.Scatter(x=trace[:, x_dim], y=trace[:, y_dim],
+            #                          mode='lines',
+            #                          line_color=color,
+            #                          text=[('{:.2f}'.format(trace_x[i]), '{:.2f}'.format(
+            #                              trace_y[i])) for i in range(len(trace_x))],
+            #                          showlegend=False)
+            #               #  name='lines')
+            #               )
+            if previous_mode[agent_id] != node.mode[agent_id]:
+                veh_mode = node.mode[agent_id][0]
+                if veh_mode == 'Normal':
+                    text_pos = 'middle center'
+                elif veh_mode == 'Brake':
+                    text_pos = 'middle left'
+                elif veh_mode == 'Accelerate':
+                    text_pos = 'middle right'
+                elif veh_mode == 'SwitchLeft':
+                    text_pos = 'top center'
+                elif veh_mode == 'SwitchRight':
+                    text_pos = 'bottom center'
 
-    #             fig.add_trace(go.Scatter(x=[trace[0, x_dim]], y=[trace[0, y_dim]],
-    #                                      mode='markers+text',
-    #                                      line_color='rgba(255,255,255,0.3)',
-    #                                      text=str(agent_id)+': ' +
-    #                                      str(node.mode[agent_id][0]),
-    #                                      textposition=text_pos,
-    #                                      textfont=dict(
-    #                 #  family="sans serif",
-    #                 size=10,
-    #                                          color="grey"),
-    #                                      showlegend=False,
-    #                                      ))
-    #             # i += 1
-    #             previous_mode[agent_id] = node.mode[agent_id]
-    #     queue += node.child
+                fig.add_trace(go.Scatter(x=[trace[0, x_dim]], y=[trace[0, y_dim]],
+                                         mode='markers+text',
+                                         line_color='rgba(255,255,255,0.3)',
+                                         text=str(agent_id)+': ' +
+                                         str(node.mode[agent_id][0]),
+                                         textposition=text_pos,
+                                         textfont=dict(
+                    #  family="sans serif",
+                    size=10,
+                                             color="grey"),
+                                         showlegend=False,
+                                         ))
+                # i += 1
+                previous_mode[agent_id] = node.mode[agent_id]
+        queue += node.child
     fig.update_traces(showlegend=False)
     scale_factor = 0.5
     if scale_type == 'trace':
