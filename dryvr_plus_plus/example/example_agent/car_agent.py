@@ -90,6 +90,8 @@ class CarAgent(BaseAgent):
         elif vehicle_mode == 'Stop':
             d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
             a = 0
+        else:
+            raise ValueError(f'Invalid mode: {vehicle_mode}')
         psi = lane_map.get_lane_heading(vehicle_lane, vehicle_pos)-theta
         steering = psi + np.arctan2(0.45*d, v)
         steering = np.clip(steering, -0.61, 0.61)

@@ -104,32 +104,88 @@ class Scenario:
         return self.verifier.compute_full_reachtube(init_list, init_mode_list, static_list, agent_list, self, time_horizon, time_step, self.map)
 
     def apply_reset(self, agent: BaseAgent, reset_list, all_agent_state) -> Tuple[str, np.ndarray]:
-        # reset_expr = ResetExpression(reset_list)
-        # continuous_variable_dict, discrete_variable_dict, _ = self.sensor.sense(self, agent, all_agent_state, self.map)
-        # dest = reset_expr.get_dest(agent, all_agent_state[agent.id], discrete_variable_dict, self.map)
-        # rect = reset_expr.apply_reset_continuous(agent, continuous_variable_dict, self.map)
-        # return dest, rect
+        lane_map = self.map
         dest = []
         rect = []
         
         agent_state, agent_mode, agent_static = all_agent_state[agent.id]
 
-        # First get the transition destinations
         dest = copy.deepcopy(agent_mode)
         possible_dest = [[elem] for elem in dest]
         ego_type = agent.controller.ego_type
-        for reset in reset_list:
+        rect = copy.deepcopy([agent_state[0][1:], agent_state[1][1:]])
+
+        # The reset_list here are all the resets for a single transition. Need to evaluate each of them
+        # and then combine them together 
+        for reset_tuple in reset_list:
+            reset, disc_var_dict, cont_var_dict = reset_tuple
             reset_variable = reset.var
             expr = reset.expr
+            # First get the transition destinations
             if "mode" in reset_variable:
                 for var_loc, discrete_variable_ego in enumerate(agent.controller.state_defs[ego_type].disc):
                     if discrete_variable_ego == reset_variable:
                         break
-                if 'map' in expr:
-                    for var in discrete_variable_dict
+                tmp = expr.split('.')
+                if 'map' in tmp[0]:
+                    for var in disc_var_dict:
+                        expr = expr.replace(var, f"'{disc_var_dict[var]}'")
+                    res = eval(expr)
+                    if not isinstance(res, list):
+                        res = [res]
+                    possible_dest[var_loc] = res
+                else:
+                    expr = tmp
+                    if expr[0].strip(' ') in agent.controller.mode_defs:
+                        possible_dest[var_loc] = [expr[1]] 
+            # Assume linear function for continuous variables
+            else: 
+                lhs = reset_variable 
+                rhs = expr 
+                for lhs_idx, cts_variable in enumerate(agent.controller.state_defs[agent.controller.ego_type].cont):
+                    if "output."+cts_variable == lhs:
+                        break 
+                # substituting low variables                
 
-        # Then get the transition updated rect
+                symbols = [] 
+                for var in cont_var_dict:
+                    if var in expr:
+                        symbols.append(var)
+
+                # TODO: Implement this function
+                # The input to this function is a list of used symbols and the cont_var_dict
+                # The ouput of this function is a list of tuple of values for each variable in the symbols list
+                # The function will explor all possible combinations of low bound and upper bound for the variables in the symbols list
+                comb_list = self._get_combinations(symbols, cont_var_dict)
+
+                lb = float('inf')
+                ub = -float('inf')
+
+                for comb in comb_list:
+                    val_dict = {}
+                    tmp = copy.deepcopy(expr)
+                    for symbol_idx,symbol in enumerate(symbols):
+                        tmp = tmp.replace(symbol, str(comb[symbol_idx]))
+                    res = eval(tmp, {}, val_dict)
+                    lb = min(lb, res)
+                    ub = max(ub, res)
+
+                rect[0][lhs_idx] = lb 
+                rect[1][lhs_idx] = ub
+
+        all_dest = itertools.product(*possible_dest)
+        dest = []
+        for tmp in all_dest:
+            dest.append(tmp)
+
         return dest, rect
+
+    def _get_combinations(self, symbols, cont_var_dict):
+        data_list = []
+        for symbol in symbols:
+            data_list.append(cont_var_dict[symbol])
+        comb_list = list(itertools.product(*data_list))
+        return comb_list
 
     def apply_cont_var_updater(self,cont_var_dict, updater):
         for variable in updater:
@@ -320,7 +376,7 @@ class Scenario:
                     # TODO: Can we also store the cont and disc var dict so we don't have to call sensor again?
                     if guard_satisfied:
                         reset_expr = ResetExpression(reset)
-                        resets[reset_expr.var].append(reset_expr)
+                        resets[reset_expr.var].append((reset_expr, discrete_variable_dict, new_cont_var_dict))
                 # Perform combination over all possible resets to generate all possible real resets
                 combined_reset_list = list(itertools.product(*resets.values()))
                 if len(combined_reset_list)==1 and combined_reset_list[0]==():

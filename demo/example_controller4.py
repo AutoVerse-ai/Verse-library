@@ -38,17 +38,21 @@ def controller(ego:State, others:State, lane_map):
         if any((other.x-ego.x > 3 and other.x-ego.x < 5 and ego.lane_mode == other.lane_mode and other.type_mode==LaneObjectMode.Vehicle) for other in others):
             if lane_map.has_left(ego.lane_mode):
                 output.vehicle_mode = VehicleMode.SwitchLeft
+                output.x = ego.x
         if any((other.x-ego.x > 3 and other.x-ego.x < 5 and ego.lane_mode == other.lane_mode) for other in others):
             if lane_map.has_right(ego.lane_mode):
                 output.vehicle_mode = VehicleMode.SwitchRight
+                output.x = ego.x
     if ego.vehicle_mode == VehicleMode.SwitchLeft:
         if  lane_map.get_lateral_distance(ego.lane_mode, [ego.x, ego.y]) >= 2.5:
             output.vehicle_mode = VehicleMode.Normal
             output.lane_mode = lane_map.left_lane(ego.lane_mode)
+            output.x = ego.x
     if ego.vehicle_mode == VehicleMode.SwitchRight:
         if lane_map.get_lateral_distance(ego.lane_mode, [ego.x, ego.y]) <= -2.5:
             output.vehicle_mode = VehicleMode.Normal
             output.lane_mode = lane_map.right_lane(ego.lane_mode)
+            output.x = ego.x
 
     return output
 
