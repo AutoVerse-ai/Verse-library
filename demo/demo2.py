@@ -2,6 +2,7 @@ from dryvr_plus_plus.example.example_agent.car_agent import CarAgent
 from dryvr_plus_plus.scene_verifier.scenario.scenario import Scenario
 from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap2, SimpleMap3, SimpleMap5, SimpleMap6
 from dryvr_plus_plus.plotter.plotter2D import *
+from dryvr_plus_plus.plotter.plotter2D_new import *
 from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor2
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt
@@ -82,9 +83,9 @@ if __name__ == "__main__":
     # fig = plotly_reachtube_tree_v2(traces, 'car1', 1, [2], 'blue', fig)
     # fig = plotly_reachtube_tree_v2(traces, 'car2', 1, [2], 'red', fig)
     # fig.show()
-    traces = scenario.verify(20)
+    traces = scenario.simulate(20)
     fig = go.Figure()
-    fig = generate_reachtube_anime(traces, tmp_map, fig)
+    fig = test_simu_anime(traces, tmp_map, fig, 1, 2, 'lines')
     # fig = plotly_simulation_anime(traces, tmp_map, fig)
     # # fig = plotly_reachtube_tree_v2(traces, 'car2', 1, [2], 'red', fig)
     fig.show()

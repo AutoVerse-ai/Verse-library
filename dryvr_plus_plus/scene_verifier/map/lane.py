@@ -8,9 +8,10 @@ from dryvr_plus_plus.scene_verifier.map.lane_segment import AbstractLane
 class Lane():
     COMPENSATE = 3
 
-    def __init__(self, id, seg_list: List[AbstractLane]):
+    def __init__(self, id, seg_list: List[AbstractLane], speed_limit=None):
         self.id = id
         self.segment_list: List[AbstractLane] = seg_list
+        self.speed_limit = speed_limit
         self._set_longitudinal_start()
 
     def _set_longitudinal_start(self):
@@ -46,8 +47,10 @@ class Lane():
         longitudinal, lateral = segment.local_coordinates(position)
         return lateral
 
-    def get_speed_limit(self, position: np.ndarray) -> float:
+    def get_speed_limit_old(self, position: np.ndarray) -> float:
         seg_idx, segment = self.get_lane_segment(position)
         longitudinal, lateral = segment.local_coordinates(position)
         return segment.speed_limit_at(longitudinal)
 
+    def get_speed_limit(self):
+        return self.speed_limit

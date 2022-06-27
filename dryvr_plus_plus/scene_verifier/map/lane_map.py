@@ -95,11 +95,23 @@ class LaneMap:
         seg_idx, segment = lane.get_lane_segment(position)
         return segment
 
-    def get_speed_limit(self, lane_idx: str, position: np.ndarray) -> AbstractLane:
+    def get_speed_limit_old(self, lane_idx: str, position: np.ndarray) -> float:
         if not isinstance(position, np.ndarray):
             position = np.array(position)
         lane = self.lane_dict[lane_idx]
-        limit = lane.get_speed_limit(position)
+        limit = lane.get_speed_limit_old(position)
         # print(limit)
         # print(position)
         return limit
+
+    def get_speed_limit(self, lane_idx: str) -> float:
+        lane = self.lane_dict[lane_idx]
+        print(lane.get_speed_limit())
+        return lane.get_speed_limit()
+
+    def get_all_speed_limit(self) -> Dict[str, float]:
+        ret_dict = {}
+        for lane_idx, lane in self.lane_dict.items():
+            ret_dict[lane_idx] = lane.get_speed_limit()
+        print(ret_dict)
+        return ret_dict

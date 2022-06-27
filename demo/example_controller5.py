@@ -55,7 +55,7 @@ def controller(ego: State, other: State, sign: State, lane_map: LaneMap):
         #     output.vehicle_mode = VehicleMode.Accelerate
         # if lane_map.get_longitudinal_position(other.lane_mode, [other.x, other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x, ego.y]) > 5:
         #     output.vehicle_mode = VehicleMode.Accelerate
-        if lane_map.get_speed_limit(ego.lane_mode, [ego.x, ego.y]) > 1:
+        if lane_map.get_speed_limit(ego.lane_mode) > 1:
             output.vehicle_mode = VehicleMode.Accelerate
 
     if ego.vehicle_mode == VehicleMode.SwitchLeft:

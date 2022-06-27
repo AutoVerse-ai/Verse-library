@@ -1,7 +1,7 @@
 from dryvr_plus_plus.example.example_agent.car_agent import CarAgent, NPCAgent
 from dryvr_plus_plus.scene_verifier.scenario.scenario import Scenario
 from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap2, SimpleMap3, SimpleMap5, SimpleMap6
-from dryvr_plus_plus.plotter.plotter2D import *
+from dryvr_plus_plus.plotter.plotter2D_new import *
 from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor2
 
 import matplotlib.pyplot as plt
@@ -75,6 +75,6 @@ if __name__ == "__main__":
     fig = go.Figure()
     for traces in res_list:
         # plotly_map(tmp_map, 'g', fig)
-        fig = plotly_simulation_tree(traces, 'car2', 1, [2], 'r', fig)
+        fig = test_simu_anime(traces, tmp_map, fig, 1, 2, 'lines')
         # fig = plotly_simulation_anime(traces, tmp_map, fig)
     fig.show()
