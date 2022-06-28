@@ -1,11 +1,11 @@
-from dryvr_plus_plus.example.example_agent.car_agent import CarAgent
+from dryvr_plus_plus.example.example_agent.car_agent import CarAgent, NPCAgent
 from dryvr_plus_plus.scene_verifier.scenario.scenario import Scenario
 from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap2, SimpleMap3, SimpleMap5, SimpleMap6
-from dryvr_plus_plus.plotter.plotter2D import *
-from dryvr_plus_plus.plotter.plotter2D_new import *
 from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor2
+from enum import Enum, auto
 import plotly.graph_objects as go
-# import matplotlib.pyplot as plt
+from dryvr_plus_plus.plotter.plotter2D_new import *
+
 
 import numpy as np
 from enum import Enum, auto
@@ -58,8 +58,7 @@ if __name__ == "__main__":
         ]
     )
 
-    traces = scenario.simulate(30)
+    traces = scenario.simulate(30, 0.05)
     fig = go.Figure()
     fig = test_simu_anime(traces, tmp_map, fig, 1, 2, 'lines')
     fig.show()
-
