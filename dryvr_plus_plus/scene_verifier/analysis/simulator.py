@@ -7,6 +7,7 @@ import numpy as np
 from dryvr_plus_plus.scene_verifier.agents.base_agent import BaseAgent
 from dryvr_plus_plus.scene_verifier.analysis.analysis_tree_node import AnalysisTreeNode
 
+
 class Simulator:
     def __init__(self):
         self.simulation_tree_root = None
@@ -19,7 +20,7 @@ class Simulator:
             mode={},
             agent={},
             child=[],
-            start_time = 0,
+            start_time=0,
         )
         for i, agent in enumerate(agent_list):
             root.init[agent.id] = init_list[i]
@@ -41,6 +42,7 @@ class Simulator:
             for agent_id in node.agent:
                 if agent_id not in node.trace:
                     # Simulate the trace starting from initial condition
+                    # [time, x, y, theta, v]
                     mode = node.mode[agent_id]
                     init = node.init[agent_id]
                     trace = node.agent[agent_id].TC_simulate(mode, init, remain_time, time_step, lane_map)
@@ -53,8 +55,10 @@ class Simulator:
             if not transitions:
                 continue
 
+
             # truncate the computed trajectories from idx and store the content after truncate
             truncated_trace = {}
+            print("idx", idx)
             for agent_idx in node.agent:
                 truncated_trace[agent_idx] = node.trace[agent_idx][transition_idx:]
                 node.trace[agent_idx] = node.trace[agent_idx][:transition_idx+1]
@@ -63,9 +67,10 @@ class Simulator:
             transition_list = list(transitions.values())
             all_transition_combinations = itertools.product(*transition_list)
 
-            # For each possible transition, construct the new node. 
+            # For each possible transition, construct the new node.
             # Obtain the new initial condition for agent having transition
             # copy the traces that are not under transition
+
             for transition_combination in all_transition_combinations:
                 next_node_mode = copy.deepcopy(node.mode) 
                 next_node_agent = node.agent 
@@ -82,15 +87,15 @@ class Simulator:
                 for agent_idx in next_node_agent:
                     if agent_idx not in next_node_init:
                         next_node_trace[agent_idx] = truncated_trace[agent_idx]
-                    
+
                 tmp = AnalysisTreeNode(
-                    trace = next_node_trace,
-                    init = next_node_init,
-                    mode = next_node_mode,
-                    agent = next_node_agent,
-                    child = [],
-                    start_time = next_node_start_time,
-                    type = 'simtrace'
+                    trace=next_node_trace,
+                    init=next_node_init,
+                    mode=next_node_mode,
+                    agent=next_node_agent,
+                    child=[],
+                    start_time=next_node_start_time,
+                    type='simtrace'
                 )
                 node.child.append(tmp)
                 simulation_queue.append(tmp)
