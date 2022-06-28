@@ -23,7 +23,6 @@ from dryvr_plus_plus.scene_verifier.analysis.analysis_tree_node import AnalysisT
 
 colors = ['red', 'green', 'blue', 'yellow', 'black']
 
-
 def plotly_plot(data,
                 x_dim: int = 0,
                 y_dim_list: List[int] = [1],
@@ -59,7 +58,6 @@ def plotly_plot(data,
     # fig.update_xaxes(range=[x_min-1, x_max+1], showgrid=False)
     # fig.update_yaxes(range=[y_min-1, y_max+1])
     return fig, (x_min, x_max), (y_min, y_max)
-
 
 def plot(
     data,
@@ -557,13 +555,36 @@ def plot_reachtube_tree(root, agent_id, x_dim: int = 0, y_dim_list: List[int] = 
         trace = traces[agent_id]
         # print(trace)
         data = []
+
         for i in range(0, len(trace)-1, 2):
             data.append([trace[i], trace[i+1]])
         fig, x_lim, y_lim = plot(
             data, x_dim, y_dim_list, color, fig, x_lim, y_lim)
-        # print(data)
         queue += node.child
+    return fig
 
+def plot_reachtube_tree_branch(root, agent_id, x_dim: int=0, y_dim_list: List[int]=[1], color='b', fig = None, x_lim = None, y_lim = None):
+    if fig is None:
+        fig = plt.figure()
+    
+    ax = fig.gca()
+    if x_lim is None:
+        x_lim = ax.get_xlim()
+    if y_lim is None:
+        y_lim = ax.get_ylim()
+
+    stack = [root]
+    while stack != []:
+        node = stack.pop()
+        traces = node.trace
+        trace = traces[agent_id]
+        data = []
+        for i in range(0,len(trace),2):
+            data.append([trace[i], trace[i+1]])
+        fig, x_lim, y_lim = plot(data, x_dim, y_dim_list, color, fig, x_lim, y_lim)
+
+        if node.child:
+            stack += [node.child[0]]
     return fig
 
 
@@ -703,7 +724,6 @@ def plot_map(map, color='b', fig=None, x_lim=None, y_lim=None):
             if lane_seg.type == 'Straight':
                 start1 = lane_seg.start + lane_seg.width/2 * lane_seg.direction_lateral
                 end1 = lane_seg.end + lane_seg.width/2 * lane_seg.direction_lateral
-
                 ax.plot([start1[0], end1[0]], [start1[1], end1[1]], color)
                 start2 = lane_seg.start - lane_seg.width/2 * lane_seg.direction_lateral
                 end2 = lane_seg.end - lane_seg.width/2 * lane_seg.direction_lateral
@@ -793,18 +813,15 @@ def plot_simulation_tree(root: AnalysisTreeNode, agent_id, x_dim: int = 0, y_dim
             ax.plot(trace[:, x_dim], trace[:, y_dim], color)
             x_min = min(x_min, trace[:, x_dim].min())
             x_max = max(x_max, trace[:, x_dim].max())
-
             y_min = min(y_min, trace[:, y_dim].min())
             y_max = max(y_max, trace[:, y_dim].max())
         queue += node.child
     ax.set_xlim([x_min-1, x_max+1])
     ax.set_ylim([y_min-1, y_max+1])
-    # plt.show()
-    # generate_simulation_anime(root, None, fig)
     return fig
 
 
-def generate_simulation_anime(root, map=None, fig=None):
+def generate_simulation_anime(root, map, fig=None):
     if fig is None:
         fig = plt.figure()
     # fig = plot_map(map, 'g', fig)
@@ -851,7 +868,7 @@ def generate_simulation_anime(root, map=None, fig=None):
             dx = np.cos(point[2])*point[3]
             dy = np.sin(point[2])*point[3]
             ax.arrow(x_tail, y_tail, dx, dy, head_width=1, head_length=0.5)
-        plt.pause(0.005)
+        plt.pause(0.05)
         plt.clf()
     return fig
     #     img_buf = io.BytesIO()
@@ -873,7 +890,8 @@ def plotly_simulation_anime(root, map=None, fig=None):
     # fig = plot_map(map, 'g', fig)
     timed_point_dict = {}
     stack = [root]
-    print("plot")
+
+    # print("plot")
     # print(root.mode)
     x_min, x_max = float('inf'), -float('inf')
     y_min, y_max = float('inf'), -float('inf')
@@ -887,8 +905,7 @@ def plotly_simulation_anime(root, map=None, fig=None):
         traces = node.trace
         for agent_id in traces:
             trace = np.array(traces[agent_id])
-            print(trace)
-            # segment_start.add(round(trace[0][0], 2))
+
             for i in range(len(trace)):
                 x_min = min(x_min, trace[i][1])
                 x_max = max(x_max, trace[i][1])
@@ -913,6 +930,7 @@ def plotly_simulation_anime(root, map=None, fig=None):
     # fill in most of layout
     # print(segment_start)
     # print(timed_point_dict.keys())
+
     duration = int(600/time)
     fig_dict["layout"]["xaxis"] = {
         "range": [(x_min-10), (x_max+10)],
@@ -968,6 +986,7 @@ def plotly_simulation_anime(root, map=None, fig=None):
     }
     # make data
     point_list = timed_point_dict[0]
+
     print(point_list)
     x_list = []
     y_list = []
@@ -997,6 +1016,7 @@ def plotly_simulation_anime(root, map=None, fig=None):
 
     # make frames
     for time_point in timed_point_dict:
+
         # print(time_point)
         frame = {"data": [], "layout": {
             "annotations": []}, "name": '{:.2f}'.format(time_point)}
@@ -1019,6 +1039,7 @@ def plotly_simulation_anime(root, map=None, fig=None):
             "x": trace_x,
             "y": trace_y,
             "mode": "markers + text",
+
             # "text": [(round(trace_theta[i]/pi*180, 2), round(trace_v[i], 3)) for i in range(len(trace_theta))],
             "text": [('{:.2f}'.format(trace_theta[i]/pi*180), '{:.3f}'.format(trace_v[i])) for i in range(len(trace_theta))],
             "textfont": dict(size=14, color="black"),
@@ -1049,26 +1070,6 @@ def plotly_simulation_anime(root, map=None, fig=None):
                                 "arrowhead": 1,
                                 "arrowcolor": "black"}
             frame["layout"]["annotations"].append(annotations_dict)
-
-            # if (time_point in segment_start) and (operator.ne(previous_mode[agent_id], node.mode[agent_id])):
-            #     annotations_dict = {"x": trace_x[i], "y": trace_y[i],
-            #                         # "xshift": ax, "yshift": ay,
-            #                         # "ax": trace_x[i], "ay": trace_y[i],
-            #                         # "arrowwidth": 2,
-            #                         # "arrowside": 'end',
-            #                         "showarrow": False,
-            #                         # "arrowsize": 1,
-            #                         # "xref": 'x', "yref": 'y',
-            #                         # "axref": 'x', "ayref": 'y',
-            #                         "text": str(node.mode[agent_id][0]),
-            #                         # "arrowhead": 1,
-            #                         # "arrowcolor": "black"
-            #                         }
-            #     frame["layout"]["annotations"].append(annotations_dict)
-            #     print(frame["layout"]["annotations"])
-            # i += 1
-            # previous_mode[agent_id] = node.mode[agent_id]
-
         fig_dict["frames"].append(frame)
         slider_step = {"args": [
             [time_point],
@@ -1105,6 +1106,7 @@ def plotly_simulation_anime(root, map=None, fig=None):
             trace_y = trace[:, 2].tolist()
             trace_x = trace[:, 1].tolist()
             # theta = [i/pi*180 for i in trace[:, 3]]
+
             i = agent_list.index(agent_id)
             color = colors[i % 5]
             fig.add_trace(go.Scatter(x=trace[:, 1], y=trace[:, 2],
@@ -1203,3 +1205,4 @@ def plotly_simulation_anime(root, map=None, fig=None):
 #             springgreen, steelblue, tan, teal, thistle, tomato,
 #             turquoise, violet, wheat, white, whitesmoke,
 #             yellow, yellowgreen
+

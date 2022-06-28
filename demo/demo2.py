@@ -5,7 +5,8 @@ from dryvr_plus_plus.plotter.plotter2D import *
 from dryvr_plus_plus.plotter.plotter2D_new import *
 from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor2
 import plotly.graph_objects as go
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
+
 import numpy as np
 from enum import Enum, auto
 
@@ -56,36 +57,9 @@ if __name__ == "__main__":
             (VehicleMode.Normal, LaneMode.Lane1),
         ]
     )
-    # res_list = scenario.simulate_multi(40,1)
 
-    # traces = scenario.simulate(40)
-
-    # fig = plt.figure(2)
-    # fig = plot_map(tmp_map, 'g', fig)
-    # # fig = plot_simulation_tree(traces, 'car1', 1, [2], 'b', fig)
-    # # fig = plot_simulation_tree(traces, 'car2', 1, [2], 'r', fig)
-    # fig = plot_reachtube_tree(traces, 'car1', 1, [2], 'b', fig)
-    # fig = plot_reachtube_tree(traces, 'car2', 1, [2], 'r', fig)
-    # plt.show()
-    # # fig1 = plt.figure(2)
-    # fig = generate_simulation_anime(traces, tmp_map, fig)
-    # plt.show()
-
-    # fig = go.Figure()
-    # fig = plotly_simulation_tree(traces, 'car1', 1, [2], 'b', fig)
-    # fig.show()
-    # traces = scenario.simulate(40)
-    # fig = go.Figure()
-    # # fig = plotly_simulation_anime(traces, tmp_map, fig)
-    # fig.show()
-
-    # fig = go.Figure()
-    # fig = plotly_reachtube_tree_v2(traces, 'car1', 1, [2], 'blue', fig)
-    # fig = plotly_reachtube_tree_v2(traces, 'car2', 1, [2], 'red', fig)
-    # fig.show()
     traces = scenario.simulate(30)
     fig = go.Figure()
     fig = test_simu_anime(traces, tmp_map, fig, 1, 2, 'lines')
-    # fig = plotly_simulation_anime(traces, tmp_map, fig)
-    # # fig = plotly_reachtube_tree_v2(traces, 'car2', 1, [2], 'red', fig)
     fig.show()
+

@@ -2,10 +2,7 @@
 # Written by: Kristina Miller
 
 import numpy as np
-import matplotlib.pyplot as plt
-import mpl_toolkits.mplot3d as a3
 
-from scipy.spatial import ConvexHull
 import polytope as pc
 import pyvista as pv
 
@@ -40,6 +37,7 @@ def plot_polytope_3d(A, b, ax = None, color = 'red', trans = 0.2, edge = True):
 	if edge:
 		edges = shell.extract_feature_edges(20)
 		ax.add_mesh(edges, color="k", line_width=1)
+	return ax
 
 def plot_line_3d(start, end, ax = None, color = 'blue', line_width = 1):
 	if ax is None:
@@ -52,6 +50,13 @@ def plot_line_3d(start, end, ax = None, color = 'blue', line_width = 1):
 	line = pv.Line(a, b)
 
 	ax.add_mesh(line, color=color, line_width=line_width)
+	return ax
+
+def plot_point_3d(points, ax=None, color='blue', point_size = 100):
+    if ax is None:
+        ax = pv.Plotter()
+    ax.add_points(points, render_points_as_spheres=True, point_size = point_size, color = color)	
+    return ax
 
 if __name__ == '__main__':
 	A = np.array([[-1, 0, 0],
@@ -62,7 +67,7 @@ if __name__ == '__main__':
 				  [0, 0, 1]])
 	b = np.array([[1], [1], [1], [1], [1], [1]])
 	b2 = np.array([[-1], [2], [-1], [2], [-1], [2]])
-	ax1 = a3.Axes3D(plt.figure())
-	plot_polytope_3d(A, b, ax = ax1, color = 'red')
-	plot_polytope_3d(A, b2, ax = ax1, color = 'green')
-	plt.show()
+	fig = pv.Plotter()
+	fig = plot_polytope_3d(A, b, ax = fig, color = 'red')
+	fig = plot_polytope_3d(A, b2, ax = fig, color = 'green')
+	fig.show()

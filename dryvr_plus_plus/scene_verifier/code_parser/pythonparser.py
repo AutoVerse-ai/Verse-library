@@ -81,12 +81,11 @@ class Guard(Statement):
             return Guard(ast.get_source_segment(code, node.test), None, None, node.test)
         elif isinstance(node.test, ast.Call):  # function not used
             source_segment = ast.get_source_segment(code, node.test)
-            if "map" in source_segment:
-                func = node.test.func.value.id + '.' + node.test.func.attr
-                args = []
-                for arg in node.test.args:
-                    args.append(arg.value.id + '.' + arg.attr)
-                return Guard(source_segment, None, None, node.test, func, args)
+            # func = node.test.func.id 
+            # args = []
+            # for arg in node.test.args:
+            #     args.append(arg.value.id + '.' + arg.attr)
+            return Guard(source_segment, None, None, node.test)
 
 
 '''
@@ -266,8 +265,7 @@ class ControllerAst():
 
         self.code = code
         self.tree = ast.parse(code)
-        self.statementtree, self.variables, self.modes, self.discrete_variables, self.state_object_dict, self.vars_dict, self.type_vars = self.initalwalktree(
-            code, self.tree)
+        self.statementtree, self.variables, self.modes, self.discrete_variables, self.state_object_dict, self.vars_dict = self.initalwalktree(code, self.tree)
         self.vertices = []
         self.vertexStrings = []
         for vertex in itertools.product(*self.modes.values()):
@@ -390,7 +388,6 @@ class ControllerAst():
     def initalwalktree(self, code, tree):
         vars = []
         discrete_vars = []
-        type_vars = []
         out = []
         mode_dict = {}
         state_object_dict = {}
@@ -415,12 +412,8 @@ class ControllerAst():
                             if "init" in item.name:
                                 for arg in item.args.args:
                                     if "self" not in arg.arg:
-                                        if "type" == arg.arg:
-                                            state_object_dict[node.name]["type"].append(
-                                                arg.arg)
-                                        elif "mode" not in arg.arg:
-                                            state_object_dict[node.name]['cont'].append(
-                                                arg.arg)
+                                        if "mode" not in arg.arg:
+                                            state_object_dict[node.name]['cont'].append(arg.arg)
                                             # vars.append(arg.arg)
                                         else:
                                             state_object_dict[node.name]['disc'].append(
@@ -436,9 +429,22 @@ class ControllerAst():
                     for arg in args:
                         if arg.annotation is None:
                             continue
-                        if arg.annotation.id not in state_object_dict:
-                            continue
-                        arg_annotation = arg.annotation.id
+                        # Handle case when input is a single variable
+                        if isinstance(arg.annotation, ast.Name):
+                            if arg.annotation.id not in state_object_dict:
+                                continue
+                            arg_annotation = arg.annotation.id
+                        # Handle case when input is a list of variables 
+                        elif isinstance(arg.annotation, ast.Subscript):
+                            if isinstance(arg.annotation.slice, ast.Index):
+                                if arg.annotation.slice.value.id not in state_object_dict:
+                                    continue 
+                                arg_annotation = arg.annotation.slice.value.id
+                            elif isinstance(arg.annotation.slice, ast.Name):
+                                if arg.annotation.slice.id not in state_object_dict:
+                                    continue
+                                arg_annotation = arg.annotation.slice.id
+                            
                         arg_name = arg.arg
                         vars_dict[arg_name] = {
                             'cont': [], 'disc': [], "type": []}
@@ -448,17 +454,8 @@ class ControllerAst():
                         for var in state_object_dict[arg_annotation]['disc']:
                             discrete_vars.append(arg_name+"."+var)
                             vars_dict[arg_name]['disc'].append(var)
-                        for var in state_object_dict[arg_annotation]['type']:
-                            type_vars.append(arg_name+"."+var)
-                            vars_dict[arg_name]['type'].append(var)
+        return [statementtree, vars, mode_dict, discrete_vars, state_object_dict, vars_dict]
 
-                        # if "mode" not in arg.arg:
-                        #     vars.append(arg.arg)
-                        #     #todo: what to add for return values
-                        # else:
-                        #     discrete_vars.append(arg.arg)
-        # statementtree.show()
-        return [statementtree, vars, mode_dict, discrete_vars, state_object_dict, vars_dict, type_vars]
 
     '''
     Helper function for initalwalktree which parses the statements in the controller function into a statement tree
@@ -533,7 +530,6 @@ class EmptyAst(ControllerAst):
                 'type': []
             }
         }
-        self.type_vars = []
         self.variables = []
         self.vars_dict = []
         self.vertexStrings = ['Null,Normal']

@@ -42,8 +42,7 @@ class LaneMap:
         if lane_idx not in self.left_lane_dict:
             raise ValueError(f"lane_idx {lane_idx} not in lane_dict")
         left_lane_list = self.left_lane_dict[lane_idx]
-        return copy.deepcopy(left_lane_list)
-
+        return copy.deepcopy(left_lane_list[0])
     def has_right(self, lane_idx):
         if isinstance(lane_idx, Enum):
             lane_idx = lane_idx.name
@@ -60,7 +59,7 @@ class LaneMap:
         if lane_idx not in self.right_lane_dict:
             raise ValueError(f"lane_idx {lane_idx} not in lane_dict")
         right_lane_list = self.right_lane_dict[lane_idx]
-        return copy.deepcopy(right_lane_list)
+        return copy.deepcopy(right_lane_list[0])
 
     def lane_geometry(self, lane_idx):
         if isinstance(lane_idx, Enum):

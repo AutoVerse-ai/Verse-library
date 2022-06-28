@@ -65,7 +65,7 @@ def randomPoint(lower, upper):
         random point (either float or list of float)
 
     """
-    # random.seed(4)
+    random.seed(4)
 
     if isinstance(lower, int) or isinstance(lower, float):
         return random.uniform(lower, upper)

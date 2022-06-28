@@ -1,9 +1,7 @@
 import enum
 import re
-from typing import List, Dict
+from typing import List, Dict, Any
 import pickle
-# from scene_verifier.automaton.hybrid_io_automaton import HybridIoAutomaton
-# from pythonparser import Guard
 import ast
 import copy
 
@@ -25,13 +23,74 @@ class LogicTreeNode:
         self.mode_guard = mode_guard
 
 
+class NodeSubstituter(ast.NodeTransformer):
+    def __init__(self, old_node, new_node):
+        super().__init__()
+        self.old_node = old_node 
+        self.new_node = new_node
+
+    def visit_Call(self, node: ast.Call) -> Any:
+        if node == self.old_node:
+            self.generic_visit(node)
+            return self.new_node 
+        else:
+            self.generic_visit(node)
+            return node
+
+class ValueSubstituter(ast.NodeTransformer):
+    def __init__(self, val:str, node):
+        super().__init__()
+        self.val = val
+        self.node = node
+    
+    def visit_Attribute(self, node: ast.Attribute) -> Any:
+        # Substitute attribute node in the ast
+        if node == self.node:
+            return ast.Name(
+                id = self.val, 
+                ctx = ast.Load()
+            )
+        return node
+
+    def visit_Name(self, node: ast.Attribute) -> Any:
+        # Substitute name node in the ast
+        if node == self.node:
+            return ast.Name(
+                id = self.val,
+                ctx = ast.Load
+            )
+        return node
+
+    def visit_Call(self, node: ast.Call) -> Any:
+        # Substitute call node in the ast
+        if node == self.node:
+            if len(self.val) == 1:
+                self.generic_visit(node)
+                return self.val[0]
+            elif node.func.id == 'any':
+                self.generic_visit(node)
+                return ast.BoolOp(
+                    op = ast.Or(),
+                    values = self.val
+            )
+            elif node.func.id == 'all':
+                self.generic_visit(node)
+                return ast.BoolOp(
+                    op = ast.And(),
+                    values = self.val
+                )
+        self.generic_visit(node)
+        return node
+
+
 class GuardExpressionAst:
     def __init__(self, guard_list):
         self.ast_list = []
         for guard in guard_list:
             self.ast_list.append(copy.deepcopy(guard.ast))
         self.cont_variables = {}
-        self.varDict = {'t': Real('t')}
+        self.varDict = {}
+
 
     def _build_guard(self, guard_str, agent):
         """
@@ -139,8 +198,6 @@ class GuardExpressionAst:
             # The reachtube hits the guard
             cur_solver.pop()
             res = True
-
-            # TODO: If the reachtube completely fall inside guard, break
             tmp_solver = Solver()
             tmp_solver.add(Not(cur_solver.assertions()[0]))
             for symbol in symbols:
@@ -210,7 +267,10 @@ class GuardExpressionAst:
                         else:
                             return False
                     z3_str.append(tmp)
-                z3_str = 'And('+','.join(z3_str)+')'
+                if len(z3_str) == 1:
+                    z3_str = z3_str[0]
+                else:
+                    z3_str = 'And('+','.join(z3_str)+')'
                 return z3_str
             elif isinstance(node.op, ast.Or):
                 z3_str = []
@@ -222,7 +282,10 @@ class GuardExpressionAst:
                         else:
                             continue
                     z3_str.append(tmp)
-                z3_str = 'Or('+','.join(z3_str)+')'
+                if len(z3_str) == 1:
+                    z3_str = z3_str[0]
+                else:
+                    z3_str = 'Or('+','.join(z3_str)+')'
                 return z3_str
             # If string, construct string
             # If bool, check result and discard/evaluate result according to operator
@@ -241,6 +304,11 @@ class GuardExpressionAst:
             value = self._generate_z3_expression_node(node.operand)
             if isinstance(node.op, ast.USub):
                 return -value
+            elif isinstance(node.op, ast.Not):
+                z3_str = 'Not('+value+')'
+                return z3_str
+            else:
+                raise NotImplementedError(f"UnaryOp {node.op} is not supported")
         else:
             # For other cases, we can return the expression directly
             expr = astunparse.unparse(node)
@@ -283,13 +351,12 @@ class GuardExpressionAst:
                         break
                 return res, root
             elif isinstance(root.op, ast.Or):
+                res = False
                 for val in root.values:
                     tmp, val = self._evaluate_guard_hybrid(
                         val, agent, disc_var_dict, cont_var_dict, lane_map)
                     res = res or tmp
-                    if res:
-                        break
-                return res, root
+                return res, root  
         elif isinstance(root, ast.BinOp):
             left, root.left = self._evaluate_guard_hybrid(
                 root.left, agent, disc_var_dict, cont_var_dict, lane_map)
@@ -304,8 +371,12 @@ class GuardExpressionAst:
                         # Get function arguments
                         arg0_node = root.args[0]
                         arg1_node = root.args[1]
-                        assert isinstance(arg0_node, ast.Attribute)
-                        arg0_var = arg0_node.value.id + '.' + arg0_node.attr
+                        if isinstance(arg0_node, ast.Attribute):
+                            arg0_var = arg0_node.value.id + '.' + arg0_node.attr
+                        elif isinstance(arg0_node, ast.Name):
+                            arg0_var = arg0_node.id
+                        else:
+                            raise ValueError(f"Node type {type(arg0_node)} is not supported")
                         vehicle_lane = disc_var_dict[arg0_var]
                         assert isinstance(arg1_node, ast.List)
                         arg1_lower = []
@@ -313,8 +384,12 @@ class GuardExpressionAst:
                         for elt in arg1_node.elts:
                             if isinstance(elt, ast.Attribute):
                                 var = elt.value.id + '.' + elt.attr
-                                arg1_lower.append(cont_var_dict[var][0])
-                                arg1_upper.append(cont_var_dict[var][1])
+                            elif isinstance(elt, ast.Name):
+                                var = elt.id
+                            else:
+                                raise ValueError(f"Node type {type(elt)} is not supported")
+                            arg1_lower.append(cont_var_dict[var][0])
+                            arg1_upper.append(cont_var_dict[var][1])   
                         vehicle_pos = (arg1_lower, arg1_upper)
 
                         # Get corresponding lane segments with respect to the set of vehicle pos
@@ -344,8 +419,13 @@ class GuardExpressionAst:
                         # Get function arguments
                         arg0_node = root.args[0]
                         arg1_node = root.args[1]
-                        assert isinstance(arg0_node, ast.Attribute)
-                        arg0_var = arg0_node.value.id + '.' + arg0_node.attr
+                        # assert isinstance(arg0_node, ast.Attribute)
+                        if isinstance(arg0_node, ast.Attribute):
+                            arg0_var = arg0_node.value.id + '.' + arg0_node.attr
+                        elif isinstance(arg0_node, ast.Name):
+                            arg0_var = arg0_node.id
+                        else:
+                            raise ValueError(f"Node type {type(arg0_node)} is not supported")
                         vehicle_lane = disc_var_dict[arg0_var]
                         assert isinstance(arg1_node, ast.List)
                         arg1_lower = []
@@ -353,8 +433,12 @@ class GuardExpressionAst:
                         for elt in arg1_node.elts:
                             if isinstance(elt, ast.Attribute):
                                 var = elt.value.id + '.' + elt.attr
-                                arg1_lower.append(cont_var_dict[var][0])
-                                arg1_upper.append(cont_var_dict[var][1])
+                            elif isinstance(elt, ast.Name):
+                                var = elt.id
+                            else:
+                                raise ValueError(f"Node type {type(elt)} is not supported")
+                            arg1_lower.append(cont_var_dict[var][0])
+                            arg1_upper.append(cont_var_dict[var][1])   
                         vehicle_pos = (arg1_lower, arg1_upper)
 
                         # Get corresponding lane segments with respect to the set of vehicle pos
@@ -392,11 +476,17 @@ class GuardExpressionAst:
         elif isinstance(root, ast.Attribute):
             return True, root
         elif isinstance(root, ast.Constant):
-            return root.value, root
+            return root.value, root 
+        elif isinstance(root, ast.Name):
+            return True, root
         elif isinstance(root, ast.UnaryOp):
             if isinstance(root.op, ast.USub):
-                res, root.operand = self._evaluate_guard_hybrid(
-                    root.operand, agent, disc_var_dict, cont_var_dict, lane_map)
+                res, root.operand = self._evaluate_guard_hybrid(root.operand, agent, disc_var_dict, cont_var_dict, lane_map)
+            elif isinstance(root.op, ast.Not):
+                res, root.operand = self._evaluate_guard_hybrid(root.operand, agent, disc_var_dict, cont_var_dict, lane_map)
+                if not res:
+                    root.operand = ast.parse('False').body[0].value
+                    return True, ast.parse('True').body[0].value
             else:
                 raise ValueError(
                     f'Node type {root} from {astunparse.unparse(root)} is not supported')
@@ -568,9 +658,7 @@ class GuardExpressionAst:
                     tmp, val = self._evaluate_guard_disc(
                         val, agent, disc_var_dict, cont_var_dict, lane_map)
                     res = res or tmp
-                    if res:
-                        break
-                return res, root
+                return res, root     
         elif isinstance(root, ast.BinOp):
             # Check left and right in the binop and replace all attributes involving discrete variables
             left, root.left = self._evaluate_guard_disc(
@@ -598,6 +686,10 @@ class GuardExpressionAst:
                     else:
                         root = ast.parse('False').body[0].value
                 else:
+                    for mode_name in agent.controller.modes:
+                        if res in agent.controller.modes[mode_name]:
+                            res = mode_name+'.'+res
+                            break
                     root = ast.parse(str(res)).body[0].value
                 return res, root
             else:
@@ -620,21 +712,35 @@ class GuardExpressionAst:
             return root.value, root
         elif isinstance(root, ast.UnaryOp):
             if isinstance(root.op, ast.USub):
-                res, root.operand = self._evaluate_guard_disc(
-                    root.operand, agent, disc_var_dict, cont_var_dict, lane_map)
+                res, root.operand = self._evaluate_guard_disc(root.operand, agent, disc_var_dict, cont_var_dict, lane_map)
+            elif isinstance(root.op, ast.Not):
+                res, root.operand = self._evaluate_guard_disc(root.operand, agent, disc_var_dict, cont_var_dict, lane_map)
+                if not res:
+                    root.operand = ast.parse('False').body[0].value
+                    return True, ast.parse('True').body[0].value
             else:
                 raise ValueError(
                     f'Node type {root} from {astunparse.unparse(root)} is not supported')
             return True, root
+        elif isinstance(root, ast.Name):
+            expr = root.id
+            if expr in disc_var_dict:
+                val = disc_var_dict[expr]
+                for mode_name in agent.controller.modes:
+                    if val in agent.controller.modes[mode_name]:
+                        val = mode_name + '.' + val 
+                        break 
+                return val, root
+            else:
+                return True, root 
         else:
             raise ValueError(
                 f'Node type {root} from {astunparse.unparse(root)} is not supported')
 
     def evaluate_guard(self, agent, continuous_variable_dict, discrete_variable_dict, lane_map):
         res = True
-        for node in self.ast_list:
-            tmp = self._evaluate_guard(
-                node, agent, continuous_variable_dict, discrete_variable_dict, lane_map)
+        for i, node in enumerate(self.ast_list):
+            tmp = self._evaluate_guard(node, agent, continuous_variable_dict, discrete_variable_dict, lane_map)
             res = tmp and res
             if not res:
                 break
@@ -696,7 +802,8 @@ class GuardExpressionAst:
         elif isinstance(root, ast.Call):
             expr = astunparse.unparse(root)
             # Check if the root is a function
-            if 'map' in expr:
+            if isinstance(root.func, ast.Attribute) and "map" in root.func.value.id:
+            # if 'map' in expr:
                 # tmp = re.split('\(|\)',expr)
                 # while "" in tmp:
                 #     tmp.remove("")
@@ -709,6 +816,10 @@ class GuardExpressionAst:
                 for arg in cnts_var_dict:
                     expr = expr.replace(arg, str(cnts_var_dict[arg]))
                 res = eval(expr)
+                for mode_name in agent.controller.modes:
+                    if res in agent.controller.modes[mode_name]:
+                        res = mode_name+'.'+res
+                        break
                 return res
         elif isinstance(root, ast.Attribute):
             expr = astunparse.unparse(root)
@@ -732,13 +843,277 @@ class GuardExpressionAst:
                 root.operand, agent, cnts_var_dict, disc_var_dict, lane_map)
             if isinstance(root.op, ast.USub):
                 return -val
+            if isinstance(root.op, ast.Not):
+                return not val
             else:
-                raise ValueError(
-                    f'Node type {root} from {astunparse.unparse(root)} is not supported')
+                raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
+        elif isinstance(root, ast.Name):
+            variable = root.id 
+            if variable in cnts_var_dict:
+                val = cnts_var_dict[variable]
+                return val 
+            elif variable in disc_var_dict:
+                val = disc_var_dict[variable]
+                for mode_name in agent.controller.modes:
+                    if val in agent.controller.modes[mode_name]:
+                        val = mode_name+'.'+val
+                        break
+                return val
+            else:
+                raise ValueError(f"{variable} doesn't exist in either continuous varibales or discrete variables") 
         else:
             raise ValueError(
                 f'Node type {root} from {astunparse.unparse(root)} is not supported')
 
+
+    def parse_any_all(self, cont_var_dict: Dict[str, float], disc_var_dict: Dict[str, float], len_dict: Dict[str, int]) -> None: 
+        for i in range(len(self.ast_list)):
+            root = self.ast_list[i]
+            j = 0
+            while j < sum(1 for _ in ast.walk(root)):
+                # TODO: Find a faster way to access nodes in the tree
+                node = list(ast.walk(root))[j]
+                if isinstance(node, ast.Call) and\
+                    isinstance(node.func, ast.Name) and\
+                    (node.func.id=='any' or node.func.id=='all'):
+                    new_node = self.unroll_any_all(node, cont_var_dict, disc_var_dict, len_dict)
+                    root = NodeSubstituter(node, new_node).visit(root)
+                j += 1
+            self.ast_list[i] = root 
+
+    def unroll_any_all(
+        self, node: ast.Call, 
+        cont_var_dict: Dict[str, float], 
+        disc_var_dict: Dict[str, float], 
+        len_dict: Dict[str, float]
+    ) -> ast.BoolOp:
+        parse_arg = node.args[0]
+        if isinstance(parse_arg, ast.GeneratorExp):
+            iter_name_list = []
+            targ_name_list = []
+            iter_len_list = []
+            # Get all the iter, targets and the length of iter list 
+            for generator in parse_arg.generators:
+                iter_name_list.append(generator.iter.id) # a_list
+                targ_name_list.append(generator.target.id) # a
+                iter_len_list.append(range(len_dict[generator.iter.id])) # len(a_list)
+
+            elt = parse_arg.elt
+            expand_elt_ast_list = []
+            iter_len_list = list(itertools.product(*iter_len_list))
+            # Loop through all possible combination of iter value
+            for i in range(len(iter_len_list)):
+                changed_elt = copy.deepcopy(elt)
+                iter_pos_list = iter_len_list[i]
+                # substitute temporary variable in each of the elt and add corresponding variables in the variable dicts
+                parsed_elt = self._parse_elt(changed_elt, cont_var_dict, disc_var_dict, iter_name_list, targ_name_list, iter_pos_list)
+                # Add the expanded elt into the list 
+                expand_elt_ast_list.append(parsed_elt)
+            # Create the new boolop (and/or) node based on the list of expanded elt
+            return ValueSubstituter(expand_elt_ast_list, node).visit(node)
+        else:
+            return node
+
+    def _parse_elt(self, root, cont_var_dict, disc_var_dict, iter_name_list, targ_name_list, iter_pos_list) -> Any:
+        # Loop through all node in the elt ast 
+        for node in ast.walk(root):
+            # If the node is an attribute
+            if isinstance(node, ast.Attribute):
+                if node.value.id in targ_name_list:
+                    # Find corresponding targ_name in the targ_name_list
+                    targ_name = node.value.id
+                    var_index = targ_name_list.index(targ_name)
+
+                    # Find the corresponding iter_name in the iter_name_list 
+                    iter_name = iter_name_list[var_index]
+
+                    # Create the name for the tmp variable 
+                    iter_pos = iter_pos_list[var_index]
+                    tmp_variable_name = f"{iter_name}_{iter_pos}.{node.attr}"
+
+                    # Replace variables in the etl by using tmp variables
+                    root = ValueSubstituter(tmp_variable_name, node).visit(root)
+
+                    # Find the value of the tmp variable in the cont/disc_var_dict
+                    # Add the tmp variables into the cont/disc_var_dict
+                    # NOTE: At each time step, for each agent, the variable value mapping and their 
+                    # sequence in the list is single. Therefore, for the same key, we will always rewrite 
+                    # its content. 
+                    variable_name = iter_name + '.' + node.attr
+                    variable_val = None
+                    if variable_name in cont_var_dict:
+                        variable_val = cont_var_dict[variable_name][iter_pos]
+                        cont_var_dict[tmp_variable_name] = variable_val
+                    elif variable_name in disc_var_dict:
+                        variable_val = disc_var_dict[variable_name][iter_pos]
+                        disc_var_dict[tmp_variable_name] = variable_val
+
+            elif isinstance(node, ast.Name):
+                if node.id in targ_name_list:
+                    node:ast.Name
+                    # Find corresponding targ_name in the targ_name_list
+                    targ_name = node.id
+                    var_index = targ_name_list.index(targ_name)
+
+                    # Find the corresponding iter_name in the iter_name_list 
+                    iter_name = iter_name_list[var_index]
+
+                    # Create the name for the tmp variable 
+                    iter_pos = iter_pos_list[var_index]
+                    tmp_variable_name = f"{iter_name}_{iter_pos}"
+
+                    # Replace variables in the etl by using tmp variables
+                    root = ValueSubstituter(tmp_variable_name, node).visit(root)
+
+                    # Find the value of the tmp variable in the cont/disc_var_dict
+                    # Add the tmp variables into the cont/disc_var_dict
+                    variable_name = iter_name
+                    variable_val = None
+                    if variable_name in cont_var_dict:
+                        variable_val = cont_var_dict[variable_name][iter_pos]
+                        cont_var_dict[tmp_variable_name] = variable_val
+                    elif variable_name in disc_var_dict:
+                        variable_val = disc_var_dict[variable_name][iter_pos]
+                        disc_var_dict[tmp_variable_name] = variable_val
+
+        # Return the modified node
+        return root
+
+    def parse_any_all_new(self, cont_var_dict: Dict[str, float], disc_var_dict: Dict[str, float], len_dict: Dict[str, int]) -> Dict[str, List[str]]: 
+        cont_var_updater = {}
+        for i in range(len(self.ast_list)):
+            root = self.ast_list[i]
+            j = 0
+            while j < sum(1 for _ in ast.walk(root)):
+                # TODO: Find a faster way to access nodes in the tree
+                node = list(ast.walk(root))[j]
+                if isinstance(node, ast.Call) and\
+                    isinstance(node.func, ast.Name) and\
+                    (node.func.id=='any' or node.func.id=='all'):
+                    new_node = self.unroll_any_all_new(node, cont_var_dict, disc_var_dict, len_dict, cont_var_updater)
+                    root = NodeSubstituter(node, new_node).visit(root)
+                j += 1
+            self.ast_list[i] = root 
+        return cont_var_updater
+
+    def unroll_any_all_new(
+        self, node: ast.Call, 
+        cont_var_dict: Dict[str, float], 
+        disc_var_dict: Dict[str, float], 
+        len_dict: Dict[str, float],
+        cont_var_updater: Dict[str, List[str]],
+    ) -> Tuple[ast.BoolOp, Dict[str, List[str]]]:
+        parse_arg = node.args[0]
+        if isinstance(parse_arg, ast.GeneratorExp):
+            iter_name_list = []
+            targ_name_list = []
+            iter_len_list = []
+            # Get all the iter, targets and the length of iter list 
+            for generator in parse_arg.generators:
+                iter_name_list.append(generator.iter.id) # a_list
+                targ_name_list.append(generator.target.id) # a
+                iter_len_list.append(range(len_dict[generator.iter.id])) # len(a_list)
+
+            elt = parse_arg.elt
+            expand_elt_ast_list = []
+            iter_len_list = list(itertools.product(*iter_len_list))
+            # Loop through all possible combination of iter value
+            for i in range(len(iter_len_list)):
+                changed_elt = copy.deepcopy(elt)
+                iter_pos_list = iter_len_list[i]
+                # substitute temporary variable in each of the elt and add corresponding variables in the variable dicts
+                parsed_elt = self._parse_elt_new(changed_elt, cont_var_dict, disc_var_dict, cont_var_updater, iter_name_list, targ_name_list, iter_pos_list)
+                # Add the expanded elt into the list 
+                expand_elt_ast_list.append(parsed_elt)
+            # Create the new boolop (and/or) node based on the list of expanded elt
+            return ValueSubstituter(expand_elt_ast_list, node).visit(node)
+        else:
+            return node
+
+    def _parse_elt_new(self, root, cont_var_dict, disc_var_dict, cont_var_updater, iter_name_list, targ_name_list, iter_pos_list) -> Any:
+        # Loop through all node in the elt ast 
+        for node in ast.walk(root):
+            # If the node is an attribute
+            if isinstance(node, ast.Attribute):
+                if node.value.id in targ_name_list:
+                    # Find corresponding targ_name in the targ_name_list
+                    targ_name = node.value.id
+                    var_index = targ_name_list.index(targ_name)
+
+                    # Find the corresponding iter_name in the iter_name_list 
+                    iter_name = iter_name_list[var_index]
+
+                    # Create the name for the tmp variable 
+                    iter_pos = iter_pos_list[var_index]
+                    tmp_variable_name = f"{iter_name}_{iter_pos}.{node.attr}"
+
+                    # Replace variables in the etl by using tmp variables
+                    root = ValueSubstituter(tmp_variable_name, node).visit(root)
+
+                    # Find the value of the tmp variable in the cont/disc_var_dict
+                    # Add the tmp variables into the cont/disc_var_dict
+                    # NOTE: At each time step, for each agent, the variable value mapping and their 
+                    # sequence in the list is single. Therefore, for the same key, we will always rewrite 
+                    # its content. 
+                    variable_name = iter_name + '.' + node.attr
+                    variable_val = None
+                    if variable_name in cont_var_dict:
+                        # variable_val = cont_var_dict[variable_name][iter_pos]
+                        # cont_var_dict[tmp_variable_name] = variable_val
+                        if variable_name not in cont_var_updater:
+                            cont_var_updater[variable_name] = [(tmp_variable_name, iter_pos)]
+                        else:
+                            if (tmp_variable_name, iter_pos) not in cont_var_updater[variable_name]:
+                                cont_var_updater[variable_name].append((tmp_variable_name, iter_pos))
+                    elif variable_name in disc_var_dict:
+                        variable_val = disc_var_dict[variable_name][iter_pos]
+                        disc_var_dict[tmp_variable_name] = variable_val
+                        # if variable_name not in disc_var_updater:
+                        #     disc_var_updater[variable_name] = [(tmp_variable_name, iter_pos)]
+                        # else:
+                        #     if (tmp_variable_name, iter_pos) not in disc_var_updater[variable_name]:
+                        #         disc_var_updater[variable_name].append((tmp_variable_name, iter_pos))
+
+            elif isinstance(node, ast.Name):
+                if node.id in targ_name_list:
+                    node:ast.Name
+                    # Find corresponding targ_name in the targ_name_list
+                    targ_name = node.id
+                    var_index = targ_name_list.index(targ_name)
+
+                    # Find the corresponding iter_name in the iter_name_list 
+                    iter_name = iter_name_list[var_index]
+
+                    # Create the name for the tmp variable 
+                    iter_pos = iter_pos_list[var_index]
+                    tmp_variable_name = f"{iter_name}_{iter_pos}"
+
+                    # Replace variables in the etl by using tmp variables
+                    root = ValueSubstituter(tmp_variable_name, node).visit(root)
+
+                    # Find the value of the tmp variable in the cont/disc_var_dict
+                    # Add the tmp variables into the cont/disc_var_dict
+                    variable_name = iter_name
+                    variable_val = None
+                    if variable_name in cont_var_dict:
+                        # variable_val = cont_var_dict[variable_name][iter_pos]
+                        # cont_var_dict[tmp_variable_name] = variable_val
+                        if variable_name not in cont_var_updater:
+                            cont_var_updater[variable_name] = [(tmp_variable_name, iter_pos)]
+                        else:
+                            if (tmp_variable_name, iter_pos) not in cont_var_updater[variable_name]:
+                                cont_var_updater.append(tmp_variable_name, iter_pos)
+                    elif variable_name in disc_var_dict:
+                        variable_val = disc_var_dict[variable_name][iter_pos]
+                        disc_var_dict[tmp_variable_name] = variable_val
+                        # if variable_name not in disc_var_updater:
+                        #     disc_var_updater[variable_name] = [(tmp_variable_name, iter_pos)]
+                        # else:
+                        #     if (tmp_variable_name, iter_pos) not in disc_var_updater[variable_name]:
+                        #         disc_var_updater[variable_name].append((tmp_variable_name, iter_pos))
+
+        # Return the modified node
+        return root
 
 if __name__ == "__main__":
     with open('tmp.pickle', 'rb') as f:
