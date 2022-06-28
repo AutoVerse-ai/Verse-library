@@ -91,7 +91,7 @@ class CarAgent(BaseAgent):
         elif vehicle_mode == "Accelerate":
             d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
             a = 1
-            if v >= lane_map.get_speed_limit(vehicle_lane, vehicle_pos)-0.02:
+            if v >= lane_map.get_speed_limit(vehicle_lane)-0.02:
                 a = 0
         elif vehicle_mode == 'Stop':
             d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)

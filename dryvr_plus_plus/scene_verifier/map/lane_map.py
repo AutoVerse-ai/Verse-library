@@ -106,7 +106,7 @@ class LaneMap:
 
     def get_speed_limit(self, lane_idx: str) -> float:
         lane = self.lane_dict[lane_idx]
-        print(lane.get_speed_limit())
+        # print(lane.get_speed_limit())
         return lane.get_speed_limit()
 
     def get_all_speed_limit(self) -> Dict[str, float]:

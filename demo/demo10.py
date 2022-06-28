@@ -2,6 +2,7 @@ from dryvr_plus_plus.example.example_agent.car_agent import CarAgent
 from dryvr_plus_plus.scene_verifier.scenario.scenario import Scenario
 from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap2, SimpleMap3, SimpleMap5, SimpleMap6, SimpleMap3_v2
 from dryvr_plus_plus.plotter.plotter2D import *
+from dryvr_plus_plus.plotter.plotter2D_new import *
 from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor2
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt
@@ -36,7 +37,7 @@ class State:
 
 
 if __name__ == "__main__":
-    input_code_name = 'example_controller5.py'
+    input_code_name = 'example_controller10.py'
     scenario = Scenario()
 
     car = CarAgent('car1', file_name=input_code_name)
@@ -76,11 +77,11 @@ if __name__ == "__main__":
     # fig = generate_simulation_anime(traces, tmp_map, fig)
     # plt.show()
 
-    traces = scenario.simulate(30)
+    traces = scenario.simulate(25)
     # fig = go.Figure()
     # fig = plotly_simulation_tree(traces, 'car1', 1, [2], 'b', fig)
     # fig.show()
     fig = go.Figure()
-    fig = plotly_simulation_anime(traces, tmp_map, fig)
+    fig = draw_simulation_tree(traces, tmp_map, fig, 1, 2, 'detailed')
     # fig = plotly_map(tmp_map, fig=fig)
     fig.show()

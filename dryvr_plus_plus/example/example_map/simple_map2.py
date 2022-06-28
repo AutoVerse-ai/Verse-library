@@ -61,7 +61,7 @@ class SimpleMap3_v2(LaneMap):
             3,
             speed_limit=[(0, 1), (10, 2)]
         )
-        lane0 = Lane('Lane0', [segment0])
+        lane0 = Lane('Lane0', [segment0], speed_limit=2)
         segment1 = StraightLane(
             'seg0',
             [0, 0],
@@ -69,7 +69,7 @@ class SimpleMap3_v2(LaneMap):
             3,
             speed_limit=[(0, 1), (20, 3)]
         )
-        lane1 = Lane('Lane1', [segment1])
+        lane1 = Lane('Lane1', [segment1], speed_limit=1)
         segment2 = StraightLane(
             'seg0',
             [0, -3],
@@ -77,7 +77,7 @@ class SimpleMap3_v2(LaneMap):
             3,
             speed_limit=[(0, 1), (25, 2.5)]
         )
-        lane2 = Lane('Lane2', [segment2])
+        lane2 = Lane('Lane2', [segment2], speed_limit=3)
         # segment2 = LaneSegment('Lane1', 3)
         # self.add_lanes([segment1,segment2])
         self.add_lanes([lane0, lane1, lane2])
