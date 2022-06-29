@@ -1,12 +1,9 @@
-from dryvr_plus_plus.example.example_agent.car_agent import CarAgent, NPCAgent
+from dryvr_plus_plus.example.example_agent.car_agent import CarAgent
 from dryvr_plus_plus.scene_verifier.scenario.scenario import Scenario
 from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap2, SimpleMap3, SimpleMap5, SimpleMap6
+from dryvr_plus_plus.plotter.plotter2D import *
 from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor2
-from enum import Enum, auto
 import plotly.graph_objects as go
-from dryvr_plus_plus.plotter.plotter2D_new import *
-
-
 import numpy as np
 from enum import Enum, auto
 
@@ -57,8 +54,17 @@ if __name__ == "__main__":
             (VehicleMode.Normal, LaneMode.Lane1),
         ]
     )
+    # res_list = scenario.simulate(40)
+    traces = scenario.verify(40)
 
-    traces = scenario.simulate(30, 0.05)
-    fig = go.Figure()
-    fig = test_simu_anime(traces, tmp_map, fig, 1, 2, 'lines')
-    fig.show()
+    fig = plt.figure(2)
+    fig = plot_map(tmp_map, 'g', fig)
+    fig = plot_reachtube_tree(traces, 'car1', 1, [2], 'b', fig)
+    fig = plot_reachtube_tree(traces, 'car2', 1, [2], 'r', fig)
+    plt.show()
+
+    # # this is for plot-based visualization
+    # traces = scenario.simulate(40)
+    # fig = go.Figure()
+    # fig = plotly_simulation_anime(traces, tmp_map, fig)
+    # fig.show()

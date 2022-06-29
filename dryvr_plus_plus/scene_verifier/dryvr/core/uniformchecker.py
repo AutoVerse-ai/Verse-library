@@ -49,8 +49,7 @@ class UniformChecker:
             cond = cond.replace("==", ">=")
             symbols = list(sympy.sympify(cond).free_symbols)
             symbols = [str(s) for s in symbols]
-            symbols_idx = {s: self._variables.index(
-                s) + 1 for s in symbols if s in self._variables}
+            symbols_idx = {s: self._variables.index(s) + 1 for s in symbols if s in self._variables}
             if 't' in symbols:
                 symbols_idx['t'] = 0
             self._solver_dict[mode].append(symbols_idx)  # TODO Fix typing

@@ -2,11 +2,13 @@ from dryvr_plus_plus.example.example_agent.car_agent import CarAgent, NPCAgent
 from dryvr_plus_plus.example.example_agent.car_agent import CarAgent
 from dryvr_plus_plus.scene_verifier.scenario.scenario import Scenario
 from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap2, SimpleMap3, SimpleMap5, SimpleMap6
+from dryvr_plus_plus.plotter.plotter2D import *
 from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor3
-from enum import Enum, auto
-import plotly.graph_objects as go
-from dryvr_plus_plus.plotter.plotter2D_new import *
 
+import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+import numpy as np
+from enum import Enum, auto
 
 class LaneObjectMode(Enum):
     Vehicle = auto()
@@ -15,19 +17,16 @@ class LaneObjectMode(Enum):
     Signal = auto()     # Traffic lights
     Obstacle = auto()   # Static (to road/lane) obstacles
 
-
 class VehicleMode(Enum):
     Normal = auto()
     SwitchLeft = auto()
     SwitchRight = auto()
     Brake = auto()
 
-
 class LaneMode(Enum):
     Lane0 = auto()
     Lane1 = auto()
     Lane2 = auto()
-
 
 class State:
     x = 0.0
@@ -58,10 +57,10 @@ if __name__ == "__main__":
     scenario.set_map(tmp_map)
     scenario.set_init(
         [
-            [[0, -0.2, 0, 1.0], [0.01, 0.2, 0, 1.0]],
-            [[10, 0, 0, 0.5], [10, 0, 0, 0.5]],
-            [[20, 3, 0, 0.5], [20, 3, 0, 0.5]],
-            [[30, 0, 0, 0.5], [30, 0, 0, 0.5]],
+            [[0, -0.2, 0, 1.0],[0.01, 0.2, 0, 1.0]],
+            [[10, 0, 0, 0.5],[10, 0, 0, 0.5]], 
+            [[20, 3, 0, 0.5],[20, 3, 0, 0.5]], 
+            [[30, 0, 0, 0.5],[30, 0, 0, 0.5]], 
         ],
         [
             (VehicleMode.Normal, LaneMode.Lane1, LaneObjectMode.Vehicle),
@@ -79,8 +78,9 @@ if __name__ == "__main__":
     # fig = plot_reachtube_tree(traces, 'car2', 1, [2], 'r', fig)
     # fig = plot_reachtube_tree(traces, 'car3', 1, [2], 'r', fig)
     # fig = plot_reachtube_tree(traces, 'car4', 1, [2], 'r', fig)
-    # plt.show()
+    # plt.show()    
 
     fig = go.Figure()
-    fig = general_simu_anime(traces, tmp_map, fig, 1, 2, 'lines')
+    fig = plotly_simulation_anime(traces, tmp_map, fig)
     fig.show()
+

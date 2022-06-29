@@ -1,23 +1,16 @@
 from enum import Enum, auto
 import copy
 
-from sympy import false
-
-from dryvr_plus_plus.scene_verifier.map.lane_map import LaneMap
-
-
 class VehicleMode(Enum):
     Normal = auto()
     SwitchLeft = auto()
     SwitchRight = auto()
     Brake = auto()
 
-
 class LaneMode(Enum):
     Lane0 = auto()
     Lane1 = auto()
     Lane2 = auto()
-
 
 class State:
     x = 0.0
@@ -30,17 +23,17 @@ class State:
     def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: LaneMode):
         self.data = []
 
-
-def controller(ego: State, other: State, lane_map: LaneMap):
+def controller(ego:State, other:State, lane_map):
     output = copy.deepcopy(ego)
     if ego.vehicle_mode == VehicleMode.Normal:
-        if lane_map.get_longitudinal_position(other.lane_mode, [other.x, other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x, ego.y]) > 0 \
-            and lane_map.get_longitudinal_position(other.lane_mode, [other.x, other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x, ego.y]) < 3 \
-                and ego.lane_mode == other.lane_mode:
+        if lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) > 0 \
+        and lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) < 3 \
+        and ego.lane_mode == other.lane_mode:
             output.vehicle_mode = VehicleMode.Brake
     elif ego.vehicle_mode == VehicleMode.Brake:
-        if lane_map.get_longitudinal_position(other.lane_mode, [other.x, other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x, ego.y]) > 3 \
-                or ego.lane_mode != other.lane_mode:
+        if lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) > 10 \
+            or ego.lane_mode != other.lane_mode:
             output.vehicle_mode = VehicleMode.Normal
 
     return output
+    
