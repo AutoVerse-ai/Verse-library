@@ -85,6 +85,17 @@ class Unparser:
         self.dispatch(tree.value)
         self.write(")")
 
+    def _CondVal(self, tree):
+        self.write(f"<CondVal [")
+        interleave(lambda: self.write(", "), self.dispatch, tree.elems)
+        self.write("]>")
+
+    def _CondValCase(self, tree):
+        self.write("<")
+        self.dispatch(tree.val)
+        self.write(" if [")
+        interleave(lambda: self.write(", "), self.dispatch, tree.cond)
+        self.write("]>")
 
     def _Module(self, tree):
         for stmt in tree.body:

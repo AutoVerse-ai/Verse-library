@@ -6,7 +6,6 @@ from scipy.integrate import ode
 
 from dryvr_plus_plus.scene_verifier.agents.base_agent import BaseAgent
 from dryvr_plus_plus.scene_verifier.map.lane_map import LaneMap
-from dryvr_plus_plus.scene_verifier.code_parser.pythonparser import EmptyAst
 
 
 class BallAgent(BaseAgent):

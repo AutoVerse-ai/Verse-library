@@ -42,17 +42,13 @@ class State:
 
 
 if __name__ == "__main__":
-    input_code_name = './example_controller4.py'
+    input_code_name = 'demo/example_controller4.py'
     scenario = Scenario()
 
-    car = CarAgent('car1', file_name=input_code_name)
-    scenario.add_agent(car)
-    car = NPCAgent('car2')
-    scenario.add_agent(car)
-    car = NPCAgent('car3')
-    scenario.add_agent(car)
-    car = NPCAgent('car4')
-    scenario.add_agent(car)
+    scenario.add_agent(CarAgent('car1', file_name=input_code_name))
+    scenario.add_agent(NPCAgent('car2'))
+    scenario.add_agent(NPCAgent('car3'))
+    scenario.add_agent(NPCAgent('car4'))
     tmp_map = SimpleMap3()
     scenario.set_map(tmp_map)
     scenario.set_init(
@@ -69,7 +65,7 @@ if __name__ == "__main__":
             (VehicleMode.Normal, LaneMode.Lane1, LaneObjectMode.Vehicle),
         ]
     )
-    traces = scenario.simulate(70, 0.05)
+    traces = scenario.simulate(70, 0.1)
     # traces = scenario.verify(70, 0.05)
 
     # fig = plt.figure(2)

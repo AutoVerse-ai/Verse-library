@@ -11,10 +11,7 @@ from dryvr_plus_plus.scene_verifier.code_parser.parser import ControllerIR, Stat
 class NPCAgent(BaseAgent):
     def __init__(self, id):
         self.id = id
-        controller = Lambda(args = [('ego', 'State'),('others', 'State')], body = {})
-        state_defs = {'State':StateDef(cont=[], disc=[], static=[])}
-        mode_defs = {'NullMode':ModeDef(modes=['Null'])}
-        self.controller = ControllerIR(controller, state_defs, mode_defs)
+        self.controller = ControllerIR.empty()
 
     @staticmethod
     def dynamic(t, state, u):
@@ -92,6 +89,8 @@ class CarAgent(BaseAgent):
         elif vehicle_mode == 'Stop':
             d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
             a = 0
+        else:
+            raise ValueError("Unknown mode")
         psi = lane_map.get_lane_heading(vehicle_lane, vehicle_pos)-theta
         steering = psi + np.arctan2(0.45*d, v)
         steering = np.clip(steering, -0.61, 0.61)
