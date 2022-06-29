@@ -92,7 +92,7 @@ if __name__ == "__main__":
     # this may be the cause for the VisibleDeprecationWarning
     # TODO: Longer term: We should initialize by writing expressions like "-2 \leq myball1.x \leq 5"
     # "-2 \leq myball1.x + myball2.x \leq 5"
-    traces = bouncingBall.simulate(40)
+    traces = bouncingBall.simulate(40,0.01)
     # TODO: There should be a print({traces}) function
     fig = go.Figure()
     fig = plotly_simulation_anime(traces, fig=fig)
