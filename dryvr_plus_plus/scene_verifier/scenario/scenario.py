@@ -206,16 +206,16 @@ class Scenario:
                     self.apply_cont_var_updater(new_cont_var_dict, continuous_variable_updater)
                     # self.apply_disc_var_updater(new_disc_var_dict, discrete_variable_updater)
                     env = pack_env(agent, new_cont_var_dict, discrete_variable_dict, self.map)
-                    # print(env)
                     if len(one_step_guard) == 0:
                         raise ValueError("empty guard")
-                    if len(one_step_guard) > 1:
+                    if len(one_step_guard) == 1:
+                        one_step_guard = one_step_guard[0]
+                    elif len(one_step_guard) > 1:
                         one_step_guard = ast.BoolOp(ast.And(), one_step_guard)
                     guard_satisfied = eval_expr(one_step_guard, env)
 
                     # Collect all the hit guards for this agent at this time step
                     if guard_satisfied:
-                        print("guard expr", ControllerIR.dump(guard_expression.ast_list))
                         # If the guard can be satisfied, handle resets
                         reset_expr = ResetExpression(reset)
                         all_resets[reset_expr.var].append(reset_expr)

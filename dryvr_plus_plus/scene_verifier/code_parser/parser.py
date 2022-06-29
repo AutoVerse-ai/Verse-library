@@ -6,7 +6,7 @@ from enum import Enum, auto
 import dryvr_plus_plus.scene_verifier.code_parser.astunparser as astunparser
 from dryvr_plus_plus.scene_verifier.utils.utils import find
 
-debug = True
+debug = False
 
 def unparse(e):
     return astunparser.unparse(e).strip("\n")
@@ -256,7 +256,11 @@ class ControllerIR:
         if isinstance(node, CondVal):
             return f"<CondVal [{', '.join(f'{ControllerIR.dump(e.val, dump)} if {ControllerIR.dump(e.cond, dump)}' for e in node.elems)}]>"
         if isinstance(node, Assert):
-            return f"<Assert {[ControllerIR.dump(a, dump) for a in node.pre]} => {ControllerIR.dump(node.cond, dump)}, \"{node.label}\">"
+            if len(node.pre) > 0:
+                pre = f"[{', '.join(ControllerIR.dump(a, dump) for a in node.pre)}] => "
+            else:
+                pre = ""
+            return f"<Assert {pre}{ControllerIR.dump(node.cond, dump)}, \"{node.label}\">"
         if isinstance(node, ast.If):
             return f"<{{{ast_dump(node, dump)}}}>"
         if isinstance(node, Reduction):

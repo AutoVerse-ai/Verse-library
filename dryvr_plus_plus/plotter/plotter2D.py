@@ -524,10 +524,10 @@ def plotly_simulation_anime(root, map=None, fig=None):
             color = color_map[agent_id]
             texts = [(round(trace[i, 3]/pi*180, 2), round(trace[i, 4], 2))
                      for i in range(len(trace_y))]
-            def assert_hit(a):
+            def assert_hit(a, i):
                 return len(node.assert_hits[a][i]) > 0 if a in node.assert_hits else False
-            marker = Marker(color=["black" if assert_hit(agent_id) else color
-                                   for _ in trace_y],
+            marker = Marker(color=["black" if assert_hit(agent_id, i) else color
+                                   for i in range(len(trace_y))],
                             size=3)
             fig.add_trace(go.Scatter(x=trace[:, 1], y=trace[:, 2],
                                      mode='markers',
