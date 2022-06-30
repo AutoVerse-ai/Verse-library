@@ -29,7 +29,7 @@ class LaneMode(Enum):
     Lane2 = auto()
 
 if __name__ == "__main__":
-    input_code_name = './example_controller7.py'
+    input_code_name = './demo/example_controller7.py'
     scenario = Scenario()
 
     car = CarAgent('car1', file_name=input_code_name)

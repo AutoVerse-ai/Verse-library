@@ -500,6 +500,8 @@ class GuardExpressionAst:
         for i, node in enumerate(self.ast_list):
             tmp, self.ast_list[i] = self._evaluate_guard_disc(node, agent, discrete_variable_dict, continuous_variable_dict, lane_map)
             res = res and tmp 
+            if not res:
+                break
         return res
             
     def _evaluate_guard_disc(self, root, agent:BaseAgent, disc_var_dict, cont_var_dict, lane_map):
@@ -544,12 +546,13 @@ class GuardExpressionAst:
                     tmp,root.values[i] = self._evaluate_guard_disc(val, agent, disc_var_dict, cont_var_dict, lane_map)
                     res = res and tmp
                     if not res:
+                        root = ast.Constant(value=False, kind=None)
                         break
                 return res, root
             elif isinstance(root.op, ast.Or):
                 res = False
-                for val in root.values:
-                    tmp,val = self._evaluate_guard_disc(val, agent, disc_var_dict, cont_var_dict, lane_map)
+                for i, val in enumerate(root.values):
+                    tmp,root.values[i] = self._evaluate_guard_disc(val, agent, disc_var_dict, cont_var_dict, lane_map)
                     res = res or tmp
                 return res, root     
         elif isinstance(root, ast.BinOp):
@@ -577,12 +580,12 @@ class GuardExpressionAst:
                     else:
                         root = ast.parse('False').body[0].value    
                 else:
-                    # TODO-PARSER: Handle This
-                    for mode_name in agent.controller.mode_defs:
-                        # TODO-PARSER: Handle This
-                        if res in agent.controller.mode_defs[mode_name].modes:
-                            res = mode_name+'.'+res
-                            break
+                    # # TODO-PARSER: Handle This
+                    # for mode_name in agent.controller.mode_defs:
+                    #     # TODO-PARSER: Handle This
+                    #     if res in agent.controller.mode_defs[mode_name].modes:
+                    #         res = mode_name+'.'+res
+                    #         break
                     root = ast.parse(str(res)).body[0].value
                 return res, root
             else:
@@ -593,11 +596,11 @@ class GuardExpressionAst:
             if expr in disc_var_dict:
                 val = disc_var_dict[expr]
                 # TODO-PARSER: Handle This
-                for mode_name in agent.controller.mode_defs:
-                    # TODO-PARSER: Handle This
-                    if val in agent.controller.mode_defs[mode_name].modes:
-                        val = mode_name+'.'+val
-                        break
+                # for mode_name in agent.controller.mode_defs:
+                #     # TODO-PARSER: Handle This
+                #     if val in agent.controller.mode_defs[mode_name].modes:
+                #         val = mode_name+'.'+val
+                #         break
                 return val, root
             # TODO-PARSER: Handle This
             elif root.value.id in agent.controller.mode_defs:
@@ -621,12 +624,12 @@ class GuardExpressionAst:
             expr = root.id
             if expr in disc_var_dict:
                 val = disc_var_dict[expr]
-                # TODO-PARSER: Handle This
-                for mode_name in agent.controller.mode_defs:
-                    # TODO-PARSER: Handle This
-                    if val in agent.controller.mode_defs[mode_name].modes:
-                        val = mode_name + '.' + val 
-                        break 
+                # # TODO-PARSER: Handle This
+                # for mode_name in agent.controller.mode_defs:
+                #     # TODO-PARSER: Handle This
+                #     if val in agent.controller.mode_defs[mode_name].modes:
+                #         val = mode_name + '.' + val 
+                #         break 
                 return val, root
             else:
                 return True, root 

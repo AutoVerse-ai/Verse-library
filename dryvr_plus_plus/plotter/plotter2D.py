@@ -41,7 +41,7 @@ def plot(
         ub = rect[1]
         for y_dim in y_dim_list:
             rect_patch = patches.Rectangle(
-                (lb[x_dim], lb[y_dim]), ub[x_dim]-lb[x_dim], ub[y_dim]-lb[y_dim], color=color, ec="black")
+                (lb[x_dim], lb[y_dim]), ub[x_dim]-lb[x_dim], ub[y_dim]-lb[y_dim], color=color, ec=color)
             ax.add_patch(rect_patch)
             x_min = min(lb[x_dim], x_min)
             y_min = min(lb[y_dim], y_min)

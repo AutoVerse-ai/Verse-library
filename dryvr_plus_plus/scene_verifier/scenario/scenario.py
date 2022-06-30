@@ -1,3 +1,4 @@
+from multiprocessing.sharedctypes import Value
 from typing import DefaultDict, Tuple, List, Dict, Any
 import copy
 import itertools
@@ -116,7 +117,7 @@ class Scenario:
 
         dest = copy.deepcopy(agent_mode)
         possible_dest = [[elem] for elem in dest]
-        ego_type = agent.controller.ego_type
+        ego_type = find(agent.controller.controller.args, lambda a: a[0] == EGO)[1]
         rect = copy.deepcopy([agent_state[0][1:], agent_state[1][1:]])
 
         # The reset_list here are all the resets for a single transition. Need to evaluate each of them
@@ -127,28 +128,41 @@ class Scenario:
             expr = reset.expr
             # First get the transition destinations
             if "mode" in reset_variable:
+                found = False
                 for var_loc, discrete_variable_ego in enumerate(agent.controller.state_defs[ego_type].disc):
                     if discrete_variable_ego == reset_variable:
+                        found = True
                         break
-                tmp = expr.split('.')
-                if 'map' in tmp[0]:
-                    for var in disc_var_dict:
-                        expr = expr.replace(var, f"'{disc_var_dict[var]}'")
-                    res = eval(expr)
-                    if not isinstance(res, list):
-                        res = [res]
-                    possible_dest[var_loc] = res
+                if not found:
+                    raise ValueError(f'Reset discrete variable {discrete_variable_ego} not found')
+                if isinstance(reset.val_ast, ast.Constant):
+                    val = eval(expr)
+                    possible_dest[var_loc] = [val]
                 else:
-                    expr = tmp
-                    if expr[0].strip(' ') in agent.controller.mode_defs:
-                        possible_dest[var_loc] = [expr[1]] 
+                    tmp = expr.split('.')
+                    if 'map' in tmp[0]:
+                        for var in disc_var_dict:
+                            expr = expr.replace(var, f"'{disc_var_dict[var]}'")
+                        res = eval(expr)
+                        if not isinstance(res, list):
+                            res = [res]
+                        possible_dest[var_loc] = res
+                    else:
+                        expr = tmp
+                        if expr[0].strip(' ') in agent.controller.mode_defs:
+                            possible_dest[var_loc] = [expr[1]] 
+
             # Assume linear function for continuous variables
             else: 
                 lhs = reset_variable 
                 rhs = expr 
-                for lhs_idx, cts_variable in enumerate(agent.controller.state_defs[agent.controller.ego_type].cont):
+                found = False
+                for lhs_idx, cts_variable in enumerate(agent.controller.state_defs[ego_type].cont):
                     if cts_variable == lhs:
+                        found = True
                         break 
+                if not found:
+                    raise ValueError(f'Reset continuous variable {cts_variable} not found')
                 # substituting low variables                
 
                 symbols = [] 
@@ -267,6 +281,8 @@ class Scenario:
                 # assert agent.controller.controller.asserts
                 def eval_expr(expr, env):
                     return eval(compile(ast.fix_missing_locations(ast.Expression(expr)), "", "eval"), env)
+                
+                # Check safety conditions
                 for i, a in enumerate(agent.controller.controller.asserts):
                     pre_sat = all(eval_expr(p, packed_env) for p in a.pre)
                     if pre_sat:
@@ -347,6 +363,8 @@ class Scenario:
         agent_guard_dict = {}
         for agent_id in node.agent:
             agent:BaseAgent = self.agent_dict[agent_id]
+            if agent.controller.controller == None:
+                continue
             agent_mode = node.mode[agent_id]
             state_dict = {}
             for tmp in node.agent:
