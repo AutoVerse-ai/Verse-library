@@ -4,10 +4,10 @@ from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap2, SimpleMa
 from dryvr_plus_plus.plotter.plotter2D import *
 from dryvr_plus_plus.plotter.plotter2D_new import *
 from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor2
-import plotly.graph_objects as go
-import matplotlib.pyplot as plt
-import numpy as np
+
 from enum import Enum, auto
+import plotly.graph_objects as go
+from dryvr_plus_plus.plotter.plotter2D_new import *
 
 
 class VehicleMode(Enum):
@@ -77,11 +77,11 @@ if __name__ == "__main__":
     # fig = generate_simulation_anime(traces, tmp_map, fig)
     # plt.show()
 
-    traces = scenario.simulate(25)
+    traces = scenario.simulate(25, 0.05)
     # fig = go.Figure()
     # fig = plotly_simulation_tree(traces, 'car1', 1, [2], 'b', fig)
     # fig.show()
     fig = go.Figure()
-    fig = draw_simulation_tree(traces, tmp_map, fig, 1, 2, 'detailed')
-    # fig = plotly_map(tmp_map, fig=fig)
+    fig = simulation_anime(
+        traces, tmp_map, fig, 1, 2, 'fill', print_dim_list=[1, 2])
     fig.show()

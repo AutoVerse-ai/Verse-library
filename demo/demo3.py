@@ -82,5 +82,6 @@ if __name__ == "__main__":
     # plt.show()
 
     fig = go.Figure()
-    fig = general_simu_anime(traces, tmp_map, fig, 1, 2, 'lines')
+    fig = simulation_anime(traces, tmp_map, fig, 1,
+                           2, 'lines', print_dim_list=[1, 2])
     fig.show()

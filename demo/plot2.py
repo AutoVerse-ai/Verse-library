@@ -1,3 +1,4 @@
+from matplotlib import markers
 import plotly.graph_objects as go
 
 import pandas as pd
@@ -60,7 +61,7 @@ sliders_dict = {
     "currentvalue": {
         "font": {"size": 20},
         "prefix": "Year:",
-        "visible": False,
+        "visible": True,
         "xanchor": "right"
     },
     "transition": {"duration": 300, "easing": "cubic-in-out"},
@@ -73,46 +74,53 @@ sliders_dict = {
 
 # make data
 year = 1952
-for continent in continents:
-    dataset_by_year = dataset[dataset["year"] == year]
+# for continent in continents:
+continent = continents[2]
+dataset_by_year = dataset[dataset["year"] == year]
+dataset_by_year_and_cont = dataset_by_year[
+    dataset_by_year["continent"] == continent]
+
+data_dict = {
+    "x": list(dataset_by_year_and_cont["lifeExp"]),
+    "y": list(dataset_by_year_and_cont["gdpPercap"]),
+    "mode": "markers",
+    "text": list(dataset_by_year_and_cont["country"]),
+    "marker": {
+        "sizemode": "area",
+        "sizeref": 200000,
+        "size": list(dataset_by_year_and_cont["pop"]),
+        "gradient": dict(type='none', color='#000000'),
+        # "symbol": 'diamond-wide'
+    },
+    "name": continent
+}
+fig_dict["data"].append(data_dict)
+
+# make frames
+for year in years:
+    frame = {"data": [], "name": str(year)}
+    # for continent in continents:
+    continent = continents[2]
+    dataset_by_year = dataset[dataset["year"] == int(year)]
     dataset_by_year_and_cont = dataset_by_year[
         dataset_by_year["continent"] == continent]
 
     data_dict = {
         "x": list(dataset_by_year_and_cont["lifeExp"]),
         "y": list(dataset_by_year_and_cont["gdpPercap"]),
-        "mode": "lines",
+        "mode": "markers",
         "text": list(dataset_by_year_and_cont["country"]),
         "marker": {
             "sizemode": "area",
             "sizeref": 200000,
-            "size": list(dataset_by_year_and_cont["pop"])
+            "size": list(dataset_by_year_and_cont["pop"]),
+            "gradient": dict(type='none', color='#000000'),
+            # "symbol": 'diamond-wide'
+
         },
         "name": continent
     }
-    fig_dict["data"].append(data_dict)
-
-# make frames
-for year in years:
-    frame = {"data": [], "name": str(year)}
-    for continent in continents:
-        dataset_by_year = dataset[dataset["year"] == int(year)]
-        dataset_by_year_and_cont = dataset_by_year[
-            dataset_by_year["continent"] == continent]
-
-        data_dict = {
-            "x": list(dataset_by_year_and_cont["lifeExp"]),
-            "y": list(dataset_by_year_and_cont["gdpPercap"]),
-            "mode": "lines",
-            "text": list(dataset_by_year_and_cont["country"]),
-            "marker": {
-                "sizemode": "area",
-                "sizeref": 200000,
-                "size": list(dataset_by_year_and_cont["pop"])
-            },
-            "name": continent
-        }
-        frame["data"].append(data_dict)
+    frame["data"].append(data_dict)
 
     fig_dict["frames"].append(frame)
     slider_step = {"args": [
@@ -129,5 +137,6 @@ for year in years:
 fig_dict["layout"]["sliders"] = [sliders_dict]
 
 fig = go.Figure(fig_dict)
+# .update_traces(marker={"gradient": dict(type='radial')})
 
 fig.show()

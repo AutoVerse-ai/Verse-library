@@ -58,7 +58,9 @@ if __name__ == "__main__":
         ]
     )
 
-    traces = scenario.simulate(30, 0.05)
+    traces = scenario.verify(10, 0.05)
     fig = go.Figure()
-    fig = test_simu_anime(traces, tmp_map, fig, 1, 2, 'lines')
+    # fig = simulation_anime_trail(traces, tmp_map, fig, 1, 2, 'lines')
+    fig = reachtube_anime(traces, tmp_map, fig, 1,
+                          2, 'lines', print_dim_list=[1, 2])
     fig.show()

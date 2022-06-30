@@ -3,7 +3,7 @@
 Now the latest version is placed in plotter2D_new.py. All functions in the plotter2D.py still work. Every function are in developemnt and might change.
 
 ## Current work & Todo
-- **Animation with trails** supported in test_simu_anime() and will be tested further.
+- **Animation with trails** supported in simulation_anime_trail() and will be tested further.
 - **Modified accelerating mode** modified, will be tested
 - **new quadrotor agent** next
 - **different color for segments of trace** done.
@@ -11,7 +11,7 @@ Now the latest version is placed in plotter2D_new.py. All functions in the plott
 ## Functions
 Belows are the functions currently used. Some of the functions in the file are deprecated.
 
-#### general_reachtube_anime(root, map, fig, x_dim, y_dim, map_type)
+#### reachtube_anime(root, map, fig, x_dim, y_dim, map_type)
 
 The genernal plotter for reachtube animation. It draws the all traces of reachtubes and the map. Animation is implemented as rectangles.
 
@@ -56,7 +56,7 @@ The old ungenernal static plotter for map which support visualization of speed l
 - **color** the color of the margin of the lanes, should be a string like 'black' or in rgb/rgba format, like 'rgb(0,0,0)' or 'rgba(0,0,0,1)'. The default value is 'rgba(0,0,0,1)' which is non-transparent black.
 - **fig:** the object of the figure, its type should be plotly.graph_objects.Figure().
 
-#### draw_simulation_tree(root, map, fig, x_dim, y_dim, map_type, scale_type):
+#### simulation_tree(root, map, fig, x_dim, y_dim, map_type, scale_type):
 
 The genernal static plotter for simulation trees. It draws the traces of agents and map.
 
@@ -69,7 +69,7 @@ The genernal static plotter for simulation trees. It draws the traces of agents 
 - **map_type** the way to draw the map. It should be 'lines' or 'fill'. For the 'lines' mode, map is only drawn by margins of lanes. For the 'fill' mode, the lanes will be filled semitransparent colors.
 - **scale_type** the way to draw the map. It should be 'trace' or 'map'. For the 'trace' mode, the plot will be scaled to show all traces. For the 'map' mode, the plot will be scaled to show the whole map. The Default value is 'trace'.
 
-#### draw_simulation_tree_single(root, agent_id, x_dim, y_dim, color_id, fig):
+#### simulation_tree_single(root, agent_id, x_dim, y_dim, color_id, fig):
 
 The genernal static plotter for simulation tree. It draws the  traces of one specific agent.
 
@@ -90,7 +90,7 @@ The old ungenernal plotter for simulation animation. It draws the all traces and
 - **map:** the map of the scenario, templates are in dryvr_plus_plus.example.example_map.simple_map2.py. It doesn't handle the map with wrong format. Only SimpleMap3_v2() class is supported now.
 - **fig:** the object of the figure, its type should be plotly.graph_objects.Figure().
 
-#### general_simu_anime(root, map, fig, x_dim, y_dim, map_type, scale_type):
+#### simulation_anime(root, map, fig, x_dim, y_dim, map_type, scale_type):
 
 The genernal plotter for simulation animation. It draws the all traces and the map. Animation is implemented as points. Since arrow is hard to generalize.
 

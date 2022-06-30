@@ -81,7 +81,7 @@ if __name__ == "__main__":
             (VehicleMode.Normal, LaneMode.Lane3),
         ]
     )
-    traces = scenario.simulate(80, 0.05)
+    traces = scenario.simulate(80, 0.1)
     # traces = scenario.verify(80, 0.05)
 
     # fig = plt.figure(2)
@@ -95,5 +95,10 @@ if __name__ == "__main__":
     # plt.show()
 
     fig = go.Figure()
-    fig = draw_simulation_tree(traces, tmp_map, fig, 1, 2, 'lines')
+    fig = simulation_anime(
+        traces, tmp_map, fig, 1, 2, 'lines', print_dim_list=[1, 2])
+    fig.show()
+    fig = go.Figure()
+    fig = simulation_tree(
+        traces, tmp_map, fig, 1, 2, 'lines', print_dim_list=[1, 2])
     fig.show()

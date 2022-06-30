@@ -43,6 +43,7 @@ class LaneMap:
             raise ValueError(f"lane_idx {lane_idx} not in lane_dict")
         left_lane_list = self.left_lane_dict[lane_idx]
         return copy.deepcopy(left_lane_list[0])
+
     def has_right(self, lane_idx):
         if isinstance(lane_idx, Enum):
             lane_idx = lane_idx.name
@@ -112,5 +113,5 @@ class LaneMap:
         ret_dict = {}
         for lane_idx, lane in self.lane_dict.items():
             ret_dict[lane_idx] = lane.get_speed_limit()
-        print(ret_dict)
+        # print(ret_dict)
         return ret_dict

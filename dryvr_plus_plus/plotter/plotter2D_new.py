@@ -3,23 +3,13 @@ This file consist main plotter code for DryVR reachtube output
 """
 
 from __future__ import annotations
-# from audioop import reverse
-# from curses import start_color
-# from re import A
-# import matplotlib.patches as patches
-# import matplotlib.pyplot as plt
+from matplotlib.pyplot import title
 import numpy as np
 from math import pi
 import plotly.graph_objects as go
-from typing import List
-# from PIL import Image, ImageDraw
-# import io
+from typing import List, Tuple
 import copy
-# import operator
-# from collections import OrderedDict
-
-# from torch import layout
-from dryvr_plus_plus.scene_verifier.analysis.analysis_tree_node import AnalysisTreeNode
+# from dryvr_plus_plus.scene_verifier.analysis.analysis_tree_node import AnalysisTreeNode
 
 colors = [['#CC0000', '#FF0000', '#FF3333', '#FF6666', '#FF9999'],
           ['#CC6600', '#FF8000', '#FF9933', '#FFB266', '#FFCC99'],
@@ -36,28 +26,41 @@ colors = [['#CC0000', '#FF0000', '#FF3333', '#FF6666', '#FF9999'],
           ]
 scheme_dict = {'red': 0, 'orange': 1, 'yellow': 2, 'yellowgreen': 3, 'lime': 4,
                'springgreen': 5, 'cyan': 6, 'cyanblue': 7, 'blue': 8, 'purple': 9, 'magenta': 10, 'pink': 11}
-bg_color = ['rgba(31,119,180,1)', 'rgba(255,127,14,0.2)', 'rgba(44,160,44,0.2)', 'rgba(214,39,40,0.2)', 'rgba(148,103,189,0.2)',
-            'rgba(140,86,75,0.2)', 'rgba(227,119,194,0.2)', 'rgba(127,127,127,0.2)', 'rgba(188,189,34,0.2)', 'rgba(23,190,207,0.2)']
+# bg_color = ['rgba(31,119,180,1)', 'rgba(255,127,14,0.2)', 'rgba(44,160,44,0.2)', 'rgba(214,39,40,0.2)', 'rgba(148,103,189,0.2)',
+# 'rgba(140,86,75,0.2)', 'rgba(227,119,194,0.2)', 'rgba(127,127,127,0.2)', 'rgba(188,189,34,0.2)', 'rgba(23,190,207,0.2)']
 color_cnt = 0
 text_size = 8
 scale_factor = 0.25
 mode_color = 'rgba(0,0,0,0.5)'
+duration = 10
 
 
-def general_reachtube_anime(root, map=None, fig=None, x_dim: int = 1, y_dim: int = 2, map_type='lines'):
-    # make figure
-    fig_dict = {
-        "data": [],
-        "layout": {},
-        "frames": []
-    }
-    fig = draw_map(map=map, fig=fig, fill_type=map_type)
+def check_dim(num_dim: int, x_dim: int = 1, y_dim: int = 2, print_dim_list: List(int) = None):
+    if x_dim <= 0 or x_dim >= num_dim:
+        raise ValueError(f'wrong x dimension value {x_dim}')
+    if y_dim <= 0 or y_dim >= num_dim:
+        raise ValueError(f'wrong y dimension value {y_dim}')
+    if print_dim_list is None:
+        return True
+    for i in print_dim_list:
+        if y_dim <= 0 or y_dim >= num_dim:
+            raise ValueError(f'wrong printed dimension value {i}')
+    return True
+
+
+def reachtube_anime(root, map=None, fig=None, x_dim: int = 1, y_dim: int = 2, map_type='lines', scale_type='trace', print_dim_list=None):
+    agent_list = list(root.agent.keys())
     timed_point_dict = {}
     stack = [root]
     x_min, x_max = float('inf'), -float('inf')
     y_min, y_max = float('inf'), -float('inf')
-    print("reachtude")
-    end_time = 0
+    # input check
+    num_dim = np.array(root.trace[list(root.agent.keys())[0]]).shape[1]
+    check_dim(num_dim, x_dim, y_dim, print_dim_list)
+    if print_dim_list is None:
+        print_dim_list = range(0, num_dim)
+    scheme_list = list(scheme_dict.keys())
+    # end_time = 0
     while stack != []:
         node = stack.pop()
         traces = node.trace
@@ -66,7 +69,7 @@ def general_reachtube_anime(root, map=None, fig=None, x_dim: int = 1, y_dim: int
             if trace[0][0] > 0:
                 trace = trace[4:]
             # print(trace)
-            end_time = trace[-1][0]
+            # end_time = trace[-1][0]
             for i in range(0, len(trace), 2):
                 x_min = min(x_min, trace[i][x_dim])
                 x_max = max(x_max, trace[i][x_dim])
@@ -85,79 +88,31 @@ def general_reachtube_anime(root, map=None, fig=None, x_dim: int = 1, y_dim: int
         stack += node.child
     # fill in most of layout
     # print(end_time)
-    duration = int(100/end_time)
-    fig_dict["layout"]["xaxis"] = {
-        # "range": [(x_min-10), (x_max+10)],
-        "title": "x position"}
-    fig_dict["layout"]["yaxis"] = {
-        "range": [(y_min-2), (y_max+2)],
-        "title": "y position"}
-    fig_dict["layout"]["hovermode"] = "closest"
-    fig_dict["layout"]["updatemenus"] = [
-        {
-            "buttons": [
-                {
-                    "args": [None, {"frame": {"duration": duration, "redraw": False},
-                                    "fromcurrent": True, "transition": {"duration": duration,
-                                                                        "easing": "quadratic-in-out"}}],
-                    "label": "Play",
-                    "method": "animate"
-                },
-                {
-                    "args": [[None], {"frame": {"duration": 0, "redraw": False},
-                                      "mode": "immediate",
-                                      "transition": {"duration": 0}}],
-                    "label": "Pause",
-                    "method": "animate"
-                }
-            ],
-            "direction": "left",
-            "pad": {"r": 10, "t": 87},
-            "showactive": False,
-            "type": "buttons",
-            "x": 0.1,
-            "xanchor": "right",
-            "y": 0,
-            "yanchor": "top"
-        }
-    ]
-    sliders_dict = {
-        "active": 0,
-        "yanchor": "top",
-        "xanchor": "left",
-        "currentvalue": {
-            "font": {"size": 20},
-            "prefix": "time:",
-            "visible": True,
-            "xanchor": "right"
-        },
-        # "method": "update",
-        "transition": {"duration": duration, "easing": "cubic-in-out"},
-        "pad": {"b": 10, "t": 50},
-        "len": 0.9,
-        "x": 0.1,
-        "y": 0,
-        "steps": []
-    }
-    # make data
-    agent_dict = timed_point_dict[0]  # {agent1:[rect1,..], ...}
-    x_list = []
-    y_list = []
-    text_list = []
-    for agent_id, rect_list in agent_dict.items():
-        for rect in rect_list:
-            # trace = list(data.values())[0]
-            # print(rect)
-            x_list.append((rect[0][x_dim]+rect[1][x_dim])/2)
-            y_list.append((rect[0][y_dim]+rect[1][y_dim])/2)
-            text_list.append(
-                ('{:.2f}'.format((rect[0][x_dim]+rect[1][x_dim])/2), '{:.3f}'.format(rect[0][y_dim]+rect[1][y_dim])/2))
+    # duration = 10
+    fig_dict, sliders_dict = create_anime_dict(duration)
+    # # make data
+    # agent_dict = timed_point_dict[0]  # {agent1:[rect1,..], ...}
+    # x_list = []
+    # y_list = []
+    # text_list = []
+    # for agent_id, rect_list in agent_dict.items():
+    #     for rect in rect_list:
+    #         # trace = list(data.values())[0]
+    #         # print(rect)
+    #         x_list.append((rect[0][x_dim]+rect[1][x_dim])/2)
+    #         y_list.append((rect[0][y_dim]+rect[1][y_dim])/2)
+    #         # text_list.append(
+    #         #     ('{:.2f}'.format((rect[0][x_dim]+rect[1][x_dim])/2), '{:.3f}'.format(rect[0][y_dim]+rect[1][y_dim])/2))
+
+    #         text_list.append(['{:.2f}'.format((rect[0][i]+rect[1][i])/2)
+    #                           for i in print_dim_list])
     # data_dict = {
     #     "x": x_list,
     #     "y": y_list,
     #     "mode": "markers + text",
     #     "text": text_list,
     #     "textposition": "bottom center",
+    #     "visible": False,
     #     # "marker": {
     #     #     "sizemode": "area",
     #     #     "sizeref": 200000,
@@ -186,34 +141,35 @@ def general_reachtube_anime(root, map=None, fig=None, x_dim: int = 1, y_dim: int
                     "y0": rect[0][y_dim],
                     "x1": rect[1][x_dim],
                     "y1": rect[1][y_dim],
-                    "fillcolor": 'rgba(255,255,255,0.5)',
+                    "fillcolor": 'rgba(0,0,0,0.5)',
                     "line": dict(color='rgba(255,255,255,0)'),
+                    "visible": True
 
                 }
                 frame["layout"]["shapes"].append(shape_dict)
-        # data_dict = {
-        #     "x": trace_x,
-        #     "y": trace_y,
-        #     "mode": "markers + text",
-        #     "text": [('{:.2f}'.format(trace_theta[i]/pi*180), '{:.3f}'.format(trace_v[i])) for i in range(len(trace_theta))],
-        #     "textposition": "bottom center",
-        #     # "marker": {
-        #     #     "sizemode": "area",
-        #     #     "sizeref": 200000,
-        #     #     "size": 2
-        #     # },
-        #     "name": "current position"
-        # }
-        # frame["data"].append(data_dict)
-        # print(trace_x)
+            # data_dict = {
+            #     "x": trace_x,
+            #     "y": trace_y,
+            #     "mode": "markers",
+            #     # "text": [('{:.2f}'.format(trace_theta[i]/pi*180), '{:.3f}'.format(trace_v[i])) for i in range(len(trace_theta))],
+            #     # "textposition": "bottom center",
+            #     # "marker": {
+            #     #     "sizemode": "area",
+            #     #     "sizeref": 200000,
+            #     #     "size": 2
+            #     # },
+            #     "name": "current position"
+            # }
+            # frame["data"].append(data_dict)
+
         fig_dict["frames"].append(frame)
         slider_step = {"args": [
-            [time_point],
+            ['{:.2f}'.format(time_point)],
             {"frame": {"duration": duration, "redraw": False},
              "mode": "immediate",
              "transition": {"duration": duration}}
         ],
-            "label": time_point,
+            "label": '{:.2f}'.format(time_point),
             "method": "animate"}
         sliders_dict["steps"].append(slider_step)
         # print(len(frame["layout"]["annotations"]))
@@ -221,24 +177,173 @@ def general_reachtube_anime(root, map=None, fig=None, x_dim: int = 1, y_dim: int
     fig_dict["layout"]["sliders"] = [sliders_dict]
 
     fig = go.Figure(fig_dict)
-    # fig = plotly_map(map, 'g', fig)
+    fig = draw_map(map=map, fig=fig, fill_type=map_type)
     i = 1
     for agent_id in traces:
-        fig = draw_reachtube_tree_v2(root, agent_id, 1, 2, i, fig)
-        i += 2
+        fig = reachtube_tree_single(
+            root, agent_id, fig, 1, 2, scheme_list[i], print_dim_list)
+        i = (i+5) % 12
+    if scale_type == 'trace':
+        queue = [root]
+        x_min, x_max = float('inf'), -float('inf')
+        y_min, y_max = float('inf'), -float('inf')
+        # scale_factor = 0.25
+    i = 0
+    queue = [root]
+    previous_mode = {}
+    # agent_list = []
+    for agent_id in root.mode:
+        previous_mode[agent_id] = []
+        # agent_list.append(agent_id)
+    text_pos = 'middle center'
+    while queue != []:
+        node = queue.pop(0)
+        traces = node.trace
+        # print(node.mode)
+        # [[time,x,y,theta,v]...]
+        # i = 0
+        for agent_id in traces:
+            trace = np.array(traces[agent_id])
+            if scale_type == 'trace':
+                x_min = min(x_min, min(trace[:, x_dim]))
+                x_max = max(x_max, max(trace[:, x_dim]))
+                y_min = min(y_min, min(trace[:, y_dim]))
+                y_max = max(y_max, max(trace[:, y_dim]))
+            # print(trace)
+            # trace_y = trace[:, y_dim].tolist()
+            # trace_x = trace[:, x_dim].tolist()
+            # theta = [i/pi*180 for i in trace[:, 3]]
+            # i = agent_list.index(agent_id)
+            # color = colors[i % 5]
+            # fig.add_trace(go.Scatter(x=trace[:, x_dim], y=trace[:, y_dim],
+            #                          mode='lines',
+            #                          line_color=color,
+            #                          text=[('{:.2f}'.format(trace_x[i]), '{:.2f}'.format(
+            #                              trace_y[i])) for i in range(len(trace_x))],
+            #                          showlegend=False)
+            #               #  name='lines')
+            #               )
 
+            if previous_mode[agent_id] != node.mode[agent_id]:
+                text_pos, text = get_text_pos(node.mode[agent_id][0])
+                x0 = trace[0, x_dim]
+                x1 = trace[1, x_dim]
+                y0 = trace[0, y_dim]
+                y1 = trace[1, y_dim]
+                fig.add_shape(type='rect', x0=x0, x1=x1, y0=y0, y1=y1,
+                              fillcolor='rgba(255,255,255,0.5)', line=dict(color='rgba(255,255,255,0)'))
+                fig.add_trace(go.Scatter(x=[(x0+x1)/2], y=[(y0+y1)/2],
+                                         mode='markers+text',
+                                         line_color=mode_color,
+                                         text=str(agent_id)+': ' + text,
+                                         textposition=text_pos,
+                                         textfont=dict(
+                    #  family="sans serif",
+                    size=text_size,
+                                             color="grey"),
+                                         showlegend=False,
+                                         ))
+                # i += 1
+                previous_mode[agent_id] = node.mode[agent_id]
+        queue += node.child
+    if scale_type == 'trace':
+        fig.update_xaxes(
+            range=[x_min-scale_factor*(x_max-x_min), x_max+scale_factor*(x_max-x_min)])
+        fig.update_yaxes(
+            range=[y_min-scale_factor*(y_max-y_min), y_max+scale_factor*(y_max-y_min)])
     return fig
 
 
-def draw_reachtube_tree_v2(root, agent_id, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, color_id=None, map_type='lines'):
-    # if fig is None:
-    #     fig = go.Figure()
-    global color_cnt, bg_color
+def reachtube_tree(root, map=None, fig=None, x_dim: int = 1, y_dim=2, map_type='lines', scale_type='trace', print_dim_list=None):
     fig = draw_map(map=map, fig=fig, fill_type=map_type)
-    if color_id is None:
-        color_id = color_cnt
+    # mark
+    agent_list = list(root.agent.keys())
+    # input check
+    num_dim = np.array(root.trace[agent_list[0]]).shape[1]
+    check_dim(num_dim, x_dim, y_dim, print_dim_list)
+    if print_dim_list is None:
+        print_dim_list = range(0, num_dim)
+
+    scheme_list = list(scheme_dict.keys())
+    i = 0
+    for agent_id in agent_list:
+        fig = reachtube_tree_single(
+            root, agent_id, fig, x_dim, y_dim, scheme_list[i], print_dim_list)
+        i = (i+5) % 12
+    if scale_type == 'trace':
+        queue = [root]
+        x_min, x_max = float('inf'), -float('inf')
+        y_min, y_max = float('inf'), -float('inf')
+        # scale_factor = 0.25
+    i = 0
+    queue = [root]
+    previous_mode = {}
+    # agent_list = []
+    for agent_id in root.mode:
+        previous_mode[agent_id] = []
+        # agent_list.append(agent_id)
+    text_pos = 'middle center'
+    while queue != []:
+        node = queue.pop(0)
+        traces = node.trace
+        # print(node.mode)
+        # [[time,x,y,theta,v]...]
+        i = 0
+        for agent_id in traces:
+            trace = np.array(traces[agent_id])
+            if scale_type == 'trace':
+                x_min = min(x_min, min(trace[:, x_dim]))
+                x_max = max(x_max, max(trace[:, x_dim]))
+                y_min = min(y_min, min(trace[:, y_dim]))
+                y_max = max(y_max, max(trace[:, y_dim]))
+            # print(trace)
+            # trace_y = trace[:, y_dim].tolist()
+            # trace_x = trace[:, x_dim].tolist()
+            # theta = [i/pi*180 for i in trace[:, 3]]
+            i = agent_list.index(agent_id)
+            # color = colors[i % 5]
+            # fig.add_trace(go.Scatter(x=trace[:, x_dim], y=trace[:, y_dim],
+            #                          mode='lines',
+            #                          line_color=color,
+            #                          text=[('{:.2f}'.format(trace_x[i]), '{:.2f}'.format(
+            #                              trace_y[i])) for i in range(len(trace_x))],
+            #                          showlegend=False)
+            #               #  name='lines')
+            #               )
+            if previous_mode[agent_id] != node.mode[agent_id]:
+                text_pos, text = get_text_pos(node.mode[agent_id][0])
+
+                fig.add_trace(go.Scatter(x=[trace[0, x_dim]], y=[trace[0, y_dim]],
+                                         mode='markers+text',
+                                         line_color=mode_color,
+                                         text=str(agent_id)+': ' + text,
+                                         textposition=text_pos,
+                                         textfont=dict(
+                    #  family="sans serif",
+                    size=text_size,
+                                             color="grey"),
+                                         showlegend=False,
+                                         ))
+                # i += 1
+                previous_mode[agent_id] = node.mode[agent_id]
+        queue += node.child
+    if scale_type == 'trace':
+        fig.update_xaxes(
+            range=[x_min-scale_factor*(x_max-x_min), x_max+scale_factor*(x_max-x_min)])
+        fig.update_yaxes(
+            range=[y_min-scale_factor*(y_max-y_min), y_max+scale_factor*(y_max-y_min)])
+    return fig
+
+
+def reachtube_tree_single(root, agent_id, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, color=None, print_dim_list=None):
+    global color_cnt
+    # fig = draw_map(map=map, fig=fig, fill_type=map_type)
+    if color == None:
+        color = list(scheme_dict.keys())[color_cnt]
+        color_cnt = (color_cnt+1) % 12
     queue = [root]
     show_legend = False
+    fillcolor = colors[scheme_dict[color]][4]
     while queue != []:
         node = queue.pop(0)
         traces = node.trace
@@ -253,28 +358,32 @@ def draw_reachtube_tree_v2(root, agent_id, fig=go.Figure(), x_dim: int = 1, y_di
                                 for i in range(1, max_id+1, 2)])
         fig.add_trace(go.Scatter(x=trace_x_odd.tolist()+trace_x_odd[::-1].tolist(), y=trace_y_odd.tolist()+trace_y_even[::-1].tolist(), mode='lines',
                                  fill='toself',
-                                 fillcolor=bg_color[color_id],
+                                 fillcolor=fillcolor,
+                                 opacity=0.5,
                                  line_color='rgba(255,255,255,0)',
                                  showlegend=show_legend
                                  ))
         fig.add_trace(go.Scatter(x=trace_x_even.tolist()+trace_x_even[::-1].tolist(), y=trace_y_odd.tolist()+trace_y_even[::-1].tolist(), mode='lines',
                                  fill='toself',
-                                 fillcolor=bg_color[color_id],
+                                 fillcolor=fillcolor,
+                                 opacity=0.5,
                                  line_color='rgba(255,255,255,0)',
                                  showlegend=show_legend))
         fig.add_trace(go.Scatter(x=trace_x_odd.tolist()+trace_x_even[::-1].tolist(), y=trace_y_odd.tolist()+trace_y_even[::-1].tolist(), mode='lines',
                                  fill='toself',
-                                 fillcolor=bg_color[color_id],
+                                 fillcolor=fillcolor,
+                                 opacity=0.5,
                                  line_color='rgba(255,255,255,0)',
                                  showlegend=show_legend
                                  ))
         fig.add_trace(go.Scatter(x=trace_x_even.tolist()+trace_x_odd[::-1].tolist(), y=trace_y_odd.tolist()+trace_y_even[::-1].tolist(), mode='lines',
                                  fill='toself',
-                                 fillcolor=bg_color[color_id],
+                                 fillcolor=fillcolor,
+                                 opacity=0.5,
                                  line_color='rgba(255,255,255,0)',
                                  showlegend=show_legend))
         queue += node.child
-        color_id = (color_id+1) % 10
+        # color_id = (color_id+1) % 10
     queue = [root]
     while queue != []:
         node = queue.pop(0)
@@ -284,19 +393,19 @@ def draw_reachtube_tree_v2(root, agent_id, fig=go.Figure(), x_dim: int = 1, y_di
         max_id = len(trace)-1
         fig.add_trace(go.Scatter(x=trace[:, x_dim], y=trace[:, y_dim],
                                  mode='markers',
+                                 text=[
+                                     ['{:.2f}'.format(trace[i, j])for j in print_dim_list] for i in range(0, trace.shape[0])],
                                  #  fill='toself',
                                  #  line=dict(dash="dot"),
-                                 line_color="black",
+                                 line_color=colors[scheme_dict[color]][0],
                                  marker={
             "sizemode": "area",
             "sizeref": 200000,
             "size": 2
         },
-            text=[range(0, max_id+1)],
             name='lines',
             showlegend=False))
         queue += node.child
-    color_cnt = color_id
     # fig.update_traces(line_dash="dash")
     return fig
 
@@ -304,6 +413,8 @@ def draw_reachtube_tree_v2(root, agent_id, fig=go.Figure(), x_dim: int = 1, y_di
 def draw_map(map, color='rgba(0,0,0,1)', fig: go.Figure() = go.Figure(), fill_type='lines'):
     x_min, x_max = float('inf'), -float('inf')
     y_min, y_max = float('inf'), -float('inf')
+    if map is None:
+        return fig
     if fill_type == 'detailed':
         speed_dict = map.get_all_speed_limit()
         speed_list = list(filter(None, speed_dict.values()))
@@ -312,6 +423,7 @@ def draw_map(map, color='rgba(0,0,0,1)', fig: go.Figure() = go.Figure(), fill_ty
         start_color = [255, 255, 255, 0.2]
         end_color = [0, 0, 0, 0.2]
         curr_color = [0, 0, 0, 0]
+    speed_limit = None
     for lane_idx in map.lane_dict:
         lane = map.lane_dict[lane_idx]
         curr_color = [0, 0, 0, 0]
@@ -337,7 +449,7 @@ def draw_map(map, color='rgba(0,0,0,1)', fig: go.Figure() = go.Figure(), fill_ty
                 y_min = min(y_min, min(trace_y))
                 x_max = max(x_max, max(trace_x))
                 y_max = max(y_max, max(trace_y))
-                if fill_type == 'lines' or speed_limit is None:
+                if fill_type == 'lines' or (fill_type == 'detailed' and speed_limit is None):
                     fig.add_trace(go.Scatter(x=trace_x, y=trace_y,
                                              mode='lines',
                                              line_color=color,
@@ -347,7 +459,7 @@ def draw_map(map, color='rgba(0,0,0,1)', fig: go.Figure() = go.Figure(), fill_ty
                                              # text=theta,
                                              name='lines'))
                 elif fill_type == 'detailed' and speed_limit is not None:
-                    print(curr_color)
+                    # print(curr_color)
                     fig.add_trace(go.Scatter(x=trace_x, y=trace_y,
                                              mode='lines',
                                              line_color=color,
@@ -362,7 +474,7 @@ def draw_map(map, color='rgba(0,0,0,1)', fig: go.Figure() = go.Figure(), fill_ty
                                              mode='lines',
                                              line_color=color,
                                              fill='toself',
-                                             #  fillcolor='rgba(255,255,255,0)',
+                                             fillcolor='rgba(0,0,0,0.1)',
                                              showlegend=False,
                                              # text=theta,
                                              name='lines'))
@@ -428,7 +540,8 @@ def draw_map(map, color='rgba(0,0,0,1)', fig: go.Figure() = go.Figure(), fill_ty
             cmin=speed_min,
             color='rgba(0,0,0,0)',
             colorbar=dict(
-                title="Speed Limit"
+                title="Speed Limit",
+                orientation='h'
             ),
             colorscale=[
                 [0, 'rgba'+str(tuple(start_color))], [1, 'rgba'+str(tuple(end_color))]]
@@ -440,136 +553,21 @@ def draw_map(map, color='rgba(0,0,0,1)', fig: go.Figure() = go.Figure(), fill_ty
     return fig
 
 
-def plotly_map(map, color='rgba(0,0,0,1)', fig: go.Figure() = go.Figure()):
-    # if fig is None:
-    #     fig = go.Figure()
-    all_x = []
-    all_y = []
-    all_v = []
-    for lane_idx in map.lane_dict:
-        lane = map.lane_dict[lane_idx]
-        for lane_seg in lane.segment_list:
-            if lane_seg.type == 'Straight':
-                start1 = lane_seg.start + lane_seg.width/2 * lane_seg.direction_lateral
-                end1 = lane_seg.end + lane_seg.width/2 * lane_seg.direction_lateral
-                # fig.add_trace(go.Scatter(x=[start1[0], end1[0]], y=[start1[1], end1[1]],
-                #                          mode='lines',
-                #                          line_color='black',
-                #                          showlegend=False,
-                #                          # text=theta,
-                #                          name='lines'))
-                start2 = lane_seg.start - lane_seg.width/2 * lane_seg.direction_lateral
-                end2 = lane_seg.end - lane_seg.width/2 * lane_seg.direction_lateral
-                # fig.add_trace(go.Scatter(x=[start2[0], end2[0]], y=[start2[1], end2[1]],
-                #                          mode='lines',
-                #                          line_color='black',
-                #                          showlegend=False,
-                #                          # text=theta,
-                #                          name='lines'))
-                fig.add_trace(go.Scatter(x=[start1[0], end1[0], end2[0], start2[0], start1[0]], y=[start1[1], end1[1], end2[1], start2[1], start1[1]],
-                                         mode='lines',
-                                         line_color=color,
-                                         #  fill='toself',
-                                         #  fillcolor='rgba(255,255,255,0)',
-                                         #  line_color='rgba(0,0,0,0)',
-                                         showlegend=False,
-                                         # text=theta,
-                                         name='lines'))
-                # fig = go.Figure().add_heatmap(x=)
-                seg_x, seg_y, seg_v = lane_seg.get_all_speed()
-                all_x += seg_x
-                all_y += seg_y
-                all_v += seg_v
-            elif lane_seg.type == "Circular":
-                phase_array = np.linspace(
-                    start=lane_seg.start_phase, stop=lane_seg.end_phase, num=100)
-                r1 = lane_seg.radius - lane_seg.width/2
-                x = np.cos(phase_array)*r1 + lane_seg.center[0]
-                y = np.sin(phase_array)*r1 + lane_seg.center[1]
-                fig.add_trace(go.Scatter(x=x, y=y,
-                                         mode='lines',
-                                         line_color=color,
-                                         showlegend=False,
-                                         # text=theta,
-                                         name='lines'))
-
-                r2 = lane_seg.radius + lane_seg.width/2
-                x = np.cos(phase_array)*r2 + lane_seg.center[0]
-                y = np.sin(phase_array)*r2 + lane_seg.center[1]
-                fig.add_trace(go.Scatter(x=x, y=y,
-                                         mode='lines',
-                                         line_color=color,
-                                         showlegend=False,
-                                         # text=theta,
-                                         name='lines'))
-            else:
-                raise ValueError(f'Unknown lane segment type {lane_seg.type}')
-    start_color = [0, 0, 255, 0.2]
-    end_color = [255, 0, 0, 0.2]
-    curr_color = copy.deepcopy(start_color)
-    max_speed = max(all_v)
-    min_speed = min(all_v)
-
-    for i in range(len(all_v)):
-        # print(all_x[i])
-        # print(all_y[i])
-        # print(all_v[i])
-        curr_color = copy.deepcopy(start_color)
-        for j in range(len(curr_color)-1):
-            curr_color[j] += (all_v[i]-min_speed)/(max_speed -
-                                                   min_speed)*(end_color[j]-start_color[j])
-        fig.add_trace(go.Scatter(x=all_x[i], y=all_y[i],
-                                 mode='lines',
-                                 line_color='rgba(0,0,0,0)',
-                                 fill='toself',
-                                 fillcolor='rgba'+str(tuple(curr_color)),
-                                 #  marker=dict(
-                                 #     symbol='square',
-                                 #     size=16,
-                                 #     cmax=max_speed,
-                                 #     cmin=min_speed,
-                                 #     # color=all_v[i],
-                                 #     colorbar=dict(
-                                 #         title="Colorbar"
-                                 #     ),
-                                 #     colorscale=[
-                                 #         [0, 'rgba'+str(tuple(start_color))], [1, 'rgba'+str(tuple(end_color))]]
-                                 # ),
-                                 showlegend=False,
-                                 ))
-    fig.add_trace(go.Scatter(x=[0], y=[0],
-                             mode='markers',
-                             # fill='toself',
-                             # fillcolor='rgba'+str(tuple(curr_color)),
-                             marker=dict(
-                                 symbol='square',
-                                 size=16,
-                                 cmax=max_speed,
-                                 cmin=min_speed,
-                                 color='rgba(0,0,0,0)',
-                                 colorbar=dict(
-                                        title="Speed Limit"
-                                 ),
-                                 colorscale=[
-                                     [0, 'rgba'+str(tuple(start_color))], [1, 'rgba'+str(tuple(end_color))]]
-    ),
-        showlegend=False,
-    ))
-    # fig.update_coloraxes(colorbar=dict(title="Colorbar"), colorscale=[
-    #                      [0, 'rgba'+str(tuple(start_color))], [1, 'rgba'+str(tuple(end_color))]])
-    return fig
-
-
-def draw_simulation_tree(root, map=None, fig=None, x_dim: int = 1, y_dim=2, map_type='lines', scale_type='trace'):
+def simulation_tree(root, map=None, fig=None, x_dim: int = 1, y_dim=2, map_type='lines', scale_type='trace', print_dim_list=None):
     fig = draw_map(map=map, fig=fig, fill_type=map_type)
     # mark
-    agent_list = root.agent.keys()
-    print(agent_list)
+    agent_list = list(root.agent.keys())
+    # input check
+    num_dim = np.array(root.trace[agent_list[0]]).shape[1]
+    check_dim(num_dim, x_dim, y_dim, print_dim_list)
+    if print_dim_list is None:
+        print_dim_list = range(0, num_dim)
+
     scheme_list = list(scheme_dict.keys())
     i = 0
     for agent_id in agent_list:
-        fig = draw_simulation_tree_single(
-            root, agent_id, fig, x_dim, y_dim, scheme_list[i], map_type)
+        fig = simulation_tree_single(
+            root, agent_id, fig, x_dim, y_dim, scheme_list[i], print_dim_list)
         i = (i+5) % 12
     if scale_type == 'trace':
         queue = [root]
@@ -579,10 +577,10 @@ def draw_simulation_tree(root, map=None, fig=None, x_dim: int = 1, y_dim=2, map_
     i = 0
     queue = [root]
     previous_mode = {}
-    agent_list = []
+    # agent_list = []
     for agent_id in root.mode:
         previous_mode[agent_id] = []
-        agent_list.append(agent_id)
+        # agent_list.append(agent_id)
     text_pos = 'middle center'
     while queue != []:
         node = queue.pop(0)
@@ -612,23 +610,11 @@ def draw_simulation_tree(root, map=None, fig=None, x_dim: int = 1, y_dim=2, map_
             #               #  name='lines')
             #               )
             if previous_mode[agent_id] != node.mode[agent_id]:
-                veh_mode = node.mode[agent_id][0]
-                if veh_mode == 'Normal':
-                    text_pos = 'middle center'
-                elif veh_mode == 'Brake':
-                    text_pos = 'middle left'
-                elif veh_mode == 'Accelerate':
-                    text_pos = 'middle right'
-                elif veh_mode == 'SwitchLeft':
-                    text_pos = 'top center'
-                elif veh_mode == 'SwitchRight':
-                    text_pos = 'bottom center'
-
+                text_pos, text = get_text_pos(node.mode[agent_id][0])
                 fig.add_trace(go.Scatter(x=[trace[0, x_dim]], y=[trace[0, y_dim]],
                                          mode='markers+text',
                                          line_color=mode_color,
-                                         text=str(agent_id)+': ' +
-                                         str(node.mode[agent_id][0]),
+                                         text=str(agent_id)+': ' + text,
                                          textposition=text_pos,
                                          textfont=dict(
                     #  family="sans serif",
@@ -644,10 +630,15 @@ def draw_simulation_tree(root, map=None, fig=None, x_dim: int = 1, y_dim=2, map_
             range=[x_min-scale_factor*(x_max-x_min), x_max+scale_factor*(x_max-x_min)])
         fig.update_yaxes(
             range=[y_min-scale_factor*(y_max-y_min), y_max+scale_factor*(y_max-y_min)])
+    # fig = fig.update_traces(showlegend=True)
+    fig.update_xaxes(title='x')
+    fig.update_yaxes(title='y')
+    fig.update_layout(legend_title_text='Agent list')
+    # go.Figure().update_t
     return fig
 
 
-def draw_simulation_tree_single(root: AnalysisTreeNode, agent_id, fig: go.Figure() = go.Figure(), x_dim: int = 1, y_dim: int = 2, color=None, map_type='lines'):
+def simulation_tree_single(root, agent_id, fig: go.Figure() = go.Figure(), x_dim: int = 1, y_dim: int = 2, color=None, print_dim_list=None):
     global color_cnt
     # fig = draw_map(map=map, fig=fig, fill_type=map_type)
     queue = [root]
@@ -655,351 +646,53 @@ def draw_simulation_tree_single(root: AnalysisTreeNode, agent_id, fig: go.Figure
     if color == None:
         color = list(scheme_dict.keys())[color_cnt]
         color_cnt = (color_cnt+1) % 12
+    start_list = []
+    end_list = []
+    count_dict = {}
     while queue != []:
         node = queue.pop(0)
         traces = node.trace
         # print(node.mode)
         # [[time,x,y,theta,v]...]
+        if agent_id not in traces.keys():
+            return fig
         trace = np.array(traces[agent_id])
-        # print(trace)
-        # trace_y = trace[:, y_dim].tolist()
-        # trace_x = trace[:, x_dim].tolist()
-        # trace_x_rev = trace_x[::-1]
-        # # print(trace_x)
-        # trace_upper = [i+1 for i in trace_y]
-        # trace_lower = [i-1 for i in trace_y]
-        # trace_lower = trace_lower[::-1]
-        # # print(trace_upper)
-        # # print(trace[:, y_dim])
-        # fig.add_trace(go.Scatter(x=trace_x+trace_x_rev, y=trace_upper+trace_lower,
-        #                          fill='toself',
-        #                          fillcolor=bg_color[color_id],
-        #                          line_color='rgba(255,255,255,0)',
-        #                          showlegend=False))'
-        trace_text = []
-        for i in range(len(trace)):
-            trace_text.append(['{:.2f}'.format(trace[i, j])
-                              for j in range(trace.shape[1])])
-
+        start = list(trace[0])
+        end = list(trace[-1])
+        if (start in start_list) and (end in end_list):
+            continue
+        time = tuple([round(start[0], 2), round(end[0], 2)])
+        if time in count_dict.keys():
+            count_dict[time] += 1
+        else:
+            count_dict[time] = 1
+        start_list.append(start)
+        end_list.append(end)
         fig.add_trace(go.Scatter(x=trace[:, x_dim], y=trace[:, y_dim],
                                  mode='lines',
                                  line_color=colors[scheme_dict[color]
                                                    ][color_id],
                                  #  text=[('{:.2f}'.format(trace[i, x_dim]), '{:.2f}'.format(
                                  #      trace[i, y_dim])) for i in range(len(trace))],
-                                 text=trace_text,
+                                 text=[
+                                     ['{:.2f}'.format(trace[i, j])for j in print_dim_list] for i in range(trace.shape[0])],
                                  #  name='lines',
-                                 showlegend=False))
+                                 legendgroup=agent_id,
+                                 legendgrouptitle_text=agent_id,
+                                 name=str(round(start[0], 2))+'-'+str(round(end[0], 2)) + \
+                                 '-'+str(count_dict[time]),
+                                 showlegend=True))
         color_id = (color_id+4) % 5
         queue += node.child
+    fig.update_layout(legend=dict(
+        groupclick="toggleitem",
+        itemclick="toggle",
+        itemdoubleclick="toggleothers"
+    ))
     return fig
 
 
-def draw_simulation_anime(root, map=None, fig=None):
-    # make figure
-    fig_dict = {
-        "data": [],
-        "layout": {},
-        "frames": []
-    }
-    # fig = plot_map(map, 'g', fig)
-    timed_point_dict = {}
-    stack = [root]
-    print("plot")
-    # print(root.mode)
-    x_min, x_max = float('inf'), -float('inf')
-    y_min, y_max = float('inf'), -float('inf')
-    # segment_start = set()
-    # previous_mode = {}
-    # for agent_id in root.mode:
-    #     previous_mode[agent_id] = []
-
-    while stack != []:
-        node = stack.pop()
-        traces = node.trace
-        for agent_id in traces:
-            trace = np.array(traces[agent_id])
-            print(trace)
-            # segment_start.add(round(trace[0][0], 2))
-            for i in range(len(trace)):
-                x_min = min(x_min, trace[i][1])
-                x_max = max(x_max, trace[i][1])
-                y_min = min(y_min, trace[i][2])
-                y_max = max(y_max, trace[i][2])
-                # print(round(trace[i][0], 2))
-                time_point = round(trace[i][0], 2)
-                if time_point not in timed_point_dict:
-                    timed_point_dict[time_point] = [
-                        {agent_id: trace[i][1:].tolist()}]
-                else:
-                    init = False
-                    for record in timed_point_dict[time_point]:
-                        if list(record.values())[0] == trace[i][1:].tolist():
-                            init = True
-                            break
-                    if init == False:
-                        timed_point_dict[time_point].append(
-                            {agent_id: trace[i][1:].tolist()})
-            time = round(trace[i][0], 2)
-        stack += node.child
-    # fill in most of layout
-    # print(segment_start)
-    # print(timed_point_dict.keys())
-    duration = int(600/time)
-    fig_dict["layout"]["xaxis"] = {
-        "range": [(x_min-10), (x_max+10)],
-        "title": "x position"}
-    fig_dict["layout"]["yaxis"] = {
-        "range": [(y_min-2), (y_max+2)],
-        "title": "y position"}
-    fig_dict["layout"]["hovermode"] = "closest"
-    fig_dict["layout"]["updatemenus"] = [
-        {
-            "buttons": [
-                {
-                    "args": [None, {"frame": {"duration": duration, "redraw": False},
-                                    "fromcurrent": True, "transition": {"duration": duration,
-                                                                        "easing": "quadratic-in-out"}}],
-                    "label": "Play",
-                    "method": "animate"
-                },
-                {
-                    "args": [[None], {"frame": {"duration": 0, "redraw": False},
-                                      "mode": "immediate",
-                                      "transition": {"duration": 0}}],
-                    "label": "Pause",
-                    "method": "animate"
-                }
-            ],
-            "direction": "left",
-            "pad": {"r": 10, "t": 87},
-            "showactive": False,
-            "type": "buttons",
-            "x": 0.1,
-            "xanchor": "right",
-            "y": 0,
-            "yanchor": "top"
-        }
-    ]
-    sliders_dict = {
-        "active": 0,
-        "yanchor": "top",
-        "xanchor": "left",
-        "currentvalue": {
-            "font": {"size": 20},
-            "prefix": "time:",
-            "visible": True,
-            "xanchor": "right"
-        },
-        "transition": {"duration": duration, "easing": "cubic-in-out"},
-        "pad": {"b": 10, "t": 50},
-        "len": 0.9,
-        "x": 0.1,
-        "y": 0,
-        "steps": []
-    }
-    # make data
-    point_list = timed_point_dict[0]
-    print(point_list)
-    x_list = []
-    y_list = []
-    text_list = []
-    for data in point_list:
-        trace = list(data.values())[0]
-        # print(trace)
-        x_list.append(trace[0])
-        y_list.append(trace[1])
-        text_list.append(
-            ('{:.2f}'.format(trace[2]/pi*180), '{:.3f}'.format(trace[3])))
-    data_dict = {
-        "x": x_list,
-        "y": y_list,
-        "mode": "markers + text",
-        "text": text_list,
-        "textfont": dict(size=text_size, color="black"),
-        "textposition": "bottom center",
-        # "marker": {
-        #     "sizemode": "area",
-        #     "sizeref": 200000,
-        #     "size": 2
-        # },
-        "name": "Current Position"
-    }
-    fig_dict["data"].append(data_dict)
-
-    # make frames
-    for time_point in timed_point_dict:
-        # print(time_point)
-        frame = {"data": [], "layout": {
-            "annotations": []}, "name": '{:.2f}'.format(time_point)}
-        # print(timed_point_dict[time_point][0])
-        point_list = timed_point_dict[time_point]
-        # point_list = list(OrderedDict.fromkeys(timed_point_dict[time_point]))
-        # todokeyi
-        trace_x = []
-        trace_y = []
-        trace_theta = []
-        trace_v = []
-        for data in point_list:
-            trace = list(data.values())[0]
-            # print(trace)
-            trace_x.append(trace[0])
-            trace_y.append(trace[1])
-            trace_theta.append(trace[2])
-            trace_v.append(trace[3])
-        data_dict = {
-            "x": trace_x,
-            "y": trace_y,
-            "mode": "markers + text",
-            # "text": [(round(trace_theta[i]/pi*180, 2), round(trace_v[i], 3)) for i in range(len(trace_theta))],
-            "text": [('{:.2f}'.format(trace_theta[i]/pi*180), '{:.3f}'.format(trace_v[i])) for i in range(len(trace_theta))],
-            "textfont": dict(size=text_size, color="black"),
-            "textposition": "bottom center",
-            # "marker": {
-            #     "sizemode": "area",
-            #     "sizeref": 200000,
-            #     "size": 2
-            # },
-            "name": "current position",
-            # "show_legend": False
-        }
-        frame["data"].append(data_dict)
-        for i in range(len(trace_x)):
-            ax = np.cos(trace_theta[i])*trace_v[i]
-            ay = np.sin(trace_theta[i])*trace_v[i]
-            # print(trace_x[i]+ax, trace_y[i]+ay)
-            annotations_dict = {"x": trace_x[i]+ax, "y": trace_y[i]+ay,
-                                # "xshift": ax, "yshift": ay,
-                                "ax": trace_x[i], "ay": trace_y[i],
-                                "arrowwidth": 2,
-                                # "arrowside": 'end',
-                                "showarrow": True,
-                                # "arrowsize": 1,
-                                "xref": 'x', "yref": 'y',
-                                "axref": 'x', "ayref": 'y',
-                                # "text": "erver",
-                                "arrowhead": 1,
-                                "arrowcolor": "black"}
-            frame["layout"]["annotations"].append(annotations_dict)
-
-            # if (time_point in segment_start) and (operator.ne(previous_mode[agent_id], node.mode[agent_id])):
-            #     annotations_dict = {"x": trace_x[i], "y": trace_y[i],
-            #                         # "xshift": ax, "yshift": ay,
-            #                         # "ax": trace_x[i], "ay": trace_y[i],
-            #                         # "arrowwidth": 2,
-            #                         # "arrowside": 'end',
-            #                         "showarrow": False,
-            #                         # "arrowsize": 1,
-            #                         # "xref": 'x', "yref": 'y',
-            #                         # "axref": 'x', "ayref": 'y',
-            #                         "text": str(node.mode[agent_id][0]),
-            #                         # "arrowhead": 1,
-            #                         # "arrowcolor": "black"
-            #                         }
-            #     frame["layout"]["annotations"].append(annotations_dict)
-            #     print(frame["layout"]["annotations"])
-            # i += 1
-            # previous_mode[agent_id] = node.mode[agent_id]
-
-        fig_dict["frames"].append(frame)
-        slider_step = {"args": [
-            [time_point],
-            {"frame": {"duration": duration, "redraw": False},
-             "mode": "immediate",
-             "transition": {"duration": duration}}
-        ],
-            "label": time_point,
-            "method": "animate"}
-        sliders_dict["steps"].append(slider_step)
-        # print(len(frame["layout"]["annotations"]))
-
-    fig_dict["layout"]["sliders"] = [sliders_dict]
-
-    fig = go.Figure(fig_dict)
-    fig = plotly_map(map, 'g', fig)
-    i = 0
-    queue = [root]
-    previous_mode = {}
-    agent_list = []
-    for agent_id in root.mode:
-        previous_mode[agent_id] = []
-        agent_list.append(agent_id)
-    text_pos = 'middle center'
-    while queue != []:
-        node = queue.pop(0)
-        traces = node.trace
-        # print(node.mode)
-        # [[time,x,y,theta,v]...]
-        i = 0
-        for agent_id in traces:
-            trace = np.array(traces[agent_id])
-            # print(trace)
-            trace_y = trace[:, 2].tolist()
-            trace_x = trace[:, 1].tolist()
-            # theta = [i/pi*180 for i in trace[:, 3]]
-            i = agent_list.index(agent_id)
-            color = colors[i % 5]
-            fig.add_trace(go.Scatter(x=trace[:, 1], y=trace[:, 2],
-                                     mode='lines',
-                                     line_color=color,
-                                     text=[(round(trace[i, 3]/pi*180, 2), round(trace[i, 4], 3))
-                                           for i in range(len(trace_y))],
-                                     showlegend=False)
-                          #  name='lines')
-                          )
-            if previous_mode[agent_id] != node.mode[agent_id]:
-                theta = trace[0, 3]
-                veh_mode = node.mode[agent_id][0]
-                if veh_mode == 'Normal':
-                    text_pos = 'middle center'
-                elif veh_mode == 'Brake':
-                    if theta >= -pi/2 and theta <= pi/2:
-                        text_pos = 'middle left'
-                    else:
-                        text_pos = 'middle right'
-                elif veh_mode == 'Accelerate':
-                    if theta >= -pi/2 and theta <= pi/2:
-                        text_pos = 'middle right'
-                    else:
-                        text_pos = 'middle left'
-                elif veh_mode == 'SwitchLeft':
-                    if theta >= -pi/2 and theta <= pi/2:
-                        text_pos = 'top center'
-                    else:
-                        text_pos = 'bottom center'
-                elif veh_mode == 'SwitchRight':
-                    if theta >= -pi/2 and theta <= pi/2:
-                        text_pos = 'bottom center'
-                    else:
-                        text_pos = 'top center'
-                fig.add_trace(go.Scatter(x=[trace[0, 1]], y=[trace[0, 2]],
-                                         mode='markers+text',
-                                         line_color=mode_color,
-                                         text=str(agent_id)+': ' +
-                                         str(node.mode[agent_id][0]),
-                                         textposition=text_pos,
-                                         textfont=dict(
-                    #  family="sans serif",
-                    size=text_size,
-                                             color="grey"),
-                                         showlegend=False,
-                                         ))
-                # i += 1
-                previous_mode[agent_id] = node.mode[agent_id]
-        queue += node.child
-    fig.update_traces(showlegend=False)
-    # fig.update_annotations(textfont=dict(size=14, color="black"))
-    # print(fig.frames[0].layout["annotations"])
-    return fig
-
-
-def general_simu_anime(root, map=None, fig=None, x_dim: int = 1, y_dim=2, map_type='lines', scale_type='trace'):
-    # make figure
-    fig_dict = {
-        "data": [],
-        "layout": {},
-        "frames": []
-    }
+def simulation_anime(root, map=None, fig=None, x_dim: int = 1, y_dim=2, map_type='lines', scale_type='trace', print_dim_list=None):
     # fig = plot_map(map, 'g', fig)
     timed_point_dict = {}
     stack = [root]
@@ -1007,11 +700,12 @@ def general_simu_anime(root, map=None, fig=None, x_dim: int = 1, y_dim=2, map_ty
     # print(root.mode)
     x_min, x_max = float('inf'), -float('inf')
     y_min, y_max = float('inf'), -float('inf')
-    # segment_start = set()
-    # previous_mode = {}
-    # for agent_id in root.mode:
-    #     previous_mode[agent_id] = []
-
+    # input check
+    num_dim = np.array(root.trace[list(root.agent.keys())[0]]).shape[1]
+    check_dim(num_dim, x_dim, y_dim, print_dim_list)
+    if print_dim_list is None:
+        print_dim_list = range(0, num_dim)
+    agent_list = list(root.agent.keys())
     while stack != []:
         node = stack.pop()
         traces = node.trace
@@ -1026,106 +720,64 @@ def general_simu_anime(root, map=None, fig=None, x_dim: int = 1, y_dim=2, map_ty
                 y_max = max(y_max, trace[i][y_dim])
                 # print(round(trace[i][0], 2))
                 time_point = round(trace[i][0], 2)
+                tmp_trace = trace[i][0:].tolist()
                 if time_point not in timed_point_dict:
-                    timed_point_dict[time_point] = [
-                        {agent_id: trace[i][0:].tolist()}]
+                    timed_point_dict[time_point] = {agent_id: [tmp_trace]}
                 else:
-                    init = False
-                    for record in timed_point_dict[time_point]:
-                        if list(record.values())[0] == trace[i][0:].tolist():
-                            init = True
-                            break
-                    if init == False:
-                        timed_point_dict[time_point].append(
-                            {agent_id: trace[i][0:].tolist()})
+                    if agent_id not in timed_point_dict[time_point].keys():
+                        timed_point_dict[time_point][agent_id] = [tmp_trace]
+                    elif tmp_trace not in timed_point_dict[time_point][agent_id]:
+                        timed_point_dict[time_point][agent_id].append(
+                            tmp_trace)
             time = round(trace[i][0], 2)
         stack += node.child
     # fill in most of layout
     # print(segment_start)
     # print(timed_point_dict.keys())
-    duration = 10
-    fig_dict["layout"]["xaxis"] = {
-        "range": [x_min, x_max],
-        "title": "x position"}
-    fig_dict["layout"]["yaxis"] = {
-        "range": [y_min, y_max],
-        "title": "y position"}
-    fig_dict["layout"]["hovermode"] = "closest"
-    fig_dict["layout"]["updatemenus"] = [
-        {
-            "buttons": [
-                {
-                    "args": [None, {"frame": {"duration": duration, "redraw": False},
-                                    "fromcurrent": True, "transition": {"duration": duration,
-                                                                        "easing": "quadratic-in-out"}}],
-                    "label": "Play",
-                    "method": "animate"
-                },
-                {
-                    "args": [[None], {"frame": {"duration": 0, "redraw": False},
-                                      "mode": "immediate",
-                                      "transition": {"duration": 0}}],
-                    "label": "Pause",
-                    "method": "animate"
-                }
-            ],
-            "direction": "left",
-            "pad": {"r": 10, "t": 87},
-            "showactive": False,
-            "type": "buttons",
-            "x": 0.1,
-            "xanchor": "right",
-            "y": 0,
-            "yanchor": "top"
-        }
-    ]
-    sliders_dict = {
-        "active": 0,
-        "yanchor": "top",
-        "xanchor": "left",
-        "currentvalue": {
-            "font": {"size": 20},
-            "prefix": "time:",
-            "visible": True,
-            "xanchor": "right"
-        },
-        "transition": {"duration": duration, "easing": "cubic-in-out"},
-        "pad": {"b": 10, "t": 50},
-        "len": 0.9,
-        "x": 0.1,
-        "y": 0,
-        "steps": []
-    }
+    # duration = 10
+    fig_dict, sliders_dict = create_anime_dict(duration)
     # make data
-    point_list = timed_point_dict[0]
-    # print(point_list)
-    x_list = []
-    y_list = []
-    text_list = []
-    for data in point_list:
-        trace = list(data.values())[0]
-        # print(trace)
-        x_list.append(trace[x_dim])
-        y_list.append(trace[y_dim])
-        # text_list.append(
-        #     ('{:.2f}'.format(trace[x_dim]), '{:.2f}'.format(trace[y_dim])))
-        text_list.append(['{:.2f}'.format(trace[i])
-                         for i in range(len(trace))])
-    data_dict = {
-        "x": x_list,
-        "y": y_list,
-        "mode": "markers + text",
-        "text": text_list,
-        "textfont": dict(size=text_size, color="black"),
-        "textposition": "bottom center",
-        # "marker": {
-        #     "sizemode": "area",
-        #     "sizeref": 200000,
-        #     "size": 2
-        # },
-        "name": "Current Position"
-    }
-    fig_dict["data"].append(data_dict)
+    trace_dict = timed_point_dict[0]
+    for agent_id, trace_list in trace_dict.items():
+        color = colors[agent_list.index(agent_id) % 12][1]
+        x_list = []
+        y_list = []
+        text_list = []
+        branch_cnt = 0
+        for trace in trace_list:
+            x_list.append(trace[x_dim])
+            y_list.append(trace[y_dim])
+            # text_list.append(
+            #     ('{:.2f}'.format(trace[x_dim]), '{:.2f}'.format(trace[y_dim])))
+            text_list.append(['{:.2f}'.format(trace[i])
+                              for i in print_dim_list])
+            branch_cnt += 1
+        data_dict = {
+            # "x": [trace[x_dim]],
+            # "y": [trace[y_dim]],
+            # "text": ['{:.2f}'.format(trace[i])for i in print_dim_list],
+            "x": x_list,
+            "y": y_list,
+            "text": text_list,
+            "mode": "markers + text",
+            "textfont": dict(size=text_size, color="black"),
+            "textposition": "bottom center",
+            # "legendgroup": agent_id,
+            # "legendgrouptitle_text": agent_id,
+            "marker": {
+                "color": color,
+                # "symbol": 'diamond-wide'
+                # "gradient": dict(type='radial'),
+                # "opacity": opacity_step*(trail_len-id),
+                # # "sizemode": "area",
+                # # "sizeref": 200000,
+                # "size": min_size + size_step*(trail_len-id)
+            },
+            # "name": "Branch-"+str(branch_cnt)
+            "name": agent_id,
+            "showlegend": True
+        }
+        fig_dict["data"].append(data_dict)
 
     # make frames
     for time_point in timed_point_dict:
@@ -1134,70 +786,54 @@ def general_simu_anime(root, map=None, fig=None, x_dim: int = 1, y_dim=2, map_ty
             "annotations": []}, "name": '{:.2f}'.format(time_point)}
         # print(timed_point_dict[time_point][0])
         point_list = timed_point_dict[time_point]
-        # point_list = list(OrderedDict.fromkeys(timed_point_dict[time_point]))
-        # todokeyi
-        trace_x = []
-        trace_y = []
-        text_list = []
-        for data in point_list:
-            # todo
-            trace = list(data.values())[0]
-            # print(trace)
-            trace_x.append(trace[x_dim])
-            trace_y.append(trace[y_dim])
-            # text_list.append(
-            #     ('{:.2f}'.format(trace[x_dim]), '{:.2f}'.format(trace[y_dim])))
-            text_list.append(['{:.2f}'.format(trace[i])
-                              for i in range(len(trace))])
-        data_dict = {
-            "x": trace_x,
-            "y": trace_y,
-            "mode": "markers + text",
-            "text": text_list,
-            "marker": {
-                # "color": color,
-                # "opacity": opacity_step*(trail_len-id),
-                # # "sizemode": "area",
-                # # "sizeref": 200000,
-                # "size": min_size + size_step*(trail_len-id)
-            },
-            "textfont": dict(size=text_size, color="black"),
-            "textposition": "bottom center",
-            # "marker": {
-            #     "sizemode": "area",
-            #     "sizeref": 200000,
-            #     "size": 2
-            # },
-            "name": "current position",
-            # "show_legend": False
-        }
-        frame["data"].append(data_dict)
-        # for i in range(len(trace_x)):
-        #     ax = np.cos(trace_theta[i])*trace_v[i]
-        #     ay = np.sin(trace_theta[i])*trace_v[i]
-        # print(trace_x[i]+ax, trace_y[i]+ay)
-        # annotations_dict = {"x": trace_x[i]+ax, "y": trace_y[i]+ay,
-        #                     # "xshift": ax, "yshift": ay,
-        #                     "ax": trace_x[i], "ay": trace_y[i],
-        #                     "arrowwidth": 2,
-        #                     # "arrowside": 'end',
-        #                     "showarrow": True,
-        #                     # "arrowsize": 1,
-        #                     "xref": 'x', "yref": 'y',
-        #                     "axref": 'x', "ayref": 'y',
-        #                     # "text": "erver",
-        #                     "arrowhead": 1,
-        #                     "arrowcolor": "black"}
-        # frame["layout"]["annotations"].append(annotations_dict)
-
+        for agent_id, trace_list in point_list.items():
+            color = colors[agent_list.index(agent_id) % 12][1]
+            x_list = []
+            y_list = []
+            text_list = []
+            branch_cnt = 0
+            for trace in trace_list:
+                x_list.append(trace[x_dim])
+                y_list.append(trace[y_dim])
+                # text_list.append(
+                #     ('{:.2f}'.format(trace[x_dim]), '{:.2f}'.format(trace[y_dim])))
+                text_list.append(['{:.2f}'.format(trace[i])
+                                  for i in print_dim_list])
+                branch_cnt += 1
+            data_dict = {
+                # "x": [trace[x_dim]],
+                # "y": [trace[y_dim]],
+                # "text": ['{:.2f}'.format(trace[i])for i in print_dim_list],
+                "x": x_list,
+                "y": y_list,
+                "text": text_list,
+                "mode": "markers + text",
+                # "legendgroup": agent_id,
+                # "legendgrouptitle_text": agent_id,
+                "marker": {
+                    "color": color,
+                    # "symbol": 'diamond-wide'
+                    # "gradient": dict(type='radial'),
+                    # "opacity": opacity_step*(trail_len-id),
+                    # # "sizemode": "area",
+                    # # "sizeref": 200000,
+                    # "size": min_size + size_step*(trail_len-id)
+                },
+                "textfont": dict(size=text_size, color="black"),
+                "textposition": "bottom center",
+                # "name": "Branch-"+str(branch_cnt),
+                "name": agent_id,
+                "showlegend": True
+            }
+            frame["data"].append(data_dict)
         fig_dict["frames"].append(frame)
         slider_step = {"args": [
-            [time_point],
-            {"frame": {"duration": duration, "redraw": False},
+            ['{:.2f}'.format(time_point)],
+            {"frame": {"duration": duration, "redraw": True},
              "mode": "immediate",
              "transition": {"duration": duration}}
         ],
-            "label": time_point,
+            "label": '{:.2f}'.format(time_point),
             "method": "animate"}
         sliders_dict["steps"].append(slider_step)
         # print(len(frame["layout"]["annotations"]))
@@ -1210,10 +846,233 @@ def general_simu_anime(root, map=None, fig=None, x_dim: int = 1, y_dim=2, map_ty
     i = 0
     queue = [root]
     previous_mode = {}
-    agent_list = []
+    agent_list = list(root.agent.keys())
     for agent_id in root.mode:
         previous_mode[agent_id] = []
-        agent_list.append(agent_id)
+        # agent_list.append(agent_id)
+    text_pos = 'middle center'
+    while queue != []:
+        node = queue.pop(0)
+        traces = node.trace
+        # print(node.mode)
+        # [[time,x,y,theta,v]...]
+        # i = 0
+        for agent_id in traces:
+            trace = np.array(traces[agent_id])
+            # print(trace)
+            trace_y = trace[:, y_dim].tolist()
+            trace_x = trace[:, x_dim].tolist()
+            # theta = [i/pi*180 for i in trace[:, 3]]
+            # i = agent_list.index(agent_id)
+            # color = colors[i % 5]
+            # fig.add_trace(go.Scatter(x=trace[:, x_dim], y=trace[:, y_dim],
+            #                          mode='lines',
+            #                          line_color=color,
+            #                          text=[('{:.2f}'.format(trace_x[i]), '{:.2f}'.format(
+            #                              trace_y[i])) for i in range(len(trace_x))],
+            #                          showlegend=False)
+            #               #  name='lines')
+            #               )
+            if previous_mode[agent_id] != node.mode[agent_id]:
+                text_pos, text = get_text_pos(node.mode[agent_id][0])
+                fig.add_trace(go.Scatter(x=[trace[0, x_dim]], y=[trace[0, y_dim]],
+                                         mode='markers+text',
+                                         line_color=mode_color,
+                                         text=str(agent_id)+': ' + text,
+                                         textposition=text_pos,
+                                         opacity=0.5,
+                                         textfont=dict(
+                    #  family="sans serif",
+                    size=text_size,
+                    color="grey"),
+                    showlegend=False,
+                ))
+                # i += 1
+                previous_mode[agent_id] = node.mode[agent_id]
+        queue += node.child
+    # fig.update_traces(showlegend=False)
+    # scale_factor = 0.25
+    if scale_type == 'trace':
+        fig.update_xaxes(
+            range=[x_min-scale_factor*(x_max-x_min), x_max+scale_factor*(x_max-x_min)])
+        fig.update_yaxes(
+            range=[y_min-scale_factor*(y_max-y_min), y_max+scale_factor*(y_max-y_min)])
+    # fig.update_annotations(textfont=dict(size=14, color="black"))
+    fig.update_layout(legend_title_text='Agent list')
+    return fig
+
+
+def simulation_anime_trail(root, map=None, fig=None, x_dim: int = 1, y_dim=2, map_type='lines', scale_type='trace', print_dim_list=None):
+    # fig = plot_map(map, 'g', fig)
+    timed_point_dict = {}
+    stack = [root]
+    # print("plot")
+    # print(root.mode)
+    x_min, x_max = float('inf'), -float('inf')
+    y_min, y_max = float('inf'), -float('inf')
+    # input check
+    num_dim = np.array(root.trace[list(root.agent.keys())[0]]).shape[1]
+    check_dim(num_dim, x_dim, y_dim, print_dim_list)
+    if print_dim_list is None:
+        print_dim_list = range(0, num_dim)
+
+    while stack != []:
+        node = stack.pop()
+        traces = node.trace
+        for agent_id in traces:
+            trace = np.array(traces[agent_id])
+            for i in range(len(trace)):
+                x_min = min(x_min, trace[i][x_dim])
+                x_max = max(x_max, trace[i][x_dim])
+                y_min = min(y_min, trace[i][y_dim])
+                y_max = max(y_max, trace[i][y_dim])
+                time_point = round(trace[i][0], 3)
+                tmp_trace = trace[i][0:].tolist()
+                if time_point not in timed_point_dict:
+                    timed_point_dict[time_point] = {agent_id: [tmp_trace]}
+                else:
+                    if agent_id not in timed_point_dict[time_point].keys():
+                        timed_point_dict[time_point][agent_id] = [tmp_trace]
+                    elif tmp_trace not in timed_point_dict[time_point][agent_id]:
+                        timed_point_dict[time_point][agent_id].append(
+                            tmp_trace)
+            time = round(trace[i][0], 2)
+        stack += node.child
+    # fill in most of layout
+    # print(segment_start)
+    # print(timed_point_dict.keys())
+    # duration = int(100/time)
+    # duration = 1
+    fig_dict, sliders_dict = create_anime_dict(duration)
+
+    time_list = list(timed_point_dict.keys())
+    agent_list = list(root.agent.keys())
+    trail_limit = min(10, len(time_list))
+    # trail_len = min(time_point_id+1, trail_limit)
+    trail_len = trail_limit
+    opacity_step = 1/trail_len
+    size_step = 2/trail_len
+    min_size = 5
+    step = 2
+    # # make data
+    trace_dict = timed_point_dict[0]
+
+    for time_point in list(timed_point_dict.keys())[0:int(trail_limit/step)]:
+        trace_dict = timed_point_dict[time_point]
+        for agent_id, point_list in trace_dict.items():
+            x_list = []
+            y_list = []
+            text_list = []
+            for point in point_list:
+                x_list.append(point[x_dim])
+                y_list.append(point[y_dim])
+                # text_list.append(
+                #     ('{:.2f}'.format(point[x_dim]), '{:.2f}'.format(point[y_dim])))
+                text_list.append(['{:.2f}'.format(point[i])
+                                  for i in print_dim_list])
+            data_dict = {
+                "x": x_list,
+                "y": y_list,
+                "mode": "markers",
+                "text": text_list,
+                "textfont": dict(size=text_size, color="black"),
+                "visible": False,
+                "textposition": "bottom center",
+                # "marker": {
+                #     "sizemode": "area",
+                #     "sizeref": 200000,
+                #     "size": 2
+                # },
+                "name": agent_id
+            }
+            fig_dict["data"].append(data_dict)
+
+    # make frames
+
+    for time_point_id in range(trail_limit, len(time_list)):
+        time_point = time_list[time_point_id]
+        frame = {"data": [], "layout": {
+            "annotations": []}, "name": '{:.2f}'.format(time_point)}
+        # todokeyi
+
+        for agent_id in agent_list:
+            color = colors[agent_list.index(agent_id) % 12][1]
+            for id in range(0, trail_len, step):
+                tmp_point_list = timed_point_dict[time_list[time_point_id-id]][agent_id]
+                trace_x = []
+                trace_y = []
+                text_list = []
+                for point in tmp_point_list:
+                    trace_x.append(point[x_dim])
+                    trace_y.append(point[y_dim])
+                    # text_list.append(
+                    #     ('{:.2f}'.format(point[x_dim]), '{:.2f}'.format(point[y_dim])))
+                    text_list.append(['{:.2f}'.format(point[i])
+                                      for i in print_dim_list])
+                #  print(trace_y)
+                if id == 0:
+                    data_dict = {
+                        "x": trace_x,
+                        "y": trace_y,
+                        "mode": "markers+text",
+                        "text": text_list,
+                        "textfont": dict(size=text_size, color="black"),
+                        "textposition": "bottom center",
+                        "visible": True,  # 'legendonly'
+                        "marker": {
+                            "color": color,
+                            "opacity": opacity_step*(trail_len-id),
+                            # "sizemode": "area",
+                            # "sizeref": 200000,
+                            "size": min_size + size_step*(trail_len-id)
+                        },
+                        "name": agent_id,
+                        "showlegend": True
+                    }
+                else:
+                    data_dict = {
+                        "x": trace_x,
+                        "y": trace_y,
+                        "mode": "markers",
+                        "text": text_list,
+                        # "textfont": dict(size=6, color="black"),
+                        # "textposition": "bottom center",
+                        "visible": True,  # 'legendonly'
+                        "marker": {
+                            "color": color,
+                            "opacity": opacity_step*(trail_len-id),
+                            # "sizemode": "area",
+                            # "sizeref": 200000,
+                            "size": min_size + size_step*(trail_len-id)
+                        },
+                        "name": agent_id,
+                        "showlegend": True
+                    }
+                frame["data"].append(data_dict)
+
+        fig_dict["frames"].append(frame)
+        slider_step = {"args": [
+            ['{:.2f}'.format(time_point)],
+            {"frame": {"duration": duration, "redraw": False},
+             "mode": "immediate",
+             "transition": {"duration": duration}}
+        ],
+            "label": '{:.2f}'.format(time_point),
+            "method": "animate"}
+        sliders_dict["steps"].append(slider_step)
+        # print(len(frame["layout"]["annotations"]))
+
+    fig_dict["layout"]["sliders"] = [sliders_dict]
+
+    fig = go.Figure(fig_dict)
+    fig = draw_map(map, 'rgba(0,0,0,1)', fig, map_type)
+    i = 0
+    queue = [root]
+    previous_mode = {}
+    agent_list = list(root.agent.keys())
+    for agent_id in root.mode:
+        previous_mode[agent_id] = []
+        # agent_list.append(agent_id)
     text_pos = 'middle center'
     while queue != []:
         node = queue.pop(0)
@@ -1237,37 +1096,28 @@ def general_simu_anime(root, map=None, fig=None, x_dim: int = 1, y_dim=2, map_ty
             #                          showlegend=False)
             #               #  name='lines')
             #               )
+            mode_color = colors[agent_list.index(agent_id) % 12][0]
             if previous_mode[agent_id] != node.mode[agent_id]:
-                veh_mode = node.mode[agent_id][0]
-                if veh_mode == 'Normal':
-                    text_pos = 'middle center'
-                elif veh_mode == 'Brake':
-                    text_pos = 'middle left'
-                elif veh_mode == 'Accelerate':
-                    text_pos = 'middle right'
-                elif veh_mode == 'SwitchLeft':
-                    text_pos = 'top center'
-                elif veh_mode == 'SwitchRight':
-                    text_pos = 'bottom center'
-
+                text_pos, text = get_text_pos(node.mode[agent_id][0])
                 fig.add_trace(go.Scatter(x=[trace[0, x_dim]], y=[trace[0, y_dim]],
                                          mode='markers+text',
                                          line_color=mode_color,
-                                         text=str(agent_id)+': ' +
-                                         str(node.mode[agent_id][0]),
-                                         textposition=text_pos,
+                                         text=str(agent_id)+': ' + text,
                                          opacity=0.5,
+                                         textposition=text_pos,
                                          textfont=dict(
                     #  family="sans serif",
                     size=text_size,
-                                             color="grey"),
-                                         showlegend=False,
-                                         ))
+                    #  color=mode_color
+                    color='black'
+                ),
+                    showlegend=False,
+                ))
                 # i += 1
                 previous_mode[agent_id] = node.mode[agent_id]
         queue += node.child
-    fig.update_traces(showlegend=False)
-    # scale_factor = 0.25
+    # fig.update_traces(showlegend=False)
+    # scale_factor = 0.5
     if scale_type == 'trace':
         fig.update_xaxes(
             range=[x_min-scale_factor*(x_max-x_min), x_max+scale_factor*(x_max-x_min)])
@@ -1275,55 +1125,17 @@ def general_simu_anime(root, map=None, fig=None, x_dim: int = 1, y_dim=2, map_ty
             range=[y_min-scale_factor*(y_max-y_min), y_max+scale_factor*(y_max-y_min)])
     # fig.update_annotations(textfont=dict(size=14, color="black"))
     # print(fig.frames[0].layout["annotations"])
+
+    fig.update_layout(legend_title_text='Agent list')
     return fig
 
 
-def test_simu_anime(root, map=None, fig=None, x_dim: int = 1, y_dim=2, map_type='lines', scale_type='trace'):
-    # make figure
+def create_anime_dict(duration=10):
     fig_dict = {
         "data": [],
         "layout": {},
         "frames": []
     }
-    # fig = plot_map(map, 'g', fig)
-    timed_point_dict = {}
-    stack = [root]
-    print("plot")
-    # print(root.mode)
-    x_min, x_max = float('inf'), -float('inf')
-    y_min, y_max = float('inf'), -float('inf')
-    # segment_start = set()
-    # previous_mode = {}
-    # for agent_id in root.mode:
-    #     previous_mode[agent_id] = []
-
-    while stack != []:
-        node = stack.pop()
-        traces = node.trace
-        for agent_id in traces:
-            trace = np.array(traces[agent_id])
-            for i in range(len(trace)):
-                x_min = min(x_min, trace[i][x_dim])
-                x_max = max(x_max, trace[i][x_dim])
-                y_min = min(y_min, trace[i][y_dim])
-                y_max = max(y_max, trace[i][y_dim])
-                time_point = round(trace[i][0], 2)
-                tmp_trace = trace[i][0:].tolist()
-                if time_point not in timed_point_dict:
-                    timed_point_dict[time_point] = {agent_id: [tmp_trace]}
-                else:
-                    if agent_id not in timed_point_dict[time_point].keys():
-                        timed_point_dict[time_point][agent_id] = [tmp_trace]
-                    elif tmp_trace not in timed_point_dict[time_point][agent_id]:
-                        timed_point_dict[time_point][agent_id].append(
-                            tmp_trace)
-            time = round(trace[i][0], 2)
-        stack += node.child
-    # fill in most of layout
-    # print(segment_start)
-    # print(timed_point_dict.keys())
-    duration = int(100/time)
-    duration = 1
     fig_dict["layout"]["xaxis"] = {
         # "range": [x_min, x_max],
         "title": "x position"}
@@ -1376,194 +1188,448 @@ def test_simu_anime(root, map=None, fig=None, x_dim: int = 1, y_dim=2, map_type=
         "y": 0,
         "steps": []
     }
-    # # make data
-    trace_dict = timed_point_dict[0]
+    return fig_dict, sliders_dict
 
-    x_list = []
-    y_list = []
-    text_list = []
-    for time_point in timed_point_dict:
-        trace_dict = timed_point_dict[time_point]
-        for agent_id, point_list in trace_dict.items():
-            for point in point_list:
-                x_list.append(point[x_dim])
-                y_list.append(point[y_dim])
-                # text_list.append(
-                #     ('{:.2f}'.format(point[x_dim]), '{:.2f}'.format(point[y_dim])))
-                text_list.append(['{:.2f}'.format(point[i])
-                                  for i in range(len(point))])
-        data_dict = {
-            "x": x_list,
-            "y": y_list,
-            "mode": "markers",
-            "text": text_list,
-            "textfont": dict(size=text_size, color="black"),
-            "visible": False,
-            "textposition": "bottom center",
-            # "marker": {
-            #     "sizemode": "area",
-            #     "sizeref": 200000,
-            #     "size": 2
-            # },
-            "name": "Current Position"
-        }
-        fig_dict["data"].append(data_dict)
-    time_list = list(timed_point_dict.keys())
-    agent_list = list(trace_dict.keys())
-    # start = time_list[0]
-    # step = time_list[1]-start
-    trail_limit = min(10, len(time_list))
-    # print(agent_list)
-    # make frames
-    for time_point_id in range(trail_limit, len(time_list)):
-        time_point = time_list[time_point_id]
-        frame = {"data": [], "layout": {
-            "annotations": []}, "name": '{:.2f}'.format(time_point)}
-        # todokeyi
-        trail_len = min(time_point_id+1, trail_limit)
-        opacity_step = 1/trail_len
-        size_step = 2/trail_len
-        min_size = 5
-        for agent_id in agent_list:
-            color = colors[agent_list.index(agent_id) % 12][1]
-            for id in range(0, trail_len, 2):
-                tmp_point_list = timed_point_dict[time_list[time_point_id-id]][agent_id]
-                trace_x = []
-                trace_y = []
-                text_list = []
-                for point in tmp_point_list:
-                    trace_x.append(point[x_dim])
-                    trace_y.append(point[y_dim])
-                    # text_list.append(
-                    #     ('{:.2f}'.format(point[x_dim]), '{:.2f}'.format(point[y_dim])))
-                    text_list.append(['{:.2f}'.format(point[i])
-                                      for i in range(len(point))])
-                #  print(trace_y)
-                if id == 0:
-                    data_dict = {
-                        "x": trace_x,
-                        "y": trace_y,
-                        "mode": "markers+text",
-                        "text": text_list,
-                        "textfont": dict(size=text_size, color="black"),
-                        "textposition": "bottom center",
-                        "visible": True,
-                        "marker": {
-                            "color": color,
-                            "opacity": opacity_step*(trail_len-id),
-                            # "sizemode": "area",
-                            # "sizeref": 200000,
-                            "size": min_size + size_step*(trail_len-id)
-                        },
-                        "name": "current position",
-                        # "show_legend": False
-                    }
-                else:
-                    data_dict = {
-                        "x": trace_x,
-                        "y": trace_y,
-                        "mode": "markers",
-                        "text": text_list,
-                        # "textfont": dict(size=6, color="black"),
-                        # "textposition": "bottom center",
-                        "visible": True,
-                        "marker": {
-                            "color": color,
-                            "opacity": opacity_step*(trail_len-id),
-                            # "sizemode": "area",
-                            # "sizeref": 200000,
-                            "size": min_size + size_step*(trail_len-id)
-                        },
-                        "name": "current position",
-                        # "show_legend": False
-                    }
-                frame["data"].append(data_dict)
 
-        fig_dict["frames"].append(frame)
-        slider_step = {"args": [
-            [time_point],
-            {"frame": {"duration": duration, "redraw": False},
-             "mode": "immediate",
-             "transition": {"duration": duration}}
-        ],
-            "label": time_point,
-            "method": "animate"}
-        sliders_dict["steps"].append(slider_step)
-        # print(len(frame["layout"]["annotations"]))
+def get_text_pos(veh_mode):
+    if veh_mode == 'Normal':
+        text_pos = 'middle center'
+        text = 'N'
+    elif veh_mode == 'Brake':
+        text_pos = 'middle left'
+        text = 'B'
+    elif veh_mode == 'Accelerate':
+        text_pos = 'middle right'
+        text = 'A'
+    elif veh_mode == 'SwitchLeft':
+        text_pos = 'top center'
+        text = 'SL'
+    elif veh_mode == 'SwitchRight':
+        text_pos = 'bottom center'
+        text = 'SR'
+    elif veh_mode == 'Stop':
+        text_pos = 'middle center'
+        text = 'S'
+    else:
+        print(veh_mode)
+        raise ValueError
+    return text_pos, text
 
-    fig_dict["layout"]["sliders"] = [sliders_dict]
+# def plotly_map(map, color='rgba(0,0,0,1)', fig: go.Figure() = go.Figure()):
+#     # if fig is None:
+#     #     fig = go.Figure()
+#     all_x = []
+#     all_y = []
+#     all_v = []
+#     for lane_idx in map.lane_dict:
+#         lane = map.lane_dict[lane_idx]
+#         for lane_seg in lane.segment_list:
+#             if lane_seg.type == 'Straight':
+#                 start1 = lane_seg.start + lane_seg.width/2 * lane_seg.direction_lateral
+#                 end1 = lane_seg.end + lane_seg.width/2 * lane_seg.direction_lateral
+#                 # fig.add_trace(go.Scatter(x=[start1[0], end1[0]], y=[start1[1], end1[1]],
+#                 #                          mode='lines',
+#                 #                          line_color='black',
+#                 #                          showlegend=False,
+#                 #                          # text=theta,
+#                 #                          name='lines'))
+#                 start2 = lane_seg.start - lane_seg.width/2 * lane_seg.direction_lateral
+#                 end2 = lane_seg.end - lane_seg.width/2 * lane_seg.direction_lateral
+#                 # fig.add_trace(go.Scatter(x=[start2[0], end2[0]], y=[start2[1], end2[1]],
+#                 #                          mode='lines',
+#                 #                          line_color='black',
+#                 #                          showlegend=False,
+#                 #                          # text=theta,
+#                 #                          name='lines'))
+#                 fig.add_trace(go.Scatter(x=[start1[0], end1[0], end2[0], start2[0], start1[0]], y=[start1[1], end1[1], end2[1], start2[1], start1[1]],
+#                                          mode='lines',
+#                                          line_color=color,
+#                                          #  fill='toself',
+#                                          #  fillcolor='rgba(255,255,255,0)',
+#                                          #  line_color='rgba(0,0,0,0)',
+#                                          showlegend=False,
+#                                          # text=theta,
+#                                          name='lines'))
+#                 # fig = go.Figure().add_heatmap(x=)
+#                 seg_x, seg_y, seg_v = lane_seg.get_all_speed()
+#                 all_x += seg_x
+#                 all_y += seg_y
+#                 all_v += seg_v
+#             elif lane_seg.type == "Circular":
+#                 phase_array = np.linspace(
+#                     start=lane_seg.start_phase, stop=lane_seg.end_phase, num=100)
+#                 r1 = lane_seg.radius - lane_seg.width/2
+#                 x = np.cos(phase_array)*r1 + lane_seg.center[0]
+#                 y = np.sin(phase_array)*r1 + lane_seg.center[1]
+#                 fig.add_trace(go.Scatter(x=x, y=y,
+#                                          mode='lines',
+#                                          line_color=color,
+#                                          showlegend=False,
+#                                          # text=theta,
+#                                          name='lines'))
 
-    fig = go.Figure(fig_dict)
-    fig = draw_map(map, 'rgba(0,0,0,1)', fig, map_type)
-    i = 0
-    queue = [root]
-    previous_mode = {}
-    agent_list = []
-    for agent_id in root.mode:
-        previous_mode[agent_id] = []
-        agent_list.append(agent_id)
-    text_pos = 'middle center'
-    while queue != []:
-        node = queue.pop(0)
-        traces = node.trace
-        # print(node.mode)
-        # [[time,x,y,theta,v]...]
-        i = 0
-        for agent_id in traces:
-            trace = np.array(traces[agent_id])
-            # print(trace)
-            trace_y = trace[:, y_dim].tolist()
-            trace_x = trace[:, x_dim].tolist()
-            # theta = [i/pi*180 for i in trace[:, 3]]
-            i = agent_list.index(agent_id)
-            # color = colors[i % 5]
-            # fig.add_trace(go.Scatter(x=trace[:, x_dim], y=trace[:, y_dim],
-            #                          mode='lines',
-            #                          line_color=color,
-            #                          text=[('{:.2f}'.format(trace_x[i]), '{:.2f}'.format(
-            #                              trace_y[i])) for i in range(len(trace_x))],
-            #                          showlegend=False)
-            #               #  name='lines')
-            #               )
-            if previous_mode[agent_id] != node.mode[agent_id]:
-                veh_mode = node.mode[agent_id][0]
-                if veh_mode == 'Normal':
-                    text_pos = 'middle center'
-                elif veh_mode == 'Brake':
-                    text_pos = 'middle left'
-                elif veh_mode == 'Accelerate':
-                    text_pos = 'middle right'
-                elif veh_mode == 'SwitchLeft':
-                    text_pos = 'top center'
-                elif veh_mode == 'SwitchRight':
-                    text_pos = 'bottom center'
+#                 r2 = lane_seg.radius + lane_seg.width/2
+#                 x = np.cos(phase_array)*r2 + lane_seg.center[0]
+#                 y = np.sin(phase_array)*r2 + lane_seg.center[1]
+#                 fig.add_trace(go.Scatter(x=x, y=y,
+#                                          mode='lines',
+#                                          line_color=color,
+#                                          showlegend=False,
+#                                          # text=theta,
+#                                          name='lines'))
+#             else:
+#                 raise ValueError(f'Unknown lane segment type {lane_seg.type}')
+#     start_color = [0, 0, 255, 0.2]
+#     end_color = [255, 0, 0, 0.2]
+#     curr_color = copy.deepcopy(start_color)
+#     max_speed = max(all_v)
+#     min_speed = min(all_v)
 
-                fig.add_trace(go.Scatter(x=[trace[0, x_dim]], y=[trace[0, y_dim]],
-                                         mode='markers+text',
-                                         line_color=mode_color,
-                                         text=str(agent_id)+': ' +
-                                         str(node.mode[agent_id][0]),
-                                         opacity=0.5,
-                                         textposition=text_pos,
-                                         textfont=dict(
-                    #  family="sans serif",
-                    size=text_size,
-                                             color="grey"),
-                                         showlegend=False,
-                                         ))
-                # i += 1
-                previous_mode[agent_id] = node.mode[agent_id]
-        queue += node.child
-    fig.update_traces(showlegend=False)
-    # scale_factor = 0.5
-    if scale_type == 'trace':
-        fig.update_xaxes(
-            range=[x_min-scale_factor*(x_max-x_min), x_max+scale_factor*(x_max-x_min)])
-        fig.update_yaxes(
-            range=[y_min-scale_factor*(y_max-y_min), y_max+scale_factor*(y_max-y_min)])
-    # fig.update_annotations(textfont=dict(size=14, color="black"))
-    # print(fig.frames[0].layout["annotations"])
-    return fig
+#     for i in range(len(all_v)):
+#         # print(all_x[i])
+#         # print(all_y[i])
+#         # print(all_v[i])
+#         curr_color = copy.deepcopy(start_color)
+#         for j in range(len(curr_color)-1):
+#             curr_color[j] += (all_v[i]-min_speed)/(max_speed -
+#                                                    min_speed)*(end_color[j]-start_color[j])
+#         fig.add_trace(go.Scatter(x=all_x[i], y=all_y[i],
+#                                  mode='lines',
+#                                  line_color='rgba(0,0,0,0)',
+#                                  fill='toself',
+#                                  fillcolor='rgba'+str(tuple(curr_color)),
+#                                  #  marker=dict(
+#                                  #     symbol='square',
+#                                  #     size=16,
+#                                  #     cmax=max_speed,
+#                                  #     cmin=min_speed,
+#                                  #     # color=all_v[i],
+#                                  #     colorbar=dict(
+#                                  #         title="Colorbar"
+#                                  #     ),
+#                                  #     colorscale=[
+#                                  #         [0, 'rgba'+str(tuple(start_color))], [1, 'rgba'+str(tuple(end_color))]]
+#                                  # ),
+#                                  showlegend=False,
+#                                  ))
+#     fig.add_trace(go.Scatter(x=[0], y=[0],
+#                              mode='markers',
+#                              # fill='toself',
+#                              # fillcolor='rgba'+str(tuple(curr_color)),
+#                              marker=dict(
+#                                  symbol='square',
+#                                  size=16,
+#                                  cmax=max_speed,
+#                                  cmin=min_speed,
+#                                  color='rgba(0,0,0,0)',
+#                                  colorbar=dict(
+#                                         title="Speed Limit"
+#                                  ),
+#                                  colorscale=[
+#                                      [0, 'rgba'+str(tuple(start_color))], [1, 'rgba'+str(tuple(end_color))]]
+#     ),
+#         showlegend=False,
+#     ))
+#     # fig.update_coloraxes(colorbar=dict(title="Colorbar"), colorscale=[
+#     #                      [0, 'rgba'+str(tuple(start_color))], [1, 'rgba'+str(tuple(end_color))]])
+#     return fig
+
+# def draw_simulation_anime(root, map=None, fig=None):
+#     # make figure
+#     fig_dict = {
+#         "data": [],
+#         "layout": {},
+#         "frames": []
+#     }
+#     # fig = plot_map(map, 'g', fig)
+#     timed_point_dict = {}
+#     stack = [root]
+#     print("plot")
+#     # print(root.mode)
+#     x_min, x_max = float('inf'), -float('inf')
+#     y_min, y_max = float('inf'), -float('inf')
+#     # segment_start = set()
+#     # previous_mode = {}
+#     # for agent_id in root.mode:
+#     #     previous_mode[agent_id] = []
+
+#     while stack != []:
+#         node = stack.pop()
+#         traces = node.trace
+#         for agent_id in traces:
+#             trace = np.array(traces[agent_id])
+#             print(trace)
+#             # segment_start.add(round(trace[0][0], 2))
+#             for i in range(len(trace)):
+#                 x_min = min(x_min, trace[i][1])
+#                 x_max = max(x_max, trace[i][1])
+#                 y_min = min(y_min, trace[i][2])
+#                 y_max = max(y_max, trace[i][2])
+#                 # print(round(trace[i][0], 2))
+#                 time_point = round(trace[i][0], 2)
+#                 if time_point not in timed_point_dict:
+#                     timed_point_dict[time_point] = [
+#                         {agent_id: trace[i][1:].tolist()}]
+#                 else:
+#                     init = False
+#                     for record in timed_point_dict[time_point]:
+#                         if list(record.values())[0] == trace[i][1:].tolist():
+#                             init = True
+#                             break
+#                     if init == False:
+#                         timed_point_dict[time_point].append(
+#                             {agent_id: trace[i][1:].tolist()})
+#             time = round(trace[i][0], 2)
+#         stack += node.child
+#     # fill in most of layout
+#     # print(segment_start)
+#     # print(timed_point_dict.keys())
+#     duration = int(600/time)
+#     fig_dict["layout"]["xaxis"] = {
+#         "range": [(x_min-10), (x_max+10)],
+#         "title": "x position"}
+#     fig_dict["layout"]["yaxis"] = {
+#         "range": [(y_min-2), (y_max+2)],
+#         "title": "y position"}
+#     fig_dict["layout"]["hovermode"] = "closest"
+#     fig_dict["layout"]["updatemenus"] = [
+#         {
+#             "buttons": [
+#                 {
+#                     "args": [None, {"frame": {"duration": duration, "redraw": False},
+#                                     "fromcurrent": True, "transition": {"duration": duration,
+#                                                                         "easing": "quadratic-in-out"}}],
+#                     "label": "Play",
+#                     "method": "animate"
+#                 },
+#                 {
+#                     "args": [[None], {"frame": {"duration": 0, "redraw": False},
+#                                       "mode": "immediate",
+#                                       "transition": {"duration": 0}}],
+#                     "label": "Pause",
+#                     "method": "animate"
+#                 }
+#             ],
+#             "direction": "left",
+#             "pad": {"r": 10, "t": 87},
+#             "showactive": False,
+#             "type": "buttons",
+#             "x": 0.1,
+#             "xanchor": "right",
+#             "y": 0,
+#             "yanchor": "top"
+#         }
+#     ]
+#     sliders_dict = {
+#         "active": 0,
+#         "yanchor": "top",
+#         "xanchor": "left",
+#         "currentvalue": {
+#             "font": {"size": 20},
+#             "prefix": "time:",
+#             "visible": True,
+#             "xanchor": "right"
+#         },
+#         "transition": {"duration": duration, "easing": "cubic-in-out"},
+#         "pad": {"b": 10, "t": 50},
+#         "len": 0.9,
+#         "x": 0.1,
+#         "y": 0,
+#         "steps": []
+#     }
+#     # make data
+#     point_list = timed_point_dict[0]
+#     # print(point_list)
+#     x_list = []
+#     y_list = []
+#     text_list = []
+#     for data in point_list:
+#         trace = list(data.values())[0]
+#         # print(trace)
+#         x_list.append(trace[0])
+#         y_list.append(trace[1])
+#         text_list.append(
+#             ('{:.2f}'.format(trace[2]/pi*180), '{:.3f}'.format(trace[3])))
+#     data_dict = {
+#         "x": x_list,
+#         "y": y_list,
+#         "mode": "markers + text",
+#         "text": text_list,
+#         "textfont": dict(size=text_size, color="black"),
+#         "textposition": "bottom center",
+#         # "marker": {
+#         #     "sizemode": "area",
+#         #     "sizeref": 200000,
+#         #     "size": 2
+#         # },
+#         "name": "Current Position"
+#     }
+#     fig_dict["data"].append(data_dict)
+
+#     # make frames
+#     for time_point in timed_point_dict:
+#         # print(time_point)
+#         frame = {"data": [], "layout": {
+#             "annotations": []}, "name": '{:.2f}'.format(time_point)}
+#         # print(timed_point_dict[time_point][0])
+#         point_list = timed_point_dict[time_point]
+#         # point_list = list(OrderedDict.fromkeys(timed_point_dict[time_point]))
+#         # todokeyi
+#         trace_x = []
+#         trace_y = []
+#         trace_theta = []
+#         trace_v = []
+#         for data in point_list:
+#             trace = list(data.values())[0]
+#             # print(trace)
+#             trace_x.append(trace[0])
+#             trace_y.append(trace[1])
+#             trace_theta.append(trace[2])
+#             trace_v.append(trace[3])
+#         data_dict = {
+#             "x": trace_x,
+#             "y": trace_y,
+#             "mode": "markers + text",
+#             # "text": [(round(trace_theta[i]/pi*180, 2), round(trace_v[i], 3)) for i in range(len(trace_theta))],
+#             "text": [('{:.2f}'.format(trace_theta[i]/pi*180), '{:.3f}'.format(trace_v[i])) for i in range(len(trace_theta))],
+#             "textfont": dict(size=text_size, color="black"),
+#             "textposition": "bottom center",
+#             # "marker": {
+#             #     "sizemode": "area",
+#             #     "sizeref": 200000,
+#             #     "size": 2
+#             # },
+#             "name": "current position",
+#             # "show_legend": False
+#         }
+#         frame["data"].append(data_dict)
+#         for i in range(len(trace_x)):
+#             ax = np.cos(trace_theta[i])*trace_v[i]
+#             ay = np.sin(trace_theta[i])*trace_v[i]
+#             # print(trace_x[i]+ax, trace_y[i]+ay)
+#             annotations_dict = {"x": trace_x[i]+ax, "y": trace_y[i]+ay,
+#                                 # "xshift": ax, "yshift": ay,
+#                                 "ax": trace_x[i], "ay": trace_y[i],
+#                                 "arrowwidth": 2,
+#                                 # "arrowside": 'end',
+#                                 "showarrow": True,
+#                                 # "arrowsize": 1,
+#                                 "xref": 'x', "yref": 'y',
+#                                 "axref": 'x', "ayref": 'y',
+#                                 # "text": "erver",
+#                                 "arrowhead": 1,
+#                                 "arrowcolor": "black"}
+#             frame["layout"]["annotations"].append(annotations_dict)
+
+#             # if (time_point in segment_start) and (operator.ne(previous_mode[agent_id], node.mode[agent_id])):
+#             #     annotations_dict = {"x": trace_x[i], "y": trace_y[i],
+#             #                         # "xshift": ax, "yshift": ay,
+#             #                         # "ax": trace_x[i], "ay": trace_y[i],
+#             #                         # "arrowwidth": 2,
+#             #                         # "arrowside": 'end',
+#             #                         "showarrow": False,
+#             #                         # "arrowsize": 1,
+#             #                         # "xref": 'x', "yref": 'y',
+#             #                         # "axref": 'x', "ayref": 'y',
+#             #                         "text": str(node.mode[agent_id][0]),
+#             #                         # "arrowhead": 1,
+#             #                         # "arrowcolor": "black"
+#             #                         }
+#             #     frame["layout"]["annotations"].append(annotations_dict)
+#             #     print(frame["layout"]["annotations"])
+#             # i += 1
+#             # previous_mode[agent_id] = node.mode[agent_id]
+
+#         fig_dict["frames"].append(frame)
+#         slider_step = {"args": [
+#             [time_point],
+#             {"frame": {"duration": duration, "redraw": False},
+#              "mode": "immediate",
+#              "transition": {"duration": duration}}
+#         ],
+#             "label": time_point,
+#             "method": "animate"}
+#         sliders_dict["steps"].append(slider_step)
+#         # print(len(frame["layout"]["annotations"]))
+
+#     fig_dict["layout"]["sliders"] = [sliders_dict]
+
+#     fig = go.Figure(fig_dict)
+#     fig = plotly_map(map, 'g', fig)
+#     i = 0
+#     queue = [root]
+#     previous_mode = {}
+#     agent_list = root.agent.keys()
+#     for agent_id in root.mode:
+#         previous_mode[agent_id] = []
+#         # agent_list.append(agent_id)
+#     text_pos = 'middle center'
+#     while queue != []:
+#         node = queue.pop(0)
+#         traces = node.trace
+#         # print(node.mode)
+#         # [[time,x,y,theta,v]...]
+#         i = 0
+#         for agent_id in traces:
+#             trace = np.array(traces[agent_id])
+#             # print(trace)
+#             trace_y = trace[:, 2].tolist()
+#             trace_x = trace[:, 1].tolist()
+#             # theta = [i/pi*180 for i in trace[:, 3]]
+#             i = agent_list.index(agent_id)
+#             color = colors[i % 5]
+#             fig.add_trace(go.Scatter(x=trace[:, 1], y=trace[:, 2],
+#                                      mode='lines',
+#                                      line_color=color,
+#                                      text=[(round(trace[i, 3]/pi*180, 2), round(trace[i, 4], 3))
+#                                            for i in range(len(trace_y))],
+#                                      showlegend=False)
+#                           #  name='lines')
+#                           )
+#             if previous_mode[agent_id] != node.mode[agent_id]:
+#                 theta = trace[0, 3]
+#                 veh_mode = node.mode[agent_id][0]
+#                 if veh_mode == 'Normal':
+#                     text_pos = 'middle center'
+#                 elif veh_mode == 'Brake':
+#                     if theta >= -pi/2 and theta <= pi/2:
+#                         text_pos = 'middle left'
+#                     else:
+#                         text_pos = 'middle right'
+#                 elif veh_mode == 'Accelerate':
+#                     if theta >= -pi/2 and theta <= pi/2:
+#                         text_pos = 'middle right'
+#                     else:
+#                         text_pos = 'middle left'
+#                 elif veh_mode == 'SwitchLeft':
+#                     if theta >= -pi/2 and theta <= pi/2:
+#                         text_pos = 'top center'
+#                     else:
+#                         text_pos = 'bottom center'
+#                 elif veh_mode == 'SwitchRight':
+#                     if theta >= -pi/2 and theta <= pi/2:
+#                         text_pos = 'bottom center'
+#                     else:
+#                         text_pos = 'top center'
+#                 fig.add_trace(go.Scatter(x=[trace[0, 1]], y=[trace[0, 2]],
+#                                          mode='markers+text',
+#                                          line_color=mode_color,
+#                                          text=str(agent_id)+': ' +
+#                                          str(node.mode[agent_id][0]),
+#                                          textposition=text_pos,
+#                                          textfont=dict(
+#                     #  family="sans serif",
+#                     size=text_size,
+#                                              color="grey"),
+#                                          showlegend=False,
+#                                          ))
+#                 # i += 1
+#                 previous_mode[agent_id] = node.mode[agent_id]
+#         queue += node.child
+#     fig.update_traces(showlegend=False)
+#     # fig.update_annotations(textfont=dict(size=14, color="black"))
+#     # print(fig.frames[0].layout["annotations"])
+#     return fig
 
 
 # The 'color' property is a color and may be specified as:
