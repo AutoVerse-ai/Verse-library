@@ -1,5 +1,5 @@
 import ast, copy
-from types import NoneType
+# from types import NoneType
 from typing import List, Dict, Union, Optional, Any, Tuple
 from dataclasses import dataclass, field, fields
 from enum import Enum, auto
@@ -288,7 +288,7 @@ class ControllerIR:
         controller = Env.trans_args(top['controller'], False)
         controller_veri = Env.trans_args(top_veri['controller'], True)
         unsafe = Env.trans_args(top['unsafe'], False) if 'unsafe' in top else None
-        assert isinstance(controller, Lambda) and isinstance(controller_veri, Lambda) and isinstance(unsafe, (Lambda, NoneType))
+        assert isinstance(controller, Lambda) and isinstance(controller_veri, Lambda) and isinstance(unsafe, (Lambda, type(None)))
         print(ControllerIR.dump(controller))
         print(ControllerIR.dump(controller_veri))
         return ControllerIR(controller, controller_veri, unsafe, env.scopes[0].asserts, env.state_defs, env.mode_defs)

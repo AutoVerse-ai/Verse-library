@@ -572,7 +572,7 @@ class Unparser:
         elif value is Ellipsis: # instead of `...` for Py2 compatibility
             self.write("...")
         else:
-            if t.kind == "u":
+            if hasattr(t,'kind') and t.kind == "u":
                 self.write("u")
             self._write_constant(t.value)
 
