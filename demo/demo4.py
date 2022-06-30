@@ -2,8 +2,6 @@ from dryvr_plus_plus.example.example_agent.car_agent import CarAgent, NPCAgent
 from dryvr_plus_plus.scene_verifier.scenario.scenario import Scenario
 from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap2, SimpleMap3, SimpleMap4, SimpleMap5, SimpleMap6
 from dryvr_plus_plus.plotter.plotter2D import *
-from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor3
-from dryvr_plus_plus.scene_verifier.sensor.base_sensor import BaseSensor
 
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go

@@ -143,7 +143,7 @@ class Scenario:
                 lhs = reset_variable 
                 rhs = expr 
                 for lhs_idx, cts_variable in enumerate(agent.controller.state_defs[agent.controller.ego_type].cont):
-                    if "output."+cts_variable == lhs:
+                    if cts_variable == lhs:
                         break 
                 # substituting low variables                
 
