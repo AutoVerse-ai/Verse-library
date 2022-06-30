@@ -33,6 +33,15 @@ def controller(ego:State, others:State):
     if ego.y>20:
         output.vy = -ego.vy
         output.y=20
+    def abs_diff(a, b):
+        if a < b:
+            r = b - a
+        else:
+            r = a - b
+        return r
+    def dist(a, b):
+        return abs_diff(a.x, b.x) + abs_diff(a.y, b.y)
+    assert all(dist(ego, o) > 5 for o in others)
     return output
 
 from dryvr_plus_plus.example.example_agent.ball_agent import BallAgent
@@ -64,7 +73,7 @@ if __name__ == "__main__":
             (BallTypeMode.TYPE2,)
         ]
     )
-    traces = bouncingBall.simulate(40, 0.01)
+    traces = bouncingBall.simulate(10, 0.01)
     fig = go.Figure()
     fig = plotly_simulation_anime(traces, fig=fig)
     fig.show()

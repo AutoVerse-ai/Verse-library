@@ -7,9 +7,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 from math import pi
 import plotly.graph_objects as go
+from plotly.graph_objs.scatter import Marker
 from typing import List
 from PIL import Image, ImageDraw
 import io
+from dryvr_plus_plus.scene_verifier.utils.utils import find
 
 colors = ['red', 'green', 'blue', 'yellow', 'black']
 
@@ -39,7 +41,7 @@ def plot(
         ub = rect[1]
         for y_dim in y_dim_list:
             rect_patch = patches.Rectangle(
-                (lb[x_dim], lb[y_dim]), ub[x_dim]-lb[x_dim], ub[y_dim]-lb[y_dim], color=color)
+                (lb[x_dim], lb[y_dim]), ub[x_dim]-lb[x_dim], ub[y_dim]-lb[y_dim], color=color, ec="black")
             ax.add_patch(rect_patch)
             x_min = min(lb[x_dim], x_min)
             y_min = min(lb[y_dim], y_min)
@@ -501,29 +503,37 @@ def plotly_simulation_anime(root, map=None, fig=None):
     fig = go.Figure(fig_dict)
     if map is not None:
         fig = plotly_map(map, 'g', fig)
-    i = 0
     queue = [root]
+    def assign_colors(agents: List[str]):
+        color_map = {a: find(["red", "green", "blue", "yellow", "purple", "cyan", "magenta"],
+                             lambda c: c in a) for a in agents}
+        if all(c != None for c in color_map.values()):
+            return color_map
+        return {a: f"hsl({i / len(agents) * 360},100%,50%)" for i, a in enumerate(agents)}
+
+    color_map = assign_colors(root.agent)
+
+    i = 0
     while queue != []:
         node = queue.pop(0)
         traces = node.trace
-        # print(node.mode)
-        # [[time,x,y,theta,v]...]
         for agent_id in traces:
             trace = np.array(traces[agent_id])
-            # print(trace)
             trace_y = trace[:, 2].tolist()
             trace_x = trace[:, 1].tolist()
-            # theta = [i/pi*180 for i in trace[:, 3]]
-            color = 'green'
-            if agent_id == 'car1':
-                color = 'red'
+            color = color_map[agent_id]
+            texts = [(round(trace[i, 3]/pi*180, 2), round(trace[i, 4], 2))
+                     for i in range(len(trace_y))]
+            def assert_hit(a, i):
+                return len(node.assert_hits[a][i]) > 0 if a in node.assert_hits else False
+            marker = Marker(color=["black" if assert_hit(agent_id, i) else color
+                                   for i in range(len(trace_y))],
+                            size=3)
             fig.add_trace(go.Scatter(x=trace[:, 1], y=trace[:, 2],
-                                     mode='lines',
-                                     line_color=color,
-                                     text=[(round(trace[i, 3]/pi*180, 2), round(trace[i, 4], 2))
-                                           for i in range(len(trace_y))],
-                                     showlegend=False)
-                          #  name='lines')
+                                     mode='markers',
+                                     marker=marker,
+                                     showlegend=False,
+                                     text=texts)
                           )
             i += 1
         queue += node.child

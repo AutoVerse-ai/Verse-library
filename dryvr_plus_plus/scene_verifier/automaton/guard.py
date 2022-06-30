@@ -6,14 +6,13 @@ import ast
 import copy
 
 from z3 import *
-import astunparse
 import numpy as np
 
 from dryvr_plus_plus.scene_verifier.map.lane_map import LaneMap
 from dryvr_plus_plus.scene_verifier.map.lane_segment import AbstractLane
 from dryvr_plus_plus.scene_verifier.utils.utils import *
-from dryvr_plus_plus.scene_verifier.code_parser.parser import Reduction, ReductionType
 from dryvr_plus_plus.scene_verifier.agents.base_agent import BaseAgent
+from dryvr_plus_plus.scene_verifier.code_parser.parser import Reduction, ReductionType, unparse
 
 class LogicTreeNode:
     def __init__(self, data, child = [], val = None, mode_guard = None):
@@ -236,7 +235,7 @@ class GuardExpressionAst:
                 return node.value
             # Else, return raw expression
             else:
-                expr = astunparse.unparse(node)
+                expr = unparse(node)
                 expr = expr.strip('\n')
                 return expr
         elif isinstance(node, ast.UnaryOp):
@@ -251,7 +250,7 @@ class GuardExpressionAst:
                 raise NotImplementedError(f"UnaryOp {node.op} is not supported")
         else:
             # For other cases, we can return the expression directly
-            expr = astunparse.unparse(node)
+            expr = unparse(node)
             expr = expr.strip('\n')
             return expr
 
@@ -273,7 +272,7 @@ class GuardExpressionAst:
 
     def _evaluate_guard_hybrid(self, root, agent, disc_var_dict, cont_var_dict, lane_map:LaneMap):
         if isinstance(root, ast.Compare): 
-            expr = astunparse.unparse(root)
+            expr = unparse(root)
             left, root.left = self._evaluate_guard_hybrid(root.left, agent, disc_var_dict, cont_var_dict, lane_map)
             right, root.comparators[0] = self._evaluate_guard_hybrid(root.comparators[0], agent, disc_var_dict, cont_var_dict, lane_map)
             return True, root
@@ -388,11 +387,11 @@ class GuardExpressionAst:
                         root = ast.parse(tmp_var_name).body[0].value
                         return True, root
                     else:
-                        raise ValueError(f'Node type {func} from {astunparse.unparse(func)} is not supported')
+                        raise ValueError(f'Node type {func} from {unparse(func)} is not supported')
                 else:
-                    raise ValueError(f'Node type {func} from {astunparse.unparse(func)} is not supported')
+                    raise ValueError(f'Node type {func} from {unparse(func)} is not supported')
             else:
-                raise ValueError(f'Node type {root.func} from {astunparse.unparse(root.func)} is not supported')   
+                raise ValueError(f'Node type {root.func} from {unparse(root.func)} is not supported')   
         elif isinstance(root, ast.Attribute):
             return True, root 
         elif isinstance(root, ast.Constant):
@@ -408,10 +407,10 @@ class GuardExpressionAst:
                     root.operand = ast.parse('False').body[0].value
                     return True, ast.parse('True').body[0].value
             else:
-                raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
+                raise ValueError(f'Node type {root} from {unparse(root)} is not supported')
             return True, root 
         else:
-            raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
+            raise ValueError(f'Node type {root} from {unparse(root)} is not supported')
 
     def _handle_longitudinal_set(self, lane_seg: AbstractLane, position: np.ndarray) -> List[float]:
         if lane_seg.type == "Straight":
@@ -514,7 +513,7 @@ class GuardExpressionAst:
         The second element in the tuple will be the updated ast node 
         """
         if isinstance(root, ast.Compare):
-            expr = astunparse.unparse(root)
+            expr = unparse(root)
             left, root.left = self._evaluate_guard_disc(root.left, agent, disc_var_dict, cont_var_dict, lane_map)
             right, root.comparators[0] = self._evaluate_guard_disc(root.comparators[0], agent, disc_var_dict, cont_var_dict, lane_map)
             if isinstance(left, bool) or isinstance(right, bool):
@@ -532,7 +531,7 @@ class GuardExpressionAst:
             elif isinstance(root.ops[0], ast.NotEq):
                 res = left != right 
             else:
-                raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
+                raise ValueError(f'Node type {root} from {unparse(root)} is not supported')
             if res:
                 root = ast.parse('True').body[0].value
             else:
@@ -559,7 +558,7 @@ class GuardExpressionAst:
             right, root.right = self._evaluate_guard_disc(root.right, agent, disc_var_dict, cont_var_dict, lane_map)
             return True, root
         elif isinstance(root, ast.Call):
-            expr = astunparse.unparse(root)
+            expr = unparse(root)
             # Check if the root is a function
             if any([var in expr for var in disc_var_dict]) and all([var not in expr for var in cont_var_dict]):
                 # tmp = re.split('\(|\)',expr)
@@ -589,7 +588,7 @@ class GuardExpressionAst:
             else:
                 return True, root
         elif isinstance(root, ast.Attribute):
-            expr = astunparse.unparse(root)
+            expr = unparse(root)
             expr = expr.strip('\n')
             if expr in disc_var_dict:
                 val = disc_var_dict[expr]
@@ -616,7 +615,7 @@ class GuardExpressionAst:
                     root.operand = ast.parse('False').body[0].value
                     return True, ast.parse('True').body[0].value
             else:
-                raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
+                raise ValueError(f'Node type {root} from {unparse(root)} is not supported')
             return True, root
         elif isinstance(root, ast.Name):
             expr = root.id
@@ -632,7 +631,7 @@ class GuardExpressionAst:
             else:
                 return True, root 
         else:
-            raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
+            raise ValueError(f'Node type {root} from {unparse(root)} is not supported')
 
     def evaluate_guard(self, agent, continuous_variable_dict, discrete_variable_dict, lane_map):
         res = True
@@ -660,7 +659,7 @@ class GuardExpressionAst:
             elif isinstance(root.ops[0], ast.NotEq):
                 return left != right 
             else:
-                raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
+                raise ValueError(f'Node type {root} from {unparse(root)} is not supported')
 
         elif isinstance(root, ast.BoolOp):
             if isinstance(root.op, ast.And):
@@ -687,9 +686,9 @@ class GuardExpressionAst:
             elif isinstance(root.op, ast.Add):
                 return left + right
             else:
-                raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
+                raise ValueError(f'Node type {root} from {unparse(root)} is not supported')
         elif isinstance(root, ast.Call):
-            expr = astunparse.unparse(root)
+            expr = unparse(root)
             # Check if the root is a function
             if isinstance(root.func, ast.Attribute) and "map" in root.func.value.id:
             # if 'map' in expr:
@@ -713,7 +712,7 @@ class GuardExpressionAst:
                         break
                 return res
         elif isinstance(root, ast.Attribute):
-            expr = astunparse.unparse(root)
+            expr = unparse(root)
             expr = expr.strip('\n')
             if expr in disc_var_dict:
                 val = disc_var_dict[expr]
@@ -740,7 +739,7 @@ class GuardExpressionAst:
             if isinstance(root.op, ast.Not):
                 return not val
             else:
-                raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
+                raise ValueError(f'Node type {root} from {unparse(root)} is not supported')
         elif isinstance(root, ast.Name):
             variable = root.id 
             if variable in cnts_var_dict:
@@ -758,7 +757,8 @@ class GuardExpressionAst:
             else:
                 raise ValueError(f"{variable} doesn't exist in either continuous varibales or discrete variables") 
         else:
-            raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
+            print("agent", agent)
+            raise ValueError(f'Node type {root} from {unparse(root)} is not supported')
 
     def parse_any_all(self, cont_var_dict: Dict[str, float], disc_var_dict: Dict[str, float], len_dict: Dict[str, int]) -> None: 
         for i in range(len(self.ast_list)):

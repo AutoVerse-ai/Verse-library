@@ -1,10 +1,15 @@
 import ast, copy
+# from types import NoneType
 from typing import List, Dict, Union, Optional, Any, Tuple
 from dataclasses import dataclass, field, fields
 from enum import Enum, auto
 import dryvr_plus_plus.scene_verifier.code_parser.astunparser as astunparser
+from dryvr_plus_plus.scene_verifier.utils.utils import find
 
 debug = False
+
+def unparse(e):
+    return astunparser.unparse(e).strip("\n")
 
 def dbg(msg, *rest):
     if not debug:
@@ -45,23 +50,48 @@ class StateDef:
     disc: List[str] = field(default_factory=list)     # Discrete variables
     static: List[str] = field(default_factory=list)   # Static data in object
 
+    def all_vars(self) -> List[str]:
+        return self.cont + self.disc + self.static
+
 ScopeValue = Union[ast.AST, "CondVal", "Lambda", "Reduction", Dict[str, "ScopeValue"]]
 
 @dataclass
-class CondValCase:
+class CondValCase(ast.expr):
     """A single case of a conditional value. Values in `cond` are implicitly `and`ed together"""
     cond: List[ScopeValue]
     val: ScopeValue
+    _fields = ("cond", "val")
+
+    def __reduce__(self):
+        return type(self), (self.cond, self.val)
 
     def __eq__(self, o) -> bool:
         if o == None or len(self.cond) != len(o.cond):
             return False
         return all(ControllerIR.ir_eq(sc, oc) for sc, oc in zip(self.cond, o.cond)) and ControllerIR.ir_eq(self.val, o.val)
 
+    def __deepcopy__(self, memo):
+        cls = self.__class__ 
+        result = cls.__new__(cls)
+        for k, v in self.__dict__.items():
+            setattr(result, k, copy.deepcopy(v))
+        return result
+
 @dataclass
-class CondVal:
+class CondVal(ast.expr):
     """A conditional value. Actual value is the combined result from all the cases"""
     elems: List[CondValCase]
+    _fields = ("elems",)
+
+    def __reduce__(self):
+        return type(self), (self.elems,)
+
+    def __deepcopy__(self, memo):
+        cls = self.__class__ 
+        result = cls.__new__(cls)
+        for k, v in self.__dict__.items():
+            setattr(result, k, copy.deepcopy(v))
+        return result
 
 class ReductionType(Enum):
     Any = auto()
@@ -92,32 +122,46 @@ class Reduction(ast.expr):
     it: str
     value: ast.AST
 
+    def __reduce__(self):
+        return type(self), (self.op, self.expr, self.it, self.value)
+
     def __eq__(self, o) -> bool:
         if o == None:
             return False
         return self.op == o.op and self.it == o.it and ControllerIR.ir_eq(self.expr, o.expr) and ControllerIR.ir_eq(self.value, o.value)
 
     def __repr__(self) -> str:
-        return f"Reduction('{self.op}', expr={astunparser.unparse(self.expr)}, it='{self.it}', value={astunparser.unparse(self.value)}"
+        return f"Reduction('{self.op}', expr={unparse(self.expr)}, it='{self.it}', value={unparse(self.value)})"
 
     def __deepcopy__(self, memo):
         cls = self.__class__ 
         result = cls.__new__(cls)
-        memo[id(self)] = result
         for k, v in self.__dict__.items():
-            setattr(result, k, copy.deepcopy(v, memo))
+            setattr(result, k, copy.deepcopy(v))
         return result
 
-Reduction._fields = [f.name for f in fields(Reduction)]
+Reduction._fields = tuple(f.name for f in fields(Reduction))
+
+@dataclass
+class Assert:
+    cond: ast.expr
+    label: Optional[str]
+    pre: List[ast.expr] = field(default_factory=list)
+
+    def __eq__(self, o) -> bool:
+        if o == None:
+            return False
+        return len(self.pre) == len(o.pre) and all(ControllerIR.ir_eq(a, b) for a, b in zip(self.pre, o.pre)) and ControllerIR.ir_eq(self.cond, o.cond)
 
 @dataclass
 class Lambda:
     """A closure. Comes from either a `lambda` or a `def`ed function"""
     args: List[Tuple[str, Optional[str]]]
-    body: ast.expr
+    body: Optional[ast.expr]
+    asserts: List[Assert]
 
     @staticmethod
-    def from_ast(tree: Union[ast.FunctionDef, ast.Lambda], env: "Env") -> "Lambda":
+    def from_ast(tree: Union[ast.FunctionDef, ast.Lambda], env: "Env", veri: bool) -> "Lambda":
         args = []
         for a in tree.args.args:
             if a.annotation != None:
@@ -131,25 +175,42 @@ class Lambda:
             else:
                 args.append((a.arg, None))
         env.push()
-        for a, _ in args:
-            env.add_hole(a)
+        for a, typ in args:
+            env.add_hole(a, typ)
         ret = None
         if isinstance(tree, ast.FunctionDef):
             for node in tree.body:
-                ret = proc(node, env)
+                ret = proc(node, env, veri)
         elif isinstance(tree, ast.Lambda):
-            ret = proc(tree.body, env)
+            ret = proc(tree.body, env, veri)
+        asserts = env.scopes[0].asserts
+        # env.dump()
         env.pop()
-        assert ret != None, "Empty function"
-        return Lambda(args, ret)
+        # assert ret != None, "Empty function"
+        return Lambda(args, ret, asserts)
 
-    def apply(self, args: List[ast.expr]) -> ast.expr:
+    @staticmethod
+    def empty() -> "Lambda":
+        return Lambda(args=[], body={}, asserts=[])
+
+    def apply(self, args: List[ast.expr]) -> Tuple[List[Assert], ast.expr]:
         ret = copy.deepcopy(self.body)
-        return ArgSubstituter({k: v for (k, _), v in zip(self.args, args)}).visit(ret)
+        subst = ArgSubstituter({k: v for (k, _), v in zip(self.args, args)})
+        ret = subst.visit(ret)
+        def visit_assert(a: Assert):
+            a = copy.deepcopy(a)
+            pre = [subst.visit(p) for p in a.pre]
+            cond = subst.visit(a.cond)
+            return Assert(cond, a.label, pre)
+        asserts = [visit_assert(a) for a in copy.deepcopy(self.asserts)]
+        return asserts, ret
 
-ast_dump = lambda node, dump=False: ast.dump(node) if dump else astunparser.unparse(node)
+ast_dump = lambda node, dump=False: ast.dump(node) if dump else unparse(node)
 
-ScopeLevel = Dict[str, ScopeValue]
+@dataclass
+class ScopeLevel:
+    v: Dict[str, ScopeValue] = field(default_factory=dict)
+    asserts: List[Assert] = field(default_factory=list)
 
 class ArgSubstituter(ast.NodeTransformer):
     args: Dict[str, ast.expr]
@@ -165,7 +226,10 @@ class ArgSubstituter(ast.NodeTransformer):
 
 @dataclass
 class ControllerIR:
-    controller: Lambda
+    controller: Optional[Lambda]
+    controller_veri: Optional[Lambda]
+    unsafe: Optional[Lambda]
+    asserts: List[Assert]
     state_defs: Dict[str, StateDef]
     mode_defs: Dict[str, ModeDef]
 
@@ -179,11 +243,13 @@ class ControllerIR:
 
     @staticmethod
     def parse(code: Optional[str] = None, fn: Optional[str] = None) -> "ControllerIR":
-        return Env.parse(code, fn).to_ir()
+        print("controller parsed")
+        return ControllerIR.from_envs(*Env.parse(code, fn))
 
     @staticmethod
     def empty() -> "ControllerIR":
-        return ControllerIR(Lambda(args=[], body=ast.Constant({})), {}, {})
+        print("controller empty")
+        return ControllerIR(None, None, None, [], {}, {})
 
     @staticmethod
     def dump(node, dump=False):
@@ -194,15 +260,21 @@ class ControllerIR:
         if isinstance(node, (ModeDef, StateDef)):
             return f"<{node}>"
         if isinstance(node, Lambda):
-            return f"<Lambda args: {node.args} body: {ControllerIR.dump(node.body, dump)}>"
+            return f"<Lambda args: {node.args} body: {ControllerIR.dump(node.body, dump)} asserts: {ControllerIR.dump(node.asserts, dump)}>"
         if isinstance(node, CondVal):
-            return f"<CondVal{''.join(f' [{ControllerIR.dump(e.val, dump)} if {ControllerIR.dump(e.cond, dump)}]' for e in node.elems)}>"
+            return f"<CondVal [{', '.join(f'{ControllerIR.dump(e.val, dump)} if {ControllerIR.dump(e.cond, dump)}' for e in node.elems)}]>"
+        if isinstance(node, Assert):
+            if len(node.pre) > 0:
+                pre = f"[{', '.join(ControllerIR.dump(a, dump) for a in node.pre)}] => "
+            else:
+                pre = ""
+            return f"<Assert {pre}{ControllerIR.dump(node.cond, dump)}, \"{node.label}\">"
         if isinstance(node, ast.If):
             return f"<{{{ast_dump(node, dump)}}}>"
         if isinstance(node, Reduction):
             return f"<Reduction {node.op} {ast_dump(node.expr, dump)} for {node.it} in {ast_dump(node.value, dump)}>"
         elif isinstance(node, dict):
-            return "<Object " + " ".join(f"{k}: {ControllerIR.dump(v, dump)}" for k, v in node.items()) + ">"
+            return "{" + ", ".join(f"{k}: {ControllerIR.dump(v, dump)}" for k, v in node.items()) + "}"
         elif isinstance(node, list):
             return f"[{', '.join(ControllerIR.dump(n, dump) for n in node)}]"
         else:
@@ -213,34 +285,40 @@ class ControllerIR:
         """Equality check on the "IR" nodes"""
         return ControllerIR.dump(a) == ControllerIR.dump(b)     # FIXME Proper equality checks; dump needed cuz asts are dumb
 
+    @staticmethod
+    def from_envs(env, env_veri):
+        top, top_veri = env.scopes[0].v, env_veri.scopes[0].v
+        assert fully_cond(top)
+        if 'controller' not in top or not isinstance(top['controller'], Lambda):
+            raise TypeError("can't find controller")
+        # env.dump()
+        # env_veri.dump()
+        controller = Env.trans_args(top['controller'], False)
+        controller_veri = Env.trans_args(top_veri['controller'], True)
+        unsafe = Env.trans_args(top['unsafe'], False) if 'unsafe' in top else None
+        assert isinstance(controller, Lambda) and isinstance(controller_veri, Lambda) and isinstance(unsafe, (Lambda, type(None)))
+        print(ControllerIR.dump(controller))
+        print(ControllerIR.dump(controller_veri))
+        return ControllerIR(controller, controller_veri, unsafe, env.scopes[0].asserts, env.state_defs, env.mode_defs)
+
     def getNextModes(self) -> List[Any]:
-        controller_body = self.controller.body 
+        controller_body = self.controller_veri.body 
         paths = []
         for variable in controller_body:
-            cond_val: CondVal = controller_body[variable]
-            for case in cond_val.elems:
-                val = case.val 
-                guard = case.cond
-                reset = (variable, val)
-                paths.append((guard, reset))
+            val = controller_body[variable]
+            if not isinstance(val, CondVal):
+                continue
+            for case in val.elems:
+                if len(case.cond) > 0:
+                    # print(ControllerIR.dump(case.cond), f"{variable} <- {ControllerIR.dump(case.val)}")
+                    paths.append((case.cond, (variable, case.val)))
         return paths 
-
-    @property 
-    def ego_type(self):
-        ego_type = None 
-        for tmp in self.controller.args:
-            if tmp[0] == 'ego':
-                ego_type = tmp[1]
-                break 
-        if ego_type is None:
-            raise ValueError('Ego not found')
-        return ego_type
 
 @dataclass
 class Env():
     state_defs: Dict[str, StateDef] = field(default_factory=dict)
     mode_defs: Dict[str, ModeDef] = field(default_factory=dict)
-    scopes: List[ScopeLevel] = field(default_factory=lambda: [{}])
+    scopes: List[ScopeLevel] = field(default_factory=lambda: [ScopeLevel()])
 
     @staticmethod
     def parse(code: Optional[str] = None, fn: Optional[str] = None):
@@ -255,36 +333,47 @@ class Env():
             root = ast.parse(cont, fn)
         else:
             raise TypeError("need at least one of `code` and `fn`")
+        root_veri = copy.deepcopy(root)
         env = Env()
-        proc(root, env)
-        return env
+        proc(root, env, False)
+        env_veri = Env()
+        proc(root_veri, env_veri, True)
+        return env, env_veri
 
     def push(self):
-        self.scopes = [{}] + self.scopes
+        self.scopes = [ScopeLevel()] + self.scopes
 
     def pop(self):
         self.scopes = self.scopes[1:]
 
     def lookup(self, key):
         for env in self.scopes:
-            if key in env:
-                return env[key]
+            if key in env.v:
+                return env.v[key]
         return None
 
     def set(self, key, val):
         for env in self.scopes:
-            if key in env:
-                env[key] = val
+            if key in env.v:
+                env.v[key] = val
                 return
-        self.scopes[0][key] = val
+        self.scopes[0].v[key] = val
 
-    def add_hole(self, name: str):
-        self.set(name, ast.arg(name, None))
+    def add_hole(self, name: str, typ: Optional[str]):
+        self.set(name, ast.arg(name, ast.Constant(typ)))
+
+    def add_assert(self, expr, label):
+        self.scopes[0].asserts.append(Assert(expr, label))
 
     @staticmethod
     def dump_scope(env: ScopeLevel, dump=False):
         print("+++")
-        for k, node in env.items():
+        print(".asserts:")
+        for a in env.asserts:
+            pre = f"if {[unparse(p) for p in a.pre]}" if a.pre != None else ""
+            label = ", \"{a.label}\"" if a.label != None else ""
+            print(f"  {pre}assert {unparse(a.cond)}{label}")
+        for k, node in env.v.items():
             print(f"{k}: {ControllerIR.dump(node, dump)}")
         print("---")
 
@@ -295,16 +384,27 @@ class Env():
         print("}}}")
 
     @staticmethod
-    def trans_args(sv: ScopeValue) -> ScopeValue:
+    def trans_args(sv: ScopeValue, veri: bool) -> ScopeValue:
+        def trans_condval(cv: CondVal):
+            for i, case in enumerate(cv.elems):
+                cv.elems[i].val = Env.trans_args(case.val, veri)
+                for j, cond in enumerate(case.cond):
+                    cv.elems[i].cond[j] = Env.trans_args(cond, veri)
+            if veri:
+                return cv
+            else:
+                ret = find(cv.elems, lambda case: len(case.cond) == 0)
+                if ret == None:
+                    ret = ast.Constant(None)
+                for case in reversed(copy.deepcopy(cv).elems):
+                    if len(case.cond) == 0:
+                        ret = case.val
+                    else:
+                        cond = ast.BoolOp(ast.And(), case.cond) if len(case.cond) > 1 else case.cond[0]
+                        ret = ast.IfExp(cond, case.val, ret)
+                dbg("converted", ControllerIR.dump(cv), ControllerIR.dump(ret))
+                return ret
         """Finish up parsing to turn `ast.arg` placeholders into `ast.Name`s so that the trees can be easily evaluated later"""
-        class ArgTransformer(ast.NodeTransformer):
-            def visit_arg(self, node):
-                if '.' in node.arg:
-                    cls_name, attr = node.arg.split('.')
-                    return ast.Attribute(value=ast.Name(id=cls_name, ctx=ast.Load()), attr = attr, ctx=ast.Load())
-                else:
-                    return ast.Name(node.arg, ctx=ast.Load())
-
             # def visit_Attribute(self, node):
             #     # if isinstance(node.value, ast.Name):
             #     #     return ast.Name(f"{node.value.id}.{node.attr}", ctx=ast.Load())
@@ -312,39 +412,59 @@ class Env():
 
         if isinstance(sv, dict):
             for k, v in sv.items():
-                sv[k] = Env.trans_args(v)
+                sv[k] = Env.trans_args(v, veri)
             return sv
         if isinstance(sv, CondVal):
-            for i, case in enumerate(sv.elems):
-                sv.elems[i].val = Env.trans_args(case.val)
-                for j, cond in enumerate(case.cond):
-                    sv.elems[i].cond[j] = Env.trans_args(cond)
-            return sv
+            return trans_condval(sv)
         if isinstance(sv, ast.AST):
-            return ArgTransformer().visit(sv)
+            class ArgTransformer(ast.NodeTransformer):
+                def __init__(self, veri: bool):
+                    super().__init__()
+                    self.veri = veri
+                def visit_arg(self, node):
+                    return ast.Name(node.arg, ctx=ast.Load())
+                def visit_CondVal(self, node):
+                    return trans_condval(node)
+            return ArgTransformer(veri).visit(sv)
         if isinstance(sv, Lambda):
-            sv.body = Env.trans_args(sv.body)
+            sv.body = Env.trans_args(sv.body, veri)
+            dbg("assert trans bf", ControllerIR.dump(sv.asserts))
+            sv.asserts = [Env.trans_args(a, veri) for a in sv.asserts]
+            dbg("assert trans af", ControllerIR.dump(sv.asserts))
+            return sv
+        if isinstance(sv, Assert):
+            sv.cond = Env.trans_args(sv.cond, veri)
+            sv.pre = [Env.trans_args(p, veri) for p in sv.pre]
             return sv
         if isinstance(sv, Reduction):
-            sv.expr = Env.trans_args(sv.expr)
-            sv.value = Env.trans_args(sv.value)
+            sv.expr = Env.trans_args(sv.expr, veri)
+            sv.value = Env.trans_args(sv.value, veri)
             return sv
 
-    def to_ir(self):
-        top = self.scopes[0]
-        assert fully_cond(top)
-        if 'controller' not in top or not isinstance(top['controller'], Lambda):
-            raise TypeError("can't find controller")
-        controller = Env.trans_args(top['controller'])
-        assert isinstance(controller, Lambda)
-        return ControllerIR(controller, self.state_defs, self.mode_defs)
+ScopeValueMap = Dict[str, ScopeValue]
 
-def merge_if(test: ast.expr, trues: Env, falses: Env, env: Env):
+def merge_if(test: ast.expr, trues: Env, falses: Env, env: Env, veri: bool):
     # `true`, `false` and `env` should have the same level
     for true, false in zip(trues.scopes, falses.scopes):
-        merge_if_single(test, true, false, env)
+        merge_if_single(test, true.v, false.v, env, veri)
+    env.scopes[0].asserts = merge_assert(test, trues.scopes[0].asserts, falses.scopes[0].asserts, env.scopes[0].asserts)
 
-def merge_if_single(test, true: ScopeLevel, false: ScopeLevel, scope: Union[Env, ScopeLevel]):
+def merge_assert(test: ast.expr, trues: List[Assert], falses: List[Assert], orig: List[Assert]):
+    def merge_cond(test, asserts):
+        for a in asserts:
+            a.pre.append(test)
+        return asserts
+    # dbg("assert merge", ControllerIR.dump(trues), ControllerIR.dump(falses), ControllerIR.dump(orig))
+    for o in orig:
+        if o in trues:
+            trues.remove(o)
+        if o in falses:
+            falses.remove(o)
+    # dbg("assert merge diff", ControllerIR.dump(trues), ControllerIR.dump(falses), ControllerIR.dump(orig))
+    m_trues, m_falses = merge_cond(test, trues), merge_cond(ast.UnaryOp(ast.Not(), test), falses)
+    return m_trues + m_falses + orig
+
+def merge_if_single(test, true: ScopeValueMap, false: ScopeValueMap, scope: Union[Env, ScopeValueMap], veri: bool):
     dbg("merge if single", ControllerIR.dump(test), true.keys(), false.keys())
     def lookup(s, k):
         if isinstance(s, Env):
@@ -366,20 +486,20 @@ def merge_if_single(test, true: ScopeLevel, false: ScopeLevel, scope: Union[Env,
             if not isinstance(lookup(scope, var), dict):
                 if lookup(scope, var) != None:
                     dbg("???", var, lookup(scope, var))
-                dbg("if.merge.obj.init")
+                # dbg("if.merge.obj.init")
                 assign(scope, var, {})
             var_true_emp, var_false_emp, var_scope = true.get(var, {}), false.get(var, {}), lookup(scope, var)
-            dbg(isinstance(var_true_emp, dict), isinstance(var_false_emp, dict), isinstance(var_scope, dict))
+            # dbg(isinstance(var_true_emp, dict), isinstance(var_false_emp, dict), isinstance(var_scope, dict))
             assert isinstance(var_true_emp, dict) and isinstance(var_false_emp, dict) and isinstance(var_scope, dict)
-            merge_if_single(test, var_true_emp, var_false_emp, var_scope)
+            merge_if_single(test, var_true_emp, var_false_emp, var_scope, veri)
         else:
-            if_val = merge_if_val(test, var_true, var_false, lookup(scope, var))
-            dbg(ControllerIR.dump(if_val))
-            assign(scope, var, if_val)
-        dbg("merged", var, ControllerIR.dump(lookup(scope, var)))
+            var_orig = lookup(scope, var)
+            if_val = merge_if_val(test, var_true, var_false, var_orig)
+            assign(scope, var, copy.deepcopy(if_val))
+        # dbg("merged", var, ControllerIR.dump(lookup(scope, var)))
 
 def merge_if_val(test, true: Optional[ScopeValue], false: Optional[ScopeValue], orig: Optional[ScopeValue]) -> CondVal:
-    dbg("merge val", ControllerIR.dump(test), ControllerIR.dump(true), ControllerIR.dump(false), ControllerIR.dump(orig), false == orig)
+    # dbg("merge val", ControllerIR.dump(test), ControllerIR.dump(true), ControllerIR.dump(false), ControllerIR.dump(orig), false == orig)
     def merge_cond(test, val):
         if isinstance(val, CondVal):
             for elem in val.elems:
@@ -394,7 +514,7 @@ def merge_if_val(test, true: Optional[ScopeValue], false: Optional[ScopeValue], 
             return CondVal([CondValCase([], a)])
         return a
     true, false, orig = as_cv(true), as_cv(false), as_cv(orig)
-    dbg("merge convert", ControllerIR.dump(true), ControllerIR.dump(false), ControllerIR.dump(orig))
+    # dbg("merge convert", ControllerIR.dump(true), ControllerIR.dump(false), ControllerIR.dump(orig))
     if orig != None:
         for orig_cve in orig.elems:
             if true != None and orig_cve in true.elems:
@@ -402,7 +522,7 @@ def merge_if_val(test, true: Optional[ScopeValue], false: Optional[ScopeValue], 
             if false != None and orig_cve in false.elems:
                 false.elems.remove(orig_cve)
 
-    dbg("merge diff", ControllerIR.dump(test), ControllerIR.dump(true), ControllerIR.dump(false), ControllerIR.dump(orig))
+    # dbg("merge diff", ControllerIR.dump(test), ControllerIR.dump(true), ControllerIR.dump(false), ControllerIR.dump(orig))
     true_emp, false_emp = true == None or len(true.elems) == 0, false == None or len(false.elems) == 0
     if true_emp and false_emp:
         raise Exception("no need for merge?")
@@ -417,26 +537,38 @@ def merge_if_val(test, true: Optional[ScopeValue], false: Optional[ScopeValue], 
         return CondVal(ret.elems + orig.elems)
     return ret
 
-def proc_assign(target: ast.AST, val, env: Env):
-    dbg("proc_assign", astunparser.unparse(target), val)
+def proc_assign(target: ast.AST, val, env: Env, veri: bool):
+    # dbg("proc_assign", unparse(target), val)
+    def proc_assign_attr(value, attr, val):
+        if proc(value, env, veri) == None:
+            # dbg("proc.assign.obj.init")
+            proc_assign(value, {}, env, veri)
+        obj = proc(value, env, veri)
+        if isinstance(val, ast.AST):
+            dbg("assign attr", ControllerIR.dump(obj, True), ControllerIR.dump(value, True), attr, ControllerIR.dump(val, True))
+            val = proc(val, env, veri)
+            dbg("assign attr val", ControllerIR.dump(val, True))
+            if val != None:
+
+                obj[attr] = val
+        else:
+            obj[attr] = val
     if isinstance(target, ast.Name):
         if isinstance(val, ast.AST):
-            val = proc(val, env)
+            val = proc(val, env, veri)
             if val != None:
-                env.set(target.id, val)
+                if isinstance(val, ast.arg):
+                    assert isinstance(val.annotation, ast.Constant)
+                    annotation = val.annotation.s
+                    if annotation in env.state_defs:
+                        for attr in env.state_defs[annotation].all_vars():
+                            proc_assign_attr(target, attr, ast.Attribute(val, attr, ast.Load()))
+                else:
+                    env.set(target.id, val)
         else:
             env.set(target.id, val)
     elif isinstance(target, ast.Attribute):
-        if proc(target.value, env) == None:
-            dbg("proc.assign.obj.init")
-            proc_assign(target.value, {}, env)
-        obj = proc(target.value, env)
-        if isinstance(val, ast.AST):
-            val = proc(val, env)
-            if val != None:
-                obj[target.attr] = val
-        else:
-            obj[target.attr] = val
+        proc_assign_attr(target.value, target.attr, val)
     else:
         raise NotImplementedError("assign.others")
 
@@ -453,10 +585,13 @@ START_OF_MAIN = "--start-of-main--"
 
 # NOTE `ast.arg` used as a placeholder for idents we don't know the value of.
 # This is fine as it's never used in expressions
-def proc(node: ast.AST, env: Env) -> Any:
+# NOTE `veri` as a flag to create 2 versions of ASTs, one used for simulation and one for
+# verification. This is needed as one form is easier to be directly evaluated while the other easier
+# for verification. The differences between them means they can't be easily converted to one another
+def proc(node: ast.AST, env: Env, veri: bool) -> Any:
     if isinstance(node, ast.Module):
         for node in node.body:
-            if proc(node, env) == START_OF_MAIN:
+            if proc(node, env, veri) == START_OF_MAIN:
                 break
     elif not_ir_ast(node):
         return node
@@ -466,37 +601,43 @@ def proc(node: ast.AST, env: Env) -> Any:
     elif isinstance(node, ast.If):
         if is_main_check(node):
             return START_OF_MAIN
-        test = proc(node.test, env)
+        test = proc(node.test, env, veri)
+        dbg("proc test", ControllerIR.dump(node.test, True), ControllerIR.dump(test, True))
+        dbg("proc test", ControllerIR.dump(node.test), ControllerIR.dump(test))
         true_scope = copy.deepcopy(env)
         for true in node.body:
-            proc(true, true_scope)
+            proc(true, true_scope, veri)
         false_scope = copy.deepcopy(env)
         for false in node.orelse:
-            proc(false, false_scope)
-        merge_if(test, true_scope, false_scope, env)
+            proc(false, false_scope, veri)
+        merge_if(test, true_scope, false_scope, env, veri)
 
     # Definition/Assignment
     elif isinstance(node, ast.Import) or isinstance(node, ast.ImportFrom):
         for alias in node.names:
-            env.add_hole(alias.name if alias.asname == None else alias.asname)
+            env.add_hole(alias.name if alias.asname == None else alias.asname, None)
     elif isinstance(node, ast.Assign):
         if len(node.targets) == 1:
-            proc_assign(node.targets[0], node.value, env)
+            proc_assign(node.targets[0], node.value, env, veri)
         else:
             raise NotImplementedError("unpacking not supported")
-    elif isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
+    elif isinstance(node, ast.Name):# and isinstance(node.ctx, ast.Load):
         return env.lookup(node.id)
     elif isinstance(node, ast.Attribute) and isinstance(node.ctx, ast.Load):
-        obj = proc(node.value, env)
+        obj = proc(node.value, env, veri)
+        dbg("attr", ControllerIR.dump(node), ControllerIR.dump(obj))
         # TODO since we know what the mode and state types contain we can do some typo checking
         if not_ir_ast(obj):
-            # return node
-            return ast.arg(f"{obj.arg}.{node.attr}", None)
+            if obj.arg in env.mode_defs:
+                return ast.Constant(node.attr)
+            attr = ast.Attribute(obj, node.attr, ctx=ast.Load())
+            dbg("ret attr", ControllerIR.dump(attr, True))
+            return attr
         return obj[node.attr]
     elif isinstance(node, ast.FunctionDef):
-        env.set(node.name, Lambda.from_ast(node, env))
+        env.set(node.name, Lambda.from_ast(node, env, veri))
     elif isinstance(node, ast.Lambda):
-        return Lambda.from_ast(node, env)
+        return Lambda.from_ast(node, env, veri)
     elif isinstance(node, ast.ClassDef):
         def grab_names(nodes: List[ast.stmt]):
             names = []
@@ -530,29 +671,49 @@ def proc(node: ast.AST, env: Env) -> Any:
                 else:
                     state_vars.disc.append(name)
             env.state_defs[node.name] = state_vars
-        env.add_hole(node.name)
+        env.add_hole(node.name, None)
+    elif isinstance(node, ast.Assert):
+        cond = proc(node.test, env, veri)
+        if node.msg == None:
+            env.add_assert(cond, None)
+        elif isinstance(node.msg, ast.Constant):
+            env.add_assert(cond, node.msg.s)
+        else:
+            raise NotImplementedError("dynamic string in assert")
 
     # Expressions
     elif isinstance(node, ast.UnaryOp):
-        return ast.UnaryOp(node.op, proc(node.operand, env))
+        return ast.UnaryOp(node.op, proc(node.operand, env, veri))
     elif isinstance(node, ast.BinOp):
-        return ast.BinOp(proc(node.left, env), node.op, proc(node.right, env))
+        return ast.BinOp(proc(node.left, env, veri), node.op, proc(node.right, env, veri))
     elif isinstance(node, ast.BoolOp):
-        return ast.BoolOp(node.op, [proc(val, env) for val in node.values])
+        return ast.BoolOp(node.op, [proc(val, env, veri) for val in node.values])
     elif isinstance(node, ast.Compare):
         if len(node.ops) > 1 or len(node.comparators) > 1:
             raise NotImplementedError("too many comparisons")
-        return ast.Compare(proc(node.left, env), node.ops, [proc(node.comparators[0], env)])
+        return ast.Compare(proc(node.left, env, veri), node.ops, [proc(node.comparators[0], env, veri)])
     elif isinstance(node, ast.Call):
-        fun = proc(node.func, env)
+        fun = proc(node.func, env, veri)
+        dbg("call fun", ControllerIR.dump(fun, True), veri)
+
         if isinstance(fun, Lambda):
-            return fun.apply([proc(a, env) for a in node.args])
+            args = [proc(a, env, veri) for a in node.args]
+            dbg("lambda args", node.args, ControllerIR.dump(args))
+            asserts, ret = fun.apply(args)
+            env.scopes[0].asserts.extend(asserts)
+            return ret
+        if isinstance(fun, ast.Attribute):
+            if isinstance(fun.value, ast.arg) and fun.value.arg == "copy" and fun.attr == "deepcopy":
+                if len(node.args) > 1:
+                    raise ValueError("too many args to `copy.deepcopy`")
+                return proc(node.args[0], env, veri)
+            return node
         if isinstance(fun, ast.arg):
             if fun.arg == "copy.deepcopy":
-                ret = None
+                raise Exception("unreachable")
             else:
                 ret = copy.deepcopy(node)
-                ret.args = [proc(a, env) for a in ret.args]
+                ret.args = [proc(a, env, veri) for a in ret.args]
             return ret
         if isinstance(node.func, ast.Name):
             name = node.func.id
@@ -560,50 +721,64 @@ def proc(node: ast.AST, env: Env) -> Any:
                 raise NotImplementedError(f"builtin function? {name}")
             if len(node.args) != 1 or not isinstance(node.args[0], ast.GeneratorExp):
                 raise NotImplementedError("reduction on non-generators")
-            gen = node.args[0]
-            if len(gen.generators) != 1:
+            gens = node.args[0]
+            if len(gens.generators) != 1:
                 raise NotImplementedError("multiple generator clauses")
-            op = ReductionType.from_str(name)
-            expr = gen.elt
-            gen = gen.generators[0]
+            expr = gens.elt
+            gen = gens.generators[0]
             target, ifs, iter = gen.target, gen.ifs, gen.iter
             if not isinstance(target, ast.Name):
                 raise NotImplementedError("complex generator target")
-            def cond_trans(e: ast.expr, c: ast.expr) -> ast.expr:
-                if op == ReductionType.Any:
-                    return ast.BoolOp(ast.And(), [e, c])
-                else:
-                    return ast.BoolOp(ast.Or(), [e, ast.UnaryOp(ast.Not(), c)])
             env.push()
-            env.add_hole(target.id)
-            expr = proc(expr, env)
+            env.add_hole(target.id, None)
+            if veri:
+                op = ReductionType.from_str(name)
+                def cond_trans(e: ast.expr, c: ast.expr) -> ast.expr:
+                    if op == ReductionType.Any:
+                        return ast.BoolOp(ast.And(), [e, c])
+                    else:
+                        return ast.BoolOp(ast.Or(), [e, ast.UnaryOp(ast.Not(), c)])
+                expr = proc(expr, env, veri)
+                expr = cond_trans(expr, ast.BoolOp(ast.And(), ifs)) if len(ifs) > 0 else expr
+                ret = Reduction(op, expr, target.id, proc(iter, env, veri))
+            else:
+                dbg("gen expr", ControllerIR.dump(gens.elt, True))
+                gens.elt = proc(gens.elt, env, veri)
+                dbg("gen expr proced", ControllerIR.dump(gens.elt, True))
+                gen.iter = proc(gen.iter, env, veri)
+                gen.ifs = [proc(cond, env, veri) for cond in gen.ifs]
+                # dbg("gen no veri", ControllerIR.dump(gen.iter), ControllerIR.dump(gen.ifs),
+                #     ControllerIR.dump(node, True))
+                ret = node
             env.pop()
-            expr = cond_trans(expr, ast.BoolOp(ast.And(), ifs)) if len(ifs) > 0 else expr
-            return Reduction(op, expr, target.id, proc(iter, env))
+            return ret
     elif isinstance(node, ast.Return):
-        return proc(node.value, env) if node.value != None else None
+        return proc(node.value, env, veri) if node.value != None else None
     elif isinstance(node, ast.IfExp):
-        return ast.If(node.test, [node.body], [node.orelse])
+        return node
 
     # Literals
     elif isinstance(node, ast.List):
-        return ast.List([proc(e, env) for e in node.elts])
+        return ast.List([proc(e, env, veri) for e in node.elts])
     elif isinstance(node, ast.Tuple):
-        return ast.Tuple([proc(e, env) for e in node.elts])
+        return ast.Tuple([proc(e, env, veri) for e in node.elts])
     elif isinstance(node, ast.Constant):
         return node         # XXX simplification?
     else:
+        print(ControllerIR.dump(node, True))
         raise NotImplementedError(str(node.__class__))
 
 if __name__ == "__main__":
-    # import sys
-    # if len(sys.argv) != 2:
-    #     print("usage: parse.py <file.py>")
-    #     sys.exit(1)
-    # fn = sys.argv[1]
-    fn = "./demo/example_controller8.py"
+    import sys
+    if len(sys.argv) != 2:
+        print("usage: parse.py <file.py>")
+        sys.exit(1)
+    fn = sys.argv[1]
+    # fn = "./demo/example_controller8.py"
     # fn = "./demo/example_two_car_sign_lane_switch.py"
     e = Env.parse(fn=fn)
-    tmp = e.to_ir()
     e.dump()
-    print(ControllerIR.dump(e.to_ir().controller.body, False))
+    ir = e.to_ir()
+    print(ControllerIR.dump(ir.controller.body, False))
+    for a in ir.asserts:
+        print(f"assert {ControllerIR.dump(a.cond, False)}, '{a.label}'")

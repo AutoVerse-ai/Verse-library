@@ -34,25 +34,30 @@ class State:
 
 def controller(ego:State, others:State, lane_map):
     output = copy.deepcopy(ego)
+    test = lambda other: other.x-ego.x > 3 and other.x-ego.x < 5 and ego.lane_mode == other.lane_mode
     if ego.vehicle_mode == VehicleMode.Normal:
-        if any((other.x-ego.x > 3 and other.x-ego.x < 5 and ego.lane_mode == other.lane_mode and other.type_mode==LaneObjectMode.Vehicle) for other in others):
+        if any((test(other) and other.type_mode==LaneObjectMode.Vehicle) for other in others):
             if lane_map.has_left(ego.lane_mode):
                 output.vehicle_mode = VehicleMode.SwitchLeft
-                output.x = ego.x
-        if any((other.x-ego.x > 3 and other.x-ego.x < 5 and ego.lane_mode == other.lane_mode) for other in others):
+        if any(test(other) for other in others):
             if lane_map.has_right(ego.lane_mode):
                 output.vehicle_mode = VehicleMode.SwitchRight
-                output.x = ego.x
+    lat_dist = lane_map.get_lateral_distance(ego.lane_mode, [ego.x, ego.y])
     if ego.vehicle_mode == VehicleMode.SwitchLeft:
-        if  lane_map.get_lateral_distance(ego.lane_mode, [ego.x, ego.y]) >= 2.5:
+        if lat_dist >= 2.5:
             output.vehicle_mode = VehicleMode.Normal
             output.lane_mode = lane_map.left_lane(ego.lane_mode)
             output.x = ego.x
     if ego.vehicle_mode == VehicleMode.SwitchRight:
-        if lane_map.get_lateral_distance(ego.lane_mode, [ego.x, ego.y]) <= -2.5:
+        if lat_dist <= -2.5:
             output.vehicle_mode = VehicleMode.Normal
             output.lane_mode = lane_map.right_lane(ego.lane_mode)
-            output.x = ego.x
-
+    def abs_diff(a, b):
+        if a < b:
+            r = b - a
+        else:
+            r = a - b
+        return r
+    assert all(abs_diff(ego.x, o.x) > 5 for o in others)
     return output
 

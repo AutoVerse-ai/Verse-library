@@ -12,7 +12,7 @@ from dryvr_plus_plus.scene_verifier.code_parser.parser import ControllerIR, Stat
 class NPCAgent(BaseAgent):
     def __init__(self, id):
         self.id = id
-        self.controller:ControllerIR = ControllerIR.EmptyControllerIR()
+        self.controller = ControllerIR.empty()
 
     @staticmethod
     def dynamic(t, state, u):
@@ -92,6 +92,7 @@ class CarAgent(BaseAgent):
             a = 0
         else:
             raise ValueError(f'Invalid mode: {vehicle_mode}')
+
         psi = lane_map.get_lane_heading(vehicle_lane, vehicle_pos)-theta
         steering = psi + np.arctan2(0.45*d, v)
         steering = np.clip(steering, -0.61, 0.61)

@@ -92,7 +92,7 @@ if __name__ == "__main__":
     scenario.set_init(
         [
             [[0, -0.2, 0, 1.0],[0.2, 0.2, 0, 1.0]],
-            [[10, 0, 0, 0.5],[10, 0, 0, 0.5]], 
+            [[9.8, -0.2, 0, 0.5],[10.2, 0.2, 0, 0.5]], 
             [[20, 0, 0, 0],[20, 0, 0, 0]],
         ],
         [
@@ -102,12 +102,12 @@ if __name__ == "__main__":
         ]
     )
     # simulator = Simulator()
-    traces = scenario.simulate(40)
-    # traces = scenario.verify(40)
+    # traces = scenario.simulate(40)
+    traces = scenario.verify(40, 0.5)
 
     fig = plt.figure()
-    fig = plot_simulation_tree(traces, 'car1', 1, [2], 'b', fig)
-    fig = plot_simulation_tree(traces, 'car2', 1, [2], 'r', fig)
+    fig = plot_reachtube_tree(traces, 'car1', 1, [2], '#0000ff04', fig)
+    fig = plot_reachtube_tree(traces, 'car2', 1, [2], '#ff000004', fig)
 
     plt.show()
 

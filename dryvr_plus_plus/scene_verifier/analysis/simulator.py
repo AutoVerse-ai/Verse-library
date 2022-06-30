@@ -50,7 +50,9 @@ class Simulator:
                     trace[:,0] += node.start_time
                     node.trace[agent_id] = trace.tolist()
 
-            transitions, transition_idx = transition_graph.get_transition_simulate_new(node)
+            assert_hits, transitions, transition_idx = transition_graph.get_transition_simulate_new(node)
+
+            node.assert_hits = {a: hs[:transition_idx + 1] for a, hs in assert_hits.items()}
 
             # If there's no transitions (returned transitions is empty), continue
             if not transitions:
