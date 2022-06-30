@@ -234,7 +234,7 @@ class Scenario:
                     for j, reset_idx in enumerate(pos):
                         reset_variable = list(all_resets.keys())[j]
                         reset_expr:ResetExpression = all_resets[reset_variable][reset_idx]
-                        res = eval_expr(reset_expr.expr , packed_env)
+                        res = eval_expr(reset_expr.val_ast , packed_env)
                         # print(ControllerIR.dump(reset_expr.expr), res)
                         if "mode" in reset_variable:
                             var_loc = agent.controller.state_defs[ego_ty_name].disc.index(reset_variable)
