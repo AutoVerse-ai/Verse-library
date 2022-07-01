@@ -1,4 +1,3 @@
-from dryvr_plus_plus.scene_verifier.code_parser.pythonparser import ControllerAst
 from dryvr_plus_plus.scene_verifier.code_parser.parser import ControllerIR, Env
 
 

@@ -1,5 +1,4 @@
-from multiprocessing.sharedctypes import Value
-from typing import DefaultDict, Tuple, List, Dict, Any
+from typing import DefaultDict, Optional, Tuple, List, Dict, Any
 import copy
 import itertools
 import warnings
@@ -12,7 +11,6 @@ from dryvr_plus_plus.scene_verifier.agents.base_agent import BaseAgent
 from dryvr_plus_plus.scene_verifier.automaton.guard import GuardExpressionAst
 from dryvr_plus_plus.scene_verifier.automaton.reset import ResetExpression
 from dryvr_plus_plus.scene_verifier.code_parser.parser import ControllerIR, unparse
-from dryvr_plus_plus.scene_verifier.code_parser.pythonparser import Guard, Reset
 from dryvr_plus_plus.scene_verifier.analysis.simulator import Simulator
 from dryvr_plus_plus.scene_verifier.analysis.verifier import Verifier
 from dryvr_plus_plus.scene_verifier.map.lane_map import LaneMap
@@ -215,7 +213,7 @@ class Scenario:
     #         unrolled_variable, unrolled_variable_index = updater[variable]
     #         disc_var_dict[unrolled_variable] = disc_var_dict[variable][unrolled_variable_index]
 
-    def get_transition_simulate_new(self, node:AnalysisTreeNode) -> Tuple[Dict[str, List[Tuple[float]]], float]:
+    def get_transition_simulate_new(self, node: AnalysisTreeNode) -> Tuple[Optional[Dict[str, List[str]]], Dict[str, List[Tuple[float]]], float]:
         lane_map = self.map
         trace_length = len(list(node.trace.values())[0])
 
@@ -277,7 +275,6 @@ class Scenario:
                     packed.update(env)
                     return packed
                 packed_env = pack_env(agent, continuous_variable_dict, orig_disc_vars, self.map)
-                # assert agent.controller.controller.asserts
                 def eval_expr(expr, env):
                     return eval(compile(ast.fix_missing_locations(ast.Expression(expr)), "", "eval"), env)
                 
@@ -286,7 +283,6 @@ class Scenario:
                     pre_sat = all(eval_expr(p, packed_env) for p in a.pre)
                     if pre_sat:
                         cond_sat = eval_expr(a.cond, packed_env)
-                        # print(a.cond, cond_sat)
                         if not cond_sat:
                             label = a.label if a.label != None else f"<assert {i}>"
                             del packed_env["__builtins__"]
@@ -298,10 +294,8 @@ class Scenario:
                 all_resets = defaultdict(list)
                 for guard_expression, continuous_variable_updater, discrete_variable_dict, reset in agent_guard_dict[agent_id]:
                     new_cont_var_dict = copy.deepcopy(continuous_variable_dict)
-                    # new_disc_var_dict = copy.deepcopy(discrete_variable_dict)
-                    one_step_guard = copy.deepcopy(guard_expression).ast_list
+                    one_step_guard = guard_expression.ast_list
                     self.apply_cont_var_updater(new_cont_var_dict, continuous_variable_updater)
-                    # self.apply_disc_var_updater(new_disc_var_dict, discrete_variable_updater)
                     env = pack_env(agent, new_cont_var_dict, discrete_variable_dict, self.map)
                     if len(one_step_guard) == 0:
                         raise ValueError("empty guard")
@@ -332,24 +326,21 @@ class Scenario:
                         reset_variable = list(all_resets.keys())[j]
                         reset_expr:ResetExpression = all_resets[reset_variable][reset_idx]
                         res = eval_expr(reset_expr.val_ast , packed_env)
-                        # print(ControllerIR.dump(reset_expr.expr), res)
+                        ego_type = agent.controller.state_defs[ego_ty_name]
                         if "mode" in reset_variable:
-                            var_loc = agent.controller.state_defs[ego_ty_name].disc.index(reset_variable)
+                            var_loc = ego_type.disc.index(reset_variable)
                             if not isinstance(res, list):
                                 res = [res]
                             possible_dest[var_loc] = res
                         else:
-                            var_loc = agent.controller.state_defs[ego_ty_name].cont.index(reset_variable)
+                            var_loc = ego_type.cont.index(reset_variable)
                             next_init[var_loc] = res
                     all_dest = list(itertools.product(*possible_dest))
                     if not all_dest:
                         warnings.warn(f"Guard hit for mode {agent_mode} for agent {agent_id} without available next mode")
                         all_dest.append(None)
                     for dest in all_dest:
-                        next_transition = (
-                            agent_id, agent_mode, dest, next_init, 
-                        )
-                        satisfied_guard.append(next_transition)
+                        satisfied_guard.append((agent_id, agent_mode, dest, next_init))
             if len(asserts) > 0:
                 return asserts, transitions, idx
             if len(satisfied_guard) > 0:
