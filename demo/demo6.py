@@ -86,7 +86,7 @@ if __name__ == "__main__":
         ]
     )
     # traces = scenario.simulate(80, 0.05)
-    traces = scenario.simulate(50, 1)
+    traces = scenario.simulate(50, 0.1)
 
     # fig = plt.figure(2)
     # fig = plot_map(tmp_map, 'g', fig)
@@ -100,5 +100,5 @@ if __name__ == "__main__":
 
     fig = go.Figure()
     fig = simulation_anime(traces, tmp_map, fig, 1,
-                           2, 'lines', print_dim_list=[1, 2])
+                           2, 'lines', 'trace', print_dim_list=[1, 2])
     fig.show()

@@ -208,7 +208,7 @@ def trimTraces(traces):
     for trace in traces:
         trace_lengths.append(len(trace))
     trace_len = min(trace_lengths)
-    print(trace_lengths)
+    # print(trace_lengths)
     for trace in traces:
         ret_traces.append(trace[:trace_len])
 

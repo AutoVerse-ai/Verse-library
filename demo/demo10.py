@@ -78,10 +78,7 @@ if __name__ == "__main__":
     # plt.show()
 
     traces = scenario.simulate(25, 0.05)
-    # fig = go.Figure()
-    # fig = plotly_simulation_tree(traces, 'car1', 1, [2], 'b', fig)
-    # fig.show()
     fig = go.Figure()
     fig = simulation_anime(
-        traces, tmp_map, fig, 1, 2, 'fill', print_dim_list=[1, 2])
+        traces, tmp_map, fig, 1, 2, 'detailed', 'trace', print_dim_list=[1, 2])
     fig.show()

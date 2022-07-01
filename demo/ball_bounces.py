@@ -100,5 +100,5 @@ if __name__ == "__main__":
     # TODO: There should be a print({traces}) function
     fig = go.Figure()
     fig = simulation_anime_trail(
-        traces, tmp_map, fig, 1, 2, 'fill', print_dim_list=[1, 2])
+        traces, tmp_map, fig, 1, 2, 'fill', 'trace', print_dim_list=[1, 2])
     fig.show()

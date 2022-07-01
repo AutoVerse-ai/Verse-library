@@ -1,12 +1,43 @@
 # Plotly-based Plotter Development Notes
 
-Now the latest version is placed in plotter2D_new.py. All functions in the plotter2D.py still work. Every function are in developemnt and might change.
+Now the latest version of the plotter is placed in plotter2D_new.py. Every function is in developement and might change.
+All functions in the plotter2D.py still work but will not be maintained. 
+## Current work 
+**Almost finish this week's plan!!!**
 
-## Current work & Todo
-- **Animation with trails** supported in simulation_anime_trail() and will be tested further.
-- **Modified accelerating mode** modified, will be tested
-- **new quadrotor agent** next
-- **different color for segments of trace** done.
+## Todo
+**Some suggestions from Sayan for improving the usability of the plotter.**
+- 1. Give some buttons like 1x 2x 5x to allow the speed-up of the playback time
+- 2. Give a button / menu to choose the rendering between lines and trails
+  
+**Beyond the plotter**
+- 1. Try examples from original DryVR and migrate some of them into our DryVR++.
+- 2. **Explore new quadcopter agent.**
+
+## Quick start
+### Five high-level plotting functions
+- **simulation_anime_trail** gives the animation of the simulation with trail.
+- **simulation_anime** gives the animation of the simulation without trail but is faster.
+- **simulation_tree** statically shows all the traces of the simulation.
+- **reachtube_anime** gives the animation of the verfication.
+- **reachtube_tree** statically shows all the traces of the verfication.
+### API
+These 5 functions share the same API.
+- **root:** the root node of the trace, should be the return value of Scenario.verify() or Scenario.simulate().
+- **map:** the map of the scenario, templates are in dryvr_plus_plus.example.example_map.simple_map2.py.
+- **fig:** the object of the figure, its type should be plotly.graph_objects.Figure().
+- **x_dim:** the dimension of x coordinate in the trace list of every time step. The default value is **1**.
+- **y_dim:** the dimension of y coordinate in the trace list of every time step. The default value is **2**.
+- **map_type** the way to draw the map. It should be **'lines'** or **'fill'** or **'detailed'**. The default value is **'lines'**.
+  - For the **'lines'** mode, map is only drawn by margins of lanes. 
+  - For the **'fill'** mode, the lanes will be filled with semitransparent colors. 
+  - For the **'detailed'** mode, the lanes will be filled some colors according to the speed limits of lanes(if the information is given). Otherwise, it is the same as the 'lines' mode.
+- **scale_type** the way to scale the coordinate axises. It should be **'trace'** or **'map'**. The default value is **'trace'**. 
+  -  For the **'trace'** mode, the traces will be in the center of the plot with an appropriate scale. 
+  - For the **'map'** mode, the map will be in the center of the plot with an appropriate scale. 
+- **print_dim_list** the list containing the dimensions of data which will be shown directly or indirectly when the mouse hovers on the point. The default value is **None**. And then all dimensions will be shown.
+
+# Ignore below for now. Update is needed.
 
 ## Functions
 Belows are the functions currently used. Some of the functions in the file are deprecated.

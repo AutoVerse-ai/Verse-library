@@ -73,5 +73,5 @@ if __name__ == "__main__":
 
     fig = go.Figure()
     fig = simulation_anime_trail(traces, tmp_map, fig, 1,
-                                 2, 'lines', print_dim_list=[1, 2])
+                                 2, 'lines', 'trace', print_dim_list=[1, 2])
     fig.show()
