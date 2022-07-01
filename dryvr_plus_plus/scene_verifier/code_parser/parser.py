@@ -165,12 +165,19 @@ class Lambda:
         args = []
         for a in tree.args.args:
             if a.annotation != None:
-                if isinstance(a.annotation, ast.Constant):
-                    typ = a.annotation.value
-                elif isinstance(a.annotation, ast.Name):
-                    typ = a.annotation.id
+                def handle_simple_ann(a):
+                    if isinstance(a, ast.Constant):
+                        return a.value
+                    elif isinstance(a, ast.Name):
+                        return a.id
+                    else:
+                        raise TypeError("weird annotation?")
+                if isinstance(a.annotation, ast.Subscript) \
+                    and isinstance(a.annotation.value, ast.Name) \
+                        and a.annotation.value.id == 'List':
+                    typ = handle_simple_ann(a.annotation.slice)
                 else:
-                    raise TypeError("weird annotation?")
+                    typ = handle_simple_ann(a.annotation)
                 args.append((a.arg, typ))
             else:
                 args.append((a.arg, None))
