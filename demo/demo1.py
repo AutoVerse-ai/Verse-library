@@ -34,7 +34,7 @@ class State:
 
 
 if __name__ == "__main__":
-    input_code_name = 'example_controller1.py'
+    input_code_name = './example_controller1.py'
     scenario = Scenario()
 
     car = NPCAgent('car1')

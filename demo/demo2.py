@@ -54,8 +54,8 @@ if __name__ == "__main__":
             (VehicleMode.Normal, LaneMode.Lane1),
         ]
     )
-    # res_list = scenario.simulate(40)
-    traces = scenario.verify(40)
+    # res_list = scenario.simulate(40, 0.05)
+    traces = scenario.verify(40, 0.05)
 
     fig = plt.figure(2)
     fig = plot_map(tmp_map, 'g', fig)

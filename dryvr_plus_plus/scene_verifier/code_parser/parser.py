@@ -352,7 +352,7 @@ class Env():
         self.scopes[0].v[key] = val
 
     def add_hole(self, name: str, typ: Optional[str]):
-        self.set(name, ast.arg(name, ast.Constant(typ)))
+        self.set(name, ast.arg(name, ast.Constant(typ, None)))
 
     def add_assert(self, expr, label):
         self.scopes[0].asserts.append(Assert(expr, label))
@@ -387,7 +387,7 @@ class Env():
             else:
                 ret = find(cv.elems, lambda case: len(case.cond) == 0)
                 if ret == None:
-                    ret = ast.Constant(None)
+                    ret = ast.Constant(None, None)
                 for case in reversed(copy.deepcopy(cv).elems):
                     if len(case.cond) == 0:
                         ret = case.val
@@ -621,7 +621,7 @@ def proc(node: ast.AST, env: Env, veri: bool) -> Any:
         # TODO since we know what the mode and state types contain we can do some typo checking
         if not_ir_ast(obj):
             if obj.arg in env.mode_defs:
-                return ast.Constant(node.attr)
+                return ast.Constant(node.attr, kind=None)
             attr = ast.Attribute(obj, node.attr, ctx=ast.Load())
             dbg("ret attr", ControllerIR.dump(attr, True))
             return attr

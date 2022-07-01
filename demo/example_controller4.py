@@ -47,6 +47,7 @@ def controller(ego:State, others:State, lane_map):
         if lat_dist >= 2.5:
             output.vehicle_mode = VehicleMode.Normal
             output.lane_mode = lane_map.left_lane(ego.lane_mode)
+            output.x = ego.x
     if ego.vehicle_mode == VehicleMode.SwitchRight:
         if lat_dist <= -2.5:
             output.vehicle_mode = VehicleMode.Normal
