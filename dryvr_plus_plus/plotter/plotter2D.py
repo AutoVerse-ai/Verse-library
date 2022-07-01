@@ -519,18 +519,17 @@ def plotly_simulation_anime(root, map=None, fig=None):
         traces = node.trace
         for agent_id in traces:
             trace = np.array(traces[agent_id])
-            trace_y = trace[:, 2].tolist()
-            trace_x = trace[:, 1].tolist()
-            color = color_map[agent_id]
-            texts = [(round(trace[i, 3]/pi*180, 2), round(trace[i, 4], 2))
-                     for i in range(len(trace_y))]
-            def assert_hit(a, i):
-                return len(node.assert_hits[a][i]) > 0 if a in node.assert_hits else False
-            marker = Marker(color=["black" if assert_hit(agent_id, i) else color
-                                   for i in range(len(trace_y))],
-                            size=3)
+            texts = [(round(trace[i, 3]/pi*180, 2), round(trace[i, 4], 2)) for i in range(len(trace))]
+            mark_colors = ["green" for _ in trace]
+            mark_sizes = [0 for _ in trace]
+            if node.assert_hits != None and agent_id in node.assert_hits:
+                mark_colors[-1] = "black"
+                mark_sizes[-1] = 10
+                texts[-1] = "BOOM!!!\nAssertions hit:\n" + "\n".join("  " + a for a in node.assert_hits[agent_id])
+            marker = Marker(color=mark_colors, size=mark_sizes)
             fig.add_trace(go.Scatter(x=trace[:, 1], y=trace[:, 2],
-                                     mode='markers',
+                                     mode='lines+markers',
+                                     line_color=color_map[agent_id],
                                      marker=marker,
                                      showlegend=False,
                                      text=texts)

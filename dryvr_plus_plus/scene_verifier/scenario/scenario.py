@@ -7,6 +7,7 @@ import ast
 
 import numpy as np
 from sympy import Q
+from dryvr_plus_plus.scene_verifier import agents
 
 from dryvr_plus_plus.scene_verifier.agents.base_agent import BaseAgent
 from dryvr_plus_plus.scene_verifier.automaton.guard import GuardExpressionAst
@@ -151,11 +152,11 @@ class Scenario:
                 continuous_variable_updater = guard_expression.parse_any_all_new(cont_var_dict_template, discrete_variable_dict, len_dict)
                 agent_guard_dict[agent_id].append((guard_expression, continuous_variable_updater, copy.deepcopy(discrete_variable_dict), reset))
 
-        transitions = {}
-        assert_hits = defaultdict(list)
+        transitions = defaultdict(list)
         # TODO: We can probably rewrite how guard hit are detected and resets are handled for simulation
         for idx in range(trace_length):
             satisfied_guard = []
+            asserts = defaultdict(list)
             for agent_id in agent_guard_dict:
                 agent:BaseAgent = self.agent_dict[agent_id]
                 state_dict = {}
@@ -185,7 +186,6 @@ class Scenario:
                     packed.update(env)
                     return packed
                 packed_env = pack_env(agent, continuous_variable_dict, orig_disc_vars, self.map)
-                assert_labels = []
                 # assert agent.controller.controller.asserts
                 def eval_expr(expr, env):
                     return eval(compile(ast.fix_missing_locations(ast.Expression(expr)), "", "eval"), env)
@@ -195,8 +195,12 @@ class Scenario:
                         cond_sat = eval_expr(a.cond, packed_env)
                         # print(a.cond, cond_sat)
                         if not cond_sat:
-                            assert_labels.append(a.label if a.label != None else f"_assert{i}")
-                assert_hits[agent_id].append(assert_labels)
+                            label = a.label if a.label != None else f"<assert {i}>"
+                            del packed_env["__builtins__"]
+                            print(f"assert hit for {agent_id}: \"{label}\" @ {packed_env}")
+                            asserts[agent_id].append(label)
+                if agent_id in asserts:
+                    continue
 
                 all_resets = defaultdict(list)
                 for guard_expression, continuous_variable_updater, discrete_variable_dict, reset in agent_guard_dict[agent_id]:
@@ -253,14 +257,13 @@ class Scenario:
                             agent_id, agent_mode, dest, next_init, 
                         )
                         satisfied_guard.append(next_transition)
-            if satisfied_guard != []:
+            if len(asserts) > 0:
+                return asserts, transitions, idx
+            if len(satisfied_guard) > 0:
                 for agent_idx, src_mode, dest_mode, next_init in satisfied_guard:
-                    if agent_idx not in transitions:
-                        transitions[agent_idx] = [(agent_idx, src_mode, dest_mode, next_init, idx)]
-                    else:
-                        transitions[agent_idx].append((agent_idx, src_mode, dest_mode, next_init, idx))
+                    transitions[agent_idx].append((agent_idx, src_mode, dest_mode, next_init, idx))
                 break
-        return assert_hits, transitions, idx
+        return None, transitions, idx
 
     def get_transition_verify_new(self, node:AnalysisTreeNode):
         lane_map = self.map 
