@@ -922,14 +922,12 @@ class GuardExpressionAst:
         cont_var_updater = {}
         for i in range(len(self.ast_list)):
             root = self.ast_list[i]
-            j = 0
-            while j < sum(1 for _ in ast.walk(root)):
+            nodes = ast.walk(root)
+            for node in nodes:
                 # TODO: Find a faster way to access nodes in the tree
-                node = list(ast.walk(root))[j]
                 if isinstance(node, Reduction):
                     new_node = self.unroll_any_all_new(node, cont_var_dict, disc_var_dict, len_dict, cont_var_updater)
                     root = NodeSubstituter(node, new_node).visit(root)
-                j += 1
             self.ast_list[i] = root 
         return cont_var_updater
 

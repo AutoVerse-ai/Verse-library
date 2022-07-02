@@ -21,6 +21,17 @@ from dryvr_plus_plus.scene_verifier.map.lane_map import LaneMap
 
 EGO, OTHERS = "ego", "others"
 
+def merge_conds(c):
+    if len(c) == 0:
+        return ast.Constant(True)
+    if len(c) == 1:
+        return c[0]
+    else:
+        return ast.BoolOp(ast.And(), c)
+
+def compile_expr(e):
+    return compile(ast.fix_missing_locations(ast.Expression(e)), "", "eval")
+
 class Scenario:
     def __init__(self):
         self.agent_dict = {}
@@ -219,6 +230,7 @@ class Scenario:
 
         # For each agent
         agent_guard_dict = defaultdict(list)
+        compiled_asserts = {}
 
         for agent_id in node.agent:
             # Get guard
@@ -226,6 +238,12 @@ class Scenario:
             agent_mode = node.mode[agent_id]
             if agent.controller.controller == None:
                 continue
+            def compile_assert(i, a):
+                p = compile_expr(merge_conds(a.pre))
+                cond = compile_expr(a.cond)
+                label = a.label if a.label != None else f"<assert {i}>"
+                return p, cond, label
+            compiled_asserts[agent_id] = [compile_assert(i, a) for i, a in enumerate(agent.controller.controller.asserts)]
             # TODO-PARSER: update how we get all next modes
             # The getNextModes function will return 
             state_dict = {}
@@ -239,7 +257,8 @@ class Scenario:
                 # copy.deepcopy(guard_expression.ast_list[0].operand)
                 # can_satisfy = guard_expression.fast_pre_process(discrete_variable_dict)
                 continuous_variable_updater = guard_expression.parse_any_all_new(cont_var_dict_template, discrete_variable_dict, len_dict)
-                agent_guard_dict[agent_id].append((guard_expression, continuous_variable_updater, copy.deepcopy(discrete_variable_dict), reset))
+                guard_comp = compile_expr(merge_conds(guard_expression.ast_list))
+                agent_guard_dict[agent_id].append((guard_comp, continuous_variable_updater, discrete_variable_dict, reset))
 
         transitions = defaultdict(list)
         # TODO: We can probably rewrite how guard hit are detected and resets are handled for simulation
@@ -286,12 +305,10 @@ class Scenario:
                     return eval(compile(ast.fix_missing_locations(ast.Expression(expr)), "", "eval"), env)
                 
                 # Check safety conditions
-                for i, a in enumerate(agent.controller.controller.asserts):
-                    pre_sat = all(eval_expr(p, packed_env) for p in a.pre)
-                    if pre_sat:
-                        cond_sat = eval_expr(a.cond, packed_env)
-                        if not cond_sat:
-                            label = a.label if a.label != None else f"<assert {i}>"
+                for pre, cond, label in compiled_asserts[agent_id]:
+                    if eval(pre, packed_env):
+                        del packed_env["__builtins__"]
+                        if not eval(cond, packed_env):
                             del packed_env["__builtins__"]
                             print(f"assert hit for {agent_id}: \"{label}\" @ {packed_env}")
                             asserts[agent_id].append(label)
@@ -299,18 +316,11 @@ class Scenario:
                     continue
 
                 all_resets = defaultdict(list)
-                for guard_expression, continuous_variable_updater, discrete_variable_dict, reset in agent_guard_dict[agent_id]:
+                for guard_comp, continuous_variable_updater, discrete_variable_dict, reset in agent_guard_dict[agent_id]:
                     new_cont_var_dict = copy.deepcopy(continuous_variable_dict)
-                    one_step_guard = guard_expression.ast_list
                     self.apply_cont_var_updater(new_cont_var_dict, continuous_variable_updater)
                     env = pack_env(agent, new_cont_var_dict, discrete_variable_dict, self.map)
-                    if len(one_step_guard) == 0:
-                        raise ValueError("empty guard")
-                    if len(one_step_guard) == 1:
-                        one_step_guard = one_step_guard[0]
-                    elif len(one_step_guard) > 1:
-                        one_step_guard = ast.BoolOp(ast.And(), one_step_guard)
-                    guard_satisfied = eval_expr(one_step_guard, env)
+                    guard_satisfied = eval(guard_comp, env)
 
                     # Collect all the hit guards for this agent at this time step
                     if guard_satisfied:
