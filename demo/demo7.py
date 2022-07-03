@@ -92,7 +92,7 @@ if __name__ == "__main__":
             (VehicleMode.Normal, LaneMode.Lane3),
         ]
     )
-    traces = scenario.simulate(80, 4)
+    traces = scenario.simulate(20, 1)
     # traces = scenario.verify(15, 0.05)
 
     # fig = plt.figure(2)
@@ -107,10 +107,10 @@ if __name__ == "__main__":
     # fig = plot_reachtube_tree(traces, 'car8', 1, [2], 'g', fig)
     # plt.show()
 
-    fig = go.Figure()
-    fig = simulation_anime(traces, tmp_map, fig, 1,
-                           2, 'lines', 'trace', print_dim_list=[1, 2])
-    fig.show()
+    # fig = go.Figure()
+    # fig = simulation_anime(traces, tmp_map, fig, 1,
+    #                        2, 'lines', 'trace', print_dim_list=[1, 2])
+    # fig.show()
     fig = go.Figure()
     fig = simulation_tree(traces, tmp_map, fig, 1,
                           2, 'lines', 'trace', print_dim_list=[1, 2])
