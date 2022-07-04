@@ -10,20 +10,17 @@ import numpy as np
 from scipy.integrate import ode
 from enum import Enum, auto
 
-from dryvr_plus_plus.scene_verifier.agents.base_agent import BaseAgent
+from demo.F16.aerobench.run_f16_sim import F16Agent
 from dryvr_plus_plus.scene_verifier.map.lane_map import LaneMap
 from dryvr_plus_plus.scene_verifier.code_parser.pythonparser import EmptyAst
+from dryvr_plus_plus.scene_verifier.scenario.scenario import Scenario
 
 
 import math
-
 from numpy import deg2rad
 import matplotlib.pyplot as plt
-
 from aerobench.run_f16_sim import run_f16_sim
-
 from aerobench.visualize import plot
-
 from waypoint_autopilot import WaypointAutopilot
 
 
@@ -76,13 +73,18 @@ def main():
     ''' The main function defines and simulates a scene.
         Defining and using a  scenario involves the following 5 easy steps:
         1. creating a basic scenario object with Scenario()
-        2. defining the agents that will populate the object, here we have two ball agents
+        2. defining the agents that will populate the object. Here a single F16 agent.
         3. adding the agents to the scenario using .add_agent()
         4. initializing the agents for this scenario.
             Note that agents are only initialized *in* a scenario, not individually outside a scenario
         5. genetating the simulation traces or computing the reachable states
     '''
     F16waypointScene = Scenario()
+    F16Controller = './F16_waypoint_scene.py'
+
+    # Resume here. This next line is the problem
+    # Fighter1 = F16Agent('Fighter1', file_name=F16Controller)
+
     ### Initial Conditions ###
     power = 9 # engine power level (0-10)
 
