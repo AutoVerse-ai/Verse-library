@@ -1,5 +1,5 @@
 '''
-Sayan Mitra
+F16 scenario Sayan Mitra
 Derived from Stanley Bak's version
 '''
 
@@ -26,8 +26,8 @@ from waypoint_autopilot import WaypointAutopilot
 
 class F16Mode(Enum):
     '''Defines the discrete modes of a single agent'''
-    Normal = auto()
-    # TODO: The one mode of this automation is called "Normal" and auto assigns it an integer value.
+    NORMAL = auto()
+    # TODO: The one mode of this automation is called "NORMAL" and auto assigns it an integer value.
 
 
 class State:
@@ -50,16 +50,16 @@ class State:
     theta = 0  # Pitch angle from nose level (rad)
     psi = math.pi / 8  # Yaw angle from North (rad)
 
-    P = 0
-    Q = 0
-    R = 0
+    p = 0
+    q = 0
+    r = 0
     pn = 0
     pe = 0
 
     # Build Initial Condition Vectors
     # state = [vt, alpha, beta, phi, theta, psi, P, Q, R, pn, pe, h, pow]
     init = [vt, alpha, beta, phi, theta, psi, 0, 0, 0, 0, 0, alt, power]
-    def __init__(self, vt, alpha, beta, phi, theta, psi, P, Q, R, pn, pe, alt, power, mode:F16Mode):
+    def __init__(self, vt, alpha, beta, phi, theta, psi, p, q, r, pn, pe, alt, power, mode:F16Mode):
         pass
 
 def controller(ego:State, others:State):
@@ -100,7 +100,7 @@ def main():
     psi = math.pi/8   # Yaw angle from North (rad)
 
     # Build Initial Condition Vectors
-    # state = [vt, alpha, beta, phi, theta, psi, P, Q, R, pn, pe, h, pow]
+    # state = [vt, alpha, beta, phi, theta, psi, p, q, r, pn, pe, h, pow]
     init = [vt, alpha, beta, phi, theta, psi, 0, 0, 0, 0, 0, alt, power]
     tmax = 70 # simulation time
 
