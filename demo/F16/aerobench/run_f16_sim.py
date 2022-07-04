@@ -20,7 +20,7 @@ class F16Agent(BaseAgent):
     '''Dynamics of an F16 aircraft
     derived from Stanley Bak's python library'''
     def __init__(self, id, code = None, file_name = None):
-        '''Contructor for tha agent
+        '''Contructor for one F16 agent
             EXACTLY one of the following should be given
             file_name: name of the controller
             code: pyhton string ddefning the controller
