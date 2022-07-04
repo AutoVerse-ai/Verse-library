@@ -5,7 +5,7 @@ from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap2, SimpleMa
 from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor3
 from enum import Enum, auto
 import plotly.graph_objects as go
-from dryvr_plus_plus.plotter.plotter2D_new import *
+from dryvr_plus_plus.plotter.plotter2D import *
 
 
 class LaneObjectMode(Enum):

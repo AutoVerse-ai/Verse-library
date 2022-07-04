@@ -10,7 +10,6 @@ from dryvr_plus_plus.scene_verifier.sensor.base_sensor import BaseSensor
 
 from enum import Enum, auto
 import plotly.graph_objects as go
-from dryvr_plus_plus.plotter.plotter2D_new import *
 
 
 class LaneObjectMode(Enum):
