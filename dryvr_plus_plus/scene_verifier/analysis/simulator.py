@@ -8,6 +8,7 @@ pp = functools.partial(pprint.pprint, compact=True, width=100)
 from dryvr_plus_plus.scene_verifier.agents.base_agent import BaseAgent
 from dryvr_plus_plus.scene_verifier.analysis.analysis_tree_node import AnalysisTreeNode
 
+
 class Simulator:
     def __init__(self):
         self.simulation_tree_root = None
@@ -21,7 +22,7 @@ class Simulator:
             static={},
             agent={},
             child=[],
-            start_time = 0,
+            start_time=0,
         )
         for i, agent in enumerate(agent_list):
             root.init[agent.id] = init_list[i]
@@ -45,10 +46,12 @@ class Simulator:
             for agent_id in node.agent:
                 if agent_id not in node.trace:
                     # Simulate the trace starting from initial condition
+                    # [time, x, y, theta, v]
                     mode = node.mode[agent_id]
                     init = node.init[agent_id]
-                    trace = node.agent[agent_id].TC_simulate(mode, init, remain_time, time_step, lane_map)
-                    trace[:,0] += node.start_time
+                    trace = node.agent[agent_id].TC_simulate(
+                        mode, init, remain_time, time_step, lane_map)
+                    trace[:, 0] += node.start_time
                     node.trace[agent_id] = trace.tolist()
 
             asserts, transitions, transition_idx = transition_graph.get_transition_simulate_new(node)

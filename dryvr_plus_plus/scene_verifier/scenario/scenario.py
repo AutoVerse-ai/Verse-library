@@ -36,14 +36,14 @@ class Scenario:
     def set_sensor(self, sensor):
         self.sensor = sensor
 
-    def set_map(self, lane_map:LaneMap):
+    def set_map(self, lane_map: LaneMap):
         self.map = lane_map
         # Update the lane mode field in the agent
         for agent_id in self.agent_dict:
             agent = self.agent_dict[agent_id]
             self.update_agent_lane_mode(agent, lane_map)
 
-    def add_agent(self, agent:BaseAgent):
+    def add_agent(self, agent: BaseAgent):
         if self.map is not None:
             # Update the lane mode field in the agent
             self.update_agent_lane_mode(agent, self.map)
@@ -76,7 +76,7 @@ class Scenario:
             trace = self.simulate(time_horizon)
             res_list.append(trace)
         return res_list
-    
+
     def simulate(self, time_horizon, time_step):
         init_list = []
         init_mode_list = []
@@ -437,7 +437,8 @@ class Scenario:
                     reset_dict[agent_id] = {}
                     reset_idx_dict[agent_id] = {}
                 if not dest_list:
-                    warnings.warn(f"Guard hit for mode {node.mode[agent_id]} for agent {agent_id} without available next mode")
+                    warnings.warn(
+                        f"Guard hit for mode {node.mode[agent_id]} for agent {agent_id} without available next mode")
                     dest_list.append(None)
                 for dest in dest_list:
                     if dest not in reset_dict[agent_id]:
@@ -445,22 +446,25 @@ class Scenario:
                         reset_idx_dict[agent_id][dest] = []
                     reset_dict[agent_id][dest].append(reset_rect)
                     reset_idx_dict[agent_id][dest].append(hit_idx)
-            
+
         # Combine reset rects and construct transitions
         for agent in reset_dict:
             for dest in reset_dict[agent]:
-                combined_rect = None 
+                combined_rect = None
                 for rect in reset_dict[agent][dest]:
                     rect = np.array(rect)
                     if combined_rect is None:
-                        combined_rect = rect 
+                        combined_rect = rect
                     else:
-                        combined_rect[0,:] = np.minimum(combined_rect[0,:], rect[0,:])
-                        combined_rect[1,:] = np.maximum(combined_rect[1,:], rect[1,:])
+                        combined_rect[0, :] = np.minimum(
+                            combined_rect[0, :], rect[0, :])
+                        combined_rect[1, :] = np.maximum(
+                            combined_rect[1, :], rect[1, :])
                 combined_rect = combined_rect.tolist()
                 min_idx = min(reset_idx_dict[agent][dest])
                 max_idx = max(reset_idx_dict[agent][dest])
-                transition = (agent, node.mode[agent], dest, combined_rect, (min_idx, max_idx))
+                transition = (
+                    agent, node.mode[agent], dest, combined_rect, (min_idx, max_idx))
                 possible_transitions.append(transition)
         # Return result
         return possible_transitions

@@ -138,7 +138,7 @@ class Lambda:
                     elif isinstance(a, ast.Name):
                         return a.id
                     else:
-                        raise TypeError("weird annotation?")
+                        raise TypeError(f"weird annotation? {a}")
                 if isinstance(a.annotation, ast.Subscript) \
                     and isinstance(a.annotation.value, ast.Name) \
                         and a.annotation.value.id == 'List':
