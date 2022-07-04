@@ -65,10 +65,24 @@ class State:
     def __init__(self, vt, alpha, beta, phi, theta, psi, P, Q, R, pn, pe, alt, power, mode:F16Mode):
         pass
 
+def controller(ego:State, others:State):
+    '''Computes the possible mode transitions
+        For now this is an empty controller function.
+        Coming soon. Waypoint transitions. Platooning.'''
+    output = copy.deepcopy(ego)
+    return output
 
 def main():
-    'main function'
-
+    ''' The main function defines and simulates a scene.
+        Defining and using a  scenario involves the following 5 easy steps:
+        1. creating a basic scenario object with Scenario()
+        2. defining the agents that will populate the object, here we have two ball agents
+        3. adding the agents to the scenario using .add_agent()
+        4. initializing the agents for this scenario.
+            Note that agents are only initialized *in* a scenario, not individually outside a scenario
+        5. genetating the simulation traces or computing the reachable states
+    '''
+    F16waypointScene = Scenario()
     ### Initial Conditions ###
     power = 9 # engine power level (0-10)
 
