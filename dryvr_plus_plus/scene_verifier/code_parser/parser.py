@@ -143,13 +143,15 @@ class Lambda:
                     and isinstance(a.annotation.value, ast.Name) \
                         and a.annotation.value.id == 'List':
                     typ = handle_simple_ann(a.annotation.slice)
+                    is_list = True
                 else:
                     typ = handle_simple_ann(a.annotation)
-                args.append((a.arg, typ))
+                    is_list = False
+                args.append((a.arg, typ, is_list))
             else:
-                args.append((a.arg, None))
+                args.append((a.arg, None, False))
         env.push()
-        for a, typ in args:
+        for a, typ, is_list in args:
             env.add_hole(a, typ)
         ret = None
         if isinstance(tree, ast.FunctionDef):
@@ -167,7 +169,7 @@ class Lambda:
 
     def apply(self, args: List[ast.expr]) -> Tuple[List[Assert], ast.expr]:
         ret = copy.deepcopy(self.body)
-        subst = ArgSubstituter({k: v for (k, _), v in zip(self.args, args)})
+        subst = ArgSubstituter({k: v for (k, _, _), v in zip(self.args, args)})
         ret = subst.visit(ret)
         def visit_assert(a: Assert):
             a = copy.deepcopy(a)

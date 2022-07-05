@@ -32,7 +32,7 @@ class State:
     def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: LaneMode, type: LaneObjectMode):
         pass
 
-def controller(ego:State, others:State, lane_map):
+def controller(ego:State, others:List[State], lane_map):
     output = copy.deepcopy(ego)
     if ego.vehicle_mode == VehicleMode.Normal:
         if any((other.x-ego.x > 3 and other.x-ego.x < 5 and ego.lane_mode == other.lane_mode) for other in others):

@@ -47,7 +47,7 @@ def car_right(ego, others, lane_map):
                  lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) >-3 and \
                  other.lane_mode==lane_map.right_lane(ego.lane_mode)) for other in others)
 
-def controller(ego:State, others:State, lane_map):
+def controller(ego:State, others:List[State], lane_map):
     output = copy.deepcopy(ego)
     if ego.vehicle_mode == VehicleMode.Normal:
         if car_front(ego, others, lane_map):

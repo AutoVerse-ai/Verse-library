@@ -33,7 +33,7 @@ class State:
     def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: LaneMode, type_mode: LaneObjectMode):
         pass
 
-def controller(ego:State, others:State, lane_map):
+def controller(ego:State, others:List[State], lane_map):
     output = copy.deepcopy(ego)
     # Detect the stop sign
     if ego.vehicle_mode == VehicleMode.Normal:

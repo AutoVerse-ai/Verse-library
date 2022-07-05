@@ -54,7 +54,7 @@ class BaseSensor():
                     controller_args = agent.controller.controller.args
                     arg_type = None
                     for arg in controller_args:
-                        if arg[0] == 'ego':
+                        if arg[0] != 'ego':
                             arg_type = arg[1]
                             break 
                     if arg_type is None:
@@ -66,8 +66,10 @@ class BaseSensor():
                 else:
                     controller_args = agent.controller.controller.args
                     arg_type = None
+                    arg_name = None
                     for arg in controller_args:
-                        if arg[0] == 'others':
+                        if arg[0] != 'ego' and 'map' not in arg[0]:
+                            arg_name = arg[0]
                             arg_type = arg[1]
                             break 
                     if arg_type is None:
@@ -75,7 +77,7 @@ class BaseSensor():
                     cont_var = agent.controller.state_defs[arg_type].cont 
                     disc_var = agent.controller.state_defs[arg_type].disc
                     stat_var = agent.controller.state_defs[arg_type].static
-                    add_states_2d(cont, disc, 'others', state_dict[agent_id], cont_var, disc_var, stat_var)
+                    add_states_2d(cont, disc, arg_name, state_dict[agent_id], cont_var, disc_var, stat_var)
 
         else:
             for agent_id in state_dict:
@@ -96,8 +98,10 @@ class BaseSensor():
                 else:
                     controller_args = agent.controller.controller.args
                     arg_type = None
+                    arg_name = None
                     for arg in controller_args:
-                        if arg[0] == 'others':
+                        if arg[0] != 'ego' and 'map' not in arg[0]:
+                            arg_name = arg[0]
                             arg_type = arg[1]
                             break 
                     if arg_type is None:
@@ -105,6 +109,6 @@ class BaseSensor():
                     cont_var = agent.controller.state_defs[arg_type].cont 
                     disc_var = agent.controller.state_defs[arg_type].disc
                     stat_var = agent.controller.state_defs[arg_type].static
-                    add_states_3d(cont, disc, 'others', state_dict[agent_id], cont_var, disc_var, stat_var)
+                    add_states_3d(cont, disc, arg_name, state_dict[agent_id], cont_var, disc_var, stat_var)
                 
         return cont, disc, len_dict

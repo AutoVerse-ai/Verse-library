@@ -256,7 +256,7 @@ class Scenario:
                 continuous_variable_dict, orig_disc_vars, _ = self.sensor.sense(self, agent, state_dict, self.map)
                 # Unsafety checking
                 ego_ty_name = find(agent.controller.controller.args, lambda a: a[0] == EGO)[1]
-                def pack_env(agent, cont, disc, map):
+                def pack_env(agent: BaseAgent, cont, disc, map):
                     env = copy.deepcopy(cont)
                     env.update(disc)
 
@@ -265,8 +265,15 @@ class Scenario:
                     for k, v in env.items():
                         k = k.split(".")
                         packed[k[0]][k[1]] = v
-                    others_keys = list(packed[OTHERS].keys())
-                    packed[OTHERS] = [state_ty(**{k: packed[OTHERS][k][i] for k in others_keys}) for i in range(len(packed[OTHERS][others_keys[0]]))]
+                    for arg, arg_type, is_list in agent.controller.controller.args:
+                        if arg != EGO and 'map' not in arg:
+                            other = arg
+                            others_keys = list(packed[other].keys())
+                            if is_list:
+                                packed[other] = [state_ty(**{k: packed[other][k][i] for k in others_keys}) for i in range(len(packed[other][others_keys[0]]))]
+                            else:
+                                packed[other] = state_ty(**{k: packed[other][k] for k in others_keys})
+    
                     packed[EGO] = state_ty(**packed[EGO])
                     map_var = find(agent.controller.controller.args, lambda a: "map" in a[0])
                     if map_var != None:
