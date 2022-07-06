@@ -6,12 +6,12 @@ from scipy.integrate import ode
 
 from dryvr_plus_plus.scene_verifier.agents.base_agent import BaseAgent
 from dryvr_plus_plus.scene_verifier.map.lane_map import LaneMap
-from dryvr_plus_plus.scene_verifier.code_parser.pythonparser import EmptyAst
+from dryvr_plus_plus.scene_verifier.code_parser.parser import ControllerIR, StateDef, ModeDef, Lambda
 
 class NPCAgent(BaseAgent):
     def __init__(self, id):
         self.id = id
-        self.controller = EmptyAst()
+        self.controller = ControllerIR.empty()
 
     @staticmethod
     def dynamic(t, state, u):
@@ -89,6 +89,9 @@ class CarAgent(BaseAgent):
         elif vehicle_mode == 'Stop':
             d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
             a = 0
+        else:
+            raise ValueError(f'Invalid mode: {vehicle_mode}')
+
         psi = lane_map.get_lane_heading(vehicle_lane, vehicle_pos)-theta
         steering = psi + np.arctan2(0.45*d, v)
         steering = np.clip(steering, -0.61, 0.61)
@@ -112,3 +115,27 @@ class CarAgent(BaseAgent):
             trace.append([t[i] + time_step] + init) 
 
         return np.array(trace)
+
+class WeirdCarAgent(CarAgent):
+    def __init__(self, id, code = None, file_name = None):
+        super().__init__(id, code, file_name)
+        self.gain = 0.2
+        self.thres = 0.8
+
+    def action_handler(self, mode: List[str], state, lane_map: LaneMap) -> Tuple[float, float]:
+        vehicle_mode = mode[0]
+        steering, a = self._action_handler(mode, state, lane_map)
+        # print("agnt", vehicle_mode, state, steering, a)
+        return steering, a
+        
+    def _action_handler(self, mode: List[str], state, lane_map: LaneMap) -> Tuple[float, float]:
+        vehicle_mode = mode[0]
+        theta = state[2]
+        if abs(theta) > self.thres:
+            return 0, 0
+        if vehicle_mode == "SwitchLeft" and theta >= 0:
+            return self.gain, 0
+        elif vehicle_mode == "SwitchRight" and theta <= 0:
+            return -self.gain, 0
+        else:
+            return 0, 0

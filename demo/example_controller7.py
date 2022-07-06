@@ -27,29 +27,36 @@ class State:
     v = 0.0
     vehicle_mode: VehicleMode = VehicleMode.Normal
     lane_mode: LaneMode = LaneMode.Lane0
-    type_mode: LaneObjectMode = LaneObjectMode.Vehicle
+    type: LaneObjectMode = LaneObjectMode.Vehicle
 
-    def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: LaneMode, type_mode: LaneObjectMode):
+    def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: LaneMode, type: LaneObjectMode):
         pass
+
+def car_front(ego, others, lane_map):
+    return any((lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) > 3 \
+            and lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) < 5 \
+            and ego.lane_mode == other.lane_mode) for other in others)
+
+def car_left(ego, others, lane_map):
+    return any((lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) < 8 and \
+                 lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) >-3 and \
+                 other.lane_mode==lane_map.left_lane(ego.lane_mode)) for other in others)
+
+def car_right(ego, others, lane_map):
+    return any((lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) < 8 and \
+                 lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) >-3 and \
+                 other.lane_mode==lane_map.right_lane(ego.lane_mode)) for other in others)
 
 def controller(ego:State, others:List[State], lane_map):
     output = copy.deepcopy(ego)
     if ego.vehicle_mode == VehicleMode.Normal:
-        if any((lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) > 3 \
-            and lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) < 5 \
-            and ego.lane_mode == other.lane_mode) for other in others):
+        if car_front(ego, others, lane_map):
             if lane_map.has_left(ego.lane_mode) and \
-             not any((lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) < 8 and \
-                 lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) >-3 and \
-                 other.lane_mode==lane_map.left_lane(ego.lane_mode)) for other in others):
+             not car_left(ego, others, lane_map):
                 output.vehicle_mode = VehicleMode.SwitchLeft
-        if any((lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) > 3 \
-            and lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) < 5 \
-            and ego.lane_mode == other.lane_mode) for other in others):
+        if car_front(ego, others, lane_map):
             if lane_map.has_right(ego.lane_mode) and \
-             not any((lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) < 8 and \
-                 lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) >-3 and \
-                 other.lane_mode==lane_map.right_lane(ego.lane_mode)) for other in others):
+             not car_right(ego, others, lane_map):
                 output.vehicle_mode = VehicleMode.SwitchRight
     if ego.vehicle_mode == VehicleMode.SwitchLeft:
         if  lane_map.get_lateral_distance(ego.lane_mode, [ego.x, ego.y]) >= 2.5:

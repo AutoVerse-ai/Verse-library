@@ -1,16 +1,18 @@
+import enum
+import re
 from typing import List, Dict, Any
 import pickle
 import ast
 import copy
 
 from z3 import *
+import astunparse
 import numpy as np
 
 from dryvr_plus_plus.scene_verifier.map.lane_map import LaneMap
 from dryvr_plus_plus.scene_verifier.map.lane_segment import AbstractLane
 from dryvr_plus_plus.scene_verifier.utils.utils import *
-from dryvr_plus_plus.scene_verifier.agents.base_agent import BaseAgent
-from dryvr_plus_plus.scene_verifier.code_parser.parser import Reduction, ReductionType, unparse
+from dryvr_plus_plus.scene_verifier.code_parser.parser import Reduction, ReductionType
 
 class LogicTreeNode:
     def __init__(self, data, child = [], val = None, mode_guard = None):
@@ -32,6 +34,14 @@ class NodeSubstituter(ast.NodeTransformer):
         else:
             self.generic_visit(node)
             return node
+
+    # def visit_Call(self, node: ast.Call) -> Any:
+    #     if node == self.old_node:
+    #         self.generic_visit(node)
+    #         return self.new_node 
+    #     else:
+    #         self.generic_visit(node)
+    #         return node
 
 class ValueSubstituter(ast.NodeTransformer):
     def __init__(self, val:str, node):
@@ -81,7 +91,6 @@ class ValueSubstituter(ast.NodeTransformer):
         self.generic_visit(node)
         return node
 
-
 class GuardExpressionAst:
     def __init__(self, guard_list):
         self.ast_list = copy.deepcopy(guard_list)
@@ -106,7 +115,7 @@ class GuardExpressionAst:
         # Therefore we are not be able to get free symbols from it
         # Thus we need to replace "==" to something else
 
-        symbols_map = {v: k for k, v in self.cont_variables.items() if k in guard_str}
+        symbols_map = {v: k for k, v in self.cont_variables.items()}
 
         for vars in reversed(self.cont_variables):
             guard_str = guard_str.replace(vars, self.cont_variables[vars])
@@ -233,7 +242,7 @@ class GuardExpressionAst:
                 return node.value
             # Else, return raw expression
             else:
-                expr = unparse(node)
+                expr = astunparse.unparse(node)
                 expr = expr.strip('\n')
                 return expr
         elif isinstance(node, ast.UnaryOp):
@@ -248,7 +257,7 @@ class GuardExpressionAst:
                 raise NotImplementedError(f"UnaryOp {node.op} is not supported")
         else:
             # For other cases, we can return the expression directly
-            expr = unparse(node)
+            expr = astunparse.unparse(node)
             expr = expr.strip('\n')
             return expr
 
@@ -270,7 +279,7 @@ class GuardExpressionAst:
 
     def _evaluate_guard_hybrid(self, root, agent, disc_var_dict, cont_var_dict, lane_map:LaneMap):
         if isinstance(root, ast.Compare): 
-            expr = unparse(root)
+            expr = astunparse.unparse(root)
             left, root.left = self._evaluate_guard_hybrid(root.left, agent, disc_var_dict, cont_var_dict, lane_map)
             right, root.comparators[0] = self._evaluate_guard_hybrid(root.comparators[0], agent, disc_var_dict, cont_var_dict, lane_map)
             return True, root
@@ -385,11 +394,11 @@ class GuardExpressionAst:
                         root = ast.parse(tmp_var_name).body[0].value
                         return True, root
                     else:
-                        raise ValueError(f'Node type {func} from {unparse(func)} is not supported')
+                        raise ValueError(f'Node type {func} from {astunparse.unparse(func)} is not supported')
                 else:
-                    raise ValueError(f'Node type {func} from {unparse(func)} is not supported')
+                    raise ValueError(f'Node type {func} from {astunparse.unparse(func)} is not supported')
             else:
-                raise ValueError(f'Node type {root.func} from {unparse(root.func)} is not supported')   
+                raise ValueError(f'Node type {root.func} from {astunparse.unparse(root.func)} is not supported')   
         elif isinstance(root, ast.Attribute):
             return True, root 
         elif isinstance(root, ast.Constant):
@@ -405,10 +414,10 @@ class GuardExpressionAst:
                     root.operand = ast.parse('False').body[0].value
                     return True, ast.parse('True').body[0].value
             else:
-                raise ValueError(f'Node type {root} from {unparse(root)} is not supported')
+                raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
             return True, root 
         else:
-            raise ValueError(f'Node type {root} from {unparse(root)} is not supported')
+            raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
 
     def _handle_longitudinal_set(self, lane_seg: AbstractLane, position: np.ndarray) -> List[float]:
         if lane_seg.type == "Straight":
@@ -498,11 +507,9 @@ class GuardExpressionAst:
         for i, node in enumerate(self.ast_list):
             tmp, self.ast_list[i] = self._evaluate_guard_disc(node, agent, discrete_variable_dict, continuous_variable_dict, lane_map)
             res = res and tmp 
-            if not res:
-                break
         return res
             
-    def _evaluate_guard_disc(self, root, agent:BaseAgent, disc_var_dict, cont_var_dict, lane_map):
+    def _evaluate_guard_disc(self, root, agent, disc_var_dict, cont_var_dict, lane_map):
         """
         Recursively called function to evaluate guard with only discrete variables
         The function will evaluate all guards with discrete variables and replace the nodes with discrete guards by
@@ -513,7 +520,7 @@ class GuardExpressionAst:
         The second element in the tuple will be the updated ast node 
         """
         if isinstance(root, ast.Compare):
-            expr = unparse(root)
+            expr = astunparse.unparse(root)
             left, root.left = self._evaluate_guard_disc(root.left, agent, disc_var_dict, cont_var_dict, lane_map)
             right, root.comparators[0] = self._evaluate_guard_disc(root.comparators[0], agent, disc_var_dict, cont_var_dict, lane_map)
             if isinstance(left, bool) or isinstance(right, bool):
@@ -531,7 +538,7 @@ class GuardExpressionAst:
             elif isinstance(root.ops[0], ast.NotEq):
                 res = left != right 
             else:
-                raise ValueError(f'Node type {root} from {unparse(root)} is not supported')
+                raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
             if res:
                 root = ast.parse('True').body[0].value
             else:
@@ -544,13 +551,12 @@ class GuardExpressionAst:
                     tmp,root.values[i] = self._evaluate_guard_disc(val, agent, disc_var_dict, cont_var_dict, lane_map)
                     res = res and tmp
                     if not res:
-                        root = ast.Constant(value=False, kind=None)
                         break
                 return res, root
             elif isinstance(root.op, ast.Or):
                 res = False
-                for i, val in enumerate(root.values):
-                    tmp,root.values[i] = self._evaluate_guard_disc(val, agent, disc_var_dict, cont_var_dict, lane_map)
+                for val in root.values:
+                    tmp,val = self._evaluate_guard_disc(val, agent, disc_var_dict, cont_var_dict, lane_map)
                     res = res or tmp
                 return res, root     
         elif isinstance(root, ast.BinOp):
@@ -559,7 +565,7 @@ class GuardExpressionAst:
             right, root.right = self._evaluate_guard_disc(root.right, agent, disc_var_dict, cont_var_dict, lane_map)
             return True, root
         elif isinstance(root, ast.Call):
-            expr = unparse(root)
+            expr = astunparse.unparse(root)
             # Check if the root is a function
             if any([var in expr for var in disc_var_dict]) and all([var not in expr for var in cont_var_dict]):
                 # tmp = re.split('\(|\)',expr)
@@ -578,30 +584,30 @@ class GuardExpressionAst:
                     else:
                         root = ast.parse('False').body[0].value    
                 else:
-                    # # TODO-PARSER: Handle This
-                    # for mode_name in agent.controller.mode_defs:
-                    #     # TODO-PARSER: Handle This
-                    #     if res in agent.controller.mode_defs[mode_name].modes:
-                    #         res = mode_name+'.'+res
-                    #         break
+                    # TODO-PARSER: Handle This
+                    for mode_name in agent.controller.modes:
+                        # TODO-PARSER: Handle This
+                        if res in agent.controller.modes[mode_name]:
+                            res = mode_name+'.'+res
+                            break
                     root = ast.parse(str(res)).body[0].value
                 return res, root
             else:
                 return True, root
         elif isinstance(root, ast.Attribute):
-            expr = unparse(root)
+            expr = astunparse.unparse(root)
             expr = expr.strip('\n')
             if expr in disc_var_dict:
                 val = disc_var_dict[expr]
                 # TODO-PARSER: Handle This
-                # for mode_name in agent.controller.mode_defs:
-                #     # TODO-PARSER: Handle This
-                #     if val in agent.controller.mode_defs[mode_name].modes:
-                #         val = mode_name+'.'+val
-                #         break
+                for mode_name in agent.controller.modes:
+                    # TODO-PARSER: Handle This
+                    if val in agent.controller.modes[mode_name]:
+                        val = mode_name+'.'+val
+                        break
                 return val, root
             # TODO-PARSER: Handle This
-            elif root.value.id in agent.controller.mode_defs:
+            elif root.value.id in agent.controller.modes:
                 return expr, root
             else:
                 return True, root
@@ -616,37 +622,37 @@ class GuardExpressionAst:
                     root.operand = ast.parse('False').body[0].value
                     return True, ast.parse('True').body[0].value
             else:
-                raise ValueError(f'Node type {root} from {unparse(root)} is not supported')
+                raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
             return True, root
         elif isinstance(root, ast.Name):
             expr = root.id
             if expr in disc_var_dict:
                 val = disc_var_dict[expr]
-                # # TODO-PARSER: Handle This
-                # for mode_name in agent.controller.mode_defs:
-                #     # TODO-PARSER: Handle This
-                #     if val in agent.controller.mode_defs[mode_name].modes:
-                #         val = mode_name + '.' + val 
-                #         break 
+                # TODO-PARSER: Handle This
+                for mode_name in agent.controller.modes:
+                    # TODO-PARSER: Handle This
+                    if val in agent.controller.modes[mode_name]:
+                        val = mode_name + '.' + val 
+                        break 
                 return val, root
             else:
                 return True, root 
         else:
-            raise ValueError(f'Node type {root} from {unparse(root)} is not supported')
+            raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
 
-    def evaluate_guard(self, agent, continuous_variable_dict, discrete_variable_dict, lane_map):
+    def evaluate_guard_old(self, agent, continuous_variable_dict, discrete_variable_dict, lane_map):
         res = True
         for i, node in enumerate(self.ast_list):
-            tmp = self._evaluate_guard(node, agent, continuous_variable_dict, discrete_variable_dict, lane_map)
+            tmp = self._evaluate_guard_old(node, agent, continuous_variable_dict, discrete_variable_dict, lane_map)
             res = tmp and res
             if not res:
                 break
         return res
 
-    def _evaluate_guard(self, root, agent, cnts_var_dict, disc_var_dict, lane_map):
+    def _evaluate_guard_old(self, root, agent, cnts_var_dict, disc_var_dict, lane_map):
         if isinstance(root, ast.Compare):
-            left = self._evaluate_guard(root.left, agent, cnts_var_dict, disc_var_dict, lane_map)
-            right = self._evaluate_guard(root.comparators[0], agent, cnts_var_dict, disc_var_dict, lane_map)
+            left = self._evaluate_guard_old(root.left, agent, cnts_var_dict, disc_var_dict, lane_map)
+            right = self._evaluate_guard_old(root.comparators[0], agent, cnts_var_dict, disc_var_dict, lane_map)
             if isinstance(root.ops[0], ast.GtE):
                 return left>=right
             elif isinstance(root.ops[0], ast.Gt):
@@ -660,13 +666,13 @@ class GuardExpressionAst:
             elif isinstance(root.ops[0], ast.NotEq):
                 return left != right 
             else:
-                raise ValueError(f'Node type {root} from {unparse(root)} is not supported')
+                raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
 
         elif isinstance(root, ast.BoolOp):
             if isinstance(root.op, ast.And):
                 res = True
                 for val in root.values:
-                    tmp = self._evaluate_guard(val, agent, cnts_var_dict, disc_var_dict, lane_map)
+                    tmp = self._evaluate_guard_old(val, agent, cnts_var_dict, disc_var_dict, lane_map)
                     res = res and tmp
                     if not res:
                         break
@@ -674,22 +680,22 @@ class GuardExpressionAst:
             elif isinstance(root.op, ast.Or):
                 res = False
                 for val in root.values:
-                    tmp = self._evaluate_guard(val, agent, cnts_var_dict, disc_var_dict, lane_map)
+                    tmp = self._evaluate_guard_old(val, agent, cnts_var_dict, disc_var_dict, lane_map)
                     res = res or tmp
                     if res:
                         break
                 return res
         elif isinstance(root, ast.BinOp):
-            left = self._evaluate_guard(root.left, agent, cnts_var_dict, disc_var_dict, lane_map)
-            right = self._evaluate_guard(root.right, agent, cnts_var_dict, disc_var_dict, lane_map)
+            left = self._evaluate_guard_old(root.left, agent, cnts_var_dict, disc_var_dict, lane_map)
+            right = self._evaluate_guard_old(root.right, agent, cnts_var_dict, disc_var_dict, lane_map)
             if isinstance(root.op, ast.Sub):
                 return left - right
             elif isinstance(root.op, ast.Add):
                 return left + right
             else:
-                raise ValueError(f'Node type {root} from {unparse(root)} is not supported')
+                raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
         elif isinstance(root, ast.Call):
-            expr = unparse(root)
+            expr = astunparse.unparse(root)
             # Check if the root is a function
             if isinstance(root.func, ast.Attribute) and "map" in root.func.value.id:
             # if 'map' in expr:
@@ -706,21 +712,21 @@ class GuardExpressionAst:
                     expr = expr.replace(arg, str(cnts_var_dict[arg]))    
                 res = eval(expr)
                 # TODO-PARSER: Handle This
-                for mode_name in agent.controller.mode_defs:
+                for mode_name in agent.controller.modes:
                     # TODO-PARSER: Handle This
-                    if res in agent.controller.mode_defs[mode_name].modes:
+                    if res in agent.controller.modes[mode_name]:
                         res = mode_name+'.'+res
                         break
                 return res
         elif isinstance(root, ast.Attribute):
-            expr = unparse(root)
+            expr = astunparse.unparse(root)
             expr = expr.strip('\n')
             if expr in disc_var_dict:
                 val = disc_var_dict[expr]
                 # TODO-PARSER: Handle This
-                for mode_name in agent.controller.mode_defs:
+                for mode_name in agent.controller.modes:
                     # TODO-PARSER: Handle This
-                    if val in agent.controller.mode_defs[mode_name].modes:
+                    if val in agent.controller.modes[mode_name]:
                         val = mode_name+'.'+val
                         break
                 return val
@@ -729,18 +735,18 @@ class GuardExpressionAst:
                 return val
 
             # TODO-PARSER: Handle This
-            elif root.value.id in agent.controller.mode_defs:
+            elif root.value.id in agent.controller.modes:
                 return expr
         elif isinstance(root, ast.Constant):
             return root.value
         elif isinstance(root, ast.UnaryOp):
-            val = self._evaluate_guard(root.operand, agent, cnts_var_dict, disc_var_dict, lane_map)
+            val = self._evaluate_guard_old(root.operand, agent, cnts_var_dict, disc_var_dict, lane_map)
             if isinstance(root.op, ast.USub):
                 return -val
             if isinstance(root.op, ast.Not):
                 return not val
             else:
-                raise ValueError(f'Node type {root} from {unparse(root)} is not supported')
+                raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
         elif isinstance(root, ast.Name):
             variable = root.id 
             if variable in cnts_var_dict:
@@ -749,130 +755,16 @@ class GuardExpressionAst:
             elif variable in disc_var_dict:
                 val = disc_var_dict[variable]
                 # TODO-PARSER: Handle This
-                for mode_name in agent.controller.mode_defs:
+                for mode_name in agent.controller.modes:
                     # TODO-PARSER: Handle This
-                    if val in agent.controller.mode_defs[mode_name].modes:
+                    if val in agent.controller.modes[mode_name]:
                         val = mode_name+'.'+val
                         break
                 return val
             else:
                 raise ValueError(f"{variable} doesn't exist in either continuous varibales or discrete variables") 
         else:
-            print("agent", agent)
-            raise ValueError(f'Node type {root} from {unparse(root)} is not supported')
-
-    def parse_any_all(self, cont_var_dict: Dict[str, float], disc_var_dict: Dict[str, float], len_dict: Dict[str, int]) -> None: 
-        for i in range(len(self.ast_list)):
-            root = self.ast_list[i]
-            j = 0
-            while j < sum(1 for _ in ast.walk(root)):
-                # TODO: Find a faster way to access nodes in the tree
-                node = list(ast.walk(root))[j]
-                if isinstance(node, ast.Call) and\
-                    isinstance(node.func, ast.Name) and\
-                    (node.func.id=='any' or node.func.id=='all'):
-                    new_node = self.unroll_any_all(node, cont_var_dict, disc_var_dict, len_dict)
-                    root = NodeSubstituter(node, new_node).visit(root)
-                j += 1
-            self.ast_list[i] = root 
-
-    def unroll_any_all(
-        self, node: ast.Call, 
-        cont_var_dict: Dict[str, float], 
-        disc_var_dict: Dict[str, float], 
-        len_dict: Dict[str, float]
-    ) -> ast.BoolOp:
-        parse_arg = node.args[0]
-        if isinstance(parse_arg, ast.GeneratorExp):
-            iter_name_list = []
-            targ_name_list = []
-            iter_len_list = []
-            # Get all the iter, targets and the length of iter list 
-            for generator in parse_arg.generators:
-                iter_name_list.append(generator.iter.id) # a_list
-                targ_name_list.append(generator.target.id) # a
-                iter_len_list.append(range(len_dict[generator.iter.id])) # len(a_list)
-
-            elt = parse_arg.elt
-            expand_elt_ast_list = []
-            iter_len_list = list(itertools.product(*iter_len_list))
-            # Loop through all possible combination of iter value
-            for i in range(len(iter_len_list)):
-                changed_elt = copy.deepcopy(elt)
-                iter_pos_list = iter_len_list[i]
-                # substitute temporary variable in each of the elt and add corresponding variables in the variable dicts
-                parsed_elt = self._parse_elt(changed_elt, cont_var_dict, disc_var_dict, iter_name_list, targ_name_list, iter_pos_list)
-                # Add the expanded elt into the list 
-                expand_elt_ast_list.append(parsed_elt)
-            # Create the new boolop (and/or) node based on the list of expanded elt
-            return ValueSubstituter(expand_elt_ast_list, node).visit(node)
-        else:
-            return node
-
-    def _parse_elt(self, root, cont_var_dict, disc_var_dict, iter_name_list, targ_name_list, iter_pos_list) -> Any:
-        # Loop through all node in the elt ast 
-        for node in ast.walk(root):
-            # If the node is an attribute
-            if isinstance(node, ast.Attribute):
-                if node.value.id in targ_name_list:
-                    # Find corresponding targ_name in the targ_name_list
-                    targ_name = node.value.id
-                    var_index = targ_name_list.index(targ_name)
-
-                    # Find the corresponding iter_name in the iter_name_list 
-                    iter_name = iter_name_list[var_index]
-
-                    # Create the name for the tmp variable 
-                    iter_pos = iter_pos_list[var_index]
-                    tmp_variable_name = f"{iter_name}_{iter_pos}.{node.attr}"
-
-                    # Replace variables in the etl by using tmp variables
-                    root = ValueSubstituter(tmp_variable_name, node).visit(root)
-
-                    # Find the value of the tmp variable in the cont/disc_var_dict
-                    # Add the tmp variables into the cont/disc_var_dict
-                    # NOTE: At each time step, for each agent, the variable value mapping and their 
-                    # sequence in the list is single. Therefore, for the same key, we will always rewrite 
-                    # its content. 
-                    variable_name = iter_name + '.' + node.attr
-                    variable_val = None
-                    if variable_name in cont_var_dict:
-                        variable_val = cont_var_dict[variable_name][iter_pos]
-                        cont_var_dict[tmp_variable_name] = variable_val
-                    elif variable_name in disc_var_dict:
-                        variable_val = disc_var_dict[variable_name][iter_pos]
-                        disc_var_dict[tmp_variable_name] = variable_val
-
-            elif isinstance(node, ast.Name):
-                if node.id in targ_name_list:
-                    node:ast.Name
-                    # Find corresponding targ_name in the targ_name_list
-                    targ_name = node.id
-                    var_index = targ_name_list.index(targ_name)
-
-                    # Find the corresponding iter_name in the iter_name_list 
-                    iter_name = iter_name_list[var_index]
-
-                    # Create the name for the tmp variable 
-                    iter_pos = iter_pos_list[var_index]
-                    tmp_variable_name = f"{iter_name}_{iter_pos}"
-
-                    # Replace variables in the etl by using tmp variables
-                    root = ValueSubstituter(tmp_variable_name, node).visit(root)
-
-                    # Find the value of the tmp variable in the cont/disc_var_dict
-                    # Add the tmp variables into the cont/disc_var_dict
-                    variable_name = iter_name
-                    variable_val = None
-                    if variable_name in cont_var_dict:
-                        variable_val = cont_var_dict[variable_name][iter_pos]
-                        cont_var_dict[tmp_variable_name] = variable_val
-                    elif variable_name in disc_var_dict:
-                        variable_val = disc_var_dict[variable_name][iter_pos]
-                        disc_var_dict[tmp_variable_name] = variable_val
-
-        # Return the modified node
-        return root
+            raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
 
     def parse_any_all_new(self, cont_var_dict: Dict[str, float], disc_var_dict: Dict[str, float], len_dict: Dict[str, int]) -> Dict[str, List[str]]: 
         cont_var_updater = {}
@@ -890,7 +782,7 @@ class GuardExpressionAst:
         return cont_var_updater
 
     def unroll_any_all_new(
-        self, node: ast.Call, 
+        self, node: Reduction, 
         cont_var_dict: Dict[str, float], 
         disc_var_dict: Dict[str, float], 
         len_dict: Dict[str, float],
@@ -936,9 +828,7 @@ class GuardExpressionAst:
         # Loop through all node in the elt ast 
         for node in ast.walk(root):
             # If the node is an attribute
-            # Assume all the nodes are attributes
             if isinstance(node, ast.Attribute):
-                node: ast.Attribute
                 if node.value.id in targ_var_list:
                     # Find corresponding targ_name in the targ_var_list
                     targ_name = node.value.id
@@ -978,47 +868,210 @@ class GuardExpressionAst:
                         #     if (tmp_variable_name, iter_pos) not in disc_var_updater[variable_name]:
                         #         disc_var_updater[variable_name].append((tmp_variable_name, iter_pos))
 
-            # elif isinstance(node, ast.Name):
-            #     if node.id in targ_var_list:
-            #         node:ast.Name
-            #         # Find corresponding targ_name in the targ_var_list
-            #         targ_name = node.id
-            #         var_index = targ_var_list.index(targ_name)
-            #         attr = node.id.split('.')[1]
+            elif isinstance(node, ast.Name):
+                targ_var = None 
+                for tmp in targ_var_list:
+                    if node.id.startswith(tmp+'.'):
+                        targ_var = tmp
+                        break 
+                if targ_var is not None:
+                    node:ast.Name
+                    # Find corresponding targ_name in the targ_var_list
+                    targ_name = targ_var
+                    var_index = targ_var_list.index(targ_name)
+                    attr = node.id.split('.')[1]
 
-            #         # Find the corresponding iter_name in the iter_name_list 
-            #         iter_name = iter_name_list[var_index]
+                    # Find the corresponding iter_name in the iter_name_list 
+                    iter_name = iter_name_list[var_index]
 
-            #         # Create the name for the tmp variable 
-            #         iter_pos = iter_pos_list[var_index]
-            #         tmp_variable_name = f"{iter_name}_{iter_pos}.{attr}"
+                    # Create the name for the tmp variable 
+                    iter_pos = iter_pos_list[var_index]
+                    tmp_variable_name = f"{iter_name}_{iter_pos}.{attr}"
 
-            #         # Replace variables in the etl by using tmp variables
-            #         root = ValueSubstituter(tmp_variable_name, node).visit(root)
+                    # Replace variables in the etl by using tmp variables
+                    root = ValueSubstituter(tmp_variable_name, node).visit(root)
 
-            #         # Find the value of the tmp variable in the cont/disc_var_dict
-            #         # Add the tmp variables into the cont/disc_var_dict
-            #         variable_name = iter_name + '.' + attr
-            #         variable_val = None
-            #         if variable_name in cont_var_dict:
-            #             # variable_val = cont_var_dict[variable_name][iter_pos]
-            #             # cont_var_dict[tmp_variable_name] = variable_val
-            #             if variable_name not in cont_var_updater:
-            #                 cont_var_updater[variable_name] = [(tmp_variable_name, iter_pos)]
-            #             else:
-            #                 if (tmp_variable_name, iter_pos) not in cont_var_updater[variable_name]:
-            #                     cont_var_updater[variable_name].append((tmp_variable_name, iter_pos))
-            #         elif variable_name in disc_var_dict:
-            #             variable_val = disc_var_dict[variable_name][iter_pos]
-            #             disc_var_dict[tmp_variable_name] = variable_val
+                    # Find the value of the tmp variable in the cont/disc_var_dict
+                    # Add the tmp variables into the cont/disc_var_dict
+                    variable_name = iter_name + '.' + attr
+                    variable_val = None
+                    if variable_name in cont_var_dict:
+                        # variable_val = cont_var_dict[variable_name][iter_pos]
+                        # cont_var_dict[tmp_variable_name] = variable_val
+                        if variable_name not in cont_var_updater:
+                            cont_var_updater[variable_name] = [(tmp_variable_name, iter_pos)]
+                        else:
+                            if (tmp_variable_name, iter_pos) not in cont_var_updater[variable_name]:
+                                cont_var_updater[variable_name].append((tmp_variable_name, iter_pos))
+                    elif variable_name in disc_var_dict:
+                        variable_val = disc_var_dict[variable_name][iter_pos]
+                        disc_var_dict[tmp_variable_name] = variable_val
                         # if variable_name not in disc_var_updater:
                         #     disc_var_updater[variable_name] = [(tmp_variable_name, iter_pos)]
                         # else:
                         #     if (tmp_variable_name, iter_pos) not in disc_var_updater[variable_name]:
                         #         disc_var_updater[variable_name].append((tmp_variable_name, iter_pos))
-                # raise NotImplementedError("Let's just give up for now and worry about names later")
+
         # Return the modified node
         return root
+
+    def evaluate_guard(self, agent, continuous_variable_dict, discrete_variable_dict, lane_map):
+        res = True 
+        for i, node in enumerate(self.ast_list):
+            tmp = self._evaluate_guard(node, agent, continuous_variable_dict, discrete_variable_dict, lane_map)
+            res = tmp and res 
+            if not res:
+                break 
+        return res 
+
+    def _evaluate_guard(self, root, agent, cnts_var_dict, disc_var_dict, lane_map):
+        if isinstance(root, ast.Compare):
+            left = self._evaluate_guard(root.left, agent, cnts_var_dict, disc_var_dict, lane_map)
+            right = self._evaluate_guard(root.comparators[0], agent, cnts_var_dict, disc_var_dict, lane_map)
+            if isinstance(root.ops[0], ast.GtE):
+                return left>=right
+            elif isinstance(root.ops[0], ast.Gt):
+                return left>right 
+            elif isinstance(root.ops[0], ast.Lt):
+                return left<right
+            elif isinstance(root.ops[0], ast.LtE):
+                return left<=right
+            elif isinstance(root.ops[0], ast.Eq):
+                return left == right 
+            elif isinstance(root.ops[0], ast.NotEq):
+                return left != right 
+            else:
+                raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
+
+        elif isinstance(root, ast.BoolOp):
+            if isinstance(root.op, ast.And):
+                res = True
+                for val in root.values:
+                    tmp = self._evaluate_guard(val, agent, cnts_var_dict, disc_var_dict, lane_map)
+                    res = res and tmp
+                    if not res:
+                        break
+                return res
+            elif isinstance(root.op, ast.Or):
+                res = False
+                for val in root.values:
+                    tmp = self._evaluate_guard(val, agent, cnts_var_dict, disc_var_dict, lane_map)
+                    res = res or tmp
+                    if res:
+                        break
+                return res
+        elif isinstance(root, ast.BinOp):
+            left = self._evaluate_guard(root.left, agent, cnts_var_dict, disc_var_dict, lane_map)
+            right = self._evaluate_guard(root.right, agent, cnts_var_dict, disc_var_dict, lane_map)
+            if isinstance(root.op, ast.Sub):
+                return left - right
+            elif isinstance(root.op, ast.Add):
+                return left + right
+            else:
+                raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
+        elif isinstance(root, ast.Call):
+            expr = astunparse.unparse(root)
+            # Check if the root is a function
+            if isinstance(root.func, ast.Attribute) and "map" in root.func.value.id:
+            # if 'map' in expr:
+                # tmp = re.split('\(|\)',expr)
+                # while "" in tmp:
+                #     tmp.remove("")
+                # for arg in tmp[1:]:
+                #     if arg in disc_var_dict:
+                #         expr = expr.replace(arg,f'"{disc_var_dict[arg]}"')
+                # res = eval(expr)
+                for arg in disc_var_dict:
+                    expr = expr.replace(arg, f'"{disc_var_dict[arg]}"')
+                for arg in cnts_var_dict:
+                    expr = expr.replace(arg, str(cnts_var_dict[arg]))    
+                res = eval(expr)
+                for mode_name in agent.controller.mode_defs:
+                    if res in agent.controller.mode_defs[mode_name].modes:
+                        res = mode_name+'.'+res
+                        break
+                return res
+            elif isinstance(root.func, ast.Name):
+                if '.' in root.func.id and "map" in root.func.id.split('.')[0]:
+                    for arg in disc_var_dict:
+                        expr = expr.replace(arg, f'"{disc_var_dict[arg]}"')
+                    for arg in cnts_var_dict:
+                        expr = expr.replace(arg, str(cnts_var_dict[arg]))    
+                    res = eval(expr)
+                    for mode_name in agent.controller.mode_defs:
+                        if res in agent.controller.mode_defs[mode_name].modes:
+                            res = mode_name+'.'+res
+                            break
+                    return res
+                else:
+                    raise ValueError(f'Unsupported function {astunparse.unparse(root)}')
+            else:
+                raise ValueError(f'Unsupported function {astunparse.unparse(root)}')
+        elif isinstance(root, ast.Attribute):
+            expr = astunparse.unparse(root)
+            expr = expr.strip('\n')
+            if expr in disc_var_dict:
+                val = disc_var_dict[expr]
+                for mode_name in agent.controller.mode_defs:
+                    if val in agent.controller.mode_defs[mode_name].modes:
+                        val = mode_name+'.'+val
+                        break
+                return val
+            elif expr in cnts_var_dict:
+                val = cnts_var_dict[expr]
+                return val
+            elif root.value.id in agent.controller.mode_defs:
+                return expr
+        elif isinstance(root, ast.Constant):
+            return root.value
+        elif isinstance(root, ast.UnaryOp):
+            val = self._evaluate_guard(root.operand, agent, cnts_var_dict, disc_var_dict, lane_map)
+            if isinstance(root.op, ast.USub):
+                return -val
+            if isinstance(root.op, ast.Not):
+                return not val
+            else:
+                raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
+        elif isinstance(root, ast.Name):
+            variable = root.id 
+            if variable in cnts_var_dict:
+                val = cnts_var_dict[variable]
+                return val 
+            elif variable in disc_var_dict:
+                val = disc_var_dict[variable]
+                for mode_name in agent.controller.mode_defs:
+                    if val in agent.controller.mode_defs[mode_name].modes:
+                        val = mode_name+'.'+val
+                        break
+                return val
+            elif '.' in variable:
+                cls_name, attr = variable.split('.')
+                if cls_name in agent.controller.mode_defs:
+                    
+            else:
+                raise ValueError(f"{variable} doesn't exist in either continuous varibales or discrete variables") 
+        else:
+            raise ValueError(f'Node type {root} from {astunparse.unparse(root)} is not supported')
+    
+    # def _evaluate_guard(self, root, agent, cont_var_dict, disc_var_dict, lane_map):
+    #     cont_var_dict.update(disc_var_dict)
+    #     for node in ast.walk(root):
+    #         if isinstance(node, ast.Name):
+    #             if node.id in cont_var_dict and '.' in node.id:
+    #                 node.id = node.id.replace('.','_')
+    #             elif '.' in node.id:
+    #                 class_name, attr = node.id.split('.')
+    #                 if class_name in agent.controller.mode_defs:
+    #                     node.id = attr
+
+    #     var_dict = {}
+    #     for var in cont_var_dict:
+    #         if '.' in var:
+    #             var_dict[var.replace('.','_')] = cont_var_dict[var]
+    #         else:
+    #             var_dict[var] = cont_var_dict[var]
+    #     var_dict['lane_map'] = lane_map
+    #     return eval(astunparse.unparse(root), {}, var_dict)
 
 if __name__ == "__main__":
     with open('tmp.pickle','rb') as f:

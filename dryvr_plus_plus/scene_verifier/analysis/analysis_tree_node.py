@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Any
 
 class AnalysisTreeNode:
     """AnalysisTreeNode class
@@ -13,6 +13,7 @@ class AnalysisTreeNode:
         trace={},
         init={},
         mode={},
+        static = {},
         agent={},
         child=[],
         start_time = 0,
@@ -22,7 +23,8 @@ class AnalysisTreeNode:
         self.trace:Dict = trace
         self.init: Dict[str, List[float]] = init
         self.mode: Dict[str, List[str]] = mode
-        self.agent:Dict = agent
-        self.child:List[AnalysisTreeNode] = child
-        self.start_time:float = round(start_time,ndigits)
-        self.type:str = type
+        self.agent: Dict = agent
+        self.child: List[AnalysisTreeNode] = child
+        self.start_time: float = round(start_time, ndigits)
+        self.type: str = type
+        self.static: Dict[str, List[str]] = static

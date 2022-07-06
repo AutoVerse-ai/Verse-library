@@ -3,8 +3,8 @@ from dryvr_plus_plus.scene_verifier.scenario.scenario import Scenario
 from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap2, SimpleMap3, SimpleMap5, SimpleMap6
 from dryvr_plus_plus.plotter.plotter2D import *
 from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor2
+
 import plotly.graph_objects as go
-import numpy as np
 from enum import Enum, auto
 
 
@@ -34,7 +34,7 @@ class State:
 
 
 if __name__ == "__main__":
-    input_code_name = 'example_controller1.py'
+    input_code_name = './demo/example_controller1.py'
     scenario = Scenario()
 
     car = NPCAgent('car1')
@@ -71,9 +71,6 @@ if __name__ == "__main__":
 
     traces = scenario.simulate(10, 0.01)
     fig = go.Figure()
-    # fig = plotly_map(tmp_map, 'g', fig)
-    # fig = plotly_simulation_tree(
-    #     traces, 'car1', 0, [1], 'b', fig, (1000, -1000), (1000, -1000))
-    # fig = plotly_simulation_tree(traces, 'car2', 0, [1], 'r', fig)
-    fig = plotly_simulation_anime(traces, tmp_map, fig)
+    fig = simulation_anime(traces, tmp_map, fig, 1, 2,
+                           'lines', 'trace', print_dim_list=[1, 2])
     fig.show()

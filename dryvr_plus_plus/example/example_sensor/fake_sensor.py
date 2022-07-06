@@ -25,28 +25,32 @@ def adds(d, thing, attrs, vals):
             d[thing + '.' + k].append(v) 
             
 def add_states_2d(cont, disc, thing, val):
-    state, mode = val 
+    state, mode, static = val 
     adds(cont, thing, ['x','y','theta','v'], state[1:5])
-    adds(disc, thing, ["vehicle_mode", "lane_mode", "type"], mode)
+    adds(disc, thing, ["vehicle_mode", "lane_mode"], mode)
+    adds(disc, thing, ['type'], static)
 
 def add_states_3d(cont, disc, thing, val):
-    state, mode = val
+    state, mode, static = val
     transp = np.transpose(np.array(state)[:, 1:5])
     assert len(transp) == 4
     adds(cont, thing, ["x", "y", "theta", "v"], transp)
-    adds(disc, thing, ["vehicle_mode", "lane_mode", "type"], mode)
+    adds(disc, thing, ["vehicle_mode", "lane_mode"], mode)
+    adds(disc, thing, ['type'], static)
 
 def set_states_2d(cnts, disc, thing, val):
-    state, mode = val
+    state, mode, static = val
     sets(cnts, thing, ["x", "y", "theta", "v"], state[1:5])
-    sets(disc, thing, ["vehicle_mode", "lane_mode", "type"], mode)
+    sets(disc, thing, ["vehicle_mode", "lane_mode"], mode)
+    sets(disc, thing, ['type'], static)
 
 def set_states_3d(cnts, disc, thing, val):
-    state, mode = val
+    state, mode, static = val
     transp = np.transpose(np.array(state)[:, 1:5])
     assert len(transp) == 4
     sets(cnts, thing, ["x", "y", "theta", "v"], transp)
-    sets(disc, thing, ["vehicle_mode", "lane_mode", "type"], mode)
+    sets(disc, thing, ["vehicle_mode", "lane_mode"], mode)
+    sets(disc, thing, ['type'], static)
 
 class FakeSensor2:
     def sense(self, scenario, agent, state_dict, lane_map):

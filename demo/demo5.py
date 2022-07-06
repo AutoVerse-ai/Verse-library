@@ -2,14 +2,11 @@ from dryvr_plus_plus.example.example_agent.car_agent import CarAgent, NPCAgent
 from dryvr_plus_plus.example.example_agent.car_agent import CarAgent
 from dryvr_plus_plus.scene_verifier.scenario.scenario import Scenario
 from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap2, SimpleMap3, SimpleMap5, SimpleMap6
-from dryvr_plus_plus.plotter.plotter2D import *
-from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor3
 from dryvr_plus_plus.scene_verifier.sensor.base_sensor import BaseSensor
-
-import matplotlib.pyplot as plt
-import plotly.graph_objects as go
-import numpy as np
 from enum import Enum, auto
+import plotly.graph_objects as go
+from dryvr_plus_plus.plotter.plotter2D import *
+
 
 class LaneObjectMode(Enum):
     Vehicle = auto()
@@ -18,19 +15,22 @@ class LaneObjectMode(Enum):
     Signal = auto()     # Traffic lights
     Obstacle = auto()   # Static (to road/lane) obstacles
 
+
 class VehicleMode(Enum):
     Normal = auto()
     SwitchLeft = auto()
     SwitchRight = auto()
     Brake = auto()
 
+
 class LaneMode(Enum):
     Lane0 = auto()
     Lane1 = auto()
     Lane2 = auto()
 
+
 if __name__ == "__main__":
-    input_code_name = './example_controller7.py'
+    input_code_name = './demo/example_controller7.py'
     scenario = Scenario()
 
     car = CarAgent('car1', file_name=input_code_name)
@@ -47,31 +47,28 @@ if __name__ == "__main__":
     scenario.set_map(tmp_map)
     scenario.set_init(
         [
-            [[0, -0.0, 0, 1.0],[0.0, 0.0, 0, 1.0]],
-            [[10, 0, 0, 0.5],[10, 0, 0, 0.5]], 
-            [[30, 0, 0, 0.5],[30, 0, 0, 0.5]], 
-            [[10, 3, 0, 0.5],[10, 3, 0, 0.5]], 
+            [[0, -0.0, 0, 1.0], [0.0, 0.0, 0, 1.0]],
+            [[10, 0, 0, 0.5], [10, 0, 0, 0.5]],
+            [[30, 0, 0, 0.5], [30, 0, 0, 0.5]],
+            [[10, 3, 0, 0.5], [10, 3, 0, 0.5]],
         ],
         [
             (VehicleMode.Normal, LaneMode.Lane1),
             (VehicleMode.Normal, LaneMode.Lane1),
             (VehicleMode.Normal, LaneMode.Lane1),
             (VehicleMode.Normal, LaneMode.Lane0),
+        ],
+        [
+            (LaneObjectMode.Vehicle,),
+            (LaneObjectMode.Vehicle,),
+            (LaneObjectMode.Vehicle,),
+            (LaneObjectMode.Vehicle,),
         ]
     )
     # traces = scenario.simulate(70, 0.05)
-    traces = scenario.verify(60, 0.05)
+    traces = scenario.simulate(70, 0.05)
 
-    fig = plt.figure(2)
-    fig = plot_map(tmp_map, 'g', fig)
-    fig = plot_reachtube_tree(traces, 'car1', 1, [2], 'b', fig)
-    fig = plot_reachtube_tree(traces, 'car2', 1, [2], 'r', fig)
-    fig = plot_reachtube_tree(traces, 'car3', 1, [2], 'r', fig)
-    fig = plot_reachtube_tree(traces, 'car4', 1, [2], 'r', fig)
-    plt.show()
-        
-
-    # fig = go.Figure()
-    # fig = plotly_simulation_anime(traces, tmp_map, fig)
-    # fig.show()
-
+    fig = go.Figure()
+    fig = simulation_anime_trail(traces, tmp_map, fig, 1,
+                                 2, 'lines', 'trace', print_dim_list=[1, 2])
+    fig.show()

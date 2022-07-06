@@ -18,6 +18,7 @@ class Verifier:
         self,
         init_list: List[float],
         init_mode_list: List[str],
+        static_list: List[str],
         agent_list:List[BaseAgent], 
         transition_graph, 
         time_horizon, 
@@ -29,6 +30,8 @@ class Verifier:
             root.init[agent.id] = init_list[i]
             init_mode = [elem.name for elem in init_mode_list[i]]
             root.mode[agent.id] = init_mode 
+            init_static = [elem.name for elem in static_list[i]]
+            root.static[agent.id] = init_static
             root.agent[agent.id] = agent 
             root.type = 'reachtube'
         self.reachtube_tree_root = root 
