@@ -137,6 +137,8 @@ class Lambda:
                         return a.value
                     elif isinstance(a, ast.Name):
                         return a.id
+                    elif isinstance(a, ast.Index):
+                        return a.value.id
                     else:
                         raise TypeError(f"weird annotation? {a}")
                 if isinstance(a.annotation, ast.Subscript) \
