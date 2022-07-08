@@ -56,7 +56,7 @@ if __name__ == "__main__":
         ]
     )
 
-    traces = scenario.simulate(20, 1)
+    traces = scenario.simulate(30, 1)
     print_trace(trans_dict(traces, 0, 0, None))
     # traces = scenario.verify(70, 0.05)
     # fig = go.Figure()
