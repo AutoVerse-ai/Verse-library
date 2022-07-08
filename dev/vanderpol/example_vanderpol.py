@@ -11,11 +11,11 @@ def dynamics1(t, state, u):
 
 def dynamics2(t, state, u):
     x1, x2, x1_hat, x2_hat = state 
-    w1, w2, w1_hat, w2_hat = u 
-    x1_dot = w1_hat*x2_hat+1.1*(x2-x2_hat)+2.3*(w1-w1_hat)
-    x2_dot = w2*x2-w2*x1_hat**2*x2-x1_hat+6.084*(x1-x1_hat) + 2.208*(w2-w2_hat)
-    x1_hat_dot = w1*x2+1.1*(x2_hat-x2)+2.3*(w1_hat-w1)
-    x2_hat_dot = w2_hat*x2_hat-w2_hat*x1**2*x2_hat-x1+6.084*(x1_hat-x1) + 2.208*(w2_hat-w2)
+    x1_dot = 1.1*x2-0.6
+    x2_dot = 15.5*x1 - 16.5*x1_hat - 0.9*x2*(x1_hat**2 - 1.0) - 3.15
+    
+    x1_hat_dot = 1.1*x2_hat-0.2*x2+0.6
+    x2_hat_dot = 15.5*x1_hat - 16.5*x1 - 1.1*x2_hat*(x1**2 - 1.0) + 3.15
     return [x1_dot, x2_dot, x1_hat_dot, x2_hat_dot]
 
 def TC_simulate1(mode, initialCondition, time_bound, time_step, noise=False):
@@ -61,7 +61,7 @@ if __name__ == "__main__":
         res = TC_simulate1(
             None, 
             [1.4, 2.3],
-            6,
+            1,
             0.1,
             True 
         )
@@ -71,7 +71,7 @@ if __name__ == "__main__":
     res = TC_simulate2(
         None, 
         [1.4, 2.3, 1.4, 2.3],
-        6,
+        1,
         0.1,
     )
 
