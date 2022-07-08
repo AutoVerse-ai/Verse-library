@@ -669,19 +669,19 @@ def reachtube_tree_single(root, agent_id, fig=go.Figure(), x_dim: int = 1, y_dim
                                  opacity=0.5,
                                  line_color='rgba(255,255,255,0)',
                                  showlegend=show_legend))
-        fig.add_trace(go.Scatter(x=trace_x_odd.tolist()+trace_x_even[::-1].tolist(), y=trace_y_odd.tolist()+trace_y_even[::-1].tolist(), mode='lines',
-                                 fill='toself',
-                                 fillcolor=fillcolor,
-                                 opacity=0.5,
-                                 line_color='rgba(255,255,255,0)',
-                                 showlegend=show_legend
-                                 ))
-        fig.add_trace(go.Scatter(x=trace_x_even.tolist()+trace_x_odd[::-1].tolist(), y=trace_y_odd.tolist()+trace_y_even[::-1].tolist(), mode='lines',
-                                 fill='toself',
-                                 fillcolor=fillcolor,
-                                 opacity=0.5,
-                                 line_color='rgba(255,255,255,0)',
-                                 showlegend=show_legend))
+        # fig.add_trace(go.Scatter(x=trace_x_odd.tolist()+trace_x_even[::-1].tolist(), y=trace_y_odd.tolist()+trace_y_even[::-1].tolist(), mode='lines',
+        #                          fill='toself',
+        #                          fillcolor=fillcolor,
+        #                          opacity=0.5,
+        #                          line_color='rgba(255,255,255,0)',
+        #                          showlegend=show_legend
+        #                          ))
+        # fig.add_trace(go.Scatter(x=trace_x_even.tolist()+trace_x_odd[::-1].tolist(), y=trace_y_odd.tolist()+trace_y_even[::-1].tolist(), mode='lines',
+        #                          fill='toself',
+        #                          fillcolor=fillcolor,
+        #                          opacity=0.5,
+        #                          line_color='rgba(255,255,255,0)',
+        #                          showlegend=show_legend))
         queue += node.child
 
     queue = [root]
@@ -974,6 +974,6 @@ def get_text_pos(veh_mode):
         text_pos = 'middle center'
         text = 'S'
     else:
-        print(veh_mode)
-        raise ValueError
+        text_pos = 'middle center'
+        text = veh_mode
     return text_pos, text

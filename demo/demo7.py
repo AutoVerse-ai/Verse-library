@@ -9,6 +9,7 @@ from dryvr_plus_plus.scene_verifier.sensor.base_sensor import BaseSensor
 
 from enum import Enum, auto
 import plotly.graph_objects as go
+from gen_json import print_trace, trans_dict
 
 
 class LaneObjectMode(Enum):
@@ -49,7 +50,6 @@ class State:
 if __name__ == "__main__":
     input_code_name = './demo/example_controller8.py'
     scenario = Scenario()
-
 
     car = CarAgent('car1', file_name=input_code_name)
     scenario.add_agent(car)
@@ -100,16 +100,17 @@ if __name__ == "__main__":
             (LaneObjectMode.Vehicle,),
             (LaneObjectMode.Vehicle,),
         ],
-        
+
     )
-    traces = scenario.simulate(60, 0.05)
+    traces = scenario.simulate(40, 1)
+    print_trace(trans_dict(traces, 0, 0, None))
     # traces = scenario.verify(15, 0.05)
 
     # fig = go.Figure()
     # fig = simulation_anime(traces, tmp_map, fig, 1,
     #                        2, 'lines', 'trace', print_dim_list=[1, 2])
     # fig.show()
-    fig = go.Figure()
-    fig = simulation_tree(traces, tmp_map, fig, 1,
-                          2, 'lines', 'trace', print_dim_list=[1, 2])
-    fig.show()
+    # fig = go.Figure()
+    # fig = simulation_tree(traces, tmp_map, fig, 1,
+    #                       2, 'lines', 'trace', print_dim_list=[1, 2])
+    # fig.show()
