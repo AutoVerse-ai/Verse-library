@@ -4,25 +4,25 @@ x = [x1,x2];
 w = [w1,w2];
 f = [w1*x2,(1-x1^2)*x2*w2-x1];
 var_range = containers.Map;
-var_range(char(x1))=[-2.5,2.5];
-var_range(char(x2))=[-3.0,3.0];
-var_range(char(w1))=[0.9,1.1];
-var_range(char(w2))=[0.9,1.1];
+var_range(char(x1))=[1,2];
+var_range(char(x2))=[1,3];
+var_range(char(w1))=[sym('9/10'),sym('11/10')];
+var_range(char(w2))=[sym('9/10'),sym('11/10')];
 
 % Compute jx and jw
 jx = jacobian(f,x);
 jw = jacobian(f,w);
 
 % Compute jx_lower and jx_upper
-jx_lower = find_min(jx, var_range);
-jx_upper = find_max(jx, var_range);
+jx_lower = sym(round(find_min(jx, var_range),5));
+jx_upper = sym(round(find_max(jx, var_range),5));
 
-jw_lower = find_min(jw, var_range);
-jw_upper = find_max(jw, var_range);
+jw_lower = sym(round(find_min(jw, var_range),5));
+jw_upper = sym(round(find_max(jw, var_range),5));
 
 % Determine delta and epsilon
-delta = [1,1;1,1];
-epsilon = [1,1;1,0];
+delta = [0,1;0,0];
+epsilon = [1,0;0,0];
 
 x_hat = x;
 w_hat = w;
@@ -80,6 +80,68 @@ for i=1:length(d)
     d(i) = subs(f(i), [x,w], [zeta(i,:),pi(i,:)])+alpha(i,:)*(x-x_hat)'+beta(i,:)*(w-w_hat)';
 end
 
+% Check if d is a valid decomposition
+% Update var_range with the _hat variables
+for i=1:length(x)
+    tmp = char(x(i));
+    bound = var_range(tmp);
+    var_range([tmp,'_hat']) = bound;
+end
+for i=1:length(w)
+    tmp = char(w(i));
+    bound = var_range(tmp);
+    var_range([tmp,'_hat']) = bound;
+end
+
+res = true;
+% Check increasing with x
+for i=1:length(d)
+    di=d(i);
+    for j=1:length(x)
+        if i~=j
+            dddx = diff(di, x(j));
+            val = find_min(dddx,var_range);
+            res = res&(val>=0);
+        end
+    end
+end
+
+% Check decreasing with x_hat
+for i=1:length(d)
+    di=d(i);
+    for j=1:length(x_hat)
+        dddx = diff(di, x_hat(j));
+        val = find_max(dddx, var_range);
+        res = res&(val<=0);
+    end
+end
+
+% Check increasing with w
+for i=1:length(d)
+    di=d(i);
+    for j=1:length(w)
+        dddx=diff(di, w(j));
+        val=find_min(dddx,var_range);
+        res = res&(val>=0);
+    end
+end
+
+% Check decreasing with w_hat
+for i=1:length(d)
+    di=d(i);
+    for j=1:length(w_hat)
+        dddx=diff(di, w_hat(j));
+        val=find_max(dddx,var_range);
+        res = res&(val<=0);
+    end
+end
+
+
+if ~res
+    disp 'invalid decomposition'
+    return
+end
+
 d_hat = d;
 for i=1:length(d_hat)
     d_hat(i) = subs(d(i), [x,w,x_hat, w_hat],[x_hat, w_hat, x,w]);
@@ -107,6 +169,6 @@ end
 
 e = [e, e_hat];
 
-vpa(d'4)
+vpa(d', 4)
 vpa([d,d_hat]', 4)
 vpa(e', 4)

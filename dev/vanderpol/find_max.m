@@ -8,7 +8,7 @@ function res = find_max(exprs,var_range)
             f = -exprs(i,j);
             symbols = symvar(f);
             if isempty(symbols)
-                res(i,j) = double(f);
+                res(i,j) = -double(f);
                 continue
             end
             fh = matlabFunction(f,'vars',{symbols});
@@ -20,8 +20,9 @@ function res = find_max(exprs,var_range)
                 lb(k) = bound(1);
                 ub(k) = bound(2);
             end
-            [x,fval] = fmincon(fh,ub,[],[],[],[],lb,ub);
-            res(i,j) = -fval;
+            options = optimoptions('fmincon','Display','off');
+            [x,fval] = fmincon(fh,ub,[],[],[],[],lb,ub,[],options);
+            res(i,j) = -round(fval,10);
         end
     end
 end
