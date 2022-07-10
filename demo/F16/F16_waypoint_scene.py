@@ -79,11 +79,11 @@ def main():
             Note that agents are only initialized *in* a scenario, not individually outside a scenario
         5. genetating the simulation traces or computing the reachable states
     '''
-    F16waypointScene = Scenario()
-    F16Controller = './F16_waypoint_scene.py'
+    f16_waypoint_scene = Scenario()
+    f16_controller = 'F16_waypoint_scene.py'
 
     # Resume here. This next line is the problem
-    # Fighter1 = F16Agent('Fighter1', file_name=F16Controller)
+    # Fighter1 = F16Agent('Fighter1', file_name=f16_controller)
 
     ### Initial Conditions ###
     power = 9 # engine power level (0-10)

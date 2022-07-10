@@ -1,6 +1,5 @@
 '''
-Stanley Bak
-run_f16_sim python version
+Adapted from Stanley Bak's run_f16_sim python version
 '''
 
 import time
