@@ -4,8 +4,8 @@ x = [x1,x2];
 w = [w1,w2];
 f = [w1*x2,(1-x1^2)*x2*w2-x1];
 var_range = containers.Map;
-var_range(char(x1))=[1,2];
-var_range(char(x2))=[1,3];
+var_range(char(x1))=[-10000,10000];
+var_range(char(x2))=[-10000,10000];
 var_range(char(w1))=[sym('9/10'),sym('11/10')];
 var_range(char(w2))=[sym('9/10'),sym('11/10')];
 
@@ -21,8 +21,8 @@ jw_lower = sym(round(find_min(jw, var_range),5));
 jw_upper = sym(round(find_max(jw, var_range),5));
 
 % Determine delta and epsilon
-delta = [0,1;0,0];
-epsilon = [1,0;0,0];
+delta = [1,1;0,1];
+epsilon = [1,1;1,1];
 
 x_hat = x;
 w_hat = w;

@@ -22,7 +22,7 @@ function res = find_min(exprs,var_range)
             end
             options = optimoptions('fmincon','Display','off');
             [x,fval] = fmincon(fh,ub,[],[],[],[],lb,ub,[],options);
-            res(i,j) = round(fval,10);
+            res(i,j) = round(fval,5);
         end
     end
 end
