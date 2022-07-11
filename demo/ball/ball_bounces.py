@@ -61,7 +61,7 @@ def controller(ego: State, others: State):
     '''  if ego.x - others[1].x < 1 and ego.y - others[1].y < 1:
         output.vy = -ego.vy
         output.vx = -ego.vx'''
-  # TODO: We would like to be able to write something like this, but currently not allowed.
+    # TODO: We would like to be able to write something like this, but currently not allowed.
     return output
 
 
@@ -100,5 +100,5 @@ if __name__ == "__main__":
     # TODO: There should be a print({traces}) function
     fig = go.Figure()
     fig = simulation_anime_trail(
-        traces, tmp_map, fig, 1, 2, 'fill', 'trace', print_dim_list=[1, 2])
+        traces, None, fig, 1, 2, 'fill', 'trace', print_dim_list=[1, 2])
     fig.show()

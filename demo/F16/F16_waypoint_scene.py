@@ -9,6 +9,7 @@ from typing import Tuple, List
 import numpy as np
 from scipy.integrate import ode
 from enum import Enum, auto
+import copy
 
 from demo.F16.aerobench.run_f16_sim import F16Agent
 from dryvr_plus_plus.scene_verifier.map.lane_map import LaneMap
@@ -69,7 +70,7 @@ def controller(ego:State, others:State):
     output = copy.deepcopy(ego)
     return output
 
-def main():
+if __name__ == '__main__':
     ''' The main function defines and simulates a scene.
         Defining and using a  scenario involves the following 5 easy steps:
         1. creating a basic scenario object with Scenario()
@@ -83,7 +84,7 @@ def main():
     f16_controller = 'F16_waypoint_scene.py'
 
     # Resume here. This next line is the problem
-    # Fighter1 = F16Agent('Fighter1', file_name=f16_controller)
+    Fighter1 = F16Agent('Fighter1', file_name=f16_controller)
 
     ### Initial Conditions ###
     power = 9 # engine power level (0-10)
@@ -150,5 +151,3 @@ def main():
     plt.savefig(filename)
     print(f"Made {filename}")
 
-if __name__ == '__main__':
-    main()
