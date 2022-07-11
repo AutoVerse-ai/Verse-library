@@ -102,7 +102,7 @@ if __name__ == "__main__":
         ],
 
     )
-    traces = scenario.simulate(40, 1)
+    traces = scenario.simulate(40, 2)
     print_trace(trans_dict(traces, 0, 0, None))
     # traces = scenario.verify(15, 0.05)
 
