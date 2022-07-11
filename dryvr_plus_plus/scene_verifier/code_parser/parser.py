@@ -1,4 +1,4 @@
-import ast, copy
+import ast, copy, warnings
 from typing import List, Dict, Union, Optional, Any, Tuple
 from dataclasses import dataclass, field, fields
 from enum import Enum, auto
@@ -684,6 +684,10 @@ def proc(node: ast.AST, env: Env, veri: bool) -> Any:
         return proc(node.value, env, veri) if node.value != None else None
     elif isinstance(node, ast.IfExp):
         return node
+    elif isinstance(node, ast.Expr):
+        if isinstance(node.value, ast.Call):
+            warnings.warn(f"Effects of this call will not be included in the result: \"{unparse(node.value)}\"")
+        return None
 
     # Literals
     elif isinstance(node, ast.List):
