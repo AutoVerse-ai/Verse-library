@@ -61,7 +61,7 @@ if __name__ == "__main__":
         res = TC_simulate1(
             None, 
             [1.4, 2.3],
-            2,
+            10,
             0.1,
             True 
         )
@@ -72,23 +72,26 @@ if __name__ == "__main__":
         plt.figure(1)
         plt.plot(res[:,0], res[:,2], 'b')
 
-    res = TC_simulate2(
-        None, 
-        [1.4, 2.3, 1.4, 2.3],
-        100,
-        0.01,
-    )
+        plt.figure(2)
+        plt.plot(res[:,1], res[:,2], 'b')
 
-    res = np.array(res)
+    # res = TC_simulate2(
+    #     None, 
+    #     [1.4, 2.3, 1.4, 2.3],
+    #     100,
+    #     0.01,
+    # )
 
-    plt.figure(0)
-    plt.plot(res[:,0], res[:,1],'r')
-    plt.plot(res[:,0], res[:,3],'g')
-    plt.title('x1')
+    # res = np.array(res)
 
-    plt.figure(1)
-    plt.plot(res[:,0], res[:,2],'r')
-    plt.plot(res[:,0], res[:,4],'g')
-    plt.title('x2')
+    # plt.figure(0)
+    # plt.plot(res[:,0], res[:,1],'r')
+    # plt.plot(res[:,0], res[:,3],'g')
+    # plt.title('x1')
+
+    # plt.figure(1)
+    # plt.plot(res[:,0], res[:,2],'r')
+    # plt.plot(res[:,0], res[:,4],'g')
+    # plt.title('x2')
     
     plt.show()

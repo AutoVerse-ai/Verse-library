@@ -1,13 +1,13 @@
 syms x1 x2 w1 w2 real
 
 x = [x1,x2];
-w = [w1,w2];
-f = [w1*x2,(1-x1^2)*x2*w2-x1];
+w = [];
+f = [x2^2+2,x1];
 var_range = containers.Map;
-var_range(char(x1))=[-10000,10000];
-var_range(char(x2))=[-10000,10000];
-var_range(char(w1))=[sym('9/10'),sym('11/10')];
-var_range(char(w2))=[sym('9/10'),sym('11/10')];
+var_range(char(x1))=[sym('-5'),sym('5')];
+var_range(char(x2))=[sym('-5'),sym('5')];
+var_range(char(w1))=[sym('-1/10'),sym('1/10')];
+var_range(char(w2))=[sym('-1/10'),sym('1/10')];
 
 % Compute jx and jw
 jx = jacobian(f,x);
@@ -21,7 +21,7 @@ jw_lower = sym(round(find_min(jw, var_range),5));
 jw_upper = sym(round(find_max(jw, var_range),5));
 
 % Determine delta and epsilon
-delta = [1,1;0,1];
+delta = [1,1;1,1];
 epsilon = [1,1;1,1];
 
 x_hat = x;
@@ -77,7 +77,11 @@ end
 % Substitute zeta, alpha, pi and beta
 d = f;
 for i=1:length(d)
-    d(i) = subs(f(i), [x,w], [zeta(i,:),pi(i,:)])+alpha(i,:)*(x-x_hat)'+beta(i,:)*(w-w_hat)';
+    if isempty(beta)
+        d(i) = subs(f(i), [x,w], [zeta(i,:),pi(i,:)])+alpha(i,:)*(x-x_hat)';        
+    else
+        d(i) = subs(f(i), [x,w], [zeta(i,:),pi(i,:)])+alpha(i,:)*(x-x_hat)'+beta(i,:)*(w-w_hat)';
+    end
 end
 
 % Check if d is a valid decomposition
@@ -136,6 +140,7 @@ for i=1:length(d)
     end
 end
 
+res = check_mixed(d,x,x_hat,w,w_hat,var_range);
 
 if ~res
     disp 'invalid decomposition'
