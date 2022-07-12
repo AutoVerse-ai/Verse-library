@@ -22,7 +22,7 @@ if __name__ == "__main__":
     scenario.add_agent(car)
     tmp_map = SimpleMap3()
     scenario.set_map(tmp_map)
-    scenario.set_sensor(ThermoSensor())
+    # scenario.set_sensor(ThermoSensor())
     # modify mode list input
     scenario.set_init(
         [

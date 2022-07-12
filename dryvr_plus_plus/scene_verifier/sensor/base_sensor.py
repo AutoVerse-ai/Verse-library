@@ -62,7 +62,7 @@ class BaseSensor():
                     controller_args = agent.controller.controller.args
                     arg_type = None
                     for arg in controller_args:
-                        if arg[0] != 'ego':
+                        if arg[0] == 'ego':
                             arg_type = arg[1]
                             break
                     if arg_type is None:
