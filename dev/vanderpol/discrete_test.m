@@ -12,8 +12,15 @@ for j=1:20
         x_plus = x;
         w1 = unifrnd(0.9, 1.1);
         w2 = unifrnd(0.9, 1.1);
-        x_plus(1) = x(1) + dt * x(2)*w1;
+%         syms w1 w2 real
+        x_plus(1) = x(1) + dt*x(2)*w1;
         x_plus(2) = x(2) + dt*((1-x(1)^2)*x(2)*w2-x(1));
+        var_range = containers.Map;
+%         var_range(char(w1))=[0.9,1.1];
+%         var_range(char(w2))=[0.9,1.1];
+        
+%         x_plus(1) = find_min(expr1, var_range);
+%         x_plus(2) = find_max(expr2, var_range);
         t0 = t0+dt;
         traj = [traj;x_plus];
         t = [t,t0];
@@ -27,6 +34,8 @@ for j=1:20
     plot(t, traj(:,2),'b')
     hold on
 end
+
+
 x10 = 1.4;
 x20 = 2.3;
 x10_hat = 1.4;
@@ -61,3 +70,4 @@ plot(t, traj(:,3),'g')
 figure(2)
 plot(t, traj(:,2),'r')
 plot(t, traj(:,4),'g')
+
