@@ -15,7 +15,7 @@ class State:
         pass
 
 
-def controller(ego: State, other: State, lane_map):
+def controller(ego: State, lane_map):
     output = copy.deepcopy(ego)
 
     return output
