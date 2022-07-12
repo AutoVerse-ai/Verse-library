@@ -83,6 +83,7 @@ class BaseSensor():
                             arg_type = arg[1]
                             break
                     if arg_type is None:
+                        continue
                         raise ValueError(f"Invalid arg for others")
                     cont_var = agent.controller.state_defs[arg_type].cont
                     disc_var = agent.controller.state_defs[arg_type].disc

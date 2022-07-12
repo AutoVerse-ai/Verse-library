@@ -13,7 +13,7 @@ class State:
     cycle_time = 0.0
     thermo_mode: ThermoMode = ThermoMode.ON
 
-    def __init__(self, temp, cycle_time, thermo_mode: ThermoMode):
+    def __init__(self, temp, total_time, cycle_time, thermo_mode: ThermoMode):
         pass
 
 

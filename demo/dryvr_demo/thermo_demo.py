@@ -30,8 +30,8 @@ if __name__ == "__main__":
             tuple([ThermoMode.ON]),
         ]
     )
-    traces = scenario.verify(3.5, 0.05)
+    traces = scenario.simulate(3.5, 0.05)
     fig = go.Figure()
-    fig = reachtube_tree(traces, tmp_map, fig, 2, 1,
-                         'lines', 'trace', print_dim_list=[2, 1])
+    fig = simulation_tree(traces, tmp_map, fig, 2, 1,
+                          'lines', 'trace', print_dim_list=[2, 1])
     fig.show()
