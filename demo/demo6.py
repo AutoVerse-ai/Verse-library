@@ -93,19 +93,14 @@ if __name__ == "__main__":
         ]
     )
     traces = scenario.simulate(80, 0.05)
-    # traces = scenario.verify(80, 0.05)
-
-    # fig = plt.figure(2)
-    # fig = plot_map(tmp_map, 'g', fig)
-    # fig = plot_reachtube_tree(traces, 'car1', 1, [2], 'b', fig)
-    # fig = plot_reachtube_tree(traces, 'car2', 1, [2], 'r', fig)
-    # fig = plot_reachtube_tree(traces, 'car3', 1, [2], 'r', fig)
-    # fig = plot_reachtube_tree(traces, 'car4', 1, [2], 'r', fig)
-    # fig = plot_reachtube_tree(traces, 'car5', 1, [2], 'r', fig)
-    # fig = plot_reachtube_tree(traces, 'car6', 1, [2], 'r', fig)
-    # plt.show()
 
     fig = go.Figure()
     fig = simulation_anime(traces, tmp_map, fig, 1,
                            2, 'lines', 'trace', print_dim_list=[1, 2])
+    fig.show()
+
+    traces = scenario.verify(80, 0.05)
+    fig = go.Figure()
+    fig = reachtube_tree(traces, tmp_map, fig, 1, 2,
+                         'lines', print_dim_list=[1, 2])
     fig.show()
