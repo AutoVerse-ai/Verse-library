@@ -1,14 +1,14 @@
 import itertools, copy
-import dryvr_plus_plus.scene_verifier.code_parser.astunparser as astunparser
+import numpy as np
 
-import numpy as np 
+from dryvr_plus_plus.scene_verifier.code_parser.parser import unparse 
 
 class ResetExpression():
     def __init__(self, reset):
         reset_var, reset_val_ast = reset 
         self.var = reset_var
         self.val_ast = reset_val_ast
-        self.expr = astunparser.unparse(reset_val_ast).strip('\n')
+        self.expr = unparse(reset_val_ast)
 
     def __eq__(self, o) -> bool:
         if o is None:

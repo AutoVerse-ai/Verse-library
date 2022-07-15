@@ -51,11 +51,11 @@ class BaseSensor():
             for agent_id in state_dict:
                 if agent_id == agent.id:
                     # Get type of ego
-                    controller_args = agent.controller.controller.args
+                    controller_args = agent.controller.args
                     arg_type = None
                     for arg in controller_args:
-                        if arg[0] != 'ego':
-                            arg_type = arg[1]
+                        if arg.name != 'ego':
+                            arg_type = arg.typ
                             break 
                     if arg_type is None:
                         raise ValueError(f"Invalid arg for ego")
@@ -64,13 +64,13 @@ class BaseSensor():
                     stat_var = agent.controller.state_defs[arg_type].static
                     set_states_2d(cont, disc, 'ego', state_dict[agent_id], cont_var, disc_var, stat_var)
                 else:
-                    controller_args = agent.controller.controller.args
+                    controller_args = agent.controller.args
                     arg_type = None
                     arg_name = None
                     for arg in controller_args:
-                        if arg[0] != 'ego' and 'map' not in arg[0]:
-                            arg_name = arg[0]
-                            arg_type = arg[1]
+                        if arg.name != 'ego' and 'map' not in arg.name:
+                            arg_name = arg.name
+                            arg_type = arg.typ
                             break 
                     if arg_type is None:
                         raise ValueError(f"Invalid arg for others")
@@ -83,11 +83,11 @@ class BaseSensor():
             for agent_id in state_dict:
                 if agent_id == agent.id:
                     # Get type of ego
-                    controller_args = agent.controller.controller.args
+                    controller_args = agent.controller.args
                     arg_type = None
                     for arg in controller_args:
-                        if arg[0] == 'ego':
-                            arg_type = arg[1]
+                        if arg.name != 'ego':
+                            arg_type = arg.typ
                             break 
                     if arg_type is None:
                         raise ValueError(f"Invalid arg for ego")
@@ -96,13 +96,13 @@ class BaseSensor():
                     stat_var = agent.controller.state_defs[arg_type].static
                     set_states_3d(cont, disc, 'ego', state_dict[agent_id], cont_var, disc_var, stat_var)
                 else:
-                    controller_args = agent.controller.controller.args
+                    controller_args = agent.controller.args
                     arg_type = None
                     arg_name = None
                     for arg in controller_args:
-                        if arg[0] != 'ego' and 'map' not in arg[0]:
-                            arg_name = arg[0]
-                            arg_type = arg[1]
+                        if arg.name != 'ego' and 'map' not in arg.name:
+                            arg_name = arg.name
+                            arg_type = arg.typ
                             break 
                     if arg_type is None:
                         raise ValueError(f"Invalid arg for others")

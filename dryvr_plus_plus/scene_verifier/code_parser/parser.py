@@ -5,6 +5,17 @@ from enum import Enum, auto
 from dryvr_plus_plus.scene_verifier.code_parser import astunparser
 from dryvr_plus_plus.scene_verifier.utils.utils import find
 
+def merge_conds(c):
+    if len(c) == 0:
+        return ast.Constant(True)
+    if len(c) == 1:
+        return c[0]
+    else:
+        return ast.BoolOp(ast.And(), c)
+
+def compile_expr(e):
+    return compile(ast.fix_missing_locations(ast.Expression(e)), "", "eval")
+
 def unparse(e):
     return astunparser.unparse(e).strip("\n")
 
@@ -110,7 +121,7 @@ class Reduction(CustomIR):
 CustomIR.set_fields(Reduction)
 
 @dataclass
-class Assert:
+class _Assert:
     cond: ast.expr
     label: Optional[str]
     pre: List[ast.expr] = field(default_factory=list)
@@ -121,14 +132,34 @@ class Assert:
         return len(self.pre) == len(o.pre) and all(ControllerIR.ir_eq(a, b) for a, b in zip(self.pre, o.pre)) and ControllerIR.ir_eq(self.cond, o.cond)
 
 @dataclass
+class CompiledAssert:
+    cond: Any
+    label: str
+    pre: Any
+
+@dataclass
+class Assert:
+    cond: ast.expr
+    label: str
+    pre: ast.expr
+
+@dataclass
+class LambdaArg:
+    name: str
+    typ: Optional[str]
+    is_list: bool
+
+LambdaArgs = List[LambdaArg]
+
+@dataclass
 class Lambda:
     """A closure. Comes from either a `lambda` or a `def`ed function"""
-    args: List[Tuple[str, Optional[str]]]
+    args: LambdaArgs
     body: Optional[ast.expr]
-    asserts: List[Assert]
+    asserts: List[_Assert]
 
     @staticmethod
-    def from_ast(tree: Union[ast.FunctionDef, ast.Lambda], env: "Env", veri: bool) -> "Lambda":
+    def from_ast(tree: Union[ast.FunctionDef, ast.Lambda], env: "Env") -> "Lambda":
         args = []
         for a in tree.args.args:
             if a.annotation != None:
@@ -147,18 +178,18 @@ class Lambda:
                 else:
                     typ = handle_simple_ann(a.annotation)
                     is_list = False
-                args.append((a.arg, typ, is_list))
+                args.append(LambdaArg(a.arg, typ, is_list))
             else:
-                args.append((a.arg, None, False))
+                args.append(LambdaArg(a.arg, None, False))
         env.push()
-        for a, typ, is_list in args:
-            env.add_hole(a, typ)
+        for a in args:
+            env.add_hole(a.name, a.typ)
         ret = None
         if isinstance(tree, ast.FunctionDef):
             for node in tree.body:
-                ret = proc(node, env, veri)
+                ret = proc(node, env)
         elif isinstance(tree, ast.Lambda):
-            ret = proc(tree.body, env, veri)
+            ret = proc(tree.body, env)
         asserts = env.scopes[0].asserts
         env.pop()
         return Lambda(args, ret, asserts)
@@ -167,15 +198,15 @@ class Lambda:
     def empty() -> "Lambda":
         return Lambda(args=[], body=None, asserts=[])
 
-    def apply(self, args: List[ast.expr]) -> Tuple[List[Assert], ast.expr]:
+    def apply(self, args: List[ast.expr]) -> Tuple[List[_Assert], ast.expr]:
         ret = copy.deepcopy(self.body)
-        subst = ArgSubstituter({k: v for (k, _, _), v in zip(self.args, args)})
+        subst = ArgSubstituter({a.name: v for a, v in zip(self.args, args)})
         ret = subst.visit(ret)
-        def visit_assert(a: Assert):
+        def visit_assert(a: _Assert):
             a = copy.deepcopy(a)
             pre = [subst.visit(p) for p in a.pre]
             cond = subst.visit(a.cond)
-            return Assert(cond, a.label, pre)
+            return _Assert(cond, a.label, pre)
         asserts = [visit_assert(a) for a in copy.deepcopy(self.asserts)]
         return asserts, ret
 
@@ -184,7 +215,7 @@ ast_dump = lambda node, dump=False: ast.dump(node) if dump else unparse(node)
 @dataclass
 class ScopeLevel:
     v: Dict[str, ScopeValue] = field(default_factory=dict)
-    asserts: List[Assert] = field(default_factory=list)
+    asserts: List[_Assert] = field(default_factory=list)
 
 class ArgSubstituter(ast.NodeTransformer):
     args: Dict[str, ast.expr]
@@ -199,21 +230,29 @@ class ArgSubstituter(ast.NodeTransformer):
         return node
 
 @dataclass
+class ModePath:
+    cond: Any
+    cond_veri: ast.expr
+    var: str
+    val: Any
+    val_veri: ast.expr
+
+@dataclass
 class ControllerIR:
-    controller: Optional[Lambda]
-    controller_veri: Optional[Lambda]
-    unsafe: Optional[Lambda]
-    asserts: List[Assert]
+    args: LambdaArgs
+    paths: List[ModePath]
+    asserts: List[CompiledAssert]
+    asserts_veri: List[Assert]
     state_defs: Dict[str, StateDef]
     mode_defs: Dict[str, ModeDef]
 
     @staticmethod
     def parse(code: Optional[str] = None, fn: Optional[str] = None) -> "ControllerIR":
-        return ControllerIR.from_envs(*Env.parse(code, fn))
+        return ControllerIR.from_env(Env.parse(code, fn))
 
     @staticmethod
     def empty() -> "ControllerIR":
-        return ControllerIR(None, None, None, [], {}, {})
+        return ControllerIR([], [], [], [], {}, {})
 
     @staticmethod
     def dump(node, dump=False):
@@ -227,7 +266,7 @@ class ControllerIR:
             return f"<Lambda args: {node.args} body: {ControllerIR.dump(node.body, dump)} asserts: {ControllerIR.dump(node.asserts, dump)}>"
         if isinstance(node, CondVal):
             return f"<CondVal [{', '.join(f'{ControllerIR.dump(e.val, dump)} if {ControllerIR.dump(e.cond, dump)}' for e in node.elems)}]>"
-        if isinstance(node, Assert):
+        if isinstance(node, _Assert):
             if len(node.pre) > 0:
                 pre = f"[{', '.join(ControllerIR.dump(a, dump) for a in node.pre)}] => "
             else:
@@ -250,27 +289,32 @@ class ControllerIR:
         return ControllerIR.dump(a) == ControllerIR.dump(b)     # FIXME Proper equality checks; dump needed cuz asts are dumb
 
     @staticmethod
-    def from_envs(env, env_veri):
-        top, top_veri = env.scopes[0].v, env_veri.scopes[0].v
+    def from_env(env):
+        top = env.scopes[0].v
         if 'controller' not in top or not isinstance(top['controller'], Lambda):
             raise TypeError("can't find controller")
-        controller = Env.trans_args(top['controller'], False)
-        controller_veri = Env.trans_args(top_veri['controller'], True)
-        unsafe = Env.trans_args(top['unsafe'], False) if 'unsafe' in top else None
-        assert isinstance(controller, Lambda) and isinstance(controller_veri, Lambda) and isinstance(unsafe, (Lambda, type(None)))
-        return ControllerIR(controller, controller_veri, unsafe, env.scopes[0].asserts, env.state_defs, env.mode_defs)
+        controller = top['controller']
+        asserts = [(a.cond, a.label if a.label != None else f"<assert {i}>", merge_conds(a.pre)) for i, a in enumerate(controller.asserts)]
+        asserts_veri = [Assert(Env.trans_args(copy.deepcopy(c), True), l, Env.trans_args(copy.deepcopy(p), True)) for c, l, p in asserts]
+        asserts_sim = [CompiledAssert(compile_expr(Env.trans_args(c, False)), l, compile_expr(Env.trans_args(p, False))) for c, l, p in asserts]
 
-    def getNextModes(self) -> List[Any]:
-        controller_body = self.controller_veri.body 
+        assert isinstance(controller, Lambda)
         paths = []
-        for variable in controller_body:
-            val = controller_body[variable]
+        if not isinstance(controller.body, dict):
+            raise NotImplementedError("non-object return")
+        for var, val in controller.body.items():
             if not isinstance(val, CondVal):
                 continue
             for case in val.elems:
                 if len(case.cond) > 0:
-                    paths.append((case.cond, (variable, case.val)))
-        return paths 
+                    cond = merge_conds(case.cond)
+                    cond_veri = Env.trans_args(copy.deepcopy(cond), True)
+                    val_veri = Env.trans_args(copy.deepcopy(case.val), True)
+                    cond = compile_expr(Env.trans_args(cond, False))
+                    val = compile_expr(Env.trans_args(case.val, False))
+                    paths.append(ModePath(cond, cond_veri, var, val, val_veri))
+
+        return ControllerIR(controller.args, paths, asserts_sim, asserts_veri, env.state_defs, env.mode_defs)
 
 @dataclass
 class Env():
@@ -291,12 +335,9 @@ class Env():
             root = ast.parse(cont, fn)
         else:
             raise TypeError("need at least one of `code` and `fn`")
-        root_veri = copy.deepcopy(root)
         env = Env()
-        proc(root, env, False)
-        env_veri = Env()
-        proc(root_veri, env_veri, True)
-        return env, env_veri
+        proc(root, env)
+        return env
 
     def push(self):
         self.scopes = [ScopeLevel()] + self.scopes
@@ -321,7 +362,7 @@ class Env():
         self.set(name, ast.arg(name, ast.Constant(typ, None)))
 
     def add_assert(self, expr, label):
-        self.scopes[0].asserts.append(Assert(expr, label))
+        self.scopes[0].asserts.append(_Assert(expr, label))
 
     @staticmethod
     def dump_scope(env: ScopeLevel, dump=False):
@@ -343,7 +384,8 @@ class Env():
 
     @staticmethod
     def trans_args(sv: ScopeValue, veri: bool) -> ScopeValue:
-        def trans_condval(cv: CondVal):
+        def trans_condval(cv: CondVal, veri: bool):
+            # raise NotImplementedError("flatten CondVal assignments")
             for i, case in enumerate(cv.elems):
                 cv.elems[i].val = Env.trans_args(case.val, veri)
                 for j, cond in enumerate(case.cond):
@@ -361,14 +403,20 @@ class Env():
                         cond = ast.BoolOp(ast.And(), case.cond) if len(case.cond) > 1 else case.cond[0]
                         ret = ast.IfExp(cond, case.val, ret)
                 return ret
-        """Finish up parsing to turn `ast.arg` placeholders into `ast.Name`s so that the trees can be easily evaluated later"""
+        def trans_reduction(red: Reduction, veri: bool):
+            if veri:
+                red.expr = Env.trans_args(red.expr, True)
+                red.value = Env.trans_args(red.value, True)
+                return red
+            expr = Env.trans_args(red.expr, False)
+            value = Env.trans_args(red.value, False)
+            gen_expr = ast.GeneratorExp(expr, [ast.comprehension(ast.Name(red.it, ctx=ast.Store()), value, [], False)])
+            return ast.Call(ast.Name(str(red.op), ctx=ast.Load()), [gen_expr], [])
 
-        if isinstance(sv, dict):
-            for k, v in sv.items():
-                sv[k] = Env.trans_args(v, veri)
-            return sv
+        if isinstance(sv, Reduction):
+            return trans_reduction(sv, veri)
         if isinstance(sv, CondVal):
-            return trans_condval(sv)
+            return trans_condval(sv, veri)
         if isinstance(sv, ast.AST):
             class ArgTransformer(ast.NodeTransformer):
                 def __init__(self, veri: bool):
@@ -377,13 +425,19 @@ class Env():
                 def visit_arg(self, node):
                     return ast.Name(node.arg, ctx=ast.Load())
                 def visit_CondVal(self, node):
-                    return trans_condval(node)
+                    return trans_condval(node, self.veri)
+                def visit_Reduction(self, node):
+                    return trans_reduction(node, self.veri)
             return ArgTransformer(veri).visit(sv)
+        if isinstance(sv, dict):
+            for k, v in sv.items():
+                sv[k] = Env.trans_args(v, veri)
+            return sv
         if isinstance(sv, Lambda):
             sv.body = Env.trans_args(sv.body, veri)
             sv.asserts = [Env.trans_args(a, veri) for a in sv.asserts]
             return sv
-        if isinstance(sv, Assert):
+        if isinstance(sv, _Assert):
             sv.cond = Env.trans_args(sv.cond, veri)
             sv.pre = [Env.trans_args(p, veri) for p in sv.pre]
             return sv
@@ -391,16 +445,18 @@ class Env():
             sv.expr = Env.trans_args(sv.expr, veri)
             sv.value = Env.trans_args(sv.value, veri)
             return sv
+        print(ControllerIR.dump(sv, True))
+        raise NotImplementedError(str(sv.__class__))
 
 ScopeValueMap = Dict[str, ScopeValue]
 
-def merge_if(test: ast.expr, trues: Env, falses: Env, env: Env, veri: bool):
+def merge_if(test: ast.expr, trues: Env, falses: Env, env: Env):
     # `true`, `false` and `env` should have the same level
     for true, false in zip(trues.scopes, falses.scopes):
-        merge_if_single(test, true.v, false.v, env, veri)
+        merge_if_single(test, true.v, false.v, env)
     env.scopes[0].asserts = merge_assert(test, trues.scopes[0].asserts, falses.scopes[0].asserts, env.scopes[0].asserts)
 
-def merge_assert(test: ast.expr, trues: List[Assert], falses: List[Assert], orig: List[Assert]):
+def merge_assert(test: ast.expr, trues: List[_Assert], falses: List[_Assert], orig: List[_Assert]):
     def merge_cond(test, asserts):
         for a in asserts:
             a.pre.append(test)
@@ -413,7 +469,7 @@ def merge_assert(test: ast.expr, trues: List[Assert], falses: List[Assert], orig
     m_trues, m_falses = merge_cond(test, trues), merge_cond(ast.UnaryOp(ast.Not(), test), falses)
     return m_trues + m_falses + orig
 
-def merge_if_single(test, true: ScopeValueMap, false: ScopeValueMap, scope: Union[Env, ScopeValueMap], veri: bool):
+def merge_if_single(test, true: ScopeValueMap, false: ScopeValueMap, scope: Union[Env, ScopeValueMap]):
     def lookup(s, k):
         if isinstance(s, Env):
             return s.lookup(k)
@@ -436,7 +492,7 @@ def merge_if_single(test, true: ScopeValueMap, false: ScopeValueMap, scope: Unio
                 assign(scope, var, {})
             var_true_emp, var_false_emp, var_scope = true.get(var, {}), false.get(var, {}), lookup(scope, var)
             assert isinstance(var_true_emp, dict) and isinstance(var_false_emp, dict) and isinstance(var_scope, dict)
-            merge_if_single(test, var_true_emp, var_false_emp, var_scope, veri)
+            merge_if_single(test, var_true_emp, var_false_emp, var_scope)
         else:
             var_orig = lookup(scope, var)
             if_val = merge_if_val(test, var_true, var_false, var_orig)
@@ -478,20 +534,20 @@ def merge_if_val(test, true: Optional[ScopeValue], false: Optional[ScopeValue], 
         return CondVal(ret.elems + orig.elems)
     return ret
 
-def proc_assign(target: ast.AST, val, env: Env, veri: bool):
+def proc_assign(target: ast.AST, val, env: Env):
     def proc_assign_attr(value, attr, val):
-        if proc(value, env, veri) == None:
-            proc_assign(value, {}, env, veri)
-        obj = proc(value, env, veri)
+        if proc(value, env) == None:
+            proc_assign(value, {}, env)
+        obj = proc(value, env)
         if isinstance(val, ast.AST):
-            val = proc(val, env, veri)
+            val = proc(val, env)
             if val != None:
                 obj[attr] = val
         else:
             obj[attr] = val
     if isinstance(target, ast.Name):
         if isinstance(val, ast.AST):
-            val = proc(val, env, veri)
+            val = proc(val, env)
             if val != None:
                 if isinstance(val, ast.arg):
                     assert isinstance(val.annotation, ast.Constant)
@@ -521,13 +577,10 @@ START_OF_MAIN = "--start-of-main--"
 
 # NOTE `ast.arg` used as a placeholder for idents we don't know the value of.
 # This is fine as it's never used in expressions
-# NOTE `veri` as a flag to create 2 versions of ASTs, one used for simulation and one for
-# verification. This is needed as one form is easier to be directly evaluated while the other easier
-# for verification. The differences between them means they can't be easily converted to one another
-def proc(node: ast.AST, env: Env, veri: bool) -> Any:
+def proc(node: ast.AST, env: Env) -> Any:
     if isinstance(node, ast.Module):
         for node in node.body:
-            if proc(node, env, veri) == START_OF_MAIN:
+            if proc(node, env) == START_OF_MAIN:
                 break
     elif not_ir_ast(node):
         return node
@@ -537,14 +590,14 @@ def proc(node: ast.AST, env: Env, veri: bool) -> Any:
     elif isinstance(node, ast.If):
         if is_main_check(node):
             return START_OF_MAIN
-        test = proc(node.test, env, veri)
+        test = proc(node.test, env)
         true_scope = copy.deepcopy(env)
         for true in node.body:
-            proc(true, true_scope, veri)
+            proc(true, true_scope)
         false_scope = copy.deepcopy(env)
         for false in node.orelse:
-            proc(false, false_scope, veri)
-        merge_if(test, true_scope, false_scope, env, veri)
+            proc(false, false_scope)
+        merge_if(test, true_scope, false_scope, env)
 
     # Definition/Assignment
     elif isinstance(node, ast.Import) or isinstance(node, ast.ImportFrom):
@@ -552,13 +605,13 @@ def proc(node: ast.AST, env: Env, veri: bool) -> Any:
             env.add_hole(alias.name if alias.asname == None else alias.asname, None)
     elif isinstance(node, ast.Assign):
         if len(node.targets) == 1:
-            proc_assign(node.targets[0], node.value, env, veri)
+            proc_assign(node.targets[0], node.value, env)
         else:
             raise NotImplementedError("unpacking not supported")
     elif isinstance(node, ast.Name):# and isinstance(node.ctx, ast.Load):
         return env.lookup(node.id)
     elif isinstance(node, ast.Attribute) and isinstance(node.ctx, ast.Load):
-        obj = proc(node.value, env, veri)
+        obj = proc(node.value, env)
         # TODO since we know what the mode and state types contain we can do some typo checking
         if not_ir_ast(obj):
             if obj.arg in env.mode_defs:
@@ -567,9 +620,9 @@ def proc(node: ast.AST, env: Env, veri: bool) -> Any:
             return attr
         return obj[node.attr]
     elif isinstance(node, ast.FunctionDef):
-        env.set(node.name, Lambda.from_ast(node, env, veri))
+        env.set(node.name, Lambda.from_ast(node, env))
     elif isinstance(node, ast.Lambda):
-        return Lambda.from_ast(node, env, veri)
+        return Lambda.from_ast(node, env)
     elif isinstance(node, ast.ClassDef):
         def grab_names(nodes: List[ast.stmt]):
             names = []
@@ -605,7 +658,7 @@ def proc(node: ast.AST, env: Env, veri: bool) -> Any:
             env.state_defs[node.name] = state_vars
         env.add_hole(node.name, None)
     elif isinstance(node, ast.Assert):
-        cond = proc(node.test, env, veri)
+        cond = proc(node.test, env)
         if node.msg == None:
             env.add_assert(cond, None)
         elif isinstance(node.msg, ast.Constant):
@@ -615,20 +668,20 @@ def proc(node: ast.AST, env: Env, veri: bool) -> Any:
 
     # Expressions
     elif isinstance(node, ast.UnaryOp):
-        return ast.UnaryOp(node.op, proc(node.operand, env, veri))
+        return ast.UnaryOp(node.op, proc(node.operand, env))
     elif isinstance(node, ast.BinOp):
-        return ast.BinOp(proc(node.left, env, veri), node.op, proc(node.right, env, veri))
+        return ast.BinOp(proc(node.left, env), node.op, proc(node.right, env))
     elif isinstance(node, ast.BoolOp):
-        return ast.BoolOp(node.op, [proc(val, env, veri) for val in node.values])
+        return ast.BoolOp(node.op, [proc(val, env) for val in node.values])
     elif isinstance(node, ast.Compare):
         if len(node.ops) > 1 or len(node.comparators) > 1:
             raise NotImplementedError("too many comparisons")
-        return ast.Compare(proc(node.left, env, veri), node.ops, [proc(node.comparators[0], env, veri)])
+        return ast.Compare(proc(node.left, env), node.ops, [proc(node.comparators[0], env)])
     elif isinstance(node, ast.Call):
-        fun = proc(node.func, env, veri)
+        fun = proc(node.func, env)
 
         if isinstance(fun, Lambda):
-            args = [proc(a, env, veri) for a in node.args]
+            args = [proc(a, env) for a in node.args]
             asserts, ret = fun.apply(args)
             env.scopes[0].asserts.extend(asserts)
             return ret
@@ -636,14 +689,14 @@ def proc(node: ast.AST, env: Env, veri: bool) -> Any:
             if isinstance(fun.value, ast.arg) and fun.value.arg == "copy" and fun.attr == "deepcopy":
                 if len(node.args) > 1:
                     raise ValueError("too many args to `copy.deepcopy`")
-                return proc(node.args[0], env, veri)
+                return proc(node.args[0], env)
             return node
         if isinstance(fun, ast.arg):
             if fun.arg == "copy.deepcopy":
                 raise Exception("unreachable")
             else:
                 ret = copy.deepcopy(node)
-                ret.args = [proc(a, env, veri) for a in ret.args]
+                ret.args = [proc(a, env) for a in ret.args]
             return ret
         if isinstance(node.func, ast.Name):
             name = node.func.id
@@ -661,33 +714,27 @@ def proc(node: ast.AST, env: Env, veri: bool) -> Any:
                 raise NotImplementedError("complex generator target")
             env.push()
             env.add_hole(target.id, None)
-            if veri:
-                op = ReductionType.from_str(name)
-                def cond_trans(e: ast.expr, c: ast.expr) -> ast.expr:
-                    if op == ReductionType.Any:
-                        return ast.BoolOp(ast.And(), [e, c])
-                    else:
-                        return ast.BoolOp(ast.Or(), [e, ast.UnaryOp(ast.Not(), c)])
-                expr = proc(expr, env, veri)
-                expr = cond_trans(expr, ast.BoolOp(ast.And(), ifs)) if len(ifs) > 0 else expr
-                ret = Reduction(op, expr, target.id, proc(iter, env, veri))
-            else:
-                gens.elt = proc(gens.elt, env, veri)
-                gen.iter = proc(gen.iter, env, veri)
-                gen.ifs = [proc(cond, env, veri) for cond in gen.ifs]
-                ret = node
+            op = ReductionType.from_str(name)
+            def cond_trans(e: ast.expr, c: ast.expr) -> ast.expr:
+                if op == ReductionType.Any:
+                    return ast.BoolOp(ast.And(), [e, c])
+                else:
+                    return ast.BoolOp(ast.Or(), [e, ast.UnaryOp(ast.Not(), c)])
+            expr = proc(expr, env)
+            expr = cond_trans(expr, ast.BoolOp(ast.And(), ifs)) if len(ifs) > 0 else expr
+            ret = Reduction(op, expr, target.id, proc(iter, env))
             env.pop()
             return ret
     elif isinstance(node, ast.Return):
-        return proc(node.value, env, veri) if node.value != None else None
+        return proc(node.value, env) if node.value != None else None
     elif isinstance(node, ast.IfExp):
         return node
 
     # Literals
     elif isinstance(node, ast.List):
-        return ast.List([proc(e, env, veri) for e in node.elts])
+        return ast.List([proc(e, env) for e in node.elts])
     elif isinstance(node, ast.Tuple):
-        return ast.Tuple([proc(e, env, veri) for e in node.elts])
+        return ast.Tuple([proc(e, env) for e in node.elts])
     elif isinstance(node, ast.Constant):
         return node         # XXX simplification?
     else:

@@ -21,17 +21,6 @@ from dryvr_plus_plus.scene_verifier.map.lane_map import LaneMap
 
 EGO, OTHERS = "ego", "others"
 
-def merge_conds(c):
-    if len(c) == 0:
-        return ast.Constant(True)
-    if len(c) == 1:
-        return c[0]
-    else:
-        return ast.BoolOp(ast.And(), c)
-
-def compile_expr(e):
-    return compile(ast.fix_missing_locations(ast.Expression(e)), "", "eval")
-
 class Scenario:
     def __init__(self):
         self.agent_dict = {}
@@ -126,7 +115,7 @@ class Scenario:
 
         dest = copy.deepcopy(agent_mode)
         possible_dest = [[elem] for elem in dest]
-        ego_type = find(agent.controller.controller.args, lambda a: a[0] == EGO)[1]
+        ego_type = find(agent.controller.args, lambda a: a.name == EGO).typ
         rect = copy.deepcopy([agent_state[0][1:], agent_state[1][1:]])
 
         # The reset_list here are all the resets for a single transition. Need to evaluate each of them
@@ -230,35 +219,20 @@ class Scenario:
 
         # For each agent
         agent_guard_dict = defaultdict(list)
-        compiled_asserts = {}
 
         for agent_id in node.agent:
             # Get guard
             agent:BaseAgent = self.agent_dict[agent_id]
             agent_mode = node.mode[agent_id]
-            if agent.controller.controller == None:
+            if len(agent.controller.args) == 0:
                 continue
-            def compile_assert(i, a):
-                p = compile_expr(merge_conds(a.pre))
-                cond = compile_expr(a.cond)
-                label = a.label if a.label != None else f"<assert {i}>"
-                return p, cond, label
-            compiled_asserts[agent_id] = [compile_assert(i, a) for i, a in enumerate(agent.controller.controller.asserts)]
-            # TODO-PARSER: update how we get all next modes
-            # The getNextModes function will return 
             state_dict = {}
             for tmp in node.agent:
                 state_dict[tmp] = (node.trace[tmp][0], node.mode[tmp], node.static[tmp])
             cont_var_dict_template, discrete_variable_dict, len_dict = self.sensor.sense(self, agent, state_dict, self.map)
-            paths = agent.controller.getNextModes()
-            for guard_list, reset in paths:
-                guard_expression = GuardExpressionAst(guard_list)
-
-                # copy.deepcopy(guard_expression.ast_list[0].operand)
-                # can_satisfy = guard_expression.fast_pre_process(discrete_variable_dict)
-                continuous_variable_updater = guard_expression.parse_any_all_new(cont_var_dict_template, discrete_variable_dict, len_dict)
-                guard_comp = compile_expr(merge_conds(guard_expression.ast_list))
-                agent_guard_dict[agent_id].append((guard_comp, continuous_variable_updater, discrete_variable_dict, reset))
+            paths = agent.controller.paths
+            for path in paths:
+                agent_guard_dict[agent_id].append((path.cond, discrete_variable_dict, path.var, path.val))
 
         transitions = defaultdict(list)
         # TODO: We can probably rewrite how guard hit are detected and resets are handled for simulation
@@ -274,7 +248,7 @@ class Scenario:
                 agent_state = agent_state[1:]
                 continuous_variable_dict, orig_disc_vars, _ = self.sensor.sense(self, agent, state_dict, self.map)
                 # Unsafety checking
-                ego_ty_name = find(agent.controller.controller.args, lambda a: a[0] == EGO)[1]
+                ego_ty_name = find(agent.controller.args, lambda a: a.name == EGO).typ
                 def pack_env(agent: BaseAgent, cont, disc, map):
                     env = copy.deepcopy(cont)
                     env.update(disc)
@@ -284,59 +258,48 @@ class Scenario:
                     for k, v in env.items():
                         k = k.split(".")
                         packed[k[0]][k[1]] = v
-                    for arg, arg_type, is_list in agent.controller.controller.args:
-                        if arg != EGO and 'map' not in arg:
-                            other = arg
+                    for arg in agent.controller.args:
+                        if arg.name != EGO and 'map' not in arg.name:
+                            other = arg.name
                             if other in packed:
                                 others_keys = list(packed[other].keys())
-                                if is_list:
-                                    packed[other] = [state_ty(**{k: packed[other][k][i] for k in others_keys}) for i in range(len(packed[other][others_keys[0]]))]
-                                else:
-                                    other_val = packed[other][others_keys[0]]
-                                    if isinstance(other_val, list):
-                                        other_val_len = len(other_val)
-                                        raise ValueError(f"Expected one {ego_ty_name} for {other}, got {other_val_len}")
-                                    packed[other] = state_ty(**{k: packed[other][k] for k in others_keys})
+                                packed[other] = [state_ty(**{k: packed[other][k][i] for k in others_keys}) for i in range(len(packed[other][others_keys[0]]))]
+                                if not arg.is_list:
+                                    packed[other] = packed[other][0]
                             else:
-                                if is_list:
+                                if arg.is_list:
                                     packed[other] = []
                                 else:
                                     raise ValueError(f"Expected one {ego_ty_name} for {other}, got none")
     
                     packed[EGO] = state_ty(**packed[EGO])
-                    map_var = find(agent.controller.controller.args, lambda a: "map" in a[0])
+                    map_var = find(agent.controller.args, lambda a: "map" in a.name)
                     if map_var != None:
-                        packed[map_var[0]] = map
+                        packed[map_var.name] = map
                     packed: Dict[str, Any] = dict(packed.items())
                     # packed.update(env)
                     return packed
                 packed_env = pack_env(agent, continuous_variable_dict, orig_disc_vars, self.map)
-                def eval_expr(expr, env):
-                    return eval(compile(ast.fix_missing_locations(ast.Expression(expr)), "", "eval"), env)
                 
                 # Check safety conditions
-                for pre, cond, label in compiled_asserts[agent_id]:
-                    if eval(pre, packed_env):
-                        del packed_env["__builtins__"]
-                        if not eval(cond, packed_env):
+                for assertion in agent.controller.asserts:
+                    if eval(assertion.pre, packed_env):
+                        if not eval(assertion.cond, packed_env):
                             del packed_env["__builtins__"]
-                            print(f"assert hit for {agent_id}: \"{label}\" @ {packed_env}")
-                            asserts[agent_id].append(label)
+                            print(f"assert hit for {agent_id}: \"{assertion.label}\" @ {packed_env}")
+                            asserts[agent_id].append(assertion.label)
                 if agent_id in asserts:
                     continue
 
                 all_resets = defaultdict(list)
-                for guard_comp, continuous_variable_updater, discrete_variable_dict, reset in agent_guard_dict[agent_id]:
+                for guard_comp, discrete_variable_dict, var, reset in agent_guard_dict[agent_id]:
                     new_cont_var_dict = copy.deepcopy(continuous_variable_dict)
-                    self.apply_cont_var_updater(new_cont_var_dict, continuous_variable_updater)
                     env = pack_env(agent, new_cont_var_dict, discrete_variable_dict, self.map)
-                    guard_satisfied = eval(guard_comp, env)
 
                     # Collect all the hit guards for this agent at this time step
-                    if guard_satisfied:
+                    if eval(guard_comp, env):
                         # If the guard can be satisfied, handle resets
-                        reset_expr = ResetExpression(reset)
-                        all_resets[reset_expr.var].append(reset_expr)
+                        all_resets[var].append(reset)
                 
                 iter_list = []
                 for reset_var in all_resets:
@@ -351,8 +314,7 @@ class Scenario:
                     possible_dest = [[elem] for elem in dest]
                     for j, reset_idx in enumerate(pos):
                         reset_variable = list(all_resets.keys())[j]
-                        reset_expr:ResetExpression = all_resets[reset_variable][reset_idx]
-                        res = eval_expr(reset_expr.val_ast , packed_env)
+                        res = eval(all_resets[reset_variable][reset_idx], packed_env)
                         ego_type = agent.controller.state_defs[ego_ty_name]
                         if "mode" in reset_variable:
                             var_loc = ego_type.disc.index(reset_variable)
@@ -382,7 +344,7 @@ class Scenario:
         agent_guard_dict = defaultdict(list)
         for agent_id in node.agent:
             agent:BaseAgent = self.agent_dict[agent_id]
-            if agent.controller.controller == None:
+            if len(agent.controller.args) == 0:
                 continue
             agent_mode = node.mode[agent_id]
             state_dict = {}
@@ -391,12 +353,12 @@ class Scenario:
             
             cont_var_dict_template, discrete_variable_dict, length_dict = self.sensor.sense(self, agent, state_dict, self.map)
             # TODO-PARSER: Get equivalent for this function
-            paths = agent.controller.getNextModes()
+            paths = agent.controller.paths
             for path in paths:
                 # Construct the guard expression
-                guard_list = path[0]
-                reset = path[1]
-                guard_expression = GuardExpressionAst(guard_list)
+                reset = (path.var, path.val_veri)
+                guard_expression = GuardExpressionAst([path.cond_veri])
+                print(ControllerIR.dump(path.cond_veri))
                 
                 cont_var_updater = guard_expression.parse_any_all_new(cont_var_dict_template, discrete_variable_dict, length_dict)
                 self.apply_cont_var_updater(cont_var_dict_template, cont_var_updater)
@@ -422,10 +384,10 @@ class Scenario:
                 continuous_variable_dict, orig_disc_vars, _ = self.sensor.sense(self, agent, state_dict, self.map)
                 resets = defaultdict(list)
                 # Check safety conditions
-                for i, a in enumerate(agent.controller.controller.asserts):
-                    pre_expr = merge_conds(a.pre)
+                for i, a in enumerate(agent.controller.asserts):
+                    pre_expr = a.pre
                     def eval_expr(expr):
-                        ge = GuardExpressionAst(expr)
+                        ge = GuardExpressionAst([expr])
                         sat = ge.evaluate_guard_hybrid(agent, orig_disc_vars, continuous_variable_dict, self.map)
                         if sat:
                             sat, _ = ge.evaluate_guard_cont(agent, continuous_variable_dict, self.map)
