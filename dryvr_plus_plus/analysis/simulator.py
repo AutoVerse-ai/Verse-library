@@ -5,8 +5,8 @@ import itertools, functools
 import pprint
 pp = functools.partial(pprint.pprint, compact=True, width=100)
 
-from dryvr_plus_plus.scene_verifier.agents.base_agent import BaseAgent
-from dryvr_plus_plus.scene_verifier.analysis.analysis_tree_node import AnalysisTreeNode
+from dryvr_plus_plus.agents.base_agent import BaseAgent
+from dryvr_plus_plus.analysis.analysis_tree_node import AnalysisTreeNode
 
 
 class Simulator:

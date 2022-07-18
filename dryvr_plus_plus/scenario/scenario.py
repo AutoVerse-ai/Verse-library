@@ -7,17 +7,17 @@ import ast
 
 import numpy as np
 
-from dryvr_plus_plus.scene_verifier.agents.base_agent import BaseAgent
-from dryvr_plus_plus.scene_verifier.automaton.guard import GuardExpressionAst
-from dryvr_plus_plus.scene_verifier.automaton.reset import ResetExpression
-from dryvr_plus_plus.scene_verifier.code_parser.parser import ControllerIR, unparse
-from dryvr_plus_plus.scene_verifier.analysis.simulator import Simulator
-from dryvr_plus_plus.scene_verifier.analysis.verifier import Verifier
-from dryvr_plus_plus.scene_verifier.map.lane_map import LaneMap
-from dryvr_plus_plus.scene_verifier.utils.utils import find, sample_rect
-from dryvr_plus_plus.scene_verifier.analysis.analysis_tree_node import AnalysisTreeNode
-from dryvr_plus_plus.scene_verifier.sensor.base_sensor import BaseSensor
-from dryvr_plus_plus.scene_verifier.map.lane_map import LaneMap
+from dryvr_plus_plus.agents.base_agent import BaseAgent
+from dryvr_plus_plus.automaton.guard import GuardExpressionAst
+from dryvr_plus_plus.automaton.reset import ResetExpression
+from dryvr_plus_plus.code_parser.parser import ControllerIR, unparse
+from dryvr_plus_plus.analysis.simulator import Simulator
+from dryvr_plus_plus.analysis.verifier import Verifier
+from dryvr_plus_plus.map.lane_map import LaneMap
+from dryvr_plus_plus.utils.utils import find, sample_rect
+from dryvr_plus_plus.analysis.analysis_tree_node import AnalysisTreeNode
+from dryvr_plus_plus.sensor.base_sensor import BaseSensor
+from dryvr_plus_plus.map.lane_map import LaneMap
 
 EGO, OTHERS = "ego", "others"
 

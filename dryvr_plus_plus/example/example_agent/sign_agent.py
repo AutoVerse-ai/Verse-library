@@ -1,6 +1,6 @@
-from dryvr_plus_plus.scene_verifier.agents.base_agent import BaseAgent
+from dryvr_plus_plus.agents.base_agent import BaseAgent
 import numpy as np
-from dryvr_plus_plus.scene_verifier.code_parser.parser import ControllerIR
+from dryvr_plus_plus.code_parser.parser import ControllerIR
 
 class SignAgent(BaseAgent):
     def __init__(self, id):

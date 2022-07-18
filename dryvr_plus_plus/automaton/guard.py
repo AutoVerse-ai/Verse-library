@@ -6,11 +6,11 @@ import copy
 from z3 import *
 import numpy as np
 
-from dryvr_plus_plus.scene_verifier.map.lane_map import LaneMap
-from dryvr_plus_plus.scene_verifier.map.lane_segment import AbstractLane
-from dryvr_plus_plus.scene_verifier.utils.utils import *
-from dryvr_plus_plus.scene_verifier.agents.base_agent import BaseAgent
-from dryvr_plus_plus.scene_verifier.code_parser.parser import Reduction, ReductionType, unparse
+from dryvr_plus_plus.map.lane_map import LaneMap
+from dryvr_plus_plus.map.lane_segment import AbstractLane
+from dryvr_plus_plus.utils.utils import *
+from dryvr_plus_plus.agents.base_agent import BaseAgent
+from dryvr_plus_plus.code_parser.parser import Reduction, ReductionType, unparse
 
 class LogicTreeNode:
     def __init__(self, data, child=[], val=None, mode_guard=None):

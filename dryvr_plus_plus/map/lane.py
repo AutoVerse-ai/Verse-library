@@ -2,7 +2,7 @@ from typing import List
 
 import numpy as np
 
-from dryvr_plus_plus.scene_verifier.map.lane_segment import AbstractLane
+from dryvr_plus_plus.map.lane_segment import AbstractLane
 
 
 class Lane():

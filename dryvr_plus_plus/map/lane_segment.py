@@ -6,7 +6,7 @@ from typing import Tuple, List, Optional, Union
 import copy
 from sympy import false
 
-from dryvr_plus_plus.scene_verifier.utils.utils import wrap_to_pi, Vector, get_class_path, class_from_path, to_serializable
+from dryvr_plus_plus.utils.utils import wrap_to_pi, Vector, get_class_path, class_from_path, to_serializable
 
 
 class LineType:

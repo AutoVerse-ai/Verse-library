@@ -3,9 +3,9 @@ import copy
 
 import numpy as np
 
-from dryvr_plus_plus.scene_verifier.agents.base_agent import BaseAgent
-from dryvr_plus_plus.scene_verifier.analysis.analysis_tree_node import AnalysisTreeNode
-from dryvr_plus_plus.scene_verifier.dryvr import calc_bloated_tube, SIMTRACENUM
+from dryvr_plus_plus.agents.base_agent import BaseAgent
+from dryvr_plus_plus.analysis.analysis_tree_node import AnalysisTreeNode
+from dryvr_plus_plus.dryvr import calc_bloated_tube, SIMTRACENUM
 
 class Verifier:
     def __init__(self):

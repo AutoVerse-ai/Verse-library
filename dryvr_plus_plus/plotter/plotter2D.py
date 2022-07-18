@@ -9,7 +9,7 @@ import plotly.graph_objects as go
 from typing import List, Tuple
 from plotly.graph_objs.scatter import Marker
 import copy
-# from dryvr_plus_plus.scene_verifier.analysis.analysis_tree_node import AnalysisTreeNode
+# from dryvr_plus_plus.analysis.analysis_tree_node import AnalysisTreeNode
 
 colors = [['#CC0000', '#FF0000', '#FF3333', '#FF6666', '#FF9999'],
           ['#CC6600', '#FF8000', '#FF9933', '#FFB266', '#FFCC99'],

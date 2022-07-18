@@ -1,5 +1,5 @@
-from dryvr_plus_plus.scene_verifier.map.lane_map import LaneMap
-from dryvr_plus_plus.scene_verifier.map.lane_segment import LaneSegment
+from dryvr_plus_plus.map.lane_map import LaneMap
+from dryvr_plus_plus.map.lane_segment import LaneSegment
 
 class SimpleMap(LaneMap):
     def __init__(self):

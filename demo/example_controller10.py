@@ -1,6 +1,6 @@
 from enum import Enum, auto
 import copy
-from dryvr_plus_plus.scene_verifier.map.lane_map import LaneMap
+from dryvr_plus_plus.map.lane_map import LaneMap
 
 
 class VehicleMode(Enum):

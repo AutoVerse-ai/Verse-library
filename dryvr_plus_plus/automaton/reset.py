@@ -1,7 +1,7 @@
 import itertools, copy
 import numpy as np
 
-from dryvr_plus_plus.scene_verifier.code_parser.parser import unparse 
+from dryvr_plus_plus.code_parser.parser import unparse 
 
 class ResetExpression():
     def __init__(self, reset):

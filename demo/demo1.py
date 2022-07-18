@@ -1,5 +1,5 @@
 from dryvr_plus_plus.example.example_agent.car_agent import CarAgent, NPCAgent
-from dryvr_plus_plus.scene_verifier.scenario.scenario import Scenario
+from dryvr_plus_plus.scenario.scenario import Scenario
 from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap2, SimpleMap3, SimpleMap5, SimpleMap6
 from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor2
 from enum import Enum, auto

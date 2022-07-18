@@ -45,12 +45,12 @@ def controller(ego:State, others:State):
     return output
 
 from dryvr_plus_plus.example.example_agent.ball_agent import BallAgent
-from dryvr_plus_plus.scene_verifier.scenario.scenario import Scenario
+from dryvr_plus_plus.scenario.scenario import Scenario
 from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap3
 from dryvr_plus_plus.plotter.plotter2D import *
 import plotly.graph_objects as go
 from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor4
-from dryvr_plus_plus.scene_verifier.sensor.base_sensor import BaseSensor
+from dryvr_plus_plus.sensor.base_sensor import BaseSensor
 
 if __name__ == "__main__":
     ball_controller = './demo/ball_bounces_dev.py'
