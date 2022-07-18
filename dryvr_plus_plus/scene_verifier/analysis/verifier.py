@@ -74,7 +74,7 @@ class Verifier:
             if asserts != None:
                 asserts, idx = asserts
                 for agent in node.agent:
-                    node.agent[agent] = node.trace[agent][:idx * 2 + 1]
+                    node.trace[agent] = node.trace[agent][:(idx + 1) * 2]
                 node.assert_hits = asserts
                 continue
 

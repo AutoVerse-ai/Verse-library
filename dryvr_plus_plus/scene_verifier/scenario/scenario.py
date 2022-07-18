@@ -377,31 +377,41 @@ class Scenario:
                 state_dict[tmp] = (node.trace[tmp][idx*2:idx*2+2], node.mode[tmp], node.static[tmp])
 
             asserts = defaultdict(list)
-            for agent_id in agent_guard_dict:
+            for agent_id in self.agent_dict.keys():
                 agent:BaseAgent = self.agent_dict[agent_id]
+                if len(agent.controller.args) == 0:
+                    continue
                 agent_state, agent_mode, agent_static = state_dict[agent_id]
                 agent_state = agent_state[1:]
-                continuous_variable_dict, orig_disc_vars, _ = self.sensor.sense(self, agent, state_dict, self.map)
+                cont_vars, disc_vars, len_dict = self.sensor.sense(self, agent, state_dict, self.map)
                 resets = defaultdict(list)
                 # Check safety conditions
                 for i, a in enumerate(agent.controller.asserts_veri):
                     pre_expr = a.pre
                     def eval_expr(expr):
-                        ge = GuardExpressionAst([expr])
-                        sat = ge.evaluate_guard_hybrid(agent, orig_disc_vars, continuous_variable_dict, self.map)
+                        ge = GuardExpressionAst([copy.deepcopy(expr)])
+                        cont_var_updater = ge.parse_any_all_new(cont_vars, disc_vars, len_dict)
+                        self.apply_cont_var_updater(cont_vars, cont_var_updater)
+                        sat = ge.evaluate_guard_disc(agent, disc_vars, cont_vars, self.map)
                         if sat:
-                            sat, _ = ge.evaluate_guard_cont(agent, continuous_variable_dict, self.map)
+                            sat = ge.evaluate_guard_hybrid(agent, disc_vars, cont_vars, self.map)
+                            if sat:
+                                sat, contained = ge.evaluate_guard_cont(agent, cont_vars, self.map)
+                                sat = sat and contained
                         return sat
                     if eval_expr(pre_expr):
                         if not eval_expr(a.cond):
                             label = a.label if a.label != None else f"<assert {i}>"
                             print(f"assert hit for {agent_id}: \"{label}\"")
+                            print(idx)
                             asserts[agent_id].append(label)
                 if agent_id in asserts:
                     continue
+                if agent_id not in agent_guard_dict:
+                    continue
 
                 for guard_expression, continuous_variable_updater, discrete_variable_dict, reset in agent_guard_dict[agent_id]:
-                    new_cont_var_dict = copy.deepcopy(continuous_variable_dict)
+                    new_cont_var_dict = copy.deepcopy(cont_vars)
                     one_step_guard:GuardExpressionAst = copy.deepcopy(guard_expression)
 
                     self.apply_cont_var_updater(new_cont_var_dict, continuous_variable_updater)

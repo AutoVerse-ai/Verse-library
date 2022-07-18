@@ -387,7 +387,7 @@ class Env():
     @staticmethod
     def trans_args(sv: ScopeValue, veri: bool) -> ScopeValue:
         def trans_condval(cv: CondVal, veri: bool):
-            # raise NotImplementedError("flatten CondVal assignments")
+            raise NotImplementedError("flatten CondVal assignments")
             for i, case in enumerate(cv.elems):
                 cv.elems[i].val = Env.trans_args(case.val, veri)
                 for j, cond in enumerate(case.cond):
