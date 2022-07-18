@@ -5,8 +5,7 @@ import numpy as np
 
 from dryvr_plus_plus.scene_verifier.agents.base_agent import BaseAgent
 from dryvr_plus_plus.scene_verifier.analysis.analysis_tree_node import AnalysisTreeNode
-from dryvr_plus_plus.scene_verifier.dryvr.core.dryvrcore import calc_bloated_tube
-import dryvr_plus_plus.scene_verifier.dryvr.common.config as userConfig
+from dryvr_plus_plus.scene_verifier.dryvr import calc_bloated_tube, SIMTRACENUM
 
 class Verifier:
     def __init__(self):
@@ -61,7 +60,7 @@ class Verifier:
                                         node.agent[agent_id].TC_simulate,
                                         'PW',
                                         100,
-                                        userConfig.SIMTRACENUM,
+                                        SIMTRACENUM,
                                         lane_map = lane_map
                                         )
                     trace = np.array(cur_bloated_tube)
