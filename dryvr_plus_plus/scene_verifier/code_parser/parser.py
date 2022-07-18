@@ -133,7 +133,7 @@ class _Assert:
 
 @dataclass
 class CompiledAssert:
-    cond: Any
+    cond: Any   # FIXME type for compiled python (`code`?)
     label: str
     pre: Any
 
@@ -296,6 +296,8 @@ class ControllerIR:
         controller = top['controller']
         asserts = [(a.cond, a.label if a.label != None else f"<assert {i}>", merge_conds(a.pre)) for i, a in enumerate(controller.asserts)]
         asserts_veri = [Assert(Env.trans_args(copy.deepcopy(c), True), l, Env.trans_args(copy.deepcopy(p), True)) for c, l, p in asserts]
+        for a in asserts_veri:
+            print(ControllerIR.dump(a.pre), ControllerIR.dump(a.cond, True))
         asserts_sim = [CompiledAssert(compile_expr(Env.trans_args(c, False)), l, compile_expr(Env.trans_args(p, False))) for c, l, p in asserts]
 
         assert isinstance(controller, Lambda)
@@ -428,6 +430,14 @@ class Env():
                     return trans_condval(node, self.veri)
                 def visit_Reduction(self, node):
                     return trans_reduction(node, self.veri)
+                def visit_Attribute(self, node: ast.Attribute) -> Any:
+                    if self.veri:
+                        value = super().visit(node.value)
+                        if isinstance(value, ast.Name):
+                            return ast.Name(f"{value.id}.{node.attr}", ctx=ast.Load())
+                        raise ValueError(f"value of attribute node is not name?: {unparse(node)}")
+                    else:
+                        return super().generic_visit(node)
             return ArgTransformer(veri).visit(sv)
         if isinstance(sv, dict):
             for k, v in sv.items():
