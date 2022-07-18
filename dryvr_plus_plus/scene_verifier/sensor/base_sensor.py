@@ -54,7 +54,7 @@ class BaseSensor():
                     controller_args = agent.controller.args
                     arg_type = None
                     for arg in controller_args:
-                        if arg.name != 'ego':
+                        if arg.name == 'ego':
                             arg_type = arg.typ
                             break 
                     if arg_type is None:
@@ -86,7 +86,7 @@ class BaseSensor():
                     controller_args = agent.controller.args
                     arg_type = None
                     for arg in controller_args:
-                        if arg.name != 'ego':
+                        if arg.name == 'ego':
                             arg_type = arg.typ
                             break 
                     if arg_type is None:
