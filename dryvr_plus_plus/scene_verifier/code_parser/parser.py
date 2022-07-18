@@ -430,14 +430,14 @@ class Env():
                     return trans_condval(node, self.veri)
                 def visit_Reduction(self, node):
                     return trans_reduction(node, self.veri)
-                def visit_Attribute(self, node: ast.Attribute) -> Any:
-                    if self.veri:
-                        value = super().visit(node.value)
-                        if isinstance(value, ast.Name):
-                            return ast.Name(f"{value.id}.{node.attr}", ctx=ast.Load())
-                        raise ValueError(f"value of attribute node is not name?: {unparse(node)}")
-                    else:
-                        return super().generic_visit(node)
+                # def visit_Attribute(self, node: ast.Attribute) -> Any:
+                #     if self.veri:
+                #         value = super().visit(node.value)
+                #         if isinstance(value, ast.Name):
+                #             return ast.Name(f"{value.id}.{node.attr}", ctx=ast.Load())
+                #         raise ValueError(f"value of attribute node is not name?: {unparse(node)}")
+                #     else:
+                #         return super().generic_visit(node)
             return ArgTransformer(veri).visit(sv)
         if isinstance(sv, dict):
             for k, v in sv.items():

@@ -16,6 +16,7 @@ class AnalysisTreeNode:
         mode={},
         static = {},
         agent={},
+        assert_hits={},
         child=[],
         start_time=0,
         ndigits=10,
@@ -27,5 +28,6 @@ class AnalysisTreeNode:
         self.agent: Dict = agent
         self.child: List[AnalysisTreeNode] = child
         self.start_time: float = round(start_time, ndigits)
+        self.assert_hits = assert_hits
         self.type: str = type
         self.static: Dict[str, List[str]] = static

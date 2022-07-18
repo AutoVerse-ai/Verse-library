@@ -69,10 +69,15 @@ class Verifier:
                     node.trace[agent_id] = trace.tolist()
                     # print("here")
             
-            # TODO: Check safety conditions here
-
             # Get all possible transitions to next mode
-            all_possible_transitions = transition_graph.get_transition_verify_new(node)
+            asserts, all_possible_transitions = transition_graph.get_transition_verify_new(node)
+            if asserts != None:
+                asserts, idx = asserts
+                for agent in node.agent:
+                    node.agent[agent] = node.trace[agent][:idx * 2 + 1]
+                node.assert_hits = asserts
+                continue
+
             max_end_idx = 0
             for transition in all_possible_transitions:
                 transit_agent_idx, src_mode, dest_mode, next_init, idx = transition 
