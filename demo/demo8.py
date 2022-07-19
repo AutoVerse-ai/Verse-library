@@ -1,6 +1,6 @@
 from dryvr_plus_plus.example.example_agent.car_agent import CarAgent, NPCAgent
 from dryvr_plus_plus.example.example_agent.sign_agent import SignAgent
-from dryvr_plus_plus.scenario.scenario import Scenario
+from dryvr_plus_plus.scenario import Scenario
 from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap2, SimpleMap3, SimpleMap5, SimpleMap6
 from dryvr_plus_plus.plotter.plotter2D import *
 

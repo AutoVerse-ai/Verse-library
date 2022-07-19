@@ -1,5 +1,5 @@
 import numpy as np
-from dryvr_plus_plus.agents.base_agent import BaseAgent
+from dryvr_plus_plus.agents import BaseAgent
 
 def sets(d, thing, attrs, vals):
     d.update({thing + "." + k: v for k, v in zip(attrs, vals)})

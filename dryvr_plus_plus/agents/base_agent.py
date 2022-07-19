@@ -1,4 +1,4 @@
-from dryvr_plus_plus.code_parser.parser import ControllerIR, Env
+from dryvr_plus_plus.code_parser import ControllerIR
 
 
 class BaseAgent:

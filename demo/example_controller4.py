@@ -53,11 +53,20 @@ def controller(ego:State, others:List[State], lane_map):
             output.vehicle_mode = VehicleMode.Normal
             output.lane_mode = lane_map.right_lane(ego.lane_mode)
     def abs_diff(a, b):
-        if a < b:
-            r = b - a
-        else:
-            r = a - b
-        return r
-    assert all(abs_diff(ego.x, o.x) > 5 for o in others)
+        # if a < b:
+        #     r = b - a
+        # else:
+        #     r = a - b
+        return a - b
+    def test(o):
+        # if ego.lane_mode == o.lane_mode:
+        #     r = abs_diff(ego.x, o.x) > 6
+        # else:
+        #     r = True
+        return abs_diff(o.x, ego.x) > 5.1
+    # assert all(test(o) for o in others)
+    # assert ego.lane_mode != LaneMode.Lane0, "lane 0"
+    # assert ego.x < 40, "x"
+    assert not (ego.lane_mode == LaneMode.Lane2 and ego.x > 30), "lane 2"
     return output
 

@@ -1,6 +1,6 @@
-from dryvr_plus_plus.agents.base_agent import BaseAgent
+from dryvr_plus_plus.agents import BaseAgent
 import numpy as np
-from dryvr_plus_plus.code_parser.parser import ControllerIR
+from dryvr_plus_plus.code_parser import ControllerIR
 
 class SignAgent(BaseAgent):
     def __init__(self, id):

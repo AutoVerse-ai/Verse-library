@@ -4,9 +4,9 @@ from typing import Tuple, List
 import numpy as np
 from scipy.integrate import ode
 
-from dryvr_plus_plus.agents.base_agent import BaseAgent
-from dryvr_plus_plus.map.lane_map import LaneMap
-from dryvr_plus_plus.code_parser.parser import ControllerIR, StateDef, ModeDef, Lambda
+from dryvr_plus_plus.agents import BaseAgent
+from dryvr_plus_plus.map import LaneMap
+from dryvr_plus_plus.code_parser import ControllerIR
 
 
 class NPCAgent(BaseAgent):

@@ -1,6 +1,6 @@
 from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor2
 from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap3
-from dryvr_plus_plus.scenario.scenario import Scenario
+from dryvr_plus_plus.scenario import Scenario
 from dryvr_plus_plus.example.example_agent.sign_agent import SignAgent
 from dryvr_plus_plus.example.example_agent.car_agent import CarAgent
 from dryvr_plus_plus.plotter.plotter2D import *

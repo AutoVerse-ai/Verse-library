@@ -3,7 +3,7 @@ from typing import List, Dict, Union, Optional, Any, Tuple
 from dataclasses import dataclass, field, fields
 from enum import Enum, auto
 from dryvr_plus_plus.code_parser import astunparser
-from dryvr_plus_plus.utils.utils import find
+from dryvr_plus_plus.utils import find
 
 def merge_conds(c):
     if len(c) == 0:

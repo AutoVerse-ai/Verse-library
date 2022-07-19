@@ -1,12 +1,9 @@
-from turtle import speed
-from typing import List
 import numpy as np
 from abc import ABCMeta, abstractmethod
-from typing import Tuple, List, Optional, Union
+from typing import Tuple, List, Optional
 import copy
-from sympy import false
 
-from dryvr_plus_plus.utils.utils import wrap_to_pi, Vector, get_class_path, class_from_path, to_serializable
+from dryvr_plus_plus.utils import wrap_to_pi, Vector, get_class_path, class_from_path, to_serializable
 
 
 class LineType:

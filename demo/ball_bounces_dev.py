@@ -19,7 +19,7 @@ class State:
     def __init__(self, x, y, vx, vy, ball_mode:BallMode, type: BallTypeMode):
         pass
 
-def controller(ego:State, others:State):
+def controller(ego:State, other: State):
     output = copy.deepcopy(ego)
     if ego.x<0:
         output.vx = -ego.vx
@@ -41,16 +41,16 @@ def controller(ego:State, others:State):
         return r
     def dist(a, b):
         return abs_diff(a.x, b.x) + abs_diff(a.y, b.y)
-    assert all(dist(ego, o) > 5 for o in others)
+    assert not (dist(ego, other) < 5 and ego.x < other.x), "collision"
     return output
 
 from dryvr_plus_plus.example.example_agent.ball_agent import BallAgent
-from dryvr_plus_plus.scenario.scenario import Scenario
+from dryvr_plus_plus.scenario import Scenario
 from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap3
 from dryvr_plus_plus.plotter.plotter2D import *
 import plotly.graph_objects as go
 from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor4
-from dryvr_plus_plus.sensor.base_sensor import BaseSensor
+from dryvr_plus_plus.sensor import BaseSensor
 
 if __name__ == "__main__":
     ball_controller = './demo/ball_bounces_dev.py'
@@ -75,6 +75,6 @@ if __name__ == "__main__":
     )
     traces = bouncingBall.simulate(10, 0.01)
     fig = go.Figure()
-    fig = plotly_simulation_anime(traces, fig=fig)
+    fig = simulation_tree(traces, fig=fig)
     fig.show()
 

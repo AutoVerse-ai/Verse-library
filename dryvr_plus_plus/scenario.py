@@ -7,17 +7,12 @@ import ast
 
 import numpy as np
 
-from dryvr_plus_plus.agents.base_agent import BaseAgent
-from dryvr_plus_plus.automaton.guard import GuardExpressionAst
-from dryvr_plus_plus.automaton.reset import ResetExpression
-from dryvr_plus_plus.code_parser.parser import ControllerIR, unparse
-from dryvr_plus_plus.analysis.simulator import Simulator
-from dryvr_plus_plus.analysis.verifier import Verifier
-from dryvr_plus_plus.map.lane_map import LaneMap
-from dryvr_plus_plus.utils.utils import find, sample_rect
-from dryvr_plus_plus.analysis.analysis_tree_node import AnalysisTreeNode
-from dryvr_plus_plus.sensor.base_sensor import BaseSensor
-from dryvr_plus_plus.map.lane_map import LaneMap
+from dryvr_plus_plus.agents import BaseAgent
+from dryvr_plus_plus.automaton import GuardExpressionAst, ResetExpression
+from dryvr_plus_plus.analysis import Simulator, Verifier, AnalysisTreeNode
+from dryvr_plus_plus.utils import find, sample_rect
+from dryvr_plus_plus.sensor import BaseSensor
+from dryvr_plus_plus.map import LaneMap
 
 EGO, OTHERS = "ego", "others"
 

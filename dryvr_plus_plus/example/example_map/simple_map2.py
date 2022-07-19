@@ -1,6 +1,4 @@
-from dryvr_plus_plus.map.lane_map import LaneMap
-from dryvr_plus_plus.map.lane_segment import LaneSegment, StraightLane, CircularLane
-from dryvr_plus_plus.map.lane import Lane
+from dryvr_plus_plus.map import LaneMap, LaneSegment, StraightLane, CircularLane, Lane
 
 import numpy as np
 

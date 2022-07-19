@@ -1,6 +1,6 @@
 from enum import Enum, auto
 import copy
-from src.map.lane_map import LaneMap
+from src.map import LaneMap
 
 class VehicleMode(Enum):
     Normal = auto()
