@@ -57,24 +57,29 @@ if __name__ == "__main__":
         ]
     )
 
-    traces = scenario.simulate(30, 1)
-    path = os.path.abspath('.')
-    if os.path.exists(path+'/demo'):
-        path += '/demo'
-    path += '/output'
-    if not os.path.exists(path):
-        os.makedirs(path)
-    file = path+"/output.json"
-    write_json(traces, file)
+    # traces = scenario.simulate(30, 1)
+    # path = os.path.abspath('.')
+    # if os.path.exists(path+'/demo'):
+    #     path += '/demo'
+    # path += '/output'
+    # if not os.path.exists(path):
+    #     os.makedirs(path)
+    # file = path+"/output.json"
+    # write_json(traces, file)
 
-    root = read_json(file)
+    # root = read_json(file)
+    # fig = go.Figure()
+    # fig = simulation_tree(root, tmp_map, fig, 1, 2, 'lines')
+    # fig.show()
+    # # traces = scenario.verify(70, 0.05)
+    # fig = go.Figure()
+    # fig = simulation_tree(traces, tmp_map, fig, 1, 2,
+    #                       'lines', 'trace', print_dim_list=[1, 2])
+    # # # fig = reachtube_anime(traces, tmp_map, fig, 1,
+    # # #                       2, 'lines', 'trace', print_dim_list=[1, 2])
+    # fig.show()
     fig = go.Figure()
-    fig = simulation_tree(root, tmp_map, fig, 1, 2, 'lines')
-    fig.show()
-    # traces = scenario.verify(70, 0.05)
-    fig = go.Figure()
-    fig = simulation_tree(traces, tmp_map, fig, 1, 2,
-                          'lines', 'trace', print_dim_list=[1, 2])
-    # # fig = reachtube_anime(traces, tmp_map, fig, 1,
-    # #                       2, 'lines', 'trace', print_dim_list=[1, 2])
+    traces = scenario.verify(30, 1)
+    fig = reachtube_anime(traces, tmp_map, fig, 1,
+                          2, 'lines', 'trace', print_dim_list=[1, 2])
     fig.show()

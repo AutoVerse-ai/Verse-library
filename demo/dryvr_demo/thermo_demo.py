@@ -22,7 +22,7 @@ if __name__ == "__main__":
     scenario.add_agent(car)
     tmp_map = SimpleMap3()
     scenario.set_map(tmp_map)
-    # scenario.set_sensor(ThermoSensor())
+    scenario.set_sensor(ThermoSensor())
     # modify mode list input
     scenario.set_init(
         [
@@ -32,8 +32,8 @@ if __name__ == "__main__":
             tuple([ThermoMode.ON]),
         ]
     )
-    traces = scenario.simulate(3.5, 0.05)
+    traces = scenario.verify(3.5, 0.05)
     fig = go.Figure()
-    fig = simulation_tree(traces, tmp_map, fig, 2, 1,
-                          'lines', 'trace', print_dim_list=[2, 1])
+    fig = reachtube_tree(traces, tmp_map, fig, 2, 1,
+                         'lines', 'trace', print_dim_list=[2, 1])
     fig.show()
