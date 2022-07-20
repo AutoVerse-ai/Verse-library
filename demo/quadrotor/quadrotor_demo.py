@@ -42,13 +42,13 @@ if __name__ == "__main__":
             tuple([CraftMode.Follow_Waypoint]),
         ]
     )
-    traces = scenario.simulate(200, 0.2)
+    traces = scenario.verify(200, 0.2)
     path = os.path.abspath(__file__)
     path = path.replace('quadrotor_demo.py', 'output.json')
     write_json(traces, path)
-    fig = go.Figure()
-    fig = simulation_tree(traces, None, fig, 1, 2,
-                          'lines', 'trace', print_dim_list=[0, 1, 2])
-    fig = fig.add_trace(go.Scatter(
-        x=[3, 5, 5, 2, 2, 8, 8], y=[0, 0, 3, 3, 6, 3, 0], text=[0, 1, 2, 3, 4, 5, 6], mode='markers', marker={'color': 'black'}))
-    fig.show()
+    # fig = go.Figure()
+    # fig = simulation_tree(traces, None, fig, 1, 2,
+    #                       'lines', 'trace', print_dim_list=[0, 1, 2])
+    # fig = fig.add_trace(go.Scatter(
+    #     x=[3, 5, 5, 2, 2, 8, 8], y=[0, 0, 3, 3, 6, 3, 0], text=[0, 1, 2, 3, 4, 5, 6], mode='markers', marker={'color': 'black'}))
+    # fig.show()
