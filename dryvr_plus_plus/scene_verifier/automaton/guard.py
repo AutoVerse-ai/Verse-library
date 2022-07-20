@@ -83,10 +83,11 @@ class ValueSubstituter(ast.NodeTransformer):
 
 
 class GuardExpressionAst:
-    def __init__(self, guard_list):
+    def __init__(self, guard_list, guard_idx = 0):
         self.ast_list = copy.deepcopy(guard_list)
         self.cont_variables = {}
         self.varDict = {}
+        self.guard_idx = guard_idx
 
     def _build_guard(self, guard_str, agent):
         """

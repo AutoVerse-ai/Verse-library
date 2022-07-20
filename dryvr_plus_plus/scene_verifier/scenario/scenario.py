@@ -126,7 +126,7 @@ class Scenario:
         # The reset_list here are all the resets for a single transition. Need to evaluate each of them
         # and then combine them together
         for reset_tuple in reset_list:
-            reset, disc_var_dict, cont_var_dict = reset_tuple
+            reset, disc_var_dict, cont_var_dict, _ = reset_tuple
             reset_variable = reset.var
             expr = reset.expr
             # First get the transition destinations
@@ -402,11 +402,11 @@ class Scenario:
                 self, agent, state_dict, self.map)
             # TODO-PARSER: Get equivalent for this function
             paths = agent.controller.getNextModes()
-            for path in paths:
+            for guard_idx, path in enumerate(paths):
                 # Construct the guard expression
                 guard_list = path[0]
                 reset = path[1]
-                guard_expression = GuardExpressionAst(guard_list)
+                guard_expression = GuardExpressionAst(guard_list, guard_idx)
 
                 cont_var_updater = guard_expression.parse_any_all_new(
                     cont_var_dict_template, discrete_variable_dict, length_dict)
@@ -459,14 +459,19 @@ class Scenario:
                     if guard_satisfied:
                         reset_expr = ResetExpression(reset)
                         resets[reset_expr.var].append(
-                            (reset_expr, discrete_variable_dict, new_cont_var_dict))
+                            (reset_expr, discrete_variable_dict, new_cont_var_dict, guard_expression.guard_idx)
+                        )
                 # Perform combination over all possible resets to generate all possible real resets
                 combined_reset_list = list(itertools.product(*resets.values()))
                 if len(combined_reset_list) == 1 and combined_reset_list[0] == ():
                     continue
                 for i in range(len(combined_reset_list)):
+                    # Compute reset_idx 
+                    reset_idx = []
+                    for reset_info in combined_reset_list[i]:
+                        reset_idx.append(reset_info[3])
                     # a list of reset expression
-                    hits.append((agent_id, guard_expression,
+                    hits.append((agent_id, tuple(reset_idx), 
                                 combined_reset_list[i]))
             if hits != []:
                 guard_hits.append((hits, state_dict, idx))
@@ -479,7 +484,7 @@ class Scenario:
         reset_dict = {}
         reset_idx_dict = {}
         for hits, all_agent_state, hit_idx in guard_hits:
-            for agent_id, guard_list, reset_list in hits:
+            for agent_id, reset_idx, reset_list in hits:
                 # TODO: Need to change this function to handle the new reset expression and then I am done
                 dest_list, reset_rect = self.apply_reset(
                     node.agent[agent_id], reset_list, all_agent_state)
@@ -490,31 +495,35 @@ class Scenario:
                     warnings.warn(
                         f"Guard hit for mode {node.mode[agent_id]} for agent {agent_id} without available next mode")
                     dest_list.append(None)
+                if reset_idx not in reset_dict[agent_id]:
+                    reset_dict[agent_id][reset_idx] = {}
+                    reset_idx_dict[agent_id][reset_idx] = {}
                 for dest in dest_list:
-                    if dest not in reset_dict[agent_id]:
-                        reset_dict[agent_id][dest] = []
-                        reset_idx_dict[agent_id][dest] = []
-                    reset_dict[agent_id][dest].append(reset_rect)
-                    reset_idx_dict[agent_id][dest].append(hit_idx)
+                    if dest not in reset_dict[agent_id][reset_idx]:
+                        reset_dict[agent_id][reset_idx][dest] = []
+                        reset_idx_dict[agent_id][reset_idx][dest] = []
+                    reset_dict[agent_id][reset_idx][dest].append(reset_rect)
+                    reset_idx_dict[agent_id][reset_idx][dest].append(hit_idx)
 
         # Combine reset rects and construct transitions
         for agent in reset_dict:
-            for dest in reset_dict[agent]:
-                combined_rect = None
-                for rect in reset_dict[agent][dest]:
-                    rect = np.array(rect)
-                    if combined_rect is None:
-                        combined_rect = rect
-                    else:
-                        combined_rect[0, :] = np.minimum(
-                            combined_rect[0, :], rect[0, :])
-                        combined_rect[1, :] = np.maximum(
-                            combined_rect[1, :], rect[1, :])
-                combined_rect = combined_rect.tolist()
-                min_idx = min(reset_idx_dict[agent][dest])
-                max_idx = max(reset_idx_dict[agent][dest])
-                transition = (
-                    agent, node.mode[agent], dest, combined_rect, (min_idx, max_idx))
-                possible_transitions.append(transition)
+            for reset_idx in reset_dict[agent]:
+                for dest in reset_dict[agent][reset_idx]:
+                    combined_rect = None
+                    for rect in reset_dict[agent][reset_idx][dest]:
+                        rect = np.array(rect)
+                        if combined_rect is None:
+                            combined_rect = rect
+                        else:
+                            combined_rect[0, :] = np.minimum(
+                                combined_rect[0, :], rect[0, :])
+                            combined_rect[1, :] = np.maximum(
+                                combined_rect[1, :], rect[1, :])
+                    combined_rect = combined_rect.tolist()
+                    min_idx = min(reset_idx_dict[agent][reset_idx][dest])
+                    max_idx = max(reset_idx_dict[agent][reset_idx][dest])
+                    transition = (
+                        agent, node.mode[agent], dest, combined_rect, (min_idx, max_idx))
+                    possible_transitions.append(transition)
         # Return result
         return possible_transitions
