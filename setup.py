@@ -13,7 +13,7 @@ setup(
     python_requires='>=3.8',
     install_requires=[
         "numpy~=1.22.1",
-        "scipy~=1.6.1",
+        "scipy~=1.8.1",
         "matplotlib~=3.4.2",
         "polytope~=0.2.3",
         "pyvista~=0.32.1",

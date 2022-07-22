@@ -9,12 +9,13 @@ import numpy as np
 
 from dryvr_plus_plus.agents.base_agent import BaseAgent
 from dryvr_plus_plus.automaton import GuardExpressionAst, ResetExpression
-from dryvr_plus_plus.analysis import Simulator, Verifier, AnalysisTreeNode
+from dryvr_plus_plus.analysis import Simulator, Verifier, AnalysisTreeNode, AnalysisTree
 from dryvr_plus_plus.reachability_engine.utils import find, sample_rect
 from dryvr_plus_plus.sensor.base_sensor import BaseSensor
 from dryvr_plus_plus.map.lane_map import LaneMap
 
 EGO, OTHERS = "ego", "others"
+
 
 class Scenario:
     def __init__(self):
@@ -53,11 +54,14 @@ class Scenario:
         # agent.controller.vertices = list(itertools.product(*mode_vals))
         # agent.controller.vertexStrings = [','.join(elem) for elem in agent.controller.vertices]
 
-    def set_init(self, init_list, init_mode_list, static_list = []):
+    def set_init(self, init_list, init_mode_list, static_list=[]):
         assert len(init_list) == len(self.agent_dict)
         assert len(init_mode_list) == len(self.agent_dict)
-        assert len(static_list) == len(self.agent_dict) or len(static_list) == 0
-        for i,agent_id in enumerate(self.agent_dict.keys()):
+        assert len(static_list) == len(
+            self.agent_dict) or len(static_list) == 0
+        print(init_mode_list)
+        print(type(init_mode_list))
+        for i, agent_id in enumerate(self.agent_dict.keys()):
             self.init_dict[agent_id] = copy.deepcopy(init_list[i])
             self.init_mode_dict[agent_id] = copy.deepcopy(init_mode_list[i])
             if static_list:
@@ -72,7 +76,7 @@ class Scenario:
             res_list.append(trace)
         return res_list
 
-    def simulate(self, time_horizon, time_step):
+    def simulate(self, time_horizon, time_step) -> AnalysisTree:
         init_list = []
         init_mode_list = []
         static_list = []
@@ -85,7 +89,7 @@ class Scenario:
         print(init_list)
         return self.simulator.simulate(init_list, init_mode_list, static_list, agent_list, self, time_horizon, time_step, self.map)
 
-    def verify(self, time_horizon, time_step):
+    def verify(self, time_horizon, time_step) -> AnalysisTree:
         init_list = []
         init_mode_list = []
         static_list = []
@@ -116,7 +120,7 @@ class Scenario:
         # The reset_list here are all the resets for a single transition. Need to evaluate each of them
         # and then combine them together
         for reset_tuple in reset_list:
-            reset, disc_var_dict, cont_var_dict = reset_tuple
+            reset, disc_var_dict, cont_var_dict, _ = reset_tuple
             reset_variable = reset.var
             expr = reset.expr
             # First get the transition destinations
@@ -127,7 +131,8 @@ class Scenario:
                         found = True
                         break
                 if not found:
-                    raise ValueError(f'Reset discrete variable {discrete_variable_ego} not found')
+                    raise ValueError(
+                        f'Reset discrete variable {discrete_variable_ego} not found')
                 if isinstance(reset.val_ast, ast.Constant):
                     val = eval(expr)
                     possible_dest[var_loc] = [val]
@@ -175,7 +180,7 @@ class Scenario:
                 for comb in comb_list:
                     val_dict = {}
                     tmp = copy.deepcopy(expr)
-                    for symbol_idx,symbol in enumerate(symbols):
+                    for symbol_idx, symbol in enumerate(symbols):
                         tmp = tmp.replace(symbol, str(comb[symbol_idx]))
                     res = eval(tmp, {}, val_dict)
                     lb = min(lb, res)
@@ -198,7 +203,7 @@ class Scenario:
         comb_list = list(itertools.product(*data_list))
         return comb_list
 
-    def apply_cont_var_updater(self,cont_var_dict, updater):
+    def apply_cont_var_updater(self, cont_var_dict, updater):
         for variable in updater:
             for unrolled_variable, unrolled_variable_index in updater[variable]:
                 cont_var_dict[unrolled_variable] = cont_var_dict[variable][unrolled_variable_index]
@@ -217,7 +222,7 @@ class Scenario:
 
         for agent_id in node.agent:
             # Get guard
-            agent:BaseAgent = self.agent_dict[agent_id]
+            agent: BaseAgent = self.agent_dict[agent_id]
             agent_mode = node.mode[agent_id]
             if len(agent.controller.args) == 0:
                 continue
@@ -235,20 +240,23 @@ class Scenario:
             satisfied_guard = []
             asserts = defaultdict(list)
             for agent_id in agent_guard_dict:
-                agent:BaseAgent = self.agent_dict[agent_id]
+                agent: BaseAgent = self.agent_dict[agent_id]
                 state_dict = {}
                 for tmp in node.agent:
-                    state_dict[tmp] = (node.trace[tmp][idx], node.mode[tmp], node.static[tmp])
+                    state_dict[tmp] = (node.trace[tmp][idx],
+                                       node.mode[tmp], node.static[tmp])
                 agent_state, agent_mode, agent_static = state_dict[agent_id]
                 agent_state = agent_state[1:]
-                continuous_variable_dict, orig_disc_vars, _ = self.sensor.sense(self, agent, state_dict, self.map)
+                continuous_variable_dict, orig_disc_vars, _ = self.sensor.sense(
+                    self, agent, state_dict, self.map)
                 # Unsafety checking
                 ego_ty_name = find(agent.controller.args, lambda a: a.name == EGO).typ
                 def pack_env(agent: BaseAgent, cont, disc, map):
                     env = copy.deepcopy(cont)
                     env.update(disc)
 
-                    state_ty = namedtuple(ego_ty_name, agent.controller.state_defs[ego_ty_name].all_vars())
+                    state_ty = namedtuple(
+                        ego_ty_name, agent.controller.state_defs[ego_ty_name].all_vars())
                     packed: DefaultDict[str, Any] = defaultdict(dict)
                     for k, v in env.items():
                         k = k.split(".")
@@ -300,7 +308,7 @@ class Scenario:
                 for reset_var in all_resets:
                     iter_list.append(range(len(all_resets[reset_var])))
                 pos_list = list(itertools.product(*iter_list))
-                if len(pos_list)==1 and pos_list[0]==():
+                if len(pos_list) == 1 and pos_list[0] == ():
                     continue
                 for i in range(len(pos_list)):
                     pos = pos_list[i]
@@ -321,15 +329,18 @@ class Scenario:
                             next_init[var_loc] = res
                     all_dest = list(itertools.product(*possible_dest))
                     if not all_dest:
-                        warnings.warn(f"Guard hit for mode {agent_mode} for agent {agent_id} without available next mode")
+                        warnings.warn(
+                            f"Guard hit for mode {agent_mode} for agent {agent_id} without available next mode")
                         all_dest.append(None)
                     for dest in all_dest:
-                        satisfied_guard.append((agent_id, agent_mode, dest, next_init))
+                        satisfied_guard.append(
+                            (agent_id, agent_mode, dest, next_init))
             if len(asserts) > 0:
                 return asserts, transitions, idx
             if len(satisfied_guard) > 0:
                 for agent_idx, src_mode, dest_mode, next_init in satisfied_guard:
-                    transitions[agent_idx].append((agent_idx, src_mode, dest_mode, next_init, idx))
+                    transitions[agent_idx].append(
+                        (agent_idx, src_mode, dest_mode, next_init, idx))
                 break
         return None, transitions, idx
 
@@ -349,10 +360,10 @@ class Scenario:
             cont_var_dict_template, discrete_variable_dict, length_dict = self.sensor.sense(self, agent, state_dict, self.map)
             # TODO-PARSER: Get equivalent for this function
             paths = agent.controller.paths
-            for path in paths:
+            for guard_idx, path in enumerate(paths):
                 # Construct the guard expression
                 reset = (path.var, path.val_veri)
-                guard_expression = GuardExpressionAst([path.cond_veri])
+                guard_expression = GuardExpressionAst([path.cond_veri], guard_idx)
 
                 cont_var_updater = guard_expression.parse_any_all_new(cont_var_dict_template, discrete_variable_dict, length_dict)
                 self.apply_cont_var_updater(cont_var_dict_template, cont_var_updater)
@@ -409,23 +420,33 @@ class Scenario:
                     new_cont_var_dict = copy.deepcopy(cont_vars)
                     one_step_guard:GuardExpressionAst = copy.deepcopy(guard_expression)
 
-                    self.apply_cont_var_updater(new_cont_var_dict, continuous_variable_updater)
-                    guard_can_satisfied = one_step_guard.evaluate_guard_hybrid(agent, discrete_variable_dict, new_cont_var_dict, self.map)
+                    self.apply_cont_var_updater(
+                        new_cont_var_dict, continuous_variable_updater)
+                    guard_can_satisfied = one_step_guard.evaluate_guard_hybrid(
+                        agent, discrete_variable_dict, new_cont_var_dict, self.map)
                     if not guard_can_satisfied:
                         continue
-                    guard_satisfied, is_contained = one_step_guard.evaluate_guard_cont(agent, new_cont_var_dict, self.map)
+                    guard_satisfied, is_contained = one_step_guard.evaluate_guard_cont(
+                        agent, new_cont_var_dict, self.map)
                     any_contained = any_contained or is_contained
                     # TODO: Can we also store the cont and disc var dict so we don't have to call sensor again?
                     if guard_satisfied:
                         reset_expr = ResetExpression(reset)
-                        resets[reset_expr.var].append((reset_expr, discrete_variable_dict, new_cont_var_dict))
+                        resets[reset_expr.var].append(
+                            (reset_expr, discrete_variable_dict, new_cont_var_dict, guard_expression.guard_idx)
+                        )
                 # Perform combination over all possible resets to generate all possible real resets
                 combined_reset_list = list(itertools.product(*resets.values()))
-                if len(combined_reset_list)==1 and combined_reset_list[0]==():
+                if len(combined_reset_list) == 1 and combined_reset_list[0] == ():
                     continue
                 for i in range(len(combined_reset_list)):
+                    # Compute reset_idx 
+                    reset_idx = []
+                    for reset_info in combined_reset_list[i]:
+                        reset_idx.append(reset_info[3])
                     # a list of reset expression
-                    hits.append((agent_id, combined_reset_list[i]))
+                    hits.append((agent_id, tuple(reset_idx), 
+                                combined_reset_list[i]))
             if len(asserts) > 0:
                 return (asserts, idx), None
             if hits != []:
@@ -439,7 +460,7 @@ class Scenario:
         reset_dict = {}#defaultdict(lambda: defaultdict(list))
         reset_idx_dict = {}#defaultdict(lambda: defaultdict(list))
         for hits, all_agent_state, hit_idx in guard_hits:
-            for agent_id, reset_list in hits:
+            for agent_id, reset_idx, reset_list in hits:
                 # TODO: Need to change this function to handle the new reset expression and then I am done
                 dest_list,reset_rect = self.apply_reset(node.agent[agent_id], reset_list, all_agent_state)
                 if agent_id not in reset_dict:
@@ -449,30 +470,36 @@ class Scenario:
                     warnings.warn(
                         f"Guard hit for mode {node.mode[agent_id]} for agent {agent_id} without available next mode")
                     dest_list.append(None)
+                if reset_idx not in reset_dict[agent_id]:
+                    reset_dict[agent_id][reset_idx] = {}
+                    reset_idx_dict[agent_id][reset_idx] = {}
                 for dest in dest_list:
-                    if dest not in reset_dict[agent_id]:
-                        reset_dict[agent_id][dest] = []
-                        reset_idx_dict[agent_id][dest] = []
-                    reset_dict[agent_id][dest].append(reset_rect)
-                    reset_idx_dict[agent_id][dest].append(hit_idx)
+                    if dest not in reset_dict[agent_id][reset_idx]:
+                        reset_dict[agent_id][reset_idx][dest] = []
+                        reset_idx_dict[agent_id][reset_idx][dest] = []
+                    reset_dict[agent_id][reset_idx][dest].append(reset_rect)
+                    reset_idx_dict[agent_id][reset_idx][dest].append(hit_idx)
 
         possible_transitions = []
         # Combine reset rects and construct transitions
         for agent in reset_dict:
-            for dest in reset_dict[agent]:
-                combined_rect = None
-                for rect in reset_dict[agent][dest]:
-                    rect = np.array(rect)
-                    if combined_rect is None:
-                        combined_rect = rect
-                    else:
-                        combined_rect[0, :] = np.minimum(
-                            combined_rect[0, :], rect[0, :])
-                        combined_rect[1, :] = np.maximum(
-                            combined_rect[1, :], rect[1, :])
-                combined_rect = combined_rect.tolist()
-                min_idx = min(reset_idx_dict[agent][dest])
-                max_idx = max(reset_idx_dict[agent][dest])
-                possible_transitions.append((agent, node.mode[agent], dest, combined_rect, (min_idx, max_idx)))
+            for reset_idx in reset_dict[agent]:
+                for dest in reset_dict[agent][reset_idx]:
+                    combined_rect = None
+                    for rect in reset_dict[agent][reset_idx][dest]:
+                        rect = np.array(rect)
+                        if combined_rect is None:
+                            combined_rect = rect
+                        else:
+                            combined_rect[0, :] = np.minimum(
+                                combined_rect[0, :], rect[0, :])
+                            combined_rect[1, :] = np.maximum(
+                                combined_rect[1, :], rect[1, :])
+                    combined_rect = combined_rect.tolist()
+                    min_idx = min(reset_idx_dict[agent][reset_idx][dest])
+                    max_idx = max(reset_idx_dict[agent][reset_idx][dest])
+                    transition = (
+                        agent, node.mode[agent], dest, combined_rect, (min_idx, max_idx))
+                    possible_transitions.append(transition)
         # Return result
         return None, possible_transitions

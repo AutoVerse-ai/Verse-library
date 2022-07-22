@@ -20,4 +20,4 @@
 #
 #     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #	Codes are far away from bugs with the protection
-from . import parser, plotter2D, plotter3D
+from . import plotter2D, plotter3D

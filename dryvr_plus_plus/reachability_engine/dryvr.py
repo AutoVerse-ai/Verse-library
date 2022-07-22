@@ -41,15 +41,13 @@ def get_reachtube_segment(training_traces: np.ndarray, initial_radii: np.ndarray
     trace_initial_time = center_trace[0, 0]
     x_points: np.ndarray = center_trace[:, 0] - trace_initial_time
     assert np.all(training_traces[0, :, 0] == training_traces[1:, :, 0])
-    y_points: np.ndarray = all_sensitivities_calc(
-        training_traces, initial_radii)
+    y_points: np.ndarray = all_sensitivities_calc(training_traces, initial_radii)
     points: np.ndarray = np.zeros((ndims - 1, trace_len, 2))
     points[np.where(initial_radii != 0), 0, 1] = 1.0
     points[:, :, 0] = np.reshape(x_points, (1, x_points.shape[0]))
     points[:, 1:, 1] = y_points
     normalizing_initial_set_radii: np.ndarray = initial_radii.copy()
-    normalizing_initial_set_radii[np.where(
-        normalizing_initial_set_radii == 0)] = 1.0
+    normalizing_initial_set_radii[np.where(normalizing_initial_set_radii == 0)] = 1.0
     df: np.ndarray = np.zeros((trace_len, ndims))
     if method == 'PW':
         df[:, 1:] = np.transpose(
@@ -61,8 +59,7 @@ def get_reachtube_segment(training_traces: np.ndarray, initial_radii: np.ndarray
         points[:, :, 1] = np.maximum(points[:, :, 1], _EPSILON)
         points[:, :, 1] = np.log(points[:, :, 1])
         for dim_ind in range(1, ndims):
-            new_min = min(
-                np.min(points[dim_ind - 1, 1:, 1]) + _TRUE_MIN_CONST, -10)
+            new_min = min(np.min(points[dim_ind - 1, 1:, 1]) + _TRUE_MIN_CONST, -10)
             if initial_radii[dim_ind - 1] == 0:
                 # exclude initial set, then add true minimum points
                 new_points: np.ndarray = np.row_stack(
@@ -70,8 +67,7 @@ def get_reachtube_segment(training_traces: np.ndarray, initial_radii: np.ndarray
             else:
                 # start from zero, then add true minimum points
                 new_points: np.ndarray = np.row_stack((points[dim_ind - 1, 0, :],
-                                                       np.array(
-                                                           (points[dim_ind - 1, 0, 0], new_min)),
+                                                       np.array((points[dim_ind - 1, 0, 0], new_min)),
                                                        np.array((points[dim_ind - 1, -1, 0], new_min))))
                 df[0, dim_ind] = initial_radii[dim_ind - 1]
                 # Tuple order is start_time, end_time, slope, y-intercept
@@ -87,18 +83,15 @@ def get_reachtube_segment(training_traces: np.ndarray, initial_radii: np.ndarray
             for end_ind, start_ind in vert_inds:
                 if cur_dim_points[start_ind, 1] != new_min and cur_dim_points[end_ind, 1] != new_min:
                     slope = (cur_dim_points[end_ind, 1] - cur_dim_points[start_ind, 1]) / (
-                        cur_dim_points[end_ind, 0] - cur_dim_points[start_ind, 0])
-                    y_intercept = cur_dim_points[start_ind,
-                                                 1] - cur_dim_points[start_ind, 0] * slope
+                                cur_dim_points[end_ind, 0] - cur_dim_points[start_ind, 0])
+                    y_intercept = cur_dim_points[start_ind, 1] - cur_dim_points[start_ind, 0] * slope
                     start_time = cur_dim_points[start_ind, 0]
                     end_time = cur_dim_points[end_ind, 0]
                     assert start_time < end_time
                     if start_time == 0:
-                        linear_separators.append(
-                            (start_time, end_time, slope, y_intercept, 0, end_ind + 1))
+                        linear_separators.append((start_time, end_time, slope, y_intercept, 0, end_ind + 1))
                     else:
-                        linear_separators.append(
-                            (start_time, end_time, slope, y_intercept, start_ind + 1, end_ind + 1))
+                        linear_separators.append((start_time, end_time, slope, y_intercept, start_ind + 1, end_ind + 1))
             linear_separators.sort()
             prev_val = 0
             prev_ind = 1 if initial_radii[dim_ind - 1] == 0 else 0
@@ -118,17 +111,13 @@ def get_reachtube_segment(training_traces: np.ndarray, initial_radii: np.ndarray
         raise ValueError
     assert (np.all(df >= 0))
     reachtube_segment: np.ndarray = np.zeros((trace_len - 1, 2, ndims))
-    reachtube_segment[:, 0, :] = np.minimum(
-        center_trace[1:, :] - df[1:, :], center_trace[:-1, :] - df[:-1, :])
-    reachtube_segment[:, 1, :] = np.maximum(
-        center_trace[1:, :] + df[1:, :], center_trace[:-1, :] + df[:-1, :])
+    reachtube_segment[:, 0, :] = np.minimum(center_trace[1:, :] - df[1:, :], center_trace[:-1, :] - df[:-1, :])
+    reachtube_segment[:, 1, :] = np.maximum(center_trace[1:, :] + df[1:, :], center_trace[:-1, :] + df[:-1, :])
     # assert 100% training accuracy (all trajectories are contained)
     for trace_ind in range(training_traces.shape[0]):
         if not (np.all(reachtube_segment[:, 0, :] <= training_traces[trace_ind, 1:, :]) and np.all(reachtube_segment[:, 1, :] >= training_traces[trace_ind, 1:, :])):
-            assert np.any(
-                np.abs(training_traces[trace_ind, 0, 1:]-center_trace[0, 1:]) > initial_radii)
-            print(f"Warning: Trace #{trace_ind}",
-                  "of this initial set is sampled outside of the initial set because of floating point error and is not contained in the initial set")
+            assert np.any(np.abs(training_traces[trace_ind, 0, 1:]-center_trace[0, 1:]) > initial_radii)
+            print(f"Warning: Trace #{trace_ind}", "of this initial set is sampled outside of the initial set because of floating point error and is not contained in the initial set")
     return reachtube_segment
 
 def calcCenterPoint(lower, upper):

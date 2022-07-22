@@ -16,19 +16,14 @@ pip install -r requirements.txt
 ```
 
 ## Examples
-The package comes with two controller examples inside folder ```demo/```
-- The first example consists a scenario with two vehicles. The second vehicle will brake and stop when it detect the first vehicle in front. The first example can be run by using command
+The package comes with several examples in the  ```demo/``` folder
+- Run examples as:
 
 ```
 python3 demo1.py
 ```
 
-- The second example consists a scenario with two vehicles, which can perform lane switch based on their relative position.
-The second example can be run using command
-
-```
-python3 demo2.py
-```
+Read the comments in ```ball_bounces.py``` to learn how to create new agents and scenarios. More detailed tutorials will be provided later.
 
 ## Package Structure
 
