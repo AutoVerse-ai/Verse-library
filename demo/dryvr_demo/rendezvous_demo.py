@@ -1,4 +1,4 @@
-from dryvr_plus_plus.example.example_agent.origin_agent import craft_agent
+from origin_agent import craft_agent
 from dryvr_plus_plus import Scenario
 from dryvr_plus_plus.plotter.plotter2D import *
 
@@ -11,7 +11,7 @@ class CraftMode(Enum):
     Passive = auto()
 
 if __name__ == "__main__":
-    input_code_name = './demo/dryvr_demo/rendezvous_controller.py'
+    input_code_name = './rendezvous_controller.py'
     scenario = Scenario()
 
     car = craft_agent('test', file_name=input_code_name)

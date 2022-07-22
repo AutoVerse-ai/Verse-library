@@ -1,4 +1,4 @@
-from dryvr_plus_plus.example.example_agent.origin_agent import vanderpol_agent
+from origin_agent import vanderpol_agent
 from dryvr_plus_plus import Scenario
 from dryvr_plus_plus.plotter.plotter2D import *
 
@@ -9,7 +9,7 @@ class AgentMode(Enum):
     Default = auto()
 
 if __name__ == "__main__":
-    input_code_name = './demo/dryvr_demo/vanderpol_controller.py'
+    input_code_name = './vanderpol_controller.py'
     scenario = Scenario()
 
     car = vanderpol_agent('car1', file_name=input_code_name)

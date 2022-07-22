@@ -1,5 +1,4 @@
-from regex import B
-from dryvr_plus_plus.example import QuadrotorAgent
+from quadrotor_agent import QuadrotorAgent
 from dryvr_plus_plus import Scenario
 from dryvr_plus_plus.example import SimpleMap2, SimpleMap3, SimpleMap5, SimpleMap6
 from dryvr_plus_plus.plotter.plotter2D import *
@@ -14,7 +13,7 @@ class CraftMode(Enum):
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/quadrotor/quadrotor_controller.py'
+    input_code_name = './quadrotor_controller.py'
     scenario = Scenario()
 
     path = os.path.abspath(__file__)

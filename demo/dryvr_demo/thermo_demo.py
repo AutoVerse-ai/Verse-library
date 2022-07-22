@@ -1,4 +1,4 @@
-from dryvr_plus_plus.example.example_agent.origin_agent import thermo_agent
+from origin_agent import thermo_agent
 from dryvr_plus_plus import Scenario
 from dryvr_plus_plus.plotter.plotter2D import *
 
@@ -10,7 +10,7 @@ class ThermoMode(Enum):
     OFF = auto()
 
 if __name__ == "__main__":
-    input_code_name = './demo/dryvr_demo/thermo_controller.py'
+    input_code_name = './thermo_controller.py'
     scenario = Scenario()
 
     car = thermo_agent('test', file_name=input_code_name)
