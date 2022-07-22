@@ -18,12 +18,18 @@ class Lane():
             longitudinal_start += lane_seg.length
 
     def get_lane_segment(self, position:np.ndarray) -> AbstractLane:
+        min_lateral = float('inf')
+        idx = -1
+        seg = None
         for seg_idx, segment in enumerate(self.segment_list):
             logitudinal, lateral = segment.local_coordinates(position)
             is_on = 0-Lane.COMPENSATE <= logitudinal < segment.length
             if is_on:
-                return seg_idx, segment
-        return -1,None
+                if lateral < min_lateral:
+                    idx = seg_idx 
+                    seg = segment
+                    min_lateral = lateral
+        return idx, seg
 
     def get_heading(self, position:np.ndarray) -> float:
         seg_idx, segment = self.get_lane_segment(position)

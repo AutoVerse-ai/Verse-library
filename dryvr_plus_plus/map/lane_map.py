@@ -71,6 +71,8 @@ class LaneMap:
         return lane.get_longitudinal_position(position)
 
     def get_lateral_distance(self, lane_idx:str, position:np.ndarray) -> float:
+        if position[0]>138 and position[0]<140 and position[1]>-9 and position[1]<-8:
+            print("stop") 
         if not isinstance(position, np.ndarray):
             position = np.array(position)
         lane = self.lane_dict[lane_idx]

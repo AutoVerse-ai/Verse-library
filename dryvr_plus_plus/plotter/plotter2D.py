@@ -886,9 +886,9 @@ def draw_map(map, color='rgba(0,0,0,1)', fig: go.Figure() = go.Figure(), fill_ty
                 y1 = (np.sin(phase_array)*r1 + lane_seg.center[1]).tolist()
                 r2 = lane_seg.radius + lane_seg.width/2
                 x2 = (np.cos(phase_array)*r2 +
-                      lane_seg.center[0]).tolist().reverse()
+                      lane_seg.center[0]).tolist()[::-1]
                 y2 = (np.sin(phase_array)*r2 +
-                      lane_seg.center[1]).tolist().reverse()
+                      lane_seg.center[1]).tolist()[::-1]
                 trace_x = x1+x2+[x1[0]]
                 trace_y = y1+y2+[y1[0]]
                 x_min = min(x_min, min(trace_x))

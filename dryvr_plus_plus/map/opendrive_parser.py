@@ -6,11 +6,9 @@ from bs4 import BeautifulSoup #Beautiful Soup library for parsing data in python
 ###############################################################################################
 
 #Import all the lane objects needed to generate all the lane map objects for the controllers
-from dryvr_plus_plus.scene_verifier.map.lane import Lane
-from dryvr_plus_plus.scene_verifier.map.lane_map import LaneMap
-from dryvr_plus_plus.scene_verifier.map.lane_segment import StraightLane, CircularLane
-from lane_visualizer import lane_visualizer
-from center_line_visualizer import center_visualizer
+from dryvr_plus_plus.map.lane import Lane
+from dryvr_plus_plus.map.lane_map import LaneMap
+from dryvr_plus_plus.map.lane_segment import *
 ###############################################################################################
 
 ###############################ASAM OPEN DRIVE PARSING FUNCTION################################
@@ -312,7 +310,7 @@ def road_traverser(road):
 #     return lanes_to_return
 
 #Function to generate lane data visualization while parsing the ASAM Open DRIVE file
-def lane_generator(file_name): 
+def opendrive_map(file_name): 
     soup = file_parser(file_name) #call the file parsing function
     road = soup.find_all('road')[:-1] #first find all the road segments and ignore the last one
     
@@ -342,7 +340,7 @@ if __name__ == '__main__':
     lane_list = []
 
     for idx,value in enumerate(file_list):
-        lane_list = lane_generator(value)
+        lane_list = opendrive_map(value)
         # plt.figure()
         # lane_visualizer(value,idx)
         # plt.savefig('full_road_geometry/figure'+str(idx)+'.png')
