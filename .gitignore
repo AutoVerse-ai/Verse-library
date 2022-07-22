@@ -10,5 +10,5 @@ dist/dryvr_plus_plus-0.1-py3.8.egg
 tmp/
 dist/
 **/output.json
-expeced_map_output/
+expected_map_output/
 map_package/
