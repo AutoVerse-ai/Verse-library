@@ -1,4 +1,4 @@
-from dryvr_plus_plus.map import LaneMap, LaneSegment
+from dryvr_plus_plus import LaneMap, LaneSegment
 
 class SimpleMap(LaneMap):
     def __init__(self):

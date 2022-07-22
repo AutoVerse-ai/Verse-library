@@ -1,9 +1,6 @@
-from dryvr_plus_plus.example.example_agent.car_agent import CarAgent, NPCAgent
-from dryvr_plus_plus.scenario import Scenario
-from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap2, SimpleMap3, SimpleMap5, SimpleMap6
-from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor2
+from dryvr_plus_plus.example import CarAgent, NPCAgent, SimpleMap2, FakeSensor2
+from dryvr_plus_plus import Scenario
 from enum import Enum, auto
-import plotly.graph_objects as go
 from dryvr_plus_plus.plotter.plotter2D import *
 
 
@@ -33,7 +30,7 @@ class State:
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/example_controller1.py'
+    input_code_name = './demo/controller/example_controller1.py'
     scenario = Scenario()
 
     car = NPCAgent('car1')

@@ -1,2 +1,3 @@
-from dryvr_plus_plus.automaton.guard import GuardExpressionAst
-from dryvr_plus_plus.automaton.reset import ResetExpression
+from . import guard, reset
+from .guard import GuardExpressionAst
+from .reset import ResetExpression

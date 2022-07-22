@@ -1,1 +1,2 @@
-from dryvr_plus_plus.sensor.base_sensor import BaseSensor
+from . import base_sensor
+from .base_sensor import BaseSensor

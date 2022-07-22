@@ -1,4 +1,4 @@
-from dryvr_plus_plus.agents import BaseAgent
+from dryvr_plus_plus import BaseAgent
 import numpy as np
 from dryvr_plus_plus.code_parser import ControllerIR
 

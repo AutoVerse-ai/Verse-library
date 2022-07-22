@@ -1,13 +1,10 @@
-from dryvr_plus_plus.sensor import BaseSensor
-from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor4
-import plotly.graph_objects as go
 from dryvr_plus_plus.plotter.plotter2D import *
-from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap3
-from dryvr_plus_plus.scenario import Scenario
-from dryvr_plus_plus.example.example_agent.ball_agent import BallAgent
+from dryvr_plus_plus.example import SimpleMap3, BallAgent
+from dryvr_plus_plus import Scenario
 from enum import Enum, auto
 import copy
-from typing import List
+
+
 # from dryvr_plus_plus.map import Lane
 
 

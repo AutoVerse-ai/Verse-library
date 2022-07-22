@@ -3,7 +3,7 @@ from abc import ABCMeta, abstractmethod
 from typing import Tuple, List, Optional
 import copy
 
-from dryvr_plus_plus.utils import wrap_to_pi, Vector, get_class_path, class_from_path, to_serializable
+from dryvr_plus_plus.reachability_engine.utils import wrap_to_pi, Vector, get_class_path, to_serializable
 
 
 class LineType:

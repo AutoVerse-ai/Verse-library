@@ -1,3 +1,4 @@
-from dryvr_plus_plus.map.lane_segment import AbstractLane, LaneSegment, StraightLane, CircularLane
-from dryvr_plus_plus.map.lane_map import LaneMap
-from dryvr_plus_plus.map.lane import Lane
+from . import lane_segment, lane_map, lane
+from .lane_segment import AbstractLane, LaneSegment, StraightLane, CircularLane
+from .lane_map import LaneMap
+from .lane import Lane

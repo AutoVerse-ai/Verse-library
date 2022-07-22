@@ -1,6 +1,5 @@
 from enum import Enum, auto
-import copy
-from typing import List
+
 
 class BallTypeMode(Enum):
     TYPE1 = auto()
@@ -44,13 +43,10 @@ def controller(ego:State, other: State):
     assert not (dist(ego, other) < 5 and ego.x < other.x), "collision"
     return output
 
-from dryvr_plus_plus.example.example_agent.ball_agent import BallAgent
-from dryvr_plus_plus.scenario import Scenario
-from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap3
+from dryvr_plus_plus.example import BallAgent
+from dryvr_plus_plus import Scenario
 from dryvr_plus_plus.plotter.plotter2D import *
 import plotly.graph_objects as go
-from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor4
-from dryvr_plus_plus.sensor import BaseSensor
 
 if __name__ == "__main__":
     ball_controller = './demo/ball_bounces_dev.py'

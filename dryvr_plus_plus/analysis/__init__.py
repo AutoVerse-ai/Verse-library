@@ -1,3 +1,4 @@
-from dryvr_plus_plus.analysis.analysis_tree_node import AnalysisTreeNode
-from dryvr_plus_plus.analysis.simulator import Simulator
-from dryvr_plus_plus.analysis.verifier import Verifier
+from . import simulator, verifier, analysis_tree_node
+from .analysis_tree_node import AnalysisTreeNode
+from .simulator import Simulator
+from .verifier import Verifier
