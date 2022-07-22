@@ -24,7 +24,9 @@ setup(
         "treelib~=1.6.1",
         "z3-solver~=4.8.17.0",
         "igraph~=0.9.10",
-        "plotly~=5.8.0"
+        "plotly~=5.8.0",
+        "beautifulsoup4~=4.11.1",
+        "et_xmlfile~=1.1.0"
     ],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
