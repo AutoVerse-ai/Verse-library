@@ -171,14 +171,10 @@ class QuadrotorAgent(BaseAgent):
         initialCondition[-2] = int(initialCondition[-2])
         time_bound = min(self.time_limits[initialCondition[-2]], time_bound)
         number_points = int(np.ceil(time_bound/time_step))
-        t = [round(i*time_step, 10) for i in range(0, number_points)]
         # todo
-        if initialCondition[-2] == 2:
-            print('r')
         # if mode[0] != 'Follow_Waypoint':
         #     raise ValueError()
         mode_parameters = self.waypoints[initialCondition[-2]]
-        print(initialCondition[-2], mode_parameters)
         # init = initialCondition
         # trace = [[0]+init]
         # for i in range(len(t)):
