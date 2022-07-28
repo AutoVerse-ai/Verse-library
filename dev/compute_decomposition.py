@@ -98,7 +98,7 @@ if __name__ == "__main__":
     w1 = Symbol('w1', real=True)
 
     time_horizon = 10
-    dt = 0.01
+    dt = 0.001
     expr = [
         x1 + dt*(-2*x1+x2*(1+x1)+x3+w1),
         x2 + dt*(-x2+x1*(1-x2)+0.1),
@@ -145,7 +145,10 @@ if __name__ == "__main__":
     plt.plot(tube[:,0], tube[:,2], 'r')
     plt.plot(tube[:,0], tube[:,6], 'g')
 
-    # plt.figure(2)
-    # for i in range(tube.shape[0]):
-    #     plt.plot(tube[i,])
+    plt.figure(2)
+    for i in range(tube.shape[0]):
+        plt.plot([tube[i,1], tube[i,5]], [tube[i,2],tube[i,2]], 'g')
+        plt.plot([tube[i,5], tube[i,5]], [tube[i,2],tube[i,6]], 'g')
+        plt.plot([tube[i,5], tube[i,1]], [tube[i,6],tube[i,6]], 'g')
+        plt.plot([tube[i,1], tube[i,1]], [tube[i,6],tube[i,2]], 'g')
     plt.show()
