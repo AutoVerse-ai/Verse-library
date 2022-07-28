@@ -4,6 +4,7 @@ import copy
 
 class CraftMode(Enum):
     Follow_Waypoint = auto()
+    Follow_Lane = auto()
 
 
 class State:
@@ -23,7 +24,7 @@ class State:
 
 def controller(ego: State):
     output = copy.deepcopy(ego)
-    if ego.done_flag > 0:
+    if ego.craft_mode == CraftMode.Follow_Waypoint and ego.done_flag > 0:
         output.done_flag = 0
         if ego.waypoint_index == 0:
             output.waypoint_index = 1

@@ -1,7 +1,7 @@
 from regex import B
 from dryvr_plus_plus.example.example_agent.quadrotor_agent import QuadrotorAgent
 from dryvr_plus_plus.scene_verifier.scenario.scenario import Scenario
-from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap2, SimpleMap3, SimpleMap5, SimpleMap6
+from dryvr_plus_plus.example.example_map.simple_map_3d import SimpleMap1
 from dryvr_plus_plus.plotter.plotter2D import *
 from dryvr_plus_plus.example.example_sensor.quadrotor_sensor import QuadrotorSensor
 import os
@@ -13,6 +13,7 @@ from gen_json import write_json, read_json
 
 class CraftMode(Enum):
     Follow_Waypoint = auto()
+    Follow_Lane = auto()
 
 
 if __name__ == "__main__":
@@ -30,8 +31,11 @@ if __name__ == "__main__":
     # print(waypoints)
     # print(guard_boxes)
     quadrotor = QuadrotorAgent(
-        'test', file_name=input_code_name, waypoints=waypoints, boxes=guard_boxes, time_limits=time_limits)
+        'test', file_name=input_code_name)
     scenario.add_agent(quadrotor)
+    tmp_map = SimpleMap1(waypoints=waypoints,
+                         guard_boxes=guard_boxes, time_limits=time_limits)
+    scenario.set_map(tmp_map)
     scenario.set_sensor(QuadrotorSensor())
     # modify mode list input
     scenario.set_init(
@@ -42,13 +46,13 @@ if __name__ == "__main__":
             tuple([CraftMode.Follow_Waypoint]),
         ]
     )
-    traces = scenario.verify(200, 0.2)
+    traces = scenario.simulate(200, 0.05)
     path = os.path.abspath(__file__)
     path = path.replace('quadrotor_demo.py', 'output.json')
     write_json(traces, path)
     fig = go.Figure()
-    fig = reachtube_tree(traces, None, fig, 1, 2,
-                         'lines', 'trace', print_dim_list=[0, 1, 2])
+    fig = simulation_tree(traces, None, fig, 1, 2,
+                          'lines', 'trace', print_dim_list=[0, 1, 2])
     fig = fig.add_trace(go.Scatter(
         x=[3, 5, 5, 2, 2, 8, 8], y=[0, 0, 3, 3, 6, 3, 0], text=[0, 1, 2, 3, 4, 5, 6], mode='markers', marker={'color': 'black'}))
     fig.show()

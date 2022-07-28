@@ -7,7 +7,7 @@ from scipy.integrate import ode
 import torch
 import math
 from dryvr_plus_plus.scene_verifier.agents.base_agent import BaseAgent
-from dryvr_plus_plus.scene_verifier.map.lane_map import LaneMap
+from dryvr_plus_plus.scene_verifier.map.lane_map_3d import LaneMap_3d
 from dryvr_plus_plus.scene_verifier.code_parser.parser import ControllerIR, StateDef, ModeDef, Lambda
 
 
@@ -25,21 +25,46 @@ class FFNNC(torch.nn.Module):
         return x
 
 
+path = os.path.abspath(__file__)
+path = path.replace('quadrotor_agent.py', 'prarm.json')
+# print(path)
+with open(path, 'r') as f:
+    prarms = json.load(f)
+bias1 = prarms['bias1']
+bias2 = prarms['bias2']
+bias3 = prarms['bias3']
+weight1 = prarms['weight1']
+weight2 = prarms['weight2']
+weight3 = prarms['weight3']
+
+bias1 = torch.FloatTensor(bias1)
+bias2 = torch.FloatTensor(bias2)
+bias3 = torch.FloatTensor(bias3)
+weight1 = torch.FloatTensor(weight1)
+weight2 = torch.FloatTensor(weight2)
+weight3 = torch.FloatTensor(weight3)
+controller = FFNNC()
+controller.layer1.weight = torch.nn.Parameter(weight1)
+controller.layer2.weight = torch.nn.Parameter(weight2)
+controller.layer3.weight = torch.nn.Parameter(weight3)
+controller.layer1.bias = torch.nn.Parameter(bias1)
+controller.layer2.bias = torch.nn.Parameter(bias2)
+controller.layer3.bias = torch.nn.Parameter(bias3)
+control_input_list = [[-0.1, -0.1, 7.81],
+                      [-0.1, -0.1, 11.81],
+                      [-0.1, 0.1, 7.81],
+                      [-0.1, 0.1, 11.81],
+                      [0.1, -0.1, 7.81],
+                      [0.1, -0.1, 11.81],
+                      [0.1, 0.1, 7.81],
+                      [0.1, 0.1, 11.81]]
+
+
 class QuadrotorAgent(BaseAgent):
-    def __init__(self, id, code=None, file_name=None, waypoints=[], boxes=[], time_limits=[]):
+    def __init__(self, id, code=None, file_name=None, boxes=[], time_limits=[]):
         super().__init__(id, code, file_name)
-        self.waypoints = waypoints
         self.boxes = boxes
         self.time_limits = time_limits
-
-    def in_box(self, state, waypoint_id):
-        if waypoint_id >= len(self.boxes):
-            return False
-        box = self.boxes[int(waypoint_id)]
-        for i in range(len(box[0])):
-            if state[i] < box[0][i] or state[i] > box[1][i]:
-                return False
-        return True
 
     @staticmethod
     def dynamic(t, state, u):
@@ -63,47 +88,14 @@ class QuadrotorAgent(BaseAgent):
         ddone_flag = ddf
         return [dref_x, dref_y, dref_z, dx, dy, dz, dvx, dvy, dvz, dwaypoint, ddone_flag]
 
-    def action_handler(self,  state) -> Tuple[float, float]:
+    def action_handler(self,  state, lane_map: LaneMap_3d) -> Tuple[float, float]:
         waypoint = state[-2]
         df = 0
-        if self.in_box(state[3:9], waypoint):
+        if lane_map.check_guard_box(state[3:9], waypoint):
             df = 1
         return df
 
-    def runModel(self, initalCondition, time_bound, time_step, ref_input):
-        path = os.path.abspath(__file__)
-        path = path.replace('quadrotor_agent.py', 'prarm.json')
-        # print(path)
-        with open(path, 'r') as f:
-            prarms = json.load(f)
-        bias1 = prarms['bias1']
-        bias2 = prarms['bias2']
-        bias3 = prarms['bias3']
-        weight1 = prarms['weight1']
-        weight2 = prarms['weight2']
-        weight3 = prarms['weight3']
-
-        bias1 = torch.FloatTensor(bias1)
-        bias2 = torch.FloatTensor(bias2)
-        bias3 = torch.FloatTensor(bias3)
-        weight1 = torch.FloatTensor(weight1)
-        weight2 = torch.FloatTensor(weight2)
-        weight3 = torch.FloatTensor(weight3)
-        controller = FFNNC()
-        controller.layer1.weight = torch.nn.Parameter(weight1)
-        controller.layer2.weight = torch.nn.Parameter(weight2)
-        controller.layer3.weight = torch.nn.Parameter(weight3)
-        controller.layer1.bias = torch.nn.Parameter(bias1)
-        controller.layer2.bias = torch.nn.Parameter(bias2)
-        controller.layer3.bias = torch.nn.Parameter(bias3)
-        control_input_list = [[-0.1, -0.1, 7.81],
-                              [-0.1, -0.1, 11.81],
-                              [-0.1, 0.1, 7.81],
-                              [-0.1, 0.1, 11.81],
-                              [0.1, -0.1, 7.81],
-                              [0.1, -0.1, 11.81],
-                              [0.1, 0.1, 7.81],
-                              [0.1, 0.1, 11.81]]
+    def runModel(self, initalCondition, time_bound, time_step, ref_input, lane_map: LaneMap_3d):
         init = initalCondition
         trajectory = [init]
         r = ode(self.dynamic)
@@ -143,7 +135,7 @@ class QuadrotorAgent(BaseAgent):
             idx = np.argmax(res)
             u = control_input_list[idx] + ref_input[0:3] + [sc]
 
-            df = self.action_handler(init)
+            df = self.action_handler(init, lane_map)
             u = u+[df]
             init = trajectory[i]  # len 11
             r = ode(self.dynamic)
@@ -165,33 +157,22 @@ class QuadrotorAgent(BaseAgent):
             trace[i].extend(val[3:])
         return trace
 
-    def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step, lane_map: LaneMap = None) -> np.ndarray:
+    def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step, lane_map: LaneMap_3d = None) -> np.ndarray:
         # total time_bound remained
         time_bound = float(time_bound)
         initialCondition[-2] = int(initialCondition[-2])
-        time_bound = min(self.time_limits[initialCondition[-2]], time_bound)
-        number_points = int(np.ceil(time_bound/time_step))
+        time_bound = min(lane_map.get_timelimit_by_id(
+            initialCondition[-2]), time_bound)
+        # number_points = int(np.ceil(time_bound/time_step))
         # todo
-        # if mode[0] != 'Follow_Waypoint':
-        #     raise ValueError()
-        mode_parameters = self.waypoints[initialCondition[-2]]
-        # init = initialCondition
-        # trace = [[0]+init]
-        # for i in range(len(t)):
-        #     steering, a = self.action_handler(mode, init, lane_map)
-        #     r = ode(self.dynamic)
-        #     r.set_initial_value(init).set_f_params([steering, a])
-        #     res: np.ndarray = r.integrate(r.t + time_step)
-        #     init = res.flatten().tolist()
-        #     if init[3] < 0:
-        #         init[3] = 0
-        #     trace.append([t[i] + time_step] + init)
-        ref_vx = (mode_parameters[3] - mode_parameters[0]) / time_bound
-        ref_vy = (mode_parameters[4] - mode_parameters[1]) / time_bound
-        ref_vz = (mode_parameters[5] - mode_parameters[2]) / time_bound
-        sym_rot_angle = 0
-        trace = self.runModel(mode_parameters[0:3] + list(initialCondition), time_bound, time_step, [ref_vx, ref_vy, ref_vz,
-                                                                                                     sym_rot_angle])
+        if mode[0] == 'Follow_Waypoint':
+            mode_parameters = lane_map.get_waypoint_by_id(initialCondition[-2])
+            ref_vx = (mode_parameters[3] - mode_parameters[0]) / time_bound
+            ref_vy = (mode_parameters[4] - mode_parameters[1]) / time_bound
+            ref_vz = (mode_parameters[5] - mode_parameters[2]) / time_bound
+            sym_rot_angle = 0
+            trace = self.runModel(mode_parameters[0:3] + list(initialCondition), time_bound, time_step, [ref_vx, ref_vy, ref_vz,
+                                                                                                         sym_rot_angle], lane_map)
         return np.array(trace)
 
 # import json
