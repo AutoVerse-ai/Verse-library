@@ -1,4 +1,7 @@
 # Verse Library
+
+Verse is a library for creating, simulating, and verifying uni*verses* or scenarios with intelligent and interacting autonomous agents.  
+
 ## Installation
 The package requires python 3.8+. The package can be installed using pip
 
