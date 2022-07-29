@@ -535,7 +535,7 @@ def testReachtubeGeoUnroll():
         #     [0.0,0.0,0.0,0.0]+[0.0,0.0]+[0.0,0.0,0.0,0.0]+[0.0,0.0,0.0,0.0]
         trace = simulategeo(
             state_init,
-            5.0,
+            1.0,
             0.001,
         )
 
@@ -559,7 +559,7 @@ def testReachtubeGeoUnroll():
     trace = computeReachtubeGeoUnroll(
         [state_init_lower, state_init_upper],
         [[],[]],
-        5.0,
+        1.0,
         0.001,
         dynamicsgeounroll_1d,
         dynamicsgeounroll_jac_1d,
