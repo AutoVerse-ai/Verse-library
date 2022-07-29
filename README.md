@@ -1,4 +1,4 @@
-# Verse Library
+# Verse Core Library
 
 Verse is a library for creating, simulating, and verifying uni*verses* or scenarios with intelligent and interacting autonomous agents.  
 
