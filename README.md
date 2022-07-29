@@ -1,4 +1,4 @@
-# DryVR++
+# AutoVerse Library
 ## Installation
 The package requires python 3.8+. The package can be installed using pip
 
