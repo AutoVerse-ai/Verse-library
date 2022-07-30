@@ -11,3 +11,4 @@ tmp/
 dist/
 **.asv
 **.m~
+**.code-workspace
