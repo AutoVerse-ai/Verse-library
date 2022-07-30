@@ -13,3 +13,4 @@ dist/
 expected_map_output/
 map_package/
 **/output.json
+docs/build/
