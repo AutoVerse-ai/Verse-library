@@ -4,8 +4,8 @@ from typing import Tuple, List
 import numpy as np
 from scipy.integrate import ode
 
-from dryvr_plus_plus.agents import BaseAgent
-from dryvr_plus_plus.map import LaneMap
+from verse.agents import BaseAgent
+from verse.map import LaneMap
 
 
 class vanderpol_agent(BaseAgent):

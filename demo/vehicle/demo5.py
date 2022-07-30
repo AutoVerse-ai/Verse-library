@@ -1,6 +1,6 @@
-from dryvr_plus_plus.example import CarAgent, NPCAgent, SimpleMap3
-from dryvr_plus_plus import Scenario
-from dryvr_plus_plus.plotter.plotter2D import *
+from verse.example import CarAgent, NPCAgent, SimpleMap3
+from verse import Scenario
+from verse.plotter.plotter2D import *
 from enum import Enum, auto
 
 

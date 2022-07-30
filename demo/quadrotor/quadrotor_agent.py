@@ -6,8 +6,8 @@ import numpy as np
 from scipy.integrate import ode
 import torch
 import math
-from dryvr_plus_plus.agents import BaseAgent
-from dryvr_plus_plus.map import LaneMap
+from verse.agents import BaseAgent
+from verse.map import LaneMap
 
 class FFNNC(torch.nn.Module):
     def __init__(self, D_in=6, D_out=8):

@@ -1,6 +1,6 @@
 from enum import Enum, auto
 import copy
-from dryvr_plus_plus.map import LaneMap
+from verse.map import LaneMap
 
 class VehicleMode(Enum):
     Normal = auto()

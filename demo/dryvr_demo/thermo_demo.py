@@ -1,6 +1,6 @@
 from origin_agent import thermo_agent
-from dryvr_plus_plus import Scenario
-from dryvr_plus_plus.plotter.plotter2D import *
+from verse import Scenario
+from verse.plotter.plotter2D import *
 
 import plotly.graph_objects as go
 from enum import Enum, auto

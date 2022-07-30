@@ -2,9 +2,9 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='dryvr_plus_plus',
+    name='verse',
     version='0.1',
-    description='DryVR++',
+    description='AutoVerse',
     author='Yangge Li, Katherine Braught, Haoqing Zhu',
     maintainer='Yangge Li, Katherine Braught, Haoqing Zhu',
     maintainer_email='{li213, braught2, haoqing3}@illinois.edu',

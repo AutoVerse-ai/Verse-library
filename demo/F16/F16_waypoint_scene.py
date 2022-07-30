@@ -11,8 +11,8 @@ from scipy.integrate import ode
 from enum import Enum, auto
 
 from demo.F16.aerobench.run_f16_sim import F16Agent
-from dryvr_plus_plus import LaneMap
-from dryvr_plus_plus import Scenario
+from verse import LaneMap
+from verse import Scenario
 
 
 import copy

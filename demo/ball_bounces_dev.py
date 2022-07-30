@@ -41,9 +41,9 @@ def controller(ego:State, other: State):
     assert not (close(ego, other) and ego.x < other.x), "collision"
     return output
 
-from dryvr_plus_plus.example import BallAgent
-from dryvr_plus_plus import Scenario
-from dryvr_plus_plus.plotter.plotter2D import *
+from verse.example import BallAgent
+from verse import Scenario
+from verse.plotter.plotter2D import *
 import plotly.graph_objects as go
 
 if __name__ == "__main__":

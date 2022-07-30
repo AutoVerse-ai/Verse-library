@@ -11,7 +11,7 @@ from scipy.integrate import RK45
 from aerobench.highlevel.controlled_f16 import controlled_f16
 from aerobench.util import get_state_names, Euler
 
-from dryvr_plus_plus import BaseAgent
+from verse import BaseAgent
 
 
 class F16Agent(BaseAgent):

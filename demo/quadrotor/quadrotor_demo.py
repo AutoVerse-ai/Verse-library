@@ -1,7 +1,7 @@
 from quadrotor_agent import QuadrotorAgent
-from dryvr_plus_plus import Scenario
-from dryvr_plus_plus.example import SimpleMap2, SimpleMap3, SimpleMap5, SimpleMap6
-from dryvr_plus_plus.plotter.plotter2D import *
+from verse import Scenario
+from verse.example import SimpleMap2, SimpleMap3, SimpleMap5, SimpleMap6
+from verse.plotter.plotter2D import *
 import os
 import json
 import plotly.graph_objects as go

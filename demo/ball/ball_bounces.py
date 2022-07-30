@@ -1,11 +1,11 @@
-from dryvr_plus_plus.plotter.plotter2D import *
-from dryvr_plus_plus.example import SimpleMap3, BallAgent
-from dryvr_plus_plus import Scenario
+from verse.plotter.plotter2D import *
+from verse.example import SimpleMap3, BallAgent
+from verse import Scenario
 from enum import Enum, auto
 import copy
 
 
-# from dryvr_plus_plus.map import Lane
+# from verse.map import Lane
 
 
 class BallMode(Enum):
