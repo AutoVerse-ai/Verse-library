@@ -1,14 +1,11 @@
-from dryvr_plus_plus.scene_verifier.sensor.base_sensor import BaseSensor
-from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor4
-import plotly.graph_objects as go
-from dryvr_plus_plus.plotter.plotter2D import *
-from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap3
-from dryvr_plus_plus.scene_verifier.scenario.scenario import Scenario
-from dryvr_plus_plus.example.example_agent.ball_agent import BallAgent
+from verse.plotter.plotter2D import *
+from verse.example import SimpleMap3, BallAgent
+from verse import Scenario
 from enum import Enum, auto
 import copy
-from typing import List
-# from dryvr_plus_plus.scene_verifier.map.lane import Lane
+
+
+# from verse.map import Lane
 
 
 class BallMode(Enum):
@@ -37,7 +34,7 @@ class State:
         pass
 
 
-def controller(ego: State, others: State):
+def controller(ego: State):
     '''Computes the possible mode transitions'''
     output = copy.deepcopy(ego)
     '''TODO: Ego and output variable names should be flexible but 
@@ -75,7 +72,7 @@ if __name__ == "__main__":
         5. genetating the simulation traces or computing the reachable states    
     '''
     bouncingBall = Scenario()
-    ball_controller = './ball_bounces.py'
+    ball_controller = './demo/ball/ball_bounces.py'
     myball1 = BallAgent('red-ball', file_name=ball_controller)
     myball2 = BallAgent('green-ball', file_name=ball_controller)
     bouncingBall.add_agent(myball1)

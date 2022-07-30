@@ -3,9 +3,8 @@ from typing import Tuple, List
 import numpy as np
 from scipy.integrate import ode
 
-from dryvr_plus_plus.scene_verifier.agents.base_agent import BaseAgent
-from dryvr_plus_plus.scene_verifier.map.lane_map import LaneMap
-from dryvr_plus_plus.scene_verifier.code_parser.parser import ControllerIR, StateDef, ModeDef, Lambda
+from verse import BaseAgent
+from verse import LaneMap
 from waypoint_autopilot import WaypointAutopilot
 from scipy.integrate import RK45
 

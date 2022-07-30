@@ -12,12 +12,11 @@ from enum import Enum, auto
 import copy
 
 from demo.F16.aerobench.run_f16_sim import F16Agent
-from dryvr_plus_plus.scene_verifier.map.lane_map import LaneMap
-from dryvr_plus_plus.scene_verifier.code_parser.pythonparser import EmptyAst
-from dryvr_plus_plus.scene_verifier.scenario.scenario import Scenario
 import os
 from json import dump
+from verse import Scenario
 
+import copy
 import math
 from numpy import deg2rad
 import matplotlib.pyplot as plt

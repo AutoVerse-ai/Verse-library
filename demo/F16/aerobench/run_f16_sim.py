@@ -11,9 +11,7 @@ from aerobench.highlevel.controlled_f16 import controlled_f16
 from aerobench.util import get_state_names, Euler
 from waypoint_autopilot import WaypointAutopilot
 
-from dryvr_plus_plus.scene_verifier.agents.base_agent import BaseAgent
-from dryvr_plus_plus.scene_verifier.map.lane_map import LaneMap
-from dryvr_plus_plus.scene_verifier.code_parser.pythonparser import EmptyAst
+from verse import BaseAgent
 
 
 class F16Agent(BaseAgent):

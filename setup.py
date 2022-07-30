@@ -2,9 +2,9 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='dryvr_plus_plus',
+    name='verse',
     version='0.1',
-    description='DryVR++',
+    description='AutoVerse',
     author='Yangge Li, Katherine Braught, Haoqing Zhu',
     maintainer='Yangge Li, Katherine Braught, Haoqing Zhu',
     maintainer_email='{li213, braught2, haoqing3}@illinois.edu',
@@ -24,7 +24,9 @@ setup(
         "treelib~=1.6.1",
         "z3-solver~=4.8.17.0",
         "igraph~=0.9.10",
-        "plotly~=5.8.0"
+        "plotly~=5.8.0",
+        "beautifulsoup4~=4.11.1",
+        "lxml~=4.9.1"
     ],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',

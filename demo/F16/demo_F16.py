@@ -1,8 +1,6 @@
 
-from dryvr_plus_plus.scene_verifier.scenario.scenario import Scenario
-from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap2, SimpleMap3, SimpleMap5, SimpleMap6
-from dryvr_plus_plus.plotter.plotter2D import *
-from dryvr_plus_plus.example.example_sensor.F16_sensor import F16Sensor
+from verse import Scenario
+from verse.plotter.plotter2D import *
 from agent_F16 import F16_Agent
 import plotly.graph_objects as go
 from enum import Enum, auto
@@ -58,7 +56,6 @@ if __name__ == "__main__":
     # input_code_name = './F16/controller_F16.py'
     scenario = Scenario()
 
-    scenario.set_sensor(F16Sensor())
     ### Initial Conditions ###
     power = 9  # engine power level (0-10)
 
