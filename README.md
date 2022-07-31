@@ -23,7 +23,7 @@ The package comes with several examples in the  ```demo/``` folder
 - Run examples as:
 
 ```
-python3 demo1.py
+python3 demo/vehicle/demo2.py 
 ```
 
 Read the comments in ```ball_bounces.py``` to learn how to create new agents and scenarios. More detailed tutorials will be provided later.
