@@ -7,10 +7,16 @@ Welcome to verse's documentation!
 =================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Contents:
 
-
+   getting_started.rst
+   agent.rst
+   map.rst
+   sensor.rst
+   scenario.rst
+   parser.md
+   API/API.rst
 
 Indices and tables
 ==================

@@ -1,8 +1,7 @@
-from .agents import *
-from .sensor import *
-from .map import *
-from .scenario import *
+from verse import agents, sensor, scenario, plotter, map, parser, automaton, analysis
+from verse.agents import BaseAgent
+from verse.sensor import BaseSensor
+from verse.map import LaneSegment, LaneMap, Lane
+from verse.scenario import Scenario
 
-from .reachability_engine import *
-from .plotter import plotter2D, plotter3D
-from . import sensor, scenario, reachability_engine, plotter, map, example, code_parser, automaton, analysis, agents
+from verse.plotter import plotter2D, plotter3D

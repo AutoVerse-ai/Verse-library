@@ -1,6 +1,5 @@
 from quadrotor_agent import QuadrotorAgent
 from verse import Scenario
-from verse.example import SimpleMap2, SimpleMap3, SimpleMap5, SimpleMap6
 from verse.plotter.plotter2D import *
 import os
 import json

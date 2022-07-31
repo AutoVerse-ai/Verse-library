@@ -1,4 +1,4 @@
-from verse import LaneMap, LaneSegment, StraightLane, CircularLane, Lane
+from verse.map import LaneMap, LaneSegment, StraightLane, CircularLane, Lane
 
 import numpy as np
 

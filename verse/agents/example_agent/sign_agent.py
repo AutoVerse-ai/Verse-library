@@ -1,6 +1,6 @@
 from verse import BaseAgent
 import numpy as np
-from verse.code_parser import ControllerIR
+from verse.parser import ControllerIR
 
 class SignAgent(BaseAgent):
     def __init__(self, id):

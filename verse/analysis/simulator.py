@@ -6,14 +6,14 @@ import functools
 import pprint
 pp = functools.partial(pprint.pprint, compact=True, width=100)
 
-from verse.agents.base_agent import BaseAgent
+# from verse.agents.base_agent import BaseAgent
 from verse.analysis.analysis_tree import AnalysisTreeNode, AnalysisTree
 
 class Simulator:
     def __init__(self):
         self.simulation_tree = None
 
-    def simulate(self, init_list, init_mode_list, static_list, agent_list: List[BaseAgent], transition_graph, time_horizon, time_step, lane_map):
+    def simulate(self, init_list, init_mode_list, static_list, agent_list, transition_graph, time_horizon, time_step, lane_map):
         # Setup the root of the simulation tree
         root = AnalysisTreeNode(
             trace={},

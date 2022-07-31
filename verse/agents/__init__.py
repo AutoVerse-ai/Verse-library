@@ -1,2 +1,2 @@
-from . import base_agent
-from .base_agent import BaseAgent
+from verse.agents.base_agent import BaseAgent
+from verse.agents import base_agent

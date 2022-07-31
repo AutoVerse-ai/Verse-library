@@ -1,4 +1,6 @@
-from verse.example import CarAgent, SimpleMap3, FakeSensor2
+from verse.agents.example_agent import CarAgent
+from verse.map.example_map import SimpleMap3
+from verse.sensor.example_sensor import FakeSensor2
 from verse import Scenario
 from verse.plotter.plotter2D import *
 from enum import Enum, auto

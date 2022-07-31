@@ -3,9 +3,9 @@ import copy
 
 import numpy as np
 
-from verse.agents.base_agent import BaseAgent
+# from verse.agents.base_agent import BaseAgent
 from verse.analysis.analysis_tree import AnalysisTreeNode, AnalysisTree
-from verse.reachability_engine.dryvr import calc_bloated_tube, SIMTRACENUM
+from verse.analysis.dryvr import calc_bloated_tube, SIMTRACENUM
 
 
 class Verifier:
@@ -19,7 +19,7 @@ class Verifier:
         init_list: List[float],
         init_mode_list: List[str],
         static_list: List[str],
-        agent_list: List[BaseAgent],
+        agent_list,
         transition_graph,
         time_horizon,
         time_step,

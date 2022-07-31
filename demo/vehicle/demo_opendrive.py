@@ -1,4 +1,4 @@
-from verse.example import CarAgent, NPCAgent, SimpleMap3
+from verse.agents.example_agent import CarAgent, NPCAgent
 from verse.map import opendrive_map
 from verse import Scenario
 from enum import Enum, auto

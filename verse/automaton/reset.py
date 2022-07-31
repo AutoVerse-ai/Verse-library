@@ -1,7 +1,7 @@
 import itertools, copy
 import numpy as np
 
-from verse.code_parser import unparse
+from verse.parser import unparse
 
 class ResetExpression():
     def __init__(self, reset):
