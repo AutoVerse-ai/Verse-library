@@ -18,17 +18,16 @@ or
 pip install -r requirements.txt
 ```
 
-## Examples
-The package comes with several examples in the  ```demo/``` folder
-- Run examples as:
+## Demos
+The package comes with several examples in the  ```demo/``` folder. Run these as:
 
 ```
 python3 demo/vehicle/demo2.py 
 ```
 
-Read the comments in ```ball_bounces.py``` to learn how to create new agents and scenarios. More detailed tutorials will be provided later.
+Read the comments in ```demo/ball/ball_bounces.py``` to learn how to create new agents and scenarios. More detailed tutorials will be provided later.
 
-## Package Structure
+## Library structure
 
 The source code of the package is contained in the verse folder, which contains the following sub-directories.
 
