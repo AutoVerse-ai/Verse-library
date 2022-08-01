@@ -16,7 +16,15 @@ Welcome to verse's documentation!
    sensor.rst
    scenario.rst
    parser.md
-   API/API.rst
+
+API Documentation
+~~~~~~~~~~~~~~~~~
+.. autosummary::
+   :toctree: _autosummary
+   :template: custom-module-template.rst
+   :recursive:
+
+   verse
 
 Indices and tables
 ==================

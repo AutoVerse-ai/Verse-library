@@ -23,6 +23,8 @@ extensions = [
     'sphinx_rtd_theme',
     'numpydoc',
 ]
+
+autosummary_generate = True
 source_suffix = ['.rst', '.md']
 
 templates_path = ['_templates']
