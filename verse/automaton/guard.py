@@ -5,9 +5,9 @@ import ast
 from z3 import *
 
 from verse.map import LaneMap, AbstractLane
-from verse.reachability_engine.utils import *
+from verse.analysis.utils import *
 from verse.agents.base_agent import BaseAgent
-from verse.code_parser import Reduction, ReductionType, unparse
+from verse.parser import Reduction, ReductionType, unparse
 
 class LogicTreeNode:
     def __init__(self, data, child = [], val = None, mode_guard = None):

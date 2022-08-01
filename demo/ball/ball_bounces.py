@@ -1,5 +1,6 @@
 from verse.plotter.plotter2D import *
-from verse.example import SimpleMap3, BallAgent
+from verse.agents.example_agent.ball_agent import BallAgent
+from verse.map.example_map.simple_map2 import SimpleMap3
 from verse import Scenario
 from enum import Enum, auto
 import copy

@@ -2,8 +2,8 @@ import ast, copy, warnings
 from typing import List, Dict, Union, Optional, Any, Tuple
 from dataclasses import dataclass, field, fields
 from enum import Enum, auto
-from verse.code_parser import astunparser
-from verse.reachability_engine.utils import find
+from verse.parser import astunparser
+from verse.analysis.utils import find
 
 def merge_conds(c):
     if len(c) == 0:

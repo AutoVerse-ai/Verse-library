@@ -6,7 +6,7 @@ from scipy.integrate import ode
 
 from verse import BaseAgent
 from verse import LaneMap
-from verse.code_parser import ControllerIR
+from verse.parser import ControllerIR
 
 class NPCAgent(BaseAgent):
     def __init__(self, id):

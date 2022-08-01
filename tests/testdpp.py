@@ -49,7 +49,7 @@ def controller(ego:State):
 
 from verse.example.example_agent.car_agent import CarAgent
 from verse.scenario.scenario import Scenario
-from verse.example.example_map.simple_map import SimpleMap2
+from verse.map.example_map.simple_map import SimpleMap2
 
 
 class TestSimulatorMethods(unittest.TestCase):

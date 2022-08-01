@@ -1,4 +1,5 @@
-from verse.example import CarAgent, SignAgent, SimpleMap3
+from verse.agents.example_agent import CarAgent, SignAgent
+from verse.map.example_map import SimpleMap3
 from verse import Scenario
 from verse.plotter.plotter2D import *
 

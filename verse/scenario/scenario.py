@@ -10,7 +10,7 @@ import numpy as np
 from verse.agents.base_agent import BaseAgent
 from verse.automaton import GuardExpressionAst, ResetExpression
 from verse.analysis import Simulator, Verifier, AnalysisTreeNode, AnalysisTree
-from verse.reachability_engine.utils import find, sample_rect
+from verse.analysis.utils import find, sample_rect
 from verse.sensor.base_sensor import BaseSensor
 from verse.map.lane_map import LaneMap
 

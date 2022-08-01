@@ -1,9 +1,8 @@
 import numpy as np
 from abc import ABCMeta, abstractmethod
 from typing import Tuple, List, Optional
-import copy
 
-from verse.reachability_engine.utils import wrap_to_pi, Vector, get_class_path, to_serializable
+from verse.analysis.utils import wrap_to_pi, Vector, get_class_path, to_serializable
 
 class LineType:
 
