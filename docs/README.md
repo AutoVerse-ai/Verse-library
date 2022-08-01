@@ -1,4 +1,4 @@
-# Verse Documentation Library
+# Verse Library Documentation
 The forder contain the document template for the Verse library. The document for the library is generated using [sphinx](https://www.sphinx-doc.org/en/master/). 
 
 ## Prerequsites 
