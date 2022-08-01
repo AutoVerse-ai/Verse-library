@@ -12,3 +12,4 @@ dist/
 **.asv
 **.m~
 **.code-workspace
+docs/build/

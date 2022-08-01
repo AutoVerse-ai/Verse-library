@@ -93,28 +93,35 @@ def compute_reachtube(
 if __name__ == "__main__":
     x1 = Symbol('x1',real=True)
     x2 = Symbol('x2',real=True)
-    x3 = Symbol('x3',real=True)
-    x4 = Symbol('x4',real=True)
-    w1 = Symbol('w1', real=True)
+    # x3 = Symbol('x3',real=True)
+    # x4 = Symbol('x4',real=True)
+    w1 = Symbol('w1',real=True)
+    w2 = Symbol('w2',real=True)
 
     time_horizon = 10
-    dt = 0.001
+    dt = 0.01
+    # expr = [
+    #     x1 + dt*(-2*x1+x2*(1+x1)+x3+w1),
+    #     x2 + dt*(-x2+x1*(1-x2)+0.1),
+    #     x3 + dt*(-x4),
+    #     x4 + dt*(x3)
+    # ]
     expr = [
-        x1 + dt*(-2*x1+x2*(1+x1)+x3+w1),
-        x2 + dt*(-x2+x1*(1-x2)+0.1),
-        x3 + dt*(-x4),
-        x4 + dt*(x3)
+        x1+dt*(x1*(1.1+w1-x1-0.1*x2)),
+        x2+dt*(x2*(4+w2-3*x1-x2)),
     ]
-    expr_func = lambdify([(x1,x2,x3,x4,w1)], expr)
+    expr_func = lambdify([(x1,x2,w1,w2)], expr)
     for j in range(20):
-        init = [np.random.uniform(1,1.5),np.random.uniform(1,1.5),1,0]
+        # init = [np.random.uniform(1,1.5),np.random.uniform(1,1.5),1,0]
+        init = [1,1]
         number_points = int(np.ceil(time_horizon/dt))
         t = [round(i*dt,10) for i in range(0,number_points)]
         trace = [[0]+init]
         for i in range(number_points):
             x_k = trace[-1][1:]
-            w = np.random.uniform(-0.1, 0.1)
-            x_k1 = expr_func(x_k+[w])
+            w1_val = np.random.uniform(-0.1, 0.1)
+            w2_val = np.random.uniform(-0.1, 0.1)
+            x_k1 = expr_func(x_k+[w1_val,w2_val])
             trace.append([t[i]+dt]+x_k1)
         trace = np.array(trace)
         plt.figure(0)
@@ -127,28 +134,28 @@ if __name__ == "__main__":
         plt.plot(trace[:,1], trace[:,2], 'b')
     
     tube = compute_reachtube(
-        [[1,1,1,0], [1.5,1.5,1,0]],
-        [[-0.1],[0.1]],
+        [[1,1], [1,1]],
+        [[-0.1, -0.1],[0.1, 0.1]],
         time_horizon,
         dt,
         expr,
-        [x1,x2,x3,x4],
-        [w1]
+        [x1,x2],
+        [w1,w2]
     )
     tube = np.array(tube)
 
     plt.figure(0)
     plt.plot(tube[:,0], tube[:,1], 'r')
-    plt.plot(tube[:,0], tube[:,5], 'g')
+    plt.plot(tube[:,0], tube[:,3], 'g')
 
     plt.figure(1)
     plt.plot(tube[:,0], tube[:,2], 'r')
-    plt.plot(tube[:,0], tube[:,6], 'g')
+    plt.plot(tube[:,0], tube[:,4], 'g')
 
-    plt.figure(2)
-    for i in range(tube.shape[0]):
-        plt.plot([tube[i,1], tube[i,5]], [tube[i,2],tube[i,2]], 'g')
-        plt.plot([tube[i,5], tube[i,5]], [tube[i,2],tube[i,6]], 'g')
-        plt.plot([tube[i,5], tube[i,1]], [tube[i,6],tube[i,6]], 'g')
-        plt.plot([tube[i,1], tube[i,1]], [tube[i,6],tube[i,2]], 'g')
+    # plt.figure(2)
+    # for i in range(tube.shape[0]):
+    #     plt.plot([tube[i,1], tube[i,5]], [tube[i,2],tube[i,2]], 'g')
+    #     plt.plot([tube[i,5], tube[i,5]], [tube[i,2],tube[i,6]], 'g')
+    #     plt.plot([tube[i,5], tube[i,1]], [tube[i,6],tube[i,6]], 'g')
+    #     plt.plot([tube[i,1], tube[i,1]], [tube[i,6],tube[i,2]], 'g')
     plt.show()

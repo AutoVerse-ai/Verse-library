@@ -29,10 +29,10 @@ def find_min(expr_func, jac_func, var_range, args, idx):
         bounds = bounds,
         jac = jac_func,
         method = 'L-BFGS-B',
-        tol = 1e-15
+        tol = 1e-20
     )
     # print(res)
-    return res.fun
+    return round(res.fun, 14)
 
 def negate_dynamicsL1(combined_state, args, idx):
     res = -dynamicsL1_1d(combined_state, args, idx)
@@ -56,7 +56,7 @@ def negate_dynamicsgeo_jac(combined_state, args, idx):
 
 def find_maxgeo(expr_func, jac_func, var_range, args, idx):
     res = find_min(negate_dynamicsgeo, negate_dynamicsgeo_jac, var_range, args, idx)
-    return -res
+    return round(-res, 14)
 
 def negate_dynamicsgeounroll(combined_state, args, idx):
     res = -dynamicsgeounroll_1d(combined_state, args, idx)
@@ -575,7 +575,91 @@ def testReachtubeGeoUnroll():
 
     plt.show()
 
+def computeReachtubeGeoTransform(
+    initial_set: List[List[float]],
+    uncertain_var_bound: List[List[float]],
+    time_horizon: float, 
+    time_step: float,
+    dynamics,
+    dynamics_jac,
+    num_var: int
+):
+    J = 1e-3*jnp.diag(jnp.array([2.5, 2.1, 4.3]))
+    m = 0.752
+    g = 9.81
+    
+    As_v = -5.0
+    As_omega = -5.0
+    dt_L1 = time_step
+
+    ctoffq1Thrust = 5*7
+    ctoffq1Moment = 1*7
+    ctoffq2Moment = 1*7
+
+    L1_params = (As_v, As_omega, dt_L1, ctoffq1Thrust, ctoffq1Moment, ctoffq2Moment, m, g, J)
+
+    number_points = int(np.ceil(time_horizon/time_step))
+    t = [round(i*time_step, 10) for i in range(0, number_points)]
+
+    T = np.zeros((18,18))
+    for i in range(18):
+        T[i,i:] = 1
+
+    initial_state_y = (np.array(initial_set)@np.transpose(np.linalg.inv(T))).tolist()
+    trace = [[0]+initial_state_y[0]+initial_state_y[1]]
+    for i in range(len(t)):
+        print(i, trace[-1])
+        y0 = trace[-1]
+        y = y0[1:1+num_var]
+        y_hat = y0[1+num_var:]
+        x = (np.array(y)@np.transpose(T)).tolist()
+        x_hat = (np.array(y_hat)@np.transpose(T)).tolist()
+        w = uncertain_var_bound[0]
+        w_hat = uncertain_var_bound[1]
+        args = (t[i], time_step, L1_params)
+        d = computeDgeo(dynamics, dynamics_jac, args, x, w, x_hat, w_hat)
+        d_hat = computeDgeo(dynamics, dynamics_jac, args, x_hat, w_hat, x, w)
+        dy = (np.round(np.array(d)@np.transpose(np.linalg.inv(T)),14)).tolist()
+        dy_hat = (np.round(np.array(d_hat)@np.transpose(np.linalg.inv(T)),14)).tolist()
+        trace.append([round(t[i]+time_step, 10)]+dy+dy_hat)
+    trace = np.array(trace)
+    trace[:,1:1+num_var] = trace[:,1:1+num_var]@np.transpose(T)
+    trace[:,1+num_var:] = trace[:,1+num_var:]@np.transpose(T)
+    return trace
+
+def testReachtubeGeoTransform():
+    import matplotlib.pyplot as plt 
+
+    for i in range(2):
+        print(f">>>>>>>>>>>>>>>>> {i}")
+        state_init = [np.random.uniform(-0.1,0.1),0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0]
+        # din_init = state_init[3:6]+state_init[15:18]+state_init[6:15]+\
+        #     [0.0,0.0,0.0]+[0.0,0.0,0.0]+[0.0,0.0,0.0,0.0]+[0.0,0.0,0.0,0.0]+\
+        #     [0.0,0.0,0.0,0.0]+[0.0,0.0]+[0.0,0.0,0.0,0.0]+[0.0,0.0,0.0,0.0]
+        trace = simulategeo(
+            state_init,
+            0.5,
+            0.001,
+        )
+
+        for i in range(1,19):
+            plt.figure(i)
+            plt.plot(trace[:,0], trace[:,i],'b')
+    
+    state_init_lower = [-0.1,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0]
+    state_init_upper = [0.1,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0]
+    trace = computeReachtubeGeoTransform(
+        [state_init_lower, state_init_upper],
+        [[], []],
+        0.5,
+        0.001,
+        dynamicsgeo_1d,
+        dynamicsgeo_jac_1d,
+        18
+    )
+
 if __name__ == "__main__":
     # testReachtubeL1()
     # testReachtubeGeo()
-    testReachtubeGeoUnroll()
+    # testReachtubeGeoUnroll()
+    testReachtubeGeoTransform()
