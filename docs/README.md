@@ -1,5 +1,5 @@
 # Verse Library Documentation
-The forder contain the document template for the Verse library. The document for the library is generated using [sphinx](https://www.sphinx-doc.org/en/master/). 
+This forder contains the documentation template for the Verse library. The documentation is automatically generated using [sphinx](https://www.sphinx-doc.org/en/master/). 
 
 ## Prerequsites 
 The following libraries are required for compile verse's document
