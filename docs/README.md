@@ -13,26 +13,26 @@ The required packages can be installed using command
 python3 -m pip install -r requirements-doc.txt
 ```
 
-## Compiling The Documents
-### For Linux User
+## Compiling documents
+### For Linux
 For linux user, the document can be compiled using command 
 ```
 make html
 ```
 in the ```docs/``` folder
 
-### For Windows User
+### For Windows
 For Windows user, the document can be compiled using command 
 ```
 ./make.bat html
 ```
 in the ```docs/``` folder
 
-## Viewing Compiled Documents
+## Viewing documents
 The compiled result can be found in ```docs/build/html``` folder. The root of the compiled document is stored in ```docs/build/html/index.html```
 
-## Example Architectural Document
+## Example architectural document
 An example highlevel architectural document can be found in file ```docs/source/parser.md```
 
-## Example Docstring for Class/Function
+## Example docstring for class/function
 An example docstring for class function can be found in file ```verse/agents/base_agent.py``` for class ```BaseAgent``` and function ```BaseAgent.__init__``` and ```BaseAgent.TC_simulate```
