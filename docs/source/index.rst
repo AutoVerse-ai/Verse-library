@@ -16,6 +16,7 @@ Welcome to verse's documentation!
    sensor.rst
    scenario.rst
    parser.md
+   contributors.rst
 
 API Documentation
 ~~~~~~~~~~~~~~~~~
