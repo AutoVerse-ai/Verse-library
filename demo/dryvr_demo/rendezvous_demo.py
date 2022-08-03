@@ -11,7 +11,7 @@ class CraftMode(Enum):
     Passive = auto()
 
 if __name__ == "__main__":
-    input_code_name = './rendezvous_controller.py'
+    input_code_name = './demo/dryvr_demo/rendezvous_controller.py'
     scenario = Scenario()
 
     car = craft_agent('test', file_name=input_code_name)
@@ -19,13 +19,14 @@ if __name__ == "__main__":
     # modify mode list input
     scenario.set_init(
         [
-            [[-925, -425, 0, 0, 0, 0], [-875, -375, 0, 0, 0, 0]],
+            [[-925, -425, 0, 0, 0, 0], [-875, -375, 5, 5, 0, 0]],
         ],
         [
             tuple([CraftMode.ProxA]),
         ]
     )
     traces = scenario.verify(200, 1)
+    print(traces)
     fig = go.Figure()
     fig = reachtube_tree(traces, None, fig, 1, 2,
                          'lines', 'trace', print_dim_list=[1, 2])

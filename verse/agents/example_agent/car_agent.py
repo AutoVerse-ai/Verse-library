@@ -57,6 +57,7 @@ class NPCAgent(BaseAgent):
 class CarAgent(BaseAgent):
     def __init__(self, id, code = None, file_name = None):
         super().__init__(id, code, file_name)
+        self.switch_duration = 0
 
     @staticmethod
     def dynamic(t, state, u):
@@ -76,19 +77,25 @@ class CarAgent(BaseAgent):
         a = 0
         if vehicle_mode == "Normal":
             d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
+            self.switch_duration = 0
         elif vehicle_mode == "SwitchLeft":
-            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos) + 3
+            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos) + lane_map.get_lane_width(vehicle_lane) 
+            self.switch_duration += 0.1
         elif vehicle_mode == "SwitchRight":
-            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos) - 3
+            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos) - lane_map.get_lane_width(vehicle_lane)
+            self.switch_duration += 0.1
         elif vehicle_mode == "Brake":
             d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
             a = -1    
+            self.switch_duration = 0
         elif vehicle_mode == "Accel":
             d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
             a = 1
+            self.switch_duration = 0
         elif vehicle_mode == 'Stop':
             d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
             a = 0
+            self.switch_duration = 0
         else:
             raise ValueError(f'Invalid mode: {vehicle_mode}')
 
