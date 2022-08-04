@@ -29,6 +29,9 @@ class Scenario:
         self.map = LaneMap()
         self.sensor = BaseSensor()
 
+        # Parameters
+        self.init_seg_length = 1000
+
     def set_sensor(self, sensor):
         self.sensor = sensor
 
@@ -103,7 +106,7 @@ class Scenario:
             init_mode_list.append(self.init_mode_dict[agent_id])
             static_list.append(self.static_dict[agent_id])
             agent_list.append(self.agent_dict[agent_id])
-        return self.verifier.compute_full_reachtube(init_list, init_mode_list, static_list, agent_list, self, time_horizon, time_step, self.map)
+        return self.verifier.compute_full_reachtube(init_list, init_mode_list, static_list, agent_list, self, time_horizon, time_step, self.init_seg_length, self.map)
 
     def apply_reset(self, agent: BaseAgent, reset_list, all_agent_state) -> Tuple[str, np.ndarray]:
         lane_map = self.map
@@ -499,7 +502,7 @@ class Scenario:
                     min_idx = min(reset_idx_dict[agent][reset_idx][dest])
                     max_idx = max(reset_idx_dict[agent][reset_idx][dest])
                     transition = (
-                        agent, node.mode[agent], dest, combined_rect, (min_idx, max_idx))
+                        agent, node.mode[agent], dest, reset_dict[agent][reset_idx][dest], reset_idx_dict[agent][reset_idx][dest])
                     possible_transitions.append(transition)
         # Return result
         return None, possible_transitions

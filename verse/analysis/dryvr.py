@@ -262,4 +262,5 @@ def calc_bloated_tube(
     final_tube[0::2, :] = cur_reach_tube[:, 0, :]
     final_tube[1::2, :] = cur_reach_tube[:, 1, :]
     # print(final_tube.tolist()[-2], final_tube.tolist()[-1])
-    return final_tube.tolist()
+    return final_tube
+    
