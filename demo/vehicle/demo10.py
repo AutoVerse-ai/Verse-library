@@ -1,9 +1,9 @@
-from verse.agents.example_agent import CarAgent, SignAgent
-from verse.agents.example_agent.car_agent import NPCAgent
-from verse.map.example_map import SimpleMap3, SimpleMap6
+from verse.agents.example_agent import CarAgent, NPCAgent
+from verse.map.example_map import SimpleMap2
 from verse import Scenario
 from verse.plotter.plotter2D import *
 from verse.plotter.plotter2D_old import plot_reachtube_tree, plot_map
+from noisy_sensor import NoisyVehicleSensor
 
 from enum import Enum, auto
 import plotly.graph_objects as go
@@ -44,42 +44,57 @@ class State:
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/vehicle/controller/example_controller5.py'
-    scenario = Scenario()
+    input_code_name = './demo/vehicle/controller/example_controller12.py'
 
+    scenario = Scenario()
     car = CarAgent('car1', file_name=input_code_name)
     scenario.add_agent(car)
     car = NPCAgent('car2')
     scenario.add_agent(car)
-    car = NPCAgent('car3')
-    scenario.add_agent(car)
-    tmp_map = SimpleMap6()
+    tmp_map = SimpleMap2()
     scenario.set_map(tmp_map)
+    scenario.set_sensor(NoisyVehicleSensor((1,1), (0,0)))
     scenario.set_init(
         [
-            [[5, -0.1, 0, 1.0], [5.5, 0.1, 0, 1.0]],
+            [[5, -0.1, 0, 1.0], [5.5, 0.1, 0, 1.1]],
             [[20, 0, 0, 0.5], [20, 0, 0, 0.5]],
-            [[4-2.5, 3, 0, 1.0], [4.5-2.5, 3.2, 0, 1.0]],
         ],
         [
             (VehicleMode.Normal, LaneMode.Lane1, LaneObjectMode.Vehicle),
             (VehicleMode.Normal, LaneMode.Lane1, LaneObjectMode.Vehicle),
-            (VehicleMode.Normal, LaneMode.Lane0, LaneObjectMode.Vehicle),
         ]
     )
     scenario.init_seg_length = 5
     traces = scenario.verify(40, 0.05)
-    # traces = scenario.verify(70, 0.05)
 
     fig = plt.figure(2)
-    fig = plot_reachtube_tree(traces.root, 'car1', 1, [2], 'b', fig)
-    fig = plot_reachtube_tree(traces.root, 'car2', 1, [2], 'r', fig)
-    fig = plot_reachtube_tree(traces.root, 'car3', 1, [2], 'r', fig)
-    # fig = plot_reachtube_tree(traces, 'car4', 1, [2], 'r', fig)
-    fig = plot_map(tmp_map, 'g', fig)
+    fig = plot_reachtube_tree(traces.root, 'car1', 0, [1], 'b', fig)
+    fig = plot_reachtube_tree(traces.root, 'car2', 0, [1], 'r', fig)
+
+    scenario1 = Scenario()
+    car1 = CarAgent('car1', file_name=input_code_name)
+    scenario1.add_agent(car1)
+    car1 = NPCAgent('car2')
+    scenario1.add_agent(car1)
+    tmp_map1 = SimpleMap2()
+    scenario1.set_map(tmp_map1)
+    # scenario1.set_sensor(NoisyVehicleSensor((0,1), (0,0)))
+    scenario1.set_init(
+        [
+            [[5, -0.1, 0, 1.0], [6, 0.1, 0, 1.0]],
+            [[20, 0, 0, 0.5], [20, 0, 0, 0.5]],
+        ],
+        [
+            (VehicleMode.Normal, LaneMode.Lane1, LaneObjectMode.Vehicle),
+            (VehicleMode.Normal, LaneMode.Lane1, LaneObjectMode.Vehicle),
+        ]
+    )
+    scenario1.init_seg_length = 5
+    traces1 = scenario1.verify(40, 0.05)
+
+    fig = plot_reachtube_tree(traces1.root, 'car1', 0, [1], 'g', fig)
+    fig = plot_reachtube_tree(traces1.root, 'car2', 0, [1], 'r', fig)
+
+
     plt.show()
 
-    # fig = go.Figure()
-    # fig = reachtube_tree(traces, tmp_map, fig, 1,
-    #                        2, 'lines', 'trace', print_dim_list=[1, 2])
-    # fig.show()

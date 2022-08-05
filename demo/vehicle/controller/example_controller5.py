@@ -39,7 +39,7 @@ def vehicle_front(ego, others, lane_map):
     return res
 
 def vehicle_close(ego, others):
-    res = any(ego.x-other.x<0.5 and ego.x-other.x>-0.5 and ego.y-other.y<0.5 and ego.y-other.y>-0.5 for other in others)
+    res = any(ego.x-other.x<1.0 and ego.x-other.x>-1.0 and ego.y-other.y<1.0 and ego.y-other.y>-1.0 for other in others)
     return res
 
 def controller(ego:State, others:List[State], lane_map):

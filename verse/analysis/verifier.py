@@ -84,7 +84,20 @@ class Verifier:
         init_seg_length,
         lane_map
     ):
-        root = AnalysisTreeNode()
+        root = AnalysisTreeNode(
+            trace={},
+            init={},
+            mode={},
+            static = {},
+            agent={},
+            assert_hits={},
+            child=[],
+            start_time = 0,
+            ndigits = 10,
+            type = 'simtrace',
+            id = 0
+        )
+        # root = AnalysisTreeNode()
         for i, agent in enumerate(agent_list):
             root.init[agent.id] = [init_list[i]]
             init_mode = [elem.name for elem in init_mode_list[i]]
@@ -117,7 +130,7 @@ class Verifier:
                                         remain_time,
                                         time_step, 
                                         node.agent[agent_id].TC_simulate,
-                                        'PW',
+                                        'GLOBAL',
                                         100,
                                         SIMTRACENUM,
                                         combine_seg_length=init_seg_length,
@@ -153,6 +166,7 @@ class Verifier:
                     continue
 
                 next_node_mode = copy.deepcopy(node.mode)
+                next_node_static = node.static
                 next_node_mode[transit_agent_idx] = dest_mode
                 next_node_agent = node.agent
                 next_node_start_time = list(truncated_trace.values())[0][0][0]
@@ -168,7 +182,9 @@ class Verifier:
                     trace=next_node_trace,
                     init=next_node_init,
                     mode=next_node_mode,
+                    static = next_node_static,
                     agent=next_node_agent,
+                    assert_hits = {},
                     child=[],
                     start_time=round(next_node_start_time, 10),
                     type='reachtube'
