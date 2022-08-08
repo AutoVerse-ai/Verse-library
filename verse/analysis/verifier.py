@@ -14,6 +14,64 @@ class Verifier:
         self.unsafe_set = None
         self.verification_result = None
 
+    def caculate_full_bloated_tube(
+        self,
+        mode_label,
+        initial_set,
+        time_horizon,
+        time_step,
+        sim_func,
+        bloating_method,
+        kvalue,
+        sim_trace_num,
+        combine_seg_length = 1000,
+        guard_checker=None,
+        guard_str="",
+        lane_map = None
+    ):
+        res_tube = None
+        tube_length = 0
+        for combine_seg_idx in range(0, len(initial_set), combine_seg_length):
+            rect_seg = initial_set[combine_seg_idx:combine_seg_idx+combine_seg_length]
+            combined_rect = None
+            for rect in rect_seg:
+                rect = np.array(rect)
+                if combined_rect is None:
+                    combined_rect = rect
+                else:
+                    combined_rect[0, :] = np.minimum(
+                        combined_rect[0, :], rect[0, :])
+                    combined_rect[1, :] = np.maximum(
+                        combined_rect[1, :], rect[1, :])
+            combined_rect = combined_rect.tolist()
+            cur_bloated_tube = calc_bloated_tube(mode_label,
+                                        combined_rect,
+                                        time_horizon,
+                                        time_step, 
+                                        sim_func,
+                                        bloating_method,
+                                        kvalue,
+                                        sim_trace_num,
+                                        lane_map = lane_map
+                                        )
+            if combine_seg_idx == 0:
+                res_tube = cur_bloated_tube
+                tube_length = cur_bloated_tube.shape[0]
+            else:
+                cur_bloated_tube = cur_bloated_tube[:tube_length - combine_seg_idx*2,:]
+                # Handle Lower Bound
+                res_tube[combine_seg_idx*2::2,1:] = np.minimum(
+                    res_tube[combine_seg_idx*2::2,1:],
+                    cur_bloated_tube[::2,1:]
+                )
+                # Handle Upper Bound
+                res_tube[combine_seg_idx*2+1::2,1:] = np.maximum(
+                    res_tube[combine_seg_idx*2+1::2,1:],
+                    cur_bloated_tube[1::2,1:]
+                )
+        return res_tube.tolist()
+
+
     def compute_full_reachtube(
         self,
         init_list: List[float],
@@ -23,11 +81,26 @@ class Verifier:
         transition_graph,
         time_horizon,
         time_step,
-        lane_map
+        lane_map,
+        init_seg_length,
+        verify_method
     ):
-        root = AnalysisTreeNode()
+        root = AnalysisTreeNode(
+            trace={},
+            init={},
+            mode={},
+            static = {},
+            agent={},
+            assert_hits={},
+            child=[],
+            start_time = 0,
+            ndigits = 10,
+            type = 'simtrace',
+            id = 0
+        )
+        # root = AnalysisTreeNode()
         for i, agent in enumerate(agent_list):
-            root.init[agent.id] = init_list[i]
+            root.init[agent.id] = [init_list[i]]
             init_mode = [elem.name for elem in init_mode_list[i]]
             root.mode[agent.id] = init_mode
             init_static = [elem.name for elem in static_list[i]]
@@ -38,7 +111,7 @@ class Verifier:
         verification_queue.append(root)
         while verification_queue != []:
             node: AnalysisTreeNode = verification_queue.pop(0)
-            # print(node.start_time, node.mode)
+            print(node.start_time, node.mode)
             remain_time = round(time_horizon - node.start_time, 10)
             if remain_time <= 0:
                 continue
@@ -53,14 +126,15 @@ class Verifier:
                     # trace[:,0] += node.start_time
                     # node.trace[agent_id] = trace.tolist()
 
-                    cur_bloated_tube = calc_bloated_tube(mode,
+                    cur_bloated_tube = self.caculate_full_bloated_tube(mode,
                                         init,
                                         remain_time,
                                         time_step, 
                                         node.agent[agent_id].TC_simulate,
-                                        'PW',
+                                        verify_method,
                                         100,
                                         SIMTRACENUM,
+                                        combine_seg_length=init_seg_length,
                                         lane_map = lane_map
                                         )
                     trace = np.array(cur_bloated_tube)
@@ -79,8 +153,9 @@ class Verifier:
 
             max_end_idx = 0
             for transition in all_possible_transitions:
+                # Each transition will contain a list of rectangles and their corresponding indexes in the original list
                 transit_agent_idx, src_mode, dest_mode, next_init, idx = transition
-                start_idx, end_idx = idx
+                start_idx, end_idx = idx[0], idx[-1]
 
                 truncated_trace = {}
                 for agent_idx in node.agent:
@@ -92,6 +167,7 @@ class Verifier:
                     continue
 
                 next_node_mode = copy.deepcopy(node.mode)
+                next_node_static = node.static
                 next_node_mode[transit_agent_idx] = dest_mode
                 next_node_agent = node.agent
                 next_node_start_time = list(truncated_trace.values())[0][0][0]
@@ -107,7 +183,9 @@ class Verifier:
                     trace=next_node_trace,
                     init=next_node_init,
                     mode=next_node_mode,
+                    static = next_node_static,
                     agent=next_node_agent,
+                    assert_hits = {},
                     child=[],
                     start_time=round(next_node_start_time, 10),
                     type='reachtube'

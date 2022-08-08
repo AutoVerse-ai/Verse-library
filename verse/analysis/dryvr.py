@@ -160,7 +160,7 @@ def calcDelta(lower, upper):
     assert len(lower) == len(upper), "Delta calc List Range Error"
     return [(upper[i] - lower[i]) / 2 for i in range(len(upper))]
 
-def randomPoint(lower, upper):
+def randomPoint(lower, upper, seed=0):
     """
     Pick a random point between lower and upper bound
     This function supports both int or list
@@ -173,7 +173,7 @@ def randomPoint(lower, upper):
         random point (either float or list of float)
 
     """
-    random.seed(4)
+    random.seed(seed)
 
     if isinstance(lower, int) or isinstance(lower, float):
         return random.uniform(lower, upper)
@@ -234,8 +234,8 @@ def calc_bloated_tube(
     cur_delta = calcDelta(initial_set[0], initial_set[1])
     traces = [sim_func(mode_label, cur_center, time_horizon, time_step, lane_map)]
     # Simulate SIMTRACENUM times to learn the sensitivity
-    for _ in range(sim_trace_num):
-        new_init_point = randomPoint(initial_set[0], initial_set[1])
+    for i in range(sim_trace_num):
+        new_init_point = randomPoint(initial_set[0], initial_set[1], i)
         traces.append(sim_func(mode_label, new_init_point, time_horizon, time_step, lane_map))
 
     # Trim the trace to the same length
@@ -262,4 +262,5 @@ def calc_bloated_tube(
     final_tube[0::2, :] = cur_reach_tube[:, 0, :]
     final_tube[1::2, :] = cur_reach_tube[:, 1, :]
     # print(final_tube.tolist()[-2], final_tube.tolist()[-1])
-    return final_tube.tolist()
+    return final_tube
+    

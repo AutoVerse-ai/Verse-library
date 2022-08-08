@@ -114,3 +114,7 @@ class LaneMap:
             ret_dict[lane_idx] = lane.get_speed_limit()
         # print(ret_dict)
         return ret_dict
+
+    def get_lane_width(self, lane_idx: str) -> float:
+        lane: Lane = self.lane_dict[lane_idx]
+        return lane.get_lane_width() 

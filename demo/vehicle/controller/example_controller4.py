@@ -44,12 +44,12 @@ def controller(ego:State, others:List[State], lane_map):
                 output.vehicle_mode = VehicleMode.SwitchRight
     lat_dist = lane_map.get_lateral_distance(ego.lane_mode, [ego.x, ego.y])
     if ego.vehicle_mode == VehicleMode.SwitchLeft:
-        if lat_dist >= 2.5:
+        if lat_dist >= (lane_map.get_lane_width(ego.lane_mode)-0.2):
             output.vehicle_mode = VehicleMode.Normal
             output.lane_mode = lane_map.left_lane(ego.lane_mode)
             output.x = ego.x
     if ego.vehicle_mode == VehicleMode.SwitchRight:
-        if lat_dist <= -2.5:
+        if lat_dist <= -(lane_map.get_lane_width(ego.lane_mode)-0.2):
             output.vehicle_mode = VehicleMode.Normal
             output.lane_mode = lane_map.right_lane(ego.lane_mode)
     def abs_diff(a, b):
@@ -67,6 +67,7 @@ def controller(ego:State, others:List[State], lane_map):
     # assert all(test(o) for o in others)
     # assert ego.lane_mode != LaneMode.Lane0, "lane 0"
     # assert ego.x < 40, "x"
-    assert not (ego.lane_mode == LaneMode.Lane2 and ego.x > 30), "lane 2"
+    # assert not (ego.lane_mode == LaneMode.Lane2 and ego.x > 30 and ego.x<50), "lane 2"
+    assert not (ego.x>30 and ego.x<50 and ego.y>-4 and ego.y<-2), "Danger Zone"
     return output
 

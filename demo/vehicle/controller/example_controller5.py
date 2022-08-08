@@ -32,17 +32,23 @@ class State:
     def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: LaneMode, type_mode: LaneObjectMode):
         pass
 
+def vehicle_front(ego, others, lane_map):
+    res = any((lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) > 3 \
+            and lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) < 5 \
+            and ego.lane_mode == other.lane_mode) for other in others)
+    return res
+
+def vehicle_close(ego, others):
+    res = any(ego.x-other.x<1.0 and ego.x-other.x>-1.0 and ego.y-other.y<1.0 and ego.y-other.y>-1.0 for other in others)
+    return res
+
 def controller(ego:State, others:List[State], lane_map):
     output = copy.deepcopy(ego)
     if ego.vehicle_mode == VehicleMode.Normal:
-        if any((lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) > 3 \
-            and lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) < 5 \
-            and ego.lane_mode == other.lane_mode) for other in others):
+        if vehicle_front(ego, others, lane_map):
             if lane_map.has_left(ego.lane_mode):
                 output.vehicle_mode = VehicleMode.SwitchLeft
-        if any((lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) > 3 \
-            and lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) < 5 \
-            and ego.lane_mode == other.lane_mode) for other in others):
+        if vehicle_front(ego, others, lane_map):
             if lane_map.has_right(ego.lane_mode):
                 output.vehicle_mode = VehicleMode.SwitchRight
     if ego.vehicle_mode == VehicleMode.SwitchLeft:
@@ -53,6 +59,8 @@ def controller(ego:State, others:List[State], lane_map):
         if lane_map.get_lateral_distance(ego.lane_mode, [ego.x, ego.y]) <= -2.5:
             output.vehicle_mode = VehicleMode.Normal
             output.lane_mode = lane_map.right_lane(ego.lane_mode)
+
+    assert not vehicle_close(ego, others)
 
     return output
 

@@ -70,13 +70,13 @@ def controller(ego:State, others:List[State], lane_map):
 
     # If switched left enough, return to normal mode
     if ego.vehicle_mode == VehicleMode.SwitchLeft:
-        if  lane_map.get_lateral_distance(ego.lane_mode, [ego.x, ego.y]) >= 2.5:
+        if  lane_map.get_lateral_distance(ego.lane_mode, [ego.x, ego.y]) >= (lane_map.get_lane_width(ego.lane_mode)-0.2):
             output.vehicle_mode = VehicleMode.Normal
             output.lane_mode = lane_map.left_lane(ego.lane_mode)
 
     # If switched right enough,return to normal mode
     if ego.vehicle_mode == VehicleMode.SwitchRight:
-        if lane_map.get_lateral_distance(ego.lane_mode, [ego.x, ego.y]) <= -2.5:
+        if lane_map.get_lateral_distance(ego.lane_mode, [ego.x, ego.y]) <= -(lane_map.get_lane_width(ego.lane_mode)-0.2):
             output.vehicle_mode = VehicleMode.Normal
             output.lane_mode = lane_map.right_lane(ego.lane_mode)
 

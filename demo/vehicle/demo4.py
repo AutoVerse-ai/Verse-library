@@ -2,9 +2,11 @@ from verse.agents.example_agent import CarAgent, NPCAgent
 from verse.map.example_map import SimpleMap4
 from verse import Scenario
 from verse.plotter.plotter2D import *
+from verse.plotter.plotter2D_old import plot_reachtube_tree
 
 from enum import Enum, auto
 import plotly.graph_objects as go
+import matplotlib.pyplot as plt 
 from enum import Enum, auto
 
 
@@ -99,7 +101,10 @@ if __name__ == "__main__":
     fig.show()
 
     traces = scenario.verify(80, 0.1)
-    fig = go.Figure()
-    fig = reachtube_tree(traces, tmp_map, fig, 1, 2,
-                         'lines', print_dim_list=[1, 2])
-    fig.show()
+    # fig = go.Figure()
+    # fig = reachtube_tree(traces, tmp_map, fig, 1, 2,
+    #                      'lines', print_dim_list=[1, 2])
+    # fig.show()
+    fig = plot_reachtube_tree(traces.root, 'car1', 1, [2], 'r')
+    plt.show()
+

@@ -10,6 +10,7 @@ class Lane():
         self.id = id
         self.segment_list: List[AbstractLane] = seg_list
         self._set_longitudinal_start()
+        self.lane_width = seg_list[0].width
 
     def _set_longitudinal_start(self):
         longitudinal_start = 0
@@ -48,3 +49,6 @@ class Lane():
         seg_idx, segment = self.get_lane_segment(position)
         longitudinal, lateral = segment.local_coordinates(position)
         return lateral
+
+    def get_lane_width(self) -> float:
+        return self.lane_width
