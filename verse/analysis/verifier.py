@@ -81,8 +81,9 @@ class Verifier:
         transition_graph,
         time_horizon,
         time_step,
+        lane_map,
         init_seg_length,
-        lane_map
+        verify_method
     ):
         root = AnalysisTreeNode(
             trace={},
@@ -130,7 +131,7 @@ class Verifier:
                                         remain_time,
                                         time_step, 
                                         node.agent[agent_id].TC_simulate,
-                                        'GLOBAL',
+                                        verify_method,
                                         100,
                                         SIMTRACENUM,
                                         combine_seg_length=init_seg_length,

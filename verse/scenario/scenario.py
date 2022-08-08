@@ -31,6 +31,7 @@ class Scenario:
 
         # Parameters
         self.init_seg_length = 1000
+        self.verify_method = 'PW'
 
     def set_sensor(self, sensor):
         self.sensor = sensor
@@ -106,7 +107,7 @@ class Scenario:
             init_mode_list.append(self.init_mode_dict[agent_id])
             static_list.append(self.static_dict[agent_id])
             agent_list.append(self.agent_dict[agent_id])
-        return self.verifier.compute_full_reachtube(init_list, init_mode_list, static_list, agent_list, self, time_horizon, time_step, self.init_seg_length, self.map)
+        return self.verifier.compute_full_reachtube(init_list, init_mode_list, static_list, agent_list, self, time_horizon, time_step, self.map, self.init_seg_length, self.verify_method)
 
     def apply_reset(self, agent: BaseAgent, reset_list, all_agent_state) -> Tuple[str, np.ndarray]:
         lane_map = self.map
@@ -488,19 +489,6 @@ class Scenario:
         for agent in reset_dict:
             for reset_idx in reset_dict[agent]:
                 for dest in reset_dict[agent][reset_idx]:
-                    combined_rect = None
-                    for rect in reset_dict[agent][reset_idx][dest]:
-                        rect = np.array(rect)
-                        if combined_rect is None:
-                            combined_rect = rect
-                        else:
-                            combined_rect[0, :] = np.minimum(
-                                combined_rect[0, :], rect[0, :])
-                            combined_rect[1, :] = np.maximum(
-                                combined_rect[1, :], rect[1, :])
-                    combined_rect = combined_rect.tolist()
-                    min_idx = min(reset_idx_dict[agent][reset_idx][dest])
-                    max_idx = max(reset_idx_dict[agent][reset_idx][dest])
                     transition = (
                         agent, node.mode[agent], dest, reset_dict[agent][reset_idx][dest], reset_idx_dict[agent][reset_idx][dest])
                     possible_transitions.append(transition)

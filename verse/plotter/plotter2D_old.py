@@ -65,7 +65,7 @@ def plot_reachtube_tree(root, agent_id, x_dim: int=0, y_dim_list: List[int]=[1],
         data = []
         for i in range(0,len(trace),2):
             data.append([trace[i], trace[i+1]])
-        if idx == 1:
+        if False:
             fig, x_lim, y_lim = plot(data, x_dim, y_dim_list, 'y', fig, x_lim, y_lim)
         else:
             fig, x_lim, y_lim = plot(data, x_dim, y_dim_list, color, fig, x_lim, y_lim)

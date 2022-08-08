@@ -90,6 +90,7 @@ if __name__ == "__main__":
         ]
     )
     scenario1.init_seg_length = 5
+    scenario.verify_method = 'GLOBAL'
     traces1 = scenario1.verify(40, 0.05)
 
     fig = plot_reachtube_tree(traces1.root, 'car1', 0, [1], 'g', fig)

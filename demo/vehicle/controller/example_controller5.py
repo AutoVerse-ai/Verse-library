@@ -60,7 +60,7 @@ def controller(ego:State, others:List[State], lane_map):
             output.vehicle_mode = VehicleMode.Normal
             output.lane_mode = lane_map.right_lane(ego.lane_mode)
 
-    assert not vehicle_close(ego, others)
+    # assert not vehicle_close(ego, others)
 
     return output
 

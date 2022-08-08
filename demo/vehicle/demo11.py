@@ -45,8 +45,8 @@ class State:
 
 if __name__ == "__main__":
     input_code_name = './demo/vehicle/controller/example_controller5.py'
-    scenario = Scenario()
 
+    scenario = Scenario()
     car = CarAgent('car1', file_name=input_code_name)
     scenario.add_agent(car)
     car = NPCAgent('car2')
@@ -80,9 +80,40 @@ if __name__ == "__main__":
     fig = plot_reachtube_tree(traces.root, 'car3', 1, [2], 'r', fig)
     # fig = plot_reachtube_tree(traces, 'car4', 1, [2], 'r', fig)
     fig = plot_map(tmp_map, 'g', fig)
-    plt.show()
+    # plt.show()
 
-    # fig = go.Figure()
-    # fig = reachtube_tree(traces, tmp_map, fig, 1,
-    #                        2, 'lines', 'trace', print_dim_list=[1, 2])
-    # fig.show()
+    scenario1 = Scenario()
+    car = CarAgent('car1', file_name=input_code_name)
+    scenario1.add_agent(car)
+    car = NPCAgent('car2')
+    scenario1.add_agent(car)
+    car = NPCAgent('car3')
+    scenario1.add_agent(car)
+    tmp_map = SimpleMap3()
+    scenario1.set_map(tmp_map)
+    scenario1.set_init(
+        [
+            [[5, -0.1, 0, 1.0], [5.5, 0.1, 0, 1.0]],
+            [[20, 0, 0, 0.5], [20, 0, 0, 0.5]],
+            [[4-2.5, 3, 0, 1.0], [4.5-2.5, 3.2, 0, 1.0]],
+        ],
+        [
+            (VehicleMode.Normal, LaneMode.Lane1, LaneObjectMode.Vehicle),
+            (VehicleMode.Normal, LaneMode.Lane1, LaneObjectMode.Vehicle),
+            (VehicleMode.Normal, LaneMode.Lane0, LaneObjectMode.Vehicle),
+        ]
+    )
+    # scenario1.set_sensor(NoisyVehicleSensor((1,1), (0,0)))
+
+    scenario1.init_seg_length = 5
+    # scenario.verify_method = 'GLOBAL'
+    traces = scenario1.verify(40, 0.05)
+    # traces = scenario.verify(70, 0.05)
+
+    # fig = plt.figure(2)
+    fig = plot_reachtube_tree(traces.root, 'car1', 1, [2], 'g', fig)
+    # fig = plot_reachtube_tree(traces.root, 'car2', 1, [2], 'r', fig)
+    # fig = plot_reachtube_tree(traces.root, 'car3', 1, [2], 'r', fig)
+    # fig = plot_reachtube_tree(traces, 'car4', 1, [2], 'r', fig)
+    # fig = plot_map(tmp_map, 'g', fig)
+    plt.show()

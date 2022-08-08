@@ -63,6 +63,7 @@ if __name__ == "__main__":
     )
     # traces = scenario.simulate(13, 0.05)
     scenario.init_seg_length = 5
+    scenario.verify_method = 'GLOBAL'
     traces = scenario.verify(13, 0.05)
 
     # fig = plt.figure(2)
