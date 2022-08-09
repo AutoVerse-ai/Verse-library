@@ -12,4 +12,9 @@ dist/
 **.asv
 **.m~
 **.code-workspace
+**/output.json
+expected_map_output/
+map_package/
+**/output.json
 docs/build/
+docs/source/_autosummary/
