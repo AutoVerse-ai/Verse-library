@@ -1,4 +1,6 @@
 from verse.parser.parser import ControllerIR
+import numpy as np 
+from scipy.integrate import ode
 
 class BaseAgent:
     """
@@ -41,4 +43,16 @@ class BaseAgent:
             map: LaneMap, optional
                 Provided if the map is used 
         """
-        raise NotImplementedError
+        time_bound = float(time_horizon)
+        number_points = int(np.ceil(time_bound/time_step))
+        t = [round(i*time_step, 10) for i in range(0, number_points)]
+        # note: digit of time
+        init = initialSet
+        trace = [[0]+init]
+        for i in range(len(t)):
+            r = ode(self.dynamics)
+            r.set_initial_value(init)
+            res: np.ndarray = r.integrate(r.t + time_step)
+            init = res.flatten().tolist()
+            trace.append([t[i] + time_step] + init)
+        return np.array(trace)

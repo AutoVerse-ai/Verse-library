@@ -6,6 +6,7 @@ import numpy as np
 # from verse.agents.base_agent import BaseAgent
 from verse.analysis.analysis_tree import AnalysisTreeNode, AnalysisTree
 from verse.analysis.dryvr import calc_bloated_tube, SIMTRACENUM
+from verse.analysis.mixmonotone import calculate_bloated_tube_mixmono_disc
 
 
 class Verifier:
@@ -21,7 +22,7 @@ class Verifier:
         time_horizon,
         time_step,
         sim_func,
-        bloating_method,
+        params,
         kvalue,
         sim_trace_num,
         combine_seg_length = 1000,
@@ -29,6 +30,11 @@ class Verifier:
         guard_str="",
         lane_map = None
     ):
+        # Handle Parameters
+        bloating_method = 'PW'
+        if 'bloating_method' in params:
+            bloating_method = params['bloating_method']
+        
         res_tube = None
         tube_length = 0
         for combine_seg_idx in range(0, len(initial_set), combine_seg_length):
@@ -84,7 +90,8 @@ class Verifier:
         time_step,
         lane_map,
         init_seg_length,
-        reachability_method
+        reachability_method,
+        params = {}
     ):
         root = AnalysisTreeNode(
             trace={},
@@ -107,7 +114,7 @@ class Verifier:
             root.mode[agent.id] = init_mode
             init_static = [elem.name for elem in static_list[i]]
             root.static[agent.id] = init_static
-            root.uncertain_param = uncertain_param_list[i]
+            root.uncertain_param[agent.id] = uncertain_param_list[i]
             root.agent[agent.id] = agent
             root.type = 'reachtube'
         verification_queue = []
@@ -135,7 +142,7 @@ class Verifier:
                                             remain_time,
                                             time_step, 
                                             node.agent[agent_id].TC_simulate,
-                                            'PW',
+                                            params,
                                             100,
                                             SIMTRACENUM,
                                             combine_seg_length=init_seg_length,
@@ -144,7 +151,7 @@ class Verifier:
                     elif reachability_method == "MIXMONO_CONT":
                         pass
                     elif reachability_method == "MIXMONO_DISC":
-                        cur_bloated_tube = self.calculate_bloated_tube_mixmono_disc(
+                        cur_bloated_tube = calculate_bloated_tube_mixmono_disc(
                             mode, 
                             init, 
                             uncertain_param,
@@ -223,53 +230,4 @@ class Verifier:
         self.reachtube_tree = AnalysisTree(root)
         return self.reachtube_tree
 
-    def calculate_bloated_tube_mixmono_disc(
-        self,
-        mode, 
-        init,
-        uncertain_param,
-        time_horizon,
-        time_step, 
-        agent,
-        lane_map
-    ):
-        if hasattr(agent, 'dynamics') and hasattr(agent, 'decomposition'):
-            decomposition = agent.decomposition
-            res = self.compute_reachtube_mixmono_disc(init, uncertain_param, time_horizon, time_step, decomposition)
-        elif hasattr(agent, 'dynamics') and hasattr(agent, 'dynamics_jac'):
-            pass 
-        elif hasattr(agent, 'dynamics'):
-            pass
-        else:
-            raise ValueError('Not enough information to apply discrete time mixed monotone algorithm.')
-        return res
 
-    def compute_reachtube_mixmono_disc(
-        self,
-        initial_set,
-        uncertain_var_bound,
-        time_horizon, 
-        time_step,
-        decomposition
-    ):
-        number_points = int(np.ceil(time_horizon/time_step))
-        t = [round(i*time_step, 10) for i in range(0, number_points)]
-        trace = [[0] + initial_set[0] + initial_set[1]]
-        num_var = len(initial_set[0])
-        for i in range(len(t)):
-            xk = trace[-1]
-            x = xk[1:1+num_var]
-            xhat = xk[1+num_var:]
-            w = uncertain_var_bound[0]
-            what = uncertain_var_bound[1]
-            d = decomposition(x,w,xhat,what)
-            dhat = decomposition(xhat, what, x, w)
-            trace.append([round(t[i]+time_step, 10)]+d+dhat)
-
-        res = []
-        for i in range(len(trace)-1):
-            res0 = [trace[i][0]] + np.minimum(trace[i][1:], trace[i+1][1:]).tolist()
-            res.append(res0)
-            res1 = [trace[i][0]] + np.maximum(trace[i][1:], trace[i+1][1:]).tolist()
-            res.append(res1)
-        return res

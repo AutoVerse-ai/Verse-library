@@ -75,7 +75,7 @@ class Scenario:
             else:
                 self.static_dict[agent_id] = []
             if uncertain_param_list:
-                self.uncertain_param_dict[agent_id] = copy.deepcopy(uncertain_param_list)
+                self.uncertain_param_dict[agent_id] = copy.deepcopy(uncertain_param_list[i])
             else:
                 self.uncertain_param_dict[agent_id] = []
 
@@ -101,7 +101,7 @@ class Scenario:
         print(init_list)
         return self.simulator.simulate(init_list, init_mode_list, static_list, uncertain_param_list, agent_list, self, time_horizon, time_step, self.map)
 
-    def verify(self, time_horizon, time_step, reachability_method = 'DRYVR') -> AnalysisTree:
+    def verify(self, time_horizon, time_step, reachability_method = 'DRYVR', params = {}) -> AnalysisTree:
         init_list = []
         init_mode_list = []
         static_list = []
@@ -118,7 +118,7 @@ class Scenario:
             uncertain_param_list.append(self.uncertain_param_dict[agent_id])
             agent_list.append(self.agent_dict[agent_id])
         
-        res = self.verifier.compute_full_reachtube(init_list, init_mode_list, static_list, uncertain_param_list, agent_list, self, time_horizon, time_step, self.map, self.init_seg_length, reachability_method)
+        res = self.verifier.compute_full_reachtube(init_list, init_mode_list, static_list, uncertain_param_list, agent_list, self, time_horizon, time_step, self.map, self.init_seg_length, reachability_method, params)
         return res
 
     def apply_reset(self, agent: BaseAgent, reset_list, all_agent_state) -> Tuple[str, np.ndarray]:
