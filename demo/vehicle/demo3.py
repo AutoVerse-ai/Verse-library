@@ -72,6 +72,6 @@ if __name__ == "__main__":
     # traces.dump('./output2.json')
     fig = go.Figure()
     fig = reachtube_tree(traces, tmp_map, fig, 1,
-                         2, 'lines', 'trace', print_dim_list=[1, 2])
+                         2, 'lines', 'trace', print_dim_list=[1, 2], combine_rect=10)
     fig.show()
 

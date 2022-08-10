@@ -28,7 +28,7 @@ text_size = 8
 scale_factor = 0.25
 mode_point_color = 'rgba(0,0,0,0.5)'
 mode_text_color = 'black'
-duration = 10
+duration = 1
 
 
 """These 5 Functions below are high-level functions and are recommended to use."""
@@ -54,7 +54,7 @@ These 5 functions share the same API.
 """
 
 
-def reachtube_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, map_type='lines', scale_type='trace', print_dim_list=None, label_mode='None'):
+def reachtube_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, map_type='lines', scale_type='trace', print_dim_list=None, label_mode='None', combine_rect=1):
     if isinstance(root, AnalysisTree):
         root = root.root
     """It gives the animation of the verfication."""
@@ -116,7 +116,7 @@ def reachtube_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=g
         fig_dict["frames"].append(frame)
         slider_step = {"args": [
             ['{:.2f}'.format(time_point)],
-            {"frame": {"duration": duration, "redraw": False},
+            {"frame": {"duration": duration, "redraw": True},
              "mode": "immediate",
              "transition": {"duration": duration}}
         ],
@@ -131,7 +131,7 @@ def reachtube_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=g
     i = 0
     for agent_id in agent_list:
         fig = reachtube_tree_single(
-            root, agent_id, fig, x_dim, y_dim, scheme_list[i], print_dim_list)
+            root, agent_id, fig, x_dim, y_dim, scheme_list[i], print_dim_list, combine_rect = combine_rect)
         i = (i+1) % 12
     if scale_type == 'trace':
         queue = [root]
@@ -183,7 +183,7 @@ def reachtube_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=g
     return fig
 
 
-def reachtube_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim=2, map_type='lines', scale_type='trace', print_dim_list=None, label_mode='None'):
+def reachtube_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim=2, map_type='lines', scale_type='trace', print_dim_list=None, label_mode='None', combine_rect=1):
     if isinstance(root, AnalysisTree):
         root = root.root
     """It statically shows all the traces of the verfication."""
@@ -199,7 +199,7 @@ def reachtube_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go
     i = 0
     for agent_id in agent_list:
         fig = reachtube_tree_single(
-            root, agent_id, fig, x_dim, y_dim, scheme_list[i], print_dim_list)
+            root, agent_id, fig, x_dim, y_dim, scheme_list[i], print_dim_list, combine_rect)
         i = (i+1) % 12
     if scale_type == 'trace':
         queue = [root]
@@ -657,7 +657,7 @@ def simulation_anime_trail(root: Union[AnalysisTree, AnalysisTreeNode], map=None
 """Functions below are low-level functions and usually are not called outside this file."""
 
 
-def reachtube_tree_single(root: Union[AnalysisTree, AnalysisTreeNode], agent_id, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, color=None, print_dim_list=None):
+def reachtube_tree_single(root: Union[AnalysisTree, AnalysisTreeNode], agent_id, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, color=None, print_dim_list=None, combine_rect=1):
     if isinstance(root, AnalysisTree):
         root = root.root
     """It statically shows the verfication traces of one given agent."""
@@ -672,13 +672,118 @@ def reachtube_tree_single(root: Union[AnalysisTree, AnalysisTreeNode], agent_id,
         node = queue.pop(0)
         traces = node.trace
         trace = np.array(traces[agent_id])
-        max_id = len(trace)-1
-        trace_x_odd = np.array([trace[i][x_dim] for i in range(0, max_id, 2)])
-        trace_x_even = np.array([trace[i][x_dim]
-                                for i in range(1, max_id+1, 2)])
-        trace_y_odd = np.array([trace[i][y_dim] for i in range(0, max_id, 2)])
-        trace_y_even = np.array([trace[i][y_dim]
-                                for i in range(1, max_id+1, 2)])
+        if combine_rect<=1:
+            for idx in range(0, len(trace), 2):
+                trace_x = np.array([
+                    trace[idx][x_dim], 
+                    trace[idx+1][x_dim], 
+                    trace[idx+1][x_dim],
+                    trace[idx][x_dim],
+                    trace[idx][x_dim]
+                ])
+                trace_y = np.array([
+                    trace[idx][y_dim],
+                    trace[idx][y_dim],
+                    trace[idx+1][y_dim],
+                    trace[idx+1][y_dim],
+                    trace[idx][y_dim],
+                ])
+                fig.add_trace(go.Scatter(x=trace_x, y=trace_y, mode='markers+lines',
+                            fill='toself',
+                            fillcolor=fillcolor,
+                            #  opacity=0.5,
+                            marker={'size': 1},
+                            line_color=colors[scheme_dict[color]][2],
+                            line={'width': 1},
+                            showlegend=show_legend
+                            ))
+        else:
+            for idx in range(0, len(trace), combine_rect*2):
+                trace_seg = trace[idx:idx+combine_rect*2]
+                max_id = len(trace_seg-1)
+                if max_id <= 2:
+                    trace_x = np.array([
+                        trace_seg[0][x_dim], 
+                        trace_seg[0+1][x_dim], 
+                        trace_seg[0+1][x_dim],
+                        trace_seg[0][x_dim],
+                        trace_seg[0][x_dim]
+                    ])
+                    trace_y = np.array([
+                        trace_seg[0][y_dim],
+                        trace_seg[0][y_dim],
+                        trace_seg[0+1][y_dim],
+                        trace_seg[0+1][y_dim],
+                        trace_seg[0][y_dim],
+                    ])
+                    fig.add_trace(go.Scatter(x=trace_x, y=trace_y, mode='markers+lines',
+                                fill='toself',
+                                fillcolor=fillcolor,
+                                #  opacity=0.5,
+                                marker={'size': 1},
+                                line_color=colors[scheme_dict[color]][2],
+                                line={'width': 1},
+                                showlegend=show_legend
+                                ))
+                else:
+                    trace_x_odd = np.array([trace_seg[i][x_dim] for i in range(0, max_id, 2)])
+                    trace_x_even = np.array([trace_seg[i][x_dim] for i in range(1, max_id+1, 2)])
+
+                    trace_y_odd = np.array([trace_seg[i][y_dim] for i in range(0, max_id, 2)])
+                    trace_y_even = np.array([trace_seg[i][y_dim] for i in range(1, max_id+1, 2)])
+                    
+                    x_start = 0
+                    x_end = 0
+                    if trace_x_odd[-1] >= trace_x_odd[-2] and trace_x_even[-1] >= trace_x_even[-2]:
+                        x_end = trace_x_even[-1]
+                    elif trace_x_odd[-1] <= trace_x_odd[-2] and trace_x_even[-1] <= trace_x_even[-2]:
+                        x_end = trace_x_odd[-1]
+                    else:
+                        x_end = trace_x_odd[-1]
+
+                    if trace_x_odd[1-1] >= trace_x_odd[2-1] and trace_x_even[1-1] >= trace_x_even[2-1]:
+                        x_start = trace_x_even[1-1]
+                    elif trace_x_odd[1-1] <= trace_x_odd[2-1] and trace_x_even[1-1] <= trace_x_even[2-1]:
+                        x_start = trace_x_odd[1-1]
+                    else:
+                        x_start = trace_x_odd[1-1]
+    
+                    y_start = 0 
+                    y_end = 0
+                    if trace_y_odd[-1] >= trace_y_odd[-2] and trace_y_even[-1] >= trace_y_even[-2]:
+                        y_end = trace_y_even[-1]
+                        if trace_x_odd[-1] >= trace_x_odd[-2] and trace_x_even[-1] >= trace_x_even[-2]:
+                            x_end = trace_x_odd[-1]
+                    elif trace_y_odd[-1] <= trace_y_odd[-2] and trace_y_even[-1] <= trace_y_even[-2]:
+                        y_end = trace_y_odd[-1]
+                    else:
+                        y_end = trace_y_odd[-1]
+
+                    if trace_y_odd[1-1] >= trace_y_odd[2-1] and trace_y_even[1-1] >= trace_y_even[2-1]:
+                        y_start = trace_y_even[1-1]
+                    elif trace_y_odd[1-1] <= trace_y_odd[2-1] and trace_y_even[1-1] <= trace_y_even[2-1]:
+                        y_start = trace_y_odd[1-1]
+                        if trace_x_odd[1-1] <= trace_x_odd[2-1] and trace_x_even[1-1] <= trace_x_even[2-1]:
+                            x_start = trace_x_even[1-1]
+                    else:
+                        y_start = trace_y_even[1-1]
+    
+
+                    trace_x = trace_x_odd.tolist()+[x_end]+trace_x_even[::-1].tolist()+[x_start]+[trace_x_odd[0]]
+                    trace_y = trace_y_odd.tolist()+[y_end]+trace_y_even[::-1].tolist()+[y_start]+[trace_y_odd[0]]
+                    fig.add_trace(go.Scatter(
+                        x=trace_x, 
+                        y=trace_y, 
+                        mode='markers+lines',
+                        fill='toself',
+                        fillcolor=fillcolor,
+                        #  opacity=0.5,
+                        marker={'size': 1},
+                        line_color=colors[scheme_dict[color]][2],
+                        line={'width': 1},
+                        showlegend=show_legend
+                    ))
+
         # trace_y_new = [0]*len(trace)
         # trace_y_new[0] = trace[0][y_dim]
         # trace_y_new[int(len(trace)/2)] = trace[-1][y_dim]
@@ -710,15 +815,6 @@ def reachtube_tree_single(root: Union[AnalysisTree, AnalysisTreeNode], agent_id,
         #                          opacity=0.5,
         #                          line_color='rgba(255,255,255,0)',
         #                          showlegend=show_legend))
-        fig.add_trace(go.Scatter(x=trace_x_odd.tolist()+trace_x_even[::-1].tolist()+[trace_x_odd[0]], y=trace_y_odd.tolist()+trace_y_even[::-1].tolist()+[trace_y_odd[0]], mode='markers+lines',
-                                 fill='toself',
-                                 fillcolor=fillcolor,
-                                 #  opacity=0.5,
-                                 marker={'size': 1},
-                                 line_color=colors[scheme_dict[color]][2],
-                                 line={'width': 1},
-                                 showlegend=show_legend
-                                 ))
         # fig.add_trace(go.Scatter(x=trace_x_even.tolist()+trace_x_odd[::-1].tolist(), y=trace_y_odd.tolist()+trace_y_even[::-1].tolist(), mode='lines',
         #                          fill='toself',
         #                          fillcolor=fillcolor,

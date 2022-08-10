@@ -2,7 +2,7 @@ from verse.agents.example_agent import CarAgent, SignAgent
 from verse.map.example_map import SimpleMap3
 from verse import Scenario
 from verse.plotter.plotter2D import *
-from verse.plotter.plotter2D_old import *
+# from verse.plotter.plotter2D_old import *
 
 from enum import Enum, auto
 import plotly.graph_objects as go
@@ -66,15 +66,15 @@ if __name__ == "__main__":
     scenario.verify_method = 'GLOBAL'
     traces = scenario.verify(13, 0.05)
 
-    # fig = plt.figure(2)
-    # fig = plot_map(tmp_map, 'g', fig)
-    fig = plot_reachtube_tree(traces.root, 'car1', 0, [1], 'b')
-    fig = plot_reachtube_tree(traces.root, 'stop_sign', 0, [1], 'r', fig)
-    # fig = plot_reachtube_tree(traces, 'car3', 1, [2], 'r', fig)
-    # fig = plot_reachtube_tree(traces, 'car4', 1, [2], 'r', fig)
-    plt.show()
+    # # fig = plt.figure(2)
+    # # fig = plot_map(tmp_map, 'g', fig)
+    # fig = plot_reachtube_tree(traces.root, 'car1', 0, [1], 'b')
+    # fig = plot_reachtube_tree(traces.root, 'stop_sign', 0, [1], 'r', fig)
+    # # fig = plot_reachtube_tree(traces, 'car3', 1, [2], 'r', fig)
+    # # fig = plot_reachtube_tree(traces, 'car4', 1, [2], 'r', fig)
+    # plt.show()
 
-    # fig = go.Figure()
-    # fig = simulation_anime(traces, tmp_map, fig, 1,
-    #                        2, 'lines', 'trace', print_dim_list=[1, 2])
-    # fig.show()
+    fig = go.Figure()
+    fig = simulation_anime(traces, tmp_map, fig, 1,
+                           2, 'lines', 'trace', print_dim_list=[1, 2])
+    fig.show()

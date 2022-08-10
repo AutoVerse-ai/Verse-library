@@ -2,7 +2,7 @@ from verse.agents.example_agent import CarAgent, NPCAgent
 from verse.map.example_map import SimpleMap2
 from verse import Scenario
 from verse.plotter.plotter2D import *
-from verse.plotter.plotter2D_old import plot_reachtube_tree, plot_map
+# from verse.plotter.plotter2D_old import plot_reachtube_tree, plot_map
 from noisy_sensor import NoisyVehicleSensor
 
 from enum import Enum, auto
@@ -67,9 +67,9 @@ if __name__ == "__main__":
     scenario.init_seg_length = 5
     traces = scenario.verify(40, 0.05)
 
-    fig = plt.figure(2)
-    fig = plot_reachtube_tree(traces.root, 'car1', 0, [1], 'b', fig)
-    fig = plot_reachtube_tree(traces.root, 'car2', 0, [1], 'r', fig)
+    # fig = plt.figure(2)
+    # fig = plot_reachtube_tree(traces.root, 'car1', 0, [1], 'b', fig)
+    # fig = plot_reachtube_tree(traces.root, 'car2', 0, [1], 'r', fig)
 
     scenario1 = Scenario()
     car1 = CarAgent('car1', file_name=input_code_name)
@@ -93,9 +93,8 @@ if __name__ == "__main__":
     scenario.verify_method = 'GLOBAL'
     traces1 = scenario1.verify(40, 0.05)
 
-    fig = plot_reachtube_tree(traces1.root, 'car1', 0, [1], 'g', fig)
-    fig = plot_reachtube_tree(traces1.root, 'car2', 0, [1], 'r', fig)
-
-
-    plt.show()
+    fig = go.Figure()
+    fig = reachtube_tree(traces, tmp_map, fig, 0,
+                                 1, 'lines', 'trace', print_dim_list=[1, 2])
+    fig.show()
 

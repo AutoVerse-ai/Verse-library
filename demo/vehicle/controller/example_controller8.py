@@ -63,10 +63,10 @@ def controller(ego:State, others:List[State], lane_map):
              not car_right(ego, others, lane_map):
                 output.vehicle_mode = VehicleMode.SwitchRight
         
-        # If really close just brake
-        if car_front(ego, others, lane_map, 3, -0.5):
-                output.vehicle_mode = VehicleMode.Stop 
-                output.v = 0.1
+        # # If really close just brake
+        # if car_front(ego, others, lane_map, 2, -0.5):
+        #         output.vehicle_mode = VehicleMode.Stop 
+        #         output.v = 0.1
 
     # If switched left enough, return to normal mode
     if ego.vehicle_mode == VehicleMode.SwitchLeft:
@@ -80,15 +80,15 @@ def controller(ego:State, others:List[State], lane_map):
             output.vehicle_mode = VehicleMode.Normal
             output.lane_mode = lane_map.right_lane(ego.lane_mode)
 
-    if ego.vehicle_mode == VehicleMode.Brake:
-        if all((\
-            (lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) -\
-            lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) > 5 or \
-            lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) -\
-            lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) < -0.5) and\
-            other.lane_mode==ego.lane_mode) for other in others):
-            output.vehicle_mode = VehicleMode.Normal 
-            output.v = 1.0
+    # if ego.vehicle_mode == VehicleMode.Brake:
+    #     if all((\
+    #         (lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) -\
+    #         lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) > 5 or \
+    #         lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) -\
+    #         lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) < -0.5) and\
+    #         other.lane_mode==ego.lane_mode) for other in others):
+    #         output.vehicle_mode = VehicleMode.Normal 
+    #         output.v = 1.0
 
     return output
 

@@ -160,7 +160,7 @@ def calcDelta(lower, upper):
     assert len(lower) == len(upper), "Delta calc List Range Error"
     return [(upper[i] - lower[i]) / 2 for i in range(len(upper))]
 
-def randomPoint(lower, upper, seed=0):
+def randomPoint(lower, upper, seed=None):
     """
     Pick a random point between lower and upper bound
     This function supports both int or list
@@ -173,7 +173,8 @@ def randomPoint(lower, upper, seed=0):
         random point (either float or list of float)
 
     """
-    random.seed(seed)
+    if seed is not None:
+        random.seed(seed)
 
     if isinstance(lower, int) or isinstance(lower, float):
         return random.uniform(lower, upper)

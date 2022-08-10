@@ -3,7 +3,7 @@ from verse.map.example_map import SimpleMap3, SimpleMap6
 from verse import Scenario
 from noisy_sensor import NoisyVehicleSensor
 from verse.plotter.plotter2D import *
-from verse.plotter.plotter2D_old import plot_reachtube_tree, plot_map
+# from verse.plotter.plotter2D_old import plot_reachtube_tree, plot_map
 
 from enum import Enum, auto
 import plotly.graph_objects as go
@@ -53,7 +53,7 @@ if __name__ == "__main__":
     scenario.add_agent(car)
     car = NPCAgent('car3')
     scenario.add_agent(car)
-    tmp_map = SimpleMap3()
+    tmp_map = SimpleMap6()
     scenario.set_map(tmp_map)
     scenario.set_init(
         [
@@ -71,12 +71,10 @@ if __name__ == "__main__":
     scenario.init_seg_length = 5
     traces = scenario.verify(40, 0.1)
 
-    fig = plt.figure(2)
-    fig = plot_reachtube_tree(traces.root, 'car1', 1, [2], 'b', fig)
-    fig = plot_reachtube_tree(traces.root, 'car2', 1, [2], 'r', fig)
-    fig = plot_reachtube_tree(traces.root, 'car3', 1, [2], 'r', fig)
-    fig = plot_map(tmp_map, 'g', fig)
-    plt.show()
+    fig = go.Figure()
+    fig = reachtube_tree(traces, tmp_map, fig, 1,
+                                 2, 'lines', 'trace', print_dim_list=[1, 2], combine_rect=10)
+    fig.show()
 
     # fig = go.Figure()
     # fig = reachtube_anime(traces, tmp_map, fig, 1,
