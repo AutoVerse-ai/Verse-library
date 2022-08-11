@@ -14,7 +14,6 @@ class AgentMode(Enum):
 
 
 if __name__ == "__main__":
-    input_code_name = './uncertain_dynamics/controller1.py'
     scenario = Scenario()
 
     car = Agent2('car1')

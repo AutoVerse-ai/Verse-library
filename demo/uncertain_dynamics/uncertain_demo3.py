@@ -1,5 +1,5 @@
 
-from uncertain_agents import Agent1
+from uncertain_agents import Agent3
 from verse import Scenario
 from verse.plotter.plotter2D import *
 from verse.plotter.plotter2D_old import plot_reachtube_tree
@@ -16,7 +16,7 @@ class AgentMode(Enum):
 if __name__ == "__main__":
     scenario = Scenario()
 
-    car = Agent1('car1')
+    car = Agent3('car1')
     scenario.add_agent(car)
     # car = vanderpol_agent('car2', file_name=input_code_name)
     # scenario.add_agent(car)
