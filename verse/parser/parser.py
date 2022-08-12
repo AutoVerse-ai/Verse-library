@@ -3,7 +3,12 @@ from typing import List, Dict, Union, Optional, Any, Tuple
 from dataclasses import dataclass, field, fields
 from enum import Enum, auto
 from verse.parser import astunparser
-from verse.analysis.utils import find
+
+def find(a, f):
+    for v in a:
+        if f(v):
+            return v
+    return None
 
 def merge_conds(c):
     if len(c) == 0:

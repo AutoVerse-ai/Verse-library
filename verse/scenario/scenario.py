@@ -5,21 +5,58 @@ import itertools
 import warnings
 from collections import defaultdict, namedtuple
 import ast
+from dataclasses import dataclass
 
 import numpy as np
 
 from verse.agents.base_agent import BaseAgent
+from verse.analysis.incremental import CachedSegment, CachedTransition
 from verse.automaton import GuardExpressionAst, ResetExpression
 from verse.analysis import Simulator, Verifier, AnalysisTreeNode, AnalysisTree
-from verse.analysis.utils import find, sample_rect
+from verse.analysis.utils import sample_rect
+from verse.parser.parser import ControllerIR, ModePath, find
 from verse.sensor.base_sensor import BaseSensor
 from verse.map.lane_map import LaneMap
 
 EGO, OTHERS = "ego", "others"
 
+def pack_env(agent: BaseAgent, ego_ty_name: str, cont, disc, lane_map):
+    state_ty = None #namedtuple(ego_ty_name, agent.controller.state_defs[ego_ty_name].all_vars())
+    packed: DefaultDict[str, Any] = defaultdict(dict)
+    # packed = {}
+    for e in [cont, disc]:
+        for k, v in e.items():
+            k1, k2 = k.split(".")
+            packed[k1][k2] = v
+    for arg in agent.controller.args:
+        if "map" in arg.name:
+            packed[arg.name] = lane_map
+        elif arg.name != EGO:
+            other = arg.name
+            if other in packed:
+                other_keys, other_vals = tuple(map(list, zip(*packed[other].items())))
+                state_ty = namedtuple(ego_ty_name, other_keys)
+                packed[other] = list(map(lambda v: state_ty(*v), zip(*other_vals)))
+                if not arg.is_list:
+                    packed[other] = packed[other][0]
+            else:
+                if arg.is_list:
+                    packed[other] = []
+                else:
+                    raise ValueError(f"Expected one {ego_ty_name} for {other}, got none")
+
+    packed[EGO] = state_ty(**packed[EGO])
+    return dict(packed.items())
+
+@dataclass
+class ScenarioConfig:
+    incremental: bool = False
+    unsafe_continue: bool = False
+    init_seg_length: int = 1000
+    reachability_method: str = 'DRYVR'
 
 class Scenario:
-    def __init__(self):
+    def __init__(self, config=ScenarioConfig()):
         self.agent_dict: Dict[str, BaseAgent] = {}
         self.simulator = Simulator()
         self.verifier = Verifier()
@@ -31,8 +68,7 @@ class Scenario:
         self.sensor = BaseSensor()
 
         # Parameters
-        self.init_seg_length = 1000
-        self.reachability_method = 'DRYVR'
+        self.config = config
 
     def set_sensor(self, sensor):
         self.sensor = sensor
@@ -177,8 +213,8 @@ class Scenario:
             uncertain_param_list.append(self.uncertain_param_dict[agent_id])
             agent_list.append(self.agent_dict[agent_id])
 
-        res = self.verifier.compute_full_reachtube(init_list, init_mode_list, static_list, uncertain_param_list,
-                                                   agent_list, self, time_horizon, time_step, self.map, self.init_seg_length, reachability_method, params)
+        res = self.verifier.compute_full_reachtube(init_list, init_mode_list, static_list, uncertain_param_list, agent_list, self, time_horizon,
+                                                   time_step, self.map, self.config.init_seg_length, self.config.reachability_method, params)
         return res
 
     def apply_reset(self, agent: BaseAgent, reset_list, all_agent_state) -> Tuple[str, np.ndarray]:
@@ -290,7 +326,7 @@ class Scenario:
     #         unrolled_variable, unrolled_variable_index = updater[variable]
     #         disc_var_dict[unrolled_variable] = disc_var_dict[variable][unrolled_variable_index]
 
-    def get_transition_simulate_new(self, node: AnalysisTreeNode) -> Tuple[Optional[Dict[str, List[str]]], Dict[str, List[Tuple[float]]], float]:
+    def get_transition_simulate_new(self, node: AnalysisTreeNode, cache: Dict[str, CachedSegment]) -> Tuple[Optional[Dict[str, List[str]]], Optional[Dict[str, List[Tuple[str, List[str], List[float]]]]], int]:
         lane_map = self.map
         trace_length = len(list(node.trace.values())[0])
 
@@ -330,45 +366,8 @@ class Scenario:
                 continuous_variable_dict, orig_disc_vars, _ = self.sensor.sense(
                     self, agent, state_dict, self.map)
                 # Unsafety checking
-                ego_ty_name = find(agent.controller.args,
-                                   lambda a: a.name == EGO).typ
-
-                def pack_env(agent: BaseAgent, cont, disc, map):
-                    env = copy.deepcopy(cont)
-                    env.update(disc)
-
-                    state_ty = namedtuple(
-                        ego_ty_name, agent.controller.state_defs[ego_ty_name].all_vars())
-                    packed: DefaultDict[str, Any] = defaultdict(dict)
-                    for k, v in env.items():
-                        k = k.split(".")
-                        packed[k[0]][k[1]] = v
-                    for arg in agent.controller.args:
-                        if arg.name != EGO and 'map' not in arg.name:
-                            other = arg.name
-                            if other in packed:
-                                others_keys = list(packed[other].keys())
-                                packed[other] = [state_ty(
-                                    **{k: packed[other][k][i] for k in others_keys}) for i in range(len(packed[other][others_keys[0]]))]
-                                if not arg.is_list:
-                                    packed[other] = packed[other][0]
-                            else:
-                                if arg.is_list:
-                                    packed[other] = []
-                                else:
-                                    raise ValueError(
-                                        f"Expected one {ego_ty_name} for {other}, got none")
-
-                    packed[EGO] = state_ty(**packed[EGO])
-                    map_var = find(agent.controller.args,
-                                   lambda a: "map" in a.name)
-                    if map_var != None:
-                        packed[map_var.name] = map
-                    packed: Dict[str, Any] = dict(packed.items())
-                    # packed.update(env)
-                    return packed
-                packed_env = pack_env(
-                    agent, continuous_variable_dict, orig_disc_vars, self.map)
+                ego_ty_name = find(agent.controller.args, lambda a: a.name == EGO).typ
+                packed_env = pack_env(agent, ego_ty_name, continuous_variable_dict, orig_disc_vars, self.map)
 
                 # Check safety conditions
                 for assertion in agent.controller.asserts:
@@ -384,8 +383,7 @@ class Scenario:
                 all_resets = defaultdict(list)
                 for guard_comp, discrete_variable_dict, var, reset in agent_guard_dict[agent_id]:
                     new_cont_var_dict = copy.deepcopy(continuous_variable_dict)
-                    env = pack_env(agent, new_cont_var_dict,
-                                   discrete_variable_dict, self.map)
+                    env = pack_env(agent, ego_ty_name, new_cont_var_dict, discrete_variable_dict, self.map)
 
                     # Collect all the hit guards for this agent at this time step
                     if eval(guard_comp, env):
@@ -422,14 +420,12 @@ class Scenario:
                             f"Guard hit for mode {agent_mode} for agent {agent_id} without available next mode")
                         all_dest.append(None)
                     for dest in all_dest:
-                        satisfied_guard.append(
-                            (agent_id, agent_mode, dest, next_init))
+                        satisfied_guard.append((agent_id, dest, next_init))
             if len(asserts) > 0:
-                return asserts, transitions, idx
+                return asserts, None, idx
             if len(satisfied_guard) > 0:
-                for agent_idx, src_mode, dest_mode, next_init in satisfied_guard:
-                    transitions[agent_idx].append(
-                        (agent_idx, src_mode, dest_mode, next_init, idx))
+                for agent_idx, dest_mode, next_init in satisfied_guard:
+                    transitions[agent_idx].append((agent_idx, dest_mode, next_init))
                 break
         return None, transitions, idx
 

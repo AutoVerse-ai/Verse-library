@@ -4,6 +4,8 @@ import itertools
 import functools
 
 import pprint
+
+from verse.analysis.incremental import SimTraceCache
 pp = functools.partial(pprint.pprint, compact=True, width=100)
 
 # from verse.agents.base_agent import BaseAgent
@@ -12,6 +14,7 @@ from verse.analysis.analysis_tree import AnalysisTreeNode, AnalysisTree
 class Simulator:
     def __init__(self):
         self.simulation_tree = None
+        self.cache = SimTraceCache()
 
     def simulate(
         self, 
@@ -56,18 +59,30 @@ class Simulator:
             if remain_time <= 0:
                 continue
             # For trace not already simulated
+            cache_entries = {}
             for agent_id in node.agent:
-                if agent_id not in node.trace:
-                    # Simulate the trace starting from initial condition
+                if agent_id in node.trace:
+                    cache_entries[agent_id] = self.cache.add_segment(agent_id, node)
+                else:
                     mode = node.mode[agent_id]
                     init = node.init[agent_id]
-                    trace = node.agent[agent_id].TC_simulate(
-                        mode, init, remain_time, time_step, lane_map)
-                    trace[:, 0] += node.start_time
-                    node.trace[agent_id] = trace.tolist()
+                    cached = self.cache.check_hit(agent_id, mode, init)
+                    if cached != None:
+                        node.trace[agent_id] = cached.trace
+                        if len(cached.trace) < remain_time / time_step:
+                            node.trace[agent_id] += node.agent[agent_id].TC_simulate(mode, cached.trace[-1], remain_time - time_step * len(cached.trace), lane_map)
+                        cache_entries[agent_id] = cached
+                    else:
+                        # Simulate the trace starting from initial condition
+                        trace = node.agent[agent_id].TC_simulate(
+                            mode, init, remain_time, time_step, lane_map)
+                        trace[:, 0] += node.start_time
+                        trace = trace.tolist()
+                        node.trace[agent_id] = trace
+                        cache_entries[agent_id] = self.cache.add_segment(agent_id, node)
 
             asserts, transitions, transition_idx = transition_graph.get_transition_simulate_new(
-                node)
+                node, cache_entries)
 
             node.assert_hits = asserts
             pp({a: trace[transition_idx] for a, trace in node.trace.items()})
@@ -104,7 +119,7 @@ class Simulator:
                     next_node_init = {}
                     next_node_trace = {}
                     for transition in transition_combination:
-                        transit_agent_idx, src_mode, dest_mode, next_init, idx = transition
+                        transit_agent_idx, dest_mode, next_init = transition
                         if dest_mode is None:
                             continue
                         # next_node = AnalysisTreeNode(trace = {},init={},mode={},agent={}, child = [], start_time = 0)
@@ -113,6 +128,7 @@ class Simulator:
                     for agent_idx in next_node_agent:
                         if agent_idx not in next_node_init:
                             next_node_trace[agent_idx] = truncated_trace[agent_idx]
+                            next_node_init[agent_idx] = truncated_trace[agent_idx][0]
 
                     tmp = AnalysisTreeNode(
                         trace=next_node_trace,

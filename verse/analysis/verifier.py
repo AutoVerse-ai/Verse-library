@@ -7,6 +7,7 @@ import numpy as np
 from verse.analysis.analysis_tree import AnalysisTreeNode, AnalysisTree
 from verse.analysis.dryvr import calc_bloated_tube, SIMTRACENUM
 from verse.analysis.mixmonotone import calculate_bloated_tube_mixmono_cont, calculate_bloated_tube_mixmono_disc
+from verse.analysis.incremental import ReachTraceCache
 
 
 class Verifier:
@@ -14,9 +15,11 @@ class Verifier:
         self.reachtube_tree = None
         self.unsafe_set = None
         self.verification_result = None
+        self.cache = ReachTraceCache()
 
     def calculate_full_bloated_tube(
         self,
+        agent_id,
         mode_label,
         initial_set,
         time_horizon,
@@ -50,16 +53,21 @@ class Verifier:
                     combined_rect[1, :] = np.maximum(
                         combined_rect[1, :], rect[1, :])
             combined_rect = combined_rect.tolist()
-            cur_bloated_tube = calc_bloated_tube(mode_label,
-                                        combined_rect,
-                                        time_horizon,
-                                        time_step, 
-                                        sim_func,
-                                        bloating_method,
-                                        kvalue,
-                                        sim_trace_num,
-                                        lane_map = lane_map
-                                        )
+            cached = self.cache.check_hit(agent_id, mode_label, combined_rect)
+            if cached != None:
+                cur_bloated_tube = cached.tube
+            else:
+                cur_bloated_tube = calc_bloated_tube(mode_label,
+                                            combined_rect,
+                                            time_horizon,
+                                            time_step, 
+                                            sim_func,
+                                            bloating_method,
+                                            kvalue,
+                                            sim_trace_num,
+                                            lane_map = lane_map
+                                            )
+                self.cache.add_tube(agent_id, mode_label, combined_rect, cur_bloated_tube)
             if combine_seg_idx == 0:
                 res_tube = cur_bloated_tube
                 tube_length = cur_bloated_tube.shape[0]
@@ -174,7 +182,7 @@ class Verifier:
                     trace[:, 0] += node.start_time
                     node.trace[agent_id] = trace.tolist()
                     # print("here")
-            
+
             # Get all possible transitions to next mode
             asserts, all_possible_transitions = transition_graph.get_transition_verify_new(node)
             if asserts != None:
@@ -208,9 +216,8 @@ class Verifier:
                 next_node_init = {}
                 next_node_trace = {}
                 for agent_idx in next_node_agent:
-                    if agent_idx == transit_agent_idx:
-                        next_node_init[agent_idx] = next_init
-                    else:
+                    next_node_init[agent_idx] = next_init
+                    if agent_idx != transit_agent_idx:
                         next_node_trace[agent_idx] = truncated_trace[agent_idx]
 
                 tmp = AnalysisTreeNode(

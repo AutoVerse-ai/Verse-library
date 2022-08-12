@@ -382,9 +382,3 @@ def sample_rect(rect: List[List[float]]) -> List[float]:
     # for i in range(len(rect[0])):
     res = np.random.uniform(rect[0], rect[1]).tolist()
     return res
-
-def find(a, f):
-    for v in a:
-        if f(v):
-            return v
-    return None
