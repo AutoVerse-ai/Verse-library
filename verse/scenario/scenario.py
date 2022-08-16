@@ -25,13 +25,13 @@ class Scenario:
         self.init_dict = {}
         self.init_mode_dict = {}
         self.static_dict = {}
-        self.static_dict = {}
+        self.uncertain_param_dict = {}
         self.map = LaneMap()
         self.sensor = BaseSensor()
 
         # Parameters
         self.init_seg_length = 1000
-        self.verify_method = 'PW'
+        self.reachability_method = 'DRYVR'
 
     def set_sensor(self, sensor):
         self.sensor = sensor
@@ -58,11 +58,13 @@ class Scenario:
         # agent.controller.vertices = list(itertools.product(*mode_vals))
         # agent.controller.vertexStrings = [','.join(elem) for elem in agent.controller.vertices]
 
-    def set_init(self, init_list, init_mode_list, static_list=[]):
+    def set_init(self, init_list, init_mode_list, static_list=[], uncertain_param_list = []):
         assert len(init_list) == len(self.agent_dict)
         assert len(init_mode_list) == len(self.agent_dict)
         assert len(static_list) == len(
             self.agent_dict) or len(static_list) == 0
+        assert len(uncertain_param_list) == len(self.agent_dict)\
+            or len(uncertain_param_list) == 0
         print(init_mode_list)
         print(type(init_mode_list))
         for i, agent_id in enumerate(self.agent_dict.keys()):
@@ -72,6 +74,10 @@ class Scenario:
                 self.static_dict[agent_id] = copy.deepcopy(static_list[i])
             else:
                 self.static_dict[agent_id] = []
+            if uncertain_param_list:
+                self.uncertain_param_dict[agent_id] = copy.deepcopy(uncertain_param_list[i])
+            else:
+                self.uncertain_param_dict[agent_id] = []
 
     def simulate_multi(self, time_horizon, num_sim):
         res_list = []
@@ -85,19 +91,22 @@ class Scenario:
         init_mode_list = []
         static_list = []
         agent_list = []
+        uncertain_param_list = []
         for agent_id in self.agent_dict:
             init_list.append(sample_rect(self.init_dict[agent_id]))
             init_mode_list.append(self.init_mode_dict[agent_id])
             static_list.append(self.static_dict[agent_id])
+            uncertain_param_list.append(self.uncertain_param_dict[agent_id])
             agent_list.append(self.agent_dict[agent_id])
         print(init_list)
-        return self.simulator.simulate(init_list, init_mode_list, static_list, agent_list, self, time_horizon, time_step, self.map)
+        return self.simulator.simulate(init_list, init_mode_list, static_list, uncertain_param_list, agent_list, self, time_horizon, time_step, self.map)
 
-    def verify(self, time_horizon, time_step) -> AnalysisTree:
+    def verify(self, time_horizon, time_step, reachability_method = 'DRYVR', params = {}) -> AnalysisTree:
         init_list = []
         init_mode_list = []
         static_list = []
         agent_list = []
+        uncertain_param_list = []
         for agent_id in self.agent_dict:
             init = self.init_dict[agent_id]
             tmp = np.array(init)
@@ -106,8 +115,11 @@ class Scenario:
             init_list.append(init)
             init_mode_list.append(self.init_mode_dict[agent_id])
             static_list.append(self.static_dict[agent_id])
+            uncertain_param_list.append(self.uncertain_param_dict[agent_id])
             agent_list.append(self.agent_dict[agent_id])
-        return self.verifier.compute_full_reachtube(init_list, init_mode_list, static_list, agent_list, self, time_horizon, time_step, self.map, self.init_seg_length, self.verify_method)
+        
+        res = self.verifier.compute_full_reachtube(init_list, init_mode_list, static_list, uncertain_param_list, agent_list, self, time_horizon, time_step, self.map, self.init_seg_length, reachability_method, params)
+        return res
 
     def apply_reset(self, agent: BaseAgent, reset_list, all_agent_state) -> Tuple[str, np.ndarray]:
         lane_map = self.map

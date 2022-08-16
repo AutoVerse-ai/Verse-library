@@ -90,8 +90,7 @@ if __name__ == "__main__":
         ]
     )
     scenario1.init_seg_length = 5
-    scenario.verify_method = 'GLOBAL'
-    traces1 = scenario1.verify(40, 0.05)
+    traces1 = scenario1.verify(40, 0.05, params={"bloating_method":'GLOBAL'})
 
     fig = go.Figure()
     fig = reachtube_tree(traces, tmp_map, fig, 0,

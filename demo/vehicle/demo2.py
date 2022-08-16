@@ -71,7 +71,7 @@ if __name__ == "__main__":
     # # #                       2, 'lines', 'trace', print_dim_list=[1, 2])
     # fig.show()
     fig = go.Figure()
-    traces = scenario.verify(30, 1)
+    traces = scenario.verify(30, 0.01)
     fig = reachtube_anime(traces, tmp_map, fig, 1,
                           2, 'lines', 'trace', print_dim_list=[1, 2])
     fig.show()

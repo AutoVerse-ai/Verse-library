@@ -70,7 +70,7 @@ if __name__ == "__main__":
     scenario.set_sensor(NoisyVehicleSensor((0.5,0.5), (0,0)))
 
     scenario.init_seg_length = 5
-    traces = scenario.verify(40, 0.1)
+    traces = scenario.verify(40, 0.1, params={"bloating_method":'GLOBAL'})
 
     fig = plt.figure(2)
     fig = plot_reachtube_tree(traces.root, 'car1', 1, [2], 'b', fig)
@@ -101,7 +101,7 @@ if __name__ == "__main__":
     )
 
     scenario1.init_seg_length = 5
-    traces = scenario1.verify(40, 0.1)
+    traces = scenario1.verify(40, 0.1, params={"bloating_method":'GLOBAL'})
 
     fig = plot_reachtube_tree(traces.root, 'car1', 1, [2], 'g', fig)
     plt.show()

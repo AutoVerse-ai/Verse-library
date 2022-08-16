@@ -15,6 +15,7 @@ class AnalysisTreeNode:
         init={},
         mode={},
         static = {},
+        uncertain_param = {},
         agent={},
         assert_hits={},
         child=[],
@@ -32,6 +33,7 @@ class AnalysisTreeNode:
         self.assert_hits = assert_hits
         self.type: str = type
         self.static: Dict[str, List[str]] = static
+        self.uncertain_param: Dict[str, List[str]] = uncertain_param
         self.id: int = id
 
     def to_dict(self):

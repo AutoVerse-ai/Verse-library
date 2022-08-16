@@ -69,11 +69,11 @@ if __name__ == "__main__":
     )
 
     scenario.init_seg_length = 5
-    traces = scenario.verify(40, 0.1)
+    traces = scenario.verify(40, 0.1, params={"bloating_method":'GLOBAL'})
 
     fig = go.Figure()
     fig = reachtube_tree(traces, tmp_map, fig, 1,
-                                 2, 'lines', 'trace', print_dim_list=[1, 2], combine_rect=10)
+                                 2, 'lines', 'trace', print_dim_list=[1, 2])
     fig.show()
 
     # fig = go.Figure()

@@ -6,6 +6,7 @@ import numpy as np
 # from verse.agents.base_agent import BaseAgent
 from verse.analysis.analysis_tree import AnalysisTreeNode, AnalysisTree
 from verse.analysis.dryvr import calc_bloated_tube, SIMTRACENUM
+from verse.analysis.mixmonotone import calculate_bloated_tube_mixmono_cont, calculate_bloated_tube_mixmono_disc
 
 
 class Verifier:
@@ -14,14 +15,14 @@ class Verifier:
         self.unsafe_set = None
         self.verification_result = None
 
-    def caculate_full_bloated_tube(
+    def calculate_full_bloated_tube(
         self,
         mode_label,
         initial_set,
         time_horizon,
         time_step,
         sim_func,
-        bloating_method,
+        params,
         kvalue,
         sim_trace_num,
         combine_seg_length = 1000,
@@ -29,6 +30,11 @@ class Verifier:
         guard_str="",
         lane_map = None
     ):
+        # Handle Parameters
+        bloating_method = 'PW'
+        if 'bloating_method' in params:
+            bloating_method = params['bloating_method']
+        
         res_tube = None
         tube_length = 0
         for combine_seg_idx in range(0, len(initial_set), combine_seg_length):
@@ -77,19 +83,22 @@ class Verifier:
         init_list: List[float],
         init_mode_list: List[str],
         static_list: List[str],
+        uncertain_param_list: List[float],
         agent_list,
         transition_graph,
         time_horizon,
         time_step,
         lane_map,
         init_seg_length,
-        verify_method
+        reachability_method,
+        params = {}
     ):
         root = AnalysisTreeNode(
             trace={},
             init={},
             mode={},
             static = {},
+            uncertain_param={},
             agent={},
             assert_hits={},
             child=[],
@@ -105,6 +114,7 @@ class Verifier:
             root.mode[agent.id] = init_mode
             init_static = [elem.name for elem in static_list[i]]
             root.static[agent.id] = init_static
+            root.uncertain_param[agent.id] = uncertain_param_list[i]
             root.agent[agent.id] = agent
             root.type = 'reachtube'
         verification_queue = []
@@ -122,21 +132,44 @@ class Verifier:
                     # Compute the trace starting from initial condition
                     mode = node.mode[agent_id]
                     init = node.init[agent_id]
+                    uncertain_param = node.uncertain_param[agent_id]
                     # trace = node.agent[agent_id].TC_simulate(mode, init, remain_time,lane_map)
                     # trace[:,0] += node.start_time
                     # node.trace[agent_id] = trace.tolist()
-
-                    cur_bloated_tube = self.caculate_full_bloated_tube(mode,
-                                        init,
-                                        remain_time,
-                                        time_step, 
-                                        node.agent[agent_id].TC_simulate,
-                                        verify_method,
-                                        100,
-                                        SIMTRACENUM,
-                                        combine_seg_length=init_seg_length,
-                                        lane_map = lane_map
-                                        )
+                    if reachability_method == "DRYVR":
+                        cur_bloated_tube = self.calculate_full_bloated_tube(mode,
+                                            init,
+                                            remain_time,
+                                            time_step, 
+                                            node.agent[agent_id].TC_simulate,
+                                            params,
+                                            100,
+                                            SIMTRACENUM,
+                                            combine_seg_length=init_seg_length,
+                                            lane_map = lane_map
+                                            )
+                    elif reachability_method == "MIXMONO_CONT":
+                        cur_bloated_tube = calculate_bloated_tube_mixmono_cont(
+                            mode, 
+                            init, 
+                            uncertain_param, 
+                            remain_time,
+                            time_step, 
+                            node.agent[agent_id],
+                            lane_map
+                        )
+                    elif reachability_method == "MIXMONO_DISC":
+                        cur_bloated_tube = calculate_bloated_tube_mixmono_disc(
+                            mode, 
+                            init, 
+                            uncertain_param,
+                            remain_time,
+                            time_step,
+                            node.agent[agent_id],
+                            lane_map
+                        ) 
+                    else:
+                        raise ValueError(f"Reachability computation method {reachability_method} not available.")
                     trace = np.array(cur_bloated_tube)
                     trace[:, 0] += node.start_time
                     node.trace[agent_id] = trace.tolist()
@@ -168,6 +201,7 @@ class Verifier:
 
                 next_node_mode = copy.deepcopy(node.mode)
                 next_node_static = node.static
+                next_node_uncertain_param = node.uncertain_param
                 next_node_mode[transit_agent_idx] = dest_mode
                 next_node_agent = node.agent
                 next_node_start_time = list(truncated_trace.values())[0][0][0]
@@ -184,6 +218,7 @@ class Verifier:
                     init=next_node_init,
                     mode=next_node_mode,
                     static = next_node_static,
+                    uncertain_param = next_node_uncertain_param,
                     agent=next_node_agent,
                     assert_hits = {},
                     child=[],
@@ -202,3 +237,5 @@ class Verifier:
 
         self.reachtube_tree = AnalysisTree(root)
         return self.reachtube_tree
+
+
