@@ -7,6 +7,12 @@ class CraftMode(Enum):
     Follow_Lane = auto()
 
 
+class LaneMode(Enum):
+    Lane0 = auto()
+    Lane1 = auto()
+    Lane2 = auto()
+
+
 class State:
     x = 0.0
     y = 0.0
@@ -15,10 +21,11 @@ class State:
     vy = 0.0
     vz = 0.0
     craft_mode: CraftMode = CraftMode.Follow_Waypoint
+    lane_mode: LaneMode = LaneMode.Lane0
     waypoint_index: int = 0
     done_flag = 0.0  # indicate if the quad rotor reach the waypoint
 
-    def __init__(self, x, y, z, vx, vy, vz, waypoint_index, done_flag, craft_mode):
+    def __init__(self, x, y, z, vx, vy, vz, waypoint_index, done_flag, craft_mode, lane_mode):
         pass
 
 
@@ -37,4 +44,7 @@ def controller(ego: State):
         if ego.waypoint_index == 4:
             output.waypoint_index = 5
 
+    if ego.craft_mode == CraftMode.Follow_Lane and ego.done_flag > 0:
+        output.done_flag = 0
+        output.waypoint_index = output.waypoint_index + 1
     return output

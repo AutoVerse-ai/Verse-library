@@ -1,20 +1,16 @@
-from dryvr_plus_plus.example.example_agent.origin_agent import thermo_agent
-from dryvr_plus_plus.scene_verifier.scenario.scenario import Scenario
-from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap2, SimpleMap3, SimpleMap5, SimpleMap6
-from dryvr_plus_plus.plotter.plotter2D import *
-from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor2
+from origin_agent import thermo_agent
+from verse import Scenario
+from verse.plotter.plotter2D import *
 
 import plotly.graph_objects as go
 from enum import Enum, auto
-
 
 class ThermoMode(Enum):
     ON = auto()
     OFF = auto()
 
-
 if __name__ == "__main__":
-    input_code_name = './demo/dryvr_demo/thermo_controller.py'
+    input_code_name = './thermo_controller.py'
     scenario = Scenario()
 
     car = thermo_agent('test', file_name=input_code_name)

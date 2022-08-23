@@ -1,14 +1,5 @@
-from dryvr_plus_plus.example.example_agent.ball_agent import BallAgent
-from dryvr_plus_plus.scene_verifier.sensor.base_sensor import BaseSensor
-from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor4
-import plotly.graph_objects as go
-from dryvr_plus_plus.plotter.plotter2D import *
-from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap3
-from dryvr_plus_plus.scene_verifier.scenario.scenario import Scenario
 from enum import Enum, auto
 import copy
-from typing import List
-
 
 class BallTypeMode(Enum):
     TYPE1 = auto()
@@ -30,8 +21,7 @@ class State:
     def __init__(self, x, y, vx, vy, ball_mode: BallMode, type: BallTypeMode):
         pass
 
-
-def controller(ego: State, others: List[State]):
+def controller(ego:State, other: State):
     output = copy.deepcopy(ego)
     if ego.x < 0:
         output.vx = -ego.vx
@@ -46,18 +36,15 @@ def controller(ego: State, others: List[State]):
         output.vy = -ego.vy
         output.y = 20
 
-    def abs_diff(a, b):
-        if a < b:
-            r = b - a
-        else:
-            r = a - b
-        return r
-
-    def dist(a, b):
-        return abs_diff(a.x, b.x) + abs_diff(a.y, b.y)
-    assert all(dist(ego, o) > 5 for o in others)
+    def close(a, b):
+        return a.x-b.x<5 and a.x-b.x>-5 and a.y-b.y<5 and a.y-b.y>-5
+    assert not (close(ego, other) and ego.x < other.x), "collision"
     return output
 
+from verse.agents.example_agent.ball_agent import BallAgent
+from verse import Scenario
+from verse.plotter.plotter2D import *
+import plotly.graph_objects as go
 
 if __name__ == "__main__":
     ball_controller = './demo/ball_bounces_dev.py'
@@ -81,6 +68,8 @@ if __name__ == "__main__":
         ]
     )
     traces = bouncingBall.simulate(10, 0.01)
+    traces.dump('./output.json')
+    traces = AnalysisTree.load('./output.json')
     fig = go.Figure()
     fig = simulation_tree(traces, fig=fig)
     fig.show()

@@ -34,4 +34,9 @@ def controller(ego: State):
         if ego.cycle_time >= 120:
             output.craft_mode = CraftMode.Passive
             output.cycle_time = 0.0
+    
+    assert (ego.craft_mode!=CraftMode.ProxB or\
+         (ego.xp>=-105 and ego.yp>=0.57735*ego.xp and -ego.yp>=0.57735*ego.xp)), "Line-of-sight"
+    assert (ego.craft_mode!=CraftMode.Passive or\
+         (ego.xp<=-0.2 or ego.xp>=0.2 or ego.yp<=-0.2 or ego.yp>=0.2)), "Collision avoidance"
     return output

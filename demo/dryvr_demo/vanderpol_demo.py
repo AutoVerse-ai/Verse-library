@@ -1,8 +1,6 @@
-from dryvr_plus_plus.example.example_agent.origin_agent import vanderpol_agent
-from dryvr_plus_plus.scene_verifier.scenario.scenario import Scenario
-from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap2, SimpleMap3, SimpleMap5, SimpleMap6
-from dryvr_plus_plus.plotter.plotter2D import *
-from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor2
+from origin_agent import vanderpol_agent
+from verse import Scenario
+from verse.plotter.plotter2D import *
 
 import plotly.graph_objects as go
 from enum import Enum, auto
@@ -13,7 +11,7 @@ class AgentMode(Enum):
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/dryvr_demo/vanderpol_controller.py'
+    input_code_name = './vanderpol_controller.py'
     scenario = Scenario()
 
     car = vanderpol_agent('car1', file_name=input_code_name)

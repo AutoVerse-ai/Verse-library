@@ -16,6 +16,12 @@ class CraftMode(Enum):
     Follow_Lane = auto()
 
 
+class LaneMode(Enum):
+    Lane0 = auto()
+    Lane1 = auto()
+    Lane2 = auto()
+
+
 if __name__ == "__main__":
     input_code_name = './demo/quadrotor/quadrotor_controller.py'
     scenario = Scenario()
@@ -33,8 +39,8 @@ if __name__ == "__main__":
     quadrotor = QuadrotorAgent(
         'test', file_name=input_code_name)
     scenario.add_agent(quadrotor)
-    tmp_map = SimpleMap1(waypoints=waypoints,
-                         guard_boxes=guard_boxes, time_limits=time_limits)
+    tmp_map = SimpleMap1(waypoints={quadrotor.id: waypoints},
+                         guard_boxes={quadrotor.id: guard_boxes}, time_limits={quadrotor.id: time_limits})
     scenario.set_map(tmp_map)
     scenario.set_sensor(QuadrotorSensor())
     # modify mode list input
@@ -43,7 +49,7 @@ if __name__ == "__main__":
             [[2.75, -0.25, -0.1, 0, 0, 0, 0, 0], [3, 0, 0, 0.1, 0.1, 0.1, 0, 0]],
         ],
         [
-            tuple([CraftMode.Follow_Waypoint]),
+            tuple([CraftMode.Follow_Waypoint, LaneMode.Lane0]),
         ]
     )
     traces = scenario.simulate(200, 0.05)
