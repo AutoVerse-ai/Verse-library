@@ -1,15 +1,12 @@
 # SM: Noting some things about the example
 
-from dryvr_plus_plus.example.example_agent.car_agent import CarAgent, NPCAgent
-from dryvr_plus_plus.example.example_agent.car_agent import CarAgent
-from dryvr_plus_plus.scene_verifier.scenario.scenario import Scenario
-from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap2, SimpleMap3, SimpleMap4, SimpleMap5, SimpleMap6
-from dryvr_plus_plus.plotter.plotter2D import *
-from dryvr_plus_plus.scene_verifier.sensor.base_sensor import BaseSensor
+from verse.agents.example_agent import CarAgent, NPCAgent
+from verse.map.example_map import SimpleMap4
+from verse import Scenario
+from verse.plotter.plotter2D import *
 
 from enum import Enum, auto
 import plotly.graph_objects as go
-from gen_json import print_trace, trans_dict
 
 
 class LaneObjectMode(Enum):
@@ -102,15 +99,14 @@ if __name__ == "__main__":
         ],
 
     )
-    traces = scenario.simulate(40, 2)
-    print_trace(trans_dict(traces, 0, 0, None))
-    # traces = scenario.verify(15, 0.05)
+    traces = scenario.simulate(60, 0.05)
+    fig = go.Figure()
+    fig = simulation_tree(traces, tmp_map, fig, 1,
+                          2, 'lines', 'trace', print_dim_list=[1, 2])
+    fig.show()
 
-    # fig = go.Figure()
-    # fig = simulation_anime(traces, tmp_map, fig, 1,
-    #                        2, 'lines', 'trace', print_dim_list=[1, 2])
-    # fig.show()
-    # fig = go.Figure()
-    # fig = simulation_tree(traces, tmp_map, fig, 1,
-    #                       2, 'lines', 'trace', print_dim_list=[1, 2])
-    # fig.show()
+    traces = scenario.verify(60, 0.05)
+    fig = go.Figure()
+    fig = reachtube_tree(traces, tmp_map, fig, 1,
+                         2, 'lines', 'trace', print_dim_list=[1, 2])
+    fig.show()

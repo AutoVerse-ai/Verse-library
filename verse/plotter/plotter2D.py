@@ -4,11 +4,10 @@ This file consist main plotter code for DryVR reachtube output
 
 from __future__ import annotations
 import numpy as np
-from math import pi
 import plotly.graph_objects as go
-from typing import List, Tuple
-import copy
-# from dryvr_plus_plus.scene_verifier.analysis.analysis_tree_node import AnalysisTreeNode
+from typing import List, Tuple, Union
+from plotly.graph_objs.scatter import Marker
+from verse.analysis.analysis_tree import AnalysisTree, AnalysisTreeNode
 
 colors = [['#CC0000', '#FF0000', '#FF3333', '#FF6666', '#FF9999', '#FFCCCC'],
           ['#CCCC00', '#FFFF00', '#FFFF33', '#FFFF66', '#FFFF99', '#FFE5CC'],
@@ -55,8 +54,10 @@ These 5 functions share the same API.
 """
 
 
-def reachtube_anime(root, map=None, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, map_type='lines', scale_type='trace', print_dim_list=None, label_mode='None', sample_rate=1, speed_rate=1):
+def reachtube_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, map_type='lines', scale_type='trace', print_dim_list=None, label_mode='None', sample_rate=1, speed_rate=1):
     """It gives the animation of the verfication."""
+    if isinstance(root, AnalysisTree):
+        root = root.root
     root = sample_trace(root, sample_rate)
     agent_list = list(root.agent.keys())
     timed_point_dict = {}
@@ -184,8 +185,10 @@ def reachtube_anime(root, map=None, fig=go.Figure(), x_dim: int = 1, y_dim: int 
     return fig
 
 
-def reachtube_tree(root, map=None, fig=go.Figure(), x_dim: int = 1, y_dim=2, map_type='lines', scale_type='trace', print_dim_list=None, label_mode='None', sample_rate=1):
+def reachtube_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim=2, map_type='lines', scale_type='trace', print_dim_list=None, label_mode='None', sample_rate=1):
     """It statically shows all the traces of the verfication."""
+    if isinstance(root, AnalysisTree):
+        root = root.root
     root = sample_trace(root, sample_rate)
     fig = draw_map(map=map, fig=fig, fill_type=map_type)
     agent_list = list(root.agent.keys())
@@ -249,8 +252,10 @@ def reachtube_tree(root, map=None, fig=go.Figure(), x_dim: int = 1, y_dim=2, map
     return fig
 
 
-def simulation_tree(root, map=None, fig=None, x_dim: int = 1, y_dim=2, map_type='lines', scale_type='trace', print_dim_list=None, label_mode='None', sample_rate=1):
+def simulation_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=None, x_dim: int = 1, y_dim=2, map_type='lines', scale_type='trace', print_dim_list=None, label_mode='None', sample_rate=1):
     """It statically shows all the traces of the simulation."""
+    if isinstance(root, AnalysisTree):
+        root = root.root
     root = sample_trace(root, sample_rate)
     fig = draw_map(map=map, fig=fig, fill_type=map_type)
     agent_list = list(root.agent.keys())
@@ -317,8 +322,10 @@ def simulation_tree(root, map=None, fig=None, x_dim: int = 1, y_dim=2, map_type=
     return fig
 
 
-def simulation_anime(root, map=None, fig=None, x_dim: int = 1, y_dim=2, map_type='lines', scale_type='trace', print_dim_list=None, label_mode='None', sample_rate=1, speed_rate=1):
+def simulation_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=None, x_dim: int = 1, y_dim=2, map_type='lines', scale_type='trace', print_dim_list=None, label_mode='None', sample_rate=1, speed_rate=1):
     """It gives the animation of the simulation without trail but is faster."""
+    if isinstance(root, AnalysisTree):
+        root = root.root
     root = sample_trace(root, sample_rate)
     timed_point_dict = {}
     queue = [root]
@@ -468,8 +475,10 @@ def simulation_anime(root, map=None, fig=None, x_dim: int = 1, y_dim=2, map_type
     return fig
 
 
-def simulation_anime_trail(root, map=None, fig=go.Figure(), x_dim: int = 1, y_dim=2, map_type='lines', scale_type='trace', print_dim_list=None, label_mode='None', sample_rate=1, speed_rate=1):
+def simulation_anime_trail(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim=2, map_type='lines', scale_type='trace', print_dim_list=None, label_mode='None', sample_rate=1, speed_rate=1):
     """It gives the animation of the simulation with trail."""
+    if isinstance(root, AnalysisTree):
+        root = root.root
     root = sample_trace(root, sample_rate)
     timed_point_dict = {}
     queue = [root]
@@ -652,8 +661,10 @@ def simulation_anime_trail(root, map=None, fig=go.Figure(), x_dim: int = 1, y_di
 """Functions below are low-level functions and usually are not called outside this file."""
 
 
-def reachtube_tree_single(root, agent_id, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, color=None, print_dim_list=None):
+def reachtube_tree_single(root: Union[AnalysisTree, AnalysisTreeNode],  agent_id, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, color=None, print_dim_list=None):
     """It statically shows the verfication traces of one given agent."""
+    if isinstance(root, AnalysisTree):
+        root = root.root
     global color_cnt
     if color == None:
         color = list(scheme_dict.keys())[color_cnt]
@@ -693,8 +704,10 @@ def reachtube_tree_single(root, agent_id, fig=go.Figure(), x_dim: int = 1, y_dim
     return fig
 
 
-def simulation_tree_single(root, agent_id, fig: go.Figure() = go.Figure(), x_dim: int = 1, y_dim: int = 2, color=None, print_dim_list=None):
+def simulation_tree_single(root: Union[AnalysisTree, AnalysisTreeNode], agent_id, fig: go.Figure() = go.Figure(), x_dim: int = 1, y_dim: int = 2, color=None, print_dim_list=None):
     """It statically shows the simulation traces of one given agent."""
+    if isinstance(root, AnalysisTree):
+        root = root.root
     global color_cnt
     queue = [root]
     color_id = 0

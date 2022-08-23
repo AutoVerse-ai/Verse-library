@@ -1,9 +1,6 @@
-from regex import B
-from dryvr_plus_plus.example.example_agent.quadrotor_agent import QuadrotorAgent
-from dryvr_plus_plus.scene_verifier.scenario.scenario import Scenario
-from dryvr_plus_plus.example.example_map.simple_map_3d import SimpleMap1
-from dryvr_plus_plus.plotter.plotter2D import *
-from dryvr_plus_plus.example.example_sensor.quadrotor_sensor import QuadrotorSensor
+from quadrotor_agent import QuadrotorAgent
+from verse import Scenario
+from verse.plotter.plotter2D import *
 import os
 import json
 import plotly.graph_objects as go

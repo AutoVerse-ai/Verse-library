@@ -1,11 +1,20 @@
-from dryvr_plus_plus.example.example_agent.car_agent import CarAgent, NPCAgent
-from dryvr_plus_plus.scene_verifier.scenario.scenario import Scenario
-from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap2, SimpleMap3, SimpleMap5, SimpleMap6
-from dryvr_plus_plus.plotter.plotter2D import *
-from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor1
+from verse.agents.example_agent import CarAgent, NPCAgent
+from verse.map.example_map import SimpleMap3, SimpleMap6
+from verse import Scenario
+from noisy_sensor import NoisyVehicleSensor
+from verse.plotter.plotter2D import *
+from verse.plotter.plotter2D_old import plot_reachtube_tree, plot_map
 
-import plotly.graph_objects as go
 from enum import Enum, auto
+import plotly.graph_objects as go
+import matplotlib.pyplot as plt 
+
+class LaneObjectMode(Enum):
+    Vehicle = auto()
+    Ped = auto()        # Pedestrians
+    Sign = auto()       # Signs, stop signs, merge, yield etc.
+    Signal = auto()     # Traffic lights
+    Obstacle = auto()   # Static (to road/lane) obstacles
 
 
 class VehicleMode(Enum):
@@ -22,37 +31,77 @@ class LaneMode(Enum):
 
 
 class State:
-    x = 0.0
-    y = 0.0
-    theta = 0.0
-    v = 0.0
-    vehicle_mode: VehicleMode = VehicleMode.Normal
-    lane_mode: LaneMode = LaneMode.Lane0
+    x: float
+    y: float
+    theta: float
+    v: float
+    vehicle_mode: VehicleMode
+    lane_mode: LaneMode
+    type_mode: LaneObjectMode
 
-    def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: LaneMode):
-        self.data = []
+    def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: LaneMode, type_mode: LaneObjectMode):
+        pass
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/example_controller11.py'
-    scenario = Scenario()
+    input_code_name = './demo/vehicle/controller/example_controller5.py'
 
+    scenario = Scenario()
     car = CarAgent('car1', file_name=input_code_name)
+    scenario.add_agent(car)
+    car = NPCAgent('car2')
+    scenario.add_agent(car)
+    car = NPCAgent('car3')
     scenario.add_agent(car)
     tmp_map = SimpleMap3()
     scenario.set_map(tmp_map)
-    # scenario.set_sensor(FakeSensor1())
     scenario.set_init(
         [
-            [[10.0, 0, 0, 1], [10.0, 0, 0, 1]],
+            [[5, -0.5, 0, 1.0], [5.5, 0.5, 0, 1.0]],
+            [[20, -0.2, 0, 0.5], [20, 0.2, 0, 0.5]],
+            [[4-2.5, 2.8, 0, 1.0], [4.5-2.5, 3.2, 0, 1.0]],
         ],
         [
             (VehicleMode.Normal, LaneMode.Lane1),
+            (VehicleMode.Normal, LaneMode.Lane1),
+            (VehicleMode.Normal, LaneMode.Lane0),
+        ]
+    )
+    scenario.set_sensor(NoisyVehicleSensor((0.5,0.5), (0,0)))
+
+    scenario.init_seg_length = 5
+    traces = scenario.verify(40, 0.1, params={"bloating_method":'GLOBAL'})
+
+    fig = plt.figure(2)
+    fig = plot_reachtube_tree(traces.root, 'car1', 1, [2], 'b', fig)
+    fig = plot_reachtube_tree(traces.root, 'car2', 1, [2], 'r', fig)
+    fig = plot_reachtube_tree(traces.root, 'car3', 1, [2], 'r', fig)
+    fig = plot_map(tmp_map, 'g', fig)
+
+    scenario1 = Scenario()
+    car = CarAgent('car1', file_name=input_code_name)
+    scenario1.add_agent(car)
+    car = NPCAgent('car2')
+    scenario1.add_agent(car)
+    car = NPCAgent('car3')
+    scenario1.add_agent(car)
+    tmp_map = SimpleMap3()
+    scenario1.set_map(tmp_map)
+    scenario1.set_init(
+        [
+            [[5, -0.5, 0, 1.0], [5.5, 0.5, 0, 1.0]],
+            [[20, -0.2, 0, 0.5], [20, 0.2, 0, 0.5]],
+            [[4-2.5, 2.8, 0, 1.0], [4.5-2.5, 3.2, 0, 1.0]],
+        ],
+        [
+            (VehicleMode.Normal, LaneMode.Lane1,),
+            (VehicleMode.Normal, LaneMode.Lane1,),
+            (VehicleMode.Normal, LaneMode.Lane0,),
         ]
     )
 
-    traces = scenario.simulate(20, 0.05)
-    fig = go.Figure()
-    fig = simulation_anime(traces, tmp_map, fig, 1, 2,
-                           'lines', 'trace', print_dim_list=[1, 2, 4])
-    fig.show()
+    scenario1.init_seg_length = 5
+    traces = scenario1.verify(40, 0.1, params={"bloating_method":'GLOBAL'})
+
+    fig = plot_reachtube_tree(traces.root, 'car1', 1, [2], 'g', fig)
+    plt.show()

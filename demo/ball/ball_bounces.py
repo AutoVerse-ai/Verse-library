@@ -1,14 +1,9 @@
-from dryvr_plus_plus.scene_verifier.sensor.base_sensor import BaseSensor
-from dryvr_plus_plus.example.example_sensor.fake_sensor import FakeSensor4
-import plotly.graph_objects as go
-from dryvr_plus_plus.plotter.plotter2D import *
-from dryvr_plus_plus.example.example_map.simple_map2 import SimpleMap3
-from dryvr_plus_plus.scene_verifier.scenario.scenario import Scenario
-from dryvr_plus_plus.example.example_agent.ball_agent import BallAgent
+from verse.plotter.plotter2D import *
+from verse.agents.example_agent.ball_agent import BallAgent
+from verse.map.example_map.simple_map2 import SimpleMap3
+from verse import Scenario
 from enum import Enum, auto
 import copy
-from typing import List
-# from dryvr_plus_plus.scene_verifier.map.lane import Lane
 
 
 class BallMode(Enum):
@@ -96,7 +91,7 @@ if __name__ == "__main__":
     # this may be the cause for the VisibleDeprecationWarning
     # TODO: Longer term: We should initialize by writing expressions like "-2 \leq myball1.x \leq 5"
     # "-2 \leq myball1.x + myball2.x \leq 5"
-    traces = bouncingBall.simulate(40,0.01)
+    traces = bouncingBall.simulate(40, 0.01)
     # TODO: There should be a print({traces}) function
     fig = go.Figure()
     fig = simulation_anime_trail(

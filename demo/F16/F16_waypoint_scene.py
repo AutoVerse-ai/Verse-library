@@ -9,13 +9,14 @@ from typing import Tuple, List
 import numpy as np
 from scipy.integrate import ode
 from enum import Enum, auto
+import copy
 
 from demo.F16.aerobench.run_f16_sim import F16Agent
-from dryvr_plus_plus.scene_verifier.map.lane_map import LaneMap
-from dryvr_plus_plus.scene_verifier.code_parser.pythonparser import EmptyAst
-from dryvr_plus_plus.scene_verifier.scenario.scenario import Scenario
+import os
+from json import dump
+from verse import Scenario
 
-
+import copy
 import math
 from numpy import deg2rad
 import matplotlib.pyplot as plt
@@ -59,17 +60,20 @@ class State:
     # Build Initial Condition Vectors
     # state = [vt, alpha, beta, phi, theta, psi, P, Q, R, pn, pe, h, pow]
     init = [vt, alpha, beta, phi, theta, psi, 0, 0, 0, 0, 0, alt, power]
-    def __init__(self, vt, alpha, beta, phi, theta, psi, p, q, r, pn, pe, alt, power, mode:F16Mode):
+
+    def __init__(self, vt, alpha, beta, phi, theta, psi, p, q, r, pn, pe, alt, power, mode: F16Mode):
         pass
 
-def controller(ego:State, others:State):
+
+def controller(ego: State, others: State):
     '''Computes the possible mode transitions
         For now this is an empty controller function.
         Coming soon. Waypoint transitions. Platooning.'''
     output = copy.deepcopy(ego)
     return output
 
-def main():
+
+if __name__ == '__main__':
     ''' The main function defines and simulates a scene.
         Defining and using a  scenario involves the following 5 easy steps:
         1. creating a basic scenario object with Scenario()
@@ -79,17 +83,17 @@ def main():
             Note that agents are only initialized *in* a scenario, not individually outside a scenario
         5. genetating the simulation traces or computing the reachable states
     '''
-    F16waypointScene = Scenario()
-    F16Controller = './F16_waypoint_scene.py'
+    f16_waypoint_scene = Scenario()
+    f16_controller = 'F16_waypoint_scene.py'
 
     # Resume here. This next line is the problem
-    # Fighter1 = F16Agent('Fighter1', file_name=F16Controller)
+    # Fighter1 = F16Agent('Fighter1', file_name=f16_controller)
 
     ### Initial Conditions ###
-    power = 9 # engine power level (0-10)
+    power = 9  # engine power level (0-10)
 
     # Default alpha & beta
-    alpha = deg2rad(2.1215) # Trim Angle of Attack (rad)
+    alpha = deg2rad(2.1215)  # Trim Angle of Attack (rad)
     beta = 0                # Side slip angle (rad)
 
     # Initial Attitude
@@ -102,7 +106,7 @@ def main():
     # Build Initial Condition Vectors
     # state = [vt, alpha, beta, phi, theta, psi, p, q, r, pn, pe, h, pow]
     init = [vt, alpha, beta, phi, theta, psi, 0, 0, 0, 0, 0, alt, power]
-    tmax = 70 # simulation time
+    tmax = 70  # simulation time
 
     # make waypoint list
     e_pt = 1000
@@ -119,9 +123,21 @@ def main():
     step = 1/30
     extended_states = True
     '''Main call to simulation'''
-    res = run_f16_sim(init, tmax, ap, step=step, extended_states=extended_states, integrator_str='rk45')
+    res = run_f16_sim(init, tmax, ap, step=step,
+                      extended_states=extended_states, integrator_str='rk45')
+    res_to_json = copy.deepcopy(res)
+    res_to_json['states'] = res_to_json['states'].tolist()
+    for i in range(len(res_to_json['xd_list'])):
+        res_to_json['xd_list'][i] = res_to_json['xd_list'][i].tolist()
+    for i in range(len(res_to_json['u_list'])):
+        res_to_json['u_list'][i] = res_to_json['u_list'][i].tolist()
+    path = os.path.abspath(__file__)
+    path = path.replace('F16_waypoint_scene.py', 'res.json')
+    with open(path, 'w', encoding='utf-8') as f:
+        dump(res_to_json, f, indent=4, separators=(', ', ': '))
 
-    print(f"Simulation Completed in {round(res['runtime'], 2)} seconds (extended_states={extended_states})")
+    print(
+        f"Simulation Completed in {round(res['runtime'], 2)} seconds (extended_states={extended_states})")
 
     plot.plot_single(res, 'alt', title='Altitude (ft)')
     filename = 'alt.png'
@@ -149,6 +165,3 @@ def main():
     filename = 'outer_loop.png'
     plt.savefig(filename)
     print(f"Made {filename}")
-
-if __name__ == '__main__':
-    main()

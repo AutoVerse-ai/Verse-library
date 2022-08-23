@@ -1,11 +1,14 @@
 from verse.agents.example_agent import CarAgent
-from verse.map.example_map import SimpleMap3
+from verse import Scenario
 from verse.sensor.example_sensor import FakeSensor2
+from verse.agents.example_agent import CarAgent, NPCAgent
+from verse.map.example_map import SimpleMap3_v2
 from verse import Scenario
 from verse.plotter.plotter2D import *
+
+
 from enum import Enum, auto
-from gen_json import write_json, read_json
-import os
+import plotly.graph_objects as go
 
 
 class VehicleMode(Enum):
@@ -13,6 +16,7 @@ class VehicleMode(Enum):
     SwitchLeft = auto()
     SwitchRight = auto()
     Brake = auto()
+    Accelerate = auto()
 
 
 class LaneMode(Enum):
@@ -34,14 +38,14 @@ class State:
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/example_controller2.py'
+    input_code_name = './demo/example_controller10.py'
     scenario = Scenario()
 
     car = CarAgent('car1', file_name=input_code_name)
     scenario.add_agent(car)
     car = CarAgent('car2', file_name=input_code_name)
     scenario.add_agent(car)
-    tmp_map = SimpleMap3()
+    tmp_map = SimpleMap3_v2()
     scenario.set_map(tmp_map)
     scenario.set_sensor(FakeSensor2())
     scenario.set_init(
@@ -54,34 +58,28 @@ if __name__ == "__main__":
             (VehicleMode.Normal, LaneMode.Lane1),
         ]
     )
-
-    # traces = scenario.simulate(30, 1)
-    # path = os.path.abspath('.')
-    # if os.path.exists(path+'/demo'):
-    #     path += '/demo'
-    # path += '/output'
-    # if not os.path.exists(path):
-    #     os.makedirs(path)
-    # file = path+"/output.json"
-    # write_json(traces, file)
-
-    # root = read_json(file)
+    # traces = scenario.verify(30)
+    # # fig = go.Figure()
+    # # fig = plotly_reachtube_tree_v2(traces, 'car1', 1, [2], 'blue', fig)
+    # # fig = plotly_reachtube_tree_v2(traces, 'car2', 1, [2], 'red', fig)
+    # # fig.show()
     # fig = go.Figure()
-    # fig = simulation_tree(root, tmp_map, fig, 1, 2, 'lines')
+    # fig = generate_reachtube_anime(traces, tmp_map, fig)
+    # # # fig = plotly_reachtube_tree_v2(traces, 'car2', 1, [2], 'red', fig)
     # fig.show()
-    # # traces = scenario.verify(70, 0.05)
-    # fig = go.Figure()
-    # fig = simulation_tree(traces, tmp_map, fig, 1, 2,
-    #                       'lines', 'trace', print_dim_list=[1, 2])
-    # # # fig = reachtube_anime(traces, tmp_map, fig, 1,
-    # # #                       2, 'lines', 'trace', print_dim_list=[1, 2])
-    # fig.show()
+    # fig = plt.figure(2)
+    # fig = plot_map(tmp_map, 'g', fig)
+    # # fig = plot_simulation_tree(traces, 'car1', 1, [2], 'b', fig)
+    # # fig = plot_simulation_tree(traces, 'car2', 1, [2], 'r', fig)
+    # fig = plot_reachtube_tree(traces, 'car1', 1, [2], 'b', fig)
+    # fig = plot_reachtube_tree(traces, 'car2', 1, [2], 'r', fig)
+    # plt.show()
+    # # fig1 = plt.figure(2)
+    # fig = generate_simulation_anime(traces, tmp_map, fig)
+    # plt.show()
+
+    traces = scenario.simulate(25, 0.05)
     fig = go.Figure()
-    # traces = scenario.verify(30, 0.2)
-    path = os.path.abspath(__file__)
-    path = path.replace('demo2.py', 'output.json')
-    # write_json(traces, path)
-    traces = read_json(path)
-    fig = reachtube_anime(traces, tmp_map, fig, 1,
-                          2, 'lines', 'trace', print_dim_list=[1, 2], sample_rate=1, speed_rate=5)
+    fig = simulation_anime(
+        traces, tmp_map, fig, 1, 2, 'detailed', 'trace', print_dim_list=[1, 2])
     fig.show()
