@@ -9,4 +9,12 @@ venv/
 dist/dryvr_plus_plus-0.1-py3.8.egg
 tmp/
 dist/
-demo/quadrotor/output.json
+**.asv
+**.m~
+**.code-workspace
+**/output.json
+expected_map_output/
+map_package/
+**/output.json
+docs/build/
+docs/source/_autosummary/

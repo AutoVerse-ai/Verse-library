@@ -1,5 +1,4 @@
 # Plot polytope in 3d
-# Written by: Kristina Miller
 
 import numpy as np
 

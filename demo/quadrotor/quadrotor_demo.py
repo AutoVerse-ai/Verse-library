@@ -20,7 +20,7 @@ class LaneMode(Enum):
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/quadrotor/quadrotor_controller.py'
+    input_code_name = './quadrotor_controller.py'
     scenario = Scenario()
 
     path = os.path.abspath(__file__)

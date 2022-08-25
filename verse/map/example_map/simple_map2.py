@@ -1,6 +1,4 @@
-from dryvr_plus_plus.scene_verifier.map.lane_map import LaneMap
-from dryvr_plus_plus.scene_verifier.map.lane_segment import LaneSegment, StraightLane, CircularLane
-from dryvr_plus_plus.scene_verifier.map.lane import Lane
+from verse.map import LaneMap, LaneSegment, StraightLane, CircularLane, Lane
 
 import numpy as np
 
@@ -171,13 +169,13 @@ class SimpleMap6(LaneMap):
         segment0 = StraightLane(
             'Seg0',
             [0,3],
-            [15,3],
+            [22.5,3],
             3
         )
         segment1 = CircularLane(
             'Seg1',
-            [15,8],
-            5,
+            [22.5,13],
+            10,
             np.pi*3/2,
             np.pi*2,
             False,
@@ -185,21 +183,21 @@ class SimpleMap6(LaneMap):
         )
         segment2 = StraightLane(
             'Seg2',
-            [20,8], 
-            [20,30],
+            [32.5,13], 
+            [32.5,100],
             3
         )
         lane0 = Lane('Lane0', [segment0, segment1, segment2])
         segment0 = StraightLane(
             'seg0',
             [0,0],
-            [18,0],
+            [22.5,0],
             3
         )
         segment1 = CircularLane(
             'seg1',
-            [18,5],
-            5,
+            [22.5,13],
+            13,
             3*np.pi/2,
             2*np.pi,
             False,
@@ -207,21 +205,21 @@ class SimpleMap6(LaneMap):
         )
         segment2 = StraightLane(
             'seg2',
-            [23,5],
-            [23,30],
+            [35.5,13],
+            [35.5,100],
             3
         )
         lane1 = Lane('Lane1', [segment0, segment1, segment2])
         segment0 = StraightLane(
             'seg0',
             [0,-3],
-            [21,-3],
+            [22.5,-3],
             3
         )
         segment1 = CircularLane(
             'seg1',
-            [21,2],
-            5,
+            [22.5,13],
+            16,
             np.pi*3/2,
             np.pi*2,
             False,
@@ -229,8 +227,8 @@ class SimpleMap6(LaneMap):
         )
         segment2 = StraightLane(
             'seg2',
-            [26,2],
-            [26,30],
+            [38.5,13],
+            [38.5,100],
             3
         )
         lane2 = Lane('Lane2', [segment0, segment1, segment2])

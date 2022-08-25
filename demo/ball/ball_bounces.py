@@ -6,6 +6,9 @@ from enum import Enum, auto
 import copy
 
 
+# from verse.map import Lane
+
+
 class BallMode(Enum):
     # NOTE: Any model should have at least one mode
     Normal = auto()
@@ -32,7 +35,7 @@ class State:
         pass
 
 
-def controller(ego: State, others: State):
+def controller(ego: State):
     '''Computes the possible mode transitions'''
     output = copy.deepcopy(ego)
     '''TODO: Ego and output variable names should be flexible but 
@@ -56,7 +59,7 @@ def controller(ego: State, others: State):
     '''  if ego.x - others[1].x < 1 and ego.y - others[1].y < 1:
         output.vy = -ego.vy
         output.vx = -ego.vx'''
-  # TODO: We would like to be able to write something like this, but currently not allowed.
+    # TODO: We would like to be able to write something like this, but currently not allowed.
     return output
 
 
@@ -70,7 +73,7 @@ if __name__ == "__main__":
         5. genetating the simulation traces or computing the reachable states    
     '''
     bouncingBall = Scenario()
-    ball_controller = './ball_bounces.py'
+    ball_controller = './demo/ball/ball_bounces.py'
     myball1 = BallAgent('red-ball', file_name=ball_controller)
     myball2 = BallAgent('green-ball', file_name=ball_controller)
     bouncingBall.add_agent(myball1)
@@ -95,5 +98,5 @@ if __name__ == "__main__":
     # TODO: There should be a print({traces}) function
     fig = go.Figure()
     fig = simulation_anime_trail(
-        traces, tmp_map, fig, 1, 2, 'fill', 'trace', print_dim_list=[1, 2])
+        traces, None, fig, 1, 2, 'fill', 'trace', print_dim_list=[1, 2])
     fig.show()

@@ -90,16 +90,30 @@ if __name__ == "__main__":
 
     # traces = scenario.simulate(80, 0.1)
     # fig = go.Figure()
-    # fig = simulation_anime(
-    #     traces, tmp_map, fig, 1, 2, 'lines', print_dim_list=[1, 2])
-    # fig.show()
-    # fig = go.Figure()
+    # # fig = simulation_anime(
+    # #     traces, tmp_map, fig, 1, 2, 'lines', print_dim_list=[1, 2])
+    # # fig.show()
+    # # fig = go.Figure()
     # fig = simulation_tree(
     #     traces, tmp_map, fig, 1, 2, 'lines', print_dim_list=[1, 2])
     # fig.show()
-
+    # scenario.init_seg_length = 10
     traces = scenario.verify(80, 0.1)
+    # root = traces.root
+    # queue = [root]
+    # while queue:
+    #     node = queue.pop(0)
+    #     print(node.mode)
+    #     queue += node.child 
+    #     node.child = []
+    #     fig = go.Figure()
+    #     fig = reachtube_tree(node, tmp_map, fig, 1, 2,
+    #                         'lines', print_dim_list=[1, 2], combine_rect=10)
+    #     fig.show()
+        
     fig = go.Figure()
     fig = reachtube_tree(traces, tmp_map, fig, 1, 2,
                          'lines', print_dim_list=[1, 2])
     fig.show()
+
+

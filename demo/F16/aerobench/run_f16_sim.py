@@ -1,6 +1,5 @@
 '''
-Stanley Bak
-run_f16_sim python version
+Adapted from Stanley Bak's run_f16_sim python version
 '''
 
 import time
@@ -10,16 +9,16 @@ from scipy.integrate import RK45
 
 from aerobench.highlevel.controlled_f16 import controlled_f16
 from aerobench.util import get_state_names, Euler
+from waypoint_autopilot import WaypointAutopilot
 
-from dryvr_plus_plus.scene_verifier.agents.base_agent import BaseAgent
-from dryvr_plus_plus.scene_verifier.map.lane_map import LaneMap
-from dryvr_plus_plus.scene_verifier.code_parser.pythonparser import EmptyAst
+from verse import BaseAgent
 
 
 class F16Agent(BaseAgent):
     '''Dynamics of an F16 aircraft
     derived from Stanley Bak's python library'''
-    def __init__(self, id, code = None, file_name = None):
+
+    def __init__(self, id, code=None, file_name=None):
         '''Contructor for one F16 agent
             EXACTLY one of the following should be given
             file_name: name of the controller
@@ -28,7 +27,8 @@ class F16Agent(BaseAgent):
         # Calling the constructor of tha base class
         super().__init__(id, code, file_name)
 
-def run_f16_sim(initial_state, tmax, ap, step=1/30, extended_states=False, model_str='morelli',
+
+def run_f16_sim(initial_state, tmax, ap: WaypointAutopilot, step=1/30, extended_states=False, model_str='morelli',
                 integrator_str='rk45', v2_integrators=False):
     '''Simulates and analyzes autonomous F-16 maneuvers
 
@@ -77,7 +77,8 @@ def run_f16_sim(initial_state, tmax, ap, step=1/30, extended_states=False, model
     modes = [ap.mode]
 
     if extended_states:
-        xd, u, Nz, ps, Ny_r = get_extended_states(ap, times[-1], states[-1], model_str, v2_integrators)
+        xd, u, Nz, ps, Ny_r = get_extended_states(
+            ap, times[-1], states[-1], model_str, v2_integrators)
 
         xd_list = [xd]
         u_list = [u]
@@ -96,7 +97,8 @@ def run_f16_sim(initial_state, tmax, ap, step=1/30, extended_states=False, model
         kwargs = {'step': step}
 
     # note: fixed_step argument is unused by rk45, used with euler
-    integrator = integrator_class(der_func, times[-1], states[-1], tmax, **kwargs)
+    integrator = integrator_class(
+        der_func, times[-1], states[-1], tmax, **kwargs)
 
     while integrator.status == 'running':
         integrator.step()
@@ -116,7 +118,8 @@ def run_f16_sim(initial_state, tmax, ap, step=1/30, extended_states=False, model
 
                 # re-run dynamics function at current state to get non-state variables
                 if extended_states:
-                    xd, u, Nz, ps, Ny_r = get_extended_states(ap, times[-1], states[-1], model_str, v2_integrators)
+                    xd, u, Nz, ps, Ny_r = get_extended_states(
+                        ap, times[-1], states[-1], model_str, v2_integrators)
 
                     xd_list.append(xd)
                     u_list.append(u)
@@ -132,7 +135,8 @@ def run_f16_sim(initial_state, tmax, ap, step=1/30, extended_states=False, model
 
                 if updated:
                     # re-initialize the integration class on discrete mode switches
-                    integrator = integrator_class(der_func, times[-1], states[-1], tmax, **kwargs)
+                    integrator = integrator_class(
+                        der_func, times[-1], states[-1], tmax, **kwargs)
                     break
 
     assert 'finished' in integrator.status
@@ -154,7 +158,8 @@ def run_f16_sim(initial_state, tmax, ap, step=1/30, extended_states=False, model
 
     return res
 
-def make_der_func(ap, model_str, v2_integrators):
+
+def make_der_func(ap: WaypointAutopilot, model_str, v2_integrators):
     'make the combined derivative function for integration'
 
     def der_func(t, full_state):
@@ -172,14 +177,16 @@ def make_der_func(ap, model_str, v2_integrators):
             state = full_state[num_vars*i:num_vars*(i+1)]
             u_ref = u_refs[4*i:4*(i+1)]
 
-            xd = controlled_f16(t, state, u_ref, ap.llc, model_str, v2_integrators)[0]
+            xd = controlled_f16(t, state, u_ref, ap.llc,
+                                model_str, v2_integrators)[0]
             xds.append(xd)
 
         rv = np.hstack(xds)
 
         return rv
-    
+
     return der_func
+
 
 def get_extended_states(ap, t, full_state, model_str, v2_integrators):
     '''get xd, u, Nz, ps, Ny_r at the current time / state
@@ -203,7 +210,8 @@ def get_extended_states(ap, t, full_state, model_str, v2_integrators):
         state = full_state[num_vars*i:num_vars*(i+1)]
         u_ref = u_refs[4*i:4*(i+1)]
 
-        xd, u, Nz, ps, Ny_r = controlled_f16(t, state, u_ref, llc, model_str, v2_integrators)
+        xd, u, Nz, ps, Ny_r = controlled_f16(
+            t, state, u_ref, llc, model_str, v2_integrators)
 
         xd_tup.append(xd)
         u_tup.append(u)
