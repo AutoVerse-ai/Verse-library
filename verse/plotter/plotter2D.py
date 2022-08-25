@@ -897,9 +897,9 @@ def draw_map(map, color='rgba(0,0,0,1)', fig: go.Figure() = go.Figure(), fill_ty
 
 
 def check_dim(num_dim: int, x_dim: int = 1, y_dim: int = 2, print_dim_list: List(int) = None):
-    if x_dim <= 0 or x_dim >= num_dim:
+    if x_dim < 0 or x_dim >= num_dim:
         raise ValueError(f'wrong x dimension value {x_dim}')
-    if y_dim <= 0 or y_dim >= num_dim:
+    if y_dim < 0 or y_dim >= num_dim:
         raise ValueError(f'wrong y dimension value {y_dim}')
     if print_dim_list is None:
         return True

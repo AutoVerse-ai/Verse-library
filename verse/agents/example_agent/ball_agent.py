@@ -4,8 +4,8 @@ from typing import Tuple, List
 import numpy as np
 from scipy.integrate import ode
 
-from dryvr_plus_plus.scene_verifier.agents.base_agent import BaseAgent
-from dryvr_plus_plus.scene_verifier.map.lane_map import LaneMap
+from verse import BaseAgent
+from verse import LaneMap
 
 
 class BallAgent(BaseAgent):
@@ -53,5 +53,5 @@ class BallAgent(BaseAgent):
 if __name__ == '__main__':
     aball = BallAgent(
         'red_ball', file_name="/Users/mitras/Dpp/GraphGeneration/demo/ball_bounces.py")
-    trace = aball.TC_simulate({'none'}, [5, 10, 2, 2], 10,0.05)
+    trace = aball.TC_simulate({'none'}, [5, 10, 2, 2], 10, 0.05)
     print(trace)

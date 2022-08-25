@@ -42,7 +42,7 @@ class State:
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/example_controller4.py'
+    input_code_name = './demo/vehicle/controller/example_controller4.py'
     scenario = Scenario()
 
     scenario.add_agent(CarAgent('car1', file_name=input_code_name))
