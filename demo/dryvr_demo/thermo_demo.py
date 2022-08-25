@@ -1,20 +1,23 @@
 from origin_agent import thermo_agent
 from verse import Scenario
 from verse.plotter.plotter2D import *
-
+from verse.sensor.example_sensor.thermo_sensor import ThermoSensor
 import plotly.graph_objects as go
 from enum import Enum, auto
+
 
 class ThermoMode(Enum):
     ON = auto()
     OFF = auto()
 
+
 if __name__ == "__main__":
-    input_code_name = './thermo_controller.py'
+    input_code_name = './demo/dryvr_demo/thermo_controller.py'
     scenario = Scenario()
 
     car = thermo_agent('test', file_name=input_code_name)
     scenario.add_agent(car)
+    scenario.set_sensor(ThermoSensor())
     # modify mode list input
     scenario.set_init(
         [
