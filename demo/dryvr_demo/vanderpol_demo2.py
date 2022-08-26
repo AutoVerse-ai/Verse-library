@@ -9,7 +9,7 @@ class AgentMode(Enum):
     Default = auto()
 
 if __name__ == "__main__":
-    input_code_name = './vanderpol_controller.py'
+    input_code_name = './demo/dryvr_demo/vanderpol_controller.py'
     scenario = Scenario()
 
     car = vanderpol_agent('car1', file_name=input_code_name)

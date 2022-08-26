@@ -54,7 +54,7 @@ These 5 functions share the same API.
 """
 
 
-def reachtube_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, map_type='lines', scale_type='trace', print_dim_list=None, label_mode='None', combine_rect=1, sample_rate=1, speed_rate=1):
+def reachtube_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, map_type='lines', scale_type='trace', print_dim_list=None, label_mode='None', combine_rect=None, sample_rate=1, speed_rate=1):
     """It gives the animation of the verfication."""
     if isinstance(root, AnalysisTree):
         root = root.root
@@ -110,7 +110,7 @@ def reachtube_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=g
                     "x1": rect[1][x_dim],
                     "y1": rect[1][y_dim],
                     "fillcolor": 'rgba(0,0,0,0.7)',
-                    "line": dict(color='rgba(0,0,0,0.7)'),
+                    "line": dict(color='rgba(0,0,0,0.7)', width=5),
                     "visible": True
                 }
                 frame["layout"]["shapes"].append(shape_dict)
@@ -682,11 +682,42 @@ def reachtube_tree_single(root: Union[AnalysisTree, AnalysisTreeNode], agent_id,
     queue = [root]
     show_legend = False
     fillcolor = colors[scheme_dict[color]][5]
+    linecolor = colors[scheme_dict[color]][4]
     while queue != []:
         node = queue.pop(0)
         traces = node.trace
         trace = np.array(traces[agent_id])
-        if combine_rect <= 1:
+        max_id = len(trace)-1
+        if len(np.unique(np.array([trace[i][x_dim] for i in range(0, max_id)]))) == 1 and len(np.unique(np.array([trace[i][y_dim] for i in range(0, max_id)]))) == 1:
+            fig.add_trace(go.Scatter(x=[trace[0][x_dim]], y=[trace[0][y_dim]], mode='markers+lines',
+                                     #  fill='toself',
+                                     #  fillcolor=fillcolor,
+                                     #  opacity=0.5,
+                                     marker={'size': 5},
+                                     line_color=linecolor,
+                                     line={'width': 1},
+                                     showlegend=show_legend
+                                     ))
+        elif combine_rect == None:
+            max_id = len(trace)-1
+            trace_x_odd = np.array([trace[i][x_dim]
+                                   for i in range(0, max_id, 2)])
+            trace_x_even = np.array([trace[i][x_dim]
+                                    for i in range(1, max_id+1, 2)])
+            trace_y_odd = np.array([trace[i][y_dim]
+                                   for i in range(0, max_id, 2)])
+            trace_y_even = np.array([trace[i][y_dim]
+                                    for i in range(1, max_id+1, 2)])
+            fig.add_trace(go.Scatter(x=trace_x_odd.tolist()+trace_x_even[::-1].tolist()+[trace_x_odd[0]], y=trace_y_odd.tolist()+trace_y_even[::-1].tolist()+[trace_y_odd[0]], mode='markers+lines',
+                                     fill='toself',
+                                     fillcolor=fillcolor,
+                                     #  opacity=0.5,
+                                     marker={'size': 1},
+                                     line_color=linecolor,
+                                     line={'width': 2},
+                                     showlegend=show_legend
+                                     ))
+        elif combine_rect <= 1:
             for idx in range(0, len(trace), 2):
                 trace_x = np.array([
                     trace[idx][x_dim],
@@ -707,7 +738,7 @@ def reachtube_tree_single(root: Union[AnalysisTree, AnalysisTreeNode], agent_id,
                                          fillcolor=fillcolor,
                                          #  opacity=0.5,
                                          marker={'size': 1},
-                                         line_color=colors[scheme_dict[color]][4],
+                                         line_color=linecolor,
                                          line={'width': 1},
                                          showlegend=show_legend
                                          ))
@@ -735,7 +766,7 @@ def reachtube_tree_single(root: Union[AnalysisTree, AnalysisTreeNode], agent_id,
                                              fillcolor=fillcolor,
                                              #  opacity=0.5,
                                              marker={'size': 1},
-                                             line_color=colors[scheme_dict[color]][4],
+                                             line_color=linecolor,
                                              line={'width': 1},
                                              showlegend=show_legend
                                              ))
@@ -798,7 +829,7 @@ def reachtube_tree_single(root: Union[AnalysisTree, AnalysisTreeNode], agent_id,
                         fillcolor=fillcolor,
                         #  opacity=0.5,
                         marker={'size': 1},
-                        line_color=colors[scheme_dict[color]][4],
+                        line_color=linecolor,
                         line={'width': 1},
                         showlegend=show_legend
                     ))

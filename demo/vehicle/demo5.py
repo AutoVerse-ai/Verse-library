@@ -62,20 +62,14 @@ if __name__ == "__main__":
             (LaneObjectMode.Vehicle,),
         ]
     )
-    traces = scenario.simulate(70, 0.05)
-    fig = go.Figure()
-    fig = simulation_tree(traces, tmp_map, fig, 1,
-                                 2, 'lines', 'trace', print_dim_list=[1, 2])
-    fig.show()
+    # traces = scenario.simulate(70, 0.05)
+    # fig = go.Figure()
+    # fig = simulation_tree(traces, tmp_map, fig, 1,
+    #                              2, 'lines', 'trace', print_dim_list=[1, 2])
+    # fig.show()
 
     traces = scenario.verify(70, 0.05)
     fig = go.Figure()
-    fig = reachtube_tree(traces, tmp_map, fig, 1,
-                                 2, 'lines', 'trace', print_dim_list=[1, 2])
-    fig.show()
-
-    traces = scenario.verify(70, 0.05)
-    fig = go.Figure()
-    fig = reachtube_tree(traces, tmp_map, fig, 1, 2,
-                         'lines', print_dim_list=[1, 2])
+    fig = reachtube_anime(traces, tmp_map, fig, 1,
+                          2, 'lines', 'trace', print_dim_list=[1, 2])
     fig.show()

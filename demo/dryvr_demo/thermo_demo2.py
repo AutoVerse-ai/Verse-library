@@ -12,7 +12,7 @@ class ThermoMode(Enum):
 
 
 if __name__ == "__main__":
-    input_code_name = './thermo_controller.py'
+    input_code_name = './demo/dryvr_demo/thermo_controller.py'
     scenario = Scenario()
 
     car = thermo_agent('test', file_name=input_code_name)
