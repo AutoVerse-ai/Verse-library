@@ -1,17 +1,18 @@
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import DefaultDict, List, Tuple, Optional
+from typing import DefaultDict, Dict, List, Tuple, Optional
 from verse.analysis import AnalysisTreeNode
 from intervaltree import IntervalTree
 
 from verse.analysis.dryvr import _EPSILON
-from verse.parser.parser import ControllerIR
+from verse.parser.parser import ControllerIR, ModePath
 
 @dataclass
 class CachedTransition:
     transition: int
     disc: List[str]
     cont: List[float]
+    paths: List[ModePath]
 
 @dataclass
 class CachedSegment:
@@ -19,6 +20,8 @@ class CachedSegment:
     asserts: List[str]
     transitions: List[CachedTransition]
     controller: ControllerIR
+    run_num: int
+    node_id: int
 
 @dataclass
 class CachedTube:
@@ -33,14 +36,15 @@ class SimTraceCache:
     def __init__(self):
         self.cache: DefaultDict[tuple, IntervalTree] = defaultdict(IntervalTree)
 
-    def add_segment(self, agent_id: str, node: AnalysisTreeNode):
+    def add_segment(self, agent_id: str, node: AnalysisTreeNode, trace: List[List[float]], transition_paths: List[List[ModePath]], run_num: int):
+        assert len(transition_paths) == len(node.child)
         key = (agent_id,) + tuple(node.mode[agent_id])
         init = node.init[agent_id]
         tree = self.cache[key]
         for i, val in enumerate(init):
             if i == len(init) - 1:
-                transitions = [CachedTransition(len(n.trace[agent_id]), n.mode[agent_id], n.init[agent_id]) for n in node.child]
-                entry = CachedSegment(node.trace[agent_id], node.assert_hits.get(agent_id), transitions, node.agent[agent_id].controller)
+                transitions = [CachedTransition(len(n.trace[agent_id]), n.mode[agent_id], n.init[agent_id], p) for n, p in zip(node.child, transition_paths)]
+                entry = CachedSegment(trace, node.assert_hits.get(agent_id), transitions, node.agent[agent_id].controller, run_num, node.id)
                 tree[val - _EPSILON:val + _EPSILON] = entry
                 return entry
             else:

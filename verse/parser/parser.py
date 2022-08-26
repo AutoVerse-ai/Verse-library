@@ -244,6 +244,10 @@ class ModePath:
     val: Any
     val_veri: ast.expr
 
+    def __eq__(self, other: object) -> bool:
+        # TODO: more general equivalence?
+        return self.cond == other.cond and self.val == other.val
+
 @dataclass
 class ControllerIR:
     args: LambdaArgs
@@ -322,7 +326,6 @@ class ControllerIR:
                     cond = compile_expr(Env.trans_args(cond, False))
                     val = compile_expr(Env.trans_args(case.val, False))
                     paths.append(ModePath(cond, cond_veri, var, val, val_veri))
-
         return ControllerIR(controller.args, paths, asserts_sim, asserts_veri, env.state_defs, env.mode_defs)
 
 @dataclass

@@ -1,5 +1,6 @@
 # SM: Noting some things about the example
 
+import timeit
 from verse.agents.example_agent import CarAgent, NPCAgent
 from verse.map.example_map import SimpleMap4
 from verse import Scenario
@@ -7,7 +8,6 @@ from verse.plotter.plotter2D import *
 
 from enum import Enum, auto
 import plotly.graph_objects as go
-
 
 class LaneObjectMode(Enum):
     Vehicle = auto()
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     scenario.set_map(tmp_map)
     scenario.set_init(
         [
-            [[0, -0.0, 0, 1.0], [0.0, 0.0, 0, 1.0]],
+            [[0, 0.0, 0, 1.0], [0.0, 0.0, 0, 1.0]],
             [[10, 0, 0, 0.5], [10, 0, 0, 0.5]],
             [[14, 3, 0, 0.6], [14, 3, 0, 0.6]],
             [[20, 3, 0, 0.5], [20, 3, 0, 0.5]],
@@ -99,12 +99,34 @@ if __name__ == "__main__":
         ],
 
     )
-    traces = scenario.simulate(60, 0.1)
+    # time = timeit.default_timer()
+    # # import cProfile, pstats, io
+    # # from pstats import SortKey
+    # # pr = cProfile.Profile()
+    # # pr.enable()
+    # traces = scenario.verify(60, 0.1)
+    # # pr.disable()
+    # # s = io.StringIO()
+    # # sortby = SortKey.CUMULATIVE
+    # # ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+    # # ps.print_stats()
+    # # print(s.getvalue())
+    # print("run1", timeit.default_timer() - time)
+    # fig = go.Figure()
+    # fig = reachtube_tree(traces, tmp_map, fig, 1,
+    #                       2, 'lines', 'trace', print_dim_list=[1, 2])
+    # fig.show()
+
+    time = timeit.default_timer()
+    traces = scenario.simulate(60, 0.05)
+    print("run2", timeit.default_timer() - time)
     fig = go.Figure()
-    fig = simulation_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace')
+    fig = simulation_tree(traces, tmp_map, fig, 1,
+                          2, 'lines', 'trace', print_dim_list=[1, 2])
     fig.show()
 
-    traces = scenario.verify(60, 0.1)
-    fig = go.Figure()
-    fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace')
-    fig.show()
+    # traces = scenario.verify(60, 0.05)
+    # fig = go.Figure()
+    # fig = reachtube_tree(traces, tmp_map, fig, 1,
+    #                       2, 'lines', 'trace', print_dim_list=[1, 2])
+    # fig.show()
