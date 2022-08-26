@@ -330,8 +330,9 @@ def simulation_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=N
     return fig
 
 
-def simulation_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=None, x_dim: int = 1, y_dim=2, map_type='lines', scale_type='trace', print_dim_list=None, label_mode='None', sample_rate=1, speed_rate=1):
-    """It gives the animation of the simulation without trail but is faster."""
+def simulation_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=None, x_dim: int = 1, y_dim=2, map_type='lines', scale_type='trace', print_dim_list=None, label_mode='None', anime_mode='normal', sample_rate=1, speed_rate=1):
+    """Normal: It gives the animation of the simulation without trail but is faster."""
+    """Trail: It gives the animation of the simulation with trail."""
     if isinstance(root, AnalysisTree):
         root = root.root
     root = sample_trace(root, sample_rate)
@@ -370,40 +371,20 @@ def simulation_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=
         queue += node.child
     duration = int(5000/num_points/speed_rate)
     fig_dict, sliders_dict = create_anime_dict(duration)
-    # make data
-    trace_dict = timed_point_dict[0]
-    for agent_id, trace_list in trace_dict.items():
-        color = colors[agent_list.index(agent_id) % 12][1]
-        x_list = []
-        y_list = []
-        text_list = []
-        branch_cnt = 0
-        for trace in trace_list:
-            x_list.append(trace[x_dim])
-            y_list.append(trace[y_dim])
-            text_list.append(['{:.2f}'.format(trace[i])
-                              for i in print_dim_list])
-            branch_cnt += 1
-        data_dict = {
-            "x": x_list,
-            "y": y_list,
-            "text": text_list,
-            "mode": "markers + text",
-            "textfont": dict(size=text_size, color="black"),
-            "textposition": "bottom center",
-            "marker": {
-                "color": color,
-            },
-            "name": agent_id,
-            "showlegend": True
-        }
-        fig_dict["data"].append(data_dict)
-    # make frames
-    for time_point in timed_point_dict:
-        frame = {"data": [], "layout": {
-            "annotations": []}, "name": '{:.3f}'.format(time_point)}
-        point_list = timed_point_dict[time_point]
-        for agent_id, trace_list in point_list.items():
+    # used for trail mode
+    time_list = list(timed_point_dict.keys())
+    agent_list = list(root.agent.keys())
+    trail_limit = min(10, len(time_list))
+    trail_len = trail_limit
+    opacity_step = 1/trail_len
+    size_step = 2/trail_len
+    min_size = 5
+    step = 2
+
+    if anime_mode == 'normal':
+        # make data
+        trace_dict = timed_point_dict[0]
+        for agent_id, trace_list in trace_dict.items():
             color = colors[agent_list.index(agent_id) % 12][1]
             x_list = []
             y_list = []
@@ -420,206 +401,147 @@ def simulation_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=
                 "y": y_list,
                 "text": text_list,
                 "mode": "markers + text",
+                "textfont": dict(size=text_size, color="black"),
+                "textposition": "bottom center",
                 "marker": {
                     "color": color,
                 },
-                "textfont": dict(size=text_size, color="black"),
-                "textposition": "bottom center",
-                # "name": "Branch-"+str(branch_cnt),
                 "name": agent_id,
                 "showlegend": True
             }
-            frame["data"].append(data_dict)
-        fig_dict["frames"].append(frame)
-        slider_step = {"args": [
-            ['{:.3f}'.format(time_point)],
-            {"frame": {"duration": duration, "redraw": True},
-             "mode": "immediate",
-             "transition": {"duration": duration}}
-        ],
-            "label": '{:.3f}'.format(time_point),
-            "method": "animate"}
-        sliders_dict["steps"].append(slider_step)
-
-    fig_dict["layout"]["sliders"] = [sliders_dict]
-
-    fig = go.Figure(fig_dict)
-    fig = draw_map(map, 'rgba(0,0,0,1)', fig, map_type)
-    i = 0
-    queue = [root]
-    previous_mode = {}
-    agent_list = list(root.agent.keys())
-    for agent_id in root.mode:
-        previous_mode[agent_id] = []
-    text_pos = 'middle center'
-    while queue != []:
-        node = queue.pop(0)
-        traces = node.trace
-        for agent_id in traces:
-            trace = np.array(traces[agent_id])
-            mode_point_color = colors[agent_list.index(agent_id) % 12][0]
-            if label_mode != 'None':
-                if previous_mode[agent_id] != node.mode[agent_id]:
-                    text_pos, text = get_text_pos(node.mode[agent_id][0])
-                    fig.add_trace(go.Scatter(x=[trace[0, x_dim]], y=[trace[0, y_dim]],
-                                             mode='markers+text',
-                                             line_color=mode_point_color,
-                                             text=str(agent_id)+': ' + text,
-                                             textposition=text_pos,
-                                             opacity=0.5,
-                                             textfont=dict(
-                        size=text_size,
-                        color=mode_text_color),
-                        showlegend=False,
-                    ))
-                    previous_mode[agent_id] = node.mode[agent_id]
-        queue += node.child
-    if scale_type == 'trace':
-        fig.update_xaxes(
-            range=[x_min-scale_factor*(x_max-x_min), x_max+scale_factor*(x_max-x_min)])
-        fig.update_yaxes(
-            range=[y_min-scale_factor*(y_max-y_min), y_max+scale_factor*(y_max-y_min)])
-    fig.update_layout(legend_title_text='Agent list')
-    return fig
-
-
-def simulation_anime_trail(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim=2, map_type='lines', scale_type='trace', print_dim_list=None, label_mode='None', sample_rate=1, speed_rate=1):
-    """It gives the animation of the simulation with trail."""
-    if isinstance(root, AnalysisTree):
-        root = root.root
-    root = sample_trace(root, sample_rate)
-    timed_point_dict = {}
-    queue = [root]
-    x_min, x_max = float('inf'), -float('inf')
-    y_min, y_max = float('inf'), -float('inf')
-    # input check
-    num_dim = np.array(root.trace[list(root.agent.keys())[0]]).shape[1]
-    check_dim(num_dim, x_dim, y_dim, print_dim_list)
-    if print_dim_list is None:
-        print_dim_list = range(0, num_dim)
-    num_points = 0
-    while queue != []:
-        node = queue.pop()
-        traces = node.trace
-        for agent_id in traces:
-            trace = np.array(traces[agent_id])
-            for i in range(len(trace)):
-                x_min = min(x_min, trace[i][x_dim])
-                x_max = max(x_max, trace[i][x_dim])
-                y_min = min(y_min, trace[i][y_dim])
-                y_max = max(y_max, trace[i][y_dim])
-                time_point = round(trace[i][0], 3)
-                tmp_trace = trace[i][0:].tolist()
-                if time_point not in timed_point_dict:
-                    num_points += 1
-                    timed_point_dict[time_point] = {agent_id: [tmp_trace]}
-                else:
-                    if agent_id not in timed_point_dict[time_point].keys():
-                        timed_point_dict[time_point][agent_id] = [tmp_trace]
-                    elif tmp_trace not in timed_point_dict[time_point][agent_id]:
-                        timed_point_dict[time_point][agent_id].append(
-                            tmp_trace)
-            time = round(trace[i][0], 2)
-        queue += node.child
-    duration = int(5000/num_points/speed_rate)
-    fig_dict, sliders_dict = create_anime_dict(duration)
-    time_list = list(timed_point_dict.keys())
-    agent_list = list(root.agent.keys())
-    trail_limit = min(10, len(time_list))
-    trail_len = trail_limit
-    opacity_step = 1/trail_len
-    size_step = 2/trail_len
-    min_size = 5
-    step = 2
-    # # make data
-    trace_dict = timed_point_dict[0]
-
-    for time_point in list(timed_point_dict.keys())[0:int(trail_limit/step)]:
-        trace_dict = timed_point_dict[time_point]
-        for agent_id, point_list in trace_dict.items():
-            x_list = []
-            y_list = []
-            text_list = []
-            for point in point_list:
-                x_list.append(point[x_dim])
-                y_list.append(point[y_dim])
-                text_list.append(['{:.2f}'.format(point[i])
-                                  for i in print_dim_list])
-            data_dict = {
-                "x": x_list,
-                "y": y_list,
-                "mode": "markers",
-                "text": text_list,
-                "textfont": dict(size=text_size, color="black"),
-                "visible": False,
-                "textposition": "bottom center",
-                "name": agent_id
-            }
             fig_dict["data"].append(data_dict)
-
-    # make frames
-    for time_point_id in range(trail_limit, len(time_list)):
-        time_point = time_list[time_point_id]
-        frame = {"data": [], "layout": {
-            "annotations": []}, "name": '{:.3f}'.format(time_point)}
-        for agent_id in agent_list:
-            color = colors[agent_list.index(agent_id) % 12][1]
-            for id in range(0, trail_len, step):
-                tmp_point_list = timed_point_dict[time_list[time_point_id-id]][agent_id]
-                trace_x = []
-                trace_y = []
+        # make frames
+        for time_point in timed_point_dict:
+            frame = {"data": [], "layout": {
+                "annotations": []}, "name": '{:.3f}'.format(time_point)}
+            point_list = timed_point_dict[time_point]
+            for agent_id, trace_list in point_list.items():
+                color = colors[agent_list.index(agent_id) % 12][1]
+                x_list = []
+                y_list = []
                 text_list = []
-                for point in tmp_point_list:
-                    trace_x.append(point[x_dim])
-                    trace_y.append(point[y_dim])
+                branch_cnt = 0
+                for trace in trace_list:
+                    x_list.append(trace[x_dim])
+                    y_list.append(trace[y_dim])
+                    text_list.append(['{:.2f}'.format(trace[i])
+                                      for i in print_dim_list])
+                    branch_cnt += 1
+                data_dict = {
+                    "x": x_list,
+                    "y": y_list,
+                    "text": text_list,
+                    "mode": "markers + text",
+                    "marker": {
+                        "color": color,
+                    },
+                    "textfont": dict(size=text_size, color="black"),
+                    "textposition": "bottom center",
+                    # "name": "Branch-"+str(branch_cnt),
+                    "name": agent_id,
+                    "showlegend": True
+                }
+                frame["data"].append(data_dict)
+            fig_dict["frames"].append(frame)
+            slider_step = {"args": [
+                ['{:.3f}'.format(time_point)],
+                {"frame": {"duration": duration, "redraw": True},
+                 "mode": "immediate",
+                 "transition": {"duration": duration}}
+            ],
+                "label": '{:.3f}'.format(time_point),
+                "method": "animate"}
+            sliders_dict["steps"].append(slider_step)
+
+        fig_dict["layout"]["sliders"] = [sliders_dict]
+    else:
+        # make data
+        trace_dict = timed_point_dict[0]
+        for time_point in list(timed_point_dict.keys())[0:int(trail_limit/step)]:
+            trace_dict = timed_point_dict[time_point]
+            for agent_id, point_list in trace_dict.items():
+                x_list = []
+                y_list = []
+                text_list = []
+                for point in point_list:
+                    x_list.append(point[x_dim])
+                    y_list.append(point[y_dim])
                     text_list.append(['{:.2f}'.format(point[i])
                                       for i in print_dim_list])
-                if id == 0:
-                    data_dict = {
-                        "x": trace_x,
-                        "y": trace_y,
-                        "mode": "markers+text",
-                        "text": text_list,
-                        "textfont": dict(size=text_size, color="black"),
-                        "textposition": "bottom center",
-                        "visible": True,  # 'legendonly'
-                        "marker": {
-                            "color": color,
-                            "opacity": opacity_step*(trail_len-id),
-                            "size": min_size + size_step*(trail_len-id)
-                        },
-                        "name": agent_id,
-                        "showlegend": True
-                    }
-                else:
-                    data_dict = {
-                        "x": trace_x,
-                        "y": trace_y,
-                        "mode": "markers",
-                        "text": text_list,
-                        "visible": True,  # 'legendonly'
-                        "marker": {
-                            "color": color,
-                            "opacity": opacity_step*(trail_len-id),
-                            "size": min_size + size_step*(trail_len-id)
-                        },
-                        "name": agent_id,
-                        "showlegend": True
-                    }
-                frame["data"].append(data_dict)
+                data_dict = {
+                    "x": x_list,
+                    "y": y_list,
+                    "mode": "markers",
+                    "text": text_list,
+                    "textfont": dict(size=text_size, color="black"),
+                    "visible": False,
+                    "textposition": "bottom center",
+                    "name": agent_id
+                }
+                fig_dict["data"].append(data_dict)
+        # make frames
+        for time_point_id in range(trail_limit, len(time_list)):
+            time_point = time_list[time_point_id]
+            frame = {"data": [], "layout": {
+                "annotations": []}, "name": '{:.3f}'.format(time_point)}
+            for agent_id in agent_list:
+                color = colors[agent_list.index(agent_id) % 12][1]
+                for id in range(0, trail_len, step):
+                    tmp_point_list = timed_point_dict[time_list[time_point_id-id]][agent_id]
+                    trace_x = []
+                    trace_y = []
+                    text_list = []
+                    for point in tmp_point_list:
+                        trace_x.append(point[x_dim])
+                        trace_y.append(point[y_dim])
+                        text_list.append(['{:.2f}'.format(point[i])
+                                          for i in print_dim_list])
+                    if id == 0:
+                        data_dict = {
+                            "x": trace_x,
+                            "y": trace_y,
+                            "mode": "markers+text",
+                            "text": text_list,
+                            "textfont": dict(size=text_size, color="black"),
+                            "textposition": "bottom center",
+                            "visible": True,  # 'legendonly'
+                            "marker": {
+                                "color": color,
+                                "opacity": opacity_step*(trail_len-id),
+                                "size": min_size + size_step*(trail_len-id)
+                            },
+                            "name": agent_id,
+                            "showlegend": True
+                        }
+                    else:
+                        data_dict = {
+                            "x": trace_x,
+                            "y": trace_y,
+                            "mode": "markers",
+                            "text": text_list,
+                            "visible": True,  # 'legendonly'
+                            "marker": {
+                                "color": color,
+                                "opacity": opacity_step*(trail_len-id),
+                                "size": min_size + size_step*(trail_len-id)
+                            },
+                            "name": agent_id,
+                            "showlegend": True
+                        }
+                    frame["data"].append(data_dict)
 
-        fig_dict["frames"].append(frame)
-        slider_step = {"args": [
-            ['{:.3f}'.format(time_point)],
-            {"frame": {"duration": duration, "redraw": False},
-             "mode": "immediate",
-             "transition": {"duration": duration}}
-        ],
-            "label": '{:.3f}'.format(time_point),
-            "method": "animate"}
-        sliders_dict["steps"].append(slider_step)
+            fig_dict["frames"].append(frame)
+            slider_step = {"args": [
+                ['{:.3f}'.format(time_point)],
+                {"frame": {"duration": duration, "redraw": False},
+                 "mode": "immediate",
+                 "transition": {"duration": duration}}
+            ],
+                "label": '{:.3f}'.format(time_point),
+                "method": "animate"}
+            sliders_dict["steps"].append(slider_step)
 
-    fig_dict["layout"]["sliders"] = [sliders_dict]
+        fig_dict["layout"]["sliders"] = [sliders_dict]
 
     fig = go.Figure(fig_dict)
     fig = draw_map(map, 'rgba(0,0,0,1)', fig, map_type)
@@ -646,7 +568,8 @@ def simulation_anime_trail(root: Union[AnalysisTree, AnalysisTreeNode], map=None
                     fig.add_trace(go.Scatter(x=[trace[0, x_dim]], y=[trace[0, y_dim]],
                                              mode='markers+text',
                                              line_color=mode_point_color,
-                                             text=str(agent_id)+': ' + text,
+                                             text=str(agent_id) +
+                                             ': ' + text,
                                              opacity=0.5,
                                              textposition=text_pos,
                                              textfont=dict(

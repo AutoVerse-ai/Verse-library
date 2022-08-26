@@ -68,13 +68,13 @@ if __name__ == "__main__":
     traces = scenario.simulate(70, 0.05)
     # traces.dump('./output1.json')
     fig = go.Figure()
-    fig = simulation_tree(traces, tmp_map, fig, 1,
-                          2, 'lines', 'trace', print_dim_list=[1, 2])
+    fig = simulation_anime(traces, tmp_map, fig, 1,
+                           2, 'lines', 'trace', print_dim_list=[1, 2], anime_mode='trail')
     fig.show()
 
-    traces = scenario.verify(70, 0.1)
-    # traces.dump('./output2.json')
-    fig = go.Figure()
-    fig = reachtube_tree(traces, tmp_map, fig, 1,
-                         2, 'lines', 'trace', print_dim_list=[1, 2], combine_rect=10)
-    fig.show()
+    # traces = scenario.verify(70, 0.1)
+    # # traces.dump('./output2.json')
+    # fig = go.Figure()
+    # fig = reachtube_tree(traces, tmp_map, fig, 1,
+    #                      2, 'lines', 'trace', print_dim_list=[1, 2], combine_rect=10)
+    # fig.show()
