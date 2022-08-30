@@ -37,10 +37,10 @@ if __name__ == "__main__":
     input_code_name = './demo/vehicle/controller/example_controller2.py'
     scenario = Scenario()
 
-    car = CarAgent('car1', file_name=input_code_name)
-    scenario.add_agent(car)
-    car = CarAgent('car2', file_name=input_code_name)
-    scenario.add_agent(car)
+    car1 = CarAgent('car1', file_name=input_code_name)
+    scenario.add_agent(car1)
+    car2 = CarAgent('car2', file_name=input_code_name)
+    scenario.add_agent(car2)
     tmp_map = SimpleMap3()
     scenario.set_map(tmp_map)
     scenario.set_sensor(FakeSensor2())
@@ -54,6 +54,15 @@ if __name__ == "__main__":
             (VehicleMode.Normal, LaneMode.Lane1),
         ]
     )
+
+    # scenario.set_init_single('car1', [
+    #                          [0, -0.2, 0, 1.0], [0.1, 0.2, 0, 1.0]], (VehicleMode.Normal, LaneMode.Lane1))
+    # scenario.set_init_single('car2', [[10, 0, 0, 0.5], [
+    #                          10, 0, 0, 0.5]], (VehicleMode.Normal, LaneMode.Lane1))
+    traces = scenario.simulate(30, 1)
+    fig = go.Figure()
+    fig = simulation_tree(traces, tmp_map, fig, 1, 2, 'lines')
+    fig.show()
 
     # traces = scenario.simulate(30, 1)
     # path = os.path.abspath('.')
@@ -76,12 +85,12 @@ if __name__ == "__main__":
     # # # fig = reachtube_anime(traces, tmp_map, fig, 1,
     # # #                       2, 'lines', 'trace', print_dim_list=[1, 2])
     # fig.show()
-    fig = go.Figure()
-    # traces = scenario.verify(30, 0.2)
-    path = os.path.abspath(__file__)
-    path = path.replace('demo2.py', 'output.json')
-    # write_json(traces, path)
-    traces = read_json(path)
-    fig = reachtube_anime(traces, tmp_map, fig, 1,
-                          2, 'lines', 'trace', print_dim_list=[1, 2], sample_rate=1, speed_rate=5)
-    fig.show()
+    # fig = go.Figure()
+    # # traces = scenario.verify(30, 0.2)
+    # path = os.path.abspath(__file__)
+    # path = path.replace('demo2.py', 'output.json')
+    # # write_json(traces, path)
+    # traces = read_json(path)
+    # fig = reachtube_anime(traces, tmp_map, fig, 1,
+    #                       2, 'lines', 'trace', print_dim_list=[1, 2], sample_rate=1, speed_rate=5)
+    # fig.show()

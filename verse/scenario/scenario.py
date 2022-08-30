@@ -58,9 +58,9 @@ class Scenario:
         # agent.controller.vertices = list(itertools.product(*mode_vals))
         # agent.controller.vertexStrings = [','.join(elem) for elem in agent.controller.vertices]
 
-    def set_init_single(self, agent: BaseAgent, init: list, init_mode: tuple, static: tuple = (), uncertain_param: tuple = ()):
-        agent_id = agent.id
+    def set_init_single(self, agent_id, init: list, init_mode: tuple, static=[], uncertain_param=[]):
         assert agent_id in self.agent_dict
+        agent = self.agent_dict[agent_id]
         assert len(init) == 1 or len(init) == 2
         # print(agent.controller.state_defs.values())
         if agent.controller != agent.controller.empty():
@@ -77,15 +77,37 @@ class Scenario:
         if static:
             self.static_dict[agent_id] = copy.deepcopy(static)
         else:
-            self.static_dict[agent_id] = ()
+            self.static_dict[agent_id] = tuple()
         if uncertain_param:
             self.uncertain_param_dict[agent_id] = copy.deepcopy(
                 uncertain_param)
         else:
-            self.uncertain_param_dict[agent_id] = ()
+            self.uncertain_param_dict[agent_id] = tuple()
         return
 
     def set_init(self, init_list, init_mode_list, static_list=[], uncertain_param_list=[]):
+        assert len(init_list) == len(self.agent_dict)
+        assert len(init_mode_list) == len(self.agent_dict)
+        assert len(static_list) == len(
+            self.agent_dict) or len(static_list) == 0
+        assert len(uncertain_param_list) == len(self.agent_dict)\
+            or len(uncertain_param_list) == 0
+        print(init_mode_list)
+        print(type(init_mode_list))
+        for i, agent_id in enumerate(self.agent_dict.keys()):
+            self.init_dict[agent_id] = copy.deepcopy(init_list[i])
+            self.init_mode_dict[agent_id] = copy.deepcopy(init_mode_list[i])
+            if static_list:
+                self.static_dict[agent_id] = copy.deepcopy(static_list[i])
+            else:
+                self.static_dict[agent_id] = []
+            if uncertain_param_list:
+                self.uncertain_param_dict[agent_id] = copy.deepcopy(
+                    uncertain_param_list[i])
+            else:
+                self.uncertain_param_dict[agent_id] = []
+
+    def set_init_new(self, init_list, init_mode_list, static_list=[], uncertain_param_list=[]):
         assert len(init_list) == len(self.agent_dict)
         assert len(init_mode_list) == len(self.agent_dict)
         assert len(static_list) == len(
@@ -101,20 +123,8 @@ class Scenario:
             uncertain_param_list = [[] for i in range(0, len(self.agent_dict))]
             # print(uncertain_param_list)
         for i, agent_id in enumerate(self.agent_dict.keys()):
-
-            self.set_init_single(self.agent_dict[agent_id], init_list[i],
+            self.set_init_single(agent_id, init_list[i],
                                  init_mode_list[i], static_list[i], uncertain_param_list[i])
-            # self.init_dict[agent_id] = copy.deepcopy(init_list[i])
-            # self.init_mode_dict[agent_id] = copy.deepcopy(init_mode_list[i])
-            # if static_list:
-            #     self.static_dict[agent_id] = copy.deepcopy(static_list[i])
-            # else:
-            #     self.static_dict[agent_id] = []
-            # if uncertain_param_list:
-            #     self.uncertain_param_dict[agent_id] = copy.deepcopy(
-            #         uncertain_param_list[i])
-            # else:
-            #     self.uncertain_param_dict[agent_id] = []
 
     def check_init(self):
         for agent_id in self.agent_dict.keys():
