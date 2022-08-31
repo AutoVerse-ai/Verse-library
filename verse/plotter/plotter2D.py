@@ -3,6 +3,7 @@ This file consist main plotter code for DryVR reachtube output
 """
 
 from __future__ import annotations
+import copy
 import numpy as np
 import plotly.graph_objects as go
 from typing import List, Tuple, Union
@@ -54,10 +55,14 @@ These 5 functions share the same API.
 """
 
 
-def reachtube_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, map_type='lines', scale_type='trace', print_dim_list=None, label_mode='None', combine_rect=None, sample_rate=1, speed_rate=1):
+def reachtube_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, print_dim_list=None, map_type='lines', scale_type='trace', label_mode='None', sample_rate=1, time_step=None, speed_rate=1, combine_rect=None):
     """It gives the animation of the verfication."""
     if isinstance(root, AnalysisTree):
         root = root.root
+    if time_step != None:
+        num_digit = num_digits(time_step)
+    else:
+        num_digit = 3
     root = sample_trace(root, sample_rate)
     agent_list = list(root.agent.keys())
     timed_point_dict = {}
@@ -83,7 +88,7 @@ def reachtube_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=g
                 x_max = max(x_max, trace[i][x_dim])
                 y_min = min(y_min, trace[i][y_dim])
                 y_max = max(y_max, trace[i][y_dim])
-                time_point = round(trace[i][0], 2)
+                time_point = trace[i][0]
                 rect = [trace[i][0:].tolist(), trace[i+1][0:].tolist()]
                 if time_point not in timed_point_dict:
                     num_points += 1
@@ -99,7 +104,7 @@ def reachtube_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=g
     fig_dict, sliders_dict = create_anime_dict(duration)
     for time_point in timed_point_dict:
         frame = {"data": [], "layout": {
-            "annotations": [], "shapes": []}, "name": '{:.3f}'.format(time_point)}
+            "annotations": [], "shapes": []}, "name": str(round(time_point, num_digit))}
         agent_dict = timed_point_dict[time_point]
         for agent_id, rect_list in agent_dict.items():
             for rect in rect_list:
@@ -117,12 +122,12 @@ def reachtube_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=g
 
         fig_dict["frames"].append(frame)
         slider_step = {"args": [
-            ['{:.3f}'.format(time_point)],
+            [str(round(time_point, num_digit))],
             {"frame": {"duration": duration, "redraw": False},
              "mode": "immediate",
              "transition": {"duration": duration}}
         ],
-            "label": '{:.3f}'.format(time_point),
+            "label": str(round(time_point, num_digit)),
             "method": "animate"}
         sliders_dict["steps"].append(slider_step)
 
@@ -176,6 +181,14 @@ def reachtube_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=g
                         showlegend=False,
                     ))
                     previous_mode[agent_id] = node.mode[agent_id]
+            if node.assert_hits != None and agent_id in node.assert_hits:
+                fig.add_trace(go.Scatter(x=[trace[-1, x_dim]], y=[trace[-1, y_dim]],
+                                         mode='markers+text',
+                                         text=['HIT:\n' +
+                                               a for a in node.assert_hits[agent_id]],
+                                         textfont={'color': 'grey'},
+                                         marker={'size': 4, 'color': 'black'},
+                                         showlegend=False))
         queue += node.child
     if scale_type == 'trace':
         fig.update_xaxes(
@@ -185,7 +198,7 @@ def reachtube_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=g
     return fig
 
 
-def reachtube_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim=2, map_type='lines', scale_type='trace', print_dim_list=None, label_mode='None', combine_rect=1, sample_rate=1):
+def reachtube_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, print_dim_list=None, map_type='lines', scale_type='trace', label_mode='None', sample_rate=1, combine_rect=1):
     """It statically shows all the traces of the verfication."""
     if isinstance(root, AnalysisTree):
         root = root.root
@@ -244,6 +257,14 @@ def reachtube_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go
                         showlegend=False,
                     ))
                     previous_mode[agent_id] = node.mode[agent_id]
+            if node.assert_hits != None and agent_id in node.assert_hits:
+                fig.add_trace(go.Scatter(x=[trace[-1, x_dim]], y=[trace[-1, y_dim]],
+                                         mode='markers+text',
+                                         text=['HIT:\n' +
+                                               a for a in node.assert_hits[agent_id]],
+                                         textfont={'color': 'grey'},
+                                         marker={'size': 4, 'color': 'black'},
+                                         showlegend=False))
         queue += node.child
     if scale_type == 'trace':
         fig.update_xaxes(
@@ -253,7 +274,7 @@ def reachtube_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go
     return fig
 
 
-def simulation_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=None, x_dim: int = 1, y_dim=2, map_type='lines', scale_type='trace', print_dim_list=None, label_mode='None', sample_rate=1):
+def simulation_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, print_dim_list=None, map_type='lines', scale_type='trace', label_mode='None', sample_rate=1):
     """It statically shows all the traces of the simulation."""
     if isinstance(root, AnalysisTree):
         root = root.root
@@ -293,31 +314,62 @@ def simulation_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=N
                 y_min = min(y_min, min(trace[:, y_dim]))
                 y_max = max(y_max, max(trace[:, y_dim]))
             mode_point_color = colors[agent_list.index(agent_id) % 12][0]
-            if previous_mode[agent_id] != node.mode[agent_id]:
-                text_pos, text = get_text_pos(node.mode[agent_id][0])
-                texts = [f"{agent_id}: {text}" for _ in trace]
-                mark_colors = [mode_point_color for _ in trace]
-                mark_sizes = [0 for _ in trace]
-                if node.assert_hits != None and agent_id in node.assert_hits:
-                    mark_colors[-1] = "black"
-                    mark_sizes[-1] = 10
-                    texts[-1] = "BOOM!!!\nAssertions hit:\n" + \
-                        "\n".join("  " + a for a in node.assert_hits[agent_id])
-                marker = Marker(color=mark_colors, size=mark_sizes)
-                fig.add_trace(go.Scatter(x=[trace[0, x_dim]], y=[trace[0, y_dim]],
-                                         mode='markers+lines',
-                                         line_color=mode_point_color,
-                                         opacity=0.5,
-                                         text=texts,
-                                         marker=marker,
-                                         textposition=text_pos,
-                                         textfont=dict(
-                                             size=text_size,
-                                             color=mode_text_color
-                ),
-                    showlegend=False,
-                ))
-                previous_mode[agent_id] = node.mode[agent_id]
+            if label_mode != 'None':
+                if previous_mode[agent_id] != node.mode[agent_id]:
+                    text_pos, text = get_text_pos(node.mode[agent_id][0])
+                    fig.add_trace(go.Scatter(x=[trace[0, x_dim]], y=[trace[0, y_dim]],
+                                             mode='markers+text',
+                                             line_color=mode_point_color,
+                                             text=str(agent_id) +
+                                             ': ' + text,
+                                             opacity=0.5,
+                                             textposition=text_pos,
+                                             textfont=dict(
+                        size=text_size,
+                        color=mode_text_color
+                    ),
+                        showlegend=False,
+                    ))
+                    previous_mode[agent_id] = node.mode[agent_id]
+            if node.assert_hits != None and agent_id in node.assert_hits:
+                fig.add_trace(go.Scatter(x=[trace[-1, x_dim]], y=[trace[-1, y_dim]],
+                                         mode='markers+text',
+                                         text=['HIT:\n' +
+                                               a for a in node.assert_hits[agent_id]],
+                                         textfont={'color': 'grey'},
+                                         marker={'size': 4, 'color': 'black'},
+                                         #  legendgroup=agent_id,
+                                         #  legendgrouptitle_text=agent_id,
+                                         #  name=str(round(start[0], 2))+'-'+str(round(end[0], 2)) +
+                                         #  '-'+str(count_dict[time])+'hit',
+                                         showlegend=False))
+            # if label_mode != 'None':
+            #     if previous_mode[agent_id] != node.mode[agent_id]:
+            #         text_pos, text = get_text_pos(node.mode[agent_id][0])
+            #         texts = [f"{agent_id}: {text}" for _ in trace]
+            #         mark_colors = [mode_point_color for _ in trace]
+            #         mark_sizes = [0 for _ in trace]
+            #         if node.assert_hits != None and agent_id in node.assert_hits:
+            #             mark_colors[-1] = "black"
+            #             mark_sizes[-1] = 10
+            #             texts[-1] = "BOOM!!!\nAssertions hit:\n" + \
+            #                 "\n".join(
+            #                     "  " + a for a in node.assert_hits[agent_id])
+            #         marker = Marker(color=mark_colors, size=mark_sizes)
+            #         fig.add_trace(go.Scatter(x=[trace[0, x_dim]], y=[trace[0, y_dim]],
+            #                                  mode='markers+lines',
+            #                                  line_color=mode_point_color,
+            #                                  opacity=0.5,
+            #                                  text=texts,
+            #                                  marker=marker,
+            #                                  textposition=text_pos,
+            #                                  textfont=dict(
+            #             size=text_size,
+            #             color=mode_text_color
+            #         ),
+            #             showlegend=False,
+            #         ))
+            #         previous_mode[agent_id] = node.mode[agent_id]
         queue += node.child
     if scale_type == 'trace':
         fig.update_xaxes(
@@ -330,11 +382,16 @@ def simulation_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=N
     return fig
 
 
-def simulation_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=None, x_dim: int = 1, y_dim=2, map_type='lines', scale_type='trace', print_dim_list=None, label_mode='None', anime_mode='normal', sample_rate=1, speed_rate=1):
+def simulation_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, print_dim_list=None, map_type='lines', scale_type='trace', label_mode='None', sample_rate=1, time_step=None, speed_rate=1, anime_mode='normal', full_trace=False):
     """Normal: It gives the animation of the simulation without trail but is faster."""
     """Trail: It gives the animation of the simulation with trail."""
     if isinstance(root, AnalysisTree):
         root = root.root
+    if time_step != None:
+        num_digit = num_digits(time_step)
+    else:
+        num_digit = 3
+    org_root = copy.deepcopy(root)
     root = sample_trace(root, sample_rate)
     timed_point_dict = {}
     queue = [root]
@@ -357,7 +414,7 @@ def simulation_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=
                 x_max = max(x_max, trace[i][x_dim])
                 y_min = min(y_min, trace[i][y_dim])
                 y_max = max(y_max, trace[i][y_dim])
-                time_point = round(trace[i][0], 2)
+                time_point = trace[i][0]
                 tmp_trace = trace[i][0:].tolist()
                 if time_point not in timed_point_dict:
                     num_points += 1
@@ -413,7 +470,7 @@ def simulation_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=
         # make frames
         for time_point in timed_point_dict:
             frame = {"data": [], "layout": {
-                "annotations": []}, "name": '{:.3f}'.format(time_point)}
+                "annotations": []}, "name": str(round(time_point, num_digit))}
             point_list = timed_point_dict[time_point]
             for agent_id, trace_list in point_list.items():
                 color = colors[agent_list.index(agent_id) % 12][1]
@@ -444,12 +501,12 @@ def simulation_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=
                 frame["data"].append(data_dict)
             fig_dict["frames"].append(frame)
             slider_step = {"args": [
-                ['{:.3f}'.format(time_point)],
+                [str(round(time_point, num_digit))],
                 {"frame": {"duration": duration, "redraw": True},
                  "mode": "immediate",
                  "transition": {"duration": duration}}
             ],
-                "label": '{:.3f}'.format(time_point),
+                "label": str(round(time_point, num_digit)),
                 "method": "animate"}
             sliders_dict["steps"].append(slider_step)
 
@@ -483,7 +540,7 @@ def simulation_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=
         for time_point_id in range(trail_limit, len(time_list)):
             time_point = time_list[time_point_id]
             frame = {"data": [], "layout": {
-                "annotations": []}, "name": '{:.3f}'.format(time_point)}
+                "annotations": []}, "name": str(round(time_point, num_digit))}
             for agent_id in agent_list:
                 color = colors[agent_list.index(agent_id) % 12][1]
                 for id in range(0, trail_len, step):
@@ -532,12 +589,12 @@ def simulation_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=
 
             fig_dict["frames"].append(frame)
             slider_step = {"args": [
-                ['{:.3f}'.format(time_point)],
+                [str(round(time_point, num_digit))],
                 {"frame": {"duration": duration, "redraw": False},
                  "mode": "immediate",
                  "transition": {"duration": duration}}
             ],
-                "label": '{:.3f}'.format(time_point),
+                "label": str(round(time_point, num_digit)),
                 "method": "animate"}
             sliders_dict["steps"].append(slider_step)
 
@@ -579,6 +636,18 @@ def simulation_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=
                         showlegend=False,
                     ))
                     previous_mode[agent_id] = node.mode[agent_id]
+            if node.assert_hits != None and agent_id in node.assert_hits:
+                fig.add_trace(go.Scatter(x=[trace[-1, x_dim]], y=[trace[-1, y_dim]],
+                                         mode='markers+text',
+                                         text=['HIT:\n' +
+                                               a for a in node.assert_hits[agent_id]],
+                                         textfont={'color': 'grey'},
+                                         marker={'size': 4, 'color': 'black'},
+                                         #  legendgroup=agent_id,
+                                         #  legendgrouptitle_text=agent_id,
+                                         #  name=str(round(start[0], 2))+'-'+str(round(end[0], 2)) +
+                                         #  '-'+str(count_dict[time])+'hit',
+                                         showlegend=False))
         queue += node.child
     if scale_type == 'trace':
         fig.update_xaxes(
@@ -586,6 +655,9 @@ def simulation_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=
         fig.update_yaxes(
             range=[y_min-scale_factor*(y_max-y_min), y_max+scale_factor*(y_max-y_min)])
     fig.update_layout(legend_title_text='Agent list')
+    if full_trace == True:
+        fig = simulation_tree(org_root, map, fig, x_dim, y_dim, print_dim_list,  map_type,
+                              scale_type, label_mode, sample_rate)
     return fig
 
 
@@ -593,8 +665,6 @@ def simulation_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=
 
 
 def reachtube_tree_single(root: Union[AnalysisTree, AnalysisTreeNode], agent_id, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, color=None, print_dim_list=None, combine_rect=1):
-    if isinstance(root, AnalysisTree):
-        root = root.root
     """It statically shows the verfication traces of one given agent."""
     if isinstance(root, AnalysisTree):
         root = root.root
@@ -756,14 +826,6 @@ def reachtube_tree_single(root: Union[AnalysisTree, AnalysisTreeNode], agent_id,
                         line={'width': 1},
                         showlegend=show_legend
                     ))
-        if node.assert_hits != None and agent_id in node.assert_hits:
-            fig.add_trace(go.Scatter(x=[trace[-1, x_dim]], y=[trace[-1, y_dim]],
-                                     mode='markers+text',
-                                     text=['HIT:\n' +
-                                           a for a in node.assert_hits[agent_id]],
-                                     textfont={'color': 'grey'},
-                                     marker={'size': 4, 'color': 'black'},
-                                     showlegend=False))
         queue += node.child
     return fig
 
@@ -810,18 +872,6 @@ def simulation_tree_single(root: Union[AnalysisTree, AnalysisTreeNode], agent_id
             name=str(round(start[0], 2))+'-'+str(round(end[0], 2)) +
             '-'+str(count_dict[time]),
             showlegend=True))
-        if node.assert_hits != None and agent_id in node.assert_hits:
-            fig.add_trace(go.Scatter(x=[trace[-1, x_dim]], y=[trace[-1, y_dim]],
-                                     mode='markers+text',
-                                     text=['HIT:\n' +
-                                           a for a in node.assert_hits[agent_id]],
-                                     textfont={'color': 'grey'},
-                                     marker={'size': 4, 'color': 'black'},
-                                     #  legendgroup=agent_id,
-                                     #  legendgrouptitle_text=agent_id,
-                                     #  name=str(round(start[0], 2))+'-'+str(round(end[0], 2)) +
-                                     #  '-'+str(count_dict[time])+'hit',
-                                     showlegend=False))
 
         color_id = (color_id+4) % 5
         queue += node.child
@@ -1081,3 +1131,13 @@ def sample_trace(root, sample_rate: int = 1):
                                         for i in range(0, len(node.trace[agent_id]), sample_rate)]
             queue += node.child
     return root
+
+
+def num_digits(val: float):
+    val_str = str(val)
+    digits_location = val_str.find('.')
+    if digits_location:
+        num = len(val_str[digits_location + 1:])
+        print(num)
+        return num
+    return False

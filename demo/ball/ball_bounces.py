@@ -97,6 +97,6 @@ if __name__ == "__main__":
     traces = bouncingBall.simulate(40, 0.01)
     # TODO: There should be a print({traces}) function
     fig = go.Figure()
-    fig = simulation_anime_trail(
-        traces, None, fig, 1, 2, 'fill', 'trace', print_dim_list=[1, 2])
+    fig = simulation_anime(
+        traces, None, fig, 1, 2, [1, 2], 'fill', 'trace')
     fig.show()

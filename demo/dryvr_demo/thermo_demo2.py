@@ -33,6 +33,6 @@ if __name__ == "__main__":
     )
     traces = scenario.simulate(3.5, 0.05)
     fig = go.Figure()
-    fig = simulation_tree(traces, None, fig, 2, 1,
-                          'lines', 'trace', print_dim_list=[2, 1])
+    fig = simulation_tree(traces, None, fig, 2, 1, [2, 1],
+                         'lines', 'trace')
     fig.show()

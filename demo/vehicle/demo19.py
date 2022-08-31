@@ -55,5 +55,5 @@ if __name__ == "__main__":
     traces = scenario.simulate(20, 0.05)
     fig = go.Figure()
     fig = simulation_anime(traces, tmp_map, fig, 1, 2,
-                           'lines', 'trace', print_dim_list=[1, 2, 4])
+                           [1, 2, 4], 'lines', 'trace')
     fig.show()

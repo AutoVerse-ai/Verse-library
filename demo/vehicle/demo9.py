@@ -7,7 +7,8 @@ from verse.plotter.plotter2D import *
 
 from enum import Enum, auto
 import plotly.graph_objects as go
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
+
 
 class LaneObjectMode(Enum):
     Vehicle = auto()
@@ -69,11 +70,10 @@ if __name__ == "__main__":
     )
 
     scenario.init_seg_length = 5
-    traces = scenario.verify(40, 0.1, params={"bloating_method":'GLOBAL'})
+    traces = scenario.verify(40, 0.1, params={"bloating_method": 'GLOBAL'})
 
     fig = go.Figure()
-    fig = reachtube_tree(traces, tmp_map, fig, 1,
-                                 2, 'lines', 'trace', print_dim_list=[1, 2])
+    fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace')
     fig.show()
 
     # fig = go.Figure()

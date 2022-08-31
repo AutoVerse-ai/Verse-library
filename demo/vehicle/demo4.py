@@ -104,16 +104,13 @@ if __name__ == "__main__":
     # while queue:
     #     node = queue.pop(0)
     #     print(node.mode)
-    #     queue += node.child 
+    #     queue += node.child
     #     node.child = []
     #     fig = go.Figure()
     #     fig = reachtube_tree(node, tmp_map, fig, 1, 2,
     #                         'lines', print_dim_list=[1, 2], combine_rect=10)
     #     fig.show()
-        
+
     fig = go.Figure()
-    fig = reachtube_tree(traces, tmp_map, fig, 1, 2,
-                         'lines', print_dim_list=[1, 2])
+    fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines')
     fig.show()
-
-

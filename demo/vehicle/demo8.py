@@ -76,6 +76,5 @@ if __name__ == "__main__":
     # plt.show()
 
     fig = go.Figure()
-    fig = reachtube_tree(traces, tmp_map, fig, 1,
-                         2, 'lines', 'trace', print_dim_list=[1, 2])
+    fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace')
     fig.show()

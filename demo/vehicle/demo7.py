@@ -99,14 +99,12 @@ if __name__ == "__main__":
         ],
 
     )
-    traces = scenario.simulate(60, 0.05)
+    traces = scenario.simulate(60, 0.1)
     fig = go.Figure()
-    fig = simulation_tree(traces, tmp_map, fig, 1,
-                          2, 'lines', 'trace', print_dim_list=[1, 2])
+    fig = simulation_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace')
     fig.show()
 
-    traces = scenario.verify(60, 0.05)
+    traces = scenario.verify(60, 0.1)
     fig = go.Figure()
-    fig = reachtube_tree(traces, tmp_map, fig, 1,
-                         2, 'lines', 'trace', print_dim_list=[1, 2])
+    fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace')
     fig.show()

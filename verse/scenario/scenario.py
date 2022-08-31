@@ -59,17 +59,18 @@ class Scenario:
         # agent.controller.vertexStrings = [','.join(elem) for elem in agent.controller.vertices]
 
     def set_init_single(self, agent_id, init: list, init_mode: tuple, static=[], uncertain_param=[]):
-        assert agent_id in self.agent_dict
+        assert agent_id in self.agent_dict, 'agent_id not found'
         agent = self.agent_dict[agent_id]
-        assert len(init) == 1 or len(init) == 2
+        assert len(init) == 1 or len(
+            init) == 2, 'the length of init should be 1 or 2'
         # print(agent.controller.state_defs.values())
         if agent.controller != agent.controller.empty():
             for i in init:
                 assert len(i) == len(
-                    list(agent.controller.state_defs.values())[0].cont)
+                    list(agent.controller.state_defs.values())[0].cont),  'the length of element in init not fit the number of continuous variables'
             # print(agent.controller.mode_defs)
             assert len(init_mode) == len(
-                list(agent.controller.state_defs.values())[0].disc)
+                list(agent.controller.state_defs.values())[0].disc),  'the length of element in init_mode not fit the number of discrete variables'
         if len(init) == 1:
             init = init+init
         self.init_dict[agent_id] = copy.deepcopy(init)
@@ -77,21 +78,23 @@ class Scenario:
         if static:
             self.static_dict[agent_id] = copy.deepcopy(static)
         else:
-            self.static_dict[agent_id] = tuple()
+            self.static_dict[agent_id] = []
         if uncertain_param:
             self.uncertain_param_dict[agent_id] = copy.deepcopy(
                 uncertain_param)
         else:
-            self.uncertain_param_dict[agent_id] = tuple()
+            self.uncertain_param_dict[agent_id] = []
         return
 
-    def set_init(self, init_list, init_mode_list, static_list=[], uncertain_param_list=[]):
-        assert len(init_list) == len(self.agent_dict)
-        assert len(init_mode_list) == len(self.agent_dict)
+    def set_init_org(self, init_list, init_mode_list, static_list=[], uncertain_param_list=[]):
+        assert len(init_list) == len(
+            self.agent_dict), 'the length of init_list not fit the number of agents'
+        assert len(init_mode_list) == len(
+            self.agent_dict), 'the length of init_mode_list not fit the number of agents'
         assert len(static_list) == len(
-            self.agent_dict) or len(static_list) == 0
+            self.agent_dict) or len(static_list) == 0, 'the length of static_list not fit the number of agents or equal to 0'
         assert len(uncertain_param_list) == len(self.agent_dict)\
-            or len(uncertain_param_list) == 0
+            or len(uncertain_param_list) == 0, 'the length of uncertain_param_list not fit the number of agents or equal to 0'
         print(init_mode_list)
         print(type(init_mode_list))
         for i, agent_id in enumerate(self.agent_dict.keys()):
@@ -107,13 +110,15 @@ class Scenario:
             else:
                 self.uncertain_param_dict[agent_id] = []
 
-    def set_init_new(self, init_list, init_mode_list, static_list=[], uncertain_param_list=[]):
-        assert len(init_list) == len(self.agent_dict)
-        assert len(init_mode_list) == len(self.agent_dict)
+    def set_init(self, init_list, init_mode_list, static_list=[], uncertain_param_list=[]):
+        assert len(init_list) == len(
+            self.agent_dict), 'the length of init_list not fit the number of agents'
+        assert len(init_mode_list) == len(
+            self.agent_dict), 'the length of init_mode_list not fit the number of agents'
         assert len(static_list) == len(
-            self.agent_dict) or len(static_list) == 0
+            self.agent_dict) or len(static_list) == 0, 'the length of static_list not fit the number of agents or equal to 0'
         assert len(uncertain_param_list) == len(self.agent_dict)\
-            or len(uncertain_param_list) == 0
+            or len(uncertain_param_list) == 0, 'the length of uncertain_param_list not fit the number of agents or equal to 0'
         print(init_mode_list)
         print(type(init_mode_list))
         if not static_list:
@@ -128,9 +133,15 @@ class Scenario:
 
     def check_init(self):
         for agent_id in self.agent_dict.keys():
-            if agent_id not in self.init_dict or agent_id not in self.init_mode_dict or agent_id not in self.static_dict or agent_id not in self.uncertain_param_dict:
-                return False
-        return True
+            assert agent_id in self.init_dict, 'init of {} not initialized'.format(
+                agent_id)
+            assert agent_id in self.init_mode_dict, 'init_mode of {} not initialized'.format(
+                agent_id)
+            assert agent_id in self.static_dict, 'static of {} not initialized'.format(
+                agent_id)
+            assert agent_id in self.uncertain_param_dict, 'uncertain_param of {} not initialized'.format(
+                agent_id)
+        return
 
     def simulate_multi(self, time_horizon, num_sim):
         res_list = []
@@ -140,7 +151,7 @@ class Scenario:
         return res_list
 
     def simulate(self, time_horizon, time_step) -> AnalysisTree:
-        assert self.check_init()
+        self.check_init()
         init_list = []
         init_mode_list = []
         static_list = []
@@ -156,7 +167,7 @@ class Scenario:
         return self.simulator.simulate(init_list, init_mode_list, static_list, uncertain_param_list, agent_list, self, time_horizon, time_step, self.map)
 
     def verify(self, time_horizon, time_step, reachability_method='DRYVR', params={}) -> AnalysisTree:
-        assert self.check_init()
+        self.check_init()
         init_list = []
         init_mode_list = []
         static_list = []
