@@ -25,20 +25,29 @@ class LaneMap_3d(LaneMap):
         return self.waypoints[agent_id][waypoint_id]
 
     def check_guard_box(self, agent_id, state, waypoint_id):
-        if waypoint_id >= len(self.guard_boxes[agent_id]):
-            return False
-        box = self.guard_boxes[agent_id][int(waypoint_id)]
-        for i in range(len(box[0])):
-            if state[i] < box[0][i] or state[i] > box[1][i]:
-                return False
+        waypoint_id = int(waypoint_id)
+        if agent_id not in self.guard_boxes or waypoint_id >= len(self.guard_boxes[agent_id]):
+            dest = self.waypoints[agent_id][waypoint_id][3:]
+            box_side = self.box_side[agent_id]
+            for i in range(len(dest)):
+                if state[i] < dest[i]-box_side[i]/2 or state[i] > dest[i]+box_side[i]/2:
+                    return False
+        else:
+            box = self.guard_boxes[agent_id][int(waypoint_id)]
+            for i in range(len(box[0])):
+                if state[i] < box[0][i] or state[i] > box[1][i]:
+                    return False
+        print(state)
+        print(self.waypoints[agent_id][waypoint_id])
+
         return True
 
     def get_timelimit_by_id(self, agent_id, waypoint_id):
         return self.time_limits[agent_id][waypoint_id]
 
     def get_next_point(self, lane, agent_id, waypoint_id):
-        curr_waypoint = self.waypoints[agent_id][waypoint_id]
-        curr_point = np.array(curr_waypoint[0:3])
+        curr_waypoint = self.waypoints[agent_id][int(waypoint_id)]
+        curr_point = np.array(curr_waypoint[3:])
         longitudinal = self.get_longitudinal_position(lane, curr_point)
         lateral = self.get_lateral_distance(lane, curr_point)
         seg = self.get_lane_segment(lane, curr_point)

@@ -31,20 +31,20 @@ class State:
 
 def controller(ego: State):
     output = copy.deepcopy(ego)
-    if ego.craft_mode == CraftMode.Follow_Waypoint and ego.done_flag > 0:
-        output.done_flag = 0
-        if ego.waypoint_index == 0:
-            output.waypoint_index = 1
-        if ego.waypoint_index == 1:
-            output.waypoint_index = 4
-        if ego.waypoint_index == 1:
-            output.waypoint_index = 2
-        if ego.waypoint_index == 2:
-            output.waypoint_index = 3
-        if ego.waypoint_index == 4:
-            output.waypoint_index = 5
-
-    # if ego.craft_mode == CraftMode.Follow_Lane and ego.done_flag > 0:
+    # if ego.craft_mode == CraftMode.Follow_Waypoint and ego.done_flag > 0:
     #     output.done_flag = 0
-    #     output.waypoint_index = output.waypoint_index + 1
+    #     if ego.waypoint_index == 0:
+    #         output.waypoint_index = 1
+    #     if ego.waypoint_index == 1:
+    #         output.waypoint_index = 4
+    #     if ego.waypoint_index == 1:
+    #         output.waypoint_index = 2
+    #     if ego.waypoint_index == 2:
+    #         output.waypoint_index = 3
+    #     if ego.waypoint_index == 4:
+    #         output.waypoint_index = 5
+
+    if ego.craft_mode == CraftMode.Follow_Lane and ego.done_flag > 0:
+        output.done_flag = 0
+        output.waypoint_index = ego.waypoint_index + 1
     return output

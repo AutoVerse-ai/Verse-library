@@ -6,8 +6,8 @@ import numpy as np
 
 
 class SimpleMap1(LaneMap_3d):
-    def __init__(self, waypoints=[], guard_boxes=[], time_limits=[]):
-        super().__init__(waypoints=waypoints, guard_boxes=guard_boxes, time_limits=time_limits)
+    def __init__(self, waypoints: dict = {}, guard_boxes: dict = {}, time_limits: dict = {}, box_side: dict = {}, t_v_pair: dict = {}):
+        super().__init__(waypoints=waypoints, guard_boxes=guard_boxes, time_limits=time_limits, box_side=box_side, t_v_pair=t_v_pair)
         segment0 = StraightLane_3d(
             'seg0',
             [0, 0, 0],

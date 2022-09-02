@@ -36,29 +36,39 @@ if __name__ == "__main__":
     time_limits = prarms["agents"][0]["timeHorizons"]
     # print(waypoints)
     # print(guard_boxes)
-    quadrotor = QuadrotorAgent(
-        'test', file_name=input_code_name, waypoints=waypoints, boxes=guard_boxes, time_limits=time_limits)
-    scenario.add_agent(quadrotor)
-    tmp_map = SimpleMap1(waypoints={quadrotor.id: waypoints},
-                         guard_boxes={quadrotor.id: guard_boxes}, time_limits={quadrotor.id: time_limits})
+    time_step = 0.05
+    quadrotor1 = QuadrotorAgent(
+        'test1', file_name=input_code_name, time_limits=[1]*100)
+    scenario.add_agent(quadrotor1)
+    quadrotor2 = QuadrotorAgent(
+        'test2', file_name=input_code_name, time_limits=[1]*100)
+    scenario.add_agent(quadrotor2)
+    wps = {quadrotor1.id: [[3, 0, 0, 4, 0, 0]],
+           quadrotor2.id: [[3, 1, 0, 4, 1, 0]]}
+    t_v = {quadrotor1.id: (1, 1), quadrotor2.id: (1, 2)}
+    bs = {quadrotor1.id: [0.4, 0.4, 0.4, 2, 2, 2],
+          quadrotor2.id: [0.4, 0.4, 0.4, 2, 2, 2]}
+    tmp_map = SimpleMap1(waypoints=wps, t_v_pair=t_v, box_side=bs)
     scenario.set_map(tmp_map)
     scenario.set_sensor(QuadrotorSensor())
     # modify mode list input
     scenario.set_init(
         [
-            [[2.75, -0.25, -0.1, 0, 0, 0, 0, 0], [3, 0, 0, 0.1, 0.1, 0.1, 0, 0]],
+            [[2.75, 0, 0, 0, 0, 0, 0, 0], [3, 0, 0, 0.1, 0.1, 0.1, 0, 0]],
+            [[2.75, 1, 0, 0, 0, 0, 0, 0], [3, 1, 0, 0.1, 0.1, 0.1, 0, 0]],
         ],
         [
-            tuple([CraftMode.Follow_Waypoint, LaneMode.Lane0]),
+            tuple([CraftMode.Follow_Lane, LaneMode.Lane1]),
+            tuple([CraftMode.Follow_Lane, LaneMode.Lane1])
         ]
     )
-    traces = scenario.simulate(200, 0.05)
+    traces = scenario.simulate(30, time_step)
     # path = os.path.abspath(__file__)
     # path = path.replace('quadrotor_demo.py', 'output.json')
     # write_json(traces, path)
     fig = go.Figure()
-    fig = simulation_tree(traces, None, fig, 1, 2, [0, 1, 2],
+    fig = simulation_tree(traces, tmp_map, fig, 1, 2, [0, 1, 2],
                           'lines', 'trace')
-    fig = fig.add_trace(go.Scatter(
-        x=[3, 5, 5, 2, 2, 8, 8], y=[0, 0, 3, 3, 6, 3, 0], text=[0, 1, 2, 3, 4, 5, 6], mode='markers', marker={'color': 'black'}))
+    # fig = fig.add_trace(go.Scatter(
+    #     x=[3, 5, 5, 2, 2, 8, 8], y=[0, 0, 3, 3, 6, 3, 0], text=[0, 1, 2, 3, 4, 5, 6], mode='markers', marker={'color': 'black'}))
     fig.show()
