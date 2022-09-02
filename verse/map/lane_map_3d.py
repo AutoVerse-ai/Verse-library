@@ -50,10 +50,11 @@ class LaneMap_3d(LaneMap):
         else:
             next_point = next_seg.position(0, lateral)
 
+        next_waypoint = curr_point.tolist() + next_point.tolist()
         if len(curr_waypoint) == 3:
             self.waypoints[agent_id][waypoint_id] = curr_point.tolist() + \
                 next_point.tolist()
         else:
             self.waypoints[agent_id].append(
                 curr_point.tolist()+next_point.tolist())
-        return
+        return next_waypoint

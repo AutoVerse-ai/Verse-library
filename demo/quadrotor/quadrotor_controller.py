@@ -44,7 +44,7 @@ def controller(ego: State):
         if ego.waypoint_index == 4:
             output.waypoint_index = 5
 
-    if ego.craft_mode == CraftMode.Follow_Lane and ego.done_flag > 0:
-        output.done_flag = 0
-        output.waypoint_index = output.waypoint_index + 1
+    # if ego.craft_mode == CraftMode.Follow_Lane and ego.done_flag > 0:
+    #     output.done_flag = 0
+    #     output.waypoint_index = output.waypoint_index + 1
     return output

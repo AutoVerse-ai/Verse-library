@@ -1,6 +1,9 @@
 from quadrotor_agent import QuadrotorAgent
 from verse import Scenario
 from verse.plotter.plotter2D import *
+from verse.map.example_map.simple_map_3d import SimpleMap1
+from verse.plotter.plotter2D import *
+from verse.sensor.example_sensor.quadrotor_sensor import QuadrotorSensor
 import os
 import json
 import plotly.graph_objects as go
@@ -20,7 +23,7 @@ class LaneMode(Enum):
 
 
 if __name__ == "__main__":
-    input_code_name = './quadrotor_controller.py'
+    input_code_name = './demo/quadrotor/quadrotor_controller.py'
     scenario = Scenario()
 
     path = os.path.abspath(__file__)
@@ -34,7 +37,7 @@ if __name__ == "__main__":
     # print(waypoints)
     # print(guard_boxes)
     quadrotor = QuadrotorAgent(
-        'test', file_name=input_code_name)
+        'test', file_name=input_code_name, waypoints=waypoints, boxes=guard_boxes, time_limits=time_limits)
     scenario.add_agent(quadrotor)
     tmp_map = SimpleMap1(waypoints={quadrotor.id: waypoints},
                          guard_boxes={quadrotor.id: guard_boxes}, time_limits={quadrotor.id: time_limits})
@@ -50,9 +53,9 @@ if __name__ == "__main__":
         ]
     )
     traces = scenario.simulate(200, 0.05)
-    path = os.path.abspath(__file__)
-    path = path.replace('quadrotor_demo.py', 'output.json')
-    write_json(traces, path)
+    # path = os.path.abspath(__file__)
+    # path = path.replace('quadrotor_demo.py', 'output.json')
+    # write_json(traces, path)
     fig = go.Figure()
     fig = simulation_tree(traces, None, fig, 1, 2, [0, 1, 2],
                           'lines', 'trace')

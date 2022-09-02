@@ -9,6 +9,7 @@ import math
 from verse.agents import BaseAgent
 from verse.map import LaneMap
 
+
 class FFNNC(torch.nn.Module):
     def __init__(self, D_in=6, D_out=8):
         super(FFNNC, self).__init__()
@@ -61,7 +62,7 @@ class QuadrotorAgent(BaseAgent):
         ddone_flag = ddf
         return [dref_x, dref_y, dref_z, dx, dy, dz, dvx, dvy, dvz, dwaypoint, ddone_flag]
 
-    def action_handler(self,  state) -> Tuple[float, float]:
+    def action_handler(self,  state):
         waypoint = state[-2]
         df = 0
         if self.in_box(state[3:9], waypoint):
@@ -166,6 +167,8 @@ class QuadrotorAgent(BaseAgent):
     def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step, lane_map: LaneMap = None) -> np.ndarray:
         # total time_bound remained
         time_bound = float(time_bound)
+        print(initialCondition[-2])
+        print(self.time_limits)
         initialCondition[-2] = int(initialCondition[-2])
         time_bound = min(self.time_limits[initialCondition[-2]], time_bound)
         number_points = int(np.ceil(time_bound/time_step))

@@ -17,7 +17,7 @@ def set_states_2d_ball(cnts, disc, thing, val):
     state, mode, static = val
     sets(cnts, thing, ['x', 'y', 'z', 'vx', 'vy', 'vz',
          'waypoint_index', 'done_flag'], state[1:9])
-    sets(disc, thing, ["craft_mode"], mode)
+    sets(disc, thing, ["craft_mode", "lane_mode"], mode)
 
 
 def set_states_3d_ball(cnts, disc, thing, val):
@@ -26,14 +26,14 @@ def set_states_3d_ball(cnts, disc, thing, val):
     assert len(transp) == 8
     sets(cnts, thing, ['x', 'y', 'z', 'vx', 'vy', 'vz',
          'waypoint_index', 'done_flag'], transp)
-    sets(disc, thing, ["craft_mode"], mode)
+    sets(disc, thing, ["craft_mode", "lane_mode"], mode)
 
 
 def add_states_2d_ball(cont, disc, thing, val):
     state, mode, static = val
     adds(cont, thing, ['x', 'y', 'z', 'vx', 'vy', 'vz',
          'waypoint_index', 'done_flag'], state[1:9])
-    adds(disc, thing, ["craft_mode"], mode)
+    adds(disc, thing, ["craft_mode", "lane_mode"], mode)
 
 
 def add_states_3d_ball(cont, disc, thing, val):
@@ -42,7 +42,7 @@ def add_states_3d_ball(cont, disc, thing, val):
     assert len(transp) == 8
     adds(cont, thing, ['x', 'y', 'z', 'vx', 'vy',
          'vz', 'waypoint_index', 'done_flag'], transp)
-    adds(disc, thing, ["craft_mode"], mode)
+    adds(disc, thing, ["craft_mode", "lane_mode"], mode)
 
 
 class QuadrotorSensor():
