@@ -7,7 +7,8 @@ from noisy_sensor import NoisyVehicleSensor
 
 from enum import Enum, auto
 import plotly.graph_objects as go
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
+
 
 class LaneObjectMode(Enum):
     Vehicle = auto()
@@ -53,7 +54,7 @@ if __name__ == "__main__":
     scenario.add_agent(car)
     tmp_map = SimpleMap2()
     scenario.set_map(tmp_map)
-    scenario.set_sensor(NoisyVehicleSensor((1,1), (0,0)))
+    scenario.set_sensor(NoisyVehicleSensor((1, 1), (0, 0)))
     scenario.set_init(
         [
             [[5, -0.1, 0, 1.0], [5.5, 0.1, 0, 1.1]],
@@ -90,10 +91,8 @@ if __name__ == "__main__":
         ]
     )
     scenario1.init_seg_length = 5
-    traces1 = scenario1.verify(40, 0.05, params={"bloating_method":'GLOBAL'})
+    traces1 = scenario1.verify(40, 0.05, params={"bloating_method": 'GLOBAL'})
 
     fig = go.Figure()
-    fig = reachtube_tree(traces, tmp_map, fig, 0,
-                                 1, 'lines', 'trace', print_dim_list=[1, 2])
+    fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace')
     fig.show()
-

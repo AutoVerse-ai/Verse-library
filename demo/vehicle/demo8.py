@@ -7,6 +7,7 @@ from verse.plotter.plotter2D import *
 from enum import Enum, auto
 import plotly.graph_objects as go
 
+
 class LaneObjectMode(Enum):
     Vehicle = auto()
     Ped = auto()        # Pedestrians
@@ -75,6 +76,5 @@ if __name__ == "__main__":
     # plt.show()
 
     fig = go.Figure()
-    fig = simulation_anime(traces, tmp_map, fig, 1,
-                           2, 'lines', 'trace', print_dim_list=[1, 2])
+    fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace')
     fig.show()

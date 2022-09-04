@@ -7,7 +7,8 @@ from verse.plotter.plotter2D import *
 
 from enum import Enum, auto
 import plotly.graph_objects as go
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
+
 
 class LaneObjectMode(Enum):
     Vehicle = auto()
@@ -37,9 +38,8 @@ class State:
     v: float
     vehicle_mode: VehicleMode
     lane_mode: LaneMode
-    type_mode: LaneObjectMode
 
-    def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: LaneMode, type_mode: LaneObjectMode):
+    def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: LaneMode):
         pass
 
 
@@ -69,14 +69,13 @@ if __name__ == "__main__":
     )
 
     scenario.init_seg_length = 5
-    traces = scenario.verify(40, 0.1, params={"bloating_method":'GLOBAL'})
+    traces = scenario.verify(40, 0.1, params={"bloating_method": 'GLOBAL'})
 
     fig = go.Figure()
-    fig = reachtube_tree(traces, tmp_map, fig, 1,
-                                 2, 'lines', 'trace', print_dim_list=[1, 2])
+    fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace')
     fig.show()
 
-    # fig = go.Figure()
-    # fig = reachtube_anime(traces, tmp_map, fig, 1,
-    #                        2, 'lines', 'trace', print_dim_list=[1, 2])
-    # fig.show()
+    fig = go.Figure()
+    fig = reachtube_anime(traces, tmp_map, fig, 1,
+                           2, 'lines', 'trace', combine_rect = 1)
+    fig.show()

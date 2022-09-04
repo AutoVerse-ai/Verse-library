@@ -27,9 +27,9 @@ class State:
     v = 0.0
     vehicle_mode: VehicleMode = VehicleMode.Normal
     lane_mode: LaneMode = LaneMode.Lane0
-    type_mode: LaneObjectMode = LaneObjectMode.Vehicle
+    type: LaneObjectMode = LaneObjectMode.Vehicle
 
-    def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: LaneMode, type_mode: LaneObjectMode):
+    def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: LaneMode, type: LaneObjectMode):
         pass
 
 def vehicle_front(ego, others, lane_map):

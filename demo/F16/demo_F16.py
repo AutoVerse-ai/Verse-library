@@ -100,6 +100,6 @@ if __name__ == "__main__":
     )
     traces = scenario.simulate(tmax, step)
     fig = go.Figure()
-    fig = simulation_tree(traces, None, fig, 0, 12,
-                          'lines', 'trace', print_dim_list=[1, 2], label_mode='None')
+    fig = simulation_tree(traces, None, fig, 0, 12, [
+                          1, 2], 'lines', 'trace', label_mode='None')
     fig.show()

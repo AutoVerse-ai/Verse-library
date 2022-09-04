@@ -1,5 +1,5 @@
 from verse.agents.example_agent import CarAgent, NPCAgent
-from verse.map.example_map import  SimpleMap4
+from verse.map.example_map import SimpleMap4
 from verse import Scenario
 from verse.plotter.plotter2D import *
 
@@ -90,7 +90,8 @@ if __name__ == "__main__":
             (LaneObjectMode.Vehicle,),
         ]
     )
-    # traces = scenario.verify(80, 0.05)
+    # traces = scenario.simulate(80, 0.05)
+    traces = scenario.verify(80, 0.05)
 
     # fig = plt.figure(2)
     # fig = plot_map(tmp_map, 'g', fig)
@@ -104,10 +105,11 @@ if __name__ == "__main__":
 
     traces = scenario.simulate(80, 0.05)
     fig = go.Figure()
-    fig = simulation_tree(traces, tmp_map, fig, 1, 2, 'lines', 'trace', print_dim_list=[1, 2])
+    fig = simulation_anime(traces, tmp_map, fig, 1, 2, [
+                           1, 2], 'lines', 'trace', sample_rate=1)
     fig.show()
 
     traces = scenario.verify(80, 0.05)
     fig = go.Figure()
-    fig = reachtube_tree(traces, tmp_map, fig, 1, 2, 'lines', 'trace', print_dim_list=[1,2])
+    fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace')
     fig.show()
