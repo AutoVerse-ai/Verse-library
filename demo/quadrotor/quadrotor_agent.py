@@ -182,7 +182,7 @@ class QuadrotorAgent(BaseAgent):
         return trace
 
     def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step, lane_map: LaneMap_3d = None) -> np.ndarray:
-        print("TC", initialCondition)
+        # print("TC", initialCondition)
         # total time_bound remained
         time_bound = float(time_bound)
         initialCondition[-2] = int(initialCondition[-2])
@@ -195,7 +195,7 @@ class QuadrotorAgent(BaseAgent):
         sym_rot_angle = 0
         trace = self.runModel(mode, mode_parameters[0:3] + list(initialCondition), time_bound, time_step, [ref_vx, ref_vy, ref_vz,
                                                                                                            sym_rot_angle], lane_map)
-        print([ref_vx, ref_vy, ref_vz, sym_rot_angle])
+        # print([ref_vx, ref_vy, ref_vz, sym_rot_angle])
         return np.array(trace)
 
 # import json

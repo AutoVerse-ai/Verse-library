@@ -2,6 +2,7 @@ import numpy as np
 from typing import List
 from abc import ABCMeta, abstractmethod
 from typing import Tuple, List, Optional, Union
+from math import pi, cos, sin, acos, asin
 
 from verse.analysis.utils import wrap_to_pi, Vector, get_class_path, class_from_path, to_serializable
 from verse.map.lane_segment import LineType, AbstractLane, StraightLane
@@ -33,7 +34,7 @@ class AbstractLane_3d(object):
         self.type = None
 
     @abstractmethod
-    def position(self, longitudinal: float, lateral: float) -> np.ndarray:
+    def position(self, longitudinal: float, lateral: float, theta: float) -> np.ndarray:
         """
         Convert local lane coordinates to a world position.
 
@@ -44,7 +45,7 @@ class AbstractLane_3d(object):
         raise NotImplementedError()
 
     @abstractmethod
-    def local_coordinates(self, position: np.ndarray) -> Tuple[float, float]:
+    def local_coordinates(self, position: np.ndarray) -> Tuple[float, float, float]:
         """
         Convert a world position to local lane coordinates.
 
@@ -168,8 +169,8 @@ class StraightLane_3d(AbstractLane_3d):
         self.start = np.array(start)
         self.end = np.array(end)
         self.width = width
-        self.heading = np.arctan2(
-            self.end[1] - self.start[1], self.end[0] - self.start[0])
+        # self.heading = np.arctan2(
+        #     self.end[1] - self.start[1], self.end[0] - self.start[0])
         self.length = np.linalg.norm(self.end - self.start)
         self.line_types = line_types or [LineType.STRIPED, LineType.STRIPED]
         self.direction = (self.end - self.start) / self.length
@@ -181,20 +182,80 @@ class StraightLane_3d(AbstractLane_3d):
         self.type = 'Straight'
         self.longitudinal_start = 0
 
-    def position(self, longitudinal: float, lateral: float) -> np.ndarray:
-        return self.start + longitudinal * self.direction + lateral * self.direction_lateral
+    def position(self, longitudinal: float, lateral: float, theta: float) -> np.ndarray:
+        n = self.direction
+        center = self.start+longitudinal*n
+        l1 = (n[0]**2+n[1]**2)**0.5
+        if l1 != 0:
+            l2 = 1.0
+            a0 = n[1]/l1
+            b0 = n[0]*n[2]/l1/l2
+            a1 = -n[0]/l1
+            b1 = n[1]*n[2]/l1/l2
+            b2 = -l1/l2
+            point = center+lateral*np.array([a0*cos(theta)+b0*sin(theta),
+                                            a1*cos(theta)+b1*sin(theta), b2*sin(theta)])
+        else:
+            point = center+lateral*np.array([cos(theta), sin(theta), 0])
+        return point
 
-    def heading_at(self, longitudinal: float) -> float:
-        return self.heading
+    # def heading_at(self, longitudinal: float) -> float:
+    #     return self.heading
 
     def width_at(self, longitudinal: float) -> float:
         return self.width
 
-    def local_coordinates(self, position: np.ndarray) -> Tuple[float, float]:
+    def local_coordinates(self, position: np.ndarray) -> Tuple[float, float, float]:
         delta = position - self.start
-        longitudinal = np.dot(delta, self.direction)
-        lateral = np.dot(delta, self.direction_lateral)
-        return float(longitudinal), float(lateral)
+        n = self.direction
+        cross = np.cross(n, delta)
+        rget = np.linalg.norm(cross)
+        lget = np.dot(delta, n)
+        centerget = self.start+lget*n
+        if round(rget, 3) == 0:
+            return lget, rget, 0
+        delta2 = (position-centerget)/rget
+        l1 = (n[0]**2+n[1]**2)**0.5
+        if l1 != 0:
+            l2 = 1.0
+            a0 = n[1]/l1
+            b0 = n[0]*n[2]/l1/l2
+            a1 = -n[0]/l1
+            b1 = n[1]*n[2]/l1/l2
+            b2 = -l1/l2
+            sinx = round(-delta2[2]*l2/l1, 3)
+            if n[0] != 0:
+                cosx = round((delta2[1]-b1*sinx)/a1, 3)
+            if n[1] != 0:
+                cosx = round((delta2[0]-b0*sinx)/a0, 3)
+        else:
+            sinx = round(delta2[1], 3)
+            cosx = round(delta2[0], 3)
+        theta1 = asin(sinx)
+        theta2 = acos(cosx)
+        # if round(theta1,3) ==round(theta2,3):
+        #     thetaget=round(theta1,3)
+        # elif theta1<0 and theta2>pi/2 and round(pi-theta1,3) ==round(2*pi-theta2,3):
+        #     thetaget=round(pi-theta1,3)
+        # elif theta1<0 and theta2<pi/2 and round(2*pi+theta1,3) ==round(2*pi-theta2,3):
+        #     thetaget=round(pi-theta1,2*pi+theta1)
+        # elif theta1>0 and theta2>pi/2 and round(pi-theta1,3) ==round(theta2,3):
+        #     thetaget=round(pi-theta1,3)
+        if sinx >= 0 and cosx >= 0:
+            pass
+        elif sinx >= 0 and cosx < 0:
+            theta1 = pi-theta1
+        elif sinx < 0 and cosx >= 0:
+            theta1 = 2*pi+theta1
+            theta2 = 2*pi-theta2
+        elif sinx < 0 and cosx < 0:
+            theta1 = pi-theta1
+            theta2 = 2*pi-theta2
+        # print(theta1, theta2)
+        if round(theta1, 3) == round(theta2, 3):
+            return float(lget), float(rget), round(theta1, 3)
+        else:
+            raise ValueError("error theta")
 
     @classmethod
     def from_config(cls, config: dict):

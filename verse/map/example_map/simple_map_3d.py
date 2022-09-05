@@ -1,6 +1,6 @@
 from verse.map.lane_map_3d import LaneMap_3d
 from verse.map.lane_segment_3d import StraightLane_3d
-from verse.map.lane import Lane
+from verse.map.lane_3d import Lane_3d
 
 import numpy as np
 
@@ -21,6 +21,6 @@ class SimpleMap1(LaneMap_3d):
             [100, 10, 0],
             3
         )
-        lane0 = Lane('Lane1', [segment0])
-        lane1 = Lane('Lane2', [segment1])
+        lane0 = Lane_3d('Lane1', [segment0])
+        lane1 = Lane_3d('Lane2', [segment1])
         self.add_lanes([lane0, lane1])

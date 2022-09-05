@@ -48,5 +48,5 @@ def controller(ego: State):
         output.done_flag = 0
         output.waypoint_index = ego.waypoint_index + 1
 
-    assert not (ego.x > 20 and ego.x < 25), "test"
+    # assert not (ego.x > 20 and ego.x < 25), "test"
     return output
