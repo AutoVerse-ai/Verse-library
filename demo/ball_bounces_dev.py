@@ -1,5 +1,10 @@
+from verse.agents.example_agent.ball_agent import BallAgent
+import plotly.graph_objects as go
+from verse.plotter.plotter2D import *
+from verse import Scenario
 from enum import Enum, auto
 import copy
+
 
 class BallTypeMode(Enum):
     TYPE1 = auto()
@@ -21,7 +26,8 @@ class State:
     def __init__(self, x, y, vx, vy, ball_mode: BallMode, type: BallTypeMode):
         pass
 
-def controller(ego:State, other: State):
+
+def controller(ego: State, other: State):
     output = copy.deepcopy(ego)
     if ego.x < 0:
         output.vx = -ego.vx
@@ -37,14 +43,10 @@ def controller(ego:State, other: State):
         output.y = 20
 
     def close(a, b):
-        return a.x-b.x<5 and a.x-b.x>-5 and a.y-b.y<5 and a.y-b.y>-5
+        return a.x-b.x < 5 and a.x-b.x > -5 and a.y-b.y < 5 and a.y-b.y > -5
     assert not (close(ego, other) and ego.x < other.x), "collision"
     return output
 
-from verse.agents.example_agent.ball_agent import BallAgent
-from verse import Scenario
-from verse.plotter.plotter2D import *
-import plotly.graph_objects as go
 
 if __name__ == "__main__":
     ball_controller = './demo/ball_bounces_dev.py'

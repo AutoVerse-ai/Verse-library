@@ -47,4 +47,6 @@ def controller(ego: State):
     if ego.craft_mode == CraftMode.Follow_Lane and ego.done_flag > 0:
         output.done_flag = 0
         output.waypoint_index = ego.waypoint_index + 1
+
+    assert not (ego.x > 20 and ego.x < 25), "test"
     return output

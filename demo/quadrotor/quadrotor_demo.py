@@ -44,7 +44,7 @@ if __name__ == "__main__":
         'test2', file_name=input_code_name, time_limits=[1]*100)
     scenario.add_agent(quadrotor2)
     wps = {quadrotor1.id: [[3, 0, 0, 4, 0, 0]],
-           quadrotor2.id: [[3, 1, 0, 4, 1, 0]]}
+           quadrotor2.id: [[3, 2, 0, 4, 2, 0]]}
     t_v = {quadrotor1.id: (1, 1), quadrotor2.id: (1, 2)}
     bs = {quadrotor1.id: [0.4, 0.4, 0.4, 2, 2, 2],
           quadrotor2.id: [0.4, 0.4, 0.4, 2, 2, 2]}
@@ -55,11 +55,11 @@ if __name__ == "__main__":
     scenario.set_init(
         [
             [[2.75, 0, 0, 0, 0, 0, 0, 0], [3, 0, 0, 0.1, 0.1, 0.1, 0, 0]],
-            [[2.75, 1, 0, 0, 0, 0, 0, 0], [3, 1, 0, 0.1, 0.1, 0.1, 0, 0]],
+            [[2.75, 2, 0, 0, 0, 0, 0, 0], [3, 2, 0, 0.1, 0.1, 0.1, 0, 0]],
         ],
         [
             tuple([CraftMode.Follow_Lane, LaneMode.Lane1]),
-            tuple([CraftMode.Follow_Lane, LaneMode.Lane1])
+            tuple([CraftMode.Follow_Lane, LaneMode.Lane2])
         ]
     )
     traces = scenario.simulate(30, time_step)
