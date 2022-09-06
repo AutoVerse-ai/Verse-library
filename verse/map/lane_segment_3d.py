@@ -183,20 +183,8 @@ class StraightLane_3d(AbstractLane_3d):
         self.longitudinal_start = 0
 
     def position(self, longitudinal: float, lateral: float, theta: float) -> np.ndarray:
-        n = self.direction
-        center = self.start+longitudinal*n
-        l1 = (n[0]**2+n[1]**2)**0.5
-        if l1 != 0:
-            l2 = 1.0
-            a0 = n[1]/l1
-            b0 = n[0]*n[2]/l1/l2
-            a1 = -n[0]/l1
-            b1 = n[1]*n[2]/l1/l2
-            b2 = -l1/l2
-            point = center+lateral*np.array([a0*cos(theta)+b0*sin(theta),
-                                            a1*cos(theta)+b1*sin(theta), b2*sin(theta)])
-        else:
-            point = center+lateral*np.array([cos(theta), sin(theta), 0])
+        point = get_coor_by_rt(
+            lateral, theta, self.direction, self.start+longitudinal*self.direction)
         return point
 
     # def heading_at(self, longitudinal: float) -> float:
@@ -214,48 +202,7 @@ class StraightLane_3d(AbstractLane_3d):
         centerget = self.start+lget*n
         if round(rget, 3) == 0:
             return lget, rget, 0
-        delta2 = (position-centerget)/rget
-        l1 = (n[0]**2+n[1]**2)**0.5
-        if l1 != 0:
-            l2 = 1.0
-            a0 = n[1]/l1
-            b0 = n[0]*n[2]/l1/l2
-            a1 = -n[0]/l1
-            b1 = n[1]*n[2]/l1/l2
-            b2 = -l1/l2
-            sinx = round(-delta2[2]*l2/l1, 3)
-            if n[0] != 0:
-                cosx = round((delta2[1]-b1*sinx)/a1, 3)
-            if n[1] != 0:
-                cosx = round((delta2[0]-b0*sinx)/a0, 3)
-        else:
-            sinx = round(delta2[1], 3)
-            cosx = round(delta2[0], 3)
-        theta1 = asin(sinx)
-        theta2 = acos(cosx)
-        # if round(theta1,3) ==round(theta2,3):
-        #     thetaget=round(theta1,3)
-        # elif theta1<0 and theta2>pi/2 and round(pi-theta1,3) ==round(2*pi-theta2,3):
-        #     thetaget=round(pi-theta1,3)
-        # elif theta1<0 and theta2<pi/2 and round(2*pi+theta1,3) ==round(2*pi-theta2,3):
-        #     thetaget=round(pi-theta1,2*pi+theta1)
-        # elif theta1>0 and theta2>pi/2 and round(pi-theta1,3) ==round(theta2,3):
-        #     thetaget=round(pi-theta1,3)
-        if sinx >= 0 and cosx >= 0:
-            pass
-        elif sinx >= 0 and cosx < 0:
-            theta1 = pi-theta1
-        elif sinx < 0 and cosx >= 0:
-            theta1 = 2*pi+theta1
-            theta2 = 2*pi-theta2
-        elif sinx < 0 and cosx < 0:
-            theta1 = pi-theta1
-            theta2 = 2*pi-theta2
-        # print(theta1, theta2)
-        if round(theta1, 3) == round(theta2, 3):
-            return float(lget), float(rget), round(theta1, 3)
-        else:
-            raise ValueError("error theta")
+        return float(lget), float(rget), get_theta_by_coor(position, n, centerget, rget)
 
     @classmethod
     def from_config(cls, config: dict):
@@ -276,3 +223,148 @@ class StraightLane_3d(AbstractLane_3d):
                 "priority": self.priority
             }
         }
+
+
+class CircularLane_3d(AbstractLane_3d):
+
+    """A lane going in circle arc."""
+
+    def __init__(self,
+                 id,
+                 center: Vector,
+                 radius: float,
+                 norm_vec: Vector,
+                 start_phase: float,
+                 end_phase: float,
+                 clockwise: bool = True,
+                 width: float = AbstractLane.DEFAULT_WIDTH,
+                 line_types: List[LineType] = None,
+                 forbidden: bool = False,
+                 speed_limit: float = 20,
+                 priority: int = 0) -> None:
+        super().__init__(id)
+        self.center = np.array(center)
+        self.radius = radius
+        self.norm_vec = norm_vec/np.linalg.norm(norm_vec)
+        self.start_phase = start_phase
+        self.end_phase = end_phase
+        self.clockwise = clockwise
+        self.direction = -1 if clockwise else 1
+        self.width = width
+        self.line_types = line_types or [LineType.STRIPED, LineType.STRIPED]
+        self.forbidden = forbidden
+        self.length = abs(radius*(end_phase - start_phase))
+        self.priority = priority
+        self.speed_limit = speed_limit
+        self.type = 'Circular'
+        self.longitudinal_start = 0
+
+    def position(self, longitudinal: float, lateral: float, theta: float) -> np.ndarray:
+        phase = self.start_phase + \
+            (self.end_phase - self.start_phase)*longitudinal/self.length
+        outer_center = get_coor_by_rt(
+            self.radius, phase, self.norm_vec, self.center)
+        cross = np.cross(self.norm_vec, outer_center-self.center)
+        norm_cross = cross/np.linalg.norm(cross)
+        point = get_coor_by_rt(lateral, theta, norm_cross, outer_center)
+        return point
+
+    # def heading_at(self, longitudinal: float) -> float:
+    #     phi = self.direction * longitudinal / self.radius + self.start_phase
+    #     psi = wrap_to_pi(phi + np.pi/2 * self.direction)
+    #     return psi
+
+    def width_at(self, longitudinal: float) -> float:
+        return self.width
+
+    def local_coordinates(self, position: np.ndarray) -> Tuple[float, float, float]:
+        rget, thetaget, phaseget = get_rtp_by_coor(
+            position, self.norm_vec, self.center, self.radius)
+        lget = (phaseget-self.start_phase)*self.length / \
+            (self.end_phase - self.start_phase)
+        return lget, rget, thetaget
+
+    @classmethod
+    def from_config(cls, config: dict):
+        config["center"] = np.array(config["center"])
+        return cls(**config)
+
+    def to_config(self) -> dict:
+        return {
+            "class_path": get_class_path(self.__class__),
+            "config": {
+                "center": to_serializable(self.center),
+                "radius": self.radius,
+                "start_phase": self.start_phase,
+                "end_phase": self.end_phase,
+                "clockwise": self.clockwise,
+                "width": self.width,
+                "line_types": self.line_types,
+                "forbidden": self.forbidden,
+                "speed_limit": self.speed_limit,
+                "priority": self.priority
+            }
+        }
+
+
+def get_coor_by_rt(r, theta, n, center):
+    l1 = (n[0]**2+n[1]**2)**0.5
+    if l1 != 0:
+        l2 = 1.0
+        l2 = (n[0]**2+n[1]**2+n[2]**2)**0.5
+        a = np.array([n[1]/l1, -n[0]/l1, 0])
+        b = np.array([n[0]*n[2]/l1/l2, n[1]*n[2]/l1/l2, -l1/l2])
+        point = center+r*(a*cos(theta)+b*sin(theta))
+    else:
+        point = center+r*np.array([cos(theta), sin(theta), 0])
+    # print(point)
+    return point
+
+
+def get_rtp_by_coor(point, n, center, radius):
+    norm = np.cross(n, point-center)
+    norm = norm/np.linalg.norm(norm)
+    tang = np.cross(norm, n)
+    tang = tang/np.linalg.norm(tang)*radius
+    outer_center = center+tang
+    # print(outer_center)
+    rget = np.linalg.norm(point-outer_center)
+    theta = get_theta_by_coor(point, norm, outer_center, rget)
+    # print(theta)
+    phase = get_theta_by_coor(outer_center, n, center, radius)
+    # print(phase)
+    return rget, theta, phase
+
+
+def get_theta_by_coor(point, n, center, r):
+    delta2 = (point-center)/r
+    l1 = (n[0]**2+n[1]**2)**0.5
+    if l1 != 0:
+        l2 = 1.0
+        a = np.array([n[1]/l1, -n[0]/l1, 0])
+        b = np.array([n[0]*n[2]/l1/l2, n[1]*n[2]/l1/l2, -l1/l2])
+        sinx = round(delta2[2]/b[2], 3)
+        if n[0] != 0:
+            cosx = round((delta2[1]-b[1]*sinx)/a[1], 3)
+        if n[1] != 0:
+            cosx = round((delta2[0]-b[0]*sinx)/a[0], 3)
+    else:
+        sinx = round(delta2[1], 3)
+        cosx = round(delta2[0], 3)
+    theta1 = asin(sinx)
+    theta2 = acos(cosx)
+    if sinx >= 0 and cosx >= 0:
+        pass
+    elif sinx >= 0 and cosx < 0:
+        theta1 = pi-theta1
+    elif sinx < 0 and cosx >= 0:
+        theta1 = 2*pi+theta1
+        theta2 = 2*pi-theta2
+    elif sinx < 0 and cosx < 0:
+        theta1 = pi-theta1
+        theta2 = 2*pi-theta2
+    # print(theta1, theta2)
+    if round(theta1, 3) == round(theta2, 3):
+        return round(theta1, 3)
+    else:
+        raise ValueError("error theta")
