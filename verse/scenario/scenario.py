@@ -1,5 +1,5 @@
 from pprint import pp
-from typing import DefaultDict, Optional, Tuple, List, Dict, Any
+from typing import DefaultDict, NamedTuple, Optional, Tuple, List, Dict, Any
 import copy
 import itertools
 import warnings
@@ -21,7 +21,7 @@ from verse.map.lane_map import LaneMap
 
 EGO, OTHERS = "ego", "others"
 
-def pack_env(agent: BaseAgent, ego_ty_name: str, cont, disc, lane_map):
+def pack_env(agent: BaseAgent, ego_ty_name: str, cont: Dict[str, float], disc: Dict[str, str], lane_map):
     state_ty = None #namedtuple(ego_ty_name, agent.controller.state_defs[ego_ty_name].all_vars())
     packed: DefaultDict[str, Any] = defaultdict(dict)
     # packed = {}
@@ -49,7 +49,7 @@ def pack_env(agent: BaseAgent, ego_ty_name: str, cont, disc, lane_map):
     packed[EGO] = state_ty(**packed[EGO])
     return dict(packed.items())
 
-def check_transitions(agent: BaseAgent, guards, cont, disc, map, state, mode):
+def check_transitions(agent: BaseAgent, guards: List[Tuple], cont, disc, map, state, mode):
     asserts = []
     satisfied_guard = []
     agent_id = agent.id
@@ -68,8 +68,8 @@ def check_transitions(agent: BaseAgent, guards, cont, disc, map, state, mode):
         return asserts, satisfied_guard
 
     all_resets = defaultdict(list)
-    for disc_vars, path in guards:
-        env = pack_env(agent, ego_ty_name, cont, disc_vars, map)    # TODO: diff disc -> disc_vars?
+    for path, disc_vars in guards:
+        env = pack_env(agent, ego_ty_name, cont, disc, map)    # TODO: diff disc -> disc_vars?
 
         # Collect all the hit guards for this agent at this time step
         if eval(path.cond, env):
@@ -82,7 +82,7 @@ def check_transitions(agent: BaseAgent, guards, cont, disc, map, state, mode):
         iter_list.append(zip(range(len(vals)), paths))
     pos_list = list(itertools.product(*iter_list))
     if len(pos_list) == 1 and pos_list[0] == ():
-        raise NotImplementedError("??")
+        return None, satisfied_guard
     for pos in pos_list:
         next_init = copy.deepcopy(state)
         dest = copy.deepcopy(mode)
@@ -412,7 +412,6 @@ class Scenario:
 
         if not cache:
             paths = [(agent, p) for agent in node.agent.values() for p in agent.controller.paths]
-            path_transitions = {}
         else:
             if len(paths) == 0:
                 transition = min(trans.transition for seg in cache.values() for trans in seg.transitions)
@@ -458,16 +457,15 @@ class Scenario:
             all_asserts = defaultdict(list)
             for agent_id in agent_guard_dict:
                 agent: BaseAgent = self.agent_dict[agent_id]
-                state_dict = {aid: (node.trace[aid][0], node.mode[aid], node.static[aid]) for aid in node.agent}
+                state_dict = {aid: (node.trace[aid][idx], node.mode[aid], node.static[aid]) for aid in node.agent}
                 agent_state, agent_mode, agent_static = state_dict[agent_id]
                 agent_state = agent_state[1:]
-                continuous_variable_dict, orig_disc_vars, _ = self.sensor.sense(
-                    self, agent, state_dict, self.map)
+                continuous_variable_dict, orig_disc_vars, _ = self.sensor.sense(self, agent, state_dict, self.map)
                 unchecked_cache_guards = [g[:2] for g in cached_guards[agent_id] if g[2] < idx]     # FIXME: off by 1?
                 asserts, satisfied = check_transitions(agent, agent_guard_dict[agent_id] + unchecked_cache_guards, continuous_variable_dict, orig_disc_vars, self.map, agent_state, agent_mode)
                 if asserts != None:
                     all_asserts[agent_id] = asserts
-                    return all_asserts, transitions, idx
+                    continue
                 if len(satisfied) != 0:
                     satisfied_guard.extend(satisfied)
             if len(all_asserts) > 0:

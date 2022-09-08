@@ -121,15 +121,18 @@ class Simulator:
             # something to combine results from different nodes in the future
             node_ids = list(set((s.run_num, s.node_id) for s in cached_segments.values()))
             assert len(node_ids) <= 1, f"{node_ids}"
+            new_cache, paths_to_sim = {}, []
             if len(node_ids) == 1:
-                run_num, node_id = node_ids[0]
-                old_node = find(past_runs[run_num], lambda n: n.id == node_id)
-                assert old_node != None
-                new_cache, paths_to_sim = to_simulate(old_node.agent, node.agent, cached_segments)
-            else:
-                new_cache, paths_to_sim = {}, []
+                old_run_num, old_node_id = node_ids[0]
+                if old_run_num != run_num:
+                    old_node = find(past_runs[run_num], lambda n: n.id == old_node_id)
+                    assert old_node != None
+                    new_cache, paths_to_sim = to_simulate(old_node.agent, node.agent, cached_segments)
+                else:
+                    print("!!!")
+                    pp(cached_segments)
 
-            asserts, transitions, transition_idx = transition_graph.get_transition_simulate_new(new_cache, paths_to_sim)
+            asserts, transitions, transition_idx = transition_graph.get_transition_simulate_new(new_cache, paths_to_sim, node)
 
             node.assert_hits = asserts
             pp({a: trace[transition_idx] for a, trace in node.trace.items()})
@@ -157,8 +160,9 @@ class Simulator:
                 # For each possible transition, construct the new node.
                 # Obtain the new initial condition for agent having transition
                 # copy the traces that are not under transition
-                transition_paths = []
+                all_transition_paths = []
                 for transition_combination in all_transition_combinations:
+                    transition_paths = []
                     next_node_mode = copy.deepcopy(node.mode)
                     next_node_static = copy.deepcopy(node.static)
                     next_node_uncertain_param = copy.deepcopy(node.uncertain_param)
@@ -169,9 +173,9 @@ class Simulator:
                     next_node_trace = {}
                     for transition in transition_combination:
                         transit_agent_idx, dest_mode, next_init, paths = transition
-                        transition_paths.append(paths)
                         if dest_mode is None:
                             continue
+                        transition_paths.extend(paths)
                         # next_node = AnalysisTreeNode(trace = {},init={},mode={},agent={}, child = [], start_time = 0)
                         next_node_mode[transit_agent_idx] = dest_mode
                         next_node_init[transit_agent_idx] = next_init
@@ -180,6 +184,7 @@ class Simulator:
                             next_node_trace[agent_idx] = truncated_trace[agent_idx]
                             next_node_init[agent_idx] = truncated_trace[agent_idx][0]
 
+                    all_transition_paths.append(transition_paths)
                     tmp = AnalysisTreeNode(
                         trace=next_node_trace,
                         init=next_node_init,
@@ -193,8 +198,8 @@ class Simulator:
                     )
                     node.child.append(tmp)
                     simulation_queue.append(tmp)
-                for agent_id in node.agent:
-                    self.cache.add_segment(agent_id, node, full_traces[agent_id], transition_paths, run_num)
+                for agent_id, agent in node.agent.items():
+                    self.cache.add_segment(agent_id, node, full_traces[agent_id], all_transition_paths, run_num)
                 # Put the node in the child of current node. Put the new node in the queue
             #     node.child.append(AnalysisTreeNode(
             #         trace = next_node_trace,

@@ -1,5 +1,6 @@
 from collections import defaultdict
 from dataclasses import dataclass
+from pprint import pp
 from typing import DefaultDict, Dict, List, Tuple, Optional
 from verse.analysis import AnalysisTreeNode
 from intervaltree import IntervalTree
@@ -41,10 +42,11 @@ class SimTraceCache:
         key = (agent_id,) + tuple(node.mode[agent_id])
         init = node.init[agent_id]
         tree = self.cache[key]
+        assert_hits = node.assert_hits or {}
         for i, val in enumerate(init):
             if i == len(init) - 1:
-                transitions = [CachedTransition(len(n.trace[agent_id]), n.mode[agent_id], n.init[agent_id], p) for n, p in zip(node.child, transition_paths)]
-                entry = CachedSegment(trace, node.assert_hits.get(agent_id), transitions, node.agent[agent_id].controller, run_num, node.id)
+                transitions = [CachedTransition(len(node.trace[agent_id]), n.mode[agent_id], n.init[agent_id], p) for n, p in zip(node.child, transition_paths)]
+                entry = CachedSegment(trace, assert_hits.get(agent_id), transitions, node.agent[agent_id].controller, run_num, node.id)
                 tree[val - _EPSILON:val + _EPSILON] = entry
                 return entry
             else:
