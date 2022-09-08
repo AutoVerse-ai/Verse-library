@@ -99,34 +99,19 @@ if __name__ == "__main__":
         ],
 
     )
-    # time = timeit.default_timer()
-    # # import cProfile, pstats, io
-    # # from pstats import SortKey
-    # # pr = cProfile.Profile()
-    # # pr.enable()
-    # traces = scenario.verify(60, 0.1)
-    # # pr.disable()
-    # # s = io.StringIO()
-    # # sortby = SortKey.CUMULATIVE
-    # # ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-    # # ps.print_stats()
-    # # print(s.getvalue())
-    # print("run1", timeit.default_timer() - time)
-    # fig = go.Figure()
-    # fig = reachtube_tree(traces, tmp_map, fig, 1,
-    #                       2, 'lines', 'trace', print_dim_list=[1, 2])
-    # fig.show()
-
+    import timeit
     time = timeit.default_timer()
     traces = scenario.simulate(60, 0.05)
-    print("run2", timeit.default_timer() - time)
+    print("\x1b[31mrun1\x1b[0m", timeit.default_timer() - time)
     fig = go.Figure()
     fig = simulation_tree(traces, tmp_map, fig, 1,
                           2, 'lines', 'trace', print_dim_list=[1, 2])
     fig.show()
 
-    # traces = scenario.verify(60, 0.05)
-    # fig = go.Figure()
-    # fig = reachtube_tree(traces, tmp_map, fig, 1,
-    #                       2, 'lines', 'trace', print_dim_list=[1, 2])
-    # fig.show()
+    time = timeit.default_timer()
+    traces = scenario.simulate(60, 0.05)
+    print("\x1b[31mrun2\x1b[0m", timeit.default_timer() - time)
+    fig = go.Figure()
+    fig = simulation_tree(traces, tmp_map, fig, 1,
+                          2, 'lines', 'trace', print_dim_list=[1, 2])
+    fig.show()
