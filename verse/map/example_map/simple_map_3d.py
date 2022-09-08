@@ -14,13 +14,13 @@ class SimpleMap1(LaneMap_3d):
             'seg0',
             [0, 0, 0],
             [100, 0, 0],
-            3
+            2
         )
         segment1 = StraightLane_3d(
             'seg0',
             [0, 3, 0],
             [100, 10, 0],
-            3
+            2
         )
         lane0 = Lane_3d('Lane1', [segment0])
         lane1 = Lane_3d('Lane2', [segment1])

@@ -150,7 +150,7 @@ class LaneMap_3d:
             for i in range(len(box[0])):
                 if state[i] < box[0][i] or state[i] > box[1][i]:
                     return False
-        print("check_guard_box", state)
+        # print("check_guard_box", state)
         # print(self.waypoints[agent_id][waypoint_id])
         return True
 
@@ -158,10 +158,11 @@ class LaneMap_3d:
         return self.time_limits[agent_id][waypoint_id]
 
     def get_next_point(self, lane, agent_id, waypoint_id, point=None):
-        curr_waypoint = self.waypoints[agent_id][int(waypoint_id)]
+        waypoint_id = int(waypoint_id)
+        curr_waypoint = self.waypoints[agent_id][waypoint_id]
         if len(curr_waypoint) != 6 and point != None:
             curr_point = np.array(point)
-            print('point', point)
+            # print('point', point)
         else:
             curr_point = np.array(curr_waypoint[3:])
         longitudinal, lateral, theta = self.get_l_r_theta(lane, curr_point)
@@ -187,6 +188,9 @@ class LaneMap_3d:
             self.waypoints[agent_id][waypoint_id] = next_waypoint
         else:
             next_waypoint = curr_point.tolist() + next_point.tolist()
-            self.waypoints[agent_id].append(next_waypoint)
-        print('next', next_waypoint)
+            if len(self.waypoints[agent_id]) <= waypoint_id+1:
+                self.waypoints[agent_id].append(next_waypoint)
+            else:
+                self.waypoints[agent_id][waypoint_id+1] = next_waypoint
+        # print('next', next_waypoint)
         return next_waypoint

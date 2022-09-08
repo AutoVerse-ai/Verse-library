@@ -55,21 +55,25 @@ if __name__ == "__main__":
     # modify mode list input
     scenario.set_init(
         [
-            #[[2.75, 0, 0, 0, 0, 0, 0, 0], [3, 0, 0, 0.1, 0.1, 0.1, 0, 0]],
-            [[2.75, 2, 0, 0, 0, 0, 0, 0], [3, 2, 0, 0.1, 0.1, 0.1, 0, 0]],
+            # [[2.8, 0, 0, 0, 0, 0, 0, 0], [3, 0, 0, 0.1, 0.1, 0.1, 0, 0]],
+            [[2.8, 1.8, -0.2, 0, 0, 0, 0, 0], [3, 2, 0, 0.1, 0.1, 0.1, 0, 0]],
         ],
         [
-            #tuple([CraftMode.Follow_Lane, LaneMode.Lane1]),
-            tuple([CraftMode.Follow_Lane, LaneMode.Lane1])
+            # tuple([CraftMode.Follow_Lane, LaneMode.Lane1]),
+            tuple([CraftMode.Follow_Lane, LaneMode.Lane2])
         ]
     )
-    traces = scenario.simulate(30, time_step)
-    # path = os.path.abspath(__file__)
-    # path = path.replace('quadrotor_demo.py', 'output.json')
-    # write_json(traces, path)
+    traces = scenario.verify(20, time_step)
+    path = os.path.abspath(__file__)
+    path = path.replace('test.py', 'output_1.json')
+    write_json(traces, path)
+    traces = read_json(path)
     fig = go.Figure()
-    fig = simulation_tree_3d(traces, tmp_map, fig, 1, 2, 3, [0, 1, 2, 3],
-                             'lines', 'trace')
-    # fig = fig.add_trace(go.Scatter(
-    #     x=[3, 5, 5, 2, 2, 8, 8], y=[0, 0, 3, 3, 6, 3, 0], text=[0, 1, 2, 3, 4, 5, 6], mode='markers', marker={'color': 'black'}))
+    fig = reachtube_tree_3d(traces, tmp_map, fig, 1, 2, 3, [0, 1, 2, 3],
+                            'lines', 'trace')
     fig.show()
+    # traces = scenario.simulate(10, time_step)
+    # fig = go.Figure()
+    # fig = simulation_tree_3d(traces, tmp_map, fig, 1, 2, 3, [0, 1, 2, 3],
+    #                          'lines', 'trace')
+    # fig.show()
