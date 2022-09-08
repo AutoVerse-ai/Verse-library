@@ -2,10 +2,9 @@ import numpy as np
 from typing import List
 from abc import ABCMeta, abstractmethod
 from typing import Tuple, List, Optional, Union
-from math import pi, cos, sin, acos, asin
+from math import pi, cos, sin, acos, asin, atan
 
 from verse.analysis.utils import wrap_to_pi, Vector, get_class_path, class_from_path, to_serializable
-from verse.map.lane_segment import LineType, AbstractLane, StraightLane
 
 
 class LineType_3d:
@@ -27,7 +26,7 @@ class AbstractLane_3d(object):
     VEHICLE_LENGTH: float = 5
     length: float = 0
     longitudinal_start: float = 0
-    line_types: List["LineType"]
+    line_types: List["LineType_3d"]
 
     def __init__(self, id: str):
         self.id = id
@@ -151,7 +150,7 @@ class StraightLane_3d(AbstractLane_3d):
                  start: Vector,
                  end: Vector,
                  width: float = AbstractLane_3d.DEFAULT_WIDTH,
-                 line_types: Tuple[LineType, LineType] = None,
+                 line_types: Tuple[LineType_3d, LineType_3d] = None,
                  forbidden: bool = False,
                  speed_limit: float = 20,
                  priority: int = 0) -> None:
@@ -172,7 +171,8 @@ class StraightLane_3d(AbstractLane_3d):
         # self.heading = np.arctan2(
         #     self.end[1] - self.start[1], self.end[0] - self.start[0])
         self.length = np.linalg.norm(self.end - self.start)
-        self.line_types = line_types or [LineType.STRIPED, LineType.STRIPED]
+        self.line_types = line_types or [
+            LineType_3d.STRIPED, LineType_3d.STRIPED]
         self.direction = (self.end - self.start) / self.length
         self.direction_lateral = np.array(
             [-self.direction[1], self.direction[0], 0])
@@ -203,6 +203,40 @@ class StraightLane_3d(AbstractLane_3d):
         if round(rget, 3) == 0:
             return lget, rget, 0
         return float(lget), float(rget), get_theta_by_coor(position, n, centerget, rget)
+
+    def get_sample_points(self, num_theta, num_len):
+        n = self.direction
+        l1 = (n[0]**2+n[1]**2)**0.5
+        if l1 != 0:
+            l2 = 1.0
+            l2 = (n[0]**2+n[1]**2+n[2]**2)**0.5
+            a = np.array([n[1]/l1, -n[0]/l1, 0])
+            b = np.array([n[0]*n[2]/l1/l2, n[1]*n[2]/l1/l2, -l1/l2])
+        else:
+            a = np.array([1, 0, 0])
+            b = np.array([0, 1, 0])
+        n = self.direction
+        start = self.start
+        r = self.width
+        thetas, ls = np.mgrid[0:2*pi:num_theta*1j, 0:self.length:num_len*1j]
+        x = start[0]+ls*n[0]+r * \
+            (a[0]*np.cos(thetas)+b[0]*np.sin(thetas))
+        y = start[1]+ls*n[1]+r * \
+            (a[1]*np.cos(thetas)+b[1]*np.sin(thetas))
+        z = start[2]+ls*n[2]+r * \
+            (a[2]*np.cos(thetas)+b[2]*np.sin(thetas))
+        return x, y, z
+
+    def get_lane_center(self, num):
+        ls = np.mgrid[0:self.length:num*1j]
+        nx = self.start[0]+self.direction[0]*ls
+        ny = self.start[1]+self.direction[1]*ls
+        nz = self.start[2]+self.direction[2]*ls
+        oc = np.zeros((num, 3))
+        oc[:, 0] = nx
+        oc[:, 1] = ny
+        oc[:, 2] = nz
+        return oc, nx, ny, nz
 
     @classmethod
     def from_config(cls, config: dict):
@@ -237,8 +271,8 @@ class CircularLane_3d(AbstractLane_3d):
                  start_phase: float,
                  end_phase: float,
                  clockwise: bool = True,
-                 width: float = AbstractLane.DEFAULT_WIDTH,
-                 line_types: List[LineType] = None,
+                 width: float = AbstractLane_3d.DEFAULT_WIDTH,
+                 line_types: List[LineType_3d] = None,
                  forbidden: bool = False,
                  speed_limit: float = 20,
                  priority: int = 0) -> None:
@@ -251,7 +285,8 @@ class CircularLane_3d(AbstractLane_3d):
         self.clockwise = clockwise
         self.direction = -1 if clockwise else 1
         self.width = width
-        self.line_types = line_types or [LineType.STRIPED, LineType.STRIPED]
+        self.line_types = line_types or [
+            LineType_3d.STRIPED, LineType_3d.STRIPED]
         self.forbidden = forbidden
         self.length = abs(radius*(end_phase - start_phase))
         self.priority = priority
@@ -260,10 +295,11 @@ class CircularLane_3d(AbstractLane_3d):
         self.longitudinal_start = 0
 
     def position(self, longitudinal: float, lateral: float, theta: float) -> np.ndarray:
-        phase = self.start_phase + \
-            (self.end_phase - self.start_phase)*longitudinal/self.length
-        outer_center = get_coor_by_rt(
-            self.radius, phase, self.norm_vec, self.center)
+        # phase = self.start_phase + \
+        #     (self.end_phase - self.start_phase)*longitudinal/self.length
+        # outer_center = get_coor_by_rt(
+        #     self.radius, phase, self.norm_vec, self.center)
+        outer_center = self.get_outer_center(longitudinal)
         cross = np.cross(self.norm_vec, outer_center-self.center)
         norm_cross = cross/np.linalg.norm(cross)
         point = get_coor_by_rt(lateral, theta, norm_cross, outer_center)
@@ -283,6 +319,78 @@ class CircularLane_3d(AbstractLane_3d):
         lget = (phaseget-self.start_phase)*self.length / \
             (self.end_phase - self.start_phase)
         return lget, rget, thetaget
+
+    def get_outer_center(self, longitudinal: float):
+        phase = self.start_phase + \
+            (self.end_phase - self.start_phase)*longitudinal/self.length
+        outer_center = get_coor_by_rt(
+            self.radius, phase, self.norm_vec, self.center)
+        return outer_center
+
+    # def get_outer_center_vec(self):
+    #     return np.vectorize(self.get_outer_center)
+
+    def get_sample_points(self, num_theta, num_len):
+        thetas, phases = np.mgrid[0:2*pi:num_theta*1j, 0:2*pi:num_len*1j]
+
+        n = self.norm_vec
+        l1 = (n[0]**2+n[1]**2)**0.5
+        if l1 != 0:
+            l2 = 1.0
+            l2 = (n[0]**2+n[1]**2+n[2]**2)**0.5
+            a = np.array([n[1]/l1, -n[0]/l1, 0])
+            b = np.array([n[0]*n[2]/l1/l2, n[1]*n[2]/l1/l2, -l1/l2])
+        else:
+            a = np.array([1, 0, 0])
+            b = np.array([0, 1, 0])
+        c_x, c_y, c_z = self.center
+        r = self.width
+        oc_x = c_x+r * (a[0]*np.cos(phases)+b[0]*np.sin(phases))
+        oc_y = c_y+r * (a[1]*np.cos(phases)+b[1]*np.sin(phases))
+        oc_z = c_z+r * (a[2]*np.cos(phases)+b[2]*np.sin(phases))
+        oc = np.zeros((num_theta, num_len, 3))
+        oc[:, :, 0] = oc_x
+        oc[:, :, 1] = oc_y
+        oc[:, :, 2] = oc_z
+
+        norms = np.cross(n, oc-self.center)
+
+        # cross = np.cross(self.norm_vec, outer_center-self.center)
+        # norm_cross = cross/np.linalg.norm(cross)
+
+        pass
+
+    def get_lane_center(self, num):
+        if (self.start_phase <= self.end_phase and self.clockwise):
+            phases = np.mgrid[self.start_phase:self.end_phase:num*1j]
+        elif (self.start_phase <= self.end_phase and not self.clockwise):
+            phases = np.mgrid[self.end_phase:(self.start_phase+2*pi):num*1j]
+        elif (self.start_phase >= self.end_phase and self.clockwise):
+            phases = np.mgrid[self.start_phase:(self.end_phase+2*pi):num*1j]
+        elif (self.start_phase >= self.end_phase and not self.clockwise):
+            phases = np.mgrid[self.end_phase:self.start_phase:num*1j]
+
+        # phases = np.mgrid[0:2*pi:num*1j]
+        n = self.norm_vec
+        l1 = (n[0]**2+n[1]**2)**0.5
+        if l1 != 0:
+            l2 = 1.0
+            l2 = (n[0]**2+n[1]**2+n[2]**2)**0.5
+            a = np.array([n[1]/l1, -n[0]/l1, 0])
+            b = np.array([n[0]*n[2]/l1/l2, n[1]*n[2]/l1/l2, -l1/l2])
+        else:
+            a = np.array([1, 0, 0])
+            b = np.array([0, 1, 0])
+        c_x, c_y, c_z = self.center
+        r = self.radius
+        oc_x = c_x+r * (a[0]*np.cos(phases)+b[0]*np.sin(phases))
+        oc_y = c_y+r * (a[1]*np.cos(phases)+b[1]*np.sin(phases))
+        oc_z = c_z+r * (a[2]*np.cos(phases)+b[2]*np.sin(phases))
+        oc = np.zeros((num, 3))
+        oc[:, 0] = oc_x
+        oc[:, 1] = oc_y
+        oc[:, 2] = oc_z
+        return oc, oc_x, oc_y, oc_z
 
     @classmethod
     def from_config(cls, config: dict):
@@ -337,34 +445,52 @@ def get_rtp_by_coor(point, n, center, radius):
 
 
 def get_theta_by_coor(point, n, center, r):
+    if round(r, 3) == 0:
+        return 0
     delta2 = (point-center)/r
+    num_digit1 = 5
+    num_digit2 = 2
     l1 = (n[0]**2+n[1]**2)**0.5
     if l1 != 0:
         l2 = 1.0
         a = np.array([n[1]/l1, -n[0]/l1, 0])
         b = np.array([n[0]*n[2]/l1/l2, n[1]*n[2]/l1/l2, -l1/l2])
-        sinx = round(delta2[2]/b[2], 3)
+        sinx = round(delta2[2]/b[2], num_digit1)
         if n[0] != 0:
-            cosx = round((delta2[1]-b[1]*sinx)/a[1], 3)
+            cosx = round((delta2[1]-b[1]*sinx)/a[1], num_digit1)
         if n[1] != 0:
-            cosx = round((delta2[0]-b[0]*sinx)/a[0], 3)
+            cosx = round((delta2[0]-b[0]*sinx)/a[0], num_digit1)
     else:
-        sinx = round(delta2[1], 3)
-        cosx = round(delta2[0], 3)
-    theta1 = asin(sinx)
-    theta2 = acos(cosx)
-    if sinx >= 0 and cosx >= 0:
-        pass
-    elif sinx >= 0 and cosx < 0:
-        theta1 = pi-theta1
-    elif sinx < 0 and cosx >= 0:
-        theta1 = 2*pi+theta1
-        theta2 = 2*pi-theta2
-    elif sinx < 0 and cosx < 0:
-        theta1 = pi-theta1
-        theta2 = 2*pi-theta2
+        sinx = round(delta2[1], num_digit1)
+        cosx = round(delta2[0], num_digit1)
+    # theta1 = asin(sinx)
+    # theta2 = acos(cosx)
+    # if sinx >= 0 and cosx >= 0:
+    #     pass
+    # elif sinx >= 0 and cosx < 0:
+    #     theta1 = pi-theta1
+    # elif sinx < 0 and cosx >= 0:
+    #     theta1 = 2*pi+theta1
+    #     theta2 = 2*pi-theta2
+    # elif sinx < 0 and cosx < 0:
+    #     theta1 = pi-theta1
+    #     theta2 = 2*pi-theta2
+    theta = atan(sinx/cosx)
+    if cosx < 0:
+        theta = pi+theta
+    elif theta < 0 and cosx > 0:
+        theta = 2*pi+theta
+    # print(sinx, cosx)
+    # print(theta, theta1, theta2)
+    return theta
     # print(theta1, theta2)
-    if round(theta1, 3) == round(theta2, 3):
-        return round(theta1, 3)
+    if round(theta1, num_digit2) == round(theta2, num_digit2):
+        return round(theta1, num_digit2)
     else:
-        raise ValueError("error theta")
+        print(point, n, center, r)
+        print(delta2)
+        print(point-center)
+        print(sinx, cosx)
+        # print(acos(round((delta2[1]-b[1]*sinx)/a[1], num_digit1)),
+        #       acos(round((delta2[0]-b[0]*sinx)/a[0], num_digit1)), theta1)
+        raise ValueError("error theta "+str(theta1)+' '+str(theta2))

@@ -9,6 +9,7 @@ import plotly.graph_objects as go
 from typing import List, Tuple, Union
 from plotly.graph_objs.scatter import Marker
 from verse.analysis.analysis_tree import AnalysisTree, AnalysisTreeNode
+from verse.map.lane_map import LaneMap
 
 colors = [['#CC0000', '#FF0000', '#FF3333', '#FF6666', '#FF9999', '#FFCCCC'],
           ['#CCCC00', '#FFFF00', '#FFFF33', '#FFFF66', '#FFFF99', '#FFE5CC'],
@@ -883,7 +884,7 @@ def simulation_tree_single(root: Union[AnalysisTree, AnalysisTreeNode], agent_id
     return fig
 
 
-def draw_map(map, color='rgba(0,0,0,1)', fig: go.Figure() = go.Figure(), fill_type='lines'):
+def draw_map(map: LaneMap, color='rgba(0,0,0,1)', fig: go.Figure() = go.Figure(), fill_type='lines'):
     """It draws the the map"""
     x_min, x_max = float('inf'), -float('inf')
     y_min, y_max = float('inf'), -float('inf')

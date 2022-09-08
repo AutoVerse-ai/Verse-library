@@ -189,6 +189,11 @@ class QuadrotorAgent(BaseAgent):
         time_limit = min(self.time_limits[initialCondition[-2]], time_bound)
         mode_parameters = lane_map.get_waypoint_by_id(
             self.id, initialCondition[-2])
+        if len(mode_parameters) != 6:
+            lane_map.get_next_point(
+                mode[1], self.id, initialCondition[-2], initialCondition[:3])
+            mode_parameters = lane_map.get_waypoint_by_id(
+                self.id, initialCondition[-2])
         ref_vx = (mode_parameters[3] - mode_parameters[0]) / time_limit
         ref_vy = (mode_parameters[4] - mode_parameters[1]) / time_limit
         ref_vz = (mode_parameters[5] - mode_parameters[2]) / time_limit

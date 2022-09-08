@@ -96,6 +96,13 @@ class LaneMap_3d:
         lane = self.lane_dict[lane_idx]
         return lane.get_theta_angle(position)
 
+    def get_l_r_theta(self, lane_idx: str, position: np.ndarray) -> float:
+        if not isinstance(position, np.ndarray):
+            position = np.array(position)
+        # print(self.lane_dict)
+        lane = self.lane_dict[lane_idx]
+        return lane.get_l_r_theta(position)
+
     # def get_lane_heading(self, lane_idx: str, position: np.ndarray) -> float:
     #     if not isinstance(position, np.ndarray):
     #         position = np.array(position)
@@ -150,13 +157,15 @@ class LaneMap_3d:
     def get_timelimit_by_id(self, agent_id, waypoint_id):
         return self.time_limits[agent_id][waypoint_id]
 
-    def get_next_point(self, lane, agent_id, waypoint_id):
+    def get_next_point(self, lane, agent_id, waypoint_id, point=None):
         curr_waypoint = self.waypoints[agent_id][int(waypoint_id)]
-        curr_point = np.array(curr_waypoint[3:])
-        longitudinal = self.get_longitudinal_position(lane, curr_point)
-        lateral = self.get_lateral_distance(lane, curr_point)
-        theta = self.get_theta_angle(lane, curr_point)
-        print('get_next_point', theta)
+        if len(curr_waypoint) != 6 and point != None:
+            curr_point = np.array(point)
+            print('point', point)
+        else:
+            curr_point = np.array(curr_waypoint[3:])
+        longitudinal, lateral, theta = self.get_l_r_theta(lane, curr_point)
+        # print('get_next_point', theta)
         seg = self.get_lane_segment(lane, curr_point)
         est_len = self.t_v_pair[agent_id][0]*self.t_v_pair[agent_id][1]
         rate = 0.02
@@ -173,12 +182,11 @@ class LaneMap_3d:
         else:
             next_point = next_seg.position(0, lateral, theta)
 
-        next_waypoint = curr_point.tolist() + next_point.tolist()
-        if len(curr_waypoint) == 3:
-            self.waypoints[agent_id][waypoint_id] = curr_point.tolist() + \
-                next_point.tolist()
+        if len(curr_waypoint) != 6:
+            next_waypoint = curr_point.tolist() + next_point.tolist()
+            self.waypoints[agent_id][waypoint_id] = next_waypoint
         else:
-            self.waypoints[agent_id].append(
-                curr_point.tolist()+next_point.tolist())
+            next_waypoint = curr_point.tolist() + next_point.tolist()
+            self.waypoints[agent_id].append(next_waypoint)
         print('next', next_waypoint)
         return next_waypoint

@@ -57,5 +57,12 @@ class Lane_3d():
         longitudinal, lateral, theta = segment.local_coordinates(position)
         return theta
 
+    def get_l_r_theta(self, position: np.ndarray) -> Tuple[float, float, float]:
+        seg_idx, segment = self.get_lane_segment(position)
+        longitudinal, lateral, theta = segment.local_coordinates(position)
+        for i in range(seg_idx):
+            longitudinal += self.segment_list[i].length
+        return longitudinal, lateral, theta
+
     def get_lane_width(self) -> float:
         return self.lane_width
