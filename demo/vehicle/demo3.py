@@ -45,26 +45,26 @@ if __name__ == "__main__":
     input_code_name = './demo/vehicle/controller/example_controller4.py'
     scenario = Scenario()
 
-    scenario.add_agent(CarAgent('car1', file_name=input_code_name))
-    scenario.add_agent(NPCAgent('car2'))
-    scenario.add_agent(NPCAgent('car3'))
-    scenario.add_agent(NPCAgent('car4'))
+    scenario.add_agent(CarAgent('car1', file_name=input_code_name, initial_state=[[0, -0.2, 0, 1.0], [0.01, 0.2, 0, 1.0]], initial_mode=(VehicleMode.Normal, LaneMode.Lane1, LaneObjectMode.Vehicle)))
+    scenario.add_agent(NPCAgent('car2', initial_state=[[10, 0, 0, 0.5], [10, 0, 0, 0.5]], initial_mode=(VehicleMode.Normal, LaneMode.Lane1, LaneObjectMode.Vehicle)))
+    scenario.add_agent(NPCAgent('car3', initial_state=[[20, 3, 0, 0.5], [20, 3, 0, 0.5]], initial_mode=(VehicleMode.Normal, LaneMode.Lane0, LaneObjectMode.Vehicle)))
+    scenario.add_agent(NPCAgent('car4', initial_state=[[30, 0, 0, 0.5], [30, 0, 0, 0.5]], initial_mode=(VehicleMode.Normal, LaneMode.Lane1, LaneObjectMode.Vehicle)))
     tmp_map = SimpleMap3()
     scenario.set_map(tmp_map)
-    scenario.set_init(
-        [
-            [[0, -0.2, 0, 1.0], [0.01, 0.2, 0, 1.0]],
-            [[10, 0, 0, 0.5], [10, 0, 0, 0.5]],
-            [[20, 3, 0, 0.5], [20, 3, 0, 0.5]],
-            [[30, 0, 0, 0.5], [30, 0, 0, 0.5]],
-        ],
-        [
-            (VehicleMode.Normal, LaneMode.Lane1, LaneObjectMode.Vehicle),
-            (VehicleMode.Normal, LaneMode.Lane1, LaneObjectMode.Vehicle),
-            (VehicleMode.Normal, LaneMode.Lane0, LaneObjectMode.Vehicle),
-            (VehicleMode.Normal, LaneMode.Lane1, LaneObjectMode.Vehicle),
-        ]
-    )
+    # scenario.set_init(
+    #     [
+    #         [[0, -0.2, 0, 1.0], [0.01, 0.2, 0, 1.0]],
+    #         [[10, 0, 0, 0.5], [10, 0, 0, 0.5]],
+    #         [[20, 3, 0, 0.5], [20, 3, 0, 0.5]],
+    #         [[30, 0, 0, 0.5], [30, 0, 0, 0.5]],
+    #     ],
+    #     [
+    #         (VehicleMode.Normal, LaneMode.Lane1, LaneObjectMode.Vehicle),
+    #         (VehicleMode.Normal, LaneMode.Lane1, LaneObjectMode.Vehicle),
+    #         (VehicleMode.Normal, LaneMode.Lane0, LaneObjectMode.Vehicle),
+    #         (VehicleMode.Normal, LaneMode.Lane1, LaneObjectMode.Vehicle),
+    #     ]
+    # )
     traces = scenario.simulate(70, 0.05)
     # traces.dump('./output1.json')
     fig = go.Figure()

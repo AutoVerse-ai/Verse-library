@@ -9,9 +9,13 @@ from verse import LaneMap
 from verse.parser import ControllerIR
 
 class NPCAgent(BaseAgent):
-    def __init__(self, id):
+    def __init__(self, id, initial_state=None, initial_mode=None):
         self.id = id
         self.controller = ControllerIR.empty()
+        self.set_initial_state(initial_state)
+        self.set_initial_mode(initial_mode)
+        self.set_static_parameter(None)
+        self.set_uncertain_parameter(None)
 
     @staticmethod
     def dynamic(t, state, u):
@@ -55,8 +59,8 @@ class NPCAgent(BaseAgent):
         return np.array(trace)
 
 class CarAgent(BaseAgent):
-    def __init__(self, id, code = None, file_name = None):
-        super().__init__(id, code, file_name)
+    def __init__(self, id, code = None, file_name = None, initial_state = None, initial_mode = None):
+        super().__init__(id, code, file_name, initial_state=initial_state, initial_mode=initial_mode)
         self.switch_duration = 0
 
     @staticmethod

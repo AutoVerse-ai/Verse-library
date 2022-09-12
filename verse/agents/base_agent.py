@@ -1,6 +1,7 @@
 from verse.parser.parser import ControllerIR
 import numpy as np 
 from scipy.integrate import ode
+import copy
 
 class BaseAgent:
     """
@@ -10,7 +11,7 @@ class BaseAgent:
         -------
         TC_simulate
     """
-    def __init__(self, id, code = None, file_name = None): 
+    def __init__(self, id, code = None, file_name = None, initial_state = None, initial_mode = None, static_param = None, uncertain_param = None): 
         """
             Constructor of agent base class.
 
@@ -25,6 +26,28 @@ class BaseAgent:
         """
         self.controller: ControllerIR = ControllerIR.parse(code, file_name)
         self.id = id
+        self.init_cont = copy.deepcopy(initial_state)
+        self.init_disc = copy.deepcopy(initial_mode)
+        self.static_parameters = copy.deepcopy(static_param)
+        self.uncertain_parameters = copy.deepcopy(uncertain_param)
+
+    def set_initial(self, initial_state, initial_mode, static_param = None, uncertain_param = None):
+        self.set_initial_state(initial_state)
+        self.set_initial_mode(initial_mode)
+        self.set_static_parameter(static_param)
+        self.set_uncertain_parameter(uncertain_param)
+
+    def set_initial_state(self, initial_state):
+        self.init_cont = copy.deepcopy(initial_state) 
+    
+    def set_initial_mode(self, initial_mode):
+        self.init_disc = copy.deepcopy(initial_mode)
+
+    def set_static_parameter(self, static_param):
+        self.static_parameters = copy.deepcopy(static_param)
+
+    def set_uncertain_parameter(self, uncertain_param):
+        self.uncertain_parameters = copy.deepcopy(uncertain_param)
 
     def TC_simulate(self, mode, initialSet, time_horizon, time_step, map=None):
         """
