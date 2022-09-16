@@ -1,7 +1,7 @@
 from collections import defaultdict
 from dataclasses import dataclass
 from pprint import pp
-from typing import DefaultDict, Dict, List, Tuple, Optional
+from typing import DefaultDict, List, Tuple, Optional
 from verse.analysis import AnalysisTreeNode
 from intervaltree import IntervalTree
 
@@ -24,6 +24,12 @@ class CachedSegment:
     run_num: int
     node_id: int
 
+def convert_transitions(agent_id, transit_agents, transition, trans_ind):
+    if agent_id in transit_agents:
+        return [CachedTransition(trans_ind, mode, init, paths) for _id, mode, init, paths in transition]
+    else:
+        return []
+
 @dataclass
 class CachedTube:
     tube: List[List[List[float]]]
@@ -37,15 +43,15 @@ class SimTraceCache:
     def __init__(self):
         self.cache: DefaultDict[tuple, IntervalTree] = defaultdict(IntervalTree)
 
-    def add_segment(self, agent_id: str, node: AnalysisTreeNode, trace: List[List[float]], transition_paths: List[List[ModePath]], run_num: int):
-        assert len(transition_paths) == len(node.child)
+    def add_segment(self, agent_id: str, node: AnalysisTreeNode, transit_agents: List[str], trace: List[List[float]], transition, trans_ind: int, run_num: int):
         key = (agent_id,) + tuple(node.mode[agent_id])
         init = node.init[agent_id]
         tree = self.cache[key]
         assert_hits = node.assert_hits or {}
+        pp(('add seg', agent_id, *node.mode[agent_id], *init))
         for i, val in enumerate(init):
             if i == len(init) - 1:
-                transitions = [CachedTransition(len(node.trace[agent_id]), n.mode[agent_id], n.init[agent_id], p) for n, p in zip(node.child, transition_paths)]
+                transitions = convert_transitions(agent_id, transit_agents, transition, trans_ind)
                 entry = CachedSegment(trace, assert_hits.get(agent_id), transitions, node.agent[agent_id].controller, run_num, node.id)
                 tree[val - _EPSILON:val + _EPSILON] = entry
                 return entry
@@ -54,6 +60,24 @@ class SimTraceCache:
                 tree[val - _EPSILON:val + _EPSILON] = next_level_tree
                 tree = next_level_tree
         raise Exception("???")
+
+    @staticmethod
+    def iter_tree(tree, depth: int) -> List[List[float]]:
+        if depth == 0:
+            return [[(i.begin + i.end) / 2, (i.data.run_num, i.data.node_id, [t.transition for t in i.data.transitions])] for i in tree]
+        res = []
+        for i in tree:
+            mid = (i.begin + i.end) / 2
+            subs = SimTraceCache.iter_tree(i.data, depth - 1)
+            res.extend([mid] + sub for sub in subs)
+        return res
+
+    def get_cached_inits(self, n: int):
+        inits = defaultdict(list)
+        for key, tree in self.cache.items():
+            inits[key[0]].extend((*key[1:], *init) for init in self.iter_tree(tree, n))
+        inits = dict(inits)
+        return inits
 
     def check_hit(self, agent_id: str, mode: Tuple[str], init: List[float]) -> Optional[CachedSegment]:
         key = (agent_id,) + tuple(mode)

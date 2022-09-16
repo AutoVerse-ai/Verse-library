@@ -244,7 +244,9 @@ class ModePath:
     val: Any
     val_veri: ast.expr
 
-    def __eq__(self, other: object) -> bool:
+    def __eq__(self, other: "ModePath") -> bool:
+        if other == None:
+            return False
         # TODO: more general equivalence?
         return self.cond == other.cond and self.val == other.val
 

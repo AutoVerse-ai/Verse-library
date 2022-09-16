@@ -21,6 +21,9 @@ from verse.map.lane_map import LaneMap
 
 EGO, OTHERS = "ego", "others"
 
+def red(s):
+    return "\x1b[31m" + s + "\x1b[0m"
+
 def pack_env(agent: BaseAgent, ego_ty_name: str, cont: Dict[str, float], disc: Dict[str, str], lane_map):
     state_ty = None #namedtuple(ego_ty_name, agent.controller.state_defs[ego_ty_name].all_vars())
     packed: DefaultDict[str, Any] = defaultdict(dict)
@@ -50,6 +53,7 @@ def pack_env(agent: BaseAgent, ego_ty_name: str, cont: Dict[str, float], disc: D
     return dict(packed.items())
 
 def check_transitions(agent: BaseAgent, guards: List[Tuple], cont, disc, map, state, mode):
+    from verse.analysis.types import type_spec
     asserts = []
     satisfied_guard = []
     agent_id = agent.id
@@ -98,11 +102,7 @@ def check_transitions(agent: BaseAgent, guards: List[Tuple], cont, disc, map, st
             else:
                 var_loc = ego_type.cont.index(reset_variable)
                 next_init[var_loc] = res
-        print("possible_dest")
-        pp(possible_dest)
         all_dest = list(itertools.product(*possible_dest))
-        print("all_dest")
-        pp(all_dest)
         if not all_dest:
             warnings.warn(
                 f"Guard hit for mode {mode} for agent {agent_id} without available next mode")
@@ -401,7 +401,6 @@ class Scenario:
     #         unrolled_variable, unrolled_variable_index = updater[variable]
     #         disc_var_dict[unrolled_variable] = disc_var_dict[variable][unrolled_variable_index]
 
-    # def get_transition_simulate_new(self, diffed: Tuple[PathDiffs, PathDiffs, PathDiffs], cache: Dict[str, CachedSegment]) -> Tuple[Optional[Dict[str, List[str]]], Optional[Dict[str, List[Tuple[str, List[str], List[float]]]]], int]:
     def get_transition_simulate_new(self, cache: Dict[str, CachedSegment], paths: PathDiffs, node: AnalysisTreeNode) -> Tuple[Optional[Dict[str, List[str]]], Optional[Dict[str, List[Tuple[str, List[str], List[float]]]]], int]:
         lane_map = self.map
         trace_length = len(list(node.trace.values())[0])
@@ -414,15 +413,20 @@ class Scenario:
             paths = [(agent, p) for agent in node.agent.values() for p in agent.controller.paths]
         else:
             if len(paths) == 0:
-                transition = min(trans.transition for seg in cache.values() for trans in seg.transitions)
+                print(red("full cache"))
+                _transitions = [trans.transition for seg in cache.values() for trans in seg.transitions]
+                pp(("cached trans", _transitions))
+                if len(_transitions) == 0:
+                    return None, None, 0
+                transition = min(_transitions)
                 transitions = defaultdict(list)
                 for agent_id, seg in cache.items():
                     # TODO: check for asserts
                     for tran in seg.transitions:
                         if tran.transition == transition:
-                            for path in tran.paths:
-                                transitions[agent_id].append((agent_id, tran.disc, tran.cont, path))
-                return None, transitions, transition
+                            pp(("chosen tran", agent_id, tran))
+                            transitions[agent_id].append((agent_id, tran.disc, tran.cont, tran.paths))
+                return None, dict(transitions), transition
 
             path_transitions = defaultdict(int)
             for seg in cache.values():
@@ -468,16 +472,16 @@ class Scenario:
                     continue
                 if len(satisfied) != 0:
                     satisfied_guard.extend(satisfied)
+                    assert all(len(s[2]) == 4 for s in satisfied)
             if len(all_asserts) > 0:
-                return all_asserts, transitions, idx
+                return all_asserts, dict(transitions), idx
             if len(satisfied_guard) > 0:
-                print("satisfied_guard")
-                pp(satisfied_guard)
                 for agent_idx, dest_mode, next_init, paths in satisfied_guard:
+                    assert isinstance(paths, list)
                     transitions[agent_idx].append((agent_idx, dest_mode, next_init, paths))
-                print("transitions", transitions)
+                # print("transitions", transitions)
                 break
-        return None, transitions, idx
+        return None, dict(transitions), idx
 
     def get_transition_verify_new(self, node: AnalysisTreeNode):
         lane_map = self.map

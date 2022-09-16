@@ -7,14 +7,17 @@ import functools
 import pprint
 from verse.agents.base_agent import BaseAgent
 
-from verse.analysis.incremental import CachedSegment, SimTraceCache
+from verse.analysis.incremental import CachedSegment, SimTraceCache, convert_transitions
 from verse.parser.parser import ControllerIR, ModePath, find
-pp = functools.partial(pprint.pprint, compact=True, width=100)
+pp = functools.partial(pprint.pprint, compact=True, width=130)
 
 # from verse.agents.base_agent import BaseAgent
 from verse.analysis.analysis_tree import AnalysisTreeNode, AnalysisTree
 
 PathDiffs = List[Tuple[BaseAgent, ModePath]]
+
+def red(s):
+    return "[31m" + s + "[0m"
 
 def to_simulate(old_agents: Dict[str, BaseAgent], new_agents: Dict[str, BaseAgent], cached: Dict[str, CachedSegment]) -> Tuple[Dict[str, CachedSegment], PathDiffs]:
     assert set(old_agents.keys()) == set(new_agents.keys())
@@ -36,7 +39,7 @@ def to_simulate(old_agents: Dict[str, BaseAgent], new_agents: Dict[str, BaseAgen
             for old, new in itertools.zip_longest(old_paths, new_paths):
                 if new == None:
                     removed_paths.append(old)
-                if old.cond != new.cond:
+                elif old.cond != new.cond:
                     added_paths.append(new)
                 elif old.val != new.val:
                     reset_changed_paths.append(new)
@@ -90,52 +93,54 @@ class Simulator:
         # Perform BFS through the simulation tree to loop through all possible transitions
         while simulation_queue != []:
             node: AnalysisTreeNode = simulation_queue.pop(0)
-            pp((node.start_time, node.mode))
+            pp(("start sim", node.start_time, {a: (*node.mode[a], *node.init[a]) for a in node.mode}))
             remain_time = round(time_horizon - node.start_time, 10)
             if remain_time <= 0:
                 continue
             # For trace not already simulated
             cached_segments = {}
             for agent_id in node.agent:
+                mode = node.mode[agent_id]
+                init = node.init[agent_id]
+                cached = self.cache.check_hit(agent_id, mode, init)
                 if agent_id in node.trace:
-                    # cached_segments[agent_id] = self.cache.add_segment(agent_id, node, run_num)
-                    pass
+                    if cached != None:
+                        cached_segments[agent_id] = cached
                 else:
-                    mode = node.mode[agent_id]
-                    init = node.init[agent_id]
-                    cached = self.cache.check_hit(agent_id, mode, init)
                     if cached != None:
                         node.trace[agent_id] = cached.trace
                         if len(cached.trace) < remain_time / time_step:
                             node.trace[agent_id] += node.agent[agent_id].TC_simulate(mode, cached.trace[-1], remain_time - time_step * len(cached.trace), lane_map)
                         cached_segments[agent_id] = cached
                     else:
+                        pp(("sim", agent_id, *mode, *init))
                         # Simulate the trace starting from initial condition
                         trace = node.agent[agent_id].TC_simulate(
                             mode, init, remain_time, time_step, lane_map)
                         trace[:, 0] += node.start_time
                         trace = trace.tolist()
                         node.trace[agent_id] = trace
-                        # cached_segments[agent_id] = self.cache.add_segment(agent_id, node, run_num)
+            pp(("cached_segments", cached_segments.keys()))
             # TODO: for now, make sure all the segments comes from the same node; maybe we can do
             # something to combine results from different nodes in the future
             node_ids = list(set((s.run_num, s.node_id) for s in cached_segments.values()))
-            assert len(node_ids) <= 1, f"{node_ids}"
+            # assert len(node_ids) <= 1, f"{node_ids}"
             new_cache, paths_to_sim = {}, []
-            if len(node_ids) == 1:
+            if len(node_ids) == 1 and len(cached_segments.keys()) == len(node.agent):
                 old_run_num, old_node_id = node_ids[0]
                 if old_run_num != run_num:
-                    old_node = find(past_runs[run_num], lambda n: n.id == old_node_id)
+                    old_node = find(past_runs[old_run_num].nodes, lambda n: n.id == old_node_id)
                     assert old_node != None
                     new_cache, paths_to_sim = to_simulate(old_node.agent, node.agent, cached_segments)
-                else:
-                    print("!!!")
-                    pp(cached_segments)
+                    pp(("to sim", new_cache.keys(), len(paths_to_sim)))
+                # else:
+                #     print("!!!")
 
             asserts, transitions, transition_idx = transition_graph.get_transition_simulate_new(new_cache, paths_to_sim, node)
+            pp(("transitions:", transition_idx, transitions))
 
             node.assert_hits = asserts
-            pp({a: trace[transition_idx] for a, trace in node.trace.items()})
+            pp(("next init:", {a: trace[transition_idx] for a, trace in node.trace.items()}))
 
             # truncate the computed trajectories from idx and store the content after truncate
             truncated_trace, full_traces = {}, {}
@@ -150,8 +155,33 @@ class Simulator:
             else:
                 # If there's no transitions (returned transitions is empty), continue
                 if not transitions:
+                    for agent_id in node.agent:
+                        if agent_id not in cached_segments:
+                            self.cache.add_segment(agent_id, node, [], full_traces[agent_id], [], transition_idx, run_num)
+                    print(red("no trans"))
                     continue
 
+                transit_agents = transitions.keys()
+                pp(("transit agents", transit_agents))
+                for agent_id in node.agent:
+                    transition = transitions[agent_id] if agent_id in transitions else []
+                    if agent_id in cached_segments:
+                        cached_segments[agent_id].transitions.extend(convert_transitions(agent_id, transit_agents, transition, transition_idx))
+                        pre_len = len(cached_segments[agent_id].transitions)
+                        def dedup(l):
+                            o = []
+                            for i in l:
+                                for j in o:
+                                    if i.disc == j.disc and i.cont == j.cont:
+                                        break
+                                else:
+                                    o.append(i)
+                            return o
+                        cached_segments[agent_id].transitions = dedup(cached_segments[agent_id].transitions)
+                        pp(("dedup!", pre_len, len(cached_segments[agent_id].transitions)))
+                    else:
+                        self.cache.add_segment(agent_id, node, transit_agents, full_traces[agent_id], transition, transition_idx, run_num)
+                pp(("cached inits", self.cache.get_cached_inits(3)))
                 # Generate the transition combinations if multiple agents can transit at the same time step
                 transition_list = list(transitions.values())
                 all_transition_combinations = itertools.product(
@@ -182,7 +212,7 @@ class Simulator:
                     for agent_idx in next_node_agent:
                         if agent_idx not in next_node_init:
                             next_node_trace[agent_idx] = truncated_trace[agent_idx]
-                            next_node_init[agent_idx] = truncated_trace[agent_idx][0]
+                            next_node_init[agent_idx] = truncated_trace[agent_idx][0][1:]
 
                     all_transition_paths.append(transition_paths)
                     tmp = AnalysisTreeNode(
@@ -198,8 +228,7 @@ class Simulator:
                     )
                     node.child.append(tmp)
                     simulation_queue.append(tmp)
-                for agent_id, agent in node.agent.items():
-                    self.cache.add_segment(agent_id, node, full_traces[agent_id], all_transition_paths, run_num)
+                print(red("end sim"))
                 # Put the node in the child of current node. Put the new node in the queue
             #     node.child.append(AnalysisTreeNode(
             #         trace = next_node_trace,
