@@ -103,15 +103,17 @@ if __name__ == "__main__":
     time = timeit.default_timer()
     traces = scenario.simulate(60, 0.05)
     print("\x1b[31mrun1\x1b[0m", timeit.default_timer() - time)
+    traces.dump_tree()
     fig = go.Figure()
     fig = simulation_tree(traces, tmp_map, fig, 1,
                           2, 'lines', 'trace', print_dim_list=[1, 2])
     fig.show()
 
-    time = timeit.default_timer()
-    traces = scenario.simulate(60, 0.05)
-    print("\x1b[31mrun2\x1b[0m", timeit.default_timer() - time)
-    fig = go.Figure()
-    fig = simulation_tree(traces, tmp_map, fig, 1,
-                          2, 'lines', 'trace', print_dim_list=[1, 2])
-    fig.show()
+#     time = timeit.default_timer()
+#     traces = scenario.simulate(60, 0.05)
+#     print("\x1b[31mrun2\x1b[0m", timeit.default_timer() - time)
+#     traces.dump_tree()
+#     fig = go.Figure()
+#     fig = simulation_tree(traces, tmp_map, fig, 1,
+#                           2, 'lines', 'trace', print_dim_list=[1, 2])
+#     fig.show()
