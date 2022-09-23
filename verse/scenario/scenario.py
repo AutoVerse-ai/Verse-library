@@ -10,7 +10,8 @@ from dataclasses import dataclass
 import numpy as np
 
 from verse.agents.base_agent import BaseAgent
-from verse.analysis.incremental import CachedSegment, CachedTransition
+from verse.analysis.dryvr import _EPSILON
+from verse.analysis.incremental import CachedSegment
 from verse.analysis.simulator import PathDiffs
 from verse.automaton import GuardExpressionAst, ResetExpression
 from verse.analysis import Simulator, Verifier, AnalysisTreeNode, AnalysisTree
@@ -414,7 +415,12 @@ class Scenario:
         else:
             if len(paths) == 0:
                 print(red("full cache"))
+                def trans_close(a: Dict[str, List[float]], b: Dict[str, List[float]]) -> bool:
+                    assert set(a.keys()) == set(b.keys())
+                    return all(abs(av - bv) < _EPSILON for aid in a.keys() for av, bv in zip(a[aid], b[aid]))
+
                 _transitions = [trans.transition for seg in cache.values() for trans in seg.transitions]
+                # _transitions = [trans.transition for seg in cache.values() for trans in seg.transitions if trans_close(trans.inits, node.init)]
                 pp(("cached trans", _transitions))
                 if len(_transitions) == 0:
                     return None, None, 0

@@ -166,7 +166,7 @@ class Simulator:
                 for agent_id in node.agent:
                     transition = transitions[agent_id] if agent_id in transitions else []
                     if agent_id in cached_segments:
-                        cached_segments[agent_id].transitions.extend(convert_transitions(agent_id, transit_agents, transition, transition_idx))
+                        cached_segments[agent_id].transitions.extend(convert_transitions(agent_id, transit_agents, node.init, transition, transition_idx))
                         pre_len = len(cached_segments[agent_id].transitions)
                         def dedup(l):
                             o = []

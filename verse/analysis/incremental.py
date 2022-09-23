@@ -1,7 +1,7 @@
 from collections import defaultdict
 from dataclasses import dataclass
 from pprint import pp
-from typing import DefaultDict, List, Tuple, Optional
+from typing import DefaultDict, List, Tuple, Optional, Dict
 from verse.analysis import AnalysisTreeNode
 from intervaltree import IntervalTree
 
@@ -10,6 +10,7 @@ from verse.parser.parser import ControllerIR, ModePath
 
 @dataclass
 class CachedTransition:
+    inits: Dict[str, List[float]]
     transition: int
     disc: List[str]
     cont: List[float]
@@ -24,9 +25,9 @@ class CachedSegment:
     run_num: int
     node_id: int
 
-def convert_transitions(agent_id, transit_agents, transition, trans_ind):
+def convert_transitions(agent_id, transit_agents, inits, transition, trans_ind):
     if agent_id in transit_agents:
-        return [CachedTransition(trans_ind, mode, init, paths) for _id, mode, init, paths in transition]
+        return [CachedTransition(inits, trans_ind, mode, init, paths) for _id, mode, init, paths in transition]
     else:
         return []
 
@@ -51,7 +52,7 @@ class SimTraceCache:
         pp(('add seg', agent_id, *node.mode[agent_id], *init))
         for i, val in enumerate(init):
             if i == len(init) - 1:
-                transitions = convert_transitions(agent_id, transit_agents, transition, trans_ind)
+                transitions = convert_transitions(agent_id, transit_agents, node.init, transition, trans_ind)
                 entry = CachedSegment(trace, assert_hits.get(agent_id), transitions, node.agent[agent_id].controller, run_num, node.id)
                 tree[val - _EPSILON:val + _EPSILON] = entry
                 return entry
