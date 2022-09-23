@@ -17,7 +17,7 @@ from verse.analysis.analysis_tree import AnalysisTreeNode, AnalysisTree
 PathDiffs = List[Tuple[BaseAgent, ModePath]]
 
 def red(s):
-    return "[31m" + s + "[0m"
+    return "\x1b[31m" + s + "\x1b[0m" #]]
 
 def to_simulate(old_agents: Dict[str, BaseAgent], new_agents: Dict[str, BaseAgent], cached: Dict[str, CachedSegment]) -> Tuple[Dict[str, CachedSegment], PathDiffs]:
     assert set(old_agents.keys()) == set(new_agents.keys())
@@ -61,9 +61,10 @@ def to_simulate(old_agents: Dict[str, BaseAgent], new_agents: Dict[str, BaseAgen
     return new_cache, added_paths
 
 class Simulator:
-    def __init__(self):
+    def __init__(self, config):
         self.simulation_tree = None
         self.cache = SimTraceCache()
+        self.config = config
 
     def simulate(self, init_list, init_mode_list, static_list, uncertain_param_list, agent_list,
                  transition_graph, time_horizon, time_step, lane_map, run_num, past_runs):
@@ -102,7 +103,10 @@ class Simulator:
             for agent_id in node.agent:
                 mode = node.mode[agent_id]
                 init = node.init[agent_id]
-                cached = self.cache.check_hit(agent_id, mode, init)
+                if self.config.incremental:
+                    cached = self.cache.check_hit(agent_id, mode, init)
+                else:
+                    cached = None
                 if agent_id in node.trace:
                     if cached != None:
                         cached_segments[agent_id] = cached
@@ -155,32 +159,34 @@ class Simulator:
             else:
                 # If there's no transitions (returned transitions is empty), continue
                 if not transitions:
-                    for agent_id in node.agent:
-                        if agent_id not in cached_segments:
-                            self.cache.add_segment(agent_id, node, [], full_traces[agent_id], [], transition_idx, run_num)
+                    if self.config.incremental:
+                        for agent_id in node.agent:
+                            if agent_id not in cached_segments:
+                                self.cache.add_segment(agent_id, node, [], full_traces[agent_id], [], transition_idx, run_num)
                     print(red("no trans"))
                     continue
 
                 transit_agents = transitions.keys()
                 pp(("transit agents", transit_agents))
-                for agent_id in node.agent:
-                    transition = transitions[agent_id] if agent_id in transitions else []
-                    if agent_id in cached_segments:
-                        cached_segments[agent_id].transitions.extend(convert_transitions(agent_id, transit_agents, node.init, transition, transition_idx))
-                        pre_len = len(cached_segments[agent_id].transitions)
-                        def dedup(l):
-                            o = []
-                            for i in l:
-                                for j in o:
-                                    if i.disc == j.disc and i.cont == j.cont:
-                                        break
-                                else:
-                                    o.append(i)
-                            return o
-                        cached_segments[agent_id].transitions = dedup(cached_segments[agent_id].transitions)
-                        pp(("dedup!", pre_len, len(cached_segments[agent_id].transitions)))
-                    else:
-                        self.cache.add_segment(agent_id, node, transit_agents, full_traces[agent_id], transition, transition_idx, run_num)
+                if self.config.incremental:
+                    for agent_id in node.agent:
+                        transition = transitions[agent_id] if agent_id in transitions else []
+                        if agent_id in cached_segments:
+                            cached_segments[agent_id].transitions.extend(convert_transitions(agent_id, transit_agents, node.init, transition, transition_idx))
+                            pre_len = len(cached_segments[agent_id].transitions)
+                            def dedup(l):
+                                o = []
+                                for i in l:
+                                    for j in o:
+                                        if i.disc == j.disc and i.cont == j.cont:
+                                            break
+                                    else:
+                                        o.append(i)
+                                return o
+                            cached_segments[agent_id].transitions = dedup(cached_segments[agent_id].transitions)
+                            pp(("dedup!", pre_len, len(cached_segments[agent_id].transitions)))
+                        else:
+                            self.cache.add_segment(agent_id, node, transit_agents, full_traces[agent_id], transition, transition_idx, run_num)
                 pp(("cached inits", self.cache.get_cached_inits(3)))
                 # Generate the transition combinations if multiple agents can transit at the same time step
                 transition_list = list(transitions.values())

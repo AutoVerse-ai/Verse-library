@@ -123,7 +123,7 @@ def check_transitions(agent: BaseAgent, guards: List[Tuple], cont, disc, map, st
 
 @dataclass
 class ScenarioConfig:
-    incremental: bool = False
+    incremental: bool = True
     unsafe_continue: bool = False
     init_seg_length: int = 1000
     reachability_method: str = 'DRYVR'
@@ -131,7 +131,7 @@ class ScenarioConfig:
 class Scenario:
     def __init__(self, config=ScenarioConfig()):
         self.agent_dict: Dict[str, BaseAgent] = {}
-        self.simulator = Simulator()
+        self.simulator = Simulator(config)
         self.verifier = Verifier()
         self.init_dict = {}
         self.init_mode_dict = {}
