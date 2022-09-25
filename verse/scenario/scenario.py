@@ -414,14 +414,14 @@ class Scenario:
             paths = [(agent, p) for agent in node.agent.values() for p in agent.controller.paths]
         else:
             if len(paths) == 0:
-                print(red("full cache"))
+                # print(red("full cache"))
                 def trans_close(a: Dict[str, List[float]], b: Dict[str, List[float]]) -> bool:
                     assert set(a.keys()) == set(b.keys())
                     return all(abs(av - bv) < _EPSILON for aid in a.keys() for av, bv in zip(a[aid], b[aid]))
 
                 _transitions = [trans.transition for seg in cache.values() for trans in seg.transitions]
                 # _transitions = [trans.transition for seg in cache.values() for trans in seg.transitions if trans_close(trans.inits, node.init)]
-                pp(("cached trans", _transitions))
+                # pp(("cached trans", _transitions))
                 if len(_transitions) == 0:
                     return None, None, 0
                 transition = min(_transitions)
@@ -430,7 +430,7 @@ class Scenario:
                     # TODO: check for asserts
                     for tran in seg.transitions:
                         if tran.transition == transition:
-                            pp(("chosen tran", agent_id, tran))
+                            # pp(("chosen tran", agent_id, tran))
                             transitions[agent_id].append((agent_id, tran.disc, tran.cont, tran.paths))
                 return None, dict(transitions), transition
 

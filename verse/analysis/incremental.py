@@ -49,7 +49,7 @@ class SimTraceCache:
         init = node.init[agent_id]
         tree = self.cache[key]
         assert_hits = node.assert_hits or {}
-        pp(('add seg', agent_id, *node.mode[agent_id], *init))
+        # pp(('add seg', agent_id, *node.mode[agent_id], *init))
         for i, val in enumerate(init):
             if i == len(init) - 1:
                 transitions = convert_transitions(agent_id, transit_agents, node.init, transition, trans_ind)

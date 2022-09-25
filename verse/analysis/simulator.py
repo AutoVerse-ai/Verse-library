@@ -94,7 +94,7 @@ class Simulator:
         # Perform BFS through the simulation tree to loop through all possible transitions
         while simulation_queue != []:
             node: AnalysisTreeNode = simulation_queue.pop(0)
-            pp(("start sim", node.start_time, {a: (*node.mode[a], *node.init[a]) for a in node.mode}))
+            # pp(("start sim", node.start_time, {a: (*node.mode[a], *node.init[a]) for a in node.mode}))
             remain_time = round(time_horizon - node.start_time, 10)
             if remain_time <= 0:
                 continue
@@ -117,14 +117,14 @@ class Simulator:
                             node.trace[agent_id] += node.agent[agent_id].TC_simulate(mode, cached.trace[-1], remain_time - time_step * len(cached.trace), lane_map)
                         cached_segments[agent_id] = cached
                     else:
-                        pp(("sim", agent_id, *mode, *init))
+                        # pp(("sim", agent_id, *mode, *init))
                         # Simulate the trace starting from initial condition
                         trace = node.agent[agent_id].TC_simulate(
                             mode, init, remain_time, time_step, lane_map)
                         trace[:, 0] += node.start_time
                         trace = trace.tolist()
                         node.trace[agent_id] = trace
-            pp(("cached_segments", cached_segments.keys()))
+            # pp(("cached_segments", cached_segments.keys()))
             # TODO: for now, make sure all the segments comes from the same node; maybe we can do
             # something to combine results from different nodes in the future
             node_ids = list(set((s.run_num, s.node_id) for s in cached_segments.values()))
@@ -136,15 +136,15 @@ class Simulator:
                     old_node = find(past_runs[old_run_num].nodes, lambda n: n.id == old_node_id)
                     assert old_node != None
                     new_cache, paths_to_sim = to_simulate(old_node.agent, node.agent, cached_segments)
-                    pp(("to sim", new_cache.keys(), len(paths_to_sim)))
+                    # pp(("to sim", new_cache.keys(), len(paths_to_sim)))
                 # else:
                 #     print("!!!")
 
             asserts, transitions, transition_idx = transition_graph.get_transition_simulate_new(new_cache, paths_to_sim, node)
-            pp(("transitions:", transition_idx, transitions))
+            # pp(("transitions:", transition_idx, transitions))
 
             node.assert_hits = asserts
-            pp(("next init:", {a: trace[transition_idx] for a, trace in node.trace.items()}))
+            # pp(("next init:", {a: trace[transition_idx] for a, trace in node.trace.items()}))
 
             # truncate the computed trajectories from idx and store the content after truncate
             truncated_trace, full_traces = {}, {}
@@ -155,7 +155,7 @@ class Simulator:
 
             if asserts != None:
                 print(transition_idx)
-                pp({a: len(t) for a, t in node.trace.items()})
+                # pp({a: len(t) for a, t in node.trace.items()})
             else:
                 # If there's no transitions (returned transitions is empty), continue
                 if not transitions:
@@ -167,7 +167,7 @@ class Simulator:
                     continue
 
                 transit_agents = transitions.keys()
-                pp(("transit agents", transit_agents))
+                # pp(("transit agents", transit_agents))
                 if self.config.incremental:
                     for agent_id in node.agent:
                         transition = transitions[agent_id] if agent_id in transitions else []
@@ -184,10 +184,10 @@ class Simulator:
                                         o.append(i)
                                 return o
                             cached_segments[agent_id].transitions = dedup(cached_segments[agent_id].transitions)
-                            pp(("dedup!", pre_len, len(cached_segments[agent_id].transitions)))
+                            # pp(("dedup!", pre_len, len(cached_segments[agent_id].transitions)))
                         else:
                             self.cache.add_segment(agent_id, node, transit_agents, full_traces[agent_id], transition, transition_idx, run_num)
-                pp(("cached inits", self.cache.get_cached_inits(3)))
+                # pp(("cached inits", self.cache.get_cached_inits(3)))
                 # Generate the transition combinations if multiple agents can transit at the same time step
                 transition_list = list(transitions.values())
                 all_transition_combinations = itertools.product(
