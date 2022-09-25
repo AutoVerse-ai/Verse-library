@@ -445,7 +445,16 @@ class Scenario:
                 if len(agent.controller.args) == 0:
                     continue
                 state_dict = {aid: (node.trace[aid][0], node.mode[aid], node.static[aid]) for aid in node.agent}
-                agent_paths = {p for tran in segment.transitions for p in tran.paths}
+                def dedup(l):
+                    o = []
+                    for i in l:
+                        for j in o:
+                            if i.var == j.var and i.cond == j.cond and i.val == j.val:
+                                break
+                        else:
+                            o.append(i)
+                    return o
+                agent_paths = dedup([p for tran in segment.transitions for p in tran.paths])
                 cont_var_dict_template, discrete_variable_dict, len_dict = self.sensor.sense(self, agent, state_dict, self.map)
                 for path in agent_paths:
                     cached_guards[agent_id].append((path, discrete_variable_dict, path_transitions[path.cond]))
