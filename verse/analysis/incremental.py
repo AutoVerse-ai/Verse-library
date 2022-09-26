@@ -1,14 +1,14 @@
 from collections import defaultdict
 from dataclasses import dataclass
 from pprint import pp
-from typing import DefaultDict, List, Tuple, Optional, Dict
+from typing import Any, DefaultDict, List, Tuple, Optional, Dict
 from verse.agents.base_agent import BaseAgent
 from verse.analysis import AnalysisTreeNode
 from intervaltree import IntervalTree
 import itertools, copy
 
 from verse.analysis.dryvr import _EPSILON
-from verse.analysis.simulator import PathDiffs
+# from verse.analysis.simulator import PathDiffs
 from verse.parser.parser import ControllerIR, ModePath
 
 @dataclass
@@ -28,7 +28,7 @@ class CachedSegment:
     run_num: int
     node_id: int
 
-def to_simulate(old_agents: Dict[str, BaseAgent], new_agents: Dict[str, BaseAgent], cached: Dict[str, CachedSegment]) -> Tuple[Dict[str, CachedSegment], PathDiffs]:
+def to_simulate(old_agents: Dict[str, BaseAgent], new_agents: Dict[str, BaseAgent], cached: Dict[str, CachedSegment]) -> Tuple[Dict[str, CachedSegment], Any]: #s/Any/PathDiffs/
     assert set(old_agents.keys()) == set(new_agents.keys())
     removed_paths, added_paths, reset_changed_paths = [], [], []
     for agent_id, old_agent in old_agents.items():

@@ -11,11 +11,12 @@ from verse.analysis.incremental import ReachTraceCache
 
 
 class Verifier:
-    def __init__(self):
+    def __init__(self, config):
         self.reachtube_tree = None
         self.unsafe_set = None
         self.verification_result = None
         self.cache = ReachTraceCache()
+        self.config = config
 
     def calculate_full_bloated_tube(
         self,
@@ -53,7 +54,10 @@ class Verifier:
                     combined_rect[1, :] = np.maximum(
                         combined_rect[1, :], rect[1, :])
             combined_rect = combined_rect.tolist()
-            cached = self.cache.check_hit(agent_id, mode_label, combined_rect)
+            if self.config.incremental:
+                cached = self.cache.check_hit(agent_id, mode_label, combined_rect)
+            else:
+                cached = None
             if cached != None:
                 cur_bloated_tube = cached.tube
             else:
@@ -67,7 +71,8 @@ class Verifier:
                                             sim_trace_num,
                                             lane_map = lane_map
                                             )
-                self.cache.add_tube(agent_id, mode_label, combined_rect, cur_bloated_tube)
+                if self.config.incremental:
+                    self.cache.add_tube(agent_id, mode_label, combined_rect, cur_bloated_tube)
             if combine_seg_idx == 0:
                 res_tube = cur_bloated_tube
                 tube_length = cur_bloated_tube.shape[0]
@@ -99,6 +104,7 @@ class Verifier:
         lane_map,
         init_seg_length,
         reachability_method,
+        run_num,
         params = {}
     ):
         root = AnalysisTreeNode(
@@ -145,7 +151,8 @@ class Verifier:
                     # trace[:,0] += node.start_time
                     # node.trace[agent_id] = trace.tolist()
                     if reachability_method == "DRYVR":
-                        cur_bloated_tube = self.calculate_full_bloated_tube(mode,
+                        cur_bloated_tube = self.calculate_full_bloated_tube(agent_id,
+                                            mode,
                                             init,
                                             remain_time,
                                             time_step, 

@@ -132,7 +132,7 @@ class Scenario:
     def __init__(self, config=ScenarioConfig()):
         self.agent_dict: Dict[str, BaseAgent] = {}
         self.simulator = Simulator(config)
-        self.verifier = Verifier()
+        self.verifier = Verifier(config)
         self.init_dict = {}
         self.init_mode_dict = {}
         self.static_dict = {}
@@ -271,7 +271,7 @@ class Scenario:
         self.past_runs.append(tree)
         return tree
 
-    def verify(self, time_horizon, time_step, reachability_method='DRYVR', params={}) -> AnalysisTree:
+    def verify(self, time_horizon, time_step, params={}) -> AnalysisTree:
         self.check_init()
         init_list = []
         init_mode_list = []
@@ -289,7 +289,7 @@ class Scenario:
             uncertain_param_list.append(self.uncertain_param_dict[agent_id])
             agent_list.append(self.agent_dict[agent_id])
         tree = self.verifier.compute_full_reachtube(init_list, init_mode_list, static_list, uncertain_param_list, agent_list, self, time_horizon,
-                                                    time_step, self.map, self.config.init_seg_length, self.config.reachability_method, params, len(self.past_runs))
+                                                    time_step, self.map, self.config.init_seg_length, self.config.reachability_method, len(self.past_runs), params)
         self.past_runs.append(tree)
         return tree
 
