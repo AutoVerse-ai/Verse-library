@@ -7,7 +7,7 @@ import functools
 import pprint
 from verse.agents.base_agent import BaseAgent
 
-from verse.analysis.incremental import CachedSegment, SimTraceCache, convert_transitions
+from verse.analysis.incremental import CachedSegment, SimTraceCache, convert_transitions, to_simulate
 from verse.parser.parser import ControllerIR, ModePath, find
 pp = functools.partial(pprint.pprint, compact=True, width=130)
 
@@ -18,47 +18,6 @@ PathDiffs = List[Tuple[BaseAgent, ModePath]]
 
 def red(s):
     return "\x1b[31m" + s + "\x1b[0m" #]]
-
-def to_simulate(old_agents: Dict[str, BaseAgent], new_agents: Dict[str, BaseAgent], cached: Dict[str, CachedSegment]) -> Tuple[Dict[str, CachedSegment], PathDiffs]:
-    assert set(old_agents.keys()) == set(new_agents.keys())
-    removed_paths, added_paths, reset_changed_paths = [], [], []
-    for agent_id, old_agent in old_agents.items():
-        new_agent = new_agents[agent_id]
-        old_ctlr, new_ctlr = old_agent.controller, new_agent.controller
-        assert old_ctlr.args == new_ctlr.args
-        def group_by_var(ctlr: ControllerIR) -> Dict[str, List[ModePath]]:
-            grouped = defaultdict(list)
-            for path in ctlr.paths:
-                grouped[path.var].append(path)
-            return dict(grouped)
-        old_grouped, new_grouped = group_by_var(old_ctlr), group_by_var(new_ctlr)
-        if set(old_grouped.keys()) != set(new_grouped.keys()):
-            raise NotImplementedError("different variable outputs")
-        for var, old_paths in old_grouped.items():
-            new_paths = new_grouped[var]
-            for old, new in itertools.zip_longest(old_paths, new_paths):
-                if new == None:
-                    removed_paths.append(old)
-                elif old.cond != new.cond:
-                    added_paths.append((new_agent, new))
-                elif old.val != new.val:
-                    reset_changed_paths.append(new)
-    new_cache = {}
-    for agent_id in cached:
-        segment = copy.deepcopy(cached[agent_id])
-        new_transitions = []
-        for trans in segment.transitions:
-            removed = False
-            for path in trans.paths:
-                if path in removed_paths:
-                    removed = True
-                for rcp in reset_changed_paths:
-                    if path.cond == rcp.cond:
-                        path.val = rcp.val
-            if not removed:
-                new_transitions.append(trans)
-        new_cache[agent_id] = segment
-    return new_cache, added_paths
 
 class Simulator:
     def __init__(self, config):
