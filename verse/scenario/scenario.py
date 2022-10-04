@@ -11,7 +11,7 @@ import numpy as np
 
 from verse.agents.base_agent import BaseAgent
 from verse.analysis.dryvr import _EPSILON
-from verse.analysis.incremental import CachedSegment
+from verse.analysis.incremental import CachedRTTrans, CachedSegment
 from verse.analysis.simulator import PathDiffs
 from verse.automaton import GuardExpressionAst, ResetExpression
 from verse.analysis import Simulator, Verifier, AnalysisTreeNode, AnalysisTree
@@ -53,8 +53,7 @@ def pack_env(agent: BaseAgent, ego_ty_name: str, cont: Dict[str, float], disc: D
     packed[EGO] = state_ty(**packed[EGO])
     return dict(packed.items())
 
-def check_transitions(agent: BaseAgent, guards: List[Tuple], cont, disc, map, state, mode):
-    from verse.analysis.types import type_spec
+def check_sim_transitions(agent: BaseAgent, guards: List[Tuple], cont, disc, map, state, mode):
     asserts = []
     satisfied_guard = []
     agent_id = agent.id
@@ -289,7 +288,7 @@ class Scenario:
             uncertain_param_list.append(self.uncertain_param_dict[agent_id])
             agent_list.append(self.agent_dict[agent_id])
         tree = self.verifier.compute_full_reachtube(init_list, init_mode_list, static_list, uncertain_param_list, agent_list, self, time_horizon,
-                                                    time_step, self.map, self.config.init_seg_length, self.config.reachability_method, len(self.past_runs), params)
+                                                    time_step, self.map, self.config.init_seg_length, self.config.reachability_method, len(self.past_runs), self.past_runspast_runs, params)
         self.past_runs.append(tree)
         return tree
 
@@ -461,10 +460,10 @@ class Scenario:
 
         for agent, path in paths:
             # Get guard
-            agent_id = agent.id
-            agent_mode = node.mode[agent_id]
             if len(agent.controller.args) == 0:
                 continue
+            agent_id = agent.id
+            agent_mode = node.mode[agent_id]
             state_dict = {aid: (node.trace[aid][0], node.mode[aid], node.static[aid]) for aid in node.agent}
             cont_var_dict_template, discrete_variable_dict, len_dict = self.sensor.sense(self, agent, state_dict, self.map)
             agent_guard_dict[agent_id].append((path, discrete_variable_dict))
@@ -481,7 +480,7 @@ class Scenario:
                 agent_state = agent_state[1:]
                 continuous_variable_dict, orig_disc_vars, _ = self.sensor.sense(self, agent, state_dict, self.map)
                 unchecked_cache_guards = [g[:2] for g in cached_guards[agent_id] if g[2] < idx]     # FIXME: off by 1?
-                asserts, satisfied = check_transitions(agent, agent_guard_dict[agent_id] + unchecked_cache_guards, continuous_variable_dict, orig_disc_vars, self.map, agent_state, agent_mode)
+                asserts, satisfied = check_sim_transitions(agent, agent_guard_dict[agent_id] + unchecked_cache_guards, continuous_variable_dict, orig_disc_vars, self.map, agent_state, agent_mode)
                 if asserts != None:
                     all_asserts[agent_id] = asserts
                     continue
@@ -498,51 +497,104 @@ class Scenario:
                 break
         return None, dict(transitions), idx
 
-    def get_transition_verify_new(self, node: AnalysisTreeNode):
+    def get_transition_verify_new(self, cache: Dict[str, CachedRTTrans], paths: PathDiffs, node: AnalysisTreeNode) -> Tuple[Optional[Dict[str, List[str]]], Optional[Dict[str, List[Tuple[str, List[str], List[float]]]]], int]:
         lane_map = self.map
 
+        # For each agent
         agent_guard_dict = defaultdict(list)
-        for agent_id in node.agent:
-            agent: BaseAgent = self.agent_dict[agent_id]
+        cached_guards = defaultdict(list)
+
+        if not cache:
+            paths = [(agent, p) for agent in node.agent.values() for p in agent.controller.paths]
+        else:
+            if len(paths) == 0:
+                # print(red("full cache"))
+                def trans_close(a: Dict[str, List[float]], b: Dict[str, List[float]]) -> bool:
+                    assert set(a.keys()) == set(b.keys())
+                    return all(abs(av - bv) < _EPSILON for aid in a.keys() for av, bv in zip(a[aid], b[aid]))
+
+                _transitions = [trans.transition for seg in cache.values() for trans in seg.transitions]
+                # _transitions = [trans.transition for seg in cache.values() for trans in seg.transitions if trans_close(trans.inits, node.init)]
+                # pp(("cached trans", _transitions))
+                if len(_transitions) == 0:
+                    return None, None, 0
+                transition = min(_transitions)
+                transitions = defaultdict(list)
+                for agent_id, seg in cache.items():
+                    # TODO: check for asserts
+                    for tran in seg.transitions:
+                        if tran.transition == transition:
+                            # pp(("chosen tran", agent_id, tran))
+                            transitions[agent_id].append((agent_id, tran.mode, tran.dest, tran.reset, tran.reset_idx, tran.paths))
+                return None, dict(transitions)
+
+            path_transitions = defaultdict(int)
+            for seg in cache.values():
+                for tran in seg.transitions:
+                    for p in tran.paths:
+                        path_transitions[p.cond] = max(path_transitions[p.cond], tran.transition)
+            for agent_id, segment in cache.items():
+                agent = node.agent[agent_id]
+                if len(agent.controller.args) == 0:
+                    continue
+                state_dict = {aid: (node.trace[aid][0], node.mode[aid], node.static[aid]) for aid in node.agent}
+                def dedup(l):
+                    o = []
+                    for i in l:
+                        for j in o:
+                            if i.var == j.var and i.cond == j.cond and i.val == j.val:
+                                break
+                        else:
+                            o.append(i)
+                    return o
+                agent_paths = dedup([p for tran in segment.transitions for p in tran.paths])
+                for path in agent_paths:
+                    cont_var_dict_template, discrete_variable_dict, length_dict = self.sensor.sense(
+                        self, agent, state_dict, self.map)
+                    reset = (path.var, path.val_veri)
+                    guard_expression = GuardExpressionAst([path.cond_veri])
+
+                    cont_var_updater = guard_expression.parse_any_all_new(
+                        cont_var_dict_template, discrete_variable_dict, length_dict)
+                    self.apply_cont_var_updater(
+                        cont_var_dict_template, cont_var_updater)
+                    guard_can_satisfied = guard_expression.evaluate_guard_disc(
+                        agent, discrete_variable_dict, cont_var_dict_template, self.map)
+                    if not guard_can_satisfied:
+                        continue
+                    cached_guards[agent_id].append((path, guard_expression, cont_var_updater, copy.deepcopy(discrete_variable_dict), reset, path_transitions[path.cond]))
+
+        for agent, path in paths:
             if len(agent.controller.args) == 0:
                 continue
+            agent_id = agent.id
             agent_mode = node.mode[agent_id]
-            state_dict = {}
-            for tmp in node.agent:
-                state_dict[tmp] = (node.trace[tmp][0*2:0*2+2],
-                                   node.mode[tmp], node.static[tmp])
-
+            state_dict = {aid: (node.trace[aid][0:2], node.mode[aid], node.static[aid]) for aid in node.agent}
             cont_var_dict_template, discrete_variable_dict, length_dict = self.sensor.sense(
                 self, agent, state_dict, self.map)
             # TODO-PARSER: Get equivalent for this function
-            paths = agent.controller.paths
-            for guard_idx, path in enumerate(paths):
-                # Construct the guard expression
-                reset = (path.var, path.val_veri)
-                guard_expression = GuardExpressionAst(
-                    [path.cond_veri], guard_idx)
+            # Construct the guard expression
+            reset = (path.var, path.val_veri)
+            guard_expression = GuardExpressionAst([path.cond_veri])
 
-                cont_var_updater = guard_expression.parse_any_all_new(
-                    cont_var_dict_template, discrete_variable_dict, length_dict)
-                self.apply_cont_var_updater(
-                    cont_var_dict_template, cont_var_updater)
-                guard_can_satisfied = guard_expression.evaluate_guard_disc(
-                    agent, discrete_variable_dict, cont_var_dict_template, self.map)
-                if not guard_can_satisfied:
-                    continue
-                agent_guard_dict[agent_id].append(
-                    (guard_expression, cont_var_updater, copy.deepcopy(discrete_variable_dict), reset))
+            cont_var_updater = guard_expression.parse_any_all_new(
+                cont_var_dict_template, discrete_variable_dict, length_dict)
+            self.apply_cont_var_updater(
+                cont_var_dict_template, cont_var_updater)
+            guard_can_satisfied = guard_expression.evaluate_guard_disc(
+                agent, discrete_variable_dict, cont_var_dict_template, self.map)
+            if not guard_can_satisfied:
+                continue
+            agent_guard_dict[agent_id].append(
+                (guard_expression, cont_var_updater, copy.deepcopy(discrete_variable_dict), reset))
 
         trace_length = int(len(list(node.trace.values())[0])/2)
         guard_hits = []
         guard_hit = False
-        for idx in range(0, trace_length):
+        for idx in range(trace_length):
             any_contained = False
             hits = []
-            state_dict = {}
-            for tmp in node.agent:
-                state_dict[tmp] = (node.trace[tmp][idx*2:idx*2+2],
-                                   node.mode[tmp], node.static[tmp])
+            state_dict = {aid: (node.trace[aid][idx*2:idx*2+2], node.mode[aid], node.static[aid]) for aid in node.agent}
 
             asserts = defaultdict(list)
             for agent_id in self.agent_dict.keys():
@@ -551,8 +603,7 @@ class Scenario:
                     continue
                 agent_state, agent_mode, agent_static = state_dict[agent_id]
                 agent_state = agent_state[1:]
-                cont_vars, disc_vars, len_dict = self.sensor.sense(
-                    self, agent, state_dict, self.map)
+                cont_vars, disc_vars, len_dict = self.sensor.sense(self, agent, state_dict, self.map)
                 resets = defaultdict(list)
                 # Check safety conditions
                 for i, a in enumerate(agent.controller.asserts_veri):
@@ -560,18 +611,13 @@ class Scenario:
 
                     def eval_expr(expr):
                         ge = GuardExpressionAst([copy.deepcopy(expr)])
-                        cont_var_updater = ge.parse_any_all_new(
-                            cont_vars, disc_vars, len_dict)
-                        self.apply_cont_var_updater(
-                            cont_vars, cont_var_updater)
-                        sat = ge.evaluate_guard_disc(
-                            agent, disc_vars, cont_vars, self.map)
+                        cont_var_updater = ge.parse_any_all_new(cont_vars, disc_vars, len_dict)
+                        self.apply_cont_var_updater(cont_vars, cont_var_updater)
+                        sat = ge.evaluate_guard_disc(agent, disc_vars, cont_vars, self.map)
                         if sat:
-                            sat = ge.evaluate_guard_hybrid(
-                                agent, disc_vars, cont_vars, self.map)
+                            sat = ge.evaluate_guard_hybrid(agent, disc_vars, cont_vars, self.map)
                             if sat:
-                                sat, contained = ge.evaluate_guard_cont(
-                                    agent, cont_vars, self.map)
+                                sat, contained = ge.evaluate_guard_cont(agent, cont_vars, self.map)
                                 sat = sat and contained
                         return sat
                     if eval_expr(pre_expr):
@@ -585,13 +631,12 @@ class Scenario:
                 if agent_id not in agent_guard_dict:
                     continue
 
-                for guard_expression, continuous_variable_updater, discrete_variable_dict, reset in agent_guard_dict[agent_id]:
+                unchecked_cache_guards = [g[:-1] for g in cached_guards[agent_id] if g[-1] < idx]     # FIXME: off by 1?
+                for guard_expression, continuous_variable_updater, discrete_variable_dict, reset in agent_guard_dict[agent_id] + unchecked_cache_guards:
                     new_cont_var_dict = copy.deepcopy(cont_vars)
-                    one_step_guard: GuardExpressionAst = copy.deepcopy(
-                        guard_expression)
+                    one_step_guard: GuardExpressionAst = copy.deepcopy(guard_expression)
 
-                    self.apply_cont_var_updater(
-                        new_cont_var_dict, continuous_variable_updater)
+                    self.apply_cont_var_updater(new_cont_var_dict, continuous_variable_updater)
                     guard_can_satisfied = one_step_guard.evaluate_guard_hybrid(
                         agent, discrete_variable_dict, new_cont_var_dict, self.map)
                     if not guard_can_satisfied:
@@ -616,8 +661,7 @@ class Scenario:
                     for reset_info in combined_reset_list[i]:
                         reset_idx.append(reset_info[3])
                     # a list of reset expression
-                    hits.append((agent_id, tuple(reset_idx),
-                                combined_reset_list[i]))
+                    hits.append((agent_id, tuple(reset_idx), combined_reset_list[i]))
             if len(asserts) > 0:
                 return (asserts, idx), None
             if hits != []:

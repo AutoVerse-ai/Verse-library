@@ -129,7 +129,7 @@ class Simulator:
                 # pp(("transit agents", transit_agents))
                 if self.config.incremental:
                     for agent_id in node.agent:
-                        transition = transitions[agent_id] if agent_id in transitions else []
+                        transition = transitions[agent_id] if agent_id in transit_agents else []
                         if agent_id in cached_segments:
                             cached_segments[agent_id].transitions.extend(convert_transitions(agent_id, transit_agents, node.init, transition, transition_idx))
                             pre_len = len(cached_segments[agent_id].transitions)

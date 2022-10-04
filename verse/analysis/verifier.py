@@ -7,15 +7,15 @@ import numpy as np
 from verse.analysis.analysis_tree import AnalysisTreeNode, AnalysisTree
 from verse.analysis.dryvr import calc_bloated_tube, SIMTRACENUM
 from verse.analysis.mixmonotone import calculate_bloated_tube_mixmono_cont, calculate_bloated_tube_mixmono_disc
-from verse.analysis.incremental import ReachTraceCache
+from verse.analysis.incremental import ReachTubeCache, TubeCache, convert_transitions, to_simulate
+from verse.parser.parser import find
 
 
 class Verifier:
     def __init__(self, config):
         self.reachtube_tree = None
-        self.unsafe_set = None
-        self.verification_result = None
-        self.cache = ReachTraceCache()
+        self.cache = TubeCache()
+        self.trans_cache = ReachTubeCache()
         self.config = config
 
     def calculate_full_bloated_tube(
@@ -105,7 +105,8 @@ class Verifier:
         init_seg_length,
         reachability_method,
         run_num,
-        params = {}
+        past_runs,
+        params = {},
     ):
         root = AnalysisTreeNode(
             trace={},
@@ -139,65 +140,110 @@ class Verifier:
             remain_time = round(time_horizon - node.start_time, 10)
             if remain_time <= 0:
                 continue
+            cached_tubes = {}
             # For reachtubes not already computed
             # TODO: can add parallalization for this loop
             for agent_id in node.agent:
-                if agent_id not in node.trace:
-                    # Compute the trace starting from initial condition
-                    mode = node.mode[agent_id]
-                    init = node.init[agent_id]
-                    uncertain_param = node.uncertain_param[agent_id]
-                    # trace = node.agent[agent_id].TC_simulate(mode, init, remain_time,lane_map)
-                    # trace[:,0] += node.start_time
-                    # node.trace[agent_id] = trace.tolist()
-                    if reachability_method == "DRYVR":
-                        cur_bloated_tube = self.calculate_full_bloated_tube(agent_id,
-                                            mode,
-                                            init,
-                                            remain_time,
-                                            time_step, 
-                                            node.agent[agent_id].TC_simulate,
-                                            params,
-                                            100,
-                                            SIMTRACENUM,
-                                            combine_seg_length=init_seg_length,
-                                            lane_map = lane_map
-                                            )
-                    elif reachability_method == "MIXMONO_CONT":
-                        cur_bloated_tube = calculate_bloated_tube_mixmono_cont(
-                            mode, 
-                            init, 
-                            uncertain_param, 
-                            remain_time,
-                            time_step, 
-                            node.agent[agent_id],
-                            lane_map
-                        )
-                    elif reachability_method == "MIXMONO_DISC":
-                        cur_bloated_tube = calculate_bloated_tube_mixmono_disc(
-                            mode, 
-                            init, 
-                            uncertain_param,
-                            remain_time,
-                            time_step,
-                            node.agent[agent_id],
-                            lane_map
-                        ) 
+                mode = node.mode[agent_id]
+                init = node.init[agent_id]
+                if self.config.incremental:
+                    cached = self.cache.check_hit(agent_id, mode, init)
+                else:
+                    cached = None
+                if agent_id in node.trace:
+                    if cached != None:
+                        cached_tubes[agent_id] = cached
+                else:
+                    if cached != None:
+                        node.trace[agent_id] = cached.trace
+                        cached_tubes[agent_id] = cached
                     else:
-                        raise ValueError(f"Reachability computation method {reachability_method} not available.")
-                    trace = np.array(cur_bloated_tube)
-                    trace[:, 0] += node.start_time
-                    node.trace[agent_id] = trace.tolist()
-                    # print("here")
+                    # Compute the trace starting from initial condition
+                        uncertain_param = node.uncertain_param[agent_id]
+                        # trace = node.agent[agent_id].TC_simulate(mode, init, remain_time,lane_map)
+                        # trace[:,0] += node.start_time
+                        # node.trace[agent_id] = trace.tolist()
+                        if reachability_method == "DRYVR":
+                            cur_bloated_tube = self.calculate_full_bloated_tube(mode,
+                                                agent_id,
+                                                init,
+                                                remain_time,
+                                                time_step, 
+                                                node.agent[agent_id].TC_simulate,
+                                                params,
+                                                100,
+                                                SIMTRACENUM,
+                                                combine_seg_length=init_seg_length,
+                                                lane_map = lane_map
+                                                )
+                        elif reachability_method == "MIXMONO_CONT":
+                            cur_bloated_tube = calculate_bloated_tube_mixmono_cont(
+                                mode, 
+                                init, 
+                                uncertain_param, 
+                                remain_time,
+                                time_step, 
+                                node.agent[agent_id],
+                                lane_map
+                            )
+                        elif reachability_method == "MIXMONO_DISC":
+                            cur_bloated_tube = calculate_bloated_tube_mixmono_disc(
+                                mode, 
+                                init, 
+                                uncertain_param,
+                                remain_time,
+                                time_step,
+                                node.agent[agent_id],
+                                lane_map
+                            ) 
+                        else:
+                            raise ValueError(f"Reachability computation method {reachability_method} not available.")
+                        trace = np.array(cur_bloated_tube)
+                        trace[:, 0] += node.start_time
+                        node.trace[agent_id] = trace.tolist()
+                        # print("here")
+            node_ids = list(set((s.run_num, s.node_id) for s in cached_tubes.values()))
+            # assert len(node_ids) <= 1, f"{node_ids}"
+            new_cache, paths_to_sim = {}, []
+            if len(node_ids) == 1 and len(cached_tubes.keys()) == len(node.agent):
+                old_run_num, old_node_id = node_ids[0]
+                if old_run_num != run_num:
+                    old_node = find(past_runs[old_run_num].nodes, lambda n: n.id == old_node_id)
+                    assert old_node != None
+                    new_cache, paths_to_sim = to_simulate(old_node.agent, node.agent, cached_tubes)
+                    # pp(("to sim", new_cache.keys(), len(paths_to_sim)))
 
             # Get all possible transitions to next mode
-            asserts, all_possible_transitions = transition_graph.get_transition_verify_new(node)
+            asserts, all_possible_transitions = transition_graph.get_transition_verify_new(new_cache, paths_to_sim, node)
+            node.assert_hits = asserts
             if asserts != None:
                 asserts, idx = asserts
                 for agent in node.agent:
                     node.trace[agent] = node.trace[agent][:(idx + 1) * 2]
-                node.assert_hits = asserts
                 continue
+
+            transit_map = {l[0]: l[1:] for l in all_possible_transitions}
+            transit_ind = max(l[-1][-1] for l in all_possible_transitions)
+            transit_agents = transit_map.keys()
+            if self.config.incremental:
+                for agent_id in node.agent:
+                    transition = transit_map[agent_id] if agent_id in transit_agents else []
+                    if agent_id in cached_tubes:
+                        cached_tubes[agent_id].transitions.extend(convert_transitions(agent_id, transit_agents, node.init, transition, transit_ind))
+                        pre_len = len(cached_tubes[agent_id].transitions)
+                        def dedup(l):
+                            o = []
+                            for i in l:
+                                for j in o:
+                                    if i.disc == j.disc and i.cont == j.cont:
+                                        break
+                                else:
+                                    o.append(i)
+                            return o
+                        cached_tubes[agent_id].transitions = dedup(cached_tubes[agent_id].transitions)
+                        # pp(("dedup!", pre_len, len(cached_tubes[agent_id].transitions)))
+                    else:
+                        self.trans_cache.add_tube(agent_id, node, transit_agents, transition, transit_ind, run_num)
 
             max_end_idx = 0
             for transition in all_possible_transitions:
