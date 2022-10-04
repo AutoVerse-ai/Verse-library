@@ -207,7 +207,7 @@ class SimpleMap6(LaneMap_3d):
         super().__init__()
         phase = 1.5*pi
         n = np.array([0, 0, 1])
-        width = 3
+        width = 2
         radius = 10
         center1 = np.array([0, 0, 0])
         segment_1_0 = CircularLane_3d_v1(
