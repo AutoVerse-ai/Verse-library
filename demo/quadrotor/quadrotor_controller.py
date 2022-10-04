@@ -3,14 +3,19 @@ import copy
 
 
 class CraftMode(Enum):
-    Follow_Waypoint = auto()
-    Follow_Lane = auto()
+    Normal = auto()
+    Switch_Down = auto()
+    Switch_Up = auto()
+    Switch_Left = auto()
+    Switch_Right = auto()
 
 
 class LaneMode(Enum):
     Lane0 = auto()
     Lane1 = auto()
     Lane2 = auto()
+    Lane3 = auto()
+    Lane4 = auto()
 
 
 class State:
@@ -20,31 +25,48 @@ class State:
     vx = 0.0
     vy = 0.0
     vz = 0.0
-    craft_mode: CraftMode = CraftMode.Follow_Waypoint
+    craft_mode: CraftMode = CraftMode.Normal
     lane_mode: LaneMode = LaneMode.Lane0
-    waypoint_index: int = 0
-    done_flag = 0.0  # indicate if the quad rotor reach the waypoint
 
-    def __init__(self, x, y, z, vx, vy, vz, waypoint_index, done_flag, craft_mode, lane_mode):
+    def __init__(self, x, y, z, vx, vy, vz, craft_mode, lane_mode):
         pass
 
 
-def controller(ego: State):
+def controller(ego: State, others: State, lane_map):
     output = copy.deepcopy(ego)
-    if ego.craft_mode == CraftMode.Follow_Waypoint and ego.done_flag > 0:
-        output.done_flag = 0
-        if ego.waypoint_index == 0:
-            output.waypoint_index = 1
-        if ego.waypoint_index == 1:
-            output.waypoint_index = 4
-        if ego.waypoint_index == 1:
-            output.waypoint_index = 2
-        if ego.waypoint_index == 2:
-            output.waypoint_index = 3
-        if ego.waypoint_index == 4:
-            output.waypoint_index = 5
 
-    # if ego.craft_mode == CraftMode.Follow_Lane and ego.done_flag > 0:
-    #     output.done_flag = 0
-    #     output.waypoint_index = output.waypoint_index + 1
+    # def close(a, b):
+    #     return a.x-b.x < 3 and a.x-b.x > 0 and a.y-b.y < 3 and a.y-b.y > 0
+    # if ego.craft_mode == CraftMode.Normal:
+    #     if close(ego, others) and ego.lane_mode == others.lane_mode:
+    #         if lane_map.has_right(ego.lane_mode):
+    #             output.craft_mode = CraftMode.Switch_Right
+    #             output.lane_mode = lane_map.right_lane(ego.lane_mode)
+    #         if lane_map.has_left(ego.lane_mode):
+    #             output.craft_mode = CraftMode.Switch_Left
+    #             output.lane_mode = lane_map.left_lane(ego.lane_mode)
+    #         if lane_map.has_up(ego.lane_mode):
+    #             output.craft_mode = CraftMode.Switch_Up
+    #             output.lane_mode = lane_map.up_lane(ego.lane_mode)
+    #         if lane_map.has_down(ego.lane_mode):
+    #             output.craft_mode = CraftMode.Switch_Down
+    #             output.lane_mode = lane_map.down_lane(ego.lane_mode)
+    if ego.craft_mode == CraftMode.Normal:
+        if lane_map.get_longitudinal_position(others.lane_mode, [others.x, others.y, others.z]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x, ego.y, ego.z]) > 0 \
+            and lane_map.get_longitudinal_position(others.lane_mode, [others.x, others.y, others.z]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x, ego.y, ego.z]) < 4 \
+                and ego.lane_mode == others.lane_mode:
+            if lane_map.has_right(ego.lane_mode):
+                output.craft_mode = CraftMode.Switch_Right
+                output.lane_mode = lane_map.right_lane(ego.lane_mode)
+            if lane_map.has_left(ego.lane_mode):
+                output.craft_mode = CraftMode.Switch_Left
+                output.lane_mode = lane_map.left_lane(ego.lane_mode)
+            if lane_map.has_up(ego.lane_mode):
+                output.craft_mode = CraftMode.Switch_Up
+                output.lane_mode = lane_map.up_lane(ego.lane_mode)
+            if lane_map.has_down(ego.lane_mode):
+                output.craft_mode = CraftMode.Switch_Down
+                output.lane_mode = lane_map.down_lane(ego.lane_mode)
+
+    # assert not (ego.x > 20 and ego.x < 25), "test"
     return output

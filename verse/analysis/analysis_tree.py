@@ -57,6 +57,22 @@ class AnalysisTreeNode:
 
         return rst_dict
 
+    def get_track(self, agent_id, D):
+        for d in D:
+            if d in self.agent[agent_id].controller.mode_defs['LaneMode'].modes:
+                return d
+        return ""
+
+    def get_mode(self, agent_id, D):
+        res = []
+        for d in D:
+            if d not in self.agent[agent_id].controller.mode_defs['LaneMode'].modes:
+                res.append(d)
+        if len(res) == 1:
+            return res[0]
+        else:
+            return tuple(res)
+            
     @staticmethod
     def from_dict(data) -> "AnalysisTreeNode":
         return AnalysisTreeNode(

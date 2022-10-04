@@ -39,6 +39,8 @@ def write_json(root, file):
 
 
 def trans_dict(root: AnalysisTreeNode, level, id, parent_dict):
+    if isinstance(root, AnalysisTree):
+        root = root.root
     global curr_lines, tree_dict, total_id
     rst_dict = {'node_name': None, 'id': 0, 'start_line': 1, 'parent': None, 'child': {}, 'agent': {}, 'init': {}, 'mode': {}, 'static': {}, 'start_time': 0,
                 'trace': {}, 'type': 'simtrace', 'assert_hits': None}

@@ -40,7 +40,7 @@ def add_states_2d(cont, disc, thing, val, cont_var, disc_var, stat_var):
 def add_states_3d(cont, disc, thing, val, cont_var, disc_var, stat_var):
     state, mode, static = val
     transp = np.transpose(np.array(state)[:, 1:])
-    assert len(transp) == 4
+    # assert len(transp) == 4
     adds(cont, thing, cont_var, transp)
     adds(disc, thing, disc_var, mode)
     adds(disc, thing, stat_var, static)
