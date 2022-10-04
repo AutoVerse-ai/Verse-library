@@ -6,15 +6,32 @@ import pyvista as pv
 
 from verse.analysis.analysis_tree import AnalysisTree, AnalysisTreeNode
 
-def plot3dReachtubeSingle(tube, x_dim, y_dim, z_dim, ax, color):
+def plot3dReachtubeSingle(tube, x_dim, y_dim, z_dim, ax, color, edge=True):
     for lb, ub in tube:
 
         box = [[lb[x_dim], lb[y_dim], lb[z_dim]],[ub[x_dim], ub[y_dim], ub[z_dim]]]
         poly = pc.box2poly(np.array(box).T)
-        ax = plot_polytope_3d(poly.A, poly.b, ax = ax, color = color)
+        ax = plot_polytope_3d(poly.A, poly.b, ax = ax, color = color, edge = edge)
     return ax
 
-def plot3dReachtube(root, agent_id, x_dim, y_dim, z_dim, color = "b", ax = None):
+def plot3dMap(lane_map, color = 'k', ax = None, width=0.1, num = 20):
+    if ax is None:
+        ax = pv.Plotter()
+    for lane_idx in lane_map.lane_dict:
+        lane = lane_map.lane_dict[lane_idx]
+        for lane_seg in lane.segment_list:
+            # if lane_seg.type == 'Straight':
+            oc, oc_x, oc_y, oc_z = lane_seg.get_lane_center(num)
+            points = np.vstack((oc_x, oc_y, oc_z)).T
+            spline = pv.Spline(points, 400)
+            tube = spline.tube(radius=width)
+            ax.add_mesh(tube, color=color)
+            # elif lane_seg.type == 'Circular':
+            #     oc, oc_x, oc_y, oc_z = lane_seg.get_lane_center(num)
+
+    return ax
+
+def plot3dReachtube(root, agent_id, x_dim, y_dim, z_dim, color = "b", ax = None, edge = True):
     if isinstance(root, AnalysisTree):
         root = root.root
     
@@ -34,7 +51,7 @@ def plot3dReachtube(root, agent_id, x_dim, y_dim, z_dim, color = "b", ax = None)
     #     lower_bound.append(node.lower_bound[key])
     # for key in sorted(node.upper_bound):
     #     upper_bound.append(node.upper_bound[key])
-        ax = plot3dReachtubeSingle(data, x_dim, y_dim, z_dim, ax, color)
+        ax = plot3dReachtubeSingle(data, x_dim, y_dim, z_dim, ax, color, edge = edge)
         queue += node.child 
         idx += 1
 

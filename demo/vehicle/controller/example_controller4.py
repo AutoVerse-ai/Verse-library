@@ -15,7 +15,7 @@ class VehicleMode(Enum):
     SwitchRight = auto()
     Brake = auto()
 
-class LaneMode(Enum):
+class TrackMode(Enum):
     Lane0 = auto()
     Lane1 = auto()
     Lane2 = auto()
@@ -26,10 +26,10 @@ class State:
     theta = 0.0
     v = 0.0
     vehicle_mode: VehicleMode = VehicleMode.Normal
-    lane_mode: LaneMode = LaneMode.Lane0
+    lane_mode: TrackMode = TrackMode.Lane0
     type_mode: LaneObjectMode = LaneObjectMode.Vehicle
 
-    def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: LaneMode, type_mode: LaneObjectMode):
+    def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: TrackMode, type_mode: LaneObjectMode):
         pass
 
 def controller(ego:State, others:List[State], lane_map):
@@ -65,9 +65,9 @@ def controller(ego:State, others:List[State], lane_map):
         #     r = True
         return abs_diff(o.x, ego.x) > 5.1
     # assert all(test(o) for o in others)
-    # assert ego.lane_mode != LaneMode.Lane0, "lane 0"
+    # assert ego.lane_mode != TrackMode.Lane0, "lane 0"
     # assert ego.x < 40, "x"
-    # assert not (ego.lane_mode == LaneMode.Lane2 and ego.x > 30 and ego.x<50), "lane 2"
+    # assert not (ego.lane_mode == TrackMode.Lane2 and ego.x > 30 and ego.x<50), "lane 2"
     assert not (ego.x>30 and ego.x<50 and ego.y>-4 and ego.y<-2), "Danger Zone"
     return output
 

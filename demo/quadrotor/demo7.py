@@ -19,7 +19,7 @@ class CraftMode(Enum):
     MoveDown = auto()
 
 
-class LaneMode(Enum):
+class TrackMode(Enum):
     T0 = auto()
     T1 = auto()
     T2 = auto()
@@ -46,7 +46,7 @@ if __name__ == "__main__":
     init_u_1 = [10,0,0,0, 0.5,0,0,0, 0.3, 0]
     # init_u_1 = [3.5, -8.5, -1, 0, 0, 0]
     scenario.set_init_single(quadrotor1.id, [init_l_1, init_u_1], tuple(
-        [CraftMode.Normal, LaneMode.T1]))
+        [CraftMode.Normal, TrackMode.T1]))
 
     quadrotor2 = QuadrotorAgent('test2', file_name=input_code_name2)
     scenario.add_agent(quadrotor2)
@@ -54,7 +54,7 @@ if __name__ == "__main__":
     init_u_2 = [3.5,0,0,0, 9.5,0,0,0, 0.3, 0]
     # init_u_2 = [3, -5, -4, 0, 0, 0]
     scenario.set_init_single(quadrotor2.id, [init_l_2, init_u_2], tuple(
-        [CraftMode.Normal, LaneMode.T1]))
+        [CraftMode.Normal, TrackMode.T1]))
 
     # quadrotor3 = QuadrotorAgent('test3', file_name=input_code_name2)
     # scenario.add_agent(quadrotor3)
@@ -62,7 +62,7 @@ if __name__ == "__main__":
     # init_u_3 = [3.5, 9.5, 8.3, 0, 0, 0]
     # # init_u_2 = [3, -5, -4, 0, 0, 0]
     # scenario.set_init_single(quadrotor3.id, [init_l_3, init_u_3], tuple(
-    #     [CraftMode.Normal, LaneMode.T0]))
+    #     [CraftMode.Normal, TrackMode.T0]))
 
     t_v = {quadrotor1.id: (1, 0.3),
            quadrotor2.id: (1, 0.3),

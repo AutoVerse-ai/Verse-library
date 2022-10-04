@@ -22,7 +22,7 @@ class VehicleMode(Enum):
     Brake = auto()
 
 
-class LaneMode(Enum):
+class TrackMode(Enum):
     Lane0 = auto()
     Lane1 = auto()
     Lane2 = auto()
@@ -34,10 +34,10 @@ class State:
     theta = 0.0
     v = 0.0
     vehicle_mode: VehicleMode = VehicleMode.Normal
-    lane_mode: LaneMode = LaneMode.Lane0
+    lane_mode: TrackMode = TrackMode.Lane0
     type_mode: LaneObjectMode = LaneObjectMode.Vehicle
 
-    def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: LaneMode, type_mode: LaneObjectMode):
+    def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: TrackMode, type_mode: LaneObjectMode):
         pass
 
 
@@ -55,8 +55,8 @@ if __name__ == "__main__":
             [[-65, -62.5, 0, 1.0], [-65, -62.5, 0, 1.0]],
         ],
         [
-            (VehicleMode.Normal, LaneMode.Lane2, LaneObjectMode.Vehicle),
-            (VehicleMode.Normal, LaneMode.Lane1, LaneObjectMode.Vehicle),
+            (VehicleMode.Normal, TrackMode.Lane2, LaneObjectMode.Vehicle),
+            (VehicleMode.Normal, TrackMode.Lane1, LaneObjectMode.Vehicle),
         ]
     )
     traces = scenario.simulate(400, 0.1)  # traces.dump('./output1.json')

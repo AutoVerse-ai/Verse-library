@@ -19,7 +19,7 @@ class CraftMode(Enum):
     Switch_Right = auto()
 
 
-class LaneMode(Enum):
+class TrackMode(Enum):
     Lane0 = auto()
     Lane1 = auto()
     Lane2 = auto()
@@ -59,8 +59,8 @@ if __name__ == "__main__":
             [[5, 0, 0, 0, 0, 0], [10, 0, 0, 0.1, 0.1, 0.1]],
         ],
         [
-            tuple([CraftMode.Normal, LaneMode.Lane0]),
-            tuple([CraftMode.Normal, LaneMode.Lane0])
+            tuple([CraftMode.Normal, TrackMode.Lane0]),
+            tuple([CraftMode.Normal, TrackMode.Lane0])
         ]
     )
     traces = scenario.simulate(20, time_step)

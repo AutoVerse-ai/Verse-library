@@ -25,7 +25,7 @@ class VehicleMode(Enum):
     Brake = auto()
 
 
-class LaneMode(Enum):
+class TrackMode(Enum):
     Lane0 = auto()
     Lane1 = auto()
     Lane2 = auto()
@@ -37,9 +37,9 @@ class State:
     theta: float
     v: float
     vehicle_mode: VehicleMode
-    lane_mode: LaneMode
+    lane_mode: TrackMode
 
-    def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: LaneMode):
+    def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: TrackMode):
         pass
 
 
@@ -62,9 +62,9 @@ if __name__ == "__main__":
             [[4-2.5, 2.8, 0, 1.0], [4.5-2.5, 3.2, 0, 1.0]],
         ],
         [
-            (VehicleMode.Normal, LaneMode.Lane1),
-            (VehicleMode.Normal, LaneMode.Lane1),
-            (VehicleMode.Normal, LaneMode.Lane0),
+            (VehicleMode.Normal, TrackMode.Lane1),
+            (VehicleMode.Normal, TrackMode.Lane1),
+            (VehicleMode.Normal, TrackMode.Lane0),
         ]
     )
 

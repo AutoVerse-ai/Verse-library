@@ -26,8 +26,10 @@ class FFNNC(torch.nn.Module):
 
 
 class QuadrotorAgent(BaseAgent):
-    def __init__(self, id, code=None, file_name=None):
+    def __init__(self, id, code=None, file_name=None, t_v_pair = [], box_side = []):
         super().__init__(id, code, file_name)
+        self.t_v_pair = t_v_pair 
+        self.box_side = box_side
 
     @staticmethod
     def dynamic(t, state, u):
@@ -52,7 +54,7 @@ class QuadrotorAgent(BaseAgent):
     def action_handler(self, mode, state, lane_map: LaneMap_3d):
         # if mode[0] == 'Normal':
         df = 0
-        if lane_map.check_guard_box(self.id, state[3:9]):
+        if lane_map.check_guard_box(self.id, state[3:9], self.box_side):
             # lane_map.get_next_point(mode[1], self.id, state[3:6])
             df = 1
         # else:
@@ -171,9 +173,9 @@ class QuadrotorAgent(BaseAgent):
         time_bound = float(time_bound)
         traces = []
         end_time = 0
-        time_limit = lane_map.get_time_limit(self.id)
+        time_limit = self.t_v_pair[0]
         mode_parameters = lane_map.get_next_point(
-            lane_map.trans_func(mode[1]), self.id, np.array(initialCondition[:3]), np.array(initialCondition[3:6]))
+            lane_map.trans_func(mode[1]), self.id, np.array(initialCondition[:3]), np.array(initialCondition[3:6]), self.t_v_pair)
         while time_bound > end_time:
             ref_vx = (mode_parameters[3] - mode_parameters[0]) / time_limit
             ref_vy = (mode_parameters[4] - mode_parameters[1]) / time_limit
@@ -205,7 +207,7 @@ class QuadrotorAgent(BaseAgent):
             end_time = trace[-1][0]
             initialCondition = trace[-1][1:]
             mode_parameters = lane_map.get_next_point(
-                lane_map.trans_func(mode[1]), self.id,  None, np.array(initialCondition[3:6]))
+                lane_map.trans_func(mode[1]), self.id,  None, np.array(initialCondition[3:6]), self.t_v_pair)
             if round(trace[0][0]-0, 4) != 0:
                 trace = trace[1:]
             traces.extend(trace)

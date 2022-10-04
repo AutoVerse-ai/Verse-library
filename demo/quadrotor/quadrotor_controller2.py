@@ -10,7 +10,7 @@ class CraftMode(Enum):
     Switch_Right = auto()
 
 
-class LaneMode(Enum):
+class TrackMode(Enum):
     Lane0 = auto()
     Lane1 = auto()
     Lane2 = auto()
@@ -26,7 +26,7 @@ class State:
     vy = 0.0
     vz = 0.0
     craft_mode: CraftMode = CraftMode.Normal
-    lane_mode: LaneMode = LaneMode.Lane0
+    lane_mode: TrackMode = TrackMode.Lane0
 
     def __init__(self, x, y, z, vx, vy, vz, craft_mode, lane_mode):
         pass

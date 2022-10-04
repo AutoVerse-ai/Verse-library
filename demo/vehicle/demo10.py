@@ -25,7 +25,7 @@ class VehicleMode(Enum):
     Brake = auto()
 
 
-class LaneMode(Enum):
+class TrackMode(Enum):
     Lane0 = auto()
     Lane1 = auto()
     Lane2 = auto()
@@ -37,10 +37,10 @@ class State:
     theta: float
     v: float
     vehicle_mode: VehicleMode
-    lane_mode: LaneMode
+    lane_mode: TrackMode
     type_mode: LaneObjectMode
 
-    def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: LaneMode, type_mode: LaneObjectMode):
+    def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: TrackMode, type_mode: LaneObjectMode):
         pass
 
 
@@ -61,8 +61,8 @@ if __name__ == "__main__":
             [[20, 0, 0, 0.5], [20, 0, 0, 0.5]],
         ],
         [
-            (VehicleMode.Normal, LaneMode.Lane1, LaneObjectMode.Vehicle),
-            (VehicleMode.Normal, LaneMode.Lane1, LaneObjectMode.Vehicle),
+            (VehicleMode.Normal, TrackMode.Lane1, LaneObjectMode.Vehicle),
+            (VehicleMode.Normal, TrackMode.Lane1, LaneObjectMode.Vehicle),
         ]
     )
     scenario.init_seg_length = 5
@@ -86,8 +86,8 @@ if __name__ == "__main__":
             [[20, 0, 0, 0.5], [20, 0, 0, 0.5]],
         ],
         [
-            (VehicleMode.Normal, LaneMode.Lane1, LaneObjectMode.Vehicle),
-            (VehicleMode.Normal, LaneMode.Lane1, LaneObjectMode.Vehicle),
+            (VehicleMode.Normal, TrackMode.Lane1, LaneObjectMode.Vehicle),
+            (VehicleMode.Normal, TrackMode.Lane1, LaneObjectMode.Vehicle),
         ]
     )
     scenario1.init_seg_length = 5

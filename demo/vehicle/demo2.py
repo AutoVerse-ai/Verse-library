@@ -15,7 +15,7 @@ class VehicleMode(Enum):
     Brake = auto()
 
 
-class LaneMode(Enum):
+class TrackMode(Enum):
     Lane0 = auto()
     Lane1 = auto()
     Lane2 = auto()
@@ -27,9 +27,9 @@ class State:
     theta = 0.0
     v = 0.0
     vehicle_mode: VehicleMode = VehicleMode.Normal
-    lane_mode: LaneMode = LaneMode.Lane0
+    lane_mode: TrackMode = TrackMode.Lane0
 
-    def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: LaneMode):
+    def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: TrackMode):
         self.data = []
 
 
@@ -47,21 +47,21 @@ if __name__ == "__main__":
 
     # # TEST1: wrong dims. AssertionError: the length of element in init not fit the number of continuous variables
     # scenario.set_init_single('car1', [
-    #                          [0, -0.2, 0, 1.0, 0], [0.1, 0.2, 0, 1.0]], (VehicleMode.Normal, LaneMode.Lane1))
+    #                          [0, -0.2, 0, 1.0, 0], [0.1, 0.2, 0, 1.0]], (VehicleMode.Normal, TrackMode.Lane1))
     # # TEST2: wrong dims. AssertionError: the length of element in init_mode not fit the number of discrete variables
     # scenario.set_init_single('car1', [
-    #                          [0, -0.2, 0, 1.0], [0.1, 0.2, 0, 1.0]], (VehicleMode.Normal, LaneMode.Lane1, LaneMode.Lane1))
+    #                          [0, -0.2, 0, 1.0], [0.1, 0.2, 0, 1.0]], (VehicleMode.Normal, TrackMode.Lane1, TrackMode.Lane1))
     # # TEST3: wrong agent id. AssertionError: agent_id not found
     # scenario.set_init_single('car3', [
-    #                          [0, -0.2, 0, 1.0], [0.1, 0.2, 0, 1.0]], (VehicleMode.Normal, LaneMode.Lane1))
+    #                          [0, -0.2, 0, 1.0], [0.1, 0.2, 0, 1.0]], (VehicleMode.Normal, TrackMode.Lane1))
     # # TEST4: not all agents inited. AssertionError: init of car2 not initialized
     # scenario.set_init_single('car1', [
-    #                          [0, -0.2, 0, 1.0], [0.1, 0.2, 0, 1.0]], (VehicleMode.Normal, LaneMode.Lane1))
+    #                          [0, -0.2, 0, 1.0], [0.1, 0.2, 0, 1.0]], (VehicleMode.Normal, TrackMode.Lane1))
     # # TEST5: init individually. works
     # scenario.set_init_single('car1', [
-    #                          [0, -0.2, 0, 1.0], [0.1, 0.2, 0, 1.0]], (VehicleMode.Normal, LaneMode.Lane1))
+    #                          [0, -0.2, 0, 1.0], [0.1, 0.2, 0, 1.0]], (VehicleMode.Normal, TrackMode.Lane1))
     # scenario.set_init_single('car2', [[10, 0, 0, 0.5], [
-    #                          10, 0, 0, 0.5]], (VehicleMode.Normal, LaneMode.Lane1))
+    #                          10, 0, 0, 0.5]], (VehicleMode.Normal, TrackMode.Lane1))
     # # TEST6: init together. works
     # scenario.set_init(
     #     [
@@ -69,15 +69,15 @@ if __name__ == "__main__":
     #         [[10, 0, 0, 0.5], [10, 0, 0, 0.5]],
     #     ],
     #     [
-    #         (VehicleMode.Normal, LaneMode.Lane1),
-    #         (VehicleMode.Normal, LaneMode.Lane1),
+    #         (VehicleMode.Normal, TrackMode.Lane1),
+    #         (VehicleMode.Normal, TrackMode.Lane1),
     #     ]
     # )
     # TEST7: init individually and omit the another limitation if it is the same as the first one. works
     scenario.set_init_single('car1', [
-                             [0, -0.2, 0, 1.0], [0.1, 0.2, 0, 1.0]], (VehicleMode.Normal, LaneMode.Lane1))
+                             [0, -0.2, 0, 1.0], [0.1, 0.2, 0, 1.0]], (VehicleMode.Normal, TrackMode.Lane1))
     scenario.set_init_single(
-        'car2', [[10, 0, 0, 0.5]], (VehicleMode.Normal, LaneMode.Lane1))
+        'car2', [[10, 0, 0, 0.5]], (VehicleMode.Normal, TrackMode.Lane1))
 
     traces = scenario.simulate(1, 0.001)
     fig = go.Figure()

@@ -48,12 +48,26 @@ class Scenario:
             # Update the lane mode field in the agent
             self.update_agent_lane_mode(agent, self.map)
         self.agent_dict[agent.id] = agent
+        if agent.init_cont is not None:
+            self.init_dict[agent.id] = copy.deepcopy(agent.init_cont) 
+        if agent.init_disc is not None:
+            self.init_mode_dict[agent.id] = copy.deepcopy(agent.init_disc)
+
+        if agent.static_parameters is not None:
+            self.static_dict[agent.id] = copy.deepcopy(agent.static_parameters)
+        else:
+            self.static_dict[agent.id] = []
+        if agent.uncertain_parameters is not None:
+            self.uncertain_param_dict[agent.id] = copy.deepcopy(agent.uncertain_parameters)
+        else:
+            self.uncertain_param_dict[agent.id] = []
+
 
     # TODO-PARSER: update this function
     def update_agent_lane_mode(self, agent: BaseAgent, lane_map: LaneMap):
         for lane_id in lane_map.lane_dict:
-            if 'LaneMode' in agent.controller.mode_defs and lane_id not in agent.controller.mode_defs['LaneMode'].modes:
-                agent.controller.mode_defs['LaneMode'].modes.append(lane_id)
+            if 'TrackMode' in agent.controller.mode_defs and lane_id not in agent.controller.mode_defs['TrackMode'].modes:
+                agent.controller.mode_defs['TrackMode'].modes.append(lane_id)
         # mode_vals = list(agent.controller.modes.values())
         # agent.controller.vertices = list(itertools.product(*mode_vals))
         # agent.controller.vertexStrings = [','.join(elem) for elem in agent.controller.vertices]
@@ -75,40 +89,19 @@ class Scenario:
             init = init+init
         self.init_dict[agent_id] = copy.deepcopy(init)
         self.init_mode_dict[agent_id] = copy.deepcopy(init_mode)
+        self.agent_dict[agent_id].set_initial(init, init_mode)
         if static:
             self.static_dict[agent_id] = copy.deepcopy(static)
+            self.agent_dict[agent_id].set_static_parameter(static)
         else:
             self.static_dict[agent_id] = []
         if uncertain_param:
             self.uncertain_param_dict[agent_id] = copy.deepcopy(
                 uncertain_param)
+            self.agent_dict[agent_id].set_uncertain_parameter(uncertain_param)
         else:
             self.uncertain_param_dict[agent_id] = []
         return
-
-    def set_init_org(self, init_list, init_mode_list, static_list=[], uncertain_param_list=[]):
-        assert len(init_list) == len(
-            self.agent_dict), 'the length of init_list not fit the number of agents'
-        assert len(init_mode_list) == len(
-            self.agent_dict), 'the length of init_mode_list not fit the number of agents'
-        assert len(static_list) == len(
-            self.agent_dict) or len(static_list) == 0, 'the length of static_list not fit the number of agents or equal to 0'
-        assert len(uncertain_param_list) == len(self.agent_dict)\
-            or len(uncertain_param_list) == 0, 'the length of uncertain_param_list not fit the number of agents or equal to 0'
-        print(init_mode_list)
-        print(type(init_mode_list))
-        for i, agent_id in enumerate(self.agent_dict.keys()):
-            self.init_dict[agent_id] = copy.deepcopy(init_list[i])
-            self.init_mode_dict[agent_id] = copy.deepcopy(init_mode_list[i])
-            if static_list:
-                self.static_dict[agent_id] = copy.deepcopy(static_list[i])
-            else:
-                self.static_dict[agent_id] = []
-            if uncertain_param_list:
-                self.uncertain_param_dict[agent_id] = copy.deepcopy(
-                    uncertain_param_list[i])
-            else:
-                self.uncertain_param_dict[agent_id] = []
 
     def set_init(self, init_list, init_mode_list, static_list=[], uncertain_param_list=[]):
         assert len(init_list) == len(

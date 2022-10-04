@@ -22,7 +22,7 @@ class VehicleMode(Enum):
     Brake = auto()
 
 
-class LaneMode(Enum):
+class TrackMode(Enum):
     Lane0 = auto()
     Lane1 = auto()
     Lane2 = auto()
@@ -34,10 +34,10 @@ class LaneMode(Enum):
 #     theta = 0.0
 #     v = 0.0
 #     vehicle_mode: VehicleMode = VehicleMode.Normal
-#     lane_mode: LaneMode = LaneMode.Lane0
+#     lane_mode: TrackMode = TrackMode.Lane0
 #     type: LaneObjectMode = LaneObjectMode.Vehicle
 
-#     def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: LaneMode, type: LaneObjectMode):
+#     def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: TrackMode, type: LaneObjectMode):
 #         pass
 
 
@@ -72,13 +72,13 @@ if __name__ == "__main__":
             [[40, -6, 0, 0.5], [40, -6, 0, 0.5]],
         ],
         [
-            (VehicleMode.Normal, LaneMode.Lane1),
-            (VehicleMode.Normal, LaneMode.Lane1),
-            (VehicleMode.Normal, LaneMode.Lane0),
-            (VehicleMode.Normal, LaneMode.Lane0),
-            (VehicleMode.Normal, LaneMode.Lane1),
-            (VehicleMode.Normal, LaneMode.Lane2),
-            (VehicleMode.Normal, LaneMode.Lane3),
+            (VehicleMode.Normal, TrackMode.Lane1),
+            (VehicleMode.Normal, TrackMode.Lane1),
+            (VehicleMode.Normal, TrackMode.Lane0),
+            (VehicleMode.Normal, TrackMode.Lane0),
+            (VehicleMode.Normal, TrackMode.Lane1),
+            (VehicleMode.Normal, TrackMode.Lane2),
+            (VehicleMode.Normal, TrackMode.Lane3),
         ],
         [
             (LaneObjectMode.Vehicle,),

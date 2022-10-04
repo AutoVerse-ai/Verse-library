@@ -20,7 +20,7 @@ class CraftMode(Enum):
     Switch_Right = auto()
 
 
-class LaneMode(Enum):
+class TrackMode(Enum):
     Lane0 = auto()
     Lane1 = auto()
     Lane2 = auto()
@@ -42,14 +42,14 @@ if __name__ == "__main__":
     init_u_1 = [4, -8, 0, 0, 0, 0]
     # init_u_1 = [3.5, -8.5, -1, 0, 0, 0]
     scenario.set_init_single(quadrotor1.id, [init_l_1, init_u_1], tuple(
-        [CraftMode.Normal, LaneMode.Lane0]))
+        [CraftMode.Normal, TrackMode.Lane0]))
     quadrotor2 = QuadrotorAgent('test2', file_name=input_code_name)
     scenario.add_agent(quadrotor2)
     init_l_2 = [3, -5, -4, 0, 0, 0]
     init_u_2 = [3.5, -4.5, -3.5, 0, 0, 0]
     # init_u_2 = [3, -5, -4, 0, 0, 0]
     scenario.set_init_single(quadrotor2.id, [init_l_2, init_u_2], tuple(
-        [CraftMode.Normal, LaneMode.Lane0]))
+        [CraftMode.Normal, TrackMode.Lane0]))
 
     t_v = {quadrotor1.id: (1, 1),
            quadrotor2.id: (1, 0.6)}

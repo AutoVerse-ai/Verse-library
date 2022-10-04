@@ -20,7 +20,7 @@ class VehicleMode(Enum):
     Brake = auto()
 
 
-class LaneMode(Enum):
+class TrackMode(Enum):
     Lane0 = auto()
     Lane1 = auto()
     Lane2 = auto()
@@ -50,10 +50,10 @@ if __name__ == "__main__":
             [[10, 3, 0, 0.5], [10, 3, 0, 0.5]],
         ],
         [
-            (VehicleMode.Normal, LaneMode.Lane1),
-            (VehicleMode.Normal, LaneMode.Lane1),
-            (VehicleMode.Normal, LaneMode.Lane1),
-            (VehicleMode.Normal, LaneMode.Lane0),
+            (VehicleMode.Normal, TrackMode.Lane1),
+            (VehicleMode.Normal, TrackMode.Lane1),
+            (VehicleMode.Normal, TrackMode.Lane1),
+            (VehicleMode.Normal, TrackMode.Lane0),
         ],
         [
             (LaneObjectMode.Vehicle,),

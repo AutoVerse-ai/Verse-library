@@ -15,7 +15,7 @@ class VehicleMode(Enum):
     SwitchRight = auto()
     Brake = auto()
 
-class LaneMode(Enum):
+class TrackMode(Enum):
     Lane0 = auto()
     Lane1 = auto()
     Lane2 = auto()
@@ -26,10 +26,10 @@ class State:
     theta = 0.0
     v = 0.0
     vehicle_mode: VehicleMode = VehicleMode.Normal
-    lane_mode: LaneMode = LaneMode.Lane0
+    lane_mode: TrackMode = TrackMode.Lane0
     type: LaneObjectMode = LaneObjectMode.Vehicle
 
-    def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: LaneMode, type: LaneObjectMode):
+    def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: TrackMode, type: LaneObjectMode):
         pass
 
 def vehicle_front(ego, others, lane_map):

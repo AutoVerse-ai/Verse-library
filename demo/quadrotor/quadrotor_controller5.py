@@ -9,7 +9,7 @@ class CraftMode(Enum):
     MoveDown = auto()
 
 
-class LaneMode(Enum):
+class TrackMode(Enum):
     T0 = auto()
     T1 = auto()
     T2 = auto()
@@ -31,7 +31,7 @@ class State:
     thetay: float 
     omegay: float 
     craft_mode: CraftMode
-    lane_mode: LaneMode
+    lane_mode: TrackMode
 
     def __init__(self, x, y, z, vx, vy, vz, thetax, omegax, thetay, omegay, craft_mode, lane_mode):
         pass

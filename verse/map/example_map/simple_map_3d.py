@@ -203,8 +203,8 @@ class SimpleMap5(LaneMap_3d):
 
 
 class SimpleMap6(LaneMap_3d):
-    def __init__(self, box_side: dict = {}, t_v_pair: dict = {}):
-        super().__init__(box_side=box_side, t_v_pair=t_v_pair)
+    def __init__(self):
+        super().__init__()
         phase = 1.5*pi
         n = np.array([0, 0, 1])
         width = 3

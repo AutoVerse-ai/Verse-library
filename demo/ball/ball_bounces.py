@@ -16,7 +16,7 @@ class BallMode(Enum):
     # Ultimately for simple models we would like to write
     # E.g., Mode = makeMode(Normal, bounce,...)
 
-# class LaneMode(Enum):
+# class TrackMode(Enum):
 #     Lane0 = auto()
 #     #For now this is a dummy notion of Lane
 

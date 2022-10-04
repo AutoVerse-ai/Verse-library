@@ -11,7 +11,7 @@ from verse.map.lane_3d import Lane_3d
 
 class LaneMap_3d:
 
-    def __init__(self, lane_seg_list: List[Lane_3d] = [], box_side: dict = {}, t_v_pair: dict = {}):
+    def __init__(self, lane_seg_list: List[Lane_3d] = []):
         self.lane_dict: Dict[str, Lane_3d] = {}
         self.left_lane_dict: Dict[str, List[str]] = {}
         self.right_lane_dict: Dict[str, List[str]] = {}
@@ -24,8 +24,8 @@ class LaneMap_3d:
             self.up_lane_dict[lane_seg.id] = []
             self.down_lane_dict[lane_seg.id] = []
 
-        self.box_side = box_side
-        self.t_v_pair = t_v_pair
+        # self.box_side = box_side
+        # self.t_v_pair = t_v_pair
         self.curr_wp = {}
         self.curr_seg = {}
         self.wps = {}
@@ -210,16 +210,15 @@ class LaneMap_3d:
     def get_curr_waypoint(self, agent_id):
         return self.waypoints[agent_id]
 
-    def check_guard_box(self, agent_id, state):
+    def check_guard_box(self, agent_id, state, box_side):
         dest = self.curr_wp[agent_id][3:]
-        box_side = self.box_side[agent_id]
         for i in range(len(dest)):
             if state[i] < dest[i]-box_side[i]/2 or state[i] > dest[i]+box_side[i]/2:
                 return False
         return True
 
-    def get_next_point(self, lane, agent_id, pos, velocity):
-        est_len = self.t_v_pair[agent_id][0]*self.t_v_pair[agent_id][1]
+    def get_next_point(self, lane, agent_id, pos, velocity, t_v_pair):
+        est_len = t_v_pair[0]*t_v_pair[1]
         if isinstance(pos, np.ndarray):
             curr_point = pos[:3]
         elif agent_id in self.curr_wp:
