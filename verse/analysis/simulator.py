@@ -1,5 +1,4 @@
-from collections import defaultdict
-from typing import List, Dict, Tuple
+from typing import List, Tuple
 import copy
 import itertools
 import functools
@@ -7,8 +6,8 @@ import functools
 import pprint
 from verse.agents.base_agent import BaseAgent
 
-from verse.analysis.incremental import CachedSegment, SimTraceCache, convert_transitions, to_simulate
-from verse.parser.parser import ControllerIR, ModePath, find
+from verse.analysis.incremental import SimTraceCache, convert_sim_trans, to_simulate
+from verse.parser.parser import ModePath, find
 pp = functools.partial(pprint.pprint, compact=True, width=130)
 
 # from verse.agents.base_agent import BaseAgent
@@ -131,7 +130,7 @@ class Simulator:
                     for agent_id in node.agent:
                         transition = transitions[agent_id] if agent_id in transit_agents else []
                         if agent_id in cached_segments:
-                            cached_segments[agent_id].transitions.extend(convert_transitions(agent_id, transit_agents, node.init, transition, transition_idx))
+                            cached_segments[agent_id].transitions.extend(convert_sim_trans(agent_id, transit_agents, node.init, transition, transition_idx))
                             pre_len = len(cached_segments[agent_id].transitions)
                             def dedup(l):
                                 o = []

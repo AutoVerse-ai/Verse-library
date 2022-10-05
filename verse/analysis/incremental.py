@@ -5,7 +5,7 @@ from typing import Any, DefaultDict, List, Tuple, Optional, Dict
 from verse.agents.base_agent import BaseAgent
 from verse.analysis import AnalysisTreeNode
 from intervaltree import IntervalTree
-import itertools, copy
+import itertools, copy, numpy as np
 
 from verse.analysis.dryvr import _EPSILON
 # from verse.analysis.simulator import PathDiffs
@@ -98,6 +98,10 @@ def convert_reach_trans(agent_id, transit_agents, inits, transition, trans_ind):
         return [CachedReachTrans(inits, trans_ind, mode, dest, reset, reset_idx, paths) for _id, mode, dest, reset, reset_idx, paths in transition]
     else:
         return []
+
+def combine_all(inits):
+    return [[min(a) for a in np.transpose(np.array(inits)[:, 0])],
+            [max(a) for a in np.transpose(np.array(inits)[:, 1])]]
 
 @dataclass
 class CachedTube:
@@ -197,12 +201,12 @@ class ReachTubeCache:
     def __init__(self):
         self.cache: DefaultDict[tuple, IntervalTree] = defaultdict(IntervalTree)
 
-    def add_tube(self, agent_id: str, node: AnalysisTreeNode, transit_agents: List[str], transition, trans_ind: int, run_num: int):
+    def add_tube(self, agent_id: str, init: Dict[str, List[List[float]]], node: AnalysisTreeNode, transit_agents: List[str], transition, trans_ind: int, run_num: int):
         key = (agent_id,) + tuple(node.mode[agent_id])
-        init = node.init[agent_id]
         tree = self.cache[key]
         assert_hits = node.assert_hits or {}
         # pp(('add seg', agent_id, *node.mode[agent_id], *init))
+        init = list(map(tuple, zip(*init[agent_id])))
         for i, (low, high) in enumerate(init):
             if i == len(init) - 1:
                 transitions = convert_reach_trans(agent_id, transit_agents, node.init, transition, trans_ind)
@@ -215,17 +219,17 @@ class ReachTubeCache:
                 tree = next_level_tree
         raise Exception("???")
 
-    def check_hit(self, agent_id: str, mode: Tuple[str], init: List[float]) -> Optional[CachedSegment]:
+    def check_hit(self, agent_id: str, mode: Tuple[str], init: List[float]) -> Optional[CachedRTTrans]:
         key = (agent_id,) + tuple(mode)
         if key not in self.cache:
             return None
         tree = self.cache[key]
-        for low, high in list(map(list, zip(*init))):
+        for low, high in list(map(tuple, zip(*init))):
             next_level_entries = [t for t in tree[low:high + _EPSILON] if t.begin <= low and high <= t.end]
             if len(next_level_entries) == 0:
                 return None
             tree = min(next_level_entries, key=lambda e: low - e.begin + e.end - high).data
-        assert isinstance(tree, CachedSegment)
+        assert isinstance(tree, CachedRTTrans)
         return tree
 
     @staticmethod

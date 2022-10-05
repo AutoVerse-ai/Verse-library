@@ -288,7 +288,7 @@ class Scenario:
             uncertain_param_list.append(self.uncertain_param_dict[agent_id])
             agent_list.append(self.agent_dict[agent_id])
         tree = self.verifier.compute_full_reachtube(init_list, init_mode_list, static_list, uncertain_param_list, agent_list, self, time_horizon,
-                                                    time_step, self.map, self.config.init_seg_length, self.config.reachability_method, len(self.past_runs), self.past_runspast_runs, params)
+                                                    time_step, self.map, self.config.init_seg_length, self.config.reachability_method, len(self.past_runs), self.past_runs, params)
         self.past_runs.append(tree)
         return tree
 
@@ -440,7 +440,6 @@ class Scenario:
                         path_transitions[p.cond] = max(path_transitions[p.cond], tran.transition)
             for agent_id, segment in cache.items():
                 agent = node.agent[agent_id]
-                agent_mode = node.mode[agent_id]
                 if len(agent.controller.args) == 0:
                     continue
                 state_dict = {aid: (node.trace[aid][0], node.mode[aid], node.static[aid]) for aid in node.agent}
@@ -568,13 +567,11 @@ class Scenario:
             if len(agent.controller.args) == 0:
                 continue
             agent_id = agent.id
-            agent_mode = node.mode[agent_id]
             state_dict = {aid: (node.trace[aid][0:2], node.mode[aid], node.static[aid]) for aid in node.agent}
             cont_var_dict_template, discrete_variable_dict, length_dict = self.sensor.sense(
                 self, agent, state_dict, self.map)
             # TODO-PARSER: Get equivalent for this function
             # Construct the guard expression
-            reset = (path.var, path.val_veri)
             guard_expression = GuardExpressionAst([path.cond_veri])
 
             cont_var_updater = guard_expression.parse_any_all_new(
@@ -586,7 +583,7 @@ class Scenario:
             if not guard_can_satisfied:
                 continue
             agent_guard_dict[agent_id].append(
-                (guard_expression, cont_var_updater, copy.deepcopy(discrete_variable_dict), reset))
+                (guard_expression, cont_var_updater, copy.deepcopy(discrete_variable_dict), path))
 
         trace_length = int(len(list(node.trace.values())[0])/2)
         guard_hits = []
@@ -632,7 +629,7 @@ class Scenario:
                     continue
 
                 unchecked_cache_guards = [g[:-1] for g in cached_guards[agent_id] if g[-1] < idx]     # FIXME: off by 1?
-                for guard_expression, continuous_variable_updater, discrete_variable_dict, reset in agent_guard_dict[agent_id] + unchecked_cache_guards:
+                for guard_expression, continuous_variable_updater, discrete_variable_dict, path in agent_guard_dict[agent_id] + unchecked_cache_guards:
                     new_cont_var_dict = copy.deepcopy(cont_vars)
                     one_step_guard: GuardExpressionAst = copy.deepcopy(guard_expression)
 
@@ -646,10 +643,10 @@ class Scenario:
                     any_contained = any_contained or is_contained
                     # TODO: Can we also store the cont and disc var dict so we don't have to call sensor again?
                     if guard_satisfied:
-                        reset_expr = ResetExpression(reset)
+                        reset_expr = ResetExpression((path.var, path.val_veri))
                         resets[reset_expr.var].append(
                             (reset_expr, discrete_variable_dict,
-                             new_cont_var_dict, guard_expression.guard_idx)
+                             new_cont_var_dict, guard_expression.guard_idx, path)
                         )
                 # Perform combination over all possible resets to generate all possible real resets
                 combined_reset_list = list(itertools.product(*resets.values()))
@@ -673,36 +670,31 @@ class Scenario:
                 break
 
         reset_dict = {}  # defaultdict(lambda: defaultdict(list))
-        reset_idx_dict = {}  # defaultdict(lambda: defaultdict(list))
         for hits, all_agent_state, hit_idx in guard_hits:
             for agent_id, reset_idx, reset_list in hits:
                 # TODO: Need to change this function to handle the new reset expression and then I am done
                 dest_list, reset_rect = self.apply_reset(
-                    node.agent[agent_id], reset_list, all_agent_state)
+                    node.agent[agent_id], reset_list[:-1], all_agent_state)
                 if agent_id not in reset_dict:
                     reset_dict[agent_id] = {}
-                    reset_idx_dict[agent_id] = {}
                 if not dest_list:
                     warnings.warn(
                         f"Guard hit for mode {node.mode[agent_id]} for agent {agent_id} without available next mode")
                     dest_list.append(None)
                 if reset_idx not in reset_dict[agent_id]:
                     reset_dict[agent_id][reset_idx] = {}
-                    reset_idx_dict[agent_id][reset_idx] = {}
                 for dest in dest_list:
                     if dest not in reset_dict[agent_id][reset_idx]:
                         reset_dict[agent_id][reset_idx][dest] = []
-                        reset_idx_dict[agent_id][reset_idx][dest] = []
-                    reset_dict[agent_id][reset_idx][dest].append(reset_rect)
-                    reset_idx_dict[agent_id][reset_idx][dest].append(hit_idx)
+                    reset_dict[agent_id][reset_idx][dest].append((reset_rect, hit_idx, reset_list[-1]))
 
         possible_transitions = []
         # Combine reset rects and construct transitions
         for agent in reset_dict:
             for reset_idx in reset_dict[agent]:
                 for dest in reset_dict[agent][reset_idx]:
-                    transition = (
-                        agent, node.mode[agent], dest, reset_dict[agent][reset_idx][dest], reset_idx_dict[agent][reset_idx][dest])
+                    resets = tuple(map(list, zip(*reset_dict[agent][reset_idx][dest])))
+                    transition = (agent, node.mode[agent], dest, *resets)
                     possible_transitions.append(transition)
         # Return result
         return None, possible_transitions
