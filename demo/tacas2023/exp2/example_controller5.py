@@ -49,7 +49,7 @@ def controller(ego:State, others:List[State], lane_map):
     output = copy.deepcopy(ego)
     if ego.agent_mode == VehicleMode.Normal:
         if vehicle_front(ego, others, lane_map):
-            if lane_map.h_exist(ego.lane_mode, ego.agent_mode, 'SwitchLeft'):
+            if lane_map.h_exist(ego.lane_mode, ego.agent_mode, VehicleMode.SwitchLeft):
                 output.agent_mode = VehicleMode.SwitchLeft
                 output.lane_mode = lane_map.h(ego.lane_mode, ego.agent_mode, 'SwitchLeft')
         if vehicle_front(ego, others, lane_map):

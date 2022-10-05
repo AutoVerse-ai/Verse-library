@@ -104,6 +104,8 @@ class LaneMap:
         return lane.get_lane_width()
 
     def h(self, lane_idx, agent_mode_src, agent_mode_dest):
+        if self.h_dict == {}:
+            return ""
         return self.h_dict[(lane_idx, agent_mode_src, agent_mode_dest)]
 
     def h_exist(self, lane_idx, agent_mode_src, agent_mode_dest):

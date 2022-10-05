@@ -623,8 +623,6 @@ def proc(node: ast.AST, env: Env) -> Any:
     elif isinstance(node, ast.Name):# and isinstance(node.ctx, ast.Load):
         return env.lookup(node.id)
     elif isinstance(node, ast.Attribute) and isinstance(node.ctx, ast.Load):
-        if isinstance(node.value, ast.Name) and node.value.id in env.mode_defs:
-            return node.attr
         obj = proc(node.value, env)
         # TODO since we know what the mode and state types contain we can do some typo checking
         if not_ir_ast(obj):
@@ -704,7 +702,16 @@ def proc(node: ast.AST, env: Env) -> Any:
                 if len(node.args) > 1:
                     raise ValueError("too many args to `copy.deepcopy`")
                 return proc(node.args[0], env)
-            return node
+            ret = copy.deepcopy(node)
+            tmp = []
+            for a in ret.args:
+                if isinstance(a, ast.Attribute) and isinstance(a.value, ast.Name) and a.value.id in env.mode_defs:
+                    tmp.append(ast.Constant(a.attr, kind=None))
+                else: 
+                    tmp.append(a)
+            ret.args = tmp
+        
+            return ret
         if isinstance(fun, ast.arg):
             if fun.arg == "copy.deepcopy":
                 raise Exception("unreachable")
