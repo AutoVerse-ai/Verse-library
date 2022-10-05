@@ -46,32 +46,32 @@ def is_close(ego, other):
     return res
 
 
-def controller(ego: State, others: List[State], track_map):
+def controller(ego: State, others: List[State], lane_map):
     next = copy.deepcopy(ego)
 
     if ego.craft_mode == CraftMode.Normal:
         if any((is_close(ego, other) and ego.track_mode == other.track_mode) for other in others):
-            if track_map.h_exist(ego.track_mode, ego.craft_mode, 'MoveUp'):
+            if lane_map.h_exist(ego.track_mode, ego.craft_mode, CraftMode.MoveUp):
                 next.craft_mode = CraftMode.MoveUp
-                next.track_mode = track_map.h(
-                    ego.track_mode, ego.craft_mode, 'MoveUp')
-            if track_map.h_exist(ego.track_mode, ego.craft_mode, 'MoveDown'):
+                next.track_mode = lane_map.h(
+                    ego.track_mode, ego.craft_mode, CraftMode.MoveUp)
+            if lane_map.h_exist(ego.track_mode, ego.craft_mode, CraftMode.MoveDown):
                 next.craft_mode = CraftMode.MoveDown
-                next.track_mode = track_map.h(
-                    ego.track_mode, ego.craft_mode, 'MoveDown')
+                next.track_mode = lane_map.h(
+                    ego.track_mode, ego.craft_mode, CraftMode.MoveDown)
 
     if ego.craft_mode == CraftMode.MoveUp:
-        if track_map.altitude(ego.track_mode)-ego.z > -1 and track_map.altitude(ego.track_mode)-ego.z < 1:
+        if lane_map.altitude(ego.track_mode)-ego.z > -1 and lane_map.altitude(ego.track_mode)-ego.z < 1:
             next.craft_mode = CraftMode.Normal
-            if track_map.h_exist(ego.track_mode, ego.craft_mode, 'Normal'):
-                next.track_mode = track_map.h(
-                    ego.track_mode, ego.craft_mode, 'Normal')
+            if lane_map.h_exist(ego.track_mode, ego.craft_mode, CraftMode.Normal):
+                next.track_mode = lane_map.h(
+                    ego.track_mode, ego.craft_mode, CraftMode.Normal)
 
     if ego.craft_mode == CraftMode.MoveDown:
-        if track_map.altitude(ego.track_mode)-ego.z > -1 and track_map.altitude(ego.track_mode)-ego.z < 1:
+        if lane_map.altitude(ego.track_mode)-ego.z > -1 and lane_map.altitude(ego.track_mode)-ego.z < 1:
             next.craft_mode = CraftMode.Normal
-            if track_map.h_exist(ego.track_mode, ego.craft_mode, 'Normal'):
-                next.track_mode = track_map.h(
-                    ego.track_mode, ego.craft_mode, 'Normal')
+            if lane_map.h_exist(ego.track_mode, ego.craft_mode, CraftMode.Normal):
+                next.track_mode = lane_map.h(
+                    ego.track_mode, ego.craft_mode, CraftMode.Normal)
 
     return next

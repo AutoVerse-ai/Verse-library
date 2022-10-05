@@ -13,9 +13,12 @@ class TrackMode(Enum):
     T1 = auto()
     T2 = auto()
     T3 = auto()
+    T4 = auto()
     M01 = auto()
     M12 = auto() 
     M23 = auto() 
+    M40 = auto() 
+    M04 = auto() 
     M32 = auto()
     M21 = auto()
     M10 = auto()
@@ -50,23 +53,23 @@ def controller(ego:State, others:List[State], lane_map):
     output = copy.deepcopy(ego)
     if ego.agent_mode == VehicleMode.Normal:
         if car_front(ego, others, lane_map):
-            if lane_map.h_exist(ego.lane_mode, ego.agent_mode, 'SwitchLeft') and \
+            if lane_map.h_exist(ego.lane_mode, ego.agent_mode, VehicleMode.SwitchLeft) and \
              not car_left(ego, others, lane_map):
                 output.agent_mode = VehicleMode.SwitchLeft
-                output.lane_mode = lane_map.h(ego.lane_mode, ego.agent_mode, 'SwitchLeft')
+                output.lane_mode = lane_map.h(ego.lane_mode, ego.agent_mode, VehicleMode.SwitchLeft)
         if car_front(ego, others, lane_map):
-            if lane_map.h_exist(ego.lane_mode, ego.agent_mode, 'SwitchRight') and \
+            if lane_map.h_exist(ego.lane_mode, ego.agent_mode, VehicleMode.SwitchRight) and \
              not car_right(ego, others, lane_map):
                 output.agent_mode = VehicleMode.SwitchRight
-                output.lane_mode = lane_map.h(ego.lane_mode, ego.agent_mode, 'SwitchRight')
+                output.lane_mode = lane_map.h(ego.lane_mode, ego.agent_mode, VehicleMode.SwitchRight)
     if ego.agent_mode == VehicleMode.SwitchLeft:
         if  lane_map.get_lateral_distance(ego.lane_mode, [ego.x, ego.y]) >= 2.5:
             output.agent_mode = VehicleMode.Normal
-            output.lane_mode = lane_map.h(ego.lane_mode, ego.agent_mode, 'Normal')
+            output.lane_mode = lane_map.h(ego.lane_mode, ego.agent_mode, VehicleMode.Normal)
     if ego.agent_mode == VehicleMode.SwitchRight:
         if lane_map.get_lateral_distance(ego.lane_mode, [ego.x, ego.y]) <= -2.5:
             output.agent_mode = VehicleMode.Normal
-            output.lane_mode = lane_map.h(ego.lane_mode, ego.agent_mode, 'Normal')
+            output.lane_mode = lane_map.h(ego.lane_mode, ego.agent_mode, VehicleMode.Normal)
 
     return output
 

@@ -198,7 +198,7 @@ def reachtube_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=g
     return fig
 
 
-def reachtube_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, print_dim_list=None, map_type='lines', scale_type='trace', label_mode='None', sample_rate=1, combine_rect=1):
+def reachtube_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, print_dim_list=None, map_type='lines', scale_type='trace', label_mode='None', sample_rate=1, combine_rect=1, tmp = False):
     """It statically shows all the traces of the verfication."""
     if isinstance(root, AnalysisTree):
         root = root.root
@@ -214,8 +214,12 @@ def reachtube_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go
     scheme_list = list(scheme_dict.keys())
     i = 0
     for agent_id in agent_list:
-        fig = reachtube_tree_single(
-            root, agent_id, fig, x_dim, y_dim, scheme_list[i], print_dim_list, combine_rect)
+        if agent_id == 'car1' and tmp:
+            fig = reachtube_tree_single(
+                root, agent_id, fig, x_dim, y_dim, 'purple', print_dim_list, combine_rect)
+        else:
+            fig = reachtube_tree_single(
+                root, agent_id, fig, x_dim, y_dim, scheme_list[i], print_dim_list, combine_rect)
         i = (i+1) % 12
     if scale_type == 'trace':
         queue = [root]

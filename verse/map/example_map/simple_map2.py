@@ -90,7 +90,7 @@ class SimpleMap4(LaneMap):
             [100,6],
             3
         )
-        lane4 = Lane('Lane4', [segment4])
+        lane4 = Lane('T4', [segment4])
 
         # segment2 = LaneSegment('Lane1', 3)
         # self.add_lanes([segment1,segment2])
@@ -99,25 +99,31 @@ class SimpleMap4(LaneMap):
             ('T0', 'Normal', 'SwitchRight'):'M01',
             ('T1', 'Normal', 'SwitchRight'):'M12',
             ('T2', 'Normal', 'SwitchRight'):'M23',
+            ('T4', 'Normal', 'SwitchRight'):'M40',
             ('T1', 'Normal', 'SwitchLeft'):'M10',
             ('T2', 'Normal', 'SwitchLeft'):'M21',
             ('T3', 'Normal', 'SwitchLeft'):'M32',
+            ('T0', 'Normal', 'SwitchLeft'):'M04',
             ('M01', 'SwitchRight', 'Normal'):'T1',
             ('M12', 'SwitchRight', 'Normal'):'T2',
             ('M23', 'SwitchRight', 'Normal'):'T3',
+            ('M40', 'SwitchRight', 'Normal'):'T0',
             ('M10', 'SwitchLeft', 'Normal'):'T0',
             ('M21', 'SwitchLeft', 'Normal'):'T1',
             ('M32', 'SwitchLeft', 'Normal'):'T2',
+            ('M04', 'SwitchLeft', 'Normal'):'T4',
         }
         self.left_dict = {
             'T1': 'T0',
             'T2': 'T1',
-            'T3': 'T2'
+            'T3': 'T2',
+            'T0': 'T4',
         }
         self.right_dict = {
             'T0': 'T1',
             'T1': 'T2',
             'T2': 'T3',
+            'T4': 'T0',
         }
 
     def left_lane(self, lane_mode):

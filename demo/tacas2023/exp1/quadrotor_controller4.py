@@ -33,6 +33,6 @@ class State:
         pass
 
 
-def controller(ego: State, others: List[State], track_map):
+def controller(ego: State, others: List[State], lane_map):
     output = copy.deepcopy(ego)
     return output

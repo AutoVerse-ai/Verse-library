@@ -22,8 +22,8 @@ class TrackMode(Enum):
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/tacas/exp1/quadrotor_controller3.py'
-    input_code_name2 = './demo/tacas/exp1/quadrotor_controller4.py'
+    input_code_name = './demo/tacas2023/exp1/quadrotor_controller3.py'
+    input_code_name2 = './demo/tacas2023/exp1/quadrotor_controller4.py'
 
     scenario = Scenario()
     time_step = 0.1
