@@ -634,7 +634,7 @@ def proc(node: ast.AST, env: Env) -> Any:
         return env.lookup(node.id)
     elif isinstance(node, ast.Attribute) and isinstance(node.ctx, ast.Load):
         if isinstance(node.value, ast.Name) and node.value.id in env.mode_defs:
-            return node.attr
+            return ast.Constant(node.attr)
         obj = proc(node.value, env)
         # TODO since we know what the mode and state types contain we can do some typo checking
         if not_ir_ast(obj):
