@@ -427,9 +427,17 @@ class Scenario:
             if len(asserts) > 0:
                 return asserts, transitions, idx
             if len(satisfied_guard) > 0:
-                for agent_idx, src_mode, dest_mode, next_init in satisfied_guard:
-                    transitions[agent_idx].append(
-                        (agent_idx, src_mode, dest_mode, next_init, idx))
+                for agent_idx, src, dest, next_init in satisfied_guard:
+                    src_mode = node.get_mode(agent_idx, src)
+                    src_track = node.get_track(agent_idx, node.mode[agent_idx])
+                    dest_mode = node.get_mode(agent_idx, dest)
+                    dest_track = node.get_track(agent_idx, dest)
+                    if dest_track == lane_map.h(src_track, src_mode, dest_mode):
+                        transition = (
+                            agent_idx, src, dest,next_init, idx)
+                        transitions[agent_idx].append(transition)
+                    # transitions[agent_idx].append(
+                    #     (agent_idx, src_mode, dest_mode, next_init, idx))
                 break
         return None, transitions, idx
 

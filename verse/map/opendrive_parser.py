@@ -41,7 +41,7 @@ def condense_matrix(drive_way_matrix,width_2d):
     drive_way_matrix = np.array(drive_way_matrix) #driveway 2d matrix to traverse
     width_2d = np.array(width_2d) #width 2d matrix to traverse
     for i in range(cols):
-        lane_to_append = Lane("Lane"+str(i+1),drive_way_matrix[:,i].tolist()) #combine all the rows into one list for each column
+        lane_to_append = Lane("T"+str(i),drive_way_matrix[:,i].tolist()) #combine all the rows into one list for each column
         lanes_to_return.append(lane_to_append) #add each Lane object to the list we want to return
         mean = np.mean(width_2d[:,i]) #calculate the mean of all the space between the lanes
         width_to_return.append(mean) #add it to the width we want to return
@@ -310,7 +310,7 @@ def road_traverser(road):
 #     return lanes_to_return
 
 #Function to generate lane data visualization while parsing the ASAM Open DRIVE file
-def opendrive_map(file_name): 
+def opendrive_map(file_name, ): 
     soup = file_parser(file_name) #call the file parsing function
     road = soup.find_all('road')[:-1] #first find all the road segments and ignore the last one
     
@@ -323,24 +323,30 @@ def opendrive_map(file_name):
     completed_lanes = LaneMap(total) #create a lane map
 
     for i in range(len(total)-1,0,-1):
+        completed_lanes.h_dict[(total[i].id, 'Normal','SwitchLeft')] = f'M{total[i].id[-1]}{total[i-1].id[-1]}'
+        completed_lanes.h_dict[(f'M{total[i].id[-1]}{total[i-1].id[-1]}','SwitchLeft', 'Normal')] = total[i-1].id
         completed_lanes.left_lane_dict[total[i].id] = [total[i-1].id] #connect each left side for each lane
 
     for i in range(len(total)-1):
+        completed_lanes.h_dict[(total[i].id, 'Normal','SwitchRight')] = f'M{total[i].id[-1]}{total[i+1].id[-1]}'
+        completed_lanes.h_dict[(f'M{total[i].id[-1]}{total[i+1].id[-1]}','SwitchRight', 'Normal')] = total[i+1].id
+
         completed_lanes.right_lane_dict[total[i].id] = [total[i+1].id] #connect each right side for each lane
 
     return completed_lanes #return the connected lane object
 
 if __name__ == '__main__':
-    file_name1 = 'map_package/Maps/t1_triple/OpenDrive/t1_triple.xodr' #parse in first file
-    file_name2 = 'map_package/Maps/t2_triple/OpenDrive/t2_triple.xodr' #parse in second file
-    file_name3 = 'map_package/Maps/t3/OpenDrive/t3.xodr' #parse in third file
-    file_name4 = 'map_package/Maps/t4/OpenDrive/t4.xodr' #parse in fourth file
-    file_name5 = 'map_package/Maps/track5/OpenDrive/track5.xodr' #parse in fifth file
-    file_list = [file_name1,file_name2, file_name3, file_name4, file_name5] #store the file names in an array
-    lane_list = []
+    # file_name1 = 'map_package/Maps/t1_triple/OpenDrive/t1_triple.xodr' #parse in first file
+    # file_name2 = 'map_package/Maps/t2_triple/OpenDrive/t2_triple.xodr' #parse in second file
+    # file_name3 = 'map_package/Maps/t3/OpenDrive/t3.xodr' #parse in third file
+    # file_name4 = 'map_package/Maps/t4/OpenDrive/t4.xodr' #parse in fourth file
+    # file_name5 = 'map_package/Maps/track5/OpenDrive/track5.xodr' #parse in fifth file
+    # file_list = [file_name1,file_name2, file_name3, file_name4, file_name5] #store the file names in an array
+    # lane_list = []
+    opendrive_map('./t1_triple.xodr')
 
-    for idx,value in enumerate(file_list):
-        lane_list = opendrive_map(value)
+    # for idx,value in enumerate(file_list):
+    #     lane_list = opendrive_map(value)
         # plt.figure()
         # lane_visualizer(value,idx)
         # plt.savefig('full_road_geometry/figure'+str(idx)+'.png')
