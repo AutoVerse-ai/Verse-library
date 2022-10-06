@@ -162,6 +162,7 @@ class Verifier:
                     # trace[:,0] += node.start_time
                     # node.trace[agent_id] = trace.tolist()
                     if reachability_method == "DRYVR":
+                        pp(('tube', agent_id, mode, inits))
                         cur_bloated_tube = self.calculate_full_bloated_tube(agent_id,
                                             mode,
                                             inits,
@@ -199,6 +200,7 @@ class Verifier:
                     trace = np.array(cur_bloated_tube)
                     trace[:, 0] += node.start_time
                     node.trace[agent_id] = trace.tolist()
+            pp(("cached_segments", cached_tubes.keys()))
             node_ids = list(set((s.run_num, s.node_id) for s in cached_tubes.values()))
             # assert len(node_ids) <= 1, f"{node_ids}"
             new_cache, paths_to_sim = {}, []
@@ -208,10 +210,11 @@ class Verifier:
                     old_node = find(past_runs[old_run_num].nodes, lambda n: n.id == old_node_id)
                     assert old_node != None
                     new_cache, paths_to_sim = to_simulate(old_node.agent, node.agent, cached_tubes)
-                    # pp(("to sim", new_cache.keys(), len(paths_to_sim)))
+                    pp(("to sim", new_cache.keys(), len(paths_to_sim)))
 
             # Get all possible transitions to next mode
             asserts, all_possible_transitions = transition_graph.get_transition_verify_new(new_cache, paths_to_sim, node)
+            pp(("transitions:", all_possible_transitions))
             node.assert_hits = asserts
             if asserts != None:
                 asserts, idx = asserts
@@ -221,6 +224,7 @@ class Verifier:
 
             transit_map = {k: list(l) for k, l in itertools.groupby(all_possible_transitions, key=lambda p:p[0])}
             transit_agents = transit_map.keys()
+            pp(("transit agents", transit_agents))
             if self.config.incremental and len(all_possible_transitions) > 0:
                 transit_ind = max(l[-2][-1] for l in all_possible_transitions)
                 for agent_id in node.agent:

@@ -693,8 +693,9 @@ class Scenario:
         for agent in reset_dict:
             for reset_idx in reset_dict[agent]:
                 for dest in reset_dict[agent][reset_idx]:
-                    resets = tuple(map(list, zip(*reset_dict[agent][reset_idx][dest])))
-                    transition = (agent, node.mode[agent], dest, *resets)
-                    possible_transitions.append(transition)
+                    if list(dest) != list(node.mode[agent]):
+                        resets = tuple(map(list, zip(*reset_dict[agent][reset_idx][dest])))
+                        transition = (agent, node.mode[agent], dest, *resets)
+                        possible_transitions.append(transition)
         # Return result
         return None, possible_transitions
