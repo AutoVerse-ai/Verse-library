@@ -48,6 +48,13 @@ def simulation_tree_3d(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fi
     # fig.update_xaxes(title='x')
     # fig.update_yaxes(title='y')
     # fig.update_layout(legend_title_text='Agent list')
+    fig.update_layout(
+        scene = dict(
+            # xaxis = dict(nticks=4, range=[-100,100],),
+            # yaxis = dict(nticks=4, range=[-50,100],),
+            zaxis = dict(nticks=4, range=[-15,15],)
+        )
+    )
     return fig
 
 

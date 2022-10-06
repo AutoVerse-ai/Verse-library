@@ -49,7 +49,7 @@ if __name__ == "__main__":
     scenario.set_map(tmp_map)
     # scenario.set_sensor(QuadrotorSensor())
 
-    traces = scenario.verify(40, time_step)
+    traces = scenario.simulate(40, time_step, seed = 4)
     # fig = pv.Plotter()
     # fig = plot3dMap(tmp_map, ax=fig, width=0.05)
     # fig = plot3dReachtube(traces, 'test1',1,2,3,'r',fig, edge = True)
@@ -57,5 +57,5 @@ if __name__ == "__main__":
     # fig.set_background('#e0e0e0')
     # fig.show()
     fig = go.Figure()
-    fig = reachtube_tree_3d(traces, tmp_map, fig, 1,2,3,[1,2,3], '')
+    fig = simulation_tree_3d(traces, tmp_map, fig, 1,2,3,[1,2,3], '')
     fig.show()

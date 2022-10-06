@@ -143,7 +143,7 @@ class Scenario:
             res_list.append(trace)
         return res_list
 
-    def simulate(self, time_horizon, time_step) -> AnalysisTree:
+    def simulate(self, time_horizon, time_step, seed = None) -> AnalysisTree:
         self.check_init()
         init_list = []
         init_mode_list = []
@@ -151,7 +151,7 @@ class Scenario:
         agent_list = []
         uncertain_param_list = []
         for agent_id in self.agent_dict:
-            init_list.append(sample_rect(self.init_dict[agent_id]))
+            init_list.append(sample_rect(self.init_dict[agent_id], seed))
             init_mode_list.append(self.init_mode_dict[agent_id])
             static_list.append(self.static_dict[agent_id])
             uncertain_param_list.append(self.uncertain_param_dict[agent_id])

@@ -377,9 +377,11 @@ def solve_trinom(a, b, c):
     else:
         return None, None
 
-def sample_rect(rect: List[List[float]]) -> List[float]:
+def sample_rect(rect: List[List[float]], seed = None) -> List[float]:
     # point = []
     # for i in range(len(rect[0])):
+    if seed is not None:
+        np.random.seed(seed)
     res = np.random.uniform(rect[0], rect[1]).tolist()
     return res
 
