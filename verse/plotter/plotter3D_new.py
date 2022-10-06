@@ -21,8 +21,8 @@ colors = [['#CC0000', '#FF0000', '#FF3333', '#FF6666', '#FF9999', '#FFCCCC'],
           ['#CC00CC', '#FF00FF', '#FF33FF', '#FF66FF', '#FF99FF', '#FFCCFF'],
           ['#CC0066', '#FF007F', '#FF3399', '#FF66B2', '#FF99CC', '#FFCCE5']
           ]
-scheme_dict = {'red': 0, 'orange': 1, 'yellow': 2, 'yellowgreen': 3, 'lime': 4,
-               'springgreen': 5, 'cyan': 6, 'cyanblue': 7, 'blue': 8, 'purple': 9, 'magenta': 10, 'pink': 11}
+scheme_dict = {'red': 0, 'springgreen': 5, 'blue': 8, 'orange': 1, 'yellow': 2, 'yellowgreen': 3, 'lime': 4,
+                'cyan': 6, 'cyanblue': 7, 'purple': 9, 'magenta': 10, 'pink': 11}
 
 
 def simulation_tree_3d(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, z_dim: int = 3, print_dim_list=None, map_type='outline', scale_type='trace', label_mode='None', sample_rate=1):
@@ -70,6 +70,16 @@ def reachtube_tree_3d(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig
         fig = reachtube_tree_single_3d(
             root, agent_id, fig, x_dim, y_dim, z_dim, scheme_list[i], print_dim_list, combine_rect)
         i = (i+1) % 12
+    
+
+    fig.update_layout(
+        scene = dict(
+            # xaxis = dict(nticks=4, range=[-100,100],),
+            # yaxis = dict(nticks=4, range=[-50,100],),
+            zaxis = dict(nticks=4, range=[-15,15],)
+        )
+    )
+    
     return fig
 
 
@@ -213,195 +223,81 @@ def reachtube_tree_single_3d(root: Union[AnalysisTree, AnalysisTreeNode], agent_
         trace = np.array(traces[agent_id])
         # print(trace)
         max_id = len(trace)-1
-        # if len(np.unique(np.array([trace[i][x_dim] for i in range(0, max_id)]))) == 1 and len(np.unique(np.array([trace[i][y_dim] for i in range(0, max_id)]))) == 1:
-        # fig.add_trace(go.Scatter3d(x=[trace[0][x_dim]], y=[trace[0][y_dim]], z=[trace[0][z_dim]],
-        #                            mode='lines',
-        #                            #  fill='toself',
-        #                            #  fillcolor=fillcolor,
-        #                            #  opacity=0.5,
-        #                            marker={'size': 5},
-        #                            line={'width': 2, 'color': linecolor},
-        #                            showlegend=show_legend
-        #                            ))
         if combine_rect == None:
             max_id = len(trace)-1
-            # trace_x = np.array([trace[i][x_dim]
-            #                     for i in range(0, max_id)])
-            # trace_y = np.array([trace[i][y_dim]
-            #                     for i in range(0, max_id)])
-            # trace_z = np.array([trace[i][z_dim]
-            #                     for i in range(0, max_id)])
-            # fig.add_trace(go.Scatter3d(x=trace_x,
-            #                            y=trace_y,
-            #                            z=trace_z,
-            #                            mode='markers',
-            #                            #  opacity=0.5,
-            #                            marker={'size': 1, 'color': linecolor},
-            #               line={'width': 5, 'color': linecolor},
-            #     showlegend=show_legend
-            # ))
-
-            trace_x_odd = np.array([trace[i][x_dim]
-                                    for i in range(0, max_id, 2)])
-            trace_x_even = np.array([trace[i][x_dim]
-                                     for i in range(1, max_id+1, 2)])
-            trace_y_odd = np.array([trace[i][y_dim]
-                                    for i in range(0, max_id, 2)])
-            trace_y_even = np.array([trace[i][y_dim]
-                                     for i in range(1, max_id+1, 2)])
-            trace_z_odd = np.array([trace[i][z_dim]
-                                    for i in range(0, max_id, 2)])
-            trace_z_even = np.array([trace[i][z_dim]
-                                     for i in range(1, max_id+1, 2)])
-            fig.add_trace(go.Scatter3d(x=trace_x_odd,
-                                       y=trace_y_odd,
-                                       z=trace_z_odd,
-                                       mode='lines',
-                                       #  opacity=0.5,
-                                       marker={
-                                           'size': 1, 'color': colors[scheme_dict[color]][0]},
-                                       line={
-                                           'width': 10, 'color': colors[scheme_dict[color]][0]},
-                                       showlegend=show_legend
-                                       ))
-            fig.add_trace(go.Scatter3d(x=trace_x_even,
-                                       y=trace_y_even,
-                                       z=trace_z_even,
-                                       mode='lines',
-                                       #  opacity=0.5,
-                                       marker={'size': 1, 'color': linecolor},
-                                       line={'width': 10, 'color': linecolor},
-                                       showlegend=show_legend
-                                       ))
-            # fig.add_trace(go.Scatter3d(x=trace_x_odd.tolist()+trace_x_even[::-1].tolist()+[trace_x_odd[0]],
-            #                            y=trace_y_odd.tolist() +
-            #                            trace_y_even[::-1].tolist() +
-            #                            [trace_y_odd[0]],
-            #                            z=trace_z_odd.tolist() +
-            #                            trace_z_even[::-1].tolist() +
-            #                            [trace_y_odd[0]],
+            num_cube = 0
+            i = [0, 3, 4, 7, 0, 6, 1, 7, 0, 5, 2, 7]
+            j = [1, 2, 5, 6, 2, 4, 3, 5, 4, 1, 6, 3]
+            k = [3, 0, 7, 4, 6, 0, 7, 1, 5, 0, 7, 2]
+            x_total = []
+            y_total = []
+            z_total = []
+            i_total = []
+            j_total = []
+            k_total = []
+            for n in range(0, max_id, 2):
+                px = [trace[n][x_dim], trace[n+1][x_dim]]
+                py = [trace[n][y_dim], trace[n+1][y_dim]]
+                pz = [trace[n][z_dim], trace[n+1][z_dim]]
+                n = 0
+                for z in pz:
+                    for y in py:
+                        for x in px:
+                            x_total.append(x)
+                            y_total.append(y)
+                            z_total.append(z)
+                for n in range(12):
+                    i_total.append(i[n]+num_cube*8)
+                    j_total.append(j[n]+num_cube*8)
+                    k_total.append(k[n]+num_cube*8)
+                num_cube += 1
+            fig.add_trace(go.Mesh3d(
+                # vertices of cubes
+                x=x_total,
+                y=y_total,
+                z=z_total,
+                # i, j and k give the vertices of triangles
+                i=i_total,
+                j=j_total,
+                k=k_total,
+                name='y',
+                opacity=0.20,
+                color=colors[scheme_dict[color]][1],
+                flatshading=True
+            ))
+            
+            # trace_x_odd = np.array([trace[i][x_dim]
+            #                         for i in range(0, max_id, 2)])
+            # trace_x_even = np.array([trace[i][x_dim]
+            #                          for i in range(1, max_id+1, 2)])
+            # trace_y_odd = np.array([trace[i][y_dim]
+            #                         for i in range(0, max_id, 2)])
+            # trace_y_even = np.array([trace[i][y_dim]
+            #                          for i in range(1, max_id+1, 2)])
+            # trace_z_odd = np.array([trace[i][z_dim]
+            #                         for i in range(0, max_id, 2)])
+            # trace_z_even = np.array([trace[i][z_dim]
+            #                          for i in range(1, max_id+1, 2)])
+            # fig.add_trace(go.Scatter3d(x=trace_x_odd,
+            #                            y=trace_y_odd,
+            #                            z=trace_z_odd,
             #                            mode='lines',
             #                            #  opacity=0.5,
-            #                            marker={'size': 1},
+            #                            marker={
+            #                                'size': 1, 'color': colors[scheme_dict[color]][0]},
+            #                            line={
+            #                                'width': 10, 'color': colors[scheme_dict[color]][0]},
+            #                            showlegend=show_legend
+            #                            ))
+            # fig.add_trace(go.Scatter3d(x=trace_x_even,
+            #                            y=trace_y_even,
+            #                            z=trace_z_even,
+            #                            mode='lines',
+            #                            #  opacity=0.5,
+            #                            marker={'size': 1, 'color': linecolor},
             #                            line={'width': 10, 'color': linecolor},
             #                            showlegend=show_legend
             #                            ))
-        elif combine_rect <= 1:
-            for idx in range(0, len(trace), 2):
-                trace_x = np.array([
-                    trace[idx][x_dim],
-                    trace[idx+1][x_dim],
-                    trace[idx+1][x_dim],
-                    trace[idx][x_dim],
-                    trace[idx][x_dim]
-                ])
-                trace_y = np.array([
-                    trace[idx][y_dim],
-                    trace[idx][y_dim],
-                    trace[idx+1][y_dim],
-                    trace[idx+1][y_dim],
-                    trace[idx][y_dim],
-                ])
-                fig.add_trace(go.Scatter(x=trace_x, y=trace_y, mode='markers+lines',
-                                         fill='toself',
-                                         fillcolor=fillcolor,
-                                         #  opacity=0.5,
-                                         marker={'size': 1},
-                                         line_color=linecolor,
-                                         line={'width': 1},
-                                         showlegend=show_legend
-                                         ))
-        else:
-            for idx in range(0, len(trace), combine_rect*2):
-                trace_seg = trace[idx:idx+combine_rect*2]
-                max_id = len(trace_seg-1)
-                if max_id <= 2:
-                    trace_x = np.array([
-                        trace_seg[0][x_dim],
-                        trace_seg[0+1][x_dim],
-                        trace_seg[0+1][x_dim],
-                        trace_seg[0][x_dim],
-                        trace_seg[0][x_dim]
-                    ])
-                    trace_y = np.array([
-                        trace_seg[0][y_dim],
-                        trace_seg[0][y_dim],
-                        trace_seg[0+1][y_dim],
-                        trace_seg[0+1][y_dim],
-                        trace_seg[0][y_dim],
-                    ])
-                    fig.add_trace(go.Scatter(x=trace_x, y=trace_y, mode='markers+lines',
-                                             fill='toself',
-                                             fillcolor=fillcolor,
-                                             #  opacity=0.5,
-                                             marker={'size': 1},
-                                             line_color=linecolor,
-                                             line={'width': 1},
-                                             showlegend=show_legend
-                                             ))
-                else:
-                    trace_x_odd = np.array(
-                        [trace_seg[i][x_dim] for i in range(0, max_id, 2)])
-                    trace_x_even = np.array(
-                        [trace_seg[i][x_dim] for i in range(1, max_id+1, 2)])
-
-                    trace_y_odd = np.array(
-                        [trace_seg[i][y_dim] for i in range(0, max_id, 2)])
-                    trace_y_even = np.array(
-                        [trace_seg[i][y_dim] for i in range(1, max_id+1, 2)])
-
-                    x_start = 0
-                    x_end = 0
-                    if trace_x_odd[-1] >= trace_x_odd[-2] and trace_x_even[-1] >= trace_x_even[-2]:
-                        x_end = trace_x_even[-1]
-                    elif trace_x_odd[-1] <= trace_x_odd[-2] and trace_x_even[-1] <= trace_x_even[-2]:
-                        x_end = trace_x_odd[-1]
-                    else:
-                        x_end = trace_x_odd[-1]
-
-                    if trace_x_odd[1-1] >= trace_x_odd[2-1] and trace_x_even[1-1] >= trace_x_even[2-1]:
-                        x_start = trace_x_even[1-1]
-                    elif trace_x_odd[1-1] <= trace_x_odd[2-1] and trace_x_even[1-1] <= trace_x_even[2-1]:
-                        x_start = trace_x_odd[1-1]
-                    else:
-                        x_start = trace_x_odd[1-1]
-
-                    y_start = 0
-                    y_end = 0
-                    if trace_y_odd[-1] >= trace_y_odd[-2] and trace_y_even[-1] >= trace_y_even[-2]:
-                        y_end = trace_y_even[-1]
-                        if trace_x_odd[-1] >= trace_x_odd[-2] and trace_x_even[-1] >= trace_x_even[-2]:
-                            x_end = trace_x_odd[-1]
-                    elif trace_y_odd[-1] <= trace_y_odd[-2] and trace_y_even[-1] <= trace_y_even[-2]:
-                        y_end = trace_y_odd[-1]
-                    else:
-                        y_end = trace_y_odd[-1]
-
-                    if trace_y_odd[1-1] >= trace_y_odd[2-1] and trace_y_even[1-1] >= trace_y_even[2-1]:
-                        y_start = trace_y_even[1-1]
-                    elif trace_y_odd[1-1] <= trace_y_odd[2-1] and trace_y_even[1-1] <= trace_y_even[2-1]:
-                        y_start = trace_y_odd[1-1]
-                        if trace_x_odd[1-1] <= trace_x_odd[2-1] and trace_x_even[1-1] <= trace_x_even[2-1]:
-                            x_start = trace_x_even[1-1]
-                    else:
-                        y_start = trace_y_even[1-1]
-
-                    trace_x = trace_x_odd.tolist(
-                    )+[x_end]+trace_x_even[::-1].tolist()+[x_start]+[trace_x_odd[0]]
-                    trace_y = trace_y_odd.tolist(
-                    )+[y_end]+trace_y_even[::-1].tolist()+[y_start]+[trace_y_odd[0]]
-                    fig.add_trace(go.Scatter(
-                        x=trace_x,
-                        y=trace_y,
-                        mode='markers+lines',
-                        fill='toself',
-                        fillcolor=fillcolor,
-                        #  opacity=0.5,
-                        marker={'size': 1},
-                        line_color=linecolor,
-                        line={'width': 1},
-                        showlegend=show_legend
-                    ))
         queue += node.child
     return fig
 
