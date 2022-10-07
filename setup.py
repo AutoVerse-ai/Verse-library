@@ -26,7 +26,9 @@ setup(
         "igraph~=0.9.10",
         "plotly~=5.8.0",
         "beautifulsoup4~=4.11.1",
-        "lxml~=4.9.1"
+        "lxml~=4.9.1",
+        "torch",
+        "tqdm"
     ],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
