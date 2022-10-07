@@ -42,8 +42,10 @@ if __name__ == "__main__":
     fig = plot_reachtube_tree(traces.root, 'car1', 0, [3],fig=fig)
     fig = plt.figure(3)
     fig = plot_reachtube_tree(traces.root, 'car1', 0, [4],fig=fig)
+    fig = plt.figure(4)
+    fig = plot_reachtube_tree(traces.root, 'car1', 1, [2],fig=fig)
     plt.show()
     # fig = go.Figure()
-    # fig = simulation_tree(traces, None, fig, 1, 2,
-    #                       'lines', 'trace', print_dim_list=[1, 2])
+    # fig = reachtube_tree(traces, None, fig, 1, 2,[1, 2],
+    #                       'lines', 'trace')
     # fig.show()

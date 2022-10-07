@@ -7,7 +7,7 @@ import numpy as np
 from verse.analysis.analysis_tree import AnalysisTreeNode, AnalysisTree
 from verse.analysis.dryvr import calc_bloated_tube, SIMTRACENUM
 from verse.analysis.mixmonotone import calculate_bloated_tube_mixmono_cont, calculate_bloated_tube_mixmono_disc
-
+from verse.analysis.NeuReach.NeuReach_onestep_rect import postCont
 
 class Verifier:
     def __init__(self):
@@ -148,6 +148,16 @@ class Verifier:
                                             combine_seg_length=init_seg_length,
                                             lane_map = lane_map
                                             )
+                    elif reachability_method == "NeuReach":
+                        cur_bloated_tube = postCont(
+                            mode, 
+                            init[0], 
+                            remain_time, 
+                            time_step, 
+                            node.agent[agent_id].TC_simulate, 
+                            lane_map,
+                            params, 
+                        )
                     elif reachability_method == "MIXMONO_CONT":
                         cur_bloated_tube = calculate_bloated_tube_mixmono_cont(
                             mode, 

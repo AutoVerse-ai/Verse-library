@@ -25,7 +25,17 @@ if __name__ == "__main__":
             tuple([AgentMode.Default]),
         ]
     )
-    traces = scenario.verify(7, 0.05)
+    traces = scenario.verify(
+        7, 0.05,reachability_method='NeuReach', 
+        params={
+            "N_X0":1,
+            "N_x0":500,
+            "N_t":100,
+            "epochs":50,
+            "_lambda":0.05,
+            "use_cuda":True,
+        }
+    )
     fig = go.Figure()
     fig = reachtube_tree(traces, None, fig, 1, 2, [1, 2],
                          'lines', 'trace')

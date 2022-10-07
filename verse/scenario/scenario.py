@@ -463,7 +463,7 @@ class Scenario:
                 # Construct the guard expression
                 reset = (path.var, path.val_veri)
                 guard_expression = GuardExpressionAst(
-                    [path.cond_veri], guard_idx)
+                    [path.cond_veri])
 
                 cont_var_updater = guard_expression.parse_any_all_new(
                     cont_var_dict_template, discrete_variable_dict, length_dict)

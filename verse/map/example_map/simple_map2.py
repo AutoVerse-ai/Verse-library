@@ -20,21 +20,21 @@ class SimpleMap3(LaneMap):
         segment0 = StraightLane(
             'Seg0',
             [0,3],
-            [100,3],
+            [500,3],
             3
         )
         lane0 = Lane('T0', [segment0])
         segment1 = StraightLane(
             'seg0',
             [0,0],
-            [100,0],
+            [500,0],
             3
         )
         lane1 = Lane('T1', [segment1])
         segment2 = StraightLane(
             'seg0',
             [0,-3],
-            [100,-3],
+            [500,-3],
             3
         )
         lane2 = Lane('T2', [segment2])
