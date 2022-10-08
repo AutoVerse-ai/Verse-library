@@ -140,6 +140,7 @@ class Verifier:
         while verification_queue != []:
             node: AnalysisTreeNode = verification_queue.pop(0)
             combined_inits = {a: combine_all(inits) for a, inits in node.init.items()}
+            print()
             pp(("start sim", node.start_time, {a: (*node.mode[a], *combined_inits[a]) for a in node.mode}))
             remain_time = round(time_horizon - node.start_time, 10)
             if remain_time <= 0:
@@ -150,9 +151,8 @@ class Verifier:
             for agent_id in node.agent:
                 mode = node.mode[agent_id]
                 inits = node.init[agent_id]
-                init = combined_inits[agent_id]
                 if self.config.incremental:
-                    cached = self.trans_cache.check_hit(agent_id, mode, init)
+                    cached = self.trans_cache.check_hit(agent_id, mode, combined_inits[agent_id])
                     if cached != None:
                         cached_tubes[agent_id] = cached
                 if agent_id not in node.trace:
@@ -200,7 +200,7 @@ class Verifier:
                     trace = np.array(cur_bloated_tube)
                     trace[:, 0] += node.start_time
                     node.trace[agent_id] = trace.tolist()
-            pp(("cached_segments", cached_tubes.keys()))
+            pp(("cached tubes", cached_tubes.keys()))
             node_ids = list(set((s.run_num, s.node_id) for s in cached_tubes.values()))
             # assert len(node_ids) <= 1, f"{node_ids}"
             new_cache, paths_to_sim = {}, []
@@ -214,7 +214,7 @@ class Verifier:
 
             # Get all possible transitions to next mode
             asserts, all_possible_transitions = transition_graph.get_transition_verify_new(new_cache, paths_to_sim, node)
-            pp(("transitions:", all_possible_transitions))
+            pp(("transitions:", [(t[0], t[2]) for t in all_possible_transitions]))
             node.assert_hits = asserts
             if asserts != None:
                 asserts, idx = asserts
@@ -249,6 +249,8 @@ class Verifier:
             max_end_idx = 0
             for transition in all_possible_transitions:
                 # Each transition will contain a list of rectangles and their corresponding indexes in the original list
+                if len(transition) != 6:
+                    pp(("weird trans", transition))
                 transit_agent_idx, src_mode, dest_mode, next_init, idx, path = transition
                 start_idx, end_idx = idx[0], idx[-1]
 
@@ -274,7 +276,7 @@ class Verifier:
                         next_node_init[agent_idx] = next_init
                     else:
                         next_node_init[agent_idx] = [[truncated_trace[agent_idx][0][1:], truncated_trace[agent_idx][1][1:]]]
-                    if agent_idx != transit_agent_idx:
+                        pp(("infer init", agent_idx, next_node_init[agent_idx], truncated_trace[agent_idx][:8]))
                         next_node_trace[agent_idx] = truncated_trace[agent_idx]
 
                 tmp = AnalysisTreeNode(

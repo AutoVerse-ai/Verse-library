@@ -63,11 +63,11 @@ def to_simulate(old_agents: Dict[str, BaseAgent], new_agents: Dict[str, BaseAgen
             raise NotImplementedError("different variable outputs")
         for var, old_paths in old_grouped.items():
             new_paths = new_grouped[var]
-            for old, new in itertools.zip_longest(old_paths, new_paths):
+            for i, (old, new) in enumerate(itertools.zip_longest(old_paths, new_paths)):
                 if new == None:
                     removed_paths.append(old)
                 elif old.cond != new.cond:
-                    added_paths.append((new_agent, new))
+                    added_paths.append((new_agent, i, new))
                 elif old.val != new.val:
                     reset_changed_paths.append(new)
     new_cache = {}
@@ -204,8 +204,8 @@ class ReachTubeCache:
     def add_tube(self, agent_id: str, init: Dict[str, List[List[float]]], node: AnalysisTreeNode, transit_agents: List[str], transition, trans_ind: int, run_num: int):
         key = (agent_id,) + tuple(node.mode[agent_id])
         tree = self.cache[key]
+        pp(('add seg', agent_id, node.mode[agent_id], init))
         assert_hits = node.assert_hits or {}
-        # pp(('add seg', agent_id, *node.mode[agent_id], *init))
         init = list(map(tuple, zip(*init[agent_id])))
         for i, (low, high) in enumerate(init):
             if i == len(init) - 1:
