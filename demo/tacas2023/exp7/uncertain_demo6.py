@@ -22,13 +22,13 @@ if __name__ == "__main__":
     # modify mode list input
     scenario.set_init(
         [
-             [[0.3,0.3], [2,2]],
+            [[0.3, 0.3], [2, 2]],
         ],
         [
             tuple([AgentMode.Default]),
         ],
         uncertain_param_list=[
-            [[-0.1,-0.1],[0.1,0.1]],
+            [[-0.1, -0.1], [0.1, 0.1]],
         ]
     )
     traces = scenario.verify(10, 0.01, reachability_method='MIXMONO_CONT')
@@ -39,11 +39,13 @@ if __name__ == "__main__":
     # fig = plt.figure(4)
     # fig = plot_reachtube_tree(traces.root, 'car1', 1, [2],fig=fig)
     # plt.show()
+    traces.dump("./output7.json")
+    traces = AnalysisTree.load('./output7.json')
     fig = go.Figure()
     fig = reachtube_tree(traces, None, fig, 0, 1, [0, 1],
-                          'lines', 'trace')
+                         'lines', 'trace')
     fig.show()
     fig = go.Figure()
     fig = reachtube_tree(traces, None, fig, 0, 2, [0, 2],
-                          'lines', 'trace')
+                         'lines', 'trace')
     fig.show()

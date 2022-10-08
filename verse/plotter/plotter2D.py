@@ -9,21 +9,26 @@ import plotly.graph_objects as go
 from typing import List, Tuple, Union
 from plotly.graph_objs.scatter import Marker
 from verse.analysis.analysis_tree import AnalysisTree, AnalysisTreeNode
+from verse.map.lane_map import LaneMap
 
-colors = [['#CC0000', '#FF0000', '#FF3333', '#FF6666', '#FF9999', '#FFCCCC'],
-          ['#CCCC00', '#FFFF00', '#FFFF33', '#FFFF66', '#FFFF99', '#FFE5CC'],
-          ['#66CC00', '#80FF00', '#99FF33', '#B2FF66', '#CCFF99', '#FFFFCC'],
-          ['#00CC00', '#00FF00', '#33FF33', '#66FF66', '#99FF99', '#E5FFCC'],
-          ['#00CC66', '#00FF80', '#33FF99', '#66FFB2', '#99FFCC', '#CCFFCC'],
-          ['#00CCCC', '#00FFFF', '#33FFFF', '#66FFFF', '#99FFFF', '#CCFFE5'],
-          ['#0066CC', '#0080FF', '#3399FF', '#66B2FF', '#99CCFF', '#CCE5FF'],
-          ['#0000CC', '#0000FF', '#3333FF', '#6666FF', '#9999FF', '#CCCCFF'],
-          ['#6600CC', '#7F00FF', '#9933FF', '#B266FF', '#CC99FF', '#E5CCFF'],
-          ['#CC00CC', '#FF00FF', '#FF33FF', '#FF66FF', '#FF99FF', '#FFCCFF'],
-          ['#CC0066', '#FF007F', '#FF3399', '#FF66B2', '#FF99CC', '#FFCCE5']
-          ]
+colors = [
+    ['#CC0000', '#FF0000', '#FF3333', '#FF6666', '#FF9999', '#FFCCCC'],  # red
+    ['#0000CC', '#0000FF', '#3333FF', '#6666FF', '#9999FF', '#CCCCFF'],  # blue
+    ['#CCCC00', '#FFFF00', '#FFFF33', '#FFFF66', '#FFFF99', '#FFE5CC'],  # yellow
+    #   ['#66CC00', '#80FF00', '#99FF33', '#B2FF66', '#CCFF99', '#FFFFCC'], # yellowgreen
+    ['#CC00CC', '#FF00FF', '#FF33FF', '#FF66FF', '#FF99FF', '#FFCCFF'],  # magenta
+    #   ['#00CC66', '#00FF80', '#33FF99', '#66FFB2', '#99FFCC', '#CCFFCC'], # springgreen
+    ['#00CCCC', '#00FFFF', '#33FFFF', '#66FFFF', '#99FFFF', '#CCFFE5'],  # cyan
+    #   ['#0066CC', '#0080FF', '#3399FF', '#66B2FF', '#99CCFF', '#CCE5FF'], # cyanblue
+    ['#CC6600', '#FF8000', '#FF9933', '#FFB266', '#FFCC99', '#FFE5CC'],  # orange
+    #   ['#6600CC', '#7F00FF', '#9933FF', '#B266FF', '#CC99FF', '#E5CCFF'], # purple
+    ['#00CC00', '#00FF00', '#33FF33', '#66FF66', '#99FF99', '#E5FFCC'],  # lime
+    ['#CC0066', '#FF007F', '#FF3399', '#FF66B2', '#FF99CC', '#FFCCE5']  # pink
+]
 scheme_dict = {'red': 0, 'orange': 1, 'yellow': 2, 'yellowgreen': 3, 'lime': 4,
                'springgreen': 5, 'cyan': 6, 'cyanblue': 7, 'blue': 8, 'purple': 9, 'magenta': 10, 'pink': 11}
+scheme_list = list(scheme_dict.keys())
+num_theme = len(colors)
 color_cnt = 0
 text_size = 8
 scale_factor = 0.25
@@ -36,7 +41,6 @@ duration = 1
 """
 API
 These 5 functions share the same API.
-
 - root: the root node of the trace, should be the return value of Scenario.verify() or Scenario.simulate().
 - map: the map of the scenario, templates are in verse.example.example_map.simple_map2.py.
 - fig: the object of the figure, its type should be plotly.graph_objects.Figure().
@@ -55,7 +59,7 @@ These 5 functions share the same API.
 """
 
 
-def reachtube_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, print_dim_list=None, map_type='lines', scale_type='trace', label_mode='None', sample_rate=1, time_step=None, speed_rate=1, combine_rect=1):
+def reachtube_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, print_dim_list=None, map_type='lines', scale_type='trace', label_mode='None', sample_rate=1, time_step=None, speed_rate=1, combine_rect=None):
     """It gives the animation of the verfication."""
     if isinstance(root, AnalysisTree):
         root = root.root
@@ -74,7 +78,7 @@ def reachtube_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=g
     check_dim(num_dim, x_dim, y_dim, print_dim_list)
     if print_dim_list is None:
         print_dim_list = range(0, num_dim)
-    scheme_list = list(scheme_dict.keys())
+    # scheme_list = list(scheme_dict.keys())
     num_points = 0
     while queue != []:
         node = queue.pop()
@@ -89,6 +93,7 @@ def reachtube_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=g
                 y_min = min(y_min, trace[i][y_dim])
                 y_max = max(y_max, trace[i][y_dim])
                 time_point = trace[i][0]
+                time_point = round(time_point, num_digit)
                 rect = [trace[i][0:].tolist(), trace[i+1][0:].tolist()]
                 if time_point not in timed_point_dict:
                     num_points += 1
@@ -139,7 +144,7 @@ def reachtube_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=g
     for agent_id in agent_list:
         fig = reachtube_tree_single(
             root, agent_id, fig, x_dim, y_dim, scheme_list[i], print_dim_list, combine_rect=combine_rect)
-        i = (i+1) % 12
+        i = (i+1) % num_theme
     if scale_type == 'trace':
         queue = [root]
         x_min, x_max = float('inf'), -float('inf')
@@ -168,7 +173,7 @@ def reachtube_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=g
                     y0 = trace[0, y_dim]
                     y1 = trace[1, y_dim]
                     mode_point_color = colors[agent_list.index(
-                        agent_id) % 12][0]
+                        agent_id) % num_theme][0]
                     fig.add_trace(go.Scatter(x=[(x0+x1)/2], y=[(y0+y1)/2],
                                              mode='markers+text',
                                              line_color=mode_point_color,
@@ -195,10 +200,11 @@ def reachtube_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=g
             range=[x_min-scale_factor*(x_max-x_min), x_max+scale_factor*(x_max-x_min)])
         fig.update_yaxes(
             range=[y_min-scale_factor*(y_max-y_min), y_max+scale_factor*(y_max-y_min)])
+    fig = update_style(fig)
     return fig
 
 
-def reachtube_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, print_dim_list=None, map_type='lines', scale_type='trace', label_mode='None', sample_rate=1, combine_rect=1, tmp = False):
+def reachtube_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, print_dim_list=None, map_type='lines', scale_type='trace', label_mode='None', sample_rate=1, combine_rect=1):
     """It statically shows all the traces of the verfication."""
     if isinstance(root, AnalysisTree):
         root = root.root
@@ -211,16 +217,12 @@ def reachtube_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go
     if print_dim_list is None:
         print_dim_list = range(0, num_dim)
 
-    scheme_list = list(scheme_dict.keys())
+    # scheme_list = list(scheme_dict.keys())
     i = 0
     for agent_id in agent_list:
-        if agent_id == 'car1' and tmp:
-            fig = reachtube_tree_single(
-                root, agent_id, fig, x_dim, y_dim, 'purple', print_dim_list, combine_rect)
-        else:
-            fig = reachtube_tree_single(
-                root, agent_id, fig, x_dim, y_dim, scheme_list[i], print_dim_list, combine_rect)
-        i = (i+1) % 12
+        fig = reachtube_tree_single(
+            root, agent_id, fig, x_dim, y_dim, scheme_list[i], print_dim_list, combine_rect)
+        i = (i+1) % num_theme
     if scale_type == 'trace':
         queue = [root]
         x_min, x_max = float('inf'), -float('inf')
@@ -248,7 +250,7 @@ def reachtube_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go
                 if previous_mode[agent_id] != node.mode[agent_id]:
                     text_pos, text = get_text_pos(node.mode[agent_id][0])
                     mode_point_color = colors[agent_list.index(
-                        agent_id) % 12][0]
+                        agent_id) % num_theme][0]
                     fig.add_trace(go.Scatter(x=[trace[0, x_dim]], y=[trace[0, y_dim]],
                                              mode='markers+text',
                                              line_color=mode_point_color,
@@ -275,6 +277,7 @@ def reachtube_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go
             range=[x_min-scale_factor*(x_max-x_min), x_max+scale_factor*(x_max-x_min)])
         fig.update_yaxes(
             range=[y_min-scale_factor*(y_max-y_min), y_max+scale_factor*(y_max-y_min)])
+    fig = update_style(fig)
     return fig
 
 
@@ -291,12 +294,12 @@ def simulation_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=g
     if print_dim_list is None:
         print_dim_list = range(0, num_dim)
 
-    scheme_list = list(scheme_dict.keys())
+    # scheme_list = list(scheme_dict.keys())
     i = 0
     for agent_id in agent_list:
         fig = simulation_tree_single(
             root, agent_id, fig, x_dim, y_dim, scheme_list[i], print_dim_list)
-        i = (i+1) % 12
+        i = (i+1) % num_theme
     if scale_type == 'trace':
         x_min, x_max = float('inf'), -float('inf')
         y_min, y_max = float('inf'), -float('inf')
@@ -317,7 +320,8 @@ def simulation_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=g
                 x_max = max(x_max, max(trace[:, x_dim]))
                 y_min = min(y_min, min(trace[:, y_dim]))
                 y_max = max(y_max, max(trace[:, y_dim]))
-            mode_point_color = colors[agent_list.index(agent_id) % 12][0]
+            mode_point_color = colors[agent_list.index(
+                agent_id) % num_theme][0]
             if label_mode != 'None':
                 if previous_mode[agent_id] != node.mode[agent_id]:
                     text_pos, text = get_text_pos(node.mode[agent_id][0])
@@ -383,6 +387,7 @@ def simulation_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=g
     fig.update_xaxes(title='x')
     fig.update_yaxes(title='y')
     fig.update_layout(legend_title_text='Agent list')
+    fig = update_style(fig)
     return fig
 
 
@@ -418,7 +423,7 @@ def simulation_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=
                 x_max = max(x_max, trace[i][x_dim])
                 y_min = min(y_min, trace[i][y_dim])
                 y_max = max(y_max, trace[i][y_dim])
-                time_point = round(trace[i][0],8)
+                time_point = trace[i][0]
                 tmp_trace = trace[i][0:].tolist()
                 if time_point not in timed_point_dict:
                     num_points += 1
@@ -446,7 +451,7 @@ def simulation_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=
         # make data
         trace_dict = timed_point_dict[0]
         for agent_id, trace_list in trace_dict.items():
-            color = colors[agent_list.index(agent_id) % 12][1]
+            color = colors[agent_list.index(agent_id) % num_theme][1]
             x_list = []
             y_list = []
             text_list = []
@@ -477,7 +482,7 @@ def simulation_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=
                 "annotations": []}, "name": str(round(time_point, num_digit))}
             point_list = timed_point_dict[time_point]
             for agent_id, trace_list in point_list.items():
-                color = colors[agent_list.index(agent_id) % 12][1]
+                color = colors[agent_list.index(agent_id) % num_theme][1]
                 x_list = []
                 y_list = []
                 text_list = []
@@ -546,7 +551,7 @@ def simulation_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=
             frame = {"data": [], "layout": {
                 "annotations": []}, "name": str(round(time_point, num_digit))}
             for agent_id in agent_list:
-                color = colors[agent_list.index(agent_id) % 12][1]
+                color = colors[agent_list.index(agent_id) % num_theme][1]
                 for id in range(0, trail_len, step):
                     tmp_point_list = timed_point_dict[time_list[time_point_id-id]][agent_id]
                     trace_x = []
@@ -622,7 +627,8 @@ def simulation_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=
             trace_y = trace[:, y_dim].tolist()
             trace_x = trace[:, x_dim].tolist()
             i = agent_list.index(agent_id)
-            mode_point_color = colors[agent_list.index(agent_id) % 12][0]
+            mode_point_color = colors[agent_list.index(
+                agent_id) % num_theme][0]
             if label_mode != 'None':
                 if previous_mode[agent_id] != node.mode[agent_id]:
                     text_pos, text = get_text_pos(node.mode[agent_id][0])
@@ -662,6 +668,7 @@ def simulation_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=
     if full_trace == True:
         fig = simulation_tree(org_root, map, fig, x_dim, y_dim, print_dim_list,  map_type,
                               scale_type, label_mode, sample_rate)
+    fig = update_style(fig)
     return fig
 
 
@@ -675,11 +682,11 @@ def reachtube_tree_single(root: Union[AnalysisTree, AnalysisTreeNode], agent_id,
     global color_cnt
     if color == None:
         color = list(scheme_dict.keys())[color_cnt]
-        color_cnt = (color_cnt+1) % 12
+        color_cnt = (color_cnt+1) % num_theme
     queue = [root]
     show_legend = False
-    fillcolor = colors[scheme_dict[color]][5]
-    linecolor = colors[scheme_dict[color]][4]
+    fillcolor = colors[scheme_dict[color]][1]
+    linecolor = colors[scheme_dict[color]][0]
     while queue != []:
         node = queue.pop(0)
         traces = node.trace
@@ -843,7 +850,7 @@ def simulation_tree_single(root: Union[AnalysisTree, AnalysisTreeNode], agent_id
     color_id = 0
     if color == None:
         color = list(scheme_dict.keys())[color_cnt]
-        color_cnt = (color_cnt+1) % 12
+        color_cnt = (color_cnt+1) % num_theme
     start_list = []
     end_list = []
     count_dict = {}
@@ -855,8 +862,8 @@ def simulation_tree_single(root: Union[AnalysisTree, AnalysisTreeNode], agent_id
         trace = np.array(traces[agent_id])
         start = list(trace[0])
         end = list(trace[-1])
-        if (start in start_list) and (end in end_list):
-            continue
+        # if (start in start_list) and (end in end_list):
+        #     continue
         time = tuple([round(start[0], 2), round(end[0], 2)])
         if time in count_dict.keys():
             count_dict[time] += 1
@@ -887,7 +894,7 @@ def simulation_tree_single(root: Union[AnalysisTree, AnalysisTreeNode], agent_id
     return fig
 
 
-def draw_map(map, color='rgba(0,0,0,1)', fig: go.Figure() = go.Figure(), fill_type='lines'):
+def draw_map(map: LaneMap, color='rgba(0,0,0,1)', fig: go.Figure() = go.Figure(), fill_type='lines'):
     """It draws the the map"""
     x_min, x_max = float('inf'), -float('inf')
     y_min, y_max = float('inf'), -float('inf')
@@ -1145,3 +1152,22 @@ def num_digits(val: float):
         print(num)
         return num
     return False
+
+# fig= go.Figure()
+# fig.update_traces(line={'width':5})
+
+
+def update_style(fig: go.Figure() = go.Figure()):
+    fig.update_traces(line={'width': 3})
+    fig.update_layout(
+        # paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)"
+    )
+    fig.update_layout(font={'size': 32})
+    linewidth = 4
+    gridwidth = 2
+    fig.update_yaxes(showline=True, linewidth=linewidth, linecolor='Gray',
+                     showgrid=True, gridwidth=gridwidth, gridcolor='LightGrey')
+    fig.update_xaxes(showline=True, linewidth=linewidth, linecolor='Gray',
+                     showgrid=True, gridwidth=gridwidth, gridcolor='LightGrey')
+    return fig

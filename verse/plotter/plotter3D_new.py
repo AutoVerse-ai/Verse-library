@@ -1,3 +1,4 @@
+from curses import start_color
 import plotly.graph_objects as go
 import numpy as np
 from typing import List, Tuple, Union
@@ -22,10 +23,10 @@ colors = [['#CC0000', '#FF0000', '#FF3333', '#FF6666', '#FF9999', '#FFCCCC'],
           ['#CC0066', '#FF007F', '#FF3399', '#FF66B2', '#FF99CC', '#FFCCE5']
           ]
 scheme_dict = {'red': 0, 'springgreen': 5, 'blue': 8, 'orange': 1, 'yellow': 2, 'yellowgreen': 3, 'lime': 4,
-                'cyan': 6, 'cyanblue': 7, 'purple': 9, 'magenta': 10, 'pink': 11}
+               'cyan': 6, 'cyanblue': 7, 'purple': 9, 'magenta': 10, 'pink': 11}
 
 
-def simulation_tree_3d(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, z_dim: int = 3, print_dim_list=None, map_type='outline', scale_type='trace', label_mode='None', sample_rate=1):
+def simulation_tree_3d(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, z_dim: int = 3, print_dim_list=None, map_type='outline', sample_rate=1):
     """It statically shows all the traces of the simulation."""
     if isinstance(root, AnalysisTree):
         root = root.root
@@ -49,16 +50,17 @@ def simulation_tree_3d(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fi
     # fig.update_yaxes(title='y')
     # fig.update_layout(legend_title_text='Agent list')
     fig.update_layout(
-        scene = dict(
+        scene=dict(
             # xaxis = dict(nticks=4, range=[-100,100],),
             # yaxis = dict(nticks=4, range=[-50,100],),
-            zaxis = dict(nticks=4, range=[-15,15],)
+            zaxis=dict(nticks=4, range=[-15, 15],)
         )
     )
+    fig = update_style(fig)
     return fig
 
 
-def reachtube_tree_3d(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, z_dim: int = 3, print_dim_list=None, map_type='outline', scale_type='trace', label_mode='None', sample_rate=1, combine_rect=None):
+def reachtube_tree_3d(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, z_dim: int = 3, print_dim_list=None, map_type='outline', sample_rate=1, combine_rect=None):
     """It statically shows all the traces of the verfication."""
     if isinstance(root, AnalysisTree):
         root = root.root
@@ -77,34 +79,33 @@ def reachtube_tree_3d(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig
         fig = reachtube_tree_single_3d(
             root, agent_id, fig, x_dim, y_dim, z_dim, scheme_list[i], print_dim_list, combine_rect)
         i = (i+1) % 12
-    
 
     fig.update_layout(
-        scene = dict(
+        scene=dict(
             # xaxis = dict(nticks=4, range=[-100,100],),
             # yaxis = dict(nticks=4, range=[-50,100],),
-            zaxis = dict(nticks=4, range=[-15,15],)
+            zaxis=dict(nticks=4, range=[-15, 15],)
         )
     )
-    
+    fig = update_style(fig)
     return fig
 
 
 def draw_map_3d(map: LaneMap_3d, fig=go.Figure(), fill_type='outline', color='rgba(0,0,0,1)'):
     if map is None:
         return fig
-    num = 20
+    num = 100
     for lane_idx in map.lane_dict:
         lane = map.lane_dict[lane_idx]
-        curr_color = [0, 0, 0, 0]
-        opacity = 0.5
+        opacity = 0.2
+        start_color = end_color = 'grey'
         for lane_seg in lane.segment_list:
             if lane_seg.type == 'Straight':
                 lane_seg: StraightLane_3d = lane_seg
                 if fill_type == 'outline':
                     x, y, z = lane_seg.get_sample_points(num, num)
                     fig.add_trace(go.Surface(x=x, y=y, z=z, opacity=opacity,
-                                             colorscale=[[0, 'rgb(255,255,255)'], [1, 'rgb(255,255,255)']]))
+                                             colorscale=[[0, start_color], [1, end_color]]))
                     fig.update_traces(showscale=False)
                 else:
                     oc, oc_x, oc_y, oc_z = lane_seg.get_lane_center(num)
@@ -124,7 +125,7 @@ def draw_map_3d(map: LaneMap_3d, fig=go.Figure(), fill_type='outline', color='rg
                 # print(oc)
                 if fill_type == 'outline':
                     fig.add_trace(go.Surface(x=oc_x, y=oc_y, z=oc_z, opacity=opacity,
-                                             colorscale=[[0, 'rgb(255,255,255)'], [1, 'rgb(255,255,255)']]))
+                                             colorscale=[[0, start_color], [1, end_color]]))
                     fig.update_traces(showscale=False)
                 else:
                     oc, oc_x, oc_y, oc_z = lane_seg.get_lane_center(num)
@@ -193,7 +194,7 @@ def simulation_tree_single_3d(root: Union[AnalysisTree, AnalysisTreeNode], agent
                                    marker=dict(
             color=colors[scheme_dict[color]][color_id]),
             line=dict(
-            color=colors[scheme_dict[color]][color_id], width=10),
+            color=colors[scheme_dict[color]][color_id], width=18),
             text=[
             ['{:.2f}'.format(trace[i, j])for j in print_dim_list] for i in range(trace.shape[0])],
             legendgroup=agent_id,
@@ -272,7 +273,7 @@ def reachtube_tree_single_3d(root: Union[AnalysisTree, AnalysisTreeNode], agent_
                 color=colors[scheme_dict[color]][1],
                 flatshading=True
             ))
-            
+
             # trace_x_odd = np.array([trace[i][x_dim]
             #                         for i in range(0, max_id, 2)])
             # trace_x_even = np.array([trace[i][x_dim]
@@ -348,3 +349,19 @@ def sample_trace(root, sample_rate: int = 1):
                                         for i in range(0, len(node.trace[agent_id]), sample_rate)]
             queue += node.child
     return root
+
+
+def update_style(fig: go.Figure() = go.Figure()):
+    # fig.update_traces(line={'width': 3})
+    fig.update_layout(
+        # paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)"
+    )
+    fig.update_layout(font={'size': 18})
+    linewidth = 4
+    gridwidth = 2
+    fig.update_yaxes(showline=True, linewidth=linewidth, linecolor='Gray',
+                     showgrid=True, gridwidth=gridwidth, gridcolor='LightGrey')
+    fig.update_xaxes(showline=True, linewidth=linewidth, linecolor='Gray',
+                     showgrid=True, gridwidth=gridwidth, gridcolor='LightGrey')
+    return fig

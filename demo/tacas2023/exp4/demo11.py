@@ -7,7 +7,8 @@ from verse.plotter.plotter2D_old import plot_reachtube_tree, plot_map
 
 from enum import Enum, auto
 import plotly.graph_objects as go
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
+
 
 class VehicleMode(Enum):
     Normal = auto()
@@ -24,6 +25,7 @@ class TrackMode(Enum):
     M12 = auto()
     M21 = auto()
     M10 = auto()
+
 
 if __name__ == "__main__":
     input_code_name = './demo/tacas2023/exp4/example_controller5.py'
@@ -49,10 +51,10 @@ if __name__ == "__main__":
             (VehicleMode.Normal, TrackMode.T0),
         ]
     )
-    scenario.set_sensor(NoisyVehicleSensor((0.5,0.5), (0,0)))
+    scenario.set_sensor(NoisyVehicleSensor((0.5, 0.5), (0, 0)))
 
     scenario.init_seg_length = 5
-    traces = scenario.verify(40, 0.1, params={"bloating_method":'GLOBAL'})
+    traces = scenario.verify(40, 0.1, params={"bloating_method": 'GLOBAL'})
 
     fig = go.Figure()
     fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace')
@@ -86,8 +88,10 @@ if __name__ == "__main__":
     )
 
     scenario1.init_seg_length = 5
-    traces = scenario1.verify(40, 0.1, params={"bloating_method":'GLOBAL'})
-
-    fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace', tmp=True)
+    # traces = scenario1.verify(40, 0.1, params={"bloating_method": 'GLOBAL'})
+    # traces.dump("./output4.json")
+    traces = AnalysisTree.load('./output4.json')
+    fig = go.Figure()
+    fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [
+                         1, 2], 'lines', 'trace')
     fig.show()
-    # plt.show()

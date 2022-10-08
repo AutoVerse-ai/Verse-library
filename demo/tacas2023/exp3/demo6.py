@@ -6,11 +6,13 @@ from verse.plotter.plotter2D import *
 from enum import Enum, auto
 import plotly.graph_objects as go
 
+
 class VehicleMode(Enum):
     Normal = auto()
     SwitchLeft = auto()
     SwitchRight = auto()
     Brake = auto()
+
 
 class TrackMode(Enum):
     T0 = auto()
@@ -19,13 +21,14 @@ class TrackMode(Enum):
     T3 = auto()
     T4 = auto()
     M01 = auto()
-    M12 = auto() 
-    M23 = auto() 
-    M40 = auto() 
-    M04 = auto() 
+    M12 = auto()
+    M23 = auto()
+    M40 = auto()
+    M04 = auto()
     M32 = auto()
     M21 = auto()
     M10 = auto()
+
 
 if __name__ == "__main__":
     input_code_name = './demo/tacas2023/exp3/example_controller7.py'
@@ -67,14 +70,16 @@ if __name__ == "__main__":
             (VehicleMode.Normal, TrackMode.T3),
         ]
     )
- 
+
     # traces = scenario.simulate(80, 0.05)
     # fig = go.Figure()
     # fig = simulation_anime(traces, tmp_map, fig, 1, 2, [
     #                        1, 2], 'lines', 'trace', sample_rate=1)
     # fig.show()
 
-    traces = scenario.verify(80, 0.05)
+    # traces = scenario.verify(80, 0.2)
+    # traces.dump("./output3.json")
+    traces = AnalysisTree.load('./output3.json')
     fig = go.Figure()
     fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace')
     fig.show()
