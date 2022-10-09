@@ -11,11 +11,11 @@ import numpy as np
 
 from verse.agents.base_agent import BaseAgent
 from verse.analysis.dryvr import _EPSILON
-from verse.analysis.incremental import CachedRTTrans, CachedSegment, combine_all
+from verse.analysis.incremental import CachedRTTrans, CachedSegment, combine_all, reach_trans_suit
 from verse.analysis.simulator import PathDiffs
 from verse.automaton import GuardExpressionAst, ResetExpression
 from verse.analysis import Simulator, Verifier, AnalysisTreeNode, AnalysisTree
-from verse.analysis.utils import sample_rect
+from verse.analysis.utils import dedup, sample_rect
 from verse.parser import astunparser
 from verse.parser.parser import ControllerIR, ModePath, find
 from verse.sensor.base_sensor import BaseSensor
@@ -444,16 +444,7 @@ class Scenario:
                 if len(agent.controller.args) == 0:
                     continue
                 state_dict = {aid: (node.trace[aid][0], node.mode[aid], node.static[aid]) for aid in node.agent}
-                def dedup(l):
-                    o = []
-                    for i in l:
-                        for j in o:
-                            if i.var == j.var and i.cond == j.cond and i.val == j.val:
-                                break
-                        else:
-                            o.append(i)
-                    return o
-                agent_paths = dedup([p for tran in segment.transitions for p in tran.paths])
+                agent_paths = dedup([p for tran in segment.transitions for p in tran.paths], lambda i: (i.var, i.cond, i.val))
                 cont_var_dict_template, discrete_variable_dict, len_dict = self.sensor.sense(self, agent, state_dict, self.map)
                 for path in agent_paths:
                     cached_guards[agent_id].append((path, discrete_variable_dict, path_transitions[path.cond]))
@@ -509,28 +500,16 @@ class Scenario:
         else:
             if len(paths) == 0:
                 # print(red("full cache"))
-                def trans_suit(a: Dict[str, List[List[List[float]]]], b: Dict[str, List[List[List[float]]]]) -> bool:
-                    assert set(a.keys()) == set(b.keys())
-                    def transp(a):
-                        return list(map(list, zip(*a)))
-                    def suits(a: List[List[float]], b: List[List[float]]) -> bool:
-                        at, bt = transp(a), transp(b)
-                        return all(al <= bl and ah >= bh for (al, ah), (bl, bh) in zip(at, bt))
-                    return all(suits(av, bv) for aid in a.keys() for av, bv in zip(a[aid], b[aid]))
 
                 # _transitions = [trans.transition for seg in cache.values() for trans in seg.transitions]
-                _transitions = [trans.transition for seg in cache.values() for trans in seg.transitions if trans_suit(trans.inits, node.init)]
-                # pp(("cached trans", _transitions))
+                _transitions = [trans.transition for seg in cache.values() for trans in seg.transitions if reach_trans_suit(trans.inits, node.init) or pp(("not suit", trans.inits, node.init))]
+                pp(("cached trans", len(_transitions)))
                 if len(_transitions) == 0:
                     return None, []
                 transition = min(_transitions)
-                transitions = []
-                for agent_id, seg in cache.items():
-                    # TODO: check for asserts
-                    for tran in seg.transitions:
-                        if tran.transition == transition:
-                            # pp(("chosen tran", agent_id, tran))
-                            transitions.append((agent_id, tran.mode, tran.dest, tran.reset, tran.reset_idx, tran.paths))
+                transitions = [(agent_id, tran) for agent_id, seg in cache.items() for tran in seg.transitions if tran.transition == transition]
+                # TODO: check for asserts
+                transitions = [(aid, tran.mode, tran.dest, tran.reset, tran.reset_idx, tran.paths) for aid, tran in dedup(transitions, lambda p: (p[0], p[1].mode, p[1].dest))]
                 return None, transitions
 
             path_transitions = defaultdict(int)
@@ -543,16 +522,8 @@ class Scenario:
                 if len(agent.controller.args) == 0:
                     continue
                 state_dict = {aid: (node.trace[aid][0], node.mode[aid], node.static[aid]) for aid in node.agent}
-                def dedup(l):
-                    o = []
-                    for i in l:
-                        for j in o:
-                            if i.var == j.var and i.cond == j.cond and i.val == j.val:
-                                break
-                        else:
-                            o.append(i)
-                    return o
-                agent_paths = dedup([p for tran in segment.transitions for p in tran.paths])
+
+                agent_paths = dedup([p for tran in segment.transitions for p in tran.paths], lambda i: (i.var, i.cond, i.val))
                 for path in agent_paths:
                     cont_var_dict_template, discrete_variable_dict, length_dict = self.sensor.sense(
                         self, agent, state_dict, self.map)

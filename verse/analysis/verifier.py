@@ -11,6 +11,7 @@ from verse.analysis.analysis_tree import AnalysisTreeNode, AnalysisTree
 from verse.analysis.dryvr import calc_bloated_tube, SIMTRACENUM
 from verse.analysis.mixmonotone import calculate_bloated_tube_mixmono_cont, calculate_bloated_tube_mixmono_disc
 from verse.analysis.incremental import ReachTubeCache, TubeCache, convert_reach_trans, to_simulate, combine_all
+from verse.analysis.utils import dedup
 from verse.parser.parser import find
 pp = functools.partial(pprint.pprint, compact=True, width=130)
 
@@ -151,8 +152,10 @@ class Verifier:
             for agent_id in node.agent:
                 mode = node.mode[agent_id]
                 inits = node.init[agent_id]
+                combined = combine_all(inits)
                 if self.config.incremental:
-                    cached = self.trans_cache.check_hit(agent_id, mode, combined_inits[agent_id])
+                    cached = self.trans_cache.check_hit(agent_id, mode, combined, node.init)
+                    pp(("check hit", agent_id, mode, combined))
                     if cached != None:
                         cached_tubes[agent_id] = cached
                 if agent_id not in node.trace:
@@ -232,17 +235,8 @@ class Verifier:
                     if agent_id in cached_tubes:
                         cached_tubes[agent_id].transitions.extend(convert_reach_trans(agent_id, transit_agents, node.init, transition, transit_ind))
                         pre_len = len(cached_tubes[agent_id].transitions)
-                        def dedup(l):
-                            o = []
-                            for i in l:
-                                for j in o:
-                                    if i.mode == j.mode and i.dest == j.dest:
-                                        break
-                                else:
-                                    o.append(i)
-                            return o
-                        cached_tubes[agent_id].transitions = dedup(cached_tubes[agent_id].transitions)
-                        # pp(("dedup!", pre_len, len(cached_tubes[agent_id].transitions)))
+                        cached_tubes[agent_id].transitions = dedup(cached_tubes[agent_id].transitions, lambda i: (i.mode, i.dest, i.inits))
+                        pp(("dedup!", pre_len, len(cached_tubes[agent_id].transitions)))
                     else:
                         self.trans_cache.add_tube(agent_id, combined_inits, node, transit_agents, transition, transit_ind, run_num)
 
@@ -276,7 +270,7 @@ class Verifier:
                         next_node_init[agent_idx] = next_init
                     else:
                         next_node_init[agent_idx] = [[truncated_trace[agent_idx][0][1:], truncated_trace[agent_idx][1][1:]]]
-                        pp(("infer init", agent_idx, next_node_init[agent_idx], truncated_trace[agent_idx][:8]))
+                        pp(("infer init", agent_idx, next_node_init[agent_idx]))
                         next_node_trace[agent_idx] = truncated_trace[agent_idx]
 
                 tmp = AnalysisTreeNode(

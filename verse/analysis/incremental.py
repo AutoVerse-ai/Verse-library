@@ -103,6 +103,15 @@ def combine_all(inits):
     return [[min(a) for a in np.transpose(np.array(inits)[:, 0])],
             [max(a) for a in np.transpose(np.array(inits)[:, 1])]]
 
+def reach_trans_suit(a: Dict[str, List[List[List[float]]]], b: Dict[str, List[List[List[float]]]]) -> bool:
+    assert set(a.keys()) == set(b.keys())
+    def transp(a):
+        return list(map(list, zip(*a)))
+    def suits(a: List[List[float]], b: List[List[float]]) -> bool:
+        at, bt = transp(a), transp(b)
+        return all(al <= bl and ah >= bh for (al, ah), (bl, bh) in zip(at, bt))
+    return all(suits(av, bv) for aid in a.keys() for av, bv in zip(a[aid], b[aid]))
+
 @dataclass
 class CachedTube:
     tube: List[List[List[float]]]
@@ -219,18 +228,31 @@ class ReachTubeCache:
                 tree = next_level_tree
         raise Exception("???")
 
-    def check_hit(self, agent_id: str, mode: Tuple[str], init: List[float]) -> Optional[CachedRTTrans]:
+    @staticmethod
+    def query_cont(tree: IntervalTree, cont: List[Tuple[float, float]]) -> List[CachedRTTrans]:
+        assert isinstance(tree, IntervalTree)
+        low, high = cont[0]
+        next_level_entries = [t.data for t in tree[low:high + _EPSILON] if t.begin <= low and high <= t.end]
+        if len(cont) == 1:
+            for ent in next_level_entries:
+                assert isinstance(ent, CachedRTTrans)
+            return next_level_entries
+        else:
+            return [ent for t in next_level_entries for ent in ReachTubeCache.query_cont(t, cont[1:])]
+
+    def check_hit(self, agent_id: str, mode: Tuple[str], init: List[float], inits: Dict[str, List[List[List[float]]]]) -> Optional[CachedRTTrans]:
         key = (agent_id,) + tuple(mode)
         if key not in self.cache:
             return None
         tree = self.cache[key]
-        for low, high in list(map(tuple, zip(*init))):
-            next_level_entries = [t for t in tree[low:high + _EPSILON] if t.begin <= low and high <= t.end]
-            if len(next_level_entries) == 0:
-                return None
-            tree = min(next_level_entries, key=lambda e: low - e.begin + e.end - high).data
-        assert isinstance(tree, CachedRTTrans)
-        return tree
+        entries = self.query_cont(tree, list(map(tuple, zip(*init))))
+        if len(entries) == 0:
+            return None
+        def num_trans_suit(e: CachedRTTrans) -> int:
+            return sum(1 if reach_trans_suit(t.inits, inits) else 0 for t in e.transitions)
+        entries = list(sorted([(e, -num_trans_suit(e)) for e in entries], key=lambda p: p[1]))
+        pp(("check hit entries", len(entries), entries[0][1]))
+        return entries[0][0]
 
     @staticmethod
     def iter_tree(tree, depth: int) -> List[List[float]]:

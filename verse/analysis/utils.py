@@ -382,3 +382,14 @@ def sample_rect(rect: List[List[float]]) -> List[float]:
     # for i in range(len(rect[0])):
     res = np.random.uniform(rect[0], rect[1]).tolist()
     return res
+
+def dedup(l, f=lambda a:a):
+    o = []
+    l = [(i, f(i)) for i in l]
+    for i, k in l:
+        for _, k_ in o:
+            if k == k_:
+                break
+        else:
+            o.append((i, k))
+    return [i for i, _ in o]
