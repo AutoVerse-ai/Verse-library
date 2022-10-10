@@ -67,7 +67,7 @@ def to_simulate(old_agents: Dict[str, BaseAgent], new_agents: Dict[str, BaseAgen
                 if new == None:
                     removed_paths.append(old)
                 elif old.cond != new.cond:
-                    added_paths.append((new_agent, i, new))
+                    added_paths.append((new_agent, new))
                 elif old.val != new.val:
                     reset_changed_paths.append(new)
     new_cache = {}

@@ -449,7 +449,7 @@ class Scenario:
                 for path in agent_paths:
                     cached_guards[agent_id].append((path, discrete_variable_dict, path_transitions[path.cond]))
 
-        for agent, _idx, path in paths:
+        for agent, path in paths:
             # Get guard
             if len(agent.controller.args) == 0:
                 continue
@@ -496,7 +496,7 @@ class Scenario:
         cached_guards = defaultdict(list)
 
         if not cache:
-            paths = [(agent, i, p) for agent in node.agent.values() for i, p in enumerate(agent.controller.paths)]
+            paths = [(agent, p) for agent in node.agent.values() for p in agent.controller.paths]
         else:
             if len(paths) == 0:
                 # print(red("full cache"))
@@ -543,7 +543,7 @@ class Scenario:
         # for aid, trace in node.trace.items():
         #     if len(trace) < 2:
         #         pp(("weird state", aid, trace))
-        for agent, idx, path in paths:
+        for agent, path in paths:
             if len(agent.controller.args) == 0:
                 continue
             agent_id = agent.id

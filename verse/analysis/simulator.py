@@ -14,7 +14,7 @@ pp = functools.partial(pprint.pprint, compact=True, width=130)
 # from verse.agents.base_agent import BaseAgent
 from verse.analysis.analysis_tree import AnalysisTreeNode, AnalysisTree
 
-PathDiffs = List[Tuple[BaseAgent, int, ModePath]]
+PathDiffs = List[Tuple[BaseAgent, ModePath]]
 
 def red(s):
     return "\x1b[31m" + s + "\x1b[0m" #]]
