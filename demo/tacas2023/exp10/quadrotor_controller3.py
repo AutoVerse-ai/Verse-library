@@ -40,8 +40,9 @@ def safe_seperation(ego, other):
     return res
 
 def is_close(ego, other):
-    res = (((ego.vx <= 0) and (ego.x-other.x > 2 and ego.x-other.x < 5)) or ((ego.vx > 0) and (ego.x-other.x <= -2 and ego.x-other.x > - 5))) \
-        and (((ego.vy <= 0) and (ego.y-other.y > 2 and ego.y-other.y < 5)) or ((ego.vy > 0) and (ego.y-other.y <= -2 and ego.y-other.y > - 5)))
+    res = ((other.x - ego.x < 10 and other.x-ego.x > 8) or\
+        (other.y-ego.y < 10 and other.y-ego.y > 8) or\
+        (other.z-ego.z < 10 and other.z-ego.z > 8))
     return res
 
 
@@ -72,7 +73,16 @@ def controller(ego: State, others: List[State], lane_map):
             if lane_map.h_exist(ego.track_mode, ego.craft_mode, CraftMode.Normal):
                 next.track_mode = lane_map.h(
                     ego.track_mode, ego.craft_mode, CraftMode.Normal)
-   
-    assert not any(safe_seperation(ego, other) for other in others), "Safe Seperation"
 
+    assert not any(ego.x-other.x < 1 and ego.x-other.x >-1 and \
+        ego.y-other.y < 1 and ego.y-other.y > -1 and \
+        ego.z-other.z < 1 and ego.z-other.z > -1 \
+        for other in others),\
+        "Safe Seperation"
+
+    assert not (ego.x > 40 and ego.x<50 and\
+        ego.y>-5 and ego.y<5 and\
+        ego.z > -10 and ego.z<-6),\
+        "Unsafe Region"
+    
     return next

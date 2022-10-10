@@ -60,7 +60,7 @@ def simulation_tree_3d(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fi
     return fig
 
 
-def reachtube_tree_3d(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, z_dim: int = 3, print_dim_list=None, map_type='outline', sample_rate=1, combine_rect=None):
+def reachtube_tree_3d(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, z_dim: int = 3, print_dim_list=None, map_type='outline', sample_rate=1, combine_rect=None, xrange=[], yrange=[], zrange=[]):
     """It statically shows all the traces of the verfication."""
     if isinstance(root, AnalysisTree):
         root = root.root
@@ -82,9 +82,9 @@ def reachtube_tree_3d(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig
 
     fig.update_layout(
         scene=dict(
-            # xaxis = dict(nticks=4, range=[-100,100],),
-            # yaxis = dict(nticks=4, range=[-50,100],),
-            zaxis=dict(nticks=4, range=[-15, 15],)
+            xaxis = dict(nticks=4, range=xrange,),
+            yaxis = dict(nticks=4, range=yrange,),
+            zaxis = dict(nticks=4, range=zrange,)
         )
     )
     fig = update_style(fig)

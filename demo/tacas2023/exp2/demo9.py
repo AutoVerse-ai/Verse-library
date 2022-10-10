@@ -57,7 +57,7 @@ if __name__ == "__main__":
     scenario.add_agent(car)
     car = NPCAgent('car3')
     scenario.add_agent(car)
-    tmp_map = SimpleMap3()
+    tmp_map = SimpleMap6()
     scenario.set_map(tmp_map)
     scenario.set_init(
         [
@@ -74,13 +74,11 @@ if __name__ == "__main__":
 
     scenario.init_seg_length = 5
     traces = scenario.verify(40, 0.1, params={"bloating_method": 'GLOBAL'})
-    traces.dump("./output1.json")
-    traces = AnalysisTree.load('./output1.json')
     fig = go.Figure()
     fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace')
     fig.show()
 
-    fig = go.Figure()
-    fig = reachtube_anime(traces, tmp_map, fig, 1,
-                          2, 'lines', 'trace', combine_rect=1)
-    fig.show()
+    # fig = go.Figure()
+    # fig = reachtube_anime(traces, tmp_map, fig, 1,
+    #                       2, 'lines', 'trace', combine_rect=1)
+    # fig.show()

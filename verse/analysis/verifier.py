@@ -119,6 +119,7 @@ class Verifier:
             root.type = 'reachtube'
         verification_queue = []
         verification_queue.append(root)
+        num_calls = 0
         while verification_queue != []:
             node: AnalysisTreeNode = verification_queue.pop(0)
             print(node.start_time, node.mode)
@@ -180,6 +181,7 @@ class Verifier:
                         ) 
                     else:
                         raise ValueError(f"Reachability computation method {reachability_method} not available.")
+                    num_calls += 1
                     trace = np.array(cur_bloated_tube)
                     trace[:, 0] += node.start_time
                     node.trace[agent_id] = trace.tolist()
@@ -246,6 +248,7 @@ class Verifier:
                         max_end_idx+1)*2]
 
         self.reachtube_tree = AnalysisTree(root)
+        print(f">>>>>>>> Number of calls to reachability engine: {num_calls}")
         return self.reachtube_tree
 
 

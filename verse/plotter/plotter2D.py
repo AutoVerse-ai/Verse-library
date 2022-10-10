@@ -14,6 +14,7 @@ from verse.map.lane_map import LaneMap
 colors = [
     ['#CC0000', '#FF0000', '#FF3333', '#FF6666', '#FF9999', '#FFCCCC'],  # red
     ['#0000CC', '#0000FF', '#3333FF', '#6666FF', '#9999FF', '#CCCCFF'],  # blue
+    ['#00CC00', '#00FF00', '#33FF33', '#66FF66', '#99FF99', '#CCFFCC'],  # green
     ['#CCCC00', '#FFFF00', '#FFFF33', '#FFFF66', '#FFFF99', '#FFE5CC'],  # yellow
     #   ['#66CC00', '#80FF00', '#99FF33', '#B2FF66', '#CCFF99', '#FFFFCC'], # yellowgreen
     ['#CC00CC', '#FF00FF', '#FF33FF', '#FF66FF', '#FF99FF', '#FFCCFF'],  # magenta
@@ -25,8 +26,8 @@ colors = [
     ['#00CC00', '#00FF00', '#33FF33', '#66FF66', '#99FF99', '#E5FFCC'],  # lime
     ['#CC0066', '#FF007F', '#FF3399', '#FF66B2', '#FF99CC', '#FFCCE5']  # pink
 ]
-scheme_dict = {'red': 0, 'orange': 1, 'yellow': 2, 'yellowgreen': 3, 'lime': 4,
-               'springgreen': 5, 'cyan': 6, 'cyanblue': 7, 'blue': 8, 'purple': 9, 'magenta': 10, 'pink': 11}
+scheme_dict = {'red': 0, 'orange': 1, 'green':2, 'yellow': 3, 'yellowgreen': 4, 'lime': 5,
+               'springgreen': 6, 'cyan': 7, 'cyanblue': 8, 'blue': 9, 'purple': 10, 'magenta': 11, 'pink': 12}
 scheme_list = list(scheme_dict.keys())
 num_theme = len(colors)
 color_cnt = 0
@@ -191,7 +192,7 @@ def reachtube_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=g
                                          mode='markers+text',
                                          text=['HIT:\n' +
                                                a for a in node.assert_hits[agent_id]],
-                                         textfont={'color': 'grey'},
+                                         textfont={'color': 'black'},
                                          marker={'size': 4, 'color': 'black'},
                                          showlegend=False))
         queue += node.child
@@ -204,8 +205,10 @@ def reachtube_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=g
     return fig
 
 
-def reachtube_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, print_dim_list=None, map_type='lines', scale_type='trace', label_mode='None', sample_rate=1, combine_rect=1):
+def reachtube_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, print_dim_list=None, map_type='lines', scale_type='trace', label_mode='None', sample_rate=1, combine_rect=1, plot_color = None):
     """It statically shows all the traces of the verfication."""
+    if plot_color is None:
+        plot_color = colors
     if isinstance(root, AnalysisTree):
         root = root.root
     root = sample_trace(root, sample_rate)
@@ -221,7 +224,7 @@ def reachtube_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go
     i = 0
     for agent_id in agent_list:
         fig = reachtube_tree_single(
-            root, agent_id, fig, x_dim, y_dim, scheme_list[i], print_dim_list, combine_rect)
+            root, agent_id, fig, x_dim, y_dim, scheme_list[i], print_dim_list, combine_rect, plot_color=plot_color)
         i = (i+1) % num_theme
     if scale_type == 'trace':
         queue = [root]
@@ -249,7 +252,7 @@ def reachtube_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go
             if label_mode != 'None':
                 if previous_mode[agent_id] != node.mode[agent_id]:
                     text_pos, text = get_text_pos(node.mode[agent_id][0])
-                    mode_point_color = colors[agent_list.index(
+                    mode_point_color = plot_color[agent_list.index(
                         agent_id) % num_theme][0]
                     fig.add_trace(go.Scatter(x=[trace[0, x_dim]], y=[trace[0, y_dim]],
                                              mode='markers+text',
@@ -268,7 +271,7 @@ def reachtube_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go
                                          mode='markers+text',
                                          text=['HIT:\n' +
                                                a for a in node.assert_hits[agent_id]],
-                                         textfont={'color': 'grey'},
+                                         textfont={'color': 'black'},
                                          marker={'size': 4, 'color': 'black'},
                                          showlegend=False))
         queue += node.child
@@ -675,18 +678,20 @@ def simulation_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=
 """Functions below are low-level functions and usually are not called outside this file."""
 
 
-def reachtube_tree_single(root: Union[AnalysisTree, AnalysisTreeNode], agent_id, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, color=None, print_dim_list=None, combine_rect=1):
+def reachtube_tree_single(root: Union[AnalysisTree, AnalysisTreeNode], agent_id, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, color=None, print_dim_list=None, combine_rect=1, plot_color = None):
     """It statically shows the verfication traces of one given agent."""
     if isinstance(root, AnalysisTree):
         root = root.root
+    if plot_color is None:
+        plot_color = colors
     global color_cnt
     if color == None:
         color = list(scheme_dict.keys())[color_cnt]
         color_cnt = (color_cnt+1) % num_theme
     queue = [root]
     show_legend = False
-    fillcolor = colors[scheme_dict[color]][1]
-    linecolor = colors[scheme_dict[color]][0]
+    fillcolor = plot_color[scheme_dict[color]][1]
+    linecolor = plot_color[scheme_dict[color]][0]
     while queue != []:
         node = queue.pop(0)
         traces = node.trace

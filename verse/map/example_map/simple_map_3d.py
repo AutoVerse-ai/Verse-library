@@ -207,7 +207,7 @@ class SimpleMap6(LaneMap_3d):
         super().__init__()
         phase = 1.5*pi
         n = np.array([0, 0, 1])
-        width = 5
+        width = 2
         radius = 10
         center1 = np.array([0, 0, 0])
         segment_1_0 = CircularLane_3d_v1(
@@ -300,6 +300,65 @@ class SimpleMap6(LaneMap_3d):
             lane = 'T2'
         return lane
 
+class SimpleMap7(LaneMap_3d):
+
+    def __init__(self):
+        super().__init__()
+        width = 4
+        y_offset = 0
+        z_offset = 0
+        segment0 = StraightLane_3d(
+            'seg0',
+            [0, 0, 0],
+            [100, 0+y_offset, 0+z_offset],
+            width
+        )
+        lane0 = Lane_3d('T1', [segment0])
+        segment3 = StraightLane_3d(
+            'seg0',
+            [0, 0, 2*width],
+            [100, 0+y_offset, 2*width+z_offset],
+            width
+        )
+        lane3 = Lane_3d('T0', [segment3])
+        segment4 = StraightLane_3d(
+            'seg0',
+            [0, 0, -2*width],
+            [100, 0+y_offset, -2*width+z_offset],
+            width
+        )
+        lane4 = Lane_3d('T2', [segment4])
+        self.add_lanes([lane0, lane3, lane4])
+
+        self.h_dict = {
+            ('T1', 'Normal', 'MoveUp'): 'M10',
+            ('T0', 'Normal', 'MoveDown'): 'M01',
+            ('T1', 'Normal', 'MoveDown'): 'M12',
+            ('T2', 'Normal', 'MoveUp'): 'M21',
+            ('M10', 'MoveUp', 'Normal'): 'T0',
+            ('M01', 'MoveDown', 'Normal'): 'T1',
+            ('M12', 'MoveDown', 'Normal'): 'T2',
+            ('M21', 'MoveUp', 'Normal'): 'T1',
+        }
+
+    def h(self, lane_idx: str, agent_mode_src: str, agent_mode_dest: str) -> str:
+        return self.h_dict[(lane_idx, agent_mode_src, agent_mode_dest)]
+
+    def h_exist(self, lane_idx: str, agent_mode_src: str, agent_mode_dest: str) -> bool:
+        if (lane_idx, agent_mode_src, agent_mode_dest) in self.h_dict:
+            return True
+        else:
+            return False
+
+    def trans_func(self, lane_idx: str) -> str:
+        lane = ''
+        if lane_idx[-1] == '0':
+            lane = 'T0'
+        elif lane_idx[-1] == '1':
+            lane = 'T1'
+        elif lane_idx[-1] == '2':
+            lane = 'T2'
+        return lane
 
 def get_end(start, n, lens):
     n = n/np.linalg.norm(n)

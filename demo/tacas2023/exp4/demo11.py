@@ -51,19 +51,14 @@ if __name__ == "__main__":
             (VehicleMode.Normal, TrackMode.T0),
         ]
     )
-    scenario.set_sensor(NoisyVehicleSensor((0.5, 0.5), (0, 0)))
+    scenario.set_sensor(NoisyVehicleSensor((0.5, 0.5), (0.5, 0.5)))
 
     scenario.init_seg_length = 5
     traces = scenario.verify(40, 0.1, params={"bloating_method": 'GLOBAL'})
+    traces.dump("./demo/tacas2023/exp4/output4_noisy.json")
 
-    fig = go.Figure()
-    fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace')
-
-    # fig = plt.figure(2)
-    # fig = plot_reachtube_tree(traces.root, 'car1', 1, [2], 'b', fig)
-    # fig = plot_reachtube_tree(traces.root, 'car2', 1, [2], 'r', fig)
-    # fig = plot_reachtube_tree(traces.root, 'car3', 1, [2], 'r', fig)
-    # fig = plot_map(tmp_map, 'g', fig)
+    # fig = go.Figure()
+    # fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace')
 
     scenario1 = Scenario()
     car = CarAgent('car1', file_name=input_code_name)
@@ -88,10 +83,24 @@ if __name__ == "__main__":
     )
 
     scenario1.init_seg_length = 5
-    # traces = scenario1.verify(40, 0.1, params={"bloating_method": 'GLOBAL'})
-    # traces.dump("./output4.json")
-    traces = AnalysisTree.load('./output4.json')
-    fig = go.Figure()
-    fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [
-                         1, 2], 'lines', 'trace')
-    fig.show()
+    traces = scenario1.verify(40, 0.1, params={"bloating_method": 'GLOBAL'})
+    traces.dump("./demo/tacas2023/exp4/output4_nonoise.json")
+    # fig = reachtube_tree(
+    #     traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace',
+    #     plot_color = [
+    #         ['#CCCC00', '#FFFF00', '#FFFF33', '#FFFF66', '#FFFF99', '#FFE5CC'],  # red
+    #         ['#0000CC', '#0000FF', '#3333FF', '#6666FF', '#9999FF', '#CCCCFF'],  # blue
+    #         ['#00CC00', '#00FF00', '#33FF33', '#66FF66', '#99FF99', '#CCFFCC'],  # green
+    #         ['#CCCC00', '#FFFF00', '#FFFF33', '#FFFF66', '#FFFF99', '#FFE5CC'],  # yellow
+    #         #   ['#66CC00', '#80FF00', '#99FF33', '#B2FF66', '#CCFF99', '#FFFFCC'], # yellowgreen
+    #         ['#CC00CC', '#FF00FF', '#FF33FF', '#FF66FF', '#FF99FF', '#FFCCFF'],  # magenta
+    #         #   ['#00CC66', '#00FF80', '#33FF99', '#66FFB2', '#99FFCC', '#CCFFCC'], # springgreen
+    #         ['#00CCCC', '#00FFFF', '#33FFFF', '#66FFFF', '#99FFFF', '#CCFFE5'],  # cyan
+    #         #   ['#0066CC', '#0080FF', '#3399FF', '#66B2FF', '#99CCFF', '#CCE5FF'], # cyanblue
+    #         ['#CC6600', '#FF8000', '#FF9933', '#FFB266', '#FFCC99', '#FFE5CC'],  # orange
+    #         #   ['#6600CC', '#7F00FF', '#9933FF', '#B266FF', '#CC99FF', '#E5CCFF'], # purple
+    #         ['#00CC00', '#00FF00', '#33FF33', '#66FF66', '#99FF99', '#E5FFCC'],  # lime
+    #         ['#CC0066', '#FF007F', '#FF3399', '#FF66B2', '#FF99CC', '#FFCCE5']  # pink
+    #     ]
+    # )
+    # fig.show()

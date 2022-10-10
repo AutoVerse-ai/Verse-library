@@ -2,6 +2,8 @@ from enum import Enum, auto
 import copy
 from typing import List
 
+from verse.map.lane_map import LaneMap
+
 class LaneObjectMode(Enum):
     Vehicle = auto()
     Ped = auto()        # Pedestrians
@@ -45,6 +47,10 @@ def vehicle_close(ego, others):
     res = any(ego.x-other.x<1.0 and ego.x-other.x>-1.0 and ego.y-other.y<1.0 and ego.y-other.y>-1.0 for other in others)
     return res
 
+def enter_unsafe_region(ego):
+    res = (ego.x > 30 and ego.x<40 and ego.lane_mode == TrackMode.T2)
+    return res
+
 def controller(ego:State, others:List[State], lane_map):
     output = copy.deepcopy(ego)
     if ego.agent_mode == VehicleMode.Normal:
@@ -66,6 +72,7 @@ def controller(ego:State, others:List[State], lane_map):
             output.agent_mode = VehicleMode.Normal
             output.lane_mode = lane_map.h(ego.lane_mode, ego.agent_mode, VehicleMode.Normal)
 
-    assert not vehicle_close(ego, others), "Seperation"
+    assert not enter_unsafe_region(ego), 'Unsafe Region'
+    assert not vehicle_close(ego, others), 'Safe Seperation'
     return output
 

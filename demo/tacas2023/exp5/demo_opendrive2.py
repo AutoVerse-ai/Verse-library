@@ -59,8 +59,8 @@ if __name__ == "__main__":
     )
     scenario.init_seg_length = 1
     traces = scenario.verify(60, 0.1)  # traces.dump('./output1.json')
-    traces.dump("./output5.json")
-    traces = AnalysisTree.load('./output5.json')
-    fig = go.Figure()
-    fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace')
-    fig.show()
+    traces.dump("./demo/tacas2023/exp5/output5.json")
+    # traces = AnalysisTree.load('./output5.json')
+    # fig = go.Figure()
+    # fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace')
+    # fig.show()

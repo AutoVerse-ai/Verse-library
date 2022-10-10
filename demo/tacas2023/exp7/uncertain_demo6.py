@@ -39,8 +39,8 @@ if __name__ == "__main__":
     # fig = plt.figure(4)
     # fig = plot_reachtube_tree(traces.root, 'car1', 1, [2],fig=fig)
     # plt.show()
-    traces.dump("./output7.json")
-    traces = AnalysisTree.load('./output7.json')
+    traces.dump("./demo/tacas2023/exp7/output7.json")
+    # traces = AnalysisTree.load('./output7.json')
     fig = go.Figure()
     fig = reachtube_tree(traces, None, fig, 0, 1, [0, 1],
                          'lines', 'trace')
