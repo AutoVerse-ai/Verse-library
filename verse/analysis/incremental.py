@@ -213,7 +213,7 @@ class ReachTubeCache:
     def add_tube(self, agent_id: str, init: Dict[str, List[List[float]]], node: AnalysisTreeNode, transit_agents: List[str], transition, trans_ind: int, run_num: int):
         key = (agent_id,) + tuple(node.mode[agent_id])
         tree = self.cache[key]
-        pp(('add seg', agent_id, node.mode[agent_id], init))
+        # pp(('add seg', agent_id, node.mode[agent_id], init))
         assert_hits = node.assert_hits or {}
         init = list(map(tuple, zip(*init[agent_id])))
         for i, (low, high) in enumerate(init):
@@ -251,7 +251,7 @@ class ReachTubeCache:
         def num_trans_suit(e: CachedRTTrans) -> int:
             return sum(1 if reach_trans_suit(t.inits, inits) else 0 for t in e.transitions)
         entries = list(sorted([(e, -num_trans_suit(e)) for e in entries], key=lambda p: p[1]))
-        pp(("check hit entries", len(entries), entries[0][1]))
+        # pp(("check hit entries", len(entries), entries[0][1]))
         return entries[0][0]
 
     @staticmethod

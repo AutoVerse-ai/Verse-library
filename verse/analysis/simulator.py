@@ -7,6 +7,7 @@ import pprint
 from verse.agents.base_agent import BaseAgent
 
 from verse.analysis.incremental import SimTraceCache, convert_sim_trans, to_simulate
+from verse.analysis.utils import dedup
 from verse.parser.parser import ModePath, find
 pp = functools.partial(pprint.pprint, compact=True, width=130)
 
@@ -132,16 +133,7 @@ class Simulator:
                         if agent_id in cached_segments:
                             cached_segments[agent_id].transitions.extend(convert_sim_trans(agent_id, transit_agents, node.init, transition, transition_idx))
                             pre_len = len(cached_segments[agent_id].transitions)
-                            def dedup(l):
-                                o = []
-                                for i in l:
-                                    for j in o:
-                                        if i.disc == j.disc and i.cont == j.cont:
-                                            break
-                                    else:
-                                        o.append(i)
-                                return o
-                            cached_segments[agent_id].transitions = dedup(cached_segments[agent_id].transitions)
+                            cached_segments[agent_id].transitions = dedup(cached_segments[agent_id].transitions, lambda i: (i.disc, i.cont))
                             # pp(("dedup!", pre_len, len(cached_segments[agent_id].transitions)))
                         else:
                             self.cache.add_segment(agent_id, node, transit_agents, full_traces[agent_id], transition, transition_idx, run_num)

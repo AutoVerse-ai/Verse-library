@@ -502,8 +502,8 @@ class Scenario:
                 # print(red("full cache"))
 
                 # _transitions = [trans.transition for seg in cache.values() for trans in seg.transitions]
-                _transitions = [trans.transition for seg in cache.values() for trans in seg.transitions if reach_trans_suit(trans.inits, node.init) or pp(("not suit", trans.inits, node.init))]
-                pp(("cached trans", len(_transitions)))
+                _transitions = [trans.transition for seg in cache.values() for trans in seg.transitions if reach_trans_suit(trans.inits, node.init)]# or pp(("not suit", trans.inits, node.init))]
+                # pp(("cached trans", len(_transitions)))
                 if len(_transitions) == 0:
                     return None, []
                 transition = min(_transitions)
@@ -540,9 +540,9 @@ class Scenario:
                         continue
                     cached_guards[agent_id].append((path, guard_expression, cont_var_updater, copy.deepcopy(discrete_variable_dict), reset, path_transitions[path.cond]))
 
-        for aid, trace in node.trace.items():
-            if len(trace) < 2:
-                pp(("weird state", aid, trace))
+        # for aid, trace in node.trace.items():
+        #     if len(trace) < 2:
+        #         pp(("weird state", aid, trace))
         for agent, idx, path in paths:
             if len(agent.controller.args) == 0:
                 continue
@@ -580,8 +580,8 @@ class Scenario:
                 if len(agent.controller.args) == 0:
                     continue
                 agent_state, agent_mode, agent_static = state_dict[agent_id]
-                if np.array(agent_state).ndim != 2:
-                    pp(("weird state", agent_id, agent_state))
+                # if np.array(agent_state).ndim != 2:
+                #     pp(("weird state", agent_id, agent_state))
                 agent_state = agent_state[1:]
                 cont_vars, disc_vars, len_dict = self.sensor.sense(self, agent, state_dict, self.map)
                 resets = defaultdict(list)

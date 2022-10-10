@@ -141,8 +141,8 @@ class Verifier:
         while verification_queue != []:
             node: AnalysisTreeNode = verification_queue.pop(0)
             combined_inits = {a: combine_all(inits) for a, inits in node.init.items()}
-            print()
-            pp(("start sim", node.start_time, {a: (*node.mode[a], *combined_inits[a]) for a in node.mode}))
+            # print()
+            # pp(("start sim", node.start_time, {a: (*node.mode[a], *combined_inits[a]) for a in node.mode}))
             remain_time = round(time_horizon - node.start_time, 10)
             if remain_time <= 0:
                 continue
@@ -155,7 +155,7 @@ class Verifier:
                 combined = combine_all(inits)
                 if self.config.incremental:
                     cached = self.trans_cache.check_hit(agent_id, mode, combined, node.init)
-                    pp(("check hit", agent_id, mode, combined))
+                    # pp(("check hit", agent_id, mode, combined))
                     if cached != None:
                         cached_tubes[agent_id] = cached
                 if agent_id not in node.trace:
@@ -165,7 +165,7 @@ class Verifier:
                     # trace[:,0] += node.start_time
                     # node.trace[agent_id] = trace.tolist()
                     if reachability_method == "DRYVR":
-                        pp(('tube', agent_id, mode, inits))
+                        # pp(('tube', agent_id, mode, inits))
                         cur_bloated_tube = self.calculate_full_bloated_tube(agent_id,
                                             mode,
                                             inits,
@@ -203,7 +203,7 @@ class Verifier:
                     trace = np.array(cur_bloated_tube)
                     trace[:, 0] += node.start_time
                     node.trace[agent_id] = trace.tolist()
-            pp(("cached tubes", cached_tubes.keys()))
+            # pp(("cached tubes", cached_tubes.keys()))
             node_ids = list(set((s.run_num, s.node_id) for s in cached_tubes.values()))
             # assert len(node_ids) <= 1, f"{node_ids}"
             new_cache, paths_to_sim = {}, []
@@ -213,11 +213,11 @@ class Verifier:
                     old_node = find(past_runs[old_run_num].nodes, lambda n: n.id == old_node_id)
                     assert old_node != None
                     new_cache, paths_to_sim = to_simulate(old_node.agent, node.agent, cached_tubes)
-                    pp(("to sim", new_cache.keys(), len(paths_to_sim)))
+                    # pp(("to sim", new_cache.keys(), len(paths_to_sim)))
 
             # Get all possible transitions to next mode
             asserts, all_possible_transitions = transition_graph.get_transition_verify_new(new_cache, paths_to_sim, node)
-            pp(("transitions:", [(t[0], t[2]) for t in all_possible_transitions]))
+            # pp(("transitions:", [(t[0], t[2]) for t in all_possible_transitions]))
             node.assert_hits = asserts
             if asserts != None:
                 asserts, idx = asserts
@@ -227,7 +227,7 @@ class Verifier:
 
             transit_map = {k: list(l) for k, l in itertools.groupby(all_possible_transitions, key=lambda p:p[0])}
             transit_agents = transit_map.keys()
-            pp(("transit agents", transit_agents))
+            # pp(("transit agents", transit_agents))
             if self.config.incremental and len(all_possible_transitions) > 0:
                 transit_ind = max(l[-2][-1] for l in all_possible_transitions)
                 for agent_id in node.agent:
@@ -236,15 +236,15 @@ class Verifier:
                         cached_tubes[agent_id].transitions.extend(convert_reach_trans(agent_id, transit_agents, node.init, transition, transit_ind))
                         pre_len = len(cached_tubes[agent_id].transitions)
                         cached_tubes[agent_id].transitions = dedup(cached_tubes[agent_id].transitions, lambda i: (i.mode, i.dest, i.inits))
-                        pp(("dedup!", pre_len, len(cached_tubes[agent_id].transitions)))
+                        # pp(("dedup!", pre_len, len(cached_tubes[agent_id].transitions)))
                     else:
                         self.trans_cache.add_tube(agent_id, combined_inits, node, transit_agents, transition, transit_ind, run_num)
 
             max_end_idx = 0
             for transition in all_possible_transitions:
                 # Each transition will contain a list of rectangles and their corresponding indexes in the original list
-                if len(transition) != 6:
-                    pp(("weird trans", transition))
+                # if len(transition) != 6:
+                #     pp(("weird trans", transition))
                 transit_agent_idx, src_mode, dest_mode, next_init, idx, path = transition
                 start_idx, end_idx = idx[0], idx[-1]
 
@@ -270,7 +270,7 @@ class Verifier:
                         next_node_init[agent_idx] = next_init
                     else:
                         next_node_init[agent_idx] = [[truncated_trace[agent_idx][0][1:], truncated_trace[agent_idx][1][1:]]]
-                        pp(("infer init", agent_idx, next_node_init[agent_idx]))
+                        # pp(("infer init", agent_idx, next_node_init[agent_idx]))
                         next_node_trace[agent_idx] = truncated_trace[agent_idx]
 
                 tmp = AnalysisTreeNode(
