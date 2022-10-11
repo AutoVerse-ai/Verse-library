@@ -37,7 +37,7 @@ import sys
 arg = sys.argv[1]
 
 def jerk(l: List[List[float]], x=0, y=0):
-    return [[l[0][0] - x, l[0][1] - y, *l[0][2:]], [l[1][0] - x, l[1][1] - y, *l[1][2:]]]
+    return [[l[0][0] - x, l[0][1] - y, *l[0][2:]], [l[1][0] + x, l[1][1] + y, *l[1][2:]]]
 
 def jerks(ls: List[List[List[float]]], js: List[List[float]]):
     return [jerk(l, *j) for l, j in zip(ls, js)]
@@ -145,5 +145,5 @@ if __name__ == "__main__":
         run(sim, True)
     elif '8' in arg:
         run(sim)
-        scenario.agent_dict["car8"] = CarAgent('car8', file_name=input_code_name.replace(".py", "-fsw4.py"))
+        scenario.agent_dict["car8"] = CarAgent('car8', file_name=input_code_name.replace(".py", "-fsw7.py"))
         run(sim, True)

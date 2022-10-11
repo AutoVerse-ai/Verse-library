@@ -51,23 +51,17 @@ def car_right(ego, others, lane_map):
 def controller(ego:State, others:List[State], lane_map):
     output = copy.deepcopy(ego)
     if ego.vehicle_mode == VehicleMode.Normal:
-        # Switch left if left lane is empty
         if car_front(ego, others, lane_map, 5, 3):
+            # Switch left if left lane is empty
             if lane_map.has_left(ego.lane_mode) and \
              not car_left(ego, others, lane_map):
                 output.vehicle_mode = VehicleMode.SwitchLeft
         
-        # Switch right if right lane is empty
-        if car_front(ego, others, lane_map, 5, 3):
+            # Switch right if right lane is empty
             if lane_map.has_right(ego.lane_mode) and \
              not car_right(ego, others, lane_map):
                 output.vehicle_mode = VehicleMode.SwitchRight
         
-        # # If really close just brake
-        # if car_front(ego, others, lane_map, 2, -0.5):
-        #         output.vehicle_mode = VehicleMode.Stop 
-        #         output.v = 0.1
-
     # If switched left enough, return to normal mode
     if ego.vehicle_mode == VehicleMode.SwitchLeft:
         if  lane_map.get_lateral_distance(ego.lane_mode, [ego.x, ego.y]) >= (lane_map.get_lane_width(ego.lane_mode)-0.2):
@@ -79,16 +73,6 @@ def controller(ego:State, others:List[State], lane_map):
         if lane_map.get_lateral_distance(ego.lane_mode, [ego.x, ego.y]) <= -(lane_map.get_lane_width(ego.lane_mode)-0.2):
             output.vehicle_mode = VehicleMode.Normal
             output.lane_mode = lane_map.right_lane(ego.lane_mode)
-
-    # if ego.vehicle_mode == VehicleMode.Brake:
-    #     if all((\
-    #         (lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) -\
-    #         lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) > 5 or \
-    #         lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) -\
-    #         lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) < -0.5) and\
-    #         other.lane_mode==ego.lane_mode) for other in others):
-    #         output.vehicle_mode = VehicleMode.Normal 
-    #         output.v = 1.0
 
     return output
 
