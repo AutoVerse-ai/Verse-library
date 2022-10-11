@@ -43,25 +43,25 @@ if __name__ == "__main__":
     #                        2, [1, 2], 'lines', 'trace', anime_mode='trail', full_trace = True)
     # fig.show()
 
-    # traces = scenario.verify(40, 0.05,
-    #                          reachability_method='NeuReach',
-    #                          params={
-    #                              "N_X0": 1,
-    #                              "N_x0": 50,
-    #                              "N_t": 500,
-    #                              "epochs": 50,
-    #                              "_lambda": 5,
-    #                              "use_cuda": True,
-    #                              'r': 0,
-    #                          }
-    #                         )
-    # traces.dump("./demo/tacas2023/exp6/output6_neureach.json")
+    traces = scenario.verify(40, 0.05,
+                             reachability_method='NeuReach',
+                             params={
+                                 "N_X0": 1,
+                                 "N_x0": 50,
+                                 "N_t": 500,
+                                 "epochs": 50,
+                                 "_lambda": 5,
+                                 "use_cuda": True,
+                                 'r': 0,
+                             }
+                            )
+    traces.dump("./demo/tacas2023/exp6/output6_neureach.json")
 
-    traces = scenario.verify(40, 0.05,)
-    traces.dump("./demo/tacas2023/exp6/output6_dryvr.json")
+    # traces = scenario.verify(40, 0.05,)
+    # traces.dump("./demo/tacas2023/exp6/output6_dryvr.json")
     # traces = AnalysisTree.load('./output6.json')
-    # traces = scenario.verify(50, 0.05)
-    # fig = go.Figure()
-    # fig = reachtube_tree(traces, tmp_map, fig, 1,
-    #                      2, [1, 2], 'lines', 'trace')
-    # fig.show()
+    traces = scenario.verify(50, 0.05)
+    fig = go.Figure()
+    fig = reachtube_tree(traces, tmp_map, fig, 1,
+                         2, [1, 2], 'lines', 'trace')
+    fig.show()

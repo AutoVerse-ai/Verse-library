@@ -120,12 +120,14 @@ class Verifier:
         verification_queue = []
         verification_queue.append(root)
         num_calls = 0
+        num_transitions = 0
         while verification_queue != []:
             node: AnalysisTreeNode = verification_queue.pop(0)
             print(node.start_time, node.mode)
             remain_time = round(time_horizon - node.start_time, 10)
             if remain_time <= 0:
                 continue
+            num_transitions += 1
             # For reachtubes not already computed
             # TODO: can add parallalization for this loop
             for agent_id in node.agent:
@@ -249,6 +251,8 @@ class Verifier:
 
         self.reachtube_tree = AnalysisTree(root)
         print(f">>>>>>>> Number of calls to reachability engine: {num_calls}")
+        print(f">>>>>>>> Number of transitions happening: {num_transitions}")
+
         return self.reachtube_tree
 
 
