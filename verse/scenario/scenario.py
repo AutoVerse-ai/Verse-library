@@ -409,30 +409,31 @@ class Scenario:
         # For each agent
         agent_guard_dict = defaultdict(list)
         cached_guards = defaultdict(list)
+        min_trans_ind = None
+        cached_trans = defaultdict(list)
 
         if not cache:
             paths = [(agent, p) for agent in node.agent.values() for p in agent.controller.paths]
         else:
-            if len(paths) == 0:
-                # print(red("full cache"))
-                def trans_close(a: Dict[str, List[float]], b: Dict[str, List[float]]) -> bool:
-                    assert set(a.keys()) == set(b.keys())
-                    return all(abs(av - bv) < _EPSILON for aid in a.keys() for av, bv in zip(a[aid], b[aid]))
+            def trans_close(a: Dict[str, List[float]], b: Dict[str, List[float]]) -> bool:
+                assert set(a.keys()) == set(b.keys())
+                return all(abs(av - bv) < _EPSILON for aid in a.keys() for av, bv in zip(a[aid], b[aid]))
 
-                _transitions = [trans.transition for seg in cache.values() for trans in seg.transitions]
-                # _transitions = [trans.transition for seg in cache.values() for trans in seg.transitions if trans_close(trans.inits, node.init)]
-                # pp(("cached trans", _transitions))
-                if len(_transitions) == 0:
-                    return None, None, 0
-                transition = min(_transitions)
-                transitions = defaultdict(list)
-                for agent_id, seg in cache.items():
-                    # TODO: check for asserts
-                    for tran in seg.transitions:
-                        if tran.transition == transition:
-                            # pp(("chosen tran", agent_id, tran))
-                            transitions[agent_id].append((agent_id, tran.disc, tran.cont, tran.paths))
-                return None, dict(transitions), transition
+            _transitions = [trans.transition for seg in cache.values() for trans in seg.transitions]
+            # _transitions = [trans.transition for seg in cache.values() for trans in seg.transitions if trans_close(trans.inits, node.init)]
+            pp(("cached trans", _transitions))
+            if len(_transitions) == 0:
+                return None, None, 0
+            min_trans_ind = min(_transitions)
+            for agent_id, seg in cache.items():
+                # TODO: check for asserts
+                for tran in seg.transitions:
+                    if tran.transition == min_trans_ind:
+                        # pp(("chosen tran", agent_id, tran))
+                        cached_trans[agent_id].append((agent_id, tran.disc, tran.cont, tran.paths))
+            if len(paths) == 0:
+                print(red("full cache"))
+                return None, dict(cached_trans), min_trans_ind
 
             path_transitions = defaultdict(int)
             for seg in cache.values():
@@ -462,6 +463,8 @@ class Scenario:
         transitions = defaultdict(list)
         # TODO: We can probably rewrite how guard hit are detected and resets are handled for simulation
         for idx in range(trace_length):
+            if min_trans_ind != None and idx >= min_trans_ind:
+                return None, dict(cached_trans), min_trans_ind
             satisfied_guard = []
             all_asserts = defaultdict(list)
             for agent_id in agent_guard_dict:
@@ -516,7 +519,6 @@ class Scenario:
             for seg in cache.values():
                 for tran in seg.transitions:
                     for p in tran.paths:
-                        pp(p)
                         path_transitions[p.cond] = max(path_transitions[p.cond], tran.transition)
             for agent_id, segment in cache.items():
                 agent = node.agent[agent_id]

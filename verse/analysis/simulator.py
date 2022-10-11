@@ -53,7 +53,7 @@ class Simulator:
         # Perform BFS through the simulation tree to loop through all possible transitions
         while simulation_queue != []:
             node: AnalysisTreeNode = simulation_queue.pop(0)
-            # pp(("start sim", node.start_time, {a: (*node.mode[a], *node.init[a]) for a in node.mode}))
+            pp(("start sim", node.start_time, {a: (*node.mode[a], *node.init[a]) for a in node.mode}))
             remain_time = round(time_horizon - node.start_time, 10)
             if remain_time <= 0:
                 continue
@@ -63,7 +63,9 @@ class Simulator:
                 mode = node.mode[agent_id]
                 init = node.init[agent_id]
                 if self.config.incremental:
+                    pp(("check hit", agent_id, mode, init))
                     cached = self.cache.check_hit(agent_id, mode, init)
+                    pp(("check hit res", agent_id, len(cached.transitions) if cached != None else None))
                 else:
                     cached = None
                 if agent_id in node.trace:
@@ -83,7 +85,7 @@ class Simulator:
                         trace[:, 0] += node.start_time
                         trace = trace.tolist()
                         node.trace[agent_id] = trace
-            # pp(("cached_segments", cached_segments.keys()))
+            pp(("cached_segments", cached_segments.keys()))
             # TODO: for now, make sure all the segments comes from the same node; maybe we can do
             # something to combine results from different nodes in the future
             node_ids = list(set((s.run_num, s.node_id) for s in cached_segments.values()))
@@ -95,7 +97,7 @@ class Simulator:
                     old_node = find(past_runs[old_run_num].nodes, lambda n: n.id == old_node_id)
                     assert old_node != None
                     new_cache, paths_to_sim = to_simulate(old_node.agent, node.agent, cached_segments)
-                    # pp(("to sim", new_cache.keys(), len(paths_to_sim)))
+                    pp(("to sim", new_cache.keys(), len(paths_to_sim)))
                 # else:
                 #     print("!!!")
 
