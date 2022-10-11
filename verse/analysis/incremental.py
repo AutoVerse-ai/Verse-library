@@ -104,6 +104,7 @@ def combine_all(inits):
             [max(a) for a in np.transpose(np.array(inits)[:, 1])]]
 
 def reach_trans_suit(a: Dict[str, List[List[List[float]]]], b: Dict[str, List[List[List[float]]]]) -> bool:
+    # FIXME include discrete stuff
     assert set(a.keys()) == set(b.keys())
     def transp(a):
         return list(map(list, zip(*a)))
@@ -252,6 +253,7 @@ class ReachTubeCache:
             return sum(1 if reach_trans_suit(t.inits, inits) else 0 for t in e.transitions)
         entries = list(sorted([(e, -num_trans_suit(e)) for e in entries], key=lambda p: p[1]))
         # pp(("check hit entries", len(entries), entries[0][1]))
+        assert isinstance(entries[0][0], (type(None), CachedRTTrans))
         return entries[0][0]
 
     @staticmethod

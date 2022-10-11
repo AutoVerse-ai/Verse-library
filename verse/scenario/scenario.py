@@ -516,6 +516,7 @@ class Scenario:
             for seg in cache.values():
                 for tran in seg.transitions:
                     for p in tran.paths:
+                        pp(p)
                         path_transitions[p.cond] = max(path_transitions[p.cond], tran.transition)
             for agent_id, segment in cache.items():
                 agent = node.agent[agent_id]
@@ -613,6 +614,7 @@ class Scenario:
 
                 unchecked_cache_guards = [g[:-1] for g in cached_guards[agent_id] if g[-1] < idx]     # FIXME: off by 1?
                 for guard_expression, continuous_variable_updater, discrete_variable_dict, path in agent_guard_dict[agent_id] + unchecked_cache_guards:
+                    assert isinstance(path, ModePath)
                     new_cont_var_dict = copy.deepcopy(cont_vars)
                     one_step_guard: GuardExpressionAst = copy.deepcopy(guard_expression)
 
@@ -678,8 +680,8 @@ class Scenario:
                 for dest in reset_dict[agent][reset_idx]:
                     # reset_data = reset_dict[agent][reset_idx][dest]
                     reset_data = tuple(map(list, zip(*reset_dict[agent][reset_idx][dest])))
-                    # pp(("resets", reset_data))
-                    transition = (agent, node.mode[agent], dest, *reset_data)
+                    paths = [r[-1] for r in reset_data[-1]]
+                    transition = (agent, node.mode[agent],dest, *reset_data[:-1], paths)
                     possible_transitions.append(transition)
         # Return result
         return None, possible_transitions

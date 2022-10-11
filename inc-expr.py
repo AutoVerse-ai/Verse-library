@@ -13,9 +13,9 @@ class ExperimentResult:
     node_count: int
     ret_code: int
 
-xprms = ["".join(l) for l in product(
-    # ("v", ""),
-    "brn8", ("", "i"))]
+xprms = [
+    # "v" + 
+    "".join(l) for l in product("brn8", ("", "i"))]
 rslts = []
 for xprm in xprms:
     print(f"run '{xprm}'")
