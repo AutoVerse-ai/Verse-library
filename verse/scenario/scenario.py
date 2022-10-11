@@ -421,7 +421,7 @@ class Scenario:
 
             _transitions = [trans.transition for seg in cache.values() for trans in seg.transitions]
             # _transitions = [trans.transition for seg in cache.values() for trans in seg.transitions if trans_close(trans.inits, node.init)]
-            pp(("cached trans", _transitions))
+            # pp(("cached trans", _transitions))
             if len(_transitions) == 0:
                 return None, None, 0
             min_trans_ind = min(_transitions)
@@ -432,7 +432,7 @@ class Scenario:
                         # pp(("chosen tran", agent_id, tran))
                         cached_trans[agent_id].append((agent_id, tran.disc, tran.cont, tran.paths))
             if len(paths) == 0:
-                print(red("full cache"))
+                # print(red("full cache"))
                 return None, dict(cached_trans), min_trans_ind
 
             path_transitions = defaultdict(int)
