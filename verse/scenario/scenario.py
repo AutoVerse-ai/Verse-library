@@ -505,8 +505,8 @@ class Scenario:
         else:
 
             # _transitions = [trans.transition for seg in cache.values() for trans in seg.transitions]
-            _transitions = [trans.transition for seg in cache.values() for trans in seg.transitions if reach_trans_suit(trans.inits, node.init) or pp(("not suit", trans.inits, node.init))]
-            pp(("cached trans", len(_transitions)))
+            _transitions = [trans.transition for seg in cache.values() for trans in seg.transitions if reach_trans_suit(trans.inits, node.init)]
+            # pp(("cached trans", len(_transitions)))
             if len(_transitions) == 0:
                 return None, []
             min_trans_ind = min(_transitions)

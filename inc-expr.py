@@ -14,12 +14,12 @@ class ExperimentResult:
     ret_code: int
 
 xprms = [
-    # "v" + 
-    "".join(l) for l in product("brn8", ("", "i"))]
+    "v" + 
+    "".join(l) for l in product("n8", ("", "i"))]
 rslts = []
 for xprm in xprms:
-    print(f"run '{xprm}'")
     cmd = Popen(f"/usr/bin/time -v -- python3.8 demo/vehicle/inc-expr.py {xprm}", stdout=PIPE, stderr=PIPE, shell=True)
+    print(f"run '{xprm}', pid={cmd.pid}")
     ret = cmd.wait()
     stderr = cmd.stderr.readlines()
     stdout = cmd.stdout.readlines() 
@@ -50,4 +50,4 @@ for i in range(0, len(rslts), 2):
     elif "8" in var:
         name = "change ctlr"
 
-    print(" & ".join([name] + [str(i) for i in [inc.node_count, round(no.duration, 2), round(no.max_mem), round(inc.duration, 2), round(inc.max_mem), round(inc.cache_size, 2)]]) + " \\\\")
+    print("    & " + " & ".join([name] + [str(i) for i in [inc.node_count, round(no.duration, 2), round(no.max_mem), round(inc.duration, 2), round(inc.max_mem), round(inc.cache_size, 2)]]) + " \\\\")

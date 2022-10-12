@@ -81,7 +81,7 @@ def run(sim, meas=False):
         })
 
 if __name__ == "__main__":
-    input_code_name = './demo/vehicle/controller/inc-expr.py'
+    input_code_name = './demo/vehicle/controller/inc-expr6.py' if "6" in arg else './demo/vehicle/controller/inc-expr.py'
     config = ScenarioConfig()
     config.incremental = 'i' in arg
     scenario = Scenario(config)
@@ -93,33 +93,61 @@ if __name__ == "__main__":
     scenario.add_agent(NPCAgent('car5'))
     scenario.add_agent(NPCAgent('car6'))
     scenario.add_agent(NPCAgent('car7'))
-    scenario.add_agent(CarAgent('car8', file_name=input_code_name))
+    if "6" not in arg:
+        scenario.add_agent(CarAgent('car8', file_name=input_code_name))
     tmp_map = SimpleMap4()
     scenario.set_map(tmp_map)
     sim = "v" not in arg
-    mode_inits = ([
-            (VehicleMode.Normal, LaneMode.Lane1), (VehicleMode.Normal, LaneMode.Lane1),
-            (VehicleMode.Normal, LaneMode.Lane0), (VehicleMode.Normal, LaneMode.Lane0),
-            (VehicleMode.Normal, LaneMode.Lane1), (VehicleMode.Normal, LaneMode.Lane2),
-            (VehicleMode.Normal, LaneMode.Lane2), (VehicleMode.Normal, LaneMode.Lane2),
-        ],
-        [
-            (LaneObjectMode.Vehicle,), (LaneObjectMode.Vehicle,),
-            (LaneObjectMode.Vehicle,), (LaneObjectMode.Vehicle,),
-            (LaneObjectMode.Vehicle,), (LaneObjectMode.Vehicle,),
-            (LaneObjectMode.Vehicle,), (LaneObjectMode.Vehicle,),
-        ])
-    poses = [
-        [0, 0, 0, 1.0], [10, 0, 0, 0.5],
-        [14, 3, 0, 0.6], [20, 3, 0, 0.5],
-        [30, 0, 0, 0.5], [28.5, -3, 0, 0.5],
-        [39.5, -3, 0, 0.5], [30, -3, 0, 0.6],
-    ]
+    if "6" in arg:
+        mode_inits = ([
+                (VehicleMode.Normal, LaneMode.Lane1),
+                (VehicleMode.Normal, LaneMode.Lane1),
+                (VehicleMode.Normal, LaneMode.Lane0),
+                (VehicleMode.Normal, LaneMode.Lane0),
+                (VehicleMode.Normal, LaneMode.Lane1),
+                (VehicleMode.Normal, LaneMode.Lane2),
+                (VehicleMode.Normal, LaneMode.Lane3),
+            ],
+            [
+                (LaneObjectMode.Vehicle,), (LaneObjectMode.Vehicle,),
+                (LaneObjectMode.Vehicle,), (LaneObjectMode.Vehicle,),
+                (LaneObjectMode.Vehicle,), (LaneObjectMode.Vehicle,),
+                (LaneObjectMode.Vehicle,),
+            ])
+        poses = [
+            [0, 0, 0, 1],
+            [10, 0, 0, 0.5],
+            [14.5, 3, 0, 0.6],
+            [25, 3, 0, 0.5],
+            [30, 0, 0, 0.5],
+            [23, -3, 0, 0.5],
+            [40, -6, 0, 0.5],
+        ]
+    else:
+        mode_inits = ([
+                (VehicleMode.Normal, LaneMode.Lane1), (VehicleMode.Normal, LaneMode.Lane1),
+                (VehicleMode.Normal, LaneMode.Lane0), (VehicleMode.Normal, LaneMode.Lane0),
+                (VehicleMode.Normal, LaneMode.Lane1), (VehicleMode.Normal, LaneMode.Lane2),
+                (VehicleMode.Normal, LaneMode.Lane2), (VehicleMode.Normal, LaneMode.Lane2),
+            ],
+            [
+                (LaneObjectMode.Vehicle,), (LaneObjectMode.Vehicle,),
+                (LaneObjectMode.Vehicle,), (LaneObjectMode.Vehicle,),
+                (LaneObjectMode.Vehicle,), (LaneObjectMode.Vehicle,),
+                (LaneObjectMode.Vehicle,), (LaneObjectMode.Vehicle,),
+            ])
+
+        poses = [
+            [0, 0, 0, 1.0], [10, 0, 0, 0.5],
+            [14, 3, 0, 0.6], [20, 3, 0, 0.5],
+            [30, 0, 0, 0.5], [28.5, -3, 0, 0.5],
+            [39.5, -3, 0, 0.5], [30, -3, 0, 0.6],
+        ]
     _jerks = [
-        [0.05, 0.1], [],
-        [0.05, 0.1], [],
+        [0, 0.05], [],
+        [0, 0.05], [],
         [], [],
-        [], [0.05, 0.1],
+        [], [0, 0.05],
     ]
     cont_inits = dupi(poses)
     if not sim:
