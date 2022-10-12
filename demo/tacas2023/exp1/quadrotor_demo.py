@@ -5,7 +5,8 @@ from verse.plotter.plotter3D import *
 from verse.map.example_map.simple_map_3d import SimpleMap6
 import pyvista as pv
 from enum import Enum, auto
-
+import warnings
+warnings.filterwarnings("ignore")
 
 class CraftMode(Enum):
     Normal = auto()
@@ -40,7 +41,7 @@ if __name__ == "__main__":
     scenario.add_agent(quadrotor1)
 
     quadrotor2 = QuadrotorAgent(
-        'test2', file_name=input_code_name2, t_v_pair=(1, 0.3), box_side=[0.4]*3)
+        'test2', file_name=input_code_name, t_v_pair=(1, 0.3), box_side=[0.4]*3)
     init_l_2 = [3, 9, -0.35, 0, 0, 0]
     init_u_2 = [3.7, 9.7, 0.35, 0, 0, 0]
     quadrotor2.set_initial(
@@ -57,12 +58,21 @@ if __name__ == "__main__":
     # traces.dump("./output1.json")
     # traces = AnalysisTree.load('./output1.json')
     traces = scenario.verify(40, time_step)
+    # traces.dump('demo/tacas2023/exp1/output1.json')
     fig = pv.Plotter()
     fig = plot3dMap(tmp_map, ax=fig, width=0.05)
     fig = plot3dReachtube(traces, 'test1',1,2,3,'r',fig, edge = True)
-    fig = plot3dReachtube(traces, 'test2',1,2,3,'g',fig, edge = True)
+    fig = plot3dReachtube(traces, 'test2',1,2,3,'b',fig, edge = True)
     fig.set_background('#e0e0e0')
     fig.show()
     # fig = go.Figure()
+    # fig = draw_map_3d(tmp_map, fig, fill_type = 'center')
     # fig = simulation_tree_3d(traces, tmp_map, fig, 1, 2, 3, [1, 2, 3])
+    # fig.update_layout(
+    #     scene=dict(
+    #         # xaxis = dict(nticks=4, range=xrange,),
+    #         # yaxis = dict(nticks=4, range=yrange,),
+    #         zaxis = dict(nticks=4, range=[-12,12],)
+    #     )
+    # )
     # fig.show()

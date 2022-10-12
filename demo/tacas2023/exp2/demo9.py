@@ -74,9 +74,9 @@ if __name__ == "__main__":
 
     scenario.init_seg_length = 5
     traces = scenario.verify(40, 0.1, params={"bloating_method": 'GLOBAL'})
-    fig = go.Figure()
-    fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace')
-    fig.show()
+    # fig = go.Figure()
+    # fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace')
+    # fig.show()
 
     # fig = go.Figure()
     # fig = reachtube_anime(traces, tmp_map, fig, 1,

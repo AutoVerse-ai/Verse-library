@@ -6,7 +6,8 @@ from verse.plotter.plotter3D import *
 from verse.map.example_map.simple_map_3d import SimpleMap7
 import pyvista as pv
 from enum import Enum, auto
-
+import warnings
+warnings.filterwarnings("ignore")
 
 class CraftMode(Enum):
     Normal = auto()
@@ -59,8 +60,21 @@ if __name__ == "__main__":
     # fig = simulation_tree_3d(traces, tmp_map, fig, 1, 2, 3, [1, 2, 3])
     # fig.show()
 
-    traces = scenario.verify(60, time_step)
-    traces.dump('./demo/tacas2023/exp9/output9.json')
+    # traces = scenario.verify(60, time_step)
+    # traces.dump('./demo/tacas2023/exp9/output9_DryVR.json')
+    # traces = scenario.verify(60, time_step,
+    #                          reachability_method='NeuReach',
+    #                          params={
+    #                              "N_X0": 1,
+    #                              "N_x0": 50,
+    #                              "N_t": 50,
+    #                              "epochs": 50,
+    #                              "_lambda": 10,
+    #                              "use_cuda": True,
+    #                              'r': 0,
+    #                          }
+    #                         )
+    # traces.dump('./demo/tacas2023/exp9/output9_NeuReach.json')
     # fig = go.Figure()
     # fig = reachtube_tree(traces, None, fig, 0, 1, [0,1])
     # fig.show()
@@ -70,15 +84,16 @@ if __name__ == "__main__":
     # fig = go.Figure()
     # fig = reachtube_tree(traces, None, fig, 0, 3, [0,1])
     # fig.show()
-    # fig = pv.Plotter()
-    # fig = plot3dMap(tmp_map, ax=fig)
-    # fig = plot3dReachtube(traces, 'test1', 1, 2, 3, color = 'r', ax=fig)
-    # fig = plot3dReachtube(traces, 'test2', 1, 2, 3, color = 'b', ax=fig)
-    # fig = plot_line_3d([0,0,0],[10,0,0],fig,'r',line_width = 5)
-    # fig = plot_line_3d([0,0,0],[0,10,0],fig,'g',line_width = 5)
-    # fig = plot_line_3d([0,0,0],[0,0,10],fig,'b',line_width = 5)
-    # fig.set_background('#e0e0e0')
-    # fig.show()
+    traces = AnalysisTree.load('./demo/tacas2023/exp9/output9.json')
+    fig = pv.Plotter()
+    fig = plot3dMap(tmp_map, ax=fig)
+    fig = plot3dReachtube(traces, 'test1', 1, 2, 3, color = 'r', ax=fig)
+    fig = plot3dReachtube(traces, 'test2', 1, 2, 3, color = 'b', ax=fig)
+    fig = plot_line_3d([0,0,0],[10,0,0],fig,'r',line_width = 5)
+    fig = plot_line_3d([0,0,0],[0,10,0],fig,'g',line_width = 5)
+    fig = plot_line_3d([0,0,0],[0,0,10],fig,'b',line_width = 5)
+    fig.set_background('#e0e0e0')
+    fig.show()
     
     # fig = go.Figure()
     # fig = reachtube_tree_3d(
@@ -87,8 +102,5 @@ if __name__ == "__main__":
     #     fig, 1, 2, 3, 
     #     [1, 2, 3], 
     #     map_type='center',
-    #     xrange = [0,40],
-    #     yrange = [0,40],
-    #     zrange = [-10,10]
     # )
     # fig.show()

@@ -78,7 +78,7 @@ def plot_polytope_3d(A, b, ax = None, color = 'red', trans = 0.2, edge = True):
     ax.add_mesh(shell, opacity=trans, color=color)
     if edge:
         edges = shell.extract_feature_edges(20)
-        ax.add_mesh(edges, color="k", line_width=1)
+        ax.add_mesh(edges, color="k", line_width=0.1,opacity=0.5)
     return ax
 
 def plot_line_3d(start, end, ax = None, color = 'blue', line_width = 1):

@@ -57,11 +57,10 @@ if __name__ == "__main__":
                             )
     traces.dump("./demo/tacas2023/exp6/output6_neureach.json")
 
-    # traces = scenario.verify(40, 0.05,)
+    traces = scenario.verify(40, 0.05,)
     # traces.dump("./demo/tacas2023/exp6/output6_dryvr.json")
     # traces = AnalysisTree.load('./output6.json')
-    traces = scenario.verify(50, 0.05)
-    fig = go.Figure()
-    fig = reachtube_tree(traces, tmp_map, fig, 1,
-                         2, [1, 2], 'lines', 'trace')
-    fig.show()
+    # fig = go.Figure()
+    # fig = reachtube_tree(traces, tmp_map, fig, 1,
+    #                      2, [1, 2], 'lines', 'trace')
+    # fig.show()
