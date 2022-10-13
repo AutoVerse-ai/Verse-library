@@ -111,8 +111,9 @@ class Simulator:
             truncated_trace, full_traces = {}, {}
             for agent_idx in node.agent:
                 full_traces[agent_idx] = node.trace[agent_idx]
-                truncated_trace[agent_idx] = node.trace[agent_idx][transition_idx:]
-                node.trace[agent_idx] = node.trace[agent_idx][:transition_idx+1]
+                if transitions:
+                    truncated_trace[agent_idx] = node.trace[agent_idx][transition_idx:]
+                    node.trace[agent_idx] = node.trace[agent_idx][:transition_idx+1]
 
             if asserts != None:
                 pass
