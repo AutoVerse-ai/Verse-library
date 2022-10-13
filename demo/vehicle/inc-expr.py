@@ -161,7 +161,7 @@ if __name__ == "__main__":
         run(sim, True)
     elif 'n' in arg:
         run(sim)
-        poses[0][0] = 1
+        poses[6][0] = 50
         cont_inits = dupi(poses)
         if not sim:
             cont_inits = jerks(cont_inits, _jerks)
