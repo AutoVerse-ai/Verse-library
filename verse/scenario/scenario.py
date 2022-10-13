@@ -415,17 +415,16 @@ class Scenario:
         if not cache:
             paths = [(agent, p) for agent in node.agent.values() for p in agent.controller.paths]
         else:
-            _transitions = [trans.transition for seg in cache.values() for trans in seg.transitions if sim_trans_suit(trans.inits, node.init)]
+            _transitions = [(aid, trans) for aid, seg in cache.items() for trans in seg.transitions if sim_trans_suit(trans.inits, node.init)]
             # pp(("cached trans", _transitions))
             if len(_transitions) == 0:
                 return None, None, 0
-            min_trans_ind = min(_transitions)
-            for agent_id, seg in cache.items():
+            min_trans_ind = min([t.transition for _, t in _transitions])
+            for aid, trans in _transitions:
                 # TODO: check for asserts
-                for tran in seg.transitions:
-                    if tran.transition == min_trans_ind:
-                        # pp(("chosen tran", agent_id, tran))
-                        cached_trans[agent_id].append((agent_id, tran.disc, tran.cont, tran.paths))
+                if trans.transition == min_trans_ind:
+                    # pp(("chosen tran", aid, trans))
+                    cached_trans[aid].append((aid, trans.disc, trans.cont, trans.paths))
             for agent_id in cached_trans:
                 cached_trans[agent_id] = dedup(cached_trans[agent_id], lambda p: p[:3])
             if len(paths) == 0:
