@@ -64,7 +64,7 @@ class Simulator:
                 init = node.init[agent_id]
                 if self.config.incremental:
                     # pp(("check hit", agent_id, mode, init))
-                    cached = self.cache.check_hit(agent_id, mode, init)
+                    cached = self.cache.check_hit(agent_id, mode, init, node.init)
                     # pp(("check hit res", agent_id, len(cached.transitions) if cached != None else None))
                 else:
                     cached = None
@@ -137,7 +137,7 @@ class Simulator:
                         if agent_id in cached_segments:
                             cached_segments[agent_id].transitions.extend(convert_sim_trans(agent_id, transit_agents, node.init, transition, transition_idx))
                             pre_len = len(cached_segments[agent_id].transitions)
-                            cached_segments[agent_id].transitions = dedup(cached_segments[agent_id].transitions, lambda i: (i.disc, i.cont))
+                            cached_segments[agent_id].transitions = dedup(cached_segments[agent_id].transitions, lambda i: (i.disc, i.cont, i.inits))
                             # pp(("dedup!", pre_len, len(cached_segments[agent_id].transitions)))
                         else:
                             self.cache.add_segment(agent_id, node, transit_agents, full_traces[agent_id], transition, transition_idx, run_num)

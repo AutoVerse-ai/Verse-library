@@ -103,6 +103,10 @@ def combine_all(inits):
     return [[min(a) for a in np.transpose(np.array(inits)[:, 0])],
             [max(a) for a in np.transpose(np.array(inits)[:, 1])]]
 
+def sim_trans_suit(a: Dict[str, List[float]], b: Dict[str, List[float]]) -> bool:
+    assert set(a.keys()) == set(b.keys())
+    return all(abs(av - bv) < _EPSILON for aid in a.keys() for av, bv in zip(a[aid], b[aid]))
+
 def reach_trans_suit(a: Dict[str, List[List[List[float]]]], b: Dict[str, List[List[List[float]]]]) -> bool:
     # FIXME include discrete stuff
     assert set(a.keys()) == set(b.keys())
@@ -162,18 +166,31 @@ class SimTraceCache:
         inits = dict(inits)
         return inits
 
-    def check_hit(self, agent_id: str, mode: Tuple[str], init: List[float]) -> Optional[CachedSegment]:
+    @staticmethod
+    def query_cont(tree: IntervalTree, cont: List[float]) -> List[CachedSegment]:
+        assert isinstance(tree, IntervalTree)
+        next_level_entries = [t.data for t in tree[cont[0]]]
+        if len(cont) == 1:
+            for ent in next_level_entries:
+                assert isinstance(ent, CachedSegment)
+            return next_level_entries
+        else:
+            return [ent for t in next_level_entries for ent in SimTraceCache.query_cont(t, cont[1:])]
+
+    def check_hit(self, agent_id: str, mode: Tuple[str], init: List[float], inits: Dict[str, List[float]]) -> Optional[CachedSegment]:
         key = (agent_id,) + tuple(mode)
         if key not in self.cache:
             return None
         tree = self.cache[key]
-        for cont in init:
-            next_level_entries = list(tree[cont])
-            if len(next_level_entries) == 0:
-                return None
-            tree = min(next_level_entries, key=lambda e: (e.end + e.begin) / 2 - cont).data
-        assert isinstance(tree, CachedSegment)
-        return tree
+        entries = self.query_cont(tree, init)
+        if len(entries) == 0:
+            return None
+        def num_trans_suit(e: CachedSegment) -> int:
+            return sum(1 if sim_trans_suit(t.inits, inits) else 0 for t in e.transitions)
+        entries = list(sorted([(e, -num_trans_suit(e)) for e in entries], key=lambda p: p[1]))
+        # pp(("check hit entries", len(entries), entries[0][1]))
+        assert isinstance(entries[0][0], (type(None), CachedSegment))
+        return entries[0][0]
 
 class TubeCache:
     def __init__(self):

@@ -11,7 +11,7 @@ import numpy as np
 
 from verse.agents.base_agent import BaseAgent
 from verse.analysis.dryvr import _EPSILON
-from verse.analysis.incremental import CachedRTTrans, CachedSegment, combine_all, reach_trans_suit
+from verse.analysis.incremental import CachedRTTrans, CachedSegment, combine_all, reach_trans_suit, sim_trans_suit
 from verse.analysis.simulator import PathDiffs
 from verse.automaton import GuardExpressionAst, ResetExpression
 from verse.analysis import Simulator, Verifier, AnalysisTreeNode, AnalysisTree
@@ -415,12 +415,7 @@ class Scenario:
         if not cache:
             paths = [(agent, p) for agent in node.agent.values() for p in agent.controller.paths]
         else:
-            def trans_close(a: Dict[str, List[float]], b: Dict[str, List[float]]) -> bool:
-                assert set(a.keys()) == set(b.keys())
-                return all(abs(av - bv) < _EPSILON for aid in a.keys() for av, bv in zip(a[aid], b[aid]))
-
-            _transitions = [trans.transition for seg in cache.values() for trans in seg.transitions]
-            # _transitions = [trans.transition for seg in cache.values() for trans in seg.transitions if trans_close(trans.inits, node.init)]
+            _transitions = [trans.transition for seg in cache.values() for trans in seg.transitions if sim_trans_suit(trans.inits, node.init)]
             # pp(("cached trans", _transitions))
             if len(_transitions) == 0:
                 return None, None, 0
@@ -431,6 +426,8 @@ class Scenario:
                     if tran.transition == min_trans_ind:
                         # pp(("chosen tran", agent_id, tran))
                         cached_trans[agent_id].append((agent_id, tran.disc, tran.cont, tran.paths))
+            for agent_id in cached_trans:
+                cached_trans[agent_id] = dedup(cached_trans[agent_id], lambda p: p[:3])
             if len(paths) == 0:
                 # print(red("full cache"))
                 return None, dict(cached_trans), min_trans_ind
