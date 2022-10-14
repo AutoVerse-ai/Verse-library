@@ -3,6 +3,7 @@ from itertools import product
 from pprint import pp
 import re
 from subprocess import PIPE, Popen
+from typing import Tuple, Union
 
 @dataclass
 class ExperimentResult:
@@ -12,10 +13,11 @@ class ExperimentResult:
     cache_size: float
     node_count: int
     ret_code: int
+    cache_hits: Union[Tuple[int, int], Tuple[Tuple[int, int], Tuple[int, int]]]
 
 xprms = [
-    "v" + 
-    "".join(l) for l in product("n8", ("", "i"))]
+    # "v" + 
+    "".join(l) for l in product("brn8", ("", "i"))]
 rslts = []
 for xprm in xprms:
     cmd = Popen(f"/usr/bin/time -v -- python3.8 demo/vehicle/inc-expr.py {xprm}", stdout=PIPE, stderr=PIPE, shell=True)
@@ -30,7 +32,7 @@ for xprm in xprms:
         print(b"".join(stderr))
         exit(2)
     info = eval(filtered_info[0])
-    rslt = ExperimentResult(xprm, max_mem, info["dur"], info["cache_size"] / 1_000_000, info["node_count"], ret)
+    rslt = ExperimentResult(xprm, max_mem, info["dur"], info["cache_size"] / 1_000_000, info["node_count"], ret, info["hits"])
     pp(rslt)
     if rslt.ret_code != 0:
         print(f"uh oh, var={xprm} ret={rslt.ret_code}")
@@ -50,4 +52,5 @@ for i in range(0, len(rslts), 2):
     elif "8" in var:
         name = "change ctlr"
 
-    print("    & " + " & ".join([name] + [str(i) for i in [inc.node_count, round(no.duration, 2), round(no.max_mem), round(inc.duration, 2), round(inc.max_mem), round(inc.cache_size, 2)]]) + " \\\\")
+    cache_hit_rate = inc.cache_hits[0] / (inc.cache_hits[0] + inc.cache_hits[1]) if "v" not in var else (inc.cache_hits[0][0] + inc.cache_hits[1][0]) / (inc.cache_hits[0][0] + inc.cache_hits[0][1] + inc.cache_hits[1][0] + inc.cache_hits[1][1])
+    print("    & " + " & ".join([name] + [str(i) for i in [inc.node_count, round(no.duration, 2), round(no.max_mem), round(inc.duration, 2), round(inc.max_mem), round(inc.cache_size, 2), round(cache_hit_rate * 100, 2)]]) + " \\\\")

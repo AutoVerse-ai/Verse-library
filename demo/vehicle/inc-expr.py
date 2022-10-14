@@ -52,7 +52,7 @@ if 'p' in arg:
 def run(sim, meas=False):
     time = timeit.default_timer()
     if sim:
-        traces = scenario.simulate(60, 0.05)
+        traces = scenario.simulate(60, 0.1)
     else:
         traces = scenario.verify(60, 0.1)
 
@@ -78,6 +78,7 @@ def run(sim, meas=False):
             "dur": timeit.default_timer() - time,
             "cache_size": cache_size,
             "node_count": len(traces.nodes),
+            "hits": scenario.simulator.cache_hits if sim else (scenario.verifier.tube_cache_hits, scenario.verifier.trans_cache_hits),
         })
 
 if __name__ == "__main__":

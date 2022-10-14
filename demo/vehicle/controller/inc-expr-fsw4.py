@@ -52,13 +52,13 @@ def controller(ego:State, others:List[State], lane_map):
     output = copy.deepcopy(ego)
     if ego.vehicle_mode == VehicleMode.Normal:
         # Switch left if left lane is empty
-        if car_front(ego, others, lane_map, 4, 3):
+        if car_front(ego, others, lane_map, 4.5, 3):
             if lane_map.has_left(ego.lane_mode) and \
              not car_left(ego, others, lane_map):
                 output.vehicle_mode = VehicleMode.SwitchLeft
         
         # Switch right if right lane is empty
-        if car_front(ego, others, lane_map, 4, 3):
+        if car_front(ego, others, lane_map, 4.5, 3):
             if lane_map.has_right(ego.lane_mode) and \
              not car_right(ego, others, lane_map):
                 output.vehicle_mode = VehicleMode.SwitchRight
