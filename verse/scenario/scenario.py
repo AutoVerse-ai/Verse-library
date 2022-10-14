@@ -416,35 +416,35 @@ class Scenario:
             paths = [(agent, p) for agent in node.agent.values() for p in agent.controller.paths]
         else:
             _transitions = [(aid, trans) for aid, seg in cache.items() for trans in seg.transitions if sim_trans_suit(trans.inits, node.init)]
-            # pp(("cached trans", _transitions))
-            if len(_transitions) == 0:
-                return None, None, 0
-            min_trans_ind = min([t.transition for _, t in _transitions])
-            for aid, trans in _transitions:
-                # TODO: check for asserts
-                if trans.transition == min_trans_ind:
-                    # pp(("chosen tran", aid, trans))
-                    cached_trans[aid].append((aid, trans.disc, trans.cont, trans.paths))
-            for agent_id in cached_trans:
-                cached_trans[agent_id] = dedup(cached_trans[agent_id], lambda p: p[:3])
-            if len(paths) == 0:
-                # print(red("full cache"))
-                return None, dict(cached_trans), min_trans_ind
+            pp(("cached trans", _transitions))
+            if len(_transitions) > 0:
+                min_trans_ind = min([t.transition for _, t in _transitions])
+                pp(("min", min_trans_ind))
+                for aid, trans in _transitions:
+                    # TODO: check for asserts
+                    if trans.transition == min_trans_ind:
+                        pp(("chosen tran", aid, trans))
+                        cached_trans[aid].append((aid, trans.disc, trans.cont, trans.paths))
+                for agent_id in cached_trans:
+                    cached_trans[agent_id] = dedup(cached_trans[agent_id], lambda p: p[:3])
+                if len(paths) == 0:
+                    # print(red("full cache"))
+                    return None, dict(cached_trans), min_trans_ind
 
-            path_transitions = defaultdict(int)
-            for seg in cache.values():
-                for tran in seg.transitions:
-                    for p in tran.paths:
-                        path_transitions[p.cond] = max(path_transitions[p.cond], tran.transition)
-            for agent_id, segment in cache.items():
-                agent = node.agent[agent_id]
-                if len(agent.controller.args) == 0:
-                    continue
-                state_dict = {aid: (node.trace[aid][0], node.mode[aid], node.static[aid]) for aid in node.agent}
-                agent_paths = dedup([p for tran in segment.transitions for p in tran.paths], lambda i: (i.var, i.cond, i.val))
-                cont_var_dict_template, discrete_variable_dict, len_dict = self.sensor.sense(self, agent, state_dict, self.map)
-                for path in agent_paths:
-                    cached_guards[agent_id].append((path, discrete_variable_dict, path_transitions[path.cond]))
+                path_transitions = defaultdict(int)
+                for seg in cache.values():
+                    for tran in seg.transitions:
+                        for p in tran.paths:
+                            path_transitions[p.cond] = max(path_transitions[p.cond], tran.transition)
+                for agent_id, segment in cache.items():
+                    agent = node.agent[agent_id]
+                    if len(agent.controller.args) == 0:
+                        continue
+                    state_dict = {aid: (node.trace[aid][0], node.mode[aid], node.static[aid]) for aid in node.agent}
+                    agent_paths = dedup([p for tran in segment.transitions for p in tran.paths], lambda i: (i.var, i.cond, i.val))
+                    cont_var_dict_template, discrete_variable_dict, len_dict = self.sensor.sense(self, agent, state_dict, self.map)
+                    for path in agent_paths:
+                        cached_guards[agent_id].append((path, discrete_variable_dict, path_transitions[path.cond]))
 
         for agent, path in paths:
             # Get guard
@@ -501,14 +501,13 @@ class Scenario:
         else:
 
             # _transitions = [trans.transition for seg in cache.values() for trans in seg.transitions]
-            _transitions = [trans.transition for seg in cache.values() for trans in seg.transitions if reach_trans_suit(trans.inits, node.init)]
+            _transitions = [(aid, trans) for aid, seg in cache.items() for trans in seg.transitions if reach_trans_suit(trans.inits, node.init)]
             # pp(("cached trans", len(_transitions)))
             if len(_transitions) == 0:
                 return None, []
-            min_trans_ind = min(_transitions)
-            cached_trans = [(agent_id, tran) for agent_id, seg in cache.items() for tran in seg.transitions if tran.transition == min_trans_ind]
+            min_trans_ind = min([t.transition for _, t in _transitions])
             # TODO: check for asserts
-            cached_trans = [(aid, tran.mode, tran.dest, tran.reset, tran.reset_idx, tran.paths) for aid, tran in dedup(cached_trans, lambda p: (p[0], p[1].mode, p[1].dest))]
+            cached_trans = [(aid, tran.mode, tran.dest, tran.reset, tran.reset_idx, tran.paths) for aid, tran in dedup(_transitions, lambda p: (p[0], p[1].mode, p[1].dest)) if tran.transition == min_trans_ind]
             if len(paths) == 0:
                 # print(red("full cache"))
                 return None, cached_trans

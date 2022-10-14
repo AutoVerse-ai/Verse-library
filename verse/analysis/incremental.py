@@ -65,26 +65,36 @@ def to_simulate(old_agents: Dict[str, BaseAgent], new_agents: Dict[str, BaseAgen
             new_paths = new_grouped[var]
             for i, (old, new) in enumerate(itertools.zip_longest(old_paths, new_paths)):
                 if new == None:
-                    removed_paths.append(old)
-                elif old.cond != new.cond:
+                    removed_paths.append((agent_id, old))
+                elif not ControllerIR.ir_eq(old.cond_veri, new.cond_veri):
+                    # pp(("diff", old, new))
+                    # pp(("diff", ControllerIR.dump(old.cond_veri), ControllerIR.dump(old.val_veri), ControllerIR.dump(new.cond_veri), ControllerIR.dump(new.val_veri)))
+                    removed_paths.append((agent_id, old))
                     added_paths.append((new_agent, new))
-                elif old.val != new.val:
+                elif not ControllerIR.ir_eq(old.val_veri, new.val_veri):
                     reset_changed_paths.append(new)
     new_cache = {}
+    pp(("removed_paths", removed_paths))
     for agent_id in cached:
         segment = copy.deepcopy(cached[agent_id])
         new_transitions = []
         for trans in segment.transitions:
             removed = False
             for path in trans.paths:
-                if path in removed_paths:
-                    removed = True
+                for aid, rp in removed_paths:
+                    if aid == agent_id and rp == path:
+                        # pp(("remove", path, rp))
+                        # pp(("remove", ControllerIR.dump(path.cond_veri), ControllerIR.dump(path.val_veri), ControllerIR.dump(rp.cond_veri), ControllerIR.dump(rp.val_veri)))
+                        removed = True
                 for rcp in reset_changed_paths:
                     if path.cond == rcp.cond:
                         path.val = rcp.val
+            # pp(("filter", agent_id, trans.paths, removed))
             if not removed:
                 new_transitions.append(trans)
+        segment.transitions = new_transitions
         new_cache[agent_id] = segment
+        pp(("filtered", agent_id, len(cached[agent_id].transitions), len(new_cache[agent_id].transitions), len([p for a, p in added_paths if a.id == agent_id])))
     return new_cache, added_paths
 
 def convert_sim_trans(agent_id, transit_agents, inits, transition, trans_ind):

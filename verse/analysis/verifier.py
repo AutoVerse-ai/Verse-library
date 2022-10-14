@@ -20,6 +20,8 @@ class Verifier:
         self.reachtube_tree = None
         self.cache = TubeCache()
         self.trans_cache = ReachTubeCache()
+        self.tube_cache_hits = (0, 0)
+        self.trans_cache_hits = (0, 0)
         self.config = config
 
     def calculate_full_bloated_tube(
@@ -60,6 +62,10 @@ class Verifier:
             combined_rect = combined_rect.tolist()
             if self.config.incremental:
                 cached = self.cache.check_hit(agent_id, mode_label, combined_rect)
+                if cached != None:
+                    self.tube_cache_hits = self.tube_cache_hits[0] + 1, self.tube_cache_hits[1]
+                else:
+                    self.tube_cache_hits = self.tube_cache_hits[0], self.tube_cache_hits[1] + 1
             else:
                 cached = None
             if cached != None:
@@ -155,6 +161,10 @@ class Verifier:
                 combined = combine_all(inits)
                 if self.config.incremental:
                     cached = self.trans_cache.check_hit(agent_id, mode, combined, node.init)
+                    if cached != None:
+                        self.trans_cache_hits = self.trans_cache_hits[0] + 1, self.trans_cache_hits[1]
+                    else:
+                        self.trans_cache_hits = self.trans_cache_hits[0], self.trans_cache_hits[1] + 1
                     # pp(("check hit", agent_id, mode, combined))
                     if cached != None:
                         cached_tubes[agent_id] = cached
