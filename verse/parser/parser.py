@@ -3,7 +3,12 @@ from typing import List, Dict, Union, Optional, Any, Tuple
 from dataclasses import dataclass, field, fields
 from enum import Enum, auto
 from verse.parser import astunparser
-from verse.analysis.utils import find
+
+def find(a, f):
+    for v in a:
+        if f(v):
+            return v
+    return None
 
 def merge_conds(c):
     if len(c) == 0:
@@ -239,6 +244,12 @@ class ModePath:
     val: Any
     val_veri: ast.expr
 
+    def __eq__(self, other: "ModePath") -> bool:
+        if other == None:
+            return False
+        # TODO: more general equivalence?
+        return self.cond == other.cond and self.val == other.val
+
 @dataclass
 class ControllerIR:
     args: LambdaArgs
@@ -317,7 +328,6 @@ class ControllerIR:
                     cond = compile_expr(Env.trans_args(cond, False))
                     val = compile_expr(Env.trans_args(case.val, False))
                     paths.append(ModePath(cond, cond_veri, var, val, val_veri))
-
         return ControllerIR(controller.args, paths, asserts_sim, asserts_veri, env.state_defs, env.mode_defs)
 
 @dataclass
@@ -623,6 +633,8 @@ def proc(node: ast.AST, env: Env) -> Any:
     elif isinstance(node, ast.Name):# and isinstance(node.ctx, ast.Load):
         return env.lookup(node.id)
     elif isinstance(node, ast.Attribute) and isinstance(node.ctx, ast.Load):
+        if isinstance(node.value, ast.Name) and node.value.id in env.mode_defs:
+            return ast.Constant(node.attr)
         obj = proc(node.value, env)
         # TODO since we know what the mode and state types contain we can do some typo checking
         if not_ir_ast(obj):

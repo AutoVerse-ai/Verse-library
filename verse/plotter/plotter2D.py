@@ -476,7 +476,7 @@ def simulation_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=
                     "color": color,
                 },
                 "name": agent_id,
-                "showlegend": True
+                "showlegend": False
             }
             fig_dict["data"].append(data_dict)
         # make frames
@@ -508,7 +508,7 @@ def simulation_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=
                     "textposition": "bottom center",
                     # "name": "Branch-"+str(branch_cnt),
                     "name": agent_id,
-                    "showlegend": True
+                    "showlegend": False
                 }
                 frame["data"].append(data_dict)
             fig_dict["frames"].append(frame)
@@ -580,7 +580,7 @@ def simulation_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=
                                 "size": min_size + size_step*(trail_len-id)
                             },
                             "name": agent_id,
-                            "showlegend": True
+                            "showlegend": False
                         }
                     else:
                         data_dict = {
@@ -595,7 +595,7 @@ def simulation_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=
                                 "size": min_size + size_step*(trail_len-id)
                             },
                             "name": agent_id,
-                            "showlegend": True
+                            "showlegend": False
                         }
                     frame["data"].append(data_dict)
 
@@ -887,7 +887,7 @@ def simulation_tree_single(root: Union[AnalysisTree, AnalysisTreeNode], agent_id
             legendgrouptitle_text=agent_id,
             name=str(round(start[0], 2))+'-'+str(round(end[0], 2)) +
             '-'+str(count_dict[time]),
-            showlegend=True))
+            showlegend=False))
 
         color_id = (color_id+4) % 5
         queue += node.child

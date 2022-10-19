@@ -1,3 +1,6 @@
+import functools
+import itertools
+import pprint
 from typing import List
 import copy
 
@@ -8,15 +11,23 @@ from verse.analysis.analysis_tree import AnalysisTreeNode, AnalysisTree
 from verse.analysis.dryvr import calc_bloated_tube, SIMTRACENUM
 from verse.analysis.mixmonotone import calculate_bloated_tube_mixmono_cont, calculate_bloated_tube_mixmono_disc
 from verse.analysis.NeuReach.NeuReach_onestep_rect import postCont
+from verse.analysis.incremental import ReachTubeCache, TubeCache, convert_reach_trans, to_simulate, combine_all
+from verse.analysis.utils import dedup
+from verse.parser.parser import find
+pp = functools.partial(pprint.pprint, compact=True, width=130)
 
 class Verifier:
-    def __init__(self):
+    def __init__(self, config):
         self.reachtube_tree = None
-        self.unsafe_set = None
-        self.verification_result = None
+        self.cache = TubeCache()
+        self.trans_cache = ReachTubeCache()
+        self.tube_cache_hits = (0, 0)
+        self.trans_cache_hits = (0, 0)
+        self.config = config
 
     def calculate_full_bloated_tube(
         self,
+        agent_id,
         mode_label,
         initial_set,
         time_horizon,
@@ -50,16 +61,29 @@ class Verifier:
                     combined_rect[1, :] = np.maximum(
                         combined_rect[1, :], rect[1, :])
             combined_rect = combined_rect.tolist()
-            cur_bloated_tube = calc_bloated_tube(mode_label,
-                                        combined_rect,
-                                        time_horizon,
-                                        time_step, 
-                                        sim_func,
-                                        bloating_method,
-                                        kvalue,
-                                        sim_trace_num,
-                                        lane_map = lane_map
-                                        )
+            if self.config.incremental:
+                cached = self.cache.check_hit(agent_id, mode_label, combined_rect)
+                if cached != None:
+                    self.tube_cache_hits = self.tube_cache_hits[0] + 1, self.tube_cache_hits[1]
+                else:
+                    self.tube_cache_hits = self.tube_cache_hits[0], self.tube_cache_hits[1] + 1
+            else:
+                cached = None
+            if cached != None:
+                cur_bloated_tube = cached.tube
+            else:
+                cur_bloated_tube = calc_bloated_tube(mode_label,
+                                            combined_rect,
+                                            time_horizon,
+                                            time_step, 
+                                            sim_func,
+                                            bloating_method,
+                                            kvalue,
+                                            sim_trace_num,
+                                            lane_map = lane_map
+                                            )
+                if self.config.incremental:
+                    self.cache.add_tube(agent_id, mode_label, combined_rect, cur_bloated_tube)
             if combine_seg_idx == 0:
                 res_tube = cur_bloated_tube
                 tube_length = cur_bloated_tube.shape[0]
@@ -91,7 +115,9 @@ class Verifier:
         lane_map,
         init_seg_length,
         reachability_method,
-        params = {}
+        run_num,
+        past_runs,
+        params = {},
     ):
         root = AnalysisTreeNode(
             trace={},
@@ -123,25 +149,40 @@ class Verifier:
         num_transitions = 0
         while verification_queue != []:
             node: AnalysisTreeNode = verification_queue.pop(0)
-            print(node.start_time, node.mode)
+            combined_inits = {a: combine_all(inits) for a, inits in node.init.items()}
+            # print()
+            # pp(("start sim", node.start_time, {a: (*node.mode[a], *combined_inits[a]) for a in node.mode}))
             remain_time = round(time_horizon - node.start_time, 10)
             if remain_time <= 0:
                 continue
             num_transitions += 1
+            cached_tubes = {}
             # For reachtubes not already computed
             # TODO: can add parallalization for this loop
             for agent_id in node.agent:
+                mode = node.mode[agent_id]
+                inits = node.init[agent_id]
+                combined = combine_all(inits)
+                if self.config.incremental:
+                    cached = self.trans_cache.check_hit(agent_id, mode, combined, node.init)
+                    if cached != None:
+                        self.trans_cache_hits = self.trans_cache_hits[0] + 1, self.trans_cache_hits[1]
+                    else:
+                        self.trans_cache_hits = self.trans_cache_hits[0], self.trans_cache_hits[1] + 1
+                    # pp(("check hit", agent_id, mode, combined))
+                    if cached != None:
+                        cached_tubes[agent_id] = cached
                 if agent_id not in node.trace:
                     # Compute the trace starting from initial condition
-                    mode = node.mode[agent_id]
-                    init = node.init[agent_id]
                     uncertain_param = node.uncertain_param[agent_id]
                     # trace = node.agent[agent_id].TC_simulate(mode, init, remain_time,lane_map)
                     # trace[:,0] += node.start_time
                     # node.trace[agent_id] = trace.tolist()
                     if reachability_method == "DRYVR":
-                        cur_bloated_tube = self.calculate_full_bloated_tube(mode,
-                                            init,
+                        # pp(('tube', agent_id, mode, inits))
+                        cur_bloated_tube = self.calculate_full_bloated_tube(agent_id,
+                                            mode,
+                                            inits,
                                             remain_time,
                                             time_step, 
                                             node.agent[agent_id].TC_simulate,
@@ -164,7 +205,7 @@ class Verifier:
                     elif reachability_method == "MIXMONO_CONT":
                         cur_bloated_tube = calculate_bloated_tube_mixmono_cont(
                             mode, 
-                            init, 
+                            inits, 
                             uncertain_param, 
                             remain_time,
                             time_step, 
@@ -174,7 +215,7 @@ class Verifier:
                     elif reachability_method == "MIXMONO_DISC":
                         cur_bloated_tube = calculate_bloated_tube_mixmono_disc(
                             mode, 
-                            init, 
+                            inits, 
                             uncertain_param,
                             remain_time,
                             time_step,
@@ -187,21 +228,49 @@ class Verifier:
                     trace = np.array(cur_bloated_tube)
                     trace[:, 0] += node.start_time
                     node.trace[agent_id] = trace.tolist()
-                    # print("here")
-            
+            # pp(("cached tubes", cached_tubes.keys()))
+            node_ids = list(set((s.run_num, s.node_id) for s in cached_tubes.values()))
+            # assert len(node_ids) <= 1, f"{node_ids}"
+            new_cache, paths_to_sim = {}, []
+            if len(node_ids) == 1 and len(cached_tubes.keys()) == len(node.agent):
+                old_run_num, old_node_id = node_ids[0]
+                if old_run_num != run_num:
+                    old_node = find(past_runs[old_run_num].nodes, lambda n: n.id == old_node_id)
+                    assert old_node != None
+                    new_cache, paths_to_sim = to_simulate(old_node.agent, node.agent, cached_tubes)
+                    # pp(("to sim", new_cache.keys(), len(paths_to_sim)))
+
             # Get all possible transitions to next mode
-            asserts, all_possible_transitions = transition_graph.get_transition_verify_new(node)
+            asserts, all_possible_transitions = transition_graph.get_transition_verify_new(new_cache, paths_to_sim, node)
+            # pp(("transitions:", [(t[0], t[2]) for t in all_possible_transitions]))
+            node.assert_hits = asserts
             if asserts != None:
                 asserts, idx = asserts
                 for agent in node.agent:
                     node.trace[agent] = node.trace[agent][:(idx + 1) * 2]
-                node.assert_hits = asserts
                 continue
+
+            transit_map = {k: list(l) for k, l in itertools.groupby(all_possible_transitions, key=lambda p:p[0])}
+            transit_agents = transit_map.keys()
+            # pp(("transit agents", transit_agents))
+            if self.config.incremental and len(all_possible_transitions) > 0:
+                transit_ind = max(l[-2][-1] for l in all_possible_transitions)
+                for agent_id in node.agent:
+                    transition = transit_map[agent_id] if agent_id in transit_agents else []
+                    if agent_id in cached_tubes:
+                        cached_tubes[agent_id].transitions.extend(convert_reach_trans(agent_id, transit_agents, node.init, transition, transit_ind))
+                        pre_len = len(cached_tubes[agent_id].transitions)
+                        cached_tubes[agent_id].transitions = dedup(cached_tubes[agent_id].transitions, lambda i: (i.mode, i.dest, i.inits))
+                        # pp(("dedup!", pre_len, len(cached_tubes[agent_id].transitions)))
+                    else:
+                        self.trans_cache.add_tube(agent_id, combined_inits, node, transit_agents, transition, transit_ind, run_num)
 
             max_end_idx = 0
             for transition in all_possible_transitions:
                 # Each transition will contain a list of rectangles and their corresponding indexes in the original list
-                transit_agent_idx, src_mode, dest_mode, next_init, idx = transition
+                # if len(transition) != 6:
+                #     pp(("weird trans", transition))
+                transit_agent_idx, src_mode, dest_mode, next_init, idx, path = transition
                 start_idx, end_idx = idx[0], idx[-1]
 
                 truncated_trace = {}
@@ -225,6 +294,8 @@ class Verifier:
                     if agent_idx == transit_agent_idx:
                         next_node_init[agent_idx] = next_init
                     else:
+                        next_node_init[agent_idx] = [[truncated_trace[agent_idx][0][1:], truncated_trace[agent_idx][1][1:]]]
+                        # pp(("infer init", agent_idx, next_node_init[agent_idx]))
                         next_node_trace[agent_idx] = truncated_trace[agent_idx]
 
                 tmp = AnalysisTreeNode(

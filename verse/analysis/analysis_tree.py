@@ -1,5 +1,6 @@
 from typing import List, Dict, Any
 import json
+from treelib import Tree
 
 class AnalysisTreeNode:
     """AnalysisTreeNode class
@@ -144,3 +145,20 @@ class AnalysisTree:
                 parent_node.child.append(child_node)
                 queue.append((child_node_dict, child_node))
         return AnalysisTree(root)
+
+    def dump_tree(self):
+        tree = Tree()
+        AnalysisTree._dump_tree(self.root, tree, 0, 1)
+        tree.show()
+
+    @staticmethod
+    def _dump_tree(node, tree, pid, id):
+        n = "\n".join(str((aid, *node.mode[aid], *node.init[aid])) for aid in node.agent)
+        if pid != 0:
+            tree.create_node(n, id, parent=pid)
+        else:
+            tree.create_node(n, id)
+        nid = id + 1
+        for child in node.child:
+            nid = AnalysisTree._dump_tree(child, tree, id, nid)
+        return nid + 1
