@@ -323,6 +323,7 @@ class Verifier:
         self.reachtube_tree = AnalysisTree(root)
         print(f">>>>>>>> Number of calls to reachability engine: {num_calls}")
         print(f">>>>>>>> Number of transitions happening: {num_transitions}")
+        self.num_transitions = num_transitions
 
         return self.reachtube_tree
 

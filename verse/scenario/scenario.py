@@ -417,14 +417,14 @@ class Scenario:
             paths = [(agent, p) for agent in node.agent.values() for p in agent.controller.paths]
         else:
             _transitions = [(aid, trans) for aid, seg in cache.items() for trans in seg.transitions if sim_trans_suit(trans.inits, node.init)]
-            pp(("cached trans", _transitions))
+            # pp(("cached trans", _transitions))
             if len(_transitions) > 0:
                 min_trans_ind = min([t.transition for _, t in _transitions])
-                pp(("min", min_trans_ind))
+                # pp(("min", min_trans_ind))
                 for aid, trans in _transitions:
                     # TODO: check for asserts
                     if trans.transition == min_trans_ind:
-                        pp(("chosen tran", aid, trans))
+                        # pp(("chosen tran", aid, trans))
                         cached_trans[aid].append((aid, trans.disc, trans.cont, trans.paths))
                 for agent_id in cached_trans:
                     cached_trans[agent_id] = dedup(cached_trans[agent_id], lambda p: p[:3])
@@ -488,8 +488,8 @@ class Scenario:
                     src_track = node.get_track(agent_idx, node.mode[agent_idx])
                     dest_mode = node.get_mode(agent_idx, dest)
                     dest_track = node.get_track(agent_idx, dest)
-                    pp(("dbg", src_track, src_mode, dest, dest_mode, dest_track))
-                    pp((lane_map.h(src_track, src_mode, dest_mode)))
+                    # pp(("dbg", src_track, src_mode, dest, dest_mode, dest_track))
+                    # pp((lane_map.h(src_track, src_mode, dest_mode)))
                     if dest_track == lane_map.h(src_track, src_mode, dest_mode):
                         transitions[agent_idx].append((agent_idx, dest, next_init, paths))
                 # print("transitions", transitions)
