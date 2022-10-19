@@ -86,7 +86,7 @@ def run(sim, meas=False):
         pp({
             "dur": timeit.default_timer() - time,
             "cache_size": cache_size,
-            "node_count": len(traces.nodes),
+            "node_count": ((0 if sim else scenario.verifier.num_transitions), len(traces.nodes)),
             "hits": scenario.simulator.cache_hits if sim else (scenario.verifier.tube_cache_hits, scenario.verifier.trans_cache_hits),
         })
 
