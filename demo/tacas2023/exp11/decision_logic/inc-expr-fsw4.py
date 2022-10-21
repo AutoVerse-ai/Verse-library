@@ -58,7 +58,7 @@ def car_right(ego, others, lane_map):
 def controller(ego:State, others:List[State], lane_map):
     output = copy.deepcopy(ego)
     if ego.agent_mode == AgentMode.Normal:
-        if car_front(ego, others, lane_map, 4, 3):
+        if car_front(ego, others, lane_map, 4.5, 3):
             # Switch left if left lane is empty
             if lane_map.h_exist(ego.track_mode, ego.agent_mode, AgentMode.SwitchLeft) and \
              not car_left(ego, others, lane_map):

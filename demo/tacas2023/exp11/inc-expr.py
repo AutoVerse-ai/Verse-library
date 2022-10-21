@@ -75,7 +75,7 @@ def run(sim, meas=False):
         if sim:
             fig = simulation_tree(traces, tmp_map, fig, 1, 2, print_dim_list=[1, 2])
         else:
-            fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines')
+            fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines',combine_rect=5)
         fig.show()
 
     if sim:
@@ -91,7 +91,7 @@ def run(sim, meas=False):
         })
 
 if __name__ == "__main__":
-    input_code_name = './demo/vehicle/controller/inc-expr6.py' if "6" in arg else './demo/vehicle/controller/inc-expr.py'
+    input_code_name = './demo/tacas2023/exp11/decision_logic/inc-expr6.py' if "6" in arg else './demo/tacas2023/exp11/decision_logic/inc-expr.py'
     config = ScenarioConfig()
     config.incremental = 'i' in arg
     scenario = Scenario(config)

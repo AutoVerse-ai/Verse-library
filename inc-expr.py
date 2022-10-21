@@ -20,7 +20,7 @@ xprms = [
     "".join(l) for l in product("brn8", ("", "i"))]
 rslts = []
 for xprm in xprms:
-    cmd = Popen(f"/usr/bin/time -v -- python3.8 demo/vehicle/inc-expr.py {xprm}", stdout=PIPE, stderr=PIPE, shell=True)
+    cmd = Popen(f"/usr/bin/time -v -- python3.8 demo/tacas2023/exp11/inc-expr.py {xprm}", stdout=PIPE, stderr=PIPE, shell=True)
     print(f"run '{xprm}', pid={cmd.pid}")
     ret = cmd.wait()
     stderr = cmd.stderr.readlines()

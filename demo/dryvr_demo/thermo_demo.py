@@ -17,7 +17,7 @@ if __name__ == "__main__":
 
     car = thermo_agent('test', file_name=input_code_name)
     scenario.add_agent(car)
-    scenario.set_sensor(ThermoSensor())
+    # scenario.set_sensor(ThermoSensor())
     # modify mode list input
     scenario.set_init(
         [
@@ -27,8 +27,8 @@ if __name__ == "__main__":
             tuple([ThermoMode.ON]),
         ]
     )
-    traces = scenario.verify(3.5, 0.05)
+    traces = scenario.simulate(3.5, 0.05)
     fig = go.Figure()
-    fig = reachtube_tree(traces, None, fig, 2, 1, [2, 1],
+    fig = simulation_tree(traces, None, fig, 2, 1, [2, 1],
                          'lines', 'trace')
     fig.show()

@@ -78,8 +78,6 @@ if __name__ == "__main__":
     myball2 = BallAgent('green-ball', file_name=ball_controller)
     bouncingBall.add_agent(myball1)
     bouncingBall.add_agent(myball2)
-    tmp_map = SimpleMap3()
-    bouncingBall.set_map(tmp_map)
     bouncingBall.set_init(
         [
             [[5, 10, 2, 2], [5, 10, 2, 2]],
@@ -97,6 +95,6 @@ if __name__ == "__main__":
     traces = bouncingBall.simulate(40, 0.01)
     # TODO: There should be a print({traces}) function
     fig = go.Figure()
-    fig = simulation_anime(
+    fig = simulation_tree(
         traces, None, fig, 1, 2, [1, 2], 'fill', 'trace')
     fig.show()

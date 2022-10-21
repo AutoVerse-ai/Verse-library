@@ -34,6 +34,8 @@ def pack_env(agent: BaseAgent, ego_ty_name: str, cont: Dict[str, float], disc: D
         for k, v in e.items():
             k1, k2 = k.split(".")
             packed[k1][k2] = v
+    ego_keys, ego_vals = tuple(map(list, zip(*packed[EGO].items())))
+    state_ty = namedtuple(ego_ty_name, ego_keys)
     for arg in agent.controller.args:
         if "map" in arg.name:
             packed[arg.name] = lane_map
@@ -123,7 +125,7 @@ def check_sim_transitions(agent: BaseAgent, guards: List[Tuple], cont, disc, map
 
 @dataclass
 class ScenarioConfig:
-    incremental: bool = True
+    incremental: bool = False
     unsafe_continue: bool = False
     init_seg_length: int = 1000
     reachability_method: str = 'DRYVR'
@@ -477,7 +479,7 @@ class Scenario:
                     continue
                 if len(satisfied) != 0:
                     satisfied_guard.extend(satisfied)
-                    assert all(len(s[2]) == 4 for s in satisfied)
+                    # assert all(len(s[2]) == 4 for s in satisfied)
             if len(all_asserts) > 0:
                 return all_asserts, dict(transitions), idx
             if len(satisfied_guard) > 0:

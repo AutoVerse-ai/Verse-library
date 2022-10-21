@@ -9,6 +9,9 @@ from enum import Enum, auto
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 
+import pyvista as pv 
+from verse.plotter.plotter3D import *
+
 
 class LaneObjectMode(Enum):
     Vehicle = auto()
@@ -74,11 +77,21 @@ if __name__ == "__main__":
 
     scenario.init_seg_length = 5
     traces = scenario.verify(40, 0.1, params={"bloating_method": 'GLOBAL'})
-    # fig = go.Figure()
-    # fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace')
-    # fig.show()
+    
+    fig = go.Figure()
+    fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace')
+    fig.show()
 
     # fig = go.Figure()
     # fig = reachtube_anime(traces, tmp_map, fig, 1,
     #                       2, 'lines', 'trace', combine_rect=1)
+    # fig.show()
+
+    # fig = pv.Plotter()
+    # fig = plot3dReachtube(traces,'car1',1,2,0,'b',fig)
+    # fig = plot3dReachtube(traces,'car2',1,2,0,'r',fig)
+    # fig = plot3dReachtube(traces,'car3',1,2,0,'g',fig)
+    # fig = plot_line_3d([0,0,0],[10,0,0],ax=fig,color='r')
+    # fig = plot_line_3d([0,0,0],[0,10,0],ax=fig,color='g')
+    # fig = plot_line_3d([0,0,0],[0,0,10],ax=fig,color='b')
     # fig.show()
