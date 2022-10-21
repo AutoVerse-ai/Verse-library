@@ -8,7 +8,7 @@ from enum import Enum, auto
 import warnings
 warnings.filterwarnings("ignore")
 
-class CraftMode(Enum):
+class TacticalMode(Enum):
     Normal = auto()
     MoveUp = auto()
     MoveDown = auto()
@@ -26,7 +26,6 @@ class TrackMode(Enum):
 
 if __name__ == "__main__":
     input_code_name = './demo/tacas2023/exp1/quadrotor_controller3.py'
-    input_code_name2 = './demo/tacas2023/exp1/quadrotor_controller4.py'
 
     scenario = Scenario()
     time_step = 0.1
@@ -36,7 +35,7 @@ if __name__ == "__main__":
     init_u_1 = [10.2, 0.7, 0.35, 0, 0, 0]
     quadrotor1.set_initial(
         [init_l_1, init_u_1],
-        (CraftMode.Normal, TrackMode.T1)
+        (TacticalMode.Normal, TrackMode.T1)
     )
     scenario.add_agent(quadrotor1)
 
@@ -46,7 +45,7 @@ if __name__ == "__main__":
     init_u_2 = [3.7, 9.7, 0.35, 0, 0, 0]
     quadrotor2.set_initial(
         [init_l_2, init_u_2],
-        (CraftMode.Normal, TrackMode.T1)
+        (TacticalMode.Normal, TrackMode.T1)
     )
     scenario.add_agent(quadrotor2)
 

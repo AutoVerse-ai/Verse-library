@@ -4,7 +4,7 @@ import numpy as np
 from scipy.integrate import ode
 
 from verse.agents import BaseAgent
-from verse.parser import controllerIR
+from verse.parser import ControllerIR
 
 from scipy.optimize import minimize
 from sympy import Symbol, diff
@@ -62,7 +62,7 @@ def computeD(exprs, symbol_x, symbol_w, x, w, x_hat, w_hat):
 class Agent1(BaseAgent):
     def __init__(self, id):
         self.id = id 
-        self.controller = controllerIR.empty()
+        self.controller = ControllerIR.empty()
 
     def dynamics(self, x, args):
         w1, w2, dt = args
@@ -90,7 +90,7 @@ class Agent1(BaseAgent):
 class Agent2(BaseAgent):
     def __init__(self, id):
         self.id = id 
-        self.controller = controllerIR.empty()
+        self.controller = ControllerIR.empty()
 
     def dynamics(self, x, args):
         w1, w2, dt = args
@@ -118,7 +118,7 @@ class Agent2(BaseAgent):
 class Agent3(BaseAgent):
     def __init__(self, id):
         self.id = id 
-        self.controller = controllerIR.empty()
+        self.controller = ControllerIR.empty()
 
     def dynamics(self, x, args):
         w1, w2, dt = args
@@ -132,7 +132,7 @@ class Agent3(BaseAgent):
 class Agent4(BaseAgent):
     def __init__(self, id):
         self.id = id 
-        self.controller = controllerIR.empty()
+        self.controller = ControllerIR.empty()
 
     def dynamics(self, x, args):
         w1, dt = args
@@ -164,7 +164,7 @@ class Agent5(BaseAgent):
     def __init__(self, id):
         # super().__init__(id, code, file_name)
         self.id = id 
-        self.controller = controllerIR.empty()
+        self.controller = ControllerIR.empty()
         self.init_cont = None
         self.init_disc = None
         self.static_parameters = None
@@ -213,7 +213,7 @@ class Agent6(BaseAgent):
     def __init__(self, id):
         # super().__init__(id, code, file_name)
         self.id = id 
-        self.controller = controllerIR.empty()
+        self.controller = ControllerIR.empty()
         self.init_cont = None
         self.init_disc = None
         self.static_parameters = None

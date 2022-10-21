@@ -44,7 +44,7 @@ if __name__ == "__main__":
     # fig.show()
 
     traces = scenario.verify(60, 0.05)
-    traces.dump("./demo/tacas2023/exp8/output8.json")
+    # traces.dump("./demo/tacas2023/exp8/output8.json")
     # traces = AnalysisTree.load('./output6.json')
     # traces = scenario.verify(50, 0.05)
     fig = go.Figure()

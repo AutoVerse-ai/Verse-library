@@ -51,7 +51,7 @@ if __name__ == "__main__":
             (AgentMode.Normal, TrackMode.T0),
         ]
     )
-    scenario.set_sensor(NoisyVehicleSensor((0.5, 0.5), (0.5, 0.5)))
+    scenario.set_sensor(NoisyVehicleSensor((0.5, 0.5), (0.0, 0.0)))
 
     scenario.init_seg_length = 5
     traces = scenario.verify(40, 0.1, params={"bloating_method": 'GLOBAL'})

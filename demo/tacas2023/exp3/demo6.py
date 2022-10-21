@@ -78,7 +78,7 @@ if __name__ == "__main__":
     # fig.show()
 
     traces = scenario.verify(80, 0.05)
-    traces.dump("./demo/tacas2023/exp3/output3.json")
-    # fig = go.Figure()
-    # fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace',combine_rect=3)
-    # fig.show()
+    # traces.dump("./demo/tacas2023/exp3/output3.json")
+    fig = go.Figure()
+    fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace',combine_rect=3)
+    fig.show()

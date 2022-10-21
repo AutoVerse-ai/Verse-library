@@ -1,6 +1,7 @@
 
 from uncertain_agents import Agent6
 from verse import Scenario
+from verse.scenario import ScenarioConfig
 from verse.plotter.plotter2D import *
 
 import plotly.graph_objects as go
@@ -12,7 +13,7 @@ class AgentMode(Enum):
 
 
 if __name__ == "__main__":
-    scenario = Scenario()
+    scenario = Scenario(ScenarioConfig(reachability_method='MIXMONO_CONT'))
 
     car = Agent6('car1')
     scenario.add_agent(car)
@@ -31,7 +32,7 @@ if __name__ == "__main__":
             [[-0.1, -0.1], [0.1, 0.1]],
         ]
     )
-    traces = scenario.verify(10, 0.01, reachability_method='MIXMONO_CONT')
+    traces = scenario.verify(10, 0.01)
     # fig = plt.figure(0)
     # fig = plot_reachtube_tree(traces.root, 'car1', 0, [1],fig=fig)
     # fig = plt.figure(1)

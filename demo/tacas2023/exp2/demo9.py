@@ -1,6 +1,7 @@
 from verse.agents.example_agent import CarAgent, NPCAgent
 from verse.map.example_map import SimpleMap3, SimpleMap6
 from verse import Scenario
+from verse.scenario import ScenarioConfig
 # from noisy_sensor import NoisyVehicleSensor
 from verse.plotter.plotter2D import *
 # from verse.plotter.plotter2D_old import plot_reachtube_tree, plot_map
@@ -52,7 +53,7 @@ class State:
 
 if __name__ == "__main__":
     input_code_name = './demo/tacas2023/exp2/example_controller5.py'
-    scenario = Scenario()
+    scenario = Scenario(ScenarioConfig(init_seg_length=5))
 
     car = CarAgent('car1', file_name=input_code_name)
     scenario.add_agent(car)

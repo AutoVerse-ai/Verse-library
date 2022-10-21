@@ -3,7 +3,7 @@ import copy
 from typing import List
 
 
-class CraftMode(Enum):
+class TacticalMode(Enum):
     Normal = auto()
     MoveUp = auto()
     MoveDown = auto()
@@ -26,10 +26,10 @@ class State:
     vx: float
     vy: float
     vz: float
-    craft_mode: CraftMode
+    tactical_mode: TacticalMode
     track_mode: TrackMode
 
-    def __init__(self, x, y, z, vx, vy, vz, craft_mode, track_mode):
+    def __init__(self, x, y, z, vx, vy, vz, tactical_mode, track_mode):
         pass
 
 
@@ -48,30 +48,30 @@ def is_close(ego, other):
 def decisionLogic(ego: State, others: List[State], track_map):
     next = copy.deepcopy(ego)
 
-    if ego.craft_mode == CraftMode.Normal:
+    if ego.tactical_mode == TacticalMode.Normal:
         if any((is_close(ego, other) and ego.track_mode == other.track_mode) for other in others):
-            if track_map.h_exist(ego.track_mode, ego.craft_mode, CraftMode.MoveUp):
-                next.craft_mode = CraftMode.MoveUp
+            if track_map.h_exist(ego.track_mode, ego.tactical_mode, TacticalMode.MoveUp):
+                next.tactical_mode = TacticalMode.MoveUp
                 next.track_mode = track_map.h(
-                    ego.track_mode, ego.craft_mode, CraftMode.MoveUp)
-            if track_map.h_exist(ego.track_mode, ego.craft_mode, CraftMode.MoveDown):
-                next.craft_mode = CraftMode.MoveDown
+                    ego.track_mode, ego.tactical_mode, TacticalMode.MoveUp)
+            if track_map.h_exist(ego.track_mode, ego.tactical_mode, TacticalMode.MoveDown):
+                next.tactical_mode = TacticalMode.MoveDown
                 next.track_mode = track_map.h(
-                    ego.track_mode, ego.craft_mode, CraftMode.MoveDown)
+                    ego.track_mode, ego.tactical_mode, TacticalMode.MoveDown)
 
-    if ego.craft_mode == CraftMode.MoveUp:
+    if ego.tactical_mode == TacticalMode.MoveUp:
         if track_map.altitude(ego.track_mode)-ego.z > -1 and track_map.altitude(ego.track_mode)-ego.z < 1:
-            next.craft_mode = CraftMode.Normal
-            if track_map.h_exist(ego.track_mode, ego.craft_mode, CraftMode.Normal):
+            next.tactical_mode = TacticalMode.Normal
+            if track_map.h_exist(ego.track_mode, ego.tactical_mode, TacticalMode.Normal):
                 next.track_mode = track_map.h(
-                    ego.track_mode, ego.craft_mode, CraftMode.Normal)
+                    ego.track_mode, ego.tactical_mode, TacticalMode.Normal)
 
-    if ego.craft_mode == CraftMode.MoveDown:
+    if ego.tactical_mode == TacticalMode.MoveDown:
         if track_map.altitude(ego.track_mode)-ego.z > -1 and track_map.altitude(ego.track_mode)-ego.z < 1:
-            next.craft_mode = CraftMode.Normal
-            if track_map.h_exist(ego.track_mode, ego.craft_mode, CraftMode.Normal):
+            next.tactical_mode = TacticalMode.Normal
+            if track_map.h_exist(ego.track_mode, ego.tactical_mode, TacticalMode.Normal):
                 next.track_mode = track_map.h(
-                    ego.track_mode, ego.craft_mode, CraftMode.Normal)
+                    ego.track_mode, ego.tactical_mode, TacticalMode.Normal)
    
     assert not any(safe_seperation(ego, other) for other in others), "Safe Seperation"
 
