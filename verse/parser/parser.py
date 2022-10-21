@@ -304,9 +304,9 @@ class ControllerIR:
     @staticmethod
     def from_env(env):
         top = env.scopes[0].v
-        if 'controller' not in top or not isinstance(top['controller'], Lambda):
+        if 'decisionLogic' not in top or not isinstance(top['decisionLogic'], Lambda):
             raise TypeError("can't find controller")
-        controller = top['controller']
+        controller = top['decisionLogic']
         asserts = [(a.cond, a.label if a.label != None else f"<assert {i}>", merge_conds(a.pre)) for i, a in enumerate(controller.asserts)]
         asserts_veri = [Assert(Env.trans_args(copy.deepcopy(c), True), l, Env.trans_args(copy.deepcopy(p), True)) for c, l, p in asserts]
         for a in asserts_veri:
