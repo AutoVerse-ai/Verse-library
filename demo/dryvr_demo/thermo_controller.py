@@ -17,7 +17,7 @@ class State:
         pass
 
 
-def controller(ego: State):
+def decisionLogic(ego: State):
     output = copy.deepcopy(ego)
     if ego.thermo_mode == ThermoMode.ON:
         if ego.cycle_time >= 1.0 and ego.cycle_time < 1.1:

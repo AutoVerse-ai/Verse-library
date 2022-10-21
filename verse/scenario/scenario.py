@@ -26,7 +26,7 @@ EGO, OTHERS = "ego", "others"
 def red(s):
     return "\x1b[31m" + s + "\x1b[0m"
 
-def pack_env(agent: BaseAgent, ego_ty_name: str, cont: Dict[str, float], disc: Dict[str, str], lane_map):
+def pack_env(agent: BaseAgent, ego_ty_name: str, cont: Dict[str, float], disc: Dict[str, str], track_map):
     state_ty = None #namedtuple(ego_ty_name, agent.controller.state_defs[ego_ty_name].all_vars())
     packed: DefaultDict[str, Any] = defaultdict(dict)
     # packed = {}
@@ -38,7 +38,7 @@ def pack_env(agent: BaseAgent, ego_ty_name: str, cont: Dict[str, float], disc: D
     state_ty = namedtuple(ego_ty_name, ego_keys)
     for arg in agent.controller.args:
         if "map" in arg.name:
-            packed[arg.name] = lane_map
+            packed[arg.name] = track_map
         elif arg.name != EGO:
             other = arg.name
             if other in packed:
@@ -149,12 +149,12 @@ class Scenario:
     def set_sensor(self, sensor):
         self.sensor = sensor
 
-    def set_map(self, lane_map: LaneMap):
-        self.map = lane_map
+    def set_map(self, track_map: LaneMap):
+        self.map = track_map
         # Update the lane mode field in the agent
         for agent_id in self.agent_dict:
             agent = self.agent_dict[agent_id]
-            self.update_agent_lane_mode(agent, lane_map)
+            self.update_agent_lane_mode(agent, track_map)
 
     def add_agent(self, agent: BaseAgent):
         if self.map is not None:
@@ -177,8 +177,8 @@ class Scenario:
 
 
     # TODO-PARSER: update this function
-    def update_agent_lane_mode(self, agent: BaseAgent, lane_map: LaneMap):
-        for lane_id in lane_map.lane_dict:
+    def update_agent_lane_mode(self, agent: BaseAgent, track_map: LaneMap):
+        for lane_id in track_map.lane_dict:
             if 'TrackMode' in agent.controller.mode_defs and lane_id not in agent.controller.mode_defs['TrackMode'].modes:
                 agent.controller.mode_defs['TrackMode'].modes.append(lane_id)
         # mode_vals = list(agent.controller.modes.values())
@@ -297,7 +297,7 @@ class Scenario:
         return tree
 
     def apply_reset(self, agent: BaseAgent, reset_list, all_agent_state) -> Tuple[str, np.ndarray]:
-        lane_map = self.map
+        track_map = self.map
         dest = []
         rect = []
 
@@ -406,7 +406,7 @@ class Scenario:
     #         disc_var_dict[unrolled_variable] = disc_var_dict[variable][unrolled_variable_index]
 
     def get_transition_simulate_new(self, cache: Dict[str, CachedSegment], paths: PathDiffs, node: AnalysisTreeNode) -> Tuple[Optional[Dict[str, List[str]]], Optional[Dict[str, List[Tuple[str, List[str], List[float]]]]], int]:
-        lane_map = self.map
+        track_map = self.map
         trace_length = len(list(node.trace.values())[0])
 
         # For each agent
@@ -491,15 +491,15 @@ class Scenario:
                     dest_mode = node.get_mode(agent_idx, dest)
                     dest_track = node.get_track(agent_idx, dest)
                     # pp(("dbg", src_track, src_mode, dest, dest_mode, dest_track))
-                    # pp((lane_map.h(src_track, src_mode, dest_mode)))
-                    if dest_track == lane_map.h(src_track, src_mode, dest_mode):
+                    # pp((track_map.h(src_track, src_mode, dest_mode)))
+                    if dest_track == track_map.h(src_track, src_mode, dest_mode):
                         transitions[agent_idx].append((agent_idx, dest, next_init, paths))
                 # print("transitions", transitions)
                 break
         return None, dict(transitions), idx
 
     def get_transition_verify_new(self, cache: Dict[str, CachedRTTrans], paths: PathDiffs, node: AnalysisTreeNode) -> Tuple[Optional[Dict[str, List[str]]], Optional[Dict[str, List[Tuple[str, List[str], List[float]]]]]]:
-        lane_map = self.map
+        track_map = self.map
 
         # For each agent
         agent_guard_dict = defaultdict(list)
@@ -696,7 +696,7 @@ class Scenario:
                     src_track = node.get_track(agent, node.mode[agent])
                     dest_mode = node.get_mode(agent, dest)
                     dest_track = node.get_track(agent, dest)
-                    if dest_track == lane_map.h(src_track, src_mode, dest_mode):
+                    if dest_track == track_map.h(src_track, src_mode, dest_mode):
                         possible_transitions.append(transition)
         # Return result
         return None, possible_transitions

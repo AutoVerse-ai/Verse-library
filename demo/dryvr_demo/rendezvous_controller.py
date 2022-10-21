@@ -21,7 +21,7 @@ class State:
         pass
 
 
-def controller(ego: State):
+def decisionLogic(ego: State):
     output = copy.deepcopy(ego)
     if ego.craft_mode == CraftMode.ProxA:
         if ego.yp >= -100 and ego.xp+ego.yp >= -141.1 and ego.xp >= -100 and ego.yp-ego.xp <= 141.1 and ego.yp <= 100 and ego.xp+ego.yp <= 141.1 and ego.xp <= 100 and ego.yp-ego.xp >= -141.1:

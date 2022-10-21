@@ -10,7 +10,7 @@ import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 
 
-class VehicleMode(Enum):
+class AgentMode(Enum):
     Normal = auto()
     SwitchLeft = auto()
     SwitchRight = auto()
@@ -46,9 +46,9 @@ if __name__ == "__main__":
             [[4-2.5, 2.8, 0, 1.0], [4.5-2.5, 3.2, 0, 1.0]],
         ],
         [
-            (VehicleMode.Normal, TrackMode.T1),
-            (VehicleMode.Normal, TrackMode.T1),
-            (VehicleMode.Normal, TrackMode.T0),
+            (AgentMode.Normal, TrackMode.T1),
+            (AgentMode.Normal, TrackMode.T1),
+            (AgentMode.Normal, TrackMode.T0),
         ]
     )
     scenario.set_sensor(NoisyVehicleSensor((0.5, 0.5), (0.5, 0.5)))
@@ -76,9 +76,9 @@ if __name__ == "__main__":
             [[4-2.5, 2.8, 0, 1.0], [4.5-2.5, 3.2, 0, 1.0]],
         ],
         [
-            (VehicleMode.Normal, TrackMode.T1),
-            (VehicleMode.Normal, TrackMode.T1),
-            (VehicleMode.Normal, TrackMode.T0),
+            (AgentMode.Normal, TrackMode.T1),
+            (AgentMode.Normal, TrackMode.T1),
+            (AgentMode.Normal, TrackMode.T0),
         ]
     )
 

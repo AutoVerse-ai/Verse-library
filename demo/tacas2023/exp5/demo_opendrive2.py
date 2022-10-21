@@ -15,7 +15,7 @@ class LaneObjectMode(Enum):
     Obstacle = auto()   # Static (to road/lane) obstacles
 
 
-class VehicleMode(Enum):
+class AgentMode(Enum):
     Normal = auto()
     SwitchLeft = auto()
     SwitchRight = auto()
@@ -52,9 +52,9 @@ if __name__ == "__main__":
             # [[106, 18.0, 0, 2.0], [106, 18.0, 0, 2.0]],
         ],
         [
-            (VehicleMode.Normal, TrackMode.T1, ),
-            (VehicleMode.Normal, TrackMode.T1, ),
-            (VehicleMode.Normal, TrackMode.T2, ),
+            (AgentMode.Normal, TrackMode.T1, ),
+            (AgentMode.Normal, TrackMode.T1, ),
+            (AgentMode.Normal, TrackMode.T2, ),
         ]
     )
     scenario.init_seg_length = 1

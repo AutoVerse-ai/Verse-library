@@ -35,7 +35,7 @@ class State:
         pass
 
 
-def controller(ego: State):
+def decisionLogic(ego: State):
     '''Computes the possible mode transitions'''
     output = copy.deepcopy(ego)
     '''TODO: Ego and output variable names should be flexible but 

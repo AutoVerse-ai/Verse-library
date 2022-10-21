@@ -7,7 +7,7 @@ from enum import Enum, auto
 import plotly.graph_objects as go
 
 
-class VehicleMode(Enum):
+class AgentMode(Enum):
     Normal = auto()
     SwitchLeft = auto()
     SwitchRight = auto()
@@ -61,13 +61,13 @@ if __name__ == "__main__":
             [[40, -6.1, 0, 0.5], [40, -5.9, 0, 0.5]],
         ],
         [
-            (VehicleMode.Normal, TrackMode.T1),
-            (VehicleMode.Normal, TrackMode.T1),
-            (VehicleMode.Normal, TrackMode.T0),
-            (VehicleMode.Normal, TrackMode.T0),
-            (VehicleMode.Normal, TrackMode.T1),
-            (VehicleMode.Normal, TrackMode.T2),
-            (VehicleMode.Normal, TrackMode.T3),
+            (AgentMode.Normal, TrackMode.T1),
+            (AgentMode.Normal, TrackMode.T1),
+            (AgentMode.Normal, TrackMode.T0),
+            (AgentMode.Normal, TrackMode.T0),
+            (AgentMode.Normal, TrackMode.T1),
+            (AgentMode.Normal, TrackMode.T2),
+            (AgentMode.Normal, TrackMode.T3),
         ]
     )
 

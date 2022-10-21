@@ -12,7 +12,7 @@ class State:
     def __init__(self, x, y, agent_mode: AgentMode):
         pass
 
-def controller(ego: State):
+def decisionLogic(ego: State):
     output = copy.deepcopy(ego)
 
     return output

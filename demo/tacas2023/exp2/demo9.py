@@ -21,7 +21,7 @@ class LaneObjectMode(Enum):
     Obstacle = auto()   # Static (to road/lane) obstacles
 
 
-class VehicleMode(Enum):
+class AgentMode(Enum):
     Normal = auto()
     SwitchLeft = auto()
     SwitchRight = auto()
@@ -43,10 +43,10 @@ class State:
     y: float
     theta: float
     v: float
-    agent_mode: VehicleMode
-    lane_mode: TrackMode
+    agent_mode: AgentMode
+    track_mode: TrackMode
 
-    def __init__(self, x, y, theta, v, agent_mode: VehicleMode, lane_mode: TrackMode):
+    def __init__(self, x, y, theta, v, agent_mode: AgentMode, track_mode: TrackMode):
         pass
 
 
@@ -69,9 +69,9 @@ if __name__ == "__main__":
             [[4-2.5, 2.8, 0, 1.0], [4.5-2.5, 3.2, 0, 1.0]],
         ],
         [
-            (VehicleMode.Normal, TrackMode.T1),
-            (VehicleMode.Normal, TrackMode.T1),
-            (VehicleMode.Normal, TrackMode.T0),
+            (AgentMode.Normal, TrackMode.T1),
+            (AgentMode.Normal, TrackMode.T1),
+            (AgentMode.Normal, TrackMode.T0),
         ]
     )
 

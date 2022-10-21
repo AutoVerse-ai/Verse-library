@@ -7,7 +7,7 @@ from verse.plotter.plotter2D import *
 import plotly.graph_objects as go
 
 
-class VehicleMode(Enum):
+class AgentMode(Enum):
     Normal = auto()
     SwitchLeft = auto()
     SwitchRight = auto()
@@ -29,11 +29,11 @@ if __name__ == "__main__":
     scenario = Scenario()
 
     scenario.add_agent(CarAgent('car1', file_name=input_code_name, initial_state=[
-                       [0, -0.5, 0, 1.0], [0.01, 0.5, 0, 1.0]], initial_mode=(VehicleMode.Normal, TrackMode.T1)))
+                       [0, -0.5, 0, 1.0], [0.01, 0.5, 0, 1.0]], initial_mode=(AgentMode.Normal, TrackMode.T1)))
     scenario.add_agent(NPCAgent('car2', initial_state=[
-                       [15, -0.3, 0, 0.5], [15, 0.3, 0, 0.5]], initial_mode=(VehicleMode.Normal, TrackMode.T1)))
-    # scenario.add_agent(NPCAgent('car3', initial_state=[[35, -3.3, 0, 0.5], [35, -2.7, 0, 0.5]], initial_mode=(VehicleMode.Normal, TrackMode.T2)))
-    # scenario.add_agent(NPCAgent('car4', initial_state=[[30, -0.5, 0, 0.5], [30, 0.5, 0, 0.5]], initial_mode=(VehicleMode.Normal, TrackMode.T1)))
+                       [15, -0.3, 0, 0.5], [15, 0.3, 0, 0.5]], initial_mode=(AgentMode.Normal, TrackMode.T1)))
+    # scenario.add_agent(NPCAgent('car3', initial_state=[[35, -3.3, 0, 0.5], [35, -2.7, 0, 0.5]], initial_mode=(AgentMode.Normal, TrackMode.T2)))
+    # scenario.add_agent(NPCAgent('car4', initial_state=[[30, -0.5, 0, 0.5], [30, 0.5, 0, 0.5]], initial_mode=(AgentMode.Normal, TrackMode.T1)))
     tmp_map = SimpleMap3()
     scenario.set_map(tmp_map)
     # traces = scenario.simulate(70, 0.05)

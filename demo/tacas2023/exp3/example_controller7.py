@@ -2,7 +2,7 @@ from enum import Enum, auto
 import copy
 from typing import List
 
-class VehicleMode(Enum):
+class AgentMode(Enum):
     Normal = auto()
     SwitchLeft = auto()
     SwitchRight = auto()
@@ -28,48 +28,48 @@ class State:
     y:float
     theta:float
     v:float
-    agent_mode:VehicleMode
-    lane_mode:TrackMode
+    agent_mode:AgentMode
+    track_mode:TrackMode
 
-    def __init__(self, x, y, theta, v, agent_mode: VehicleMode, lane_mode: TrackMode):
+    def __init__(self, x, y, theta, v, agent_mode: AgentMode, track_mode: TrackMode):
         pass
 
-def car_front(ego, others, lane_map):
-    return any((lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) > 3 \
-            and lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) < 5 \
-            and ego.lane_mode == other.lane_mode) for other in others)
+def car_front(ego, others, track_map):
+    return any((track_map.get_longitudinal_position(other.track_mode, [other.x,other.y]) - track_map.get_longitudinal_position(ego.track_mode, [ego.x,ego.y]) > 3 \
+            and track_map.get_longitudinal_position(other.track_mode, [other.x,other.y]) - track_map.get_longitudinal_position(ego.track_mode, [ego.x,ego.y]) < 5 \
+            and ego.track_mode == other.track_mode) for other in others)
 
-def car_left(ego, others, lane_map):
-    return any((lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) < 8 and \
-                 lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) >-3 and \
-                 other.lane_mode==lane_map.left_lane(ego.lane_mode)) for other in others)
+def car_left(ego, others, track_map):
+    return any((track_map.get_longitudinal_position(other.track_mode, [other.x,other.y]) - track_map.get_longitudinal_position(ego.track_mode, [ego.x,ego.y]) < 8 and \
+                 track_map.get_longitudinal_position(other.track_mode, [other.x,other.y]) - track_map.get_longitudinal_position(ego.track_mode, [ego.x,ego.y]) >-3 and \
+                 other.track_mode==track_map.left_lane(ego.track_mode)) for other in others)
 
-def car_right(ego, others, lane_map):
-    return any((lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) < 8 and \
-                 lane_map.get_longitudinal_position(other.lane_mode, [other.x,other.y]) - lane_map.get_longitudinal_position(ego.lane_mode, [ego.x,ego.y]) >-3 and \
-                 other.lane_mode==lane_map.right_lane(ego.lane_mode)) for other in others)
+def car_right(ego, others, track_map):
+    return any((track_map.get_longitudinal_position(other.track_mode, [other.x,other.y]) - track_map.get_longitudinal_position(ego.track_mode, [ego.x,ego.y]) < 8 and \
+                 track_map.get_longitudinal_position(other.track_mode, [other.x,other.y]) - track_map.get_longitudinal_position(ego.track_mode, [ego.x,ego.y]) >-3 and \
+                 other.track_mode==track_map.right_lane(ego.track_mode)) for other in others)
 
-def controller(ego:State, others:List[State], lane_map):
+def decisionLogic(ego:State, others:List[State], track_map):
     output = copy.deepcopy(ego)
-    if ego.agent_mode == VehicleMode.Normal:
-        if car_front(ego, others, lane_map):
-            if lane_map.h_exist(ego.lane_mode, ego.agent_mode, VehicleMode.SwitchLeft) and \
-             not car_left(ego, others, lane_map):
-                output.agent_mode = VehicleMode.SwitchLeft
-                output.lane_mode = lane_map.h(ego.lane_mode, ego.agent_mode, VehicleMode.SwitchLeft)
-        if car_front(ego, others, lane_map):
-            if lane_map.h_exist(ego.lane_mode, ego.agent_mode, VehicleMode.SwitchRight) and \
-             not car_right(ego, others, lane_map):
-                output.agent_mode = VehicleMode.SwitchRight
-                output.lane_mode = lane_map.h(ego.lane_mode, ego.agent_mode, VehicleMode.SwitchRight)
-    if ego.agent_mode == VehicleMode.SwitchLeft:
-        if  lane_map.get_lateral_distance(ego.lane_mode, [ego.x, ego.y]) >= 2.5:
-            output.agent_mode = VehicleMode.Normal
-            output.lane_mode = lane_map.h(ego.lane_mode, ego.agent_mode, VehicleMode.Normal)
-    if ego.agent_mode == VehicleMode.SwitchRight:
-        if lane_map.get_lateral_distance(ego.lane_mode, [ego.x, ego.y]) <= -2.5:
-            output.agent_mode = VehicleMode.Normal
-            output.lane_mode = lane_map.h(ego.lane_mode, ego.agent_mode, VehicleMode.Normal)
+    if ego.agent_mode == AgentMode.Normal:
+        if car_front(ego, others, track_map):
+            if track_map.h_exist(ego.track_mode, ego.agent_mode, AgentMode.SwitchLeft) and \
+             not car_left(ego, others, track_map):
+                output.agent_mode = AgentMode.SwitchLeft
+                output.track_mode = track_map.h(ego.track_mode, ego.agent_mode, AgentMode.SwitchLeft)
+        if car_front(ego, others, track_map):
+            if track_map.h_exist(ego.track_mode, ego.agent_mode, AgentMode.SwitchRight) and \
+             not car_right(ego, others, track_map):
+                output.agent_mode = AgentMode.SwitchRight
+                output.track_mode = track_map.h(ego.track_mode, ego.agent_mode, AgentMode.SwitchRight)
+    if ego.agent_mode == AgentMode.SwitchLeft:
+        if  track_map.get_lateral_distance(ego.track_mode, [ego.x, ego.y]) >= 2.5:
+            output.agent_mode = AgentMode.Normal
+            output.track_mode = track_map.h(ego.track_mode, ego.agent_mode, AgentMode.Normal)
+    if ego.agent_mode == AgentMode.SwitchRight:
+        if track_map.get_lateral_distance(ego.track_mode, [ego.x, ego.y]) <= -2.5:
+            output.agent_mode = AgentMode.Normal
+            output.track_mode = track_map.h(ego.track_mode, ego.agent_mode, AgentMode.Normal)
 
     return output
 

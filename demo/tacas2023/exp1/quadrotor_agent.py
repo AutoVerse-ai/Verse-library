@@ -8,7 +8,7 @@ import torch
 import math
 from verse.agents import BaseAgent
 from verse.map import LaneMap
-from verse.map.lane_map_3d import LaneMap_3d
+from verse.map.track_map_3d import LaneMap_3d
 
 
 class FFNNC(torch.nn.Module):

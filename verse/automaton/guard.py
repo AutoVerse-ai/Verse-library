@@ -1,3 +1,4 @@
+from pprint import pp
 from typing import Any
 import pickle
 import ast
@@ -112,7 +113,7 @@ class GuardExpressionAst:
         cur_solver.add(eval(guard_str, globals(), self.varDict))  # TODO use an object instead of `eval` a string
         return cur_solver, symbols_map
 
-    def evaluate_guard_cont(self, agent, continuous_variable_dict, lane_map):
+    def evaluate_guard_cont(self, agent, continuous_variable_dict, track_map):
         res = False
         is_contained = False
 
@@ -249,7 +250,7 @@ class GuardExpressionAst:
             expr = expr.strip('\n')
             return expr
 
-    def evaluate_guard_hybrid(self, agent, discrete_variable_dict, continuous_variable_dict, lane_map:LaneMap):
+    def evaluate_guard_hybrid(self, agent, discrete_variable_dict, continuous_variable_dict, track_map:LaneMap):
         """
         Handle guard atomics that contains both continuous and hybrid variables
         Especially, we want to handle function calls that need both continuous and 
@@ -261,21 +262,21 @@ class GuardExpressionAst:
         """
         res = True 
         for i, node in enumerate(self.ast_list):
-            tmp, self.ast_list[i] = self._evaluate_guard_hybrid(node, agent, discrete_variable_dict, continuous_variable_dict, lane_map)
+            tmp, self.ast_list[i] = self._evaluate_guard_hybrid(node, agent, discrete_variable_dict, continuous_variable_dict, track_map)
             res = res and tmp 
         return res
 
-    def _evaluate_guard_hybrid(self, root, agent, disc_var_dict, cont_var_dict, lane_map:LaneMap):
+    def _evaluate_guard_hybrid(self, root, agent, disc_var_dict, cont_var_dict, track_map:LaneMap):
         if isinstance(root, ast.Compare): 
             expr = unparse(root)
-            left, root.left = self._evaluate_guard_hybrid(root.left, agent, disc_var_dict, cont_var_dict, lane_map)
-            right, root.comparators[0] = self._evaluate_guard_hybrid(root.comparators[0], agent, disc_var_dict, cont_var_dict, lane_map)
+            left, root.left = self._evaluate_guard_hybrid(root.left, agent, disc_var_dict, cont_var_dict, track_map)
+            right, root.comparators[0] = self._evaluate_guard_hybrid(root.comparators[0], agent, disc_var_dict, cont_var_dict, track_map)
             return True, root
         elif isinstance(root, ast.BoolOp):
             if isinstance(root.op, ast.And):
                 res = True
                 for i, val in enumerate(root.values):
-                    tmp, root.values[i] = self._evaluate_guard_hybrid(val, agent, disc_var_dict, cont_var_dict, lane_map)
+                    tmp, root.values[i] = self._evaluate_guard_hybrid(val, agent, disc_var_dict, cont_var_dict, track_map)
                     res = res and tmp 
                     if not res:
                         break 
@@ -283,17 +284,17 @@ class GuardExpressionAst:
             elif isinstance(root.op, ast.Or):
                 res = False
                 for val in root.values:
-                    tmp,val = self._evaluate_guard_hybrid(val, agent, disc_var_dict, cont_var_dict, lane_map)
+                    tmp,val = self._evaluate_guard_hybrid(val, agent, disc_var_dict, cont_var_dict, track_map)
                     res = res or tmp
                 return res, root  
         elif isinstance(root, ast.BinOp):
-            left, root.left = self._evaluate_guard_hybrid(root.left, agent, disc_var_dict, cont_var_dict, lane_map)
-            right, root.right = self._evaluate_guard_hybrid(root.right, agent, disc_var_dict, cont_var_dict, lane_map)
+            left, root.left = self._evaluate_guard_hybrid(root.left, agent, disc_var_dict, cont_var_dict, track_map)
+            right, root.right = self._evaluate_guard_hybrid(root.right, agent, disc_var_dict, cont_var_dict, track_map)
             return True, root
         elif isinstance(root, ast.Call):
             if isinstance(root.func, ast.Attribute):
                 func = root.func        
-                if func.value.id == 'lane_map':
+                if 'map' in func.value.id:
                     if func.attr == 'get_lateral_distance':
                         # Get function arguments
                         arg0_node = root.args[0]
@@ -320,8 +321,8 @@ class GuardExpressionAst:
                         vehicle_pos = (arg1_lower, arg1_upper)
 
                         # Get corresponding lane segments with respect to the set of vehicle pos
-                        lane_seg1 = lane_map.get_lane_segment(vehicle_lane, arg1_lower)
-                        lane_seg2 = lane_map.get_lane_segment(vehicle_lane, arg1_upper)
+                        lane_seg1 = track_map.get_lane_segment(vehicle_lane, arg1_lower)
+                        lane_seg2 = track_map.get_lane_segment(vehicle_lane, arg1_upper)
 
                         # Compute the set of possible lateral values with respect to all possible segments
                         lateral_set1 = self._handle_lateral_set(lane_seg1, np.array(vehicle_pos))
@@ -364,8 +365,8 @@ class GuardExpressionAst:
                         vehicle_pos = (arg1_lower, arg1_upper)
 
                         # Get corresponding lane segments with respect to the set of vehicle pos
-                        lane_seg1 = lane_map.get_lane_segment(vehicle_lane, arg1_lower)
-                        lane_seg2 = lane_map.get_lane_segment(vehicle_lane, arg1_upper)
+                        lane_seg1 = track_map.get_lane_segment(vehicle_lane, arg1_lower)
+                        lane_seg2 = track_map.get_lane_segment(vehicle_lane, arg1_upper)
 
                         # Compute the set of possible longitudinal values with respect to all possible segments
                         longitudinal_set1 = self._handle_longitudinal_set(lane_seg1, np.array(vehicle_pos))
@@ -395,9 +396,9 @@ class GuardExpressionAst:
             return True, root
         elif isinstance(root, ast.UnaryOp):
             if isinstance(root.op, ast.USub):
-                res, root.operand = self._evaluate_guard_hybrid(root.operand, agent, disc_var_dict, cont_var_dict, lane_map)
+                res, root.operand = self._evaluate_guard_hybrid(root.operand, agent, disc_var_dict, cont_var_dict, track_map)
             elif isinstance(root.op, ast.Not):
-                res, root.operand = self._evaluate_guard_hybrid(root.operand, agent, disc_var_dict, cont_var_dict, lane_map)
+                res, root.operand = self._evaluate_guard_hybrid(root.operand, agent, disc_var_dict, cont_var_dict, track_map)
                 if not res:
                     root.operand = ast.parse('False').body[0].value
                     return True, ast.parse('True').body[0].value
@@ -487,19 +488,19 @@ class GuardExpressionAst:
         else:
             raise ValueError(f'Lane segment with type {lane_seg.type} is not supported')
 
-    def evaluate_guard_disc(self, agent, discrete_variable_dict, continuous_variable_dict, lane_map):
+    def evaluate_guard_disc(self, agent, discrete_variable_dict, continuous_variable_dict, track_map):
         """
         Evaluate guard that involves only discrete variables. 
         """
         res = True
         for i, node in enumerate(self.ast_list):
-            tmp, self.ast_list[i] = self._evaluate_guard_disc(node, agent, discrete_variable_dict, continuous_variable_dict, lane_map)
+            tmp, self.ast_list[i] = self._evaluate_guard_disc(node, agent, discrete_variable_dict, continuous_variable_dict, track_map)
             res = res and tmp 
             if not res:
                 break
         return res
             
-    def _evaluate_guard_disc(self, root, agent:BaseAgent, disc_var_dict, cont_var_dict, lane_map):
+    def _evaluate_guard_disc(self, root, agent:BaseAgent, disc_var_dict, cont_var_dict, track_map):
         """
         Recursively called function to evaluate guard with only discrete variables
         The function will evaluate all guards with discrete variables and replace the nodes with discrete guards by
@@ -511,8 +512,8 @@ class GuardExpressionAst:
         """
         if isinstance(root, ast.Compare):
             expr = unparse(root)
-            left, root.left = self._evaluate_guard_disc(root.left, agent, disc_var_dict, cont_var_dict, lane_map)
-            right, root.comparators[0] = self._evaluate_guard_disc(root.comparators[0], agent, disc_var_dict, cont_var_dict, lane_map)
+            left, root.left = self._evaluate_guard_disc(root.left, agent, disc_var_dict, cont_var_dict, track_map)
+            right, root.comparators[0] = self._evaluate_guard_disc(root.comparators[0], agent, disc_var_dict, cont_var_dict, track_map)
             if isinstance(left, bool) or isinstance(right, bool):
                 return True, root
             if isinstance(root.ops[0], ast.GtE):
@@ -538,7 +539,7 @@ class GuardExpressionAst:
             if isinstance(root.op, ast.And):
                 res = True
                 for i,val in enumerate(root.values):
-                    tmp,root.values[i] = self._evaluate_guard_disc(val, agent, disc_var_dict, cont_var_dict, lane_map)
+                    tmp,root.values[i] = self._evaluate_guard_disc(val, agent, disc_var_dict, cont_var_dict, track_map)
                     res = res and tmp
                     if not res:
                         root = ast.Constant(value=False, kind=None)
@@ -547,13 +548,13 @@ class GuardExpressionAst:
             elif isinstance(root.op, ast.Or):
                 res = False
                 for i, val in enumerate(root.values):
-                    tmp,root.values[i] = self._evaluate_guard_disc(val, agent, disc_var_dict, cont_var_dict, lane_map)
+                    tmp,root.values[i] = self._evaluate_guard_disc(val, agent, disc_var_dict, cont_var_dict, track_map)
                     res = res or tmp
                 return res, root     
         elif isinstance(root, ast.BinOp):
             # Check left and right in the binop and replace all attributes involving discrete variables
-            left, root.left = self._evaluate_guard_disc(root.left, agent, disc_var_dict, cont_var_dict, lane_map)
-            right, root.right = self._evaluate_guard_disc(root.right, agent, disc_var_dict, cont_var_dict, lane_map)
+            left, root.left = self._evaluate_guard_disc(root.left, agent, disc_var_dict, cont_var_dict, track_map)
+            right, root.right = self._evaluate_guard_disc(root.right, agent, disc_var_dict, cont_var_dict, track_map)
             return True, root
         elif isinstance(root, ast.Call):
             expr = unparse(root)
@@ -606,9 +607,9 @@ class GuardExpressionAst:
             return root.value, root
         elif isinstance(root, ast.UnaryOp):
             if isinstance(root.op, ast.USub):
-                res, root.operand = self._evaluate_guard_disc(root.operand, agent, disc_var_dict, cont_var_dict, lane_map)
+                res, root.operand = self._evaluate_guard_disc(root.operand, agent, disc_var_dict, cont_var_dict, track_map)
             elif isinstance(root.op, ast.Not):
-                res, root.operand = self._evaluate_guard_disc(root.operand, agent, disc_var_dict, cont_var_dict, lane_map)
+                res, root.operand = self._evaluate_guard_disc(root.operand, agent, disc_var_dict, cont_var_dict, track_map)
                 if not res:
                     root.operand = ast.parse('False').body[0].value
                     return True, ast.parse('True').body[0].value
@@ -631,19 +632,19 @@ class GuardExpressionAst:
         else:
             raise ValueError(f'Node type {root} from {unparse(root)} is not supported')
 
-    def evaluate_guard(self, agent, continuous_variable_dict, discrete_variable_dict, lane_map):
+    def evaluate_guard(self, agent, continuous_variable_dict, discrete_variable_dict, track_map):
         res = True
         for i, node in enumerate(self.ast_list):
-            tmp = self._evaluate_guard(node, agent, continuous_variable_dict, discrete_variable_dict, lane_map)
+            tmp = self._evaluate_guard(node, agent, continuous_variable_dict, discrete_variable_dict, track_map)
             res = tmp and res
             if not res:
                 break
         return res
 
-    def _evaluate_guard(self, root, agent, cnts_var_dict, disc_var_dict, lane_map):
+    def _evaluate_guard(self, root, agent, cnts_var_dict, disc_var_dict, track_map):
         if isinstance(root, ast.Compare):
-            left = self._evaluate_guard(root.left, agent, cnts_var_dict, disc_var_dict, lane_map)
-            right = self._evaluate_guard(root.comparators[0], agent, cnts_var_dict, disc_var_dict, lane_map)
+            left = self._evaluate_guard(root.left, agent, cnts_var_dict, disc_var_dict, track_map)
+            right = self._evaluate_guard(root.comparators[0], agent, cnts_var_dict, disc_var_dict, track_map)
             if isinstance(root.ops[0], ast.GtE):
                 return left>=right
             elif isinstance(root.ops[0], ast.Gt):
@@ -663,7 +664,7 @@ class GuardExpressionAst:
             if isinstance(root.op, ast.And):
                 res = True
                 for val in root.values:
-                    tmp = self._evaluate_guard(val, agent, cnts_var_dict, disc_var_dict, lane_map)
+                    tmp = self._evaluate_guard(val, agent, cnts_var_dict, disc_var_dict, track_map)
                     res = res and tmp
                     if not res:
                         break
@@ -671,14 +672,14 @@ class GuardExpressionAst:
             elif isinstance(root.op, ast.Or):
                 res = False
                 for val in root.values:
-                    tmp = self._evaluate_guard(val, agent, cnts_var_dict, disc_var_dict, lane_map)
+                    tmp = self._evaluate_guard(val, agent, cnts_var_dict, disc_var_dict, track_map)
                     res = res or tmp
                     if res:
                         break
                 return res
         elif isinstance(root, ast.BinOp):
-            left = self._evaluate_guard(root.left, agent, cnts_var_dict, disc_var_dict, lane_map)
-            right = self._evaluate_guard(root.right, agent, cnts_var_dict, disc_var_dict, lane_map)
+            left = self._evaluate_guard(root.left, agent, cnts_var_dict, disc_var_dict, track_map)
+            right = self._evaluate_guard(root.right, agent, cnts_var_dict, disc_var_dict, track_map)
             if isinstance(root.op, ast.Sub):
                 return left - right
             elif isinstance(root.op, ast.Add):
@@ -731,7 +732,7 @@ class GuardExpressionAst:
         elif isinstance(root, ast.Constant):
             return root.value
         elif isinstance(root, ast.UnaryOp):
-            val = self._evaluate_guard(root.operand, agent, cnts_var_dict, disc_var_dict, lane_map)
+            val = self._evaluate_guard(root.operand, agent, cnts_var_dict, disc_var_dict, track_map)
             if isinstance(root.op, ast.USub):
                 return -val
             if isinstance(root.op, ast.Not):
