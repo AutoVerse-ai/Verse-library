@@ -4,6 +4,7 @@ from pprint import pp
 import re
 from subprocess import PIPE, Popen
 from typing import Tuple, Union
+import sys 
 
 @dataclass
 class ExperimentResult:
@@ -15,9 +16,14 @@ class ExperimentResult:
     ret_code: int
     cache_hits: Union[Tuple[int, int], Tuple[Tuple[int, int], Tuple[int, int]]]
 
-xprms = [
-    # "v" + 
-    "".join(l) for l in product("brn8", ("", "i"))]
+if len(sys.argv)>1 and sys.argv[1]=='v':
+    xprms = [
+        "v" + 
+        "".join(l) for l in product("rn8", ("", "i"))]
+else:
+    xprms = [
+        "".join(l) for l in product("rn8", ("", "i"))]
+
 rslts = []
 for xprm in xprms:
     cmd = Popen(f"/usr/bin/time -v -- python3.8 demo/tacas2023/exp11/inc-expr.py {xprm}", stdout=PIPE, stderr=PIPE, shell=True)
