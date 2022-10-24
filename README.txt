@@ -6,7 +6,7 @@ The link to the artifact on Figshare is:
 
 The link to the artifact on Google drive is: 
 
-The link to the source code git repository for Verse is: 
+The link to the source code git repository for Verse is: https://github.com/AutoVerse-ai/Verse-library
 
 ###########################
 
@@ -117,18 +117,18 @@ Verse will automatically open a browser window to show the resulting plot.
 
 11. To reproduce Fig. 15 in Appendix 
     Left: Run command 
-        python3 
+        python3 demo/tacas2023/exp11/inc-expr.py snp
     Verse will automatically open a browser window to show the resulting plot. 
 
     Right: Run command 
-        python3 
+        python3 demo/tacas2023/exp11/inc-expr.py vnp
     Verse will automatically open a browser window to show the resulting plot. 
 
 12. To reproduce Fig. 16 in Appendix 
     Left: Run command 
-        python3 
+        python3 demo/tacas2023/exp11/inc-expr.py vnp
     Verse will automatically open a browser window to show the resulting plot. 
 
     Right: Run command 
-        python3 
+        python3 demo/tacas2023/exp11/inc-expr.py v8p
     Verse will automatically open a browser window to show the resulting plot. 
