@@ -4,7 +4,7 @@
             "car1": "<class 'verse.agents.example_agent.car_agent.CarAgent'>",
             "car2": "<class 'verse.agents.example_agent.car_agent.NPCAgent'>"
         },
-        "assert_hits": {},
+        "assert_hits": null,
         "child": [
             1,
             2
@@ -12225,7 +12225,7 @@
             "car1": "<class 'verse.agents.example_agent.car_agent.CarAgent'>",
             "car2": "<class 'verse.agents.example_agent.car_agent.NPCAgent'>"
         },
-        "assert_hits": {},
+        "assert_hits": null,
         "child": [
             3
         ],
@@ -13168,6 +13168,22 @@
                         0.02005481719970703,
                         0.012962758541107178,
                         1.000572681427002
+                    ]
+                ]
+            ],
+            "car2": [
+                [
+                    [
+                        23.436147499085187,
+                        -0.2573646903038025,
+                        -0.07708930969238281,
+                        0.49961817264556885
+                    ],
+                    [
+                        24.938851785660507,
+                        0.2573646903038025,
+                        0.07708930969238281,
+                        0.5003818273544312
                     ]
                 ]
             ]
@@ -16029,7 +16045,7 @@
             "car1": "<class 'verse.agents.example_agent.car_agent.CarAgent'>",
             "car2": "<class 'verse.agents.example_agent.car_agent.NPCAgent'>"
         },
-        "assert_hits": {},
+        "assert_hits": null,
         "child": [
             4
         ],
@@ -16972,6 +16988,22 @@
                         0.02005481719970703,
                         0.012962758541107178,
                         1.000572681427002
+                    ]
+                ]
+            ],
+            "car2": [
+                [
+                    [
+                        23.436147499085187,
+                        -0.2573646903038025,
+                        -0.07708930969238281,
+                        0.49961817264556885
+                    ],
+                    [
+                        24.938851785660507,
+                        0.2573646903038025,
+                        0.07708930969238281,
+                        0.5003818273544312
                     ]
                 ]
             ]
@@ -19861,7 +19893,7 @@
             "car1": "<class 'verse.agents.example_agent.car_agent.CarAgent'>",
             "car2": "<class 'verse.agents.example_agent.car_agent.NPCAgent'>"
         },
-        "assert_hits": {},
+        "assert_hits": null,
         "child": [],
         "id": 3,
         "init": {
@@ -19934,6 +19966,22 @@
                         -2.50409643453183,
                         -0.3640532482184854,
                         1.6659734845161438
+                    ]
+                ]
+            ],
+            "car2": [
+                [
+                    [
+                        25.83629013300034,
+                        -0.257459431886673,
+                        -0.07709571719169617,
+                        0.4998209625482559
+                    ],
+                    [
+                        27.338708794117895,
+                        0.257459431886673,
+                        0.07709571719169617,
+                        0.5001790374517441
                     ]
                 ]
             ]
@@ -29403,7 +29451,7 @@
             "car1": "<class 'verse.agents.example_agent.car_agent.CarAgent'>",
             "car2": "<class 'verse.agents.example_agent.car_agent.NPCAgent'>"
         },
-        "assert_hits": {},
+        "assert_hits": null,
         "child": [],
         "id": 4,
         "init": {
@@ -29504,6 +29552,22 @@
                         2.5681722784153056,
                         0.38162958507914213,
                         1.0491198897361755
+                    ]
+                ]
+            ],
+            "car2": [
+                [
+                    [
+                        25.81128906011673,
+                        -0.25745871663093567,
+                        -0.07709565758705139,
+                        0.4998193234205246
+                    ],
+                    [
+                        27.3137098670015,
+                        0.25745871663093567,
+                        0.07709565758705139,
+                        0.5001806765794754
                     ]
                 ]
             ]

@@ -102,42 +102,29 @@ def draw_map_3d(map: LaneMap_3d, fig=go.Figure(), fill_type='outline', color='rg
         for lane_seg in lane.segment_list:
             if lane_seg.type == 'Straight':
                 lane_seg: StraightLane_3d = lane_seg
-                if fill_type == 'outline':
-                    x, y, z = lane_seg.get_sample_points(num, num)
-                    fig.add_trace(go.Surface(x=x, y=y, z=z, opacity=opacity,
-                                             colorscale=[[0, start_color], [1, end_color]]))
-                    fig.update_traces(showscale=False)
-                else:
-                    oc, oc_x, oc_y, oc_z = lane_seg.get_lane_center(num)
-                    fig.add_trace(go.Scatter3d(
-                        x=oc_x, y=oc_y, z=oc_z,
-                        # opacity=opacity,
-                        showlegend=False,
-                        mode='lines',
-                        marker=dict(color='rgb(255,255,255)',
-                                    ),
-                        line=dict(color='rgb(0,0,0)', width=10
-                                  )))
+                oc, oc_x, oc_y, oc_z = lane_seg.get_lane_center(num)
+                fig.add_trace(go.Scatter3d(
+                    x=oc_x, y=oc_y, z=oc_z,
+                    # opacity=opacity,
+                    showlegend=False,
+                    mode='lines',
+                    marker=dict(color='rgb(255,255,255)',
+                                ),
+                    line=dict(color='rgb(0,0,0)', width=10
+                                )))
 
             elif lane_seg.type == "Circular":
                 lane_seg = lane_seg
-                oc_x, oc_y, oc_z = lane_seg.get_sample_points(num, num)
-                # print(oc)
-                if fill_type == 'outline':
-                    fig.add_trace(go.Surface(x=oc_x, y=oc_y, z=oc_z, opacity=opacity,
-                                             colorscale=[[0, start_color], [1, end_color]]))
-                    fig.update_traces(showscale=False)
-                else:
-                    oc, oc_x, oc_y, oc_z = lane_seg.get_lane_center(num)
-                    fig.add_trace(go.Scatter3d(
-                        x=oc_x, y=oc_y, z=oc_z,
-                        # opacity=opacity,
-                        showlegend=False,
-                        mode='lines',
-                        marker=dict(color='rgb(255,255,255)',
-                                    ),
-                        line=dict(color='rgb(0,0,0)', width=10
-                                  )))
+                oc, oc_x, oc_y, oc_z = lane_seg.get_lane_center(num)
+                fig.add_trace(go.Scatter3d(
+                    x=oc_x, y=oc_y, z=oc_z,
+                    # opacity=opacity,
+                    showlegend=False,
+                    mode='lines',
+                    marker=dict(color='rgb(255,255,255)',
+                                ),
+                    line=dict(color='rgb(0,0,0)', width=10
+                                )))
             else:
                 raise ValueError(f'Unknown lane segment type {lane_seg.type}')
     # for agent_id, wps in map.wps.items():

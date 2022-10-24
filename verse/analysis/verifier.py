@@ -195,7 +195,7 @@ class Verifier:
                     elif reachability_method == "NeuReach":
                         cur_bloated_tube = postCont(
                             mode, 
-                            init[0], 
+                            inits[0], 
                             remain_time, 
                             time_step, 
                             node.agent[agent_id].TC_simulate, 
@@ -321,8 +321,8 @@ class Verifier:
                         max_end_idx+1)*2]
 
         self.reachtube_tree = AnalysisTree(root)
-        print(f">>>>>>>> Number of calls to reachability engine: {num_calls}")
-        print(f">>>>>>>> Number of transitions happening: {num_transitions}")
+        # print(f">>>>>>>> Number of calls to reachability engine: {num_calls}")
+        # print(f">>>>>>>> Number of transitions happening: {num_transitions}")
         self.num_transitions = num_transitions
 
         return self.reachtube_tree
