@@ -17,3 +17,4 @@ map_package/
 **/output.json
 docs/build/
 docs/source/_autosummary/
+**/.ipynb_checkpoints/
