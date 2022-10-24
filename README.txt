@@ -2,9 +2,9 @@ This is the repeatability evaluation package for the tool paper "Verse: A Python
 
 ###########################
 
-The link to the artifact on Google drive is: 
-
 The link to the artifact on Figshare is:
+
+The link to the artifact on Google drive is: 
 
 The link to the source code git repository for Verse is: 
 
@@ -14,9 +14,12 @@ The run-time for regenerating data in Table 1 in the paper is approximately 2650
 
 The run-time for regenerating data in Simulation section of Table 2 in the paper is approximately 174s (~3min).
 
-The run-time for regenerating data in Reach section of Table 2 in the paper is approximately ?s (~?min).
+The run-time for regenerating data in Reach section of Table 2 in the paper is approximately 4682s (~78min).
 
 ###########################
+
+The first step for replicating the experiments in the paper is to install Verse. Verse can be installed using command 
+    python3 -m pip install -e .
 
 To replicate our experiments from the paper, please run following commands from the root directory of the artifact. 
 1. For results in Table 1 Run command 
@@ -45,8 +48,10 @@ The results for all experiments in Table 1 will be generated as below at the end
     Verification: Run command 
         python3 inc-expr.py v 
     The results for the experiments in Table 2 section Verification will be generated as below at the end of execution
-        # TODO:
-        
+        & repeat & 105 & 464.77 & 498 & 58.99 & 482 & 3.23 & 76.79 \\
+        & change init & 49 & 384.84 & 486 & 362.25 & 500 & 3.7 & 73.21 \\
+        & change ctlr & 93 & 428.83 & 498 & 227.49 & 491 & 4.0 & 73.44 \\
+
 3. To reproduce Fig. 1,
     Center: Run command 
         python3 demo/tacas2023/exp1/exp1_sim.py p 
