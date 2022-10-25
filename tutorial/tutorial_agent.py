@@ -34,9 +34,14 @@ class Agent1(BaseAgent):
             self.switch_duration = 0
         elif vehicle_mode == "Brake":
             d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
-            a = -1    
-            if v<0.01:
-                a=0
+            if v>0:
+                a = -1    
+                if v<0.01:
+                    a=0
+            else:
+                a = 1
+                if v>-0.01:
+                    a=0
             self.switch_duration = 0
         else:
             raise ValueError(f'Invalid mode: {vehicle_mode}')

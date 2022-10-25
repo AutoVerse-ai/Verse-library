@@ -309,8 +309,9 @@ class ControllerIR:
         controller = top['decisionLogic']
         asserts = [(a.cond, a.label if a.label != None else f"<assert {i}>", merge_conds(a.pre)) for i, a in enumerate(controller.asserts)]
         asserts_veri = [Assert(Env.trans_args(copy.deepcopy(c), True), l, Env.trans_args(copy.deepcopy(p), True)) for c, l, p in asserts]
-        for a in asserts_veri:
-            print(ControllerIR.dump(a.pre), ControllerIR.dump(a.cond, True))
+        # for a in asserts_veri:
+        #     # print(a)
+        #     print(ControllerIR.dump(a.pre), ControllerIR.dump(a.cond, True))
         asserts_sim = [CompiledAssert(compile_expr(Env.trans_args(c, False)), l, compile_expr(Env.trans_args(p, False))) for c, l, p in asserts]
 
         assert isinstance(controller, Lambda)
@@ -467,7 +468,7 @@ class Env():
             sv.expr = Env.trans_args(sv.expr, veri)
             sv.value = Env.trans_args(sv.value, veri)
             return sv
-        print(ControllerIR.dump(sv, True))
+        # print(ControllerIR.dump(sv, True))
         raise NotImplementedError(str(sv.__class__))
 
 ScopeValueMap = Dict[str, ScopeValue]
