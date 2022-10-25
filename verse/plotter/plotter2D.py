@@ -387,8 +387,8 @@ def simulation_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=g
             range=[x_min-scale_factor*(x_max-x_min), x_max+scale_factor*(x_max-x_min)])
         fig.update_yaxes(
             range=[y_min-scale_factor*(y_max-y_min), y_max+scale_factor*(y_max-y_min)])
-    fig.update_xaxes(title='x')
-    fig.update_yaxes(title='y')
+    # fig.update_xaxes(title='x')
+    # fig.update_yaxes(title='y')
     fig.update_layout(legend_title_text='Agent list')
     fig = update_style(fig)
     return fig

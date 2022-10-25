@@ -23,17 +23,17 @@ class Agent1(BaseAgent):
         v_dot = a 
         return [x_dot, y_dot, theta_dot, v_dot]
 
-    def action_handler(self, mode: List[str], state, lane_map:LaneMap)->Tuple[float, float]:
+    def action_handler(self, mode: List[str], state, track_map:LaneMap)->Tuple[float, float]:
         x,y,theta,v = state
         vehicle_mode = mode[0]
         vehicle_lane = mode[1]
         vehicle_pos = np.array([x,y])
         a = 0
         if vehicle_mode == "Normal":
-            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
+            d = -track_map.get_lateral_distance(vehicle_lane, vehicle_pos)
             self.switch_duration = 0
         elif vehicle_mode == "Brake":
-            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
+            d = -track_map.get_lateral_distance(vehicle_lane, vehicle_pos)
             if v>0:
                 a = -1    
                 if v<0.01:
@@ -46,12 +46,12 @@ class Agent1(BaseAgent):
         else:
             raise ValueError(f'Invalid mode: {vehicle_mode}')
 
-        psi = lane_map.get_lane_heading(vehicle_lane, vehicle_pos)-theta
+        psi = track_map.get_lane_heading(vehicle_lane, vehicle_pos)-theta
         steering = psi + np.arctan2(0.45*d, v)
         steering = np.clip(steering, -0.61, 0.61)
         return steering, a  
 
-    def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step, lane_map:LaneMap=None)->np.ndarray:
+    def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step, track_map:LaneMap=None)->np.ndarray:
         time_bound = float(time_bound)
         number_points = int(np.ceil(time_bound/time_step))
         t = [round(i*time_step,10) for i in range(0,number_points)]
@@ -59,7 +59,7 @@ class Agent1(BaseAgent):
         init = initialCondition
         trace = [[0]+init]
         for i in range(len(t)):
-            steering, a = self.action_handler(mode, init, lane_map)
+            steering, a = self.action_handler(mode, init, track_map)
             r = ode(self.dynamic)    
             r.set_initial_value(init).set_f_params([steering, a])      
             res:np.ndarray = r.integrate(r.t + time_step)
