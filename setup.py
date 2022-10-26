@@ -21,7 +21,6 @@ setup(
         "sympy",
         "six",
         "astunparse",
-        "treelib",
         "z3-solver",
         "plotly",
         "beautifulsoup4",
@@ -29,6 +28,7 @@ setup(
         "torch",
         "tqdm",
         "intervaltree",
+        "Pympler",
     ],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',

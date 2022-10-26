@@ -18,7 +18,10 @@ The run-time for regenerating data in Reach section of Table 2 in the paper is a
 
 ###########################
 
-The first step for replicating the experiments in the paper is to install Verse. Verse can be installed using command 
+The first step for replicating the experiments in the paper is to install Verse and its dependencies. 
+The dependencies for Verse can be installed using following command in the root directory of artifact
+    python3 -m pip install -r requirements_local.txt
+Verse can be installed using following command in the root directory of artifact
     python3 -m pip install -e .
 
 To replicate our experiments from the paper, please run following commands from the root directory of the artifact. 

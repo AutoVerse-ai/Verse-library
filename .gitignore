@@ -17,3 +17,5 @@ map_package/
 **/output.json
 docs/build/
 docs/source/_autosummary/
+**.whl
+**.tar.gz
