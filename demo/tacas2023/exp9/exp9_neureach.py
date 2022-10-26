@@ -73,7 +73,7 @@ if __name__ == "__main__":
                                  "N_t": 50,
                                  "epochs": 50,
                                  "_lambda": 10,
-                                 "use_cuda": True,
+                                 "use_cuda": False,
                                  'r': 0,
                              }
                             )
