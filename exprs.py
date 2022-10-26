@@ -36,7 +36,7 @@ expr_list = [
 ]
 rslts = []
 for expr in expr_list:
-    cmd = Popen(f"/usr/bin/time -v -- python3.8 demo/tacas2023/{expr}", stdout=PIPE, stderr=PIPE, shell=True)
+    cmd = Popen(f"/usr/bin/time -v -- python3 demo/tacas2023/{expr}", stdout=PIPE, stderr=PIPE, shell=True)
     print(f"run '{expr}', pid={cmd.pid}")
     ret = cmd.wait()
     stderr = cmd.stderr.readlines()
