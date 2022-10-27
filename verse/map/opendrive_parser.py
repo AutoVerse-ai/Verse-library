@@ -1,5 +1,4 @@
 #Import all the lane objects we are going to use for lane object identification################
-from turtle import right
 import numpy as np #Numpy library to do the calculations
 import matplotlib.pyplot as plt #Matplotlib library to visualize the roads
 from bs4 import BeautifulSoup #Beautiful Soup library for parsing data in python 
