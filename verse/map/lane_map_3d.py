@@ -30,6 +30,10 @@ class LaneMap_3d:
         self.curr_seg = {}
         self.wps = {}
 
+    def trans_func(self, lane_idx: str) -> str:
+        lane = 'T'+lane_idx[-1]
+        return lane
+
     def add_lanes(self, lane_seg_list: List[AbstractLane_3d]):
         for lane_seg in lane_seg_list:
             self.lane_dict[lane_seg.id] = lane_seg
@@ -44,8 +48,8 @@ class LaneMap_3d:
     def g_func(self, agent_state, lane_idx) -> np.ndarray:
         raise NotImplementedError
 
-    def trans_func(self, lane_idx: str) -> str:
-        raise NotImplementedError
+    # def trans_func(self, lane_idx: str) -> str:
+    #     raise NotImplementedError
 
     def pair_lanes(self, lane_idx_src, lane_idx_dest, relation):
         if isinstance(lane_idx_src, Enum):
@@ -225,29 +229,13 @@ class LaneMap_3d:
             curr_point = self.curr_wp[agent_id][3:]
         else:
             raise ValueError
-        # if agent_id in self.curr_wp and self.check_guard_box(agent_id, pos):
-        #     curr_point = self.curr_wp[agent_id][3:]
-        # else:
-        #     curr_point = pos[:3]
-        # if agent_id in self.curr_wp and np.linalg.norm(curr_point-self.curr_wp[agent_id][3:]) > est_len:
-        #     curr_point = self.curr_wp[agent_id][3:]
-        # elif agent_id in self.curr_wp:
-        #     curr_point = (pos[:3])
-        # print('get_next_point', theta)
-        # if curr_point[0] >= 19.5 and curr_point[0] <= 20.5 and curr_point[1] >= -10.5 and curr_point[1] <= -9.5:
-        #     print('wervvew')
         seg, possible_seg = self.get_lane_segment(lane, curr_point)
-        # if lane == 'Lane1':
-        #     print('.')
-        # if lane == 'Lane1' and seg.id == 'seg1':
-        #     seg, possible_seg = self.get_lane_segment(lane, curr_point)
         if agent_id not in self.curr_seg:
             self.curr_seg[agent_id] = seg
         else:
             if self.curr_seg[agent_id] in possible_seg:
                 seg = self.curr_seg[agent_id]
         longitudinal, lateral, theta = seg.local_coordinates(curr_point)
-        #  print(seg.id)
 
         rate = 0.7
         if est_len >= lateral/rate:
@@ -263,18 +251,6 @@ class LaneMap_3d:
         if next_longitudinal > seg.length:
             next_seg, possible_next_seg = self.get_lane_segment(
                 lane, next_point)
-            # if agent_id == 'test1':
-            #     print(seg.id, longitudinal, next_longitudinal,
-            #           curr_point, next_point)
-            #     print([seg.id for seg in possible_next_seg])
-
-            # min_d = float('inf')
-            # for n_seg in possible_next_seg:
-            #     next_point = n_seg.position(0, lateral, theta)
-            #     d = np.linalg.norm(next_point-curr_point)
-            #     if d < min_d:
-            #         min_d = d
-            #         next_seg = n_seg
             max_in = -float('inf')
             for n_seg in possible_next_seg:
                 next_point = n_seg.position(0, lateral, theta)
@@ -284,13 +260,8 @@ class LaneMap_3d:
                 if d > max_in:
                     max_in = d
                     next_seg = n_seg
-            # if agent_id == 'test1':
-            #     print(seg.id, next_seg.id, next_point)
-            # next_seg = self.get_lane_segment(lane, next_point)
             next_point = next_seg.position(0, lateral, theta)
             self.curr_seg[agent_id] = next_seg
-            # next_point = seg.position(seg.length, lateral, theta)
-            # print(next_point)
 
         next_waypoint = list(curr_point) + next_point.tolist()
 

@@ -19,15 +19,16 @@ def plot3dMap(lane_map, color = 'k', ax = None, width=0.1, num = 20):
         ax = pv.Plotter()
     for lane_idx in lane_map.lane_dict:
         lane = lane_map.lane_dict[lane_idx]
-        for lane_seg in lane.segment_list:
-            # if lane_seg.type == 'Straight':
-            oc, oc_x, oc_y, oc_z = lane_seg.get_lane_center(num)
-            points = np.vstack((oc_x, oc_y, oc_z)).T
-            spline = pv.Spline(points, 400)
-            tube = spline.tube(radius=width)
-            ax.add_mesh(tube, color=color)
-            # elif lane_seg.type == 'Circular':
-            #     oc, oc_x, oc_y, oc_z = lane_seg.get_lane_center(num)
+        if lane.plotted:
+            for lane_seg in lane.segment_list:
+                # if lane_seg.type == 'Straight':
+                oc, oc_x, oc_y, oc_z = lane_seg.get_lane_center(num)
+                points = np.vstack((oc_x, oc_y, oc_z)).T
+                spline = pv.Spline(points, 400)
+                tube = spline.tube(radius=width)
+                ax.add_mesh(tube, color=color)
+                # elif lane_seg.type == 'Circular':
+                #     oc, oc_x, oc_y, oc_z = lane_seg.get_lane_center(num)
 
     return ax
 

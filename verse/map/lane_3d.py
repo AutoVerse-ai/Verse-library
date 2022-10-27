@@ -8,11 +8,12 @@ from verse.map.lane_segment_3d import AbstractLane_3d
 class Lane_3d():
     COMPENSATE = 1
 
-    def __init__(self, id, seg_list: List[AbstractLane_3d]):
+    def __init__(self, id, seg_list: List[AbstractLane_3d], plotted = True):
         self.id = id
         self.segment_list: List[AbstractLane_3d] = seg_list
         self._set_longitudinal_start()
         self.lane_width = seg_list[0].width
+        self.plotted = plotted
 
     def _set_longitudinal_start(self):
         longitudinal_start = 0

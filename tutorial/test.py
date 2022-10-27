@@ -1,100 +1,71 @@
 from verse.scenario import Scenario
-from tutorial_map import M1
+from tutorial_map import M4
 scenario = Scenario()
-scenario.config.init_seg_length = 5
-scenario.set_map(M1())
+scenario.set_map(M4())
 
 from enum import Enum, auto
 
-class AgentMode(Enum):
+class CraftMode(Enum):
     Normal = auto()
-    Brake = auto()
-    
+    MoveUp = auto()
+    MoveDown = auto()
+
 class TrackMode(Enum):
     T0 = auto()
-    
-class State:
-    x:float
-    y:float
-    theta:float
-    v:float
-    agent_mode:AgentMode 
-    track_mode:TrackMode 
+    T1 = auto()
+    T2 = auto()
+    M01 = auto()
+    M10 = auto()
+    M12 = auto()
+    M21 = auto()
 
-    def __init__(self, x, y, theta, v, agent_mode: AgentMode, track_mode: TrackMode):
+class State:
+    x: float
+    y: float
+    z: float
+    vx: float
+    vy: float
+    vz: float
+    craft_mode: CraftMode
+    track_mode: TrackMode
+
+    def __init__(self, x, y, z, vx, vy, vz, craft_mode, track_mode):
         pass
 
-from typing import List
-import copy
-def decisionLogic(ego:State, others: List[State], track_map):
-    output = copy.deepcopy(ego)
-    if ego.agent_mode == AgentMode.Normal:
-        if any( other.x-ego.x< 8 and other.x-ego.x>0 for other in others):
-            output.agent_mode = AgentMode.Brake
-    
-    ### Adding safety assertions
-    assert not any(other.x-ego.x<1.0 and other.x-ego.x>-1.0 for other in others), 'Seperation'
-    ##########
-    
-    return output
+from tutorial_agent import DroneAgent
+drone1 = DroneAgent(
+    'drone1', file_name="dl_sec2.py", t_v_pair=(1, 1), box_side=[0.4]*3)
+drone1.set_initial(
+    [[1.5, -0.5, -0.5, 0, 0, 0], [2.5, 0.5, 0.5, 0, 0, 0]],
+    (CraftMode.Normal, TrackMode.T1)
+)
+scenario.add_agent(drone1)
 
-dl = "from enum import Enum, auto\n\
-\n\
-class AgentMode(Enum):\n\
-    Normal = auto()\n\
-    Brake = auto()\n\
-\n\
-class TrackMode(Enum):\n\
-    T0 = auto()\n\
-\n\
-class State:\n\
-    x:float\n\
-    y:float\n\
-    theta:float\n\
-    v:float\n\
-    agent_mode:AgentMode\n\
-    track_mode:TrackMode \n\
-\n\
-    def __init__(self, x, y, theta, v, agent_mode: AgentMode, track_mode: TrackMode):\n\
-        pass\n\
-\n\
-from typing import List\n\
-import copy\n\
-def decisionLogic(ego:State, others: List[State], track_map):\n\
-    output = copy.deepcopy(ego)\n\
-    if ego.agent_mode == AgentMode.Normal:\n\
-        if any( other.x-ego.x< 8 and other.x-ego.x>0 for other in others):\n\
-            output.agent_mode = AgentMode.Brake\n\
-\n\
-    ### Adding safety assertions\n\
-    assert not any(other.x-ego.x<1.0 and other.x-ego.x>-1.0 for other in others), 'Seperation'\n\
-    ##########\n\
-\n\
-    return output\n\
-"
+drone2 = DroneAgent(
+    'drone2', file_name="dl_sec2.py", t_v_pair=(1, 0.5), box_side=[0.4]*3)
+drone2.set_initial(
+    [[19.5, -0.5, -0.5, 0, 0, 0], [20.5, 0.5, 0.5, 0, 0, 0]],
+    (CraftMode.Normal, TrackMode.T1)
+)
+scenario.add_agent(drone2)
 
-from tutorial_agent import Agent1
-car1 = Agent1('car1', code=dl)
-car1.set_initial([[0,-0.5,0,2],[1,0.5,0,2]], (AgentMode.Normal, TrackMode.T0))
-car2 = Agent1('car2', code=dl)
-car2.set_initial([[15,-0.5,0,1],[16,0.5,0,1]], (AgentMode.Normal, TrackMode.T0))
-scenario.add_agent(car1)
-scenario.add_agent(car2)
+scenario.add_agent(drone1)
+scenario.add_agent(drone2)
+
 from tutorial_sensor import DefaultSensor
 scenario.set_sensor(DefaultSensor())
 
-scenario.set_init_single('car1',[[0,-0.5,0,5],[1,0.5,0,5]], (AgentMode.Normal, TrackMode.T0))
+traces_simu = scenario.simulate(60, 0.2)
+traces_veri = scenario.verify(60, 0.2)
 
-traces_simu = scenario.simulate(10, 0.01)
-traces_veri = scenario.verify(10, 0.01)
+from verse.plotter.plotter3D import *
+import pyvista as pv
+import warnings
+warnings.filterwarnings("ignore")
 
-import plotly.graph_objects as go
-from verse.plotter.plotter2D import *
-
-fig = go.Figure()
-fig = simulation_tree(traces_simu, None, fig, 0, 1, [0, 1], 'lines', 'trace')
-fig.show()
-
-fig = go.Figure()
-fig = reachtube_tree(traces_veri, None, fig, 0, 1, [0, 1], 'lines', 'trace')
+fig = pv.Plotter()
+fig = plot3dMap(M4(), ax=fig)
+fig = plot3dReachtube(traces_veri, 'drone1', 1, 2, 3, color = 'r', ax=fig)
+fig = plot3dReachtube(traces_veri, 'drone2', 1, 2, 3, color = 'b', ax=fig)
+fig.set_background('#e0e0e0')
 fig.show()

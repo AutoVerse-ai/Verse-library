@@ -29,7 +29,7 @@ setup(
         "torch",
         "tqdm",
         "intervaltree",
-        "Pympler"
+        "Pympler",
         "nbformat",
     ],
     classifiers=[

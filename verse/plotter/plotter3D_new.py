@@ -1,4 +1,3 @@
-from curses import start_color
 import plotly.graph_objects as go
 import numpy as np
 from typing import List, Tuple, Union
