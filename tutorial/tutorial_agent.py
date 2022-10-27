@@ -10,7 +10,7 @@ from verse import BaseAgent
 from verse import LaneMap
 from verse.map.lane_map_3d import LaneMap_3d
 
-class AgentCar(BaseAgent):
+class CarAgent(BaseAgent):
     def __init__(self, id, code = None, file_name = None, initial_state = None, initial_mode = None):
         super().__init__(id, code, file_name, initial_state=initial_state, initial_mode=initial_mode)
         self.switch_duration = 0
@@ -25,33 +25,34 @@ class AgentCar(BaseAgent):
         v_dot = a 
         return [x_dot, y_dot, theta_dot, v_dot]
 
-    def action_handler(self, mode: List[str], state, track_map:LaneMap)->Tuple[float, float]:
+    def action_handler(self, mode: List[str], state, lane_map)->Tuple[float, float]:
         x,y,theta,v = state
         vehicle_mode = mode[0]
         vehicle_lane = mode[1]
         vehicle_pos = np.array([x,y])
         a = 0
         if vehicle_mode == "Normal":
-            d = -track_map.get_lateral_distance(vehicle_lane, vehicle_pos)
-            self.switch_duration = 0
+            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
+        elif vehicle_mode == "SwitchLeft":
+            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos) + lane_map.get_lane_width(vehicle_lane) 
+        elif vehicle_mode == "SwitchRight":
+            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos) - lane_map.get_lane_width(vehicle_lane)
         elif vehicle_mode == "Brake":
-            d = -track_map.get_lateral_distance(vehicle_lane, vehicle_pos)
-            if v>0:
-                a = -1    
-                if v<0.01:
-                    a=0
-            else:
-                a = 1
-                if v>-0.01:
-                    a=0
-            self.switch_duration = 0
+            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
+            a = -1    
+        elif vehicle_mode == "Accel":
+            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
+            a = 1
+        elif vehicle_mode == 'Stop':
+            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
+            a = 0
         else:
             raise ValueError(f'Invalid mode: {vehicle_mode}')
 
-        psi = track_map.get_lane_heading(vehicle_lane, vehicle_pos)-theta
+        psi = lane_map.get_lane_heading(vehicle_lane, vehicle_pos)-theta
         steering = psi + np.arctan2(0.45*d, v)
         steering = np.clip(steering, -0.61, 0.61)
-        return steering, a  
+        return steering, a   
 
     def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step, track_map:LaneMap=None)->np.ndarray:
         time_bound = float(time_bound)

@@ -788,6 +788,6 @@ if __name__ == "__main__":
     e = Env.parse(fn=fn)
     e.dump()
     ir = e.to_ir()
-    print(ControllerIR.dump(ir.controller.body, False))
+    print(ControllerIR.dump(ir.decision_logic.body, False))
     for a in ir.asserts:
         print(f"assert {ControllerIR.dump(a.cond, False)}, '{a.label}'")

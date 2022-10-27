@@ -59,21 +59,21 @@ class AnalysisTreeNode:
         return rst_dict
 
     def get_track(self, agent_id, D):
-        if 'TrackMode' not in self.agent[agent_id].controller.mode_defs:
+        if 'TrackMode' not in self.agent[agent_id].decision_logic.mode_defs:
             return ""
         for d in D:
-            if d in self.agent[agent_id].controller.mode_defs['TrackMode'].modes:
+            if d in self.agent[agent_id].decision_logic.mode_defs['TrackMode'].modes:
                 return d
         return ""
 
     def get_mode(self, agent_id, D):
         res = []
-        if 'TrackMode' not in self.agent[agent_id].controller.mode_defs:
+        if 'TrackMode' not in self.agent[agent_id].decision_logic.mode_defs:
             if len(D)==1:
                 return D[0]
             return D
         for d in D:
-            if d not in self.agent[agent_id].controller.mode_defs['TrackMode'].modes:
+            if d not in self.agent[agent_id].decision_logic.mode_defs['TrackMode'].modes:
                 res.append(d)
         if len(res) == 1:
             return res[0]

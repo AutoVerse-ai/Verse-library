@@ -143,3 +143,30 @@ class M4(LaneMap_3d):
         elif lane_idx[-1] == '2':
             lane = 'T2'
         return lane
+
+class M5(LaneMap):
+    def __init__(self):
+        super().__init__()
+        segment0 = StraightLane(
+            'Seg0',
+            [0,0],
+            [500,0],
+            3
+        )
+        lane0 = Lane('T0', [segment0])
+        segment0 = StraightLane(
+            'Seg0',
+            [0,3],
+            [500,3],
+            3
+        )
+        lane1 = Lane('T1', [segment0])
+        # segment2 = LaneSegment('Lane1', 3)
+        # self.add_lanes([segment1,segment2])
+        self.add_lanes([lane0, lane1])
+        self.h_dict = {
+            ("T0","Normal","SwitchLeft"):"M01",
+            ("T1","Normal","SwitchRight"):"M10",
+            ("M01","SwitchLeft","Normal"):"T1",
+            ("M10","SwitchRight","Normal"):"T0",
+        }

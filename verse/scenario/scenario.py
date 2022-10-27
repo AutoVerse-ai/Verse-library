@@ -27,7 +27,7 @@ def red(s):
     return "\x1b[31m" + s + "\x1b[0m"
 
 def pack_env(agent: BaseAgent, ego_ty_name: str, cont: Dict[str, float], disc: Dict[str, str], track_map):
-    state_ty = None #namedtuple(ego_ty_name, agent.controller.state_defs[ego_ty_name].all_vars())
+    state_ty = None #namedtuple(ego_ty_name, agent.decision_logic.state_defs[ego_ty_name].all_vars())
     packed: DefaultDict[str, Any] = defaultdict(dict)
     # packed = {}
     for e in [cont, disc]:
@@ -36,7 +36,7 @@ def pack_env(agent: BaseAgent, ego_ty_name: str, cont: Dict[str, float], disc: D
             packed[k1][k2] = v
     ego_keys, ego_vals = tuple(map(list, zip(*packed[EGO].items())))
     state_ty = namedtuple(ego_ty_name, ego_keys)
-    for arg in agent.controller.args:
+    for arg in agent.decision_logic.args:
         if "map" in arg.name:
             packed[arg.name] = track_map
         elif arg.name != EGO:
@@ -61,11 +61,11 @@ def check_sim_transitions(agent: BaseAgent, guards: List[Tuple], cont, disc, map
     satisfied_guard = []
     agent_id = agent.id
     # Unsafety checking
-    ego_ty_name = find(agent.controller.args, lambda a: a.name == EGO).typ
+    ego_ty_name = find(agent.decision_logic.args, lambda a: a.name == EGO).typ
     packed_env = pack_env(agent, ego_ty_name, cont, disc, map)
 
     # Check safety conditions
-    for assertion in agent.controller.asserts:
+    for assertion in agent.decision_logic.asserts:
         if eval(assertion.pre, packed_env):
             if not eval(assertion.cond, packed_env):
                 del packed_env["__builtins__"]
@@ -97,7 +97,7 @@ def check_sim_transitions(agent: BaseAgent, guards: List[Tuple], cont, disc, map
         for j, (reset_idx, path) in enumerate(pos):
             reset_variable = list(all_resets.keys())[j]
             res = eval(all_resets[reset_variable][reset_idx][0], packed_env)
-            ego_type = agent.controller.state_defs[ego_ty_name]
+            ego_type = agent.decision_logic.state_defs[ego_ty_name]
             if "mode" in reset_variable:
                 var_loc = ego_type.disc.index(reset_variable)
                 assert not isinstance(res, list), res
@@ -161,16 +161,16 @@ class Scenario:
             # Update the lane mode field in the agent
             self.update_agent_lane_mode(agent, self.map)
         self.agent_dict[agent.id] = agent
-        if agent.init_cont is not None:
+        if hasattr(agent, 'init_cont') and agent.init_cont is not None:
             self.init_dict[agent.id] = copy.deepcopy(agent.init_cont) 
-        if agent.init_disc is not None:
+        if hasattr(agent, 'init_disc') and agent.init_disc is not None:
             self.init_mode_dict[agent.id] = copy.deepcopy(agent.init_disc)
 
-        if agent.static_parameters is not None:
+        if hasattr(agent, 'static_parameters') and agent.static_parameters is not None:
             self.static_dict[agent.id] = copy.deepcopy(agent.static_parameters)
         else:
             self.static_dict[agent.id] = []
-        if agent.uncertain_parameters is not None:
+        if hasattr(agent, 'uncertain_parameters') and agent.uncertain_parameters is not None:
             self.uncertain_param_dict[agent.id] = copy.deepcopy(agent.uncertain_parameters)
         else:
             self.uncertain_param_dict[agent.id] = []
@@ -179,25 +179,25 @@ class Scenario:
     # TODO-PARSER: update this function
     def update_agent_lane_mode(self, agent: BaseAgent, track_map: LaneMap):
         for lane_id in track_map.lane_dict:
-            if 'TrackMode' in agent.controller.mode_defs and lane_id not in agent.controller.mode_defs['TrackMode'].modes:
-                agent.controller.mode_defs['TrackMode'].modes.append(lane_id)
-        # mode_vals = list(agent.controller.modes.values())
-        # agent.controller.vertices = list(itertools.product(*mode_vals))
-        # agent.controller.vertexStrings = [','.join(elem) for elem in agent.controller.vertices]
+            if 'TrackMode' in agent.decision_logic.mode_defs and lane_id not in agent.decision_logic.mode_defs['TrackMode'].modes:
+                agent.decision_logic.mode_defs['TrackMode'].modes.append(lane_id)
+        # mode_vals = list(agent.decision_logic.modes.values())
+        # agent.decision_logic.vertices = list(itertools.product(*mode_vals))
+        # agent.decision_logic.vertexStrings = [','.join(elem) for elem in agent.decision_logic.vertices]
 
     def set_init_single(self, agent_id, init: list, init_mode: tuple, static=[], uncertain_param=[]):
         assert agent_id in self.agent_dict, 'agent_id not found'
         agent = self.agent_dict[agent_id]
         assert len(init) == 1 or len(
             init) == 2, 'the length of init should be 1 or 2'
-        # print(agent.controller.state_defs.values())
-        if agent.controller != agent.controller.empty():
+        # print(agent.decision_logic.state_defs.values())
+        if agent.decision_logic != agent.decision_logic.empty():
             for i in init:
                 assert len(i) == len(
-                    list(agent.controller.state_defs.values())[0].cont),  'the length of element in init not fit the number of continuous variables'
-            # print(agent.controller.mode_defs)
+                    list(agent.decision_logic.state_defs.values())[0].cont),  'the length of element in init not fit the number of continuous variables'
+            # print(agent.decision_logic.mode_defs)
             assert len(init_mode) == len(
-                list(agent.controller.state_defs.values())[0].disc),  'the length of element in init_mode not fit the number of discrete variables'
+                list(agent.decision_logic.state_defs.values())[0].disc),  'the length of element in init_mode not fit the number of discrete variables'
         if len(init) == 1:
             init = init+init
         self.init_dict[agent_id] = copy.deepcopy(init)
@@ -305,7 +305,7 @@ class Scenario:
 
         dest = copy.deepcopy(agent_mode)
         possible_dest = [[elem] for elem in dest]
-        ego_type = find(agent.controller.args, lambda a: a.name == EGO).typ
+        ego_type = find(agent.decision_logic.args, lambda a: a.name == EGO).typ
         rect = copy.deepcopy([agent_state[0][1:], agent_state[1][1:]])
 
         # The reset_list here are all the resets for a single transition. Need to evaluate each of them
@@ -317,7 +317,7 @@ class Scenario:
             # First get the transition destinations
             if "mode" in reset_variable:
                 found = False
-                for var_loc, discrete_variable_ego in enumerate(agent.controller.state_defs[ego_type].disc):
+                for var_loc, discrete_variable_ego in enumerate(agent.decision_logic.state_defs[ego_type].disc):
                     if discrete_variable_ego == reset_variable:
                         found = True
                         break
@@ -338,7 +338,7 @@ class Scenario:
                         possible_dest[var_loc] = res
                     else:
                         expr = tmp
-                        if expr[0].strip(' ') in agent.controller.mode_defs:
+                        if expr[0].strip(' ') in agent.decision_logic.mode_defs:
                             possible_dest[var_loc] = [expr[1]]
 
             # Assume linear function for continuous variables
@@ -346,7 +346,7 @@ class Scenario:
                 lhs = reset_variable
                 rhs = expr
                 found = False
-                for lhs_idx, cts_variable in enumerate(agent.controller.state_defs[ego_type].cont):
+                for lhs_idx, cts_variable in enumerate(agent.decision_logic.state_defs[ego_type].cont):
                     if cts_variable == lhs:
                         found = True
                         break
@@ -416,7 +416,7 @@ class Scenario:
         cached_trans = defaultdict(list)
 
         if not cache:
-            paths = [(agent, p) for agent in node.agent.values() for p in agent.controller.paths]
+            paths = [(agent, p) for agent in node.agent.values() for p in agent.decision_logic.paths]
         else:
             _transitions = [(aid, trans) for aid, seg in cache.items() for trans in seg.transitions if sim_trans_suit(trans.inits, node.init)]
             # pp(("cached trans", _transitions))
@@ -441,7 +441,7 @@ class Scenario:
                             path_transitions[p.cond] = max(path_transitions[p.cond], tran.transition)
                 for agent_id, segment in cache.items():
                     agent = node.agent[agent_id]
-                    if len(agent.controller.args) == 0:
+                    if len(agent.decision_logic.args) == 0:
                         continue
                     state_dict = {aid: (node.trace[aid][0], node.mode[aid], node.static[aid]) for aid in node.agent}
                     agent_paths = dedup([p for tran in segment.transitions for p in tran.paths], lambda i: (i.var, i.cond, i.val))
@@ -451,7 +451,7 @@ class Scenario:
 
         for agent, path in paths:
             # Get guard
-            if len(agent.controller.args) == 0:
+            if len(agent.decision_logic.args) == 0:
                 continue
             agent_id = agent.id
             agent_mode = node.mode[agent_id]
@@ -508,7 +508,7 @@ class Scenario:
         cached_trans = defaultdict(list)
 
         if not cache:
-            paths = [(agent, p) for agent in node.agent.values() for p in agent.controller.paths]
+            paths = [(agent, p) for agent in node.agent.values() for p in agent.decision_logic.paths]
         else:
 
             # _transitions = [trans.transition for seg in cache.values() for trans in seg.transitions]
@@ -529,7 +529,7 @@ class Scenario:
                             path_transitions[p.cond] = max(path_transitions[p.cond], tran.transition)
                 for agent_id, segment in cache.items():
                     agent = node.agent[agent_id]
-                    if len(agent.controller.args) == 0:
+                    if len(agent.decision_logic.args) == 0:
                         continue
                     state_dict = {aid: (node.trace[aid][0], node.mode[aid], node.static[aid]) for aid in node.agent}
 
@@ -554,7 +554,7 @@ class Scenario:
         #     if len(trace) < 2:
         #         pp(("weird state", aid, trace))
         for agent, path in paths:
-            if len(agent.controller.args) == 0:
+            if len(agent.decision_logic.args) == 0:
                 continue
             agent_id = agent.id
             state_dict = {aid: (node.trace[aid][0:2], node.mode[aid], node.static[aid]) for aid in node.agent}
@@ -589,7 +589,7 @@ class Scenario:
             asserts = defaultdict(list)
             for agent_id in self.agent_dict.keys():
                 agent: BaseAgent = self.agent_dict[agent_id]
-                if len(agent.controller.args) == 0:
+                if len(agent.decision_logic.args) == 0:
                     continue
                 agent_state, agent_mode, agent_static = state_dict[agent_id]
                 # if np.array(agent_state).ndim != 2:
@@ -598,7 +598,7 @@ class Scenario:
                 cont_vars, disc_vars, len_dict = self.sensor.sense(self, agent, state_dict, self.map)
                 resets = defaultdict(list)
                 # Check safety conditions
-                for i, a in enumerate(agent.controller.asserts_veri):
+                for i, a in enumerate(agent.decision_logic.asserts_veri):
                     pre_expr = a.pre
 
                     def eval_expr(expr):

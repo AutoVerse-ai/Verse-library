@@ -577,9 +577,9 @@ class GuardExpressionAst:
                         root = ast.parse('False').body[0].value    
                 else:
                     # # TODO-PARSER: Handle This
-                    # for mode_name in agent.controller.mode_defs:
+                    # for mode_name in agent.decision_logic.mode_defs:
                     #     # TODO-PARSER: Handle This
-                    #     if res in agent.controller.mode_defs[mode_name].modes:
+                    #     if res in agent.decision_logic.mode_defs[mode_name].modes:
                     #         res = mode_name+'.'+res
                     #         break
                     root = ast.parse(str(res)).body[0].value
@@ -592,14 +592,14 @@ class GuardExpressionAst:
             if expr in disc_var_dict:
                 val = disc_var_dict[expr]
                 # TODO-PARSER: Handle This
-                # for mode_name in agent.controller.mode_defs:
+                # for mode_name in agent.decision_logic.mode_defs:
                 #     # TODO-PARSER: Handle This
-                #     if val in agent.controller.mode_defs[mode_name].modes:
+                #     if val in agent.decision_logic.mode_defs[mode_name].modes:
                 #         val = mode_name+'.'+val
                 #         break
                 return val, root
             # TODO-PARSER: Handle This
-            elif root.value.id in agent.controller.mode_defs:
+            elif root.value.id in agent.decision_logic.mode_defs:
                 return expr, root
             else:
                 return True, root
@@ -621,9 +621,9 @@ class GuardExpressionAst:
             if expr in disc_var_dict:
                 val = disc_var_dict[expr]
                 # # TODO-PARSER: Handle This
-                # for mode_name in agent.controller.mode_defs:
+                # for mode_name in agent.decision_logic.mode_defs:
                 #     # TODO-PARSER: Handle This
-                #     if val in agent.controller.mode_defs[mode_name].modes:
+                #     if val in agent.decision_logic.mode_defs[mode_name].modes:
                 #         val = mode_name + '.' + val 
                 #         break 
                 return val, root
@@ -704,9 +704,9 @@ class GuardExpressionAst:
                     expr = expr.replace(arg, str(cnts_var_dict[arg]))    
                 res = eval(expr)
                 # TODO-PARSER: Handle This
-                for mode_name in agent.controller.mode_defs:
+                for mode_name in agent.decision_logic.mode_defs:
                     # TODO-PARSER: Handle This
-                    if res in agent.controller.mode_defs[mode_name].modes:
+                    if res in agent.decision_logic.mode_defs[mode_name].modes:
                         res = mode_name+'.'+res
                         break
                 return res
@@ -716,9 +716,9 @@ class GuardExpressionAst:
             if expr in disc_var_dict:
                 val = disc_var_dict[expr]
                 # TODO-PARSER: Handle This
-                for mode_name in agent.controller.mode_defs:
+                for mode_name in agent.decision_logic.mode_defs:
                     # TODO-PARSER: Handle This
-                    if val in agent.controller.mode_defs[mode_name].modes:
+                    if val in agent.decision_logic.mode_defs[mode_name].modes:
                         val = mode_name+'.'+val
                         break
                 return val
@@ -727,7 +727,7 @@ class GuardExpressionAst:
                 return val
 
             # TODO-PARSER: Handle This
-            elif root.value.id in agent.controller.mode_defs:
+            elif root.value.id in agent.decision_logic.mode_defs:
                 return expr
         elif isinstance(root, ast.Constant):
             return root.value
@@ -747,9 +747,9 @@ class GuardExpressionAst:
             elif variable in disc_var_dict:
                 val = disc_var_dict[variable]
                 # TODO-PARSER: Handle This
-                for mode_name in agent.controller.mode_defs:
+                for mode_name in agent.decision_logic.mode_defs:
                     # TODO-PARSER: Handle This
-                    if val in agent.controller.mode_defs[mode_name].modes:
+                    if val in agent.decision_logic.mode_defs[mode_name].modes:
                         val = mode_name+'.'+val
                         break
                 return val

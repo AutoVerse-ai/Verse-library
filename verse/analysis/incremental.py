@@ -51,7 +51,7 @@ def to_simulate(old_agents: Dict[str, BaseAgent], new_agents: Dict[str, BaseAgen
     removed_paths, added_paths, reset_changed_paths = [], [], []
     for agent_id, old_agent in old_agents.items():
         new_agent = new_agents[agent_id]
-        old_ctlr, new_ctlr = old_agent.controller, new_agent.controller
+        old_ctlr, new_ctlr = old_agent.decision_logic, new_agent.decision_logic
         assert old_ctlr.args == new_ctlr.args
         def group_by_var(ctlr: ControllerIR) -> Dict[str, List[ModePath]]:
             grouped = defaultdict(list)
@@ -149,7 +149,7 @@ class SimTraceCache:
         for i, val in enumerate(init):
             if i == len(init) - 1:
                 transitions = convert_sim_trans(agent_id, transit_agents, node.init, transition, trans_ind)
-                entry = CachedSegment(trace, assert_hits.get(agent_id), transitions, node.agent[agent_id].controller, run_num, node.id)
+                entry = CachedSegment(trace, assert_hits.get(agent_id), transitions, node.agent[agent_id].decision_logic, run_num, node.id)
                 tree[val - _EPSILON:val + _EPSILON] = entry
                 return entry
             else:
@@ -247,7 +247,7 @@ class ReachTubeCache:
         for i, (low, high) in enumerate(init):
             if i == len(init) - 1:
                 transitions = convert_reach_trans(agent_id, transit_agents, node.init, transition, trans_ind)
-                entry = CachedRTTrans(assert_hits.get(agent_id), transitions, node.agent[agent_id].controller, run_num, node.id)
+                entry = CachedRTTrans(assert_hits.get(agent_id), transitions, node.agent[agent_id].decision_logic, run_num, node.id)
                 tree[low:high + _EPSILON] = entry
                 return entry
             else:

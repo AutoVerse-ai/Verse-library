@@ -1,71 +1,65 @@
-from verse.scenario import Scenario
-from tutorial_map import M4
-scenario = Scenario()
-scenario.set_map(M4())
+import numpy as np
+def car_dynamics(t, state, u):
+    x, y, theta, v = state
+    delta, a = u  
+    x_dot = v*np.cos(theta+delta)
+    y_dot = v*np.sin(theta+delta)
+    theta_dot = v/1.75*np.tan(delta)
+    v_dot = a 
+    return [x_dot, y_dot, theta_dot, v_dot]
+
+from tutorial_utils import car_action_handler
+from typing import List 
+import numpy as np 
+from scipy.integrate import ode
+
+def TC_simulate(mode: List[str], initialCondition, time_bound, time_step, track_map=None)->np.ndarray:
+    time_bound = float(time_bound)
+    number_points = int(np.ceil(time_bound/time_step))
+    t = [round(i*time_step,10) for i in range(0,number_points)]
+
+    init = initialCondition
+    trace = [[0]+init]
+    for i in range(len(t)):
+        steering, a = car_action_handler(mode, init, track_map)
+        r = ode(car_dynamics)    
+        r.set_initial_value(init).set_f_params([steering, a])      
+        res:np.ndarray = r.integrate(r.t + time_step)
+        init = res.flatten().tolist()
+        trace.append([t[i] + time_step] + init) 
+
+    return np.array(trace)
+
+from verse.parser.parser import ControllerIR
+from verse.agents import BaseAgent
+
+class CarAgent(BaseAgent):
+    def __init__(self, id, code = None, file_name = None):
+        self.id = id 
+        self.decision_logic = ControllerIR.parse(code, file_name)
+        self.TC_simulate = TC_simulate
 
 from enum import Enum, auto
 
-class CraftMode(Enum):
+class AgentMode(Enum):
     Normal = auto()
-    MoveUp = auto()
-    MoveDown = auto()
+    Brake = auto()
 
 class TrackMode(Enum):
     T0 = auto()
-    T1 = auto()
-    T2 = auto()
-    M01 = auto()
-    M10 = auto()
-    M12 = auto()
-    M21 = auto()
 
-class State:
-    x: float
-    y: float
-    z: float
-    vx: float
-    vy: float
-    vz: float
-    craft_mode: CraftMode
-    track_mode: TrackMode
+from verse.scenario import Scenario
+from tutorial_map import M1
+scenario = Scenario()
+scenario.set_map(M1())
 
-    def __init__(self, x, y, z, vx, vy, vz, craft_mode, track_mode):
-        pass
 
-from tutorial_agent import DroneAgent
-drone1 = DroneAgent(
-    'drone1', file_name="dl_sec2.py", t_v_pair=(1, 1), box_side=[0.4]*3)
-drone1.set_initial(
-    [[1.5, -0.5, -0.5, 0, 0, 0], [2.5, 0.5, 0.5, 0, 0, 0]],
-    (CraftMode.Normal, TrackMode.T1)
-)
-scenario.add_agent(drone1)
+car1 = CarAgent('car1', file_name="./tutorial/dl_sec4.py")
+car1.set_initial([[0,-0.5,0,2],[1,0.5,0,2]], (AgentMode.Normal, TrackMode.T0))
+car2 = CarAgent('car2', file_name="./tutorial/dl_sec4.py")
+car2.set_initial([[15,-0.5,0,1],[16,0.5,0,1]], (AgentMode.Normal, TrackMode.T0))
+scenario.add_agent(car1)
+scenario.add_agent(car2)
 
-drone2 = DroneAgent(
-    'drone2', file_name="dl_sec2.py", t_v_pair=(1, 0.5), box_side=[0.4]*3)
-drone2.set_initial(
-    [[19.5, -0.5, -0.5, 0, 0, 0], [20.5, 0.5, 0.5, 0, 0, 0]],
-    (CraftMode.Normal, TrackMode.T1)
-)
-scenario.add_agent(drone2)
-
-scenario.add_agent(drone1)
-scenario.add_agent(drone2)
-
-from tutorial_sensor import DefaultSensor
-scenario.set_sensor(DefaultSensor())
-
-traces_simu = scenario.simulate(60, 0.2)
-traces_veri = scenario.verify(60, 0.2)
-
-from verse.plotter.plotter3D import *
-import pyvista as pv
-import warnings
-warnings.filterwarnings("ignore")
-
-fig = pv.Plotter()
-fig = plot3dMap(M4(), ax=fig)
-fig = plot3dReachtube(traces_veri, 'drone1', 1, 2, 3, color = 'r', ax=fig)
-fig = plot3dReachtube(traces_veri, 'drone2', 1, 2, 3, color = 'b', ax=fig)
-fig.set_background('#e0e0e0')
-fig.show()
+traces_simu = scenario.simulate(10, 0.01)
+traces_veri = scenario.verify(10, 0.01)
