@@ -70,7 +70,7 @@ def run(sim, meas=False):
         traces.dump("main.json") 
         traces.dump("tree2.json" if meas else "tree1.json") 
 
-    if 'p' in arg:
+    if 'p' in arg and meas:
         fig = go.Figure()
         if sim:
             fig = simulation_tree(traces, tmp_map, fig, 1, 2, print_dim_list=[1, 2])
