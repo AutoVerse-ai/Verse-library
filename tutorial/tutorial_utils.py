@@ -6,7 +6,7 @@ def car_dynamics(t, state, u):
     delta, a = u  
     x_dot = v*np.cos(theta+delta)
     y_dot = v*np.sin(theta+delta)
-    theta_dot = v/1.75*np.sin(delta)
+    theta_dot = v/1.75*np.tan(delta)
     v_dot = a 
     return [x_dot, y_dot, theta_dot, v_dot]
 

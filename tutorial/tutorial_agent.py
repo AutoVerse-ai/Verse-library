@@ -10,7 +10,7 @@ from verse import BaseAgent
 from verse import LaneMap
 from verse.map.lane_map_3d import LaneMap_3d
 
-class Agent1(BaseAgent):
+class AgentCar(BaseAgent):
     def __init__(self, id, code = None, file_name = None, initial_state = None, initial_mode = None):
         super().__init__(id, code, file_name, initial_state=initial_state, initial_mode=initial_mode)
         self.switch_duration = 0
@@ -21,7 +21,7 @@ class Agent1(BaseAgent):
         delta, a = u  
         x_dot = v*np.cos(theta+delta)
         y_dot = v*np.sin(theta+delta)
-        theta_dot = v/1.75*np.sin(delta)
+        theta_dot = v/1.75*np.tan(delta)
         v_dot = a 
         return [x_dot, y_dot, theta_dot, v_dot]
 
