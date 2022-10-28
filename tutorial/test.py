@@ -1,65 +1,63 @@
-import numpy as np
-def car_dynamics(t, state, u):
-    x, y, theta, v = state
-    delta, a = u  
-    x_dot = v*np.cos(theta+delta)
-    y_dot = v*np.sin(theta+delta)
-    theta_dot = v/1.75*np.tan(delta)
-    v_dot = a 
-    return [x_dot, y_dot, theta_dot, v_dot]
+from verse.map.lane_segment import StraightLane
+from verse.map.lane import Lane
 
-from tutorial_utils import car_action_handler
-from typing import List 
-import numpy as np 
-from scipy.integrate import ode
+segment0 = StraightLane('seg0', [0,0], [500,0], 3)
+lane0 = Lane('T0', [segment0])
+segment1 = StraightLane('seg1', [0,3], [500,3], 3)
+lane1 = Lane('T1', [segment1])
 
-def TC_simulate(mode: List[str], initialCondition, time_bound, time_step, track_map=None)->np.ndarray:
-    time_bound = float(time_bound)
-    number_points = int(np.ceil(time_bound/time_step))
-    t = [round(i*time_step,10) for i in range(0,number_points)]
+h_dict = {
+    ('T0','Normal','SwitchLeft'): 'M01',
+    ('T1','Normal','SwitchRight'): 'M10',
+    ('M01','SwitchLeft','Normal'): 'T1',
+    ('M10','SwitchRight','Normal'): 'T0',
+}
 
-    init = initialCondition
-    trace = [[0]+init]
-    for i in range(len(t)):
-        steering, a = car_action_handler(mode, init, track_map)
-        r = ode(car_dynamics)    
-        r.set_initial_value(init).set_f_params([steering, a])      
-        res:np.ndarray = r.integrate(r.t + time_step)
-        init = res.flatten().tolist()
-        trace.append([t[i] + time_step] + init) 
+def h(lane_idx, agent_mode_src, agent_mode_dest):
+    return h_dict[(lane_idx, agent_mode_src, agent_mode_dest)]
 
-    return np.array(trace)
+def h_exist(lane_idx, agent_mode_src, agent_mode_dest):
+    return (lane_idx, agent_mode_src, agent_mode_dest) in h_dict
 
-from verse.parser.parser import ControllerIR
-from verse.agents import BaseAgent
+from verse.map import LaneMap 
 
-class CarAgent(BaseAgent):
-    def __init__(self, id, code = None, file_name = None):
-        self.id = id 
-        self.decision_logic = ControllerIR.parse(code, file_name)
-        self.TC_simulate = TC_simulate
+class Map2Lanes(LaneMap):
+    def __init__(self):
+        super().__init__()
+        self.add_lanes([lane0, lane1])
+        self.h = h 
+        self.h_exist = h_exist 
 
 from enum import Enum, auto
 
 class AgentMode(Enum):
     Normal = auto()
-    Brake = auto()
+    SwitchLeft = auto()
+    SwitchRight = auto()
 
 class TrackMode(Enum):
     T0 = auto()
+    T1 = auto()
+    M01 = auto()
+    M10 = auto()
 
 from verse.scenario import Scenario
-from tutorial_map import M1
 scenario = Scenario()
-scenario.set_map(M1())
+scenario.set_map(Map2Lanes())
 
-
-car1 = CarAgent('car1', file_name="./tutorial/dl_sec4.py")
-car1.set_initial([[0,-0.5,0,2],[1,0.5,0,2]], (AgentMode.Normal, TrackMode.T0))
-car2 = CarAgent('car2', file_name="./tutorial/dl_sec4.py")
-car2.set_initial([[15,-0.5,0,1],[16,0.5,0,1]], (AgentMode.Normal, TrackMode.T0))
+from tutorial_agent import CarAgent
+car1 = CarAgent('car1', file_name="./dl_sec5.py")
+car1.set_initial([[0,-0.5,0,2],[0.5,0.5,0,2]], (AgentMode.Normal, TrackMode.T0))
+car2 = CarAgent('car2', file_name="./dl_sec5.py")
+car2.set_initial([[20,-0.5,0,1],[20.5,0.5,0,1]], (AgentMode.Normal, TrackMode.T0))
 scenario.add_agent(car1)
 scenario.add_agent(car2)
 
-traces_simu = scenario.simulate(10, 0.01)
-traces_veri = scenario.verify(10, 0.01)
+traces_veri = scenario.verify(20, 0.01)
+
+import plotly.graph_objects as go
+from verse.plotter.plotter2D import *
+
+fig = go.Figure()
+fig = reachtube_tree(traces_veri, Map2Lanes(), fig, 1, 2, [1, 2], 'lines', 'trace')
+fig.show()

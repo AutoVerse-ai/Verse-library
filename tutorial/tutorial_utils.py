@@ -25,6 +25,8 @@ def car_action_handler(mode: List[str], state, lane_map)->Tuple[float, float]:
     elif vehicle_mode == "Brake":
         d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
         a = -1    
+        if v<0.01:
+            a = 0
     elif vehicle_mode == "Accel":
         d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
         a = 1
