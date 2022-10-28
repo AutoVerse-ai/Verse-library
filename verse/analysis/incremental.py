@@ -74,7 +74,7 @@ def to_simulate(old_agents: Dict[str, BaseAgent], new_agents: Dict[str, BaseAgen
                 elif not ControllerIR.ir_eq(old.val_veri, new.val_veri):
                     reset_changed_paths.append(new)
     new_cache = {}
-    pp(("removed_paths", removed_paths))
+    # pp(("removed_paths", removed_paths))
     for agent_id in cached:
         segment = copy.deepcopy(cached[agent_id])
         new_transitions = []
@@ -94,7 +94,7 @@ def to_simulate(old_agents: Dict[str, BaseAgent], new_agents: Dict[str, BaseAgen
                 new_transitions.append(trans)
         segment.transitions = new_transitions
         new_cache[agent_id] = segment
-        pp(("filtered", agent_id, len(cached[agent_id].transitions), len(new_cache[agent_id].transitions), len([p for a, p in added_paths if a.id == agent_id])))
+        # pp(("filtered", agent_id, len(cached[agent_id].transitions), len(new_cache[agent_id].transitions), len([p for a, p in added_paths if a.id == agent_id])))
     return new_cache, added_paths
 
 def convert_sim_trans(agent_id, transit_agents, inits, transition, trans_ind):
