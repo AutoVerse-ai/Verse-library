@@ -19,3 +19,4 @@ docs/build/
 docs/source/_autosummary/
 **.whl
 **.tar.gz
+**/.ipynb_checkpoints/
