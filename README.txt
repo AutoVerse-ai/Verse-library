@@ -1,12 +1,18 @@
-This is the repeatability evaluation package for the tool paper "Verse: A Python library for reasoning about multi-agent hybrid system scenarios"
+This is the repeatability evaluation package for the tool paper "Verse: A Python library for reasoning about multi-agent hybrid system scenarios". The "README.txt" file contains instruction to reproduce all experiments in the paper. A PDF version of the file can be found in "README.pdf".
 
 ###########################
 
 The link to the artifact on Figshare is:
+https://figshare.com/articles/software/Verse_A_Python_library_for_reasoning_about_multi-agent_hybrid_system_scenarios/21433125
 
 The link to the artifact on Google drive is: 
+https://drive.google.com/file/d/1MXVTnsqtt1YVOaWZDcgy_gvuC7d_hH7F/view?usp=sharing
 
-The link to the source code git repository for Verse is: https://github.com/AutoVerse-ai/Verse-library
+The link to the source code git repository for Verse is: 
+https://github.com/AutoVerse-ai/Verse-library
+
+A tutorial for creating custom scenarios can be found at:
+https://github.com/AutoVerse-ai/Verse-library/tree/tutorial
 
 ###########################
 
@@ -48,7 +54,7 @@ The results for all experiments in Table 1 will be generated as below at the end
         & change init & 24 & 14.93 & 431 & 12.98 & 436 & 4.07 & 75.91 \\
         & change ctlr & 45 & 16.1 & 431 & 8.49 & 438 & 4.38 & 78.19 \\
 
-    Verification: Run command 
+    Reach: Run command 
         python3 inc-expr.py v 
     The results for the experiments in Table 2 section Verification will be generated as below at the end of execution
         & repeat & 105 & 464.77 & 498 & 58.99 & 482 & 3.23 & 76.79 \\
@@ -93,9 +99,9 @@ Verse will automatically open a browser window to show the resulting plot. The r
 
 
 7. To reproduce Fig. 9 in Appendix, 
-    Left: Run command 
+    Left: Run command  
         python3 demo/tacas2023/exp6/exp6_neureach.py p
-    Verse will automatically open a browser window to show the resulting plot. 
+    Verse will automatically open a browser window to show the resulting plot. Note that due to the randomization in NeuReach's algorithm, the generated figure can be slightly different from the one included in the paper.
 
     Right: Run command 
         python3 demo/tacas2023/exp6/exp6_dryvr.py p 
@@ -129,7 +135,7 @@ Verse will automatically open a browser window to show the resulting plot.
 
 12. To reproduce Fig. 16 in Appendix 
     Left: Run command 
-        python3 demo/tacas2023/exp11/inc-expr.py vnp
+        python3 demo/tacas2023/exp11/inc-expr.py s8p
     Verse will automatically open a browser window to show the resulting plot. 
 
     Right: Run command 
