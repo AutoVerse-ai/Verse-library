@@ -8,11 +8,9 @@ https://figshare.com/articles/software/Verse_A_Python_library_for_reasoning_abou
 The link to the artifact on Google drive is: 
 https://drive.google.com/file/d/1MXVTnsqtt1YVOaWZDcgy_gvuC7d_hH7F/view?usp=sharing
 
-The link to the source code git repository for Verse is: 
-https://github.com/AutoVerse-ai/Verse-library
-
-A tutorial for creating custom scenarios can be found at:
-https://github.com/AutoVerse-ai/Verse-library/tree/tutorial
+A detailed interactive tutorial for verse can be found at:
+https://github.com/AutoVerse-ai/Verse-library/blob/tutorial/tutorial/Verse_Tutorial_Drone.ipynb
+and a PDF version of the tutorial is included in the artifact as "tutorial.pdf"
 
 ###########################
 

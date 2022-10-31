@@ -10,14 +10,11 @@ The link to the artifact on Google drive is:
 
 https://drive.google.com/file/d/1MXVTnsqtt1YVOaWZDcgy_gvuC7d_hH7F/view?usp=sharing
 
-The link to the source code git repository for Verse is: 
+A detailed interactive tutorial for verse can be found at:
 
-https://github.com/AutoVerse-ai/Verse-library
+https://github.com/AutoVerse-ai/Verse-library/blob/tutorial/tutorial/Verse_Tutorial_Drone.ipynb
 
-A tutorial for creating custom scenarios can be found at:
-
-https://github.com/AutoVerse-ai/Verse-library/tree/tutorial
-
+and a PDF version of the tutorial is included in the artifact as "tutorial.pdf"
 # Estimated Runtime
 
 The run-time for regenerating data in Table 1 in the paper is approximately 2650s (~44min).
