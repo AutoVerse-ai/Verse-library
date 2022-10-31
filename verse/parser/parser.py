@@ -600,8 +600,6 @@ def proc(node: ast.AST, env: Env) -> Any:
     elif isinstance(node, ast.For) or isinstance(node, ast.While):
         raise NotImplementedError("loops not supported")
     elif isinstance(node, ast.If):
-        if astunparser.unparse(node)=='\nif lane_map.has_left(ego.lane_mode):\n    output.vehicle_mode = VehicleMode.SwitchLeft\n':
-            print("stop")
         if is_main_check(node):
             return START_OF_MAIN
         test = proc(node.test, env)
