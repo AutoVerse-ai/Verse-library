@@ -10,7 +10,9 @@ https://drive.google.com/file/d/1MXVTnsqtt1YVOaWZDcgy_gvuC7d_hH7F/view?usp=shari
 
 A detailed interactive tutorial for verse can be found at:
 https://github.com/AutoVerse-ai/Verse-library/blob/tutorial/tutorial/Verse_Tutorial_Drone.ipynb
-and a PDF version of the tutorial is included in the artifact as "tutorial.pdf"
+and a PDF version of the tutorial is included in the artifact as "tutorial.pdf".
+
+The tool will be made available publicly if the paper gets accepted.
 
 ###########################
 
@@ -69,7 +71,7 @@ The results for all experiments in Table 1 will be generated as below at the end
 
 4. To reproduce Fig. 4, from left to right 
     (1) Run command 
-        python3 python3 demo/tacas2023/exp9/exp9_dryvr.py pl
+        python3 demo/tacas2023/exp9/exp9_dryvr.py pl
 
     (2)-(3) Run command 
         python3 demo/tacas2023/exp9/exp9_dryvr.py pc

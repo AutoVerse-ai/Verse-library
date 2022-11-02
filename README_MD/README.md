@@ -14,7 +14,9 @@ A detailed interactive tutorial for verse can be found at:
 
 https://github.com/AutoVerse-ai/Verse-library/blob/tutorial/tutorial/Verse_Tutorial_Drone.ipynb
 
-and a PDF version of the tutorial is included in the artifact as "tutorial.pdf"
+and a PDF version of the tutorial is included in the artifact as "tutorial.pdf".
+
+The tool will be made available publicly if the paper gets accepted.
 # Estimated Runtime
 
 The run-time for regenerating data in Table 1 in the paper is approximately 2650s (~44min).
@@ -104,7 +106,7 @@ To replicate our experiments from the paper, please run following commands from 
    
     <strong>(1)</strong> Run command 
     ```
-        python3 python3 demo/tacas2023/exp9/exp9_dryvr.py pl
+        python3 demo/tacas2023/exp9/exp9_dryvr.py pl
     ```
     The result will looks like below.
     ![Fig. 4 (1)](exp9_lab.png)
