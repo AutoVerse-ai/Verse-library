@@ -241,7 +241,7 @@ class Verifier:
                     # pp(("to sim", new_cache.keys(), len(paths_to_sim)))
 
             # Get all possible transitions to next mode
-            asserts, all_possible_transitions = transition_graph.get_transition_verify_new(new_cache, paths_to_sim, node)
+            asserts, all_possible_transitions = transition_graph.get_transition_verify(new_cache, paths_to_sim, node)
             # pp(("transitions:", [(t[0], t[2]) for t in all_possible_transitions]))
             node.assert_hits = asserts
             if asserts != None:
