@@ -47,7 +47,9 @@ class StateDef:
     """Variable/member set needed for simulation/verification for some object"""
     cont: List[str] = field(default_factory=list)     # Continuous variables
     disc: List[str] = field(default_factory=list)     # Discrete variables
+    disc_type: List[str] = field(default_factory=list) # Type of discrete variables
     static: List[str] = field(default_factory=list)   # Static data in object
+    static_type: List[str] = field(default_factory=list) # Type of discrete variables
 
     def all_vars(self) -> List[str]:
         return self.cont + self.disc + self.static
@@ -258,6 +260,7 @@ class ControllerIR:
     asserts_veri: List[Assert]
     state_defs: Dict[str, StateDef]
     mode_defs: Dict[str, ModeDef]
+    controller_code: str
 
     @staticmethod
     def parse(code: Optional[str] = None, fn: Optional[str] = None) -> "ControllerIR":
@@ -265,7 +268,7 @@ class ControllerIR:
 
     @staticmethod
     def empty() -> "ControllerIR":
-        return ControllerIR([], [], [], [], {}, {})
+        return ControllerIR([], [], [], [], {}, {},"")
 
     @staticmethod
     def dump(node, dump=False):
@@ -328,28 +331,32 @@ class ControllerIR:
                     cond = compile_expr(Env.trans_args(cond, False))
                     val = compile_expr(Env.trans_args(case.val, False))
                     paths.append(ModePath(cond, cond_veri, var, val, val_veri))
-        return ControllerIR(controller.args, paths, asserts_sim, asserts_veri, env.state_defs, env.mode_defs)
+        return ControllerIR(controller.args, paths, asserts_sim, asserts_veri, env.state_defs, env.mode_defs, env.controller_code)
 
 @dataclass
 class Env():
+    controller_code: str
     state_defs: Dict[str, StateDef] = field(default_factory=dict)
     mode_defs: Dict[str, ModeDef] = field(default_factory=dict)
     scopes: List[ScopeLevel] = field(default_factory=lambda: [ScopeLevel()])
 
     @staticmethod
     def parse(code: Optional[str] = None, fn: Optional[str] = None):
+        code_string = ""
         if code != None:
             if fn != None:
                 root = ast.parse(code, fn)
             else:
                 root = ast.parse(code)
+            code_string = code
         elif fn != None:
             with open(fn) as f:
                 cont = f.read()
             root = ast.parse(cont, fn)
+            code_string = cont
         else:
             raise TypeError("need at least one of `code` and `fn`")
-        env = Env()
+        env = Env(controller_code = code_string)
         proc(root, env)
         return env
 
@@ -665,20 +672,35 @@ def proc(node: ast.AST, env: Env) -> Any:
                         raise NotImplementedError("non ident as mode/state name")
             return names
 
+        def grab_annotates(nodes: List[ast.stmt]):
+            annotates = []
+            for node in nodes:
+                if isinstance(node, ast.Assign):
+                    annotates.append(None)
+                elif isinstance(node, ast.AnnAssign):
+                    if isinstance(node.annotation, ast.Name):
+                        annotates.append(node.annotation.id)
+                    else:
+                        raise NotImplementedError("non ident as mode/state name")
+            return annotates
+
         # NOTE we are dupping it in `state_defs`/`mode_defs` and the scopes cuz value
         if node.name.endswith("Mode"):
             mode_def = ModeDef(grab_names(node.body))
             env.mode_defs[node.name] = mode_def
         elif node.name.endswith("State"):
             names = grab_names(node.body)
+            annotates = grab_annotates(node.body)
             state_vars = StateDef()
-            for name in names:
+            for i, name in enumerate(names):
                 if "type" == name:
                     state_vars.static.append(name)
+                    state_vars.static_type.append(annotates[i])
                 elif "mode" not in name:
                     state_vars.cont.append(name)
                 else:
                     state_vars.disc.append(name)
+                    state_vars.disc_type.append(annotates[i])
             env.state_defs[node.name] = state_vars
         env.add_hole(node.name, None)
     elif isinstance(node, ast.Assert):

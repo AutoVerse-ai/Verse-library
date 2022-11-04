@@ -80,7 +80,7 @@ if __name__ == "__main__":
     # fig.show()
 
     start_time = time.time()
-    traces = scenario.verify(80, 0.05)
+    traces = scenario.simulate_simple(80, 0.05)
     run_time = time.time()-start_time 
     traces.dump("./demo/tacas2023/exp3/output3.json")
 
@@ -96,5 +96,5 @@ if __name__ == "__main__":
 
     if len(sys.argv)>1 and sys.argv[1]=='p':
         fig = go.Figure()
-        fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace',combine_rect=3)
+        fig = simulation_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace')
         fig.show()

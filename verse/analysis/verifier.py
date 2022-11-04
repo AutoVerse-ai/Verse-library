@@ -10,7 +10,6 @@ import numpy as np
 from verse.analysis.analysis_tree import AnalysisTreeNode, AnalysisTree
 from verse.analysis.dryvr import calc_bloated_tube, SIMTRACENUM
 from verse.analysis.mixmonotone import calculate_bloated_tube_mixmono_cont, calculate_bloated_tube_mixmono_disc
-from verse.analysis.NeuReach.NeuReach_onestep_rect import postCont
 from verse.analysis.incremental import ReachTubeCache, TubeCache, convert_reach_trans, to_simulate, combine_all
 from verse.analysis.utils import dedup
 from verse.parser.parser import find
@@ -193,6 +192,7 @@ class Verifier:
                                             lane_map = lane_map
                                             )
                     elif reachability_method == "NeuReach":
+                        from verse.analysis.NeuReach.NeuReach_onestep_rect import postCont
                         cur_bloated_tube = postCont(
                             mode, 
                             inits[0], 

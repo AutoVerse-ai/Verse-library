@@ -38,6 +38,24 @@ class LaneMap_3d:
             self.up_lane_dict[lane_seg.id] = []
             self.down_lane_dict[lane_seg.id] = []
 
+    def h(self, lane_idx: str, agent_mode_src: str, agent_mode_dest: str) -> str:
+        if isinstance(lane_idx, Enum):
+            lane_idx = lane_idx.name
+        if isinstance(agent_mode_src, Enum):
+            agent_mode_src = agent_mode_src.name
+        if isinstance(agent_mode_dest, Enum):
+            agent_mode_dest = agent_mode_dest.name
+        return self.h_func(lane_idx, agent_mode_src, agent_mode_dest)
+
+    def h_exist(self, lane_idx: str, agent_mode_src: str, agent_mode_dest: str) -> str:
+        if isinstance(lane_idx, Enum):
+            lane_idx = lane_idx.name
+        if isinstance(agent_mode_src, Enum):
+            agent_mode_src = agent_mode_src.name
+        if isinstance(agent_mode_dest, Enum):
+            agent_mode_dest = agent_mode_dest.name
+        return self.h_exist_func(lane_idx, agent_mode_src, agent_mode_dest)
+
     def h_func(self, lane_idx: str, agent_mode_src: str, agent_mode_dest: str) -> str:
         raise NotImplementedError
 
