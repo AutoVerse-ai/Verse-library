@@ -45,6 +45,7 @@ from verse.agents.example_agent.ball_agent import BallAgent
 from verse import Scenario
 from verse.plotter.plotter2D import *
 import plotly.graph_objects as go
+from verse.sensor.example_sensor.single_sensor import SingleSensor
 
 if __name__ == "__main__":
     ball_controller = './demo/ball_bounces_dev.py'
@@ -67,9 +68,13 @@ if __name__ == "__main__":
             (BallTypeMode.TYPE2,)
         ]
     )
+    bouncingBall.set_sensor(SingleSensor())
+    traces = bouncingBall.verify(10, 0.01)
+    fig = go.Figure()
+    fig = reachtube_tree(traces, fig=fig)
+    fig.show()
+
     traces = bouncingBall.simulate(10, 0.01)
-    traces.dump('./output.json')
-    traces = AnalysisTree.load('./output.json')
     fig = go.Figure()
     fig = simulation_tree(traces, fig=fig)
     fig.show()

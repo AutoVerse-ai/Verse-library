@@ -1,7 +1,4 @@
-
 import numpy as np
-from verse.agents.base_agent import BaseAgent
-
 
 def sets(d, thing, attrs, vals):
     d.update({thing + "." + k: v for k, v in zip(attrs, vals)})
@@ -49,9 +46,9 @@ def add_states_3d(cont, disc, thing, val, cont_var, disc_var, stat_var):
 # TODO-PARSER: Update base sensor
 
 
-class BaseSensor():
+class SingleSensor():
     # The baseline sensor is omniscient. Each agent can get the state of all other agents
-    def sense(self, scenario, agent: BaseAgent, state_dict, lane_map):
+    def sense(self, scenario, agent, state_dict, lane_map):
         cont = {}
         disc = {}
         len_dict = {'others': len(state_dict)-1}
@@ -123,6 +120,77 @@ class BaseSensor():
                     cont_var = agent.controller.state_defs[arg_type].cont
                     disc_var = agent.controller.state_defs[arg_type].disc
                     stat_var = agent.controller.state_defs[arg_type].static
-                    add_states_3d(cont, disc, arg_name, state_dict[agent_id], cont_var, disc_var, stat_var)
+                    set_states_3d(cont, disc, arg_name, state_dict[agent_id], cont_var, disc_var, stat_var)
                 
+        return cont, disc, len_dict
+
+class FakeSensor3:
+    def sense(self, scenario, agent, state_dict, lane_map):
+        cont = {}
+        disc = {}
+        len_dict = {'others': len(state_dict)-1}
+        tmp = np.array(state_dict['car1'][0])
+        if tmp.ndim < 2:
+            for agent_id in state_dict:
+                if agent_id == agent.id:
+                    set_states_2d(cont, disc, 'ego', state_dict[agent_id])
+                else:
+                    add_states_2d(cont, disc, 'others', state_dict[agent_id])
+        else:
+            for agent_id in state_dict:
+                if agent_id == agent.id:
+                    set_states_3d(cont, disc, "ego", state_dict[agent_id])
+                else:
+                    add_states_3d(cont, disc, 'others', state_dict[agent_id])
+        return cont, disc, len_dict
+
+
+def set_states_2d_ball(cnts, disc, thing, val):
+    state, mode = val
+    sets(cnts, thing, ["x", "y", "vx", "vy"], state[1:5])
+    sets(disc, thing, ["ball_mode", "lane_mode"], mode)
+
+
+def set_states_3d_ball(cnts, disc, thing, val):
+    state, mode = val
+    transp = np.transpose(np.array(state)[:, 1:5])
+    assert len(transp) == 4
+    sets(cnts, thing, ["x", "y", "vx", "vy"], transp)
+    sets(disc, thing, ["ball_mode", "lane_mode"], mode)
+
+
+def add_states_2d_ball(cont, disc, thing, val):
+    state, mode = val
+    adds(cont, thing, ['x', 'y', 'vx', 'vy'], state[1:5])
+    adds(disc, thing, ["ball_mode", "lane_mode", "type"], mode)
+
+
+def add_states_3d_ball(cont, disc, thing, val):
+    state, mode = val
+    transp = np.transpose(np.array(state)[:, 1:5])
+    assert len(transp) == 4
+    adds(cont, thing, ['x', 'y', 'vx', 'vy'], transp)
+    adds(disc, thing, ["ball_mode", "lane_mode", "type"], mode)
+
+
+class FakeSensor4:
+    def sense(self, scenario, agent, state_dict, lane_map):
+        cont = {}
+        disc = {}
+        len_dict = {'others': len(state_dict)-1}
+        tmp = np.array(list(state_dict.values())[0])
+        if tmp.ndim < 2:
+            for agent_id in state_dict:
+                if agent_id == agent.id:
+                    set_states_2d_ball(cont, disc, 'ego', state_dict[agent_id])
+                else:
+                    add_states_2d_ball(cont, disc, 'others',
+                                       state_dict[agent_id])
+        else:
+            for agent_id in state_dict:
+                if agent_id == agent.id:
+                    set_states_3d_ball(cont, disc, "ego", state_dict[agent_id])
+                else:
+                    add_states_3d_ball(cont, disc, 'others',
+                                       state_dict[agent_id])
         return cont, disc, len_dict
