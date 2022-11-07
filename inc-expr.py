@@ -4,6 +4,8 @@ from pprint import pp
 import re
 from subprocess import PIPE, Popen
 from typing import Tuple, Union
+import sys 
+import time 
 
 @dataclass
 class ExperimentResult:
@@ -14,13 +16,18 @@ class ExperimentResult:
     node_count: Tuple[int, int]
     ret_code: int
     cache_hits: Union[Tuple[int, int], Tuple[Tuple[int, int], Tuple[int, int]]]
+start_time = time.time()
+if len(sys.argv)>1 and sys.argv[1]=='v':
+    xprms = [
+        "v" + 
+        "".join(l) for l in product("rn8", ("", "i"))]
+else:
+    xprms = [
+        "".join(l) for l in product("rn8", ("", "i"))]
 
-xprms = [
-    # "v" + 
-    "".join(l) for l in product("brn8", ("", "i"))]
 rslts = []
 for xprm in xprms:
-    cmd = Popen(f"/usr/bin/time -v -- python3.8 demo/tacas2023/exp11/inc-expr.py {xprm}", stdout=PIPE, stderr=PIPE, shell=True)
+    cmd = Popen(f"/usr/bin/time -v -- python3 demo/tacas2023/exp11/inc-expr.py {xprm}", stdout=PIPE, stderr=PIPE, shell=True)
     print(f"run '{xprm}', pid={cmd.pid}")
     ret = cmd.wait()
     stderr = cmd.stderr.readlines()
@@ -54,3 +61,5 @@ for i in range(0, len(rslts), 2):
 
     cache_hit_rate = inc.cache_hits[0] / (inc.cache_hits[0] + inc.cache_hits[1]) if "v" not in var else (inc.cache_hits[0][0] + inc.cache_hits[1][0]) / (inc.cache_hits[0][0] + inc.cache_hits[0][1] + inc.cache_hits[1][0] + inc.cache_hits[1][1])
     print("    & " + " & ".join([name] + [str(i) for i in [inc.node_count[1], round(no.duration, 2), round(no.max_mem), round(inc.duration, 2), round(inc.max_mem), round(inc.cache_size, 2), round(cache_hit_rate * 100, 2)]]) + " \\\\")
+
+# print(">>>>>>>>>", time.time()-start_time)

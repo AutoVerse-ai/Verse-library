@@ -99,7 +99,7 @@ if __name__ == "__main__":
     # fig = reachtube_tree(traces, None, fig, 0, 3, [0,1])
     # fig.show()
     # traces = AnalysisTree.load('./demo/tacas2023/exp9/output9.json')
-    if len(sys.argv)>1 and sys.argv[1]=='p':
+    if len(sys.argv)>1 and sys.argv[1]=='pl':
         fig = pv.Plotter()
         fig = plot3dMap(tmp_map, ax=fig)
         fig = plot3dReachtube(traces, 'test1', 1, 2, 3, color = 'r', ax=fig)
@@ -109,7 +109,13 @@ if __name__ == "__main__":
         fig = plot_line_3d([0,0,0],[0,0,10],fig,'b',line_width = 5)
         fig.set_background('#e0e0e0')
         fig.show()
-    
+    elif len(sys.argv)>1 and sys.argv[1]=='pc':
+        fig = go.Figure()
+        fig = reachtube_tree(traces, None, fig, 0, 1, [0,1])
+        fig.show()
+        fig = go.Figure()
+        fig = reachtube_tree(traces, None, fig, 0, 3, [0,1])
+        fig.show()
     # fig = go.Figure()
     # fig = reachtube_tree_3d(
     #     traces, 

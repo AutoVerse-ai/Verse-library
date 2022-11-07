@@ -18,3 +18,5 @@ map_package/
 docs/build/
 docs/source/_autosummary/
 **/.ipynb_checkpoints/
+**.whl
+**.tar.gz

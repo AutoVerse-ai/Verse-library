@@ -1,12 +1,18 @@
-This is the repeatability evaluation package for the tool paper "Verse: A Python library for reasoning about multi-agent hybrid system scenarios"
+This is the repeatability evaluation package for the tool paper "Verse: A Python library for reasoning about multi-agent hybrid system scenarios". The "README.txt" file contains instruction to reproduce all experiments in the paper. A PDF version of the file can be found in "README.pdf".
 
 ###########################
 
-The link to the artifact on Google drive is: 
-
 The link to the artifact on Figshare is:
+https://figshare.com/articles/software/Verse_A_Python_library_for_reasoning_about_multi-agent_hybrid_system_scenarios/21433125
 
-The link to the source code git repository for Verse is: 
+The link to the artifact on Google drive is: 
+https://drive.google.com/file/d/1MXVTnsqtt1YVOaWZDcgy_gvuC7d_hH7F/view?usp=sharing
+
+A detailed interactive tutorial for verse can be found at:
+https://github.com/AutoVerse-ai/Verse-library/blob/tutorial/tutorial/Verse_Tutorial_Drone.ipynb
+and a PDF version of the tutorial is included in the artifact as "tutorial.pdf".
+
+The tool will be made available publicly if the paper gets accepted.
 
 ###########################
 
@@ -14,9 +20,15 @@ The run-time for regenerating data in Table 1 in the paper is approximately 2650
 
 The run-time for regenerating data in Simulation section of Table 2 in the paper is approximately 174s (~3min).
 
-The run-time for regenerating data in Reach section of Table 2 in the paper is approximately ?s (~?min).
+The run-time for regenerating data in Reach section of Table 2 in the paper is approximately 4682s (~78min).
 
 ###########################
+
+The first step for replicating the experiments in the paper is to install Verse and its dependencies. 
+The dependencies for Verse can be installed using following command in the root directory of artifact
+    python3 -m pip install -r requirements_local.txt
+Verse can be installed using following command in the root directory of artifact
+    python3 -m pip install -e .
 
 To replicate our experiments from the paper, please run following commands from the root directory of the artifact. 
 1. For results in Table 1 Run command 
@@ -42,11 +54,13 @@ The results for all experiments in Table 1 will be generated as below at the end
         & change init & 24 & 14.93 & 431 & 12.98 & 436 & 4.07 & 75.91 \\
         & change ctlr & 45 & 16.1 & 431 & 8.49 & 438 & 4.38 & 78.19 \\
 
-    Verification: Run command 
+    Reach: Run command 
         python3 inc-expr.py v 
     The results for the experiments in Table 2 section Verification will be generated as below at the end of execution
-        # TODO:
-        
+        & repeat & 105 & 464.77 & 498 & 58.99 & 482 & 3.23 & 76.79 \\
+        & change init & 49 & 384.84 & 486 & 362.25 & 500 & 3.7 & 73.21 \\
+        & change ctlr & 93 & 428.83 & 498 & 227.49 & 491 & 4.0 & 73.44 \\
+
 3. To reproduce Fig. 1,
     Center: Run command 
         python3 demo/tacas2023/exp1/exp1_sim.py p 
@@ -57,7 +71,7 @@ The results for all experiments in Table 1 will be generated as below at the end
 
 4. To reproduce Fig. 4, from left to right 
     (1) Run command 
-        python3 python3 demo/tacas2023/exp9/exp9_dryvr.py pl
+        python3 demo/tacas2023/exp9/exp9_dryvr.py pl
 
     (2)-(3) Run command 
         python3 demo/tacas2023/exp9/exp9_dryvr.py pc
@@ -85,9 +99,9 @@ Verse will automatically open a browser window to show the resulting plot. The r
 
 
 7. To reproduce Fig. 9 in Appendix, 
-    Left: Run command 
+    Left: Run command  
         python3 demo/tacas2023/exp6/exp6_neureach.py p
-    Verse will automatically open a browser window to show the resulting plot. 
+    Verse will automatically open a browser window to show the resulting plot. Note that due to the randomization in NeuReach's algorithm, the generated figure can be slightly different from the one included in the paper.
 
     Right: Run command 
         python3 demo/tacas2023/exp6/exp6_dryvr.py p 
@@ -112,18 +126,18 @@ Verse will automatically open a browser window to show the resulting plot.
 
 11. To reproduce Fig. 15 in Appendix 
     Left: Run command 
-        python3 
+        python3 demo/tacas2023/exp11/inc-expr.py snp
     Verse will automatically open a browser window to show the resulting plot. 
 
     Right: Run command 
-        python3 
+        python3 demo/tacas2023/exp11/inc-expr.py vnp
     Verse will automatically open a browser window to show the resulting plot. 
 
 12. To reproduce Fig. 16 in Appendix 
     Left: Run command 
-        python3 
+        python3 demo/tacas2023/exp11/inc-expr.py s8p
     Verse will automatically open a browser window to show the resulting plot. 
 
     Right: Run command 
-        python3 
+        python3 demo/tacas2023/exp11/inc-expr.py v8p
     Verse will automatically open a browser window to show the resulting plot. 

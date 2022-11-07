@@ -96,5 +96,5 @@ if __name__ == "__main__":
 
     if len(sys.argv)>1 and sys.argv[1]=='p':
         fig = go.Figure()
-        fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace',combine_rect=3)
+        fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace', combine_rect=3)
         fig.show()

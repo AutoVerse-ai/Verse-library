@@ -6,6 +6,9 @@ import warnings
 from collections import defaultdict, namedtuple
 import ast
 from dataclasses import dataclass
+import types
+import sys
+from enum import Enum
 
 import numpy as np
 
@@ -22,6 +25,38 @@ from verse.sensor.base_sensor import BaseSensor
 from verse.map.lane_map import LaneMap
 
 EGO, OTHERS = "ego", "others"
+
+def convertStrToEnum(inp, agent:BaseAgent, dl):
+    res = inp
+    for field in res.__dict__:
+        for state_def_name in agent.decision_logic.state_defs:
+            if field in agent.decision_logic.state_defs[state_def_name].disc:
+                idx = agent.decision_logic.state_defs[state_def_name].disc.index(field)
+                field_type = agent.decision_logic.state_defs[state_def_name].disc_type[idx]
+                enum_class = getattr(dl, field_type)
+                setattr(res, field, enum_class[getattr(res, field)])
+    return res
+
+def convertEnumToStr(inp, agent:BaseAgent, dl):
+    res = inp
+    for field in res.__dict__:
+        val = getattr(res, field)
+        if isinstance(val, Enum):
+            setattr(res, field, val.name)
+    return res
+
+def disc_field(field:str, agent:BaseAgent):
+    for state_def_name in agent.decision_logic.state_defs:
+        state_def = agent.decision_logic.state_defs[state_def_name]
+        if field in state_def.disc:
+            return True 
+    return False
+
+def namedTupleToClass(inp: NamedTuple):
+    res = types.SimpleNamespace()
+    for field in inp._fields:
+        setattr(res, field, getattr(inp, field))
+    return res
 
 def red(s):
     return "\x1b[31m" + s + "\x1b[0m"
@@ -55,6 +90,12 @@ def pack_env(agent: BaseAgent, ego_ty_name: str, cont: Dict[str, float], disc: D
 
     packed[EGO] = state_ty(**packed[EGO])
     return dict(packed.items())
+
+def is_equivalent(inp1:NamedTuple, inp2:NamedTuple):
+    for field in inp1._fields:
+        if getattr(inp1, field) != getattr(inp2, field):
+            return False
+    return True
 
 def check_sim_transitions(agent: BaseAgent, guards: List[Tuple], cont, disc, map, state, mode):
     asserts = []
@@ -274,6 +315,24 @@ class Scenario:
         self.past_runs.append(tree)
         return tree
 
+    def simulate_simple(self, time_horizon, time_step, seed = None) -> AnalysisTree:
+        self.check_init()
+        init_list = []
+        init_mode_list = []
+        static_list = []
+        agent_list = []
+        uncertain_param_list = []
+        for agent_id in self.agent_dict:
+            init_list.append(sample_rect(self.init_dict[agent_id], seed))
+            init_mode_list.append(self.init_mode_dict[agent_id])
+            static_list.append(self.static_dict[agent_id])
+            uncertain_param_list.append(self.uncertain_param_dict[agent_id])
+            agent_list.append(self.agent_dict[agent_id])
+        print(init_list)
+        tree = self.simulator.simulate_simple(init_list, init_mode_list, static_list, uncertain_param_list, agent_list, self, time_horizon, time_step, self.map, len(self.past_runs), self.past_runs)
+        self.past_runs.append(tree)
+        return tree
+
     def verify(self, time_horizon, time_step, params={}) -> AnalysisTree:
         self.check_init()
         init_list = []
@@ -405,7 +464,7 @@ class Scenario:
     #         unrolled_variable, unrolled_variable_index = updater[variable]
     #         disc_var_dict[unrolled_variable] = disc_var_dict[variable][unrolled_variable_index]
 
-    def get_transition_simulate_new(self, cache: Dict[str, CachedSegment], paths: PathDiffs, node: AnalysisTreeNode) -> Tuple[Optional[Dict[str, List[str]]], Optional[Dict[str, List[Tuple[str, List[str], List[float]]]]], int]:
+    def get_transition_simulate(self, cache: Dict[str, CachedSegment], paths: PathDiffs, node: AnalysisTreeNode) -> Tuple[Optional[Dict[str, List[str]]], Optional[Dict[str, List[Tuple[str, List[str], List[float]]]]], int]:
         track_map = self.map
         trace_length = len(list(node.trace.values())[0])
 
@@ -498,7 +557,97 @@ class Scenario:
                 break
         return None, dict(transitions), idx
 
-    def get_transition_verify_new(self, cache: Dict[str, CachedRTTrans], paths: PathDiffs, node: AnalysisTreeNode) -> Tuple[Optional[Dict[str, List[str]]], Optional[Dict[str, List[Tuple[str, List[str], List[float]]]]]]:
+    def get_transition_simulate_simple(self, node: AnalysisTreeNode) -> Tuple[Optional[Dict[str, List[str]]], Optional[Dict[str, List[Tuple[str, List[str], List[float]]]]], int]:
+        track_map = self.map
+        trace_length = len(list(node.trace.values())[0])
+
+        # For each agent
+        agent_guard_dict = defaultdict(list)
+        
+        paths = [(agent, p) for agent in node.agent.values() for p in agent.decision_logic.paths]
+        
+        for agent, path in paths:
+            # Get guard
+            if len(agent.decision_logic.args) == 0:
+                continue
+            agent_id = agent.id
+            state_dict = {aid: (node.trace[aid][0], node.mode[aid], node.static[aid]) for aid in node.agent}
+            cont_var_dict_template, discrete_variable_dict, len_dict = self.sensor.sense(self, agent, state_dict, self.map)
+            agent_guard_dict[agent_id].append((path, discrete_variable_dict))
+
+        transitions = defaultdict(list)
+        # TODO: We can probably rewrite how guard hit are detected and resets are handled for simulation
+        for idx in range(trace_length):
+            state_dict = {aid: (node.trace[aid][idx], node.mode[aid], node.static[aid]) for aid in node.agent}
+            satisfied_guard = []
+            all_asserts = defaultdict(list)
+            for agent_id in agent_guard_dict:
+                # Get agent controller 
+                # Reference: https://stackoverflow.com/questions/55905240/python-dynamically-import-modules-code-from-string-with-importlib
+                agent: BaseAgent = self.agent_dict[agent_id]
+                dl = types.ModuleType('dl')
+                exec(agent.decision_logic.controller_code,dl.__dict__)
+                
+                # Get the input arguments for the controller function
+                # Pack the environment (create ego and others list)
+                continuous_variable_dict, orig_disc_vars, _ = self.sensor.sense(self, agent, state_dict, self.map)
+                arg_list = []
+                env = pack_env(agent, EGO, continuous_variable_dict, orig_disc_vars, track_map)
+                for arg in agent.decision_logic.args:
+                    if arg.name == EGO:
+                        ego = namedTupleToClass(env[EGO])
+                        ego = convertStrToEnum(ego, agent, dl)
+                        arg_list.append(ego)
+                    elif arg.name == 'track_map':
+                        arg_list.append(track_map)
+                    else:
+                        if isinstance(env[arg.name], list):
+                            tmp_list = []
+                            for item in env[arg.name]:
+                                tmp = namedTupleToClass(item)
+                                tmp = convertStrToEnum(tmp, agent, dl)
+                                tmp_list.append(tmp)
+                            arg_list.append(tmp_list)
+                        else:
+                            tmp = namedTupleToClass(env[arg.name])
+                            tmp = convertStrToEnum(tmp, agent, dl)
+                            arg_list.append(tmp)
+
+                try:
+                    # Input the environment into the actual controller
+                    output = dl.decisionLogic(*arg_list)   
+                    output = convertEnumToStr(output, agent, dl)   
+                    # Check if output is the same as ego
+                    if not is_equivalent(env[EGO], output):
+                        # If not, a transition happen, get source and destination, break
+                        next_init = []
+                        pure_dest = []
+                        for field in env[EGO]._fields:
+                            if disc_field(field, agent):
+                                pure_dest.append(getattr(output, field))
+                            else:
+                                next_init.append(getattr(output, field))  
+                        satisfied_guard.append((agent_id, pure_dest, next_init, []))
+                except AssertionError:
+                    # If assertion error happen, means assert hit happen
+                    # Get the which assert hit happen and return
+                    _, error, _ = sys.exc_info()
+                    assertion_label = error.args[0]
+                    all_asserts[agent_id] = assertion_label
+                    continue
+                
+            if len(all_asserts) > 0:
+                for agent_idx, dest, next_init, paths in satisfied_guard:
+                    transitions[agent_idx].append((agent_idx, dest, next_init, paths))
+                return all_asserts, dict(transitions), idx
+            if len(satisfied_guard)>0:
+                break
+            # Convert output to asserts, transition and idx
+        for agent_idx, dest, next_init, paths in satisfied_guard:
+            transitions[agent_idx].append((agent_idx, dest, next_init, paths))
+        return None, dict(transitions), idx
+
+    def get_transition_verify(self, cache: Dict[str, CachedRTTrans], paths: PathDiffs, node: AnalysisTreeNode) -> Tuple[Optional[Dict[str, List[str]]], Optional[Dict[str, List[Tuple[str, List[str], List[float]]]]]]:
         track_map = self.map
 
         # For each agent

@@ -114,6 +114,7 @@ if __name__ == "__main__":
 
     # traces = AnalysisTree.load('demo/tacas2023/exp10/output10.json')
     if len(sys.argv)>1 and sys.argv[1]=='p':
+        fig = pv.Plotter()
         fig = plot3dMap(tmp_map, ax=fig)
         fig = plot3dReachtube(traces, 'test1', 1, 2, 3, color = 'r', ax=fig)
         fig = plot3dReachtube(traces, 'test2', 1, 2, 3, color = 'b', ax=fig)

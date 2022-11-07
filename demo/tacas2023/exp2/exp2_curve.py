@@ -82,7 +82,7 @@ if __name__ == "__main__":
     start_time = time.time()
     traces = scenario.verify(40, 0.1, params={"bloating_method": 'GLOBAL'})
     run_time = time.time()-start_time
-    traces.dump('output2_curve.json')
+    traces.dump('./demo/tacas2023/exp2/output2_curve.json')
     print({
         "#A": len(scenario.agent_dict),
         "A": "C",

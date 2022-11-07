@@ -54,7 +54,7 @@ if __name__ == "__main__":
                                  "N_t": 500,
                                  "epochs": 50,
                                  "_lambda": 5,
-                                 "use_cuda": True,
+                                 "use_cuda": False,
                                  'r': 0,
                              }
                             )

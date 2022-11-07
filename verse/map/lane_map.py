@@ -35,6 +35,8 @@ class LaneMap:
         return self.lane_dict[src_lane].get_geometry()
 
     def get_longitudinal_position(self, lane_idx: str, position: np.ndarray) -> float:
+        if isinstance(lane_idx, Enum):
+            lane_idx = lane_idx.name
         if len(lane_idx) == 3:
             src_lane = f"T{lane_idx[1]}"
         else:
@@ -46,6 +48,8 @@ class LaneMap:
         return lane.get_longitudinal_position(position)
 
     def get_lateral_distance(self, lane_idx: str, position: np.ndarray) -> float:
+        if isinstance(lane_idx, Enum):
+            lane_idx = lane_idx.name
         if len(lane_idx) == 3:
             src_lane = f"T{lane_idx[1]}"
         else:
@@ -104,11 +108,23 @@ class LaneMap:
         return lane.get_lane_width()
 
     def h(self, lane_idx, agent_mode_src, agent_mode_dest):
+        if isinstance(lane_idx, Enum):
+            lane_idx = lane_idx.name
+        if isinstance(agent_mode_src, Enum):
+            agent_mode_src = agent_mode_src.name
+        if isinstance(agent_mode_dest, Enum):
+            agent_mode_dest = agent_mode_dest.name
         if self.h_dict == {}:
             return ""
         return self.h_dict[(lane_idx, agent_mode_src, agent_mode_dest)]
 
     def h_exist(self, lane_idx, agent_mode_src, agent_mode_dest):
+        if isinstance(lane_idx, Enum):
+            lane_idx = lane_idx.name
+        if isinstance(agent_mode_src, Enum):
+            agent_mode_src = agent_mode_src.name
+        if isinstance(agent_mode_dest, Enum):
+            agent_mode_dest = agent_mode_dest.name
         if (lane_idx, agent_mode_src, agent_mode_dest) in self.h_dict:
             return True 
         else:

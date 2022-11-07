@@ -4,6 +4,7 @@ from verse.map.lane_3d import Lane_3d
 from math import pi
 import numpy as np
 from verse.map import LaneMap, LaneSegment, StraightLane, CircularLane, Lane
+from enum import Enum
 
 
 class M1(LaneMap):
@@ -119,9 +120,13 @@ class M2(LaneMap):
         }
 
     def left_lane(self, lane_mode):
+        if isinstance(lane_mode, Enum):
+            lane_mode = lane_mode.name
         return self.left_dict[lane_mode]
 
     def right_lane(self,lane_mode):
+        if isinstance(lane_mode, Enum):
+            lane_mode = lane_mode.name
         return self.right_dict[lane_mode]
 
 class M3(LaneMap):
@@ -347,10 +352,10 @@ class M6(LaneMap_3d):
             ('M21', 'MoveUp', 'Normal'): 'T1',
         }
 
-    def h(self, lane_idx: str, agent_mode_src: str, agent_mode_dest: str) -> str:
+    def h_func(self, lane_idx: str, agent_mode_src: str, agent_mode_dest: str) -> str:
         return self.h_dict[(lane_idx, agent_mode_src, agent_mode_dest)]
 
-    def h_exist(self, lane_idx: str, agent_mode_src: str, agent_mode_dest: str) -> bool:
+    def h_exist_func(self, lane_idx: str, agent_mode_src: str, agent_mode_dest: str) -> bool:
         if (lane_idx, agent_mode_src, agent_mode_dest) in self.h_dict:
             return True
         else:
