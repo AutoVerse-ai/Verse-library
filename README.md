@@ -3,19 +3,19 @@
 Verse is a library for creating, simulating, and verifying uni*verses* or scenarios with intelligent and interacting autonomous agents.  
 
 ## Installation
-The package requires python 3.8+. The package can be installed using pip with all dependencies
+The package requires python 3.8+. The package can be installed using pip with all required dependencies
 
 ```
 python3 -m pip install -e .
 ```
-To update the dependencies, requirements.txt can be used.
+To update the dependencies in case anything is missing, requirements.txt can be used.
 
 ```
 pip install -r requirements.txt
 ```
 
 ## Tutorial
-A detailed interactive tutorial can be found in ```tutorial/Verse_Tutorial_Drone.ipynb```. The tutorial requires Jupyter notebook to run. A PDF version of the tutorial can be found in ```Verse_Tutorial_Drone.pdf```.
+A detailed interactive tutorial can be found in ```tutorial/tutorial.ipynb```. The tutorial requires Jupyter notebook to run. A PDF version of the tutorial can be found in ```tutorial.pdf```.
 
 ## Demos
 The package comes with several examples in the  ```demo/``` folder. Run these as:
