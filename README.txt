@@ -3,13 +3,13 @@ This is the repeatability evaluation package for the tool paper "Verse: A Python
 ###########################
 
 The link to the artifact on Figshare is:
-https://figshare.com/articles/software/Verse_A_Python_library_for_reasoning_about_multi-agent_hybrid_system_scenarios/21433125
+https://doi.org/10.6084/m9.figshare.21433125
 
 The link to the artifact on Google drive is: 
 https://drive.google.com/file/d/1MXVTnsqtt1YVOaWZDcgy_gvuC7d_hH7F/view?usp=sharing
 
 A detailed interactive tutorial for verse can be found at:
-https://github.com/AutoVerse-ai/Verse-library/blob/tutorial/tutorial/Verse_Tutorial_Drone.ipynb
+https://github.com/AutoVerse-ai/Verse-library/blob/tutorial/tutorial/tutorial.ipynb
 and a PDF version of the tutorial is included in the artifact as "tutorial.pdf".
 
 The tool will be made available publicly if the paper gets accepted.
