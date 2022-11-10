@@ -16,7 +16,7 @@ class BallMode(Enum):
     # Ultimately for simple models we would like to write
     # E.g., Mode = makeMode(Normal, bounce,...)
 
-# class LaneMode(Enum):
+# class TrackMode(Enum):
 #     Lane0 = auto()
 #     #For now this is a dummy notion of Lane
 
@@ -35,7 +35,7 @@ class State:
         pass
 
 
-def controller(ego: State):
+def decisionLogic(ego: State):
     '''Computes the possible mode transitions'''
     output = copy.deepcopy(ego)
     '''TODO: Ego and output variable names should be flexible but 
@@ -78,8 +78,6 @@ if __name__ == "__main__":
     myball2 = BallAgent('green-ball', file_name=ball_controller)
     bouncingBall.add_agent(myball1)
     bouncingBall.add_agent(myball2)
-    tmp_map = SimpleMap3()
-    bouncingBall.set_map(tmp_map)
     bouncingBall.set_init(
         [
             [[5, 10, 2, 2], [5, 10, 2, 2]],
@@ -94,9 +92,9 @@ if __name__ == "__main__":
     # this may be the cause for the VisibleDeprecationWarning
     # TODO: Longer term: We should initialize by writing expressions like "-2 \leq myball1.x \leq 5"
     # "-2 \leq myball1.x + myball2.x \leq 5"
-    traces = bouncingBall.simulate(40, 0.01)
+    traces = bouncingBall.simulate_simple(40, 0.01)
     # TODO: There should be a print({traces}) function
     fig = go.Figure()
-    fig = simulation_anime(
+    fig = simulation_tree(
         traces, None, fig, 1, 2, [1, 2], 'fill', 'trace')
     fig.show()

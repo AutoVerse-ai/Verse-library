@@ -3,7 +3,12 @@ from typing import List, Dict, Union, Optional, Any, Tuple
 from dataclasses import dataclass, field, fields
 from enum import Enum, auto
 from verse.parser import astunparser
-from verse.analysis.utils import find
+
+def find(a, f):
+    for v in a:
+        if f(v):
+            return v
+    return None
 
 def merge_conds(c):
     if len(c) == 0:
@@ -42,7 +47,9 @@ class StateDef:
     """Variable/member set needed for simulation/verification for some object"""
     cont: List[str] = field(default_factory=list)     # Continuous variables
     disc: List[str] = field(default_factory=list)     # Discrete variables
+    disc_type: List[str] = field(default_factory=list) # Type of discrete variables
     static: List[str] = field(default_factory=list)   # Static data in object
+    static_type: List[str] = field(default_factory=list) # Type of discrete variables
 
     def all_vars(self) -> List[str]:
         return self.cont + self.disc + self.static
@@ -239,6 +246,12 @@ class ModePath:
     val: Any
     val_veri: ast.expr
 
+    def __eq__(self, other: "ModePath") -> bool:
+        if other == None:
+            return False
+        # TODO: more general equivalence?
+        return self.cond == other.cond and self.val == other.val
+
 @dataclass
 class ControllerIR:
     args: LambdaArgs
@@ -247,6 +260,7 @@ class ControllerIR:
     asserts_veri: List[Assert]
     state_defs: Dict[str, StateDef]
     mode_defs: Dict[str, ModeDef]
+    controller_code: str
 
     @staticmethod
     def parse(code: Optional[str] = None, fn: Optional[str] = None) -> "ControllerIR":
@@ -254,7 +268,7 @@ class ControllerIR:
 
     @staticmethod
     def empty() -> "ControllerIR":
-        return ControllerIR([], [], [], [], {}, {})
+        return ControllerIR([], [], [], [], {}, {},"")
 
     @staticmethod
     def dump(node, dump=False):
@@ -293,13 +307,14 @@ class ControllerIR:
     @staticmethod
     def from_env(env):
         top = env.scopes[0].v
-        if 'controller' not in top or not isinstance(top['controller'], Lambda):
+        if 'decisionLogic' not in top or not isinstance(top['decisionLogic'], Lambda):
             raise TypeError("can't find controller")
-        controller = top['controller']
+        controller = top['decisionLogic']
         asserts = [(a.cond, a.label if a.label != None else f"<assert {i}>", merge_conds(a.pre)) for i, a in enumerate(controller.asserts)]
         asserts_veri = [Assert(Env.trans_args(copy.deepcopy(c), True), l, Env.trans_args(copy.deepcopy(p), True)) for c, l, p in asserts]
-        for a in asserts_veri:
-            print(ControllerIR.dump(a.pre), ControllerIR.dump(a.cond, True))
+        # for a in asserts_veri:
+        #     # print(a)
+        #     print(ControllerIR.dump(a.pre), ControllerIR.dump(a.cond, True))
         asserts_sim = [CompiledAssert(compile_expr(Env.trans_args(c, False)), l, compile_expr(Env.trans_args(p, False))) for c, l, p in asserts]
 
         assert isinstance(controller, Lambda)
@@ -317,29 +332,32 @@ class ControllerIR:
                     cond = compile_expr(Env.trans_args(cond, False))
                     val = compile_expr(Env.trans_args(case.val, False))
                     paths.append(ModePath(cond, cond_veri, var, val, val_veri))
-
-        return ControllerIR(controller.args, paths, asserts_sim, asserts_veri, env.state_defs, env.mode_defs)
+        return ControllerIR(controller.args, paths, asserts_sim, asserts_veri, env.state_defs, env.mode_defs, env.controller_code)
 
 @dataclass
 class Env():
+    controller_code: str
     state_defs: Dict[str, StateDef] = field(default_factory=dict)
     mode_defs: Dict[str, ModeDef] = field(default_factory=dict)
     scopes: List[ScopeLevel] = field(default_factory=lambda: [ScopeLevel()])
 
     @staticmethod
     def parse(code: Optional[str] = None, fn: Optional[str] = None):
+        code_string = ""
         if code != None:
             if fn != None:
                 root = ast.parse(code, fn)
             else:
                 root = ast.parse(code)
+            code_string = code
         elif fn != None:
             with open(fn) as f:
                 cont = f.read()
             root = ast.parse(cont, fn)
+            code_string = cont
         else:
             raise TypeError("need at least one of `code` and `fn`")
-        env = Env()
+        env = Env(controller_code = code_string)
         proc(root, env)
         return env
 
@@ -457,7 +475,7 @@ class Env():
             sv.expr = Env.trans_args(sv.expr, veri)
             sv.value = Env.trans_args(sv.value, veri)
             return sv
-        print(ControllerIR.dump(sv, True))
+        # print(ControllerIR.dump(sv, True))
         raise NotImplementedError(str(sv.__class__))
 
 ScopeValueMap = Dict[str, ScopeValue]
@@ -655,20 +673,35 @@ def proc(node: ast.AST, env: Env) -> Any:
                         raise NotImplementedError("non ident as mode/state name")
             return names
 
+        def grab_annotates(nodes: List[ast.stmt]):
+            annotates = []
+            for node in nodes:
+                if isinstance(node, ast.Assign):
+                    annotates.append(None)
+                elif isinstance(node, ast.AnnAssign):
+                    if isinstance(node.annotation, ast.Name):
+                        annotates.append(node.annotation.id)
+                    else:
+                        raise NotImplementedError("non ident as mode/state name")
+            return annotates
+
         # NOTE we are dupping it in `state_defs`/`mode_defs` and the scopes cuz value
         if node.name.endswith("Mode"):
             mode_def = ModeDef(grab_names(node.body))
             env.mode_defs[node.name] = mode_def
         elif node.name.endswith("State"):
             names = grab_names(node.body)
+            annotates = grab_annotates(node.body)
             state_vars = StateDef()
-            for name in names:
+            for i, name in enumerate(names):
                 if "type" == name:
                     state_vars.static.append(name)
+                    state_vars.static_type.append(annotates[i])
                 elif "mode" not in name:
                     state_vars.cont.append(name)
                 else:
                     state_vars.disc.append(name)
+                    state_vars.disc_type.append(annotates[i])
             env.state_defs[node.name] = state_vars
         env.add_hole(node.name, None)
     elif isinstance(node, ast.Assert):
@@ -704,7 +737,16 @@ def proc(node: ast.AST, env: Env) -> Any:
                 if len(node.args) > 1:
                     raise ValueError("too many args to `copy.deepcopy`")
                 return proc(node.args[0], env)
-            return node
+            ret = copy.deepcopy(node)
+            tmp = []
+            for a in ret.args:
+                if isinstance(a, ast.Attribute) and isinstance(a.value, ast.Name) and a.value.id in env.mode_defs:
+                    tmp.append(ast.Constant(a.attr, kind=None))
+                else: 
+                    tmp.append(a)
+            ret.args = tmp
+        
+            return ret
         if isinstance(fun, ast.arg):
             if fun.arg == "copy.deepcopy":
                 raise Exception("unreachable")
@@ -768,6 +810,6 @@ if __name__ == "__main__":
     e = Env.parse(fn=fn)
     e.dump()
     ir = e.to_ir()
-    print(ControllerIR.dump(ir.controller.body, False))
+    print(ControllerIR.dump(ir.decision_logic.body, False))
     for a in ir.asserts:
         print(f"assert {ControllerIR.dump(a.cond, False)}, '{a.label}'")

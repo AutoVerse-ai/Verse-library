@@ -22,7 +22,7 @@ class vanderpol_agent(BaseAgent):
         y_dot = (1-x**2)*y - x
         return [x_dot, y_dot]
 
-    def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step, lane_map: LaneMap = None) -> np.ndarray:
+    def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step, track_map: LaneMap = None) -> np.ndarray:
         time_bound = float(time_bound)
         number_points = int(np.ceil(time_bound/time_step))
         t = [round(i*time_step, 10) for i in range(0, number_points)]
@@ -64,7 +64,7 @@ class thermo_agent(BaseAgent):
             raise ValueError(f'Invalid mode: {mode}')
         return rate
 
-    def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step, lane_map: LaneMap = None) -> np.ndarray:
+    def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step, track_map: LaneMap = None) -> np.ndarray:
         time_bound = float(time_bound)
         number_points = int(np.ceil(time_bound/time_step))
         t = [round(i*time_step, 10) for i in range(0, number_points)]
@@ -137,7 +137,7 @@ class craft_agent(BaseAgent):
         else:
             raise ValueError
 
-    def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step, lane_map: LaneMap = None) -> np.ndarray:
+    def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step, track_map: LaneMap = None) -> np.ndarray:
         time_bound = float(time_bound)
         number_points = int(np.ceil(time_bound/time_step))
         t = [round(i*time_step, 10) for i in range(0, number_points)]

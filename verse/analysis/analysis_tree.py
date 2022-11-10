@@ -1,5 +1,6 @@
 from typing import List, Dict, Any
 import json
+from treelib import Tree
 
 class AnalysisTreeNode:
     """AnalysisTreeNode class
@@ -57,6 +58,28 @@ class AnalysisTreeNode:
 
         return rst_dict
 
+    def get_track(self, agent_id, D):
+        if 'TrackMode' not in self.agent[agent_id].decision_logic.mode_defs:
+            return ""
+        for d in D:
+            if d in self.agent[agent_id].decision_logic.mode_defs['TrackMode'].modes:
+                return d
+        return ""
+
+    def get_mode(self, agent_id, D):
+        res = []
+        if 'TrackMode' not in self.agent[agent_id].decision_logic.mode_defs:
+            if len(D)==1:
+                return D[0]
+            return D
+        for d in D:
+            if d not in self.agent[agent_id].decision_logic.mode_defs['TrackMode'].modes:
+                res.append(d)
+        if len(res) == 1:
+            return res[0]
+        else:
+            return tuple(res)
+            
     @staticmethod
     def from_dict(data) -> "AnalysisTreeNode":
         return AnalysisTreeNode(
@@ -122,3 +145,20 @@ class AnalysisTree:
                 parent_node.child.append(child_node)
                 queue.append((child_node_dict, child_node))
         return AnalysisTree(root)
+
+    def dump_tree(self):
+        tree = Tree()
+        AnalysisTree._dump_tree(self.root, tree, 0, 1)
+        tree.show()
+
+    @staticmethod
+    def _dump_tree(node, tree, pid, id):
+        n = "\n".join(str((aid, *node.mode[aid], *node.init[aid])) for aid in node.agent)
+        if pid != 0:
+            tree.create_node(n, id, parent=pid)
+        else:
+            tree.create_node(n, id)
+        nid = id + 1
+        for child in node.child:
+            nid = AnalysisTree._dump_tree(child, tree, id, nid)
+        return nid + 1

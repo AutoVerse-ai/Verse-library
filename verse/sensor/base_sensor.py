@@ -60,7 +60,7 @@ class BaseSensor():
             for agent_id in state_dict:
                 if agent_id == agent.id:
                     # Get type of ego
-                    controller_args = agent.controller.args
+                    controller_args = agent.decision_logic.args
                     arg_type = None
                     for arg in controller_args:
                         if arg.name == 'ego':
@@ -69,13 +69,13 @@ class BaseSensor():
                     if arg_type is None:
                         continue
                         raise ValueError(f"Invalid arg for ego")
-                    cont_var = agent.controller.state_defs[arg_type].cont
-                    disc_var = agent.controller.state_defs[arg_type].disc
-                    stat_var = agent.controller.state_defs[arg_type].static
+                    cont_var = agent.decision_logic.state_defs[arg_type].cont
+                    disc_var = agent.decision_logic.state_defs[arg_type].disc
+                    stat_var = agent.decision_logic.state_defs[arg_type].static
                     set_states_2d(
                         cont, disc, 'ego', state_dict[agent_id], cont_var, disc_var, stat_var)
                 else:
-                    controller_args = agent.controller.args
+                    controller_args = agent.decision_logic.args
                     arg_type = None
                     arg_name = None
                     for arg in controller_args:
@@ -86,9 +86,9 @@ class BaseSensor():
                     if arg_type is None:
                         continue
                         raise ValueError(f"Invalid arg for others")
-                    cont_var = agent.controller.state_defs[arg_type].cont
-                    disc_var = agent.controller.state_defs[arg_type].disc
-                    stat_var = agent.controller.state_defs[arg_type].static
+                    cont_var = agent.decision_logic.state_defs[arg_type].cont
+                    disc_var = agent.decision_logic.state_defs[arg_type].disc
+                    stat_var = agent.decision_logic.state_defs[arg_type].static
                     add_states_2d(
                         cont, disc, arg_name, state_dict[agent_id], cont_var, disc_var, stat_var)
 
@@ -96,7 +96,7 @@ class BaseSensor():
             for agent_id in state_dict:
                 if agent_id == agent.id:
                     # Get type of ego
-                    controller_args = agent.controller.args
+                    controller_args = agent.decision_logic.args
                     arg_type = None
                     for arg in controller_args:
                         if arg.name == 'ego':
@@ -104,13 +104,13 @@ class BaseSensor():
                             break 
                     if arg_type is None:
                         raise ValueError(f"Invalid arg for ego")
-                    cont_var = agent.controller.state_defs[arg_type].cont
-                    disc_var = agent.controller.state_defs[arg_type].disc
-                    stat_var = agent.controller.state_defs[arg_type].static
+                    cont_var = agent.decision_logic.state_defs[arg_type].cont
+                    disc_var = agent.decision_logic.state_defs[arg_type].disc
+                    stat_var = agent.decision_logic.state_defs[arg_type].static
                     set_states_3d(
                         cont, disc, 'ego', state_dict[agent_id], cont_var, disc_var, stat_var)
                 else:
-                    controller_args = agent.controller.args
+                    controller_args = agent.decision_logic.args
                     arg_type = None
                     arg_name = None
                     for arg in controller_args:
@@ -120,9 +120,9 @@ class BaseSensor():
                             break 
                     if arg_type is None:
                         raise ValueError(f"Invalid arg for others")
-                    cont_var = agent.controller.state_defs[arg_type].cont
-                    disc_var = agent.controller.state_defs[arg_type].disc
-                    stat_var = agent.controller.state_defs[arg_type].static
+                    cont_var = agent.decision_logic.state_defs[arg_type].cont
+                    disc_var = agent.decision_logic.state_defs[arg_type].disc
+                    stat_var = agent.decision_logic.state_defs[arg_type].static
                     add_states_3d(cont, disc, arg_name, state_dict[agent_id], cont_var, disc_var, stat_var)
                 
         return cont, disc, len_dict

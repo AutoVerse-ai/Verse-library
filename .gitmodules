@@ -1,0 +1,3 @@
+[submodule "verse/analysis/NeuReach"]
+	path = verse/analysis/NeuReach
+	url = https://github.com/AutoVerse-ai/NeuReach.git

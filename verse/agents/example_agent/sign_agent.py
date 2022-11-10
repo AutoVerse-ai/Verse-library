@@ -6,7 +6,7 @@ from verse.parser import ControllerIR
 class SignAgent(BaseAgent):
     def __init__(self, id):
         self.id = id
-        self.controller = ControllerIR.empty()
+        self.decision_logic = ControllerIR.empty()
 
     def TC_simulate(self, mode, init, time_horizon, time_step, map=None):
         number_points = int(np.ceil(float(time_horizon)/time_step))

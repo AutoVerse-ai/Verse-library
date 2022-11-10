@@ -6,29 +6,35 @@ Verse is a Python library for creating, simulating, and verifying scenarios with
 
 
 ## Installation
-The package requires python 3.8+. The package can be installed using pip
+The package requires python 3.8+. The package can be installed using pip with all required dependencies
 
 ```
 python3 -m pip install -e .
 ```
-To update the dependencies, setup.py or requirement.txt can be used.
+To update the dependencies in case anything is missing, requirements.txt can be used.
 
-```
-python3 setup.py install
-```
-or
 ```
 pip install -r requirements.txt
 ```
+
+## Tutorial
+A detailed interactive tutorial can be found in ```tutorial/tutorial.ipynb```. The tutorial requires Jupyter notebook to run. A PDF version of the tutorial can be found in ```tutorial.pdf```.
 
 ## Demos
 The package comes with several examples in the  ```demo/``` folder. Run these as:
 
 ```
-python3 demo/vehicle/demo2.py 
+python3 demo/ball/ball_bounces.py 
 ```
 
 Read the comments in ```demo/ball/ball_bounces.py``` to learn how to create new agents and scenarios. More detailed tutorials will be provided later.
+
+## Using NueReach with Verse
+Verse allows users to plug-in different reachability tools for computing reachable sets. By default, Verse uses DryVR to compute reachable sets. Verse also implement post computation using NeuReach. To use NeuReach, additional dependencies can be downloaded using following commands
+```
+git submodule init
+git submodule update
+```
 
 ## Library structure
 

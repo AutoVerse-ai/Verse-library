@@ -24,7 +24,7 @@ class BaseAgent:
             file_name: str 
                 file name to the python controller
         """
-        self.controller: ControllerIR = ControllerIR.parse(code, file_name)
+        self.decision_logic: ControllerIR = ControllerIR.parse(code, file_name)
         self.id = id
         self.init_cont = copy.deepcopy(initial_state)
         self.init_disc = copy.deepcopy(initial_mode)

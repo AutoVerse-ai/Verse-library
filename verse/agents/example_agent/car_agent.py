@@ -11,7 +11,7 @@ from verse.parser import ControllerIR
 class NPCAgent(BaseAgent):
     def __init__(self, id, initial_state=None, initial_mode=None):
         self.id = id
-        self.controller = ControllerIR.empty()
+        self.decision_logic = ControllerIR.empty()
         self.set_initial_state(initial_state)
         self.set_initial_mode(initial_mode)
         self.set_static_parameter(None)

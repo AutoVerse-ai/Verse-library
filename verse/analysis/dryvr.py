@@ -229,7 +229,7 @@ def calc_bloated_tube(
         Bloated reach tube
 
     """
-    print(initial_set)
+    # print(initial_set)
     random.seed(4)
     cur_center = calcCenterPoint(initial_set[0], initial_set[1])
     cur_delta = calcDelta(initial_set[0], initial_set[1])
