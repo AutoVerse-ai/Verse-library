@@ -253,8 +253,8 @@ class Verifier:
             transit_map = {k: list(l) for k, l in itertools.groupby(all_possible_transitions, key=lambda p:p[0])}
             transit_agents = transit_map.keys()
             # pp(("transit agents", transit_agents))
-            if self.config.incremental and len(all_possible_transitions) > 0:
-                transit_ind = max(l[-2][-1] for l in all_possible_transitions)
+            if self.config.incremental:
+                transit_ind = max(l[-2][-1] for l in all_possible_transitions) if len(all_possible_transitions) > 0 else len(list(node.trace.values())[0])
                 for agent_id in node.agent:
                     transition = transit_map[agent_id] if agent_id in transit_agents else []
                     if agent_id in cached_tubes:
