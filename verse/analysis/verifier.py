@@ -149,7 +149,9 @@ class Verifier:
         while verification_queue != []:
             node: AnalysisTreeNode = verification_queue.pop(0)
             combined_inits = {a: combine_all(inits) for a, inits in node.init.items()}
+            print(node.init)
             print(node.mode)
+            print("###############")
             # pp(("start sim", node.start_time, {a: (*node.mode[a], *combined_inits[a]) for a in node.mode}))
             remain_time = round(time_horizon - node.start_time, 10)
             if remain_time <= 0:
@@ -265,37 +267,56 @@ class Verifier:
                     else:
                         self.trans_cache.add_tube(agent_id, combined_inits, node, transit_agents, transition, transit_ind, run_num)
 
+            # Check if multiple agents can transit at the same time
             max_end_idx = 0
+            transition_dict = {}
             for transition in all_possible_transitions:
+                if transition[0] not in transition_dict:
+                    transition_dict[transition[0]] = [transition]
+                else:
+                    transition_dict[transition[0]].append(transition)
+            transition_list = list(transition_dict.values())
+            combined_transitions = list(itertools.product(*transition_list))
+            aligned_transitions = self.align_transitions(combined_transitions)
+
+            for all_agent_transition in aligned_transitions:
                 # Each transition will contain a list of rectangles and their corresponding indexes in the original list
                 # if len(transition) != 6:
                 #     pp(("weird trans", transition))
-                transit_agent_idx, src_mode, dest_mode, next_init, idx, path = transition
-                start_idx, end_idx = idx[0], idx[-1]
-
+                if not all_agent_transition:
+                    continue
+                next_node_mode = copy.deepcopy(node.mode)
+                next_node_static = node.static
+                next_node_uncertain_param = node.uncertain_param
+                start_idx, end_idx = all_agent_transition[0][4][0], all_agent_transition[0][4][-1]
                 truncated_trace = {}
                 for agent_idx in node.agent:
                     truncated_trace[agent_idx] = node.trace[agent_idx][start_idx*2:]
                 if end_idx > max_end_idx:
                     max_end_idx = end_idx
-
-                if dest_mode is None:
-                    continue
-
-                next_node_mode = copy.deepcopy(node.mode)
-                next_node_static = node.static
-                next_node_uncertain_param = node.uncertain_param
-                next_node_mode[transit_agent_idx] = dest_mode
-                next_node_agent = node.agent
                 next_node_start_time = list(truncated_trace.values())[0][0][0]
+                next_node_agent = node.agent
                 next_node_init = {}
                 next_node_trace = {}
-                for agent_idx in next_node_agent:
-                    if agent_idx == transit_agent_idx:
-                        next_node_init[agent_idx] = next_init
-                    else:
+                
+                transit_agent = []
+                for transition in all_agent_transition:
+                    transit_agent_idx, src_mode, dest_mode, next_init, idx, path = transition
+                    # start_idx, end_idx = idx[0], idx[-1]
+
+                    if dest_mode is None:
+                        continue
+
+                    next_node_mode[transit_agent_idx] = dest_mode
+                    # for agent_idx in next_node_agent:
+                        # if agent_idx == transit_agent_idx:
+                    next_node_init[transit_agent_idx] = next_init
+                    transit_agent.append(transit_agent_idx)
+                        # else:
+                        #     # pp(("infer init", agent_idx, next_node_init[agent_idx]))
+                for agent_idx in next_node_agent :
+                    if agent_idx not in transit_agent:
                         next_node_init[agent_idx] = [[truncated_trace[agent_idx][0][1:], truncated_trace[agent_idx][1][1:]]]
-                        # pp(("infer init", agent_idx, next_node_init[agent_idx]))
                         next_node_trace[agent_idx] = truncated_trace[agent_idx]
 
                 tmp = AnalysisTreeNode(
@@ -327,4 +348,5 @@ class Verifier:
 
         return self.reachtube_tree
 
-
+    def align_transitions(self, all_transition_list):
+        return all_transition_list

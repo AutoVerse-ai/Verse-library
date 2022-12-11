@@ -729,8 +729,6 @@ class Scenario:
         guard_hits = []
         guard_hit = False
         for idx in range(trace_length):
-            if idx == 1500:
-                print("stop")
             if min_trans_ind != None and idx >= min_trans_ind:
                 return None, cached_trans
             any_contained = False
