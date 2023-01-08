@@ -106,7 +106,7 @@ class AnalysisTree:
         node_id = 0
         while queue:
             node = queue.pop(0)
-            node.id = node_id 
+            # node.id = node_id 
             res.append(node)
             node_id += 1
             queue += node.child

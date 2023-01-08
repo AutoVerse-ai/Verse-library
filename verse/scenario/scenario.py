@@ -170,6 +170,7 @@ class ScenarioConfig:
     unsafe_continue: bool = False
     init_seg_length: int = 1000
     reachability_method: str = 'DRYVR'
+    parallel_sim_ahead: int = 8
 
 class Scenario:
     def __init__(self, config=ScenarioConfig()):
