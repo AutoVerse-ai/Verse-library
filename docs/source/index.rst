@@ -7,7 +7,7 @@ Welcome to verse's documentation!
 =================================
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Contents:
 
    getting_started.rst
@@ -16,7 +16,9 @@ Welcome to verse's documentation!
    sensor.rst
    scenario.rst
    parser.md
+   plotting.rst
    contributors.rst
+
 
 API Documentation
 ~~~~~~~~~~~~~~~~~
