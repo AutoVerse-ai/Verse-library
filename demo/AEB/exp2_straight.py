@@ -74,8 +74,8 @@ if __name__ == "__main__":
     )
 
     start_time = time.time()
-    traces = scenario.verify(40, 0.1, params={"bloating_method": 'GLOBAL'})
-    # traces = scenario.simulate(40,0.1)
+    # traces = scenario.verify(40, 0.1, params={"bloating_method": 'GLOBAL'})
+    traces = scenario.simulate(100,0.1)
     run_time = time.time()-start_time 
     traces.dump('./demo/AEB/sim_straight.json')
 
@@ -90,6 +90,7 @@ if __name__ == "__main__":
     })
 
     fig = go.Figure()
+    fig = simulation_tree(traces, tmp_map, fig, 1, 2,None, 'lines', 'trace')
     # fig = simulation_anime(traces, tmp_map, fig, 1, 2,None, 'lines', 'trace', time_step=0.1)
-    fig = reachtube_anime(traces, tmp_map, fig, 1, 2, None,'lines', 'trace', combine_rect=1)
+    # fig = reachtube_anime(traces, tmp_map, fig, 1, 2, None,'lines', 'trace', combine_rect=1)
     fig.show()
