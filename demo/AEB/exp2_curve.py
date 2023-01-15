@@ -1,5 +1,6 @@
 from verse.agents.example_agent import CarAgent, NPCAgent
-from verse.map.example_map.map_tacas import M1
+# from verse.map.example_map import SimpleMap3, SimpleMap6
+from verse.map.example_map.map_tacas import M3
 from verse import Scenario
 from verse.scenario import ScenarioConfig
 # from noisy_sensor import NoisyVehicleSensor
@@ -63,7 +64,7 @@ if __name__ == "__main__":
     scenario.add_agent(car)
     car = NPCAgent('car3')
     scenario.add_agent(car)
-    tmp_map = M1()
+    tmp_map = M3()
     scenario.set_map(tmp_map)
     scenario.set_init(
         [
@@ -79,21 +80,20 @@ if __name__ == "__main__":
     )
 
     start_time = time.time()
-    traces = scenario.verify(4, 0.1, params={"bloating_method": 'GLOBAL'})
-    run_time = time.time()-start_time 
-    traces.dump('./demo/tacas2023/exp2/output2_straight.json')
-
+    traces = scenario.verify(40, 0.1, params={"bloating_method": 'GLOBAL'})
+    run_time = time.time()-start_time
+    traces.dump('./demo/tacas2023/exp2/output2_curve.json')
     print({
         "#A": len(scenario.agent_dict),
         "A": "C",
-        "Map": "M1",
+        "Map": "M3",
         "postCont": "DryVR",
         "Noisy S": "No",
         "# Tr": len(traces.nodes),
         "Run Time": run_time,
     })
 
-    if len(sys.argv)>1 and sys.argv[1]=='p':
+    if len(sys.argv)>1 and sys.argv[1] == 'p':
         fig = go.Figure()
         fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace')
         fig.show()
