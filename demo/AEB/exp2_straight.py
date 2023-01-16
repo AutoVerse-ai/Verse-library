@@ -4,6 +4,7 @@ from verse import Scenario
 from verse.scenario import ScenarioConfig
 # from noisy_sensor import NoisyVehicleSensor
 from verse.plotter.plotter2D import *
+import os
 
 from enum import Enum, auto
 import time
@@ -48,9 +49,10 @@ class State:
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/AEB/controller1.py'
+    # note: I modify file path assuming the controller is under the same directory -- Keyi
+    parent_dir=os.path.dirname(__file__)
+    input_code_name = parent_dir+'/controller1.py'
     scenario = Scenario(ScenarioConfig(init_seg_length=5))
-
     car = CarAgent('car1', file_name=input_code_name)
     scenario.add_agent(car)
     car = NPCAgent('car2')
@@ -58,8 +60,9 @@ if __name__ == "__main__":
     # car = NPCAgent('car3')
     # scenario.add_agent(car)
     # Q. Why do we need the tmp_map name? 
+    # A. Not necessary. We can replace all tmp_map by M1() in this case.
     tmp_map = M1()
-    scenario.set_map(M1())
+    scenario.set_map(tmp_map)
     scenario.set_init(
         [
             [[5, -0.5, 0, 1.0], [5.5, 0.5, 0, 1.0]],
@@ -77,7 +80,7 @@ if __name__ == "__main__":
     # traces = scenario.verify(40, 0.1, params={"bloating_method": 'GLOBAL'})
     traces = scenario.simulate(100,0.1)
     run_time = time.time()-start_time 
-    traces.dump('./demo/AEB/sim_straight.json')
+    traces.dump(parent_dir+'/sim_straight.json')
 
     print({
         "#A": len(scenario.agent_dict),
@@ -90,7 +93,7 @@ if __name__ == "__main__":
     })
 
     fig = go.Figure()
-    fig = simulation_tree(traces, tmp_map, fig, 1, 2,None, 'lines', 'trace')
+    fig = simulation_tree(traces, tmp_map, fig, 1, 2, None, 'lines', 'trace')
     # fig = simulation_anime(traces, tmp_map, fig, 1, 2,None, 'lines', 'trace', time_step=0.1)
     # fig = reachtube_anime(traces, tmp_map, fig, 1, 2, None,'lines', 'trace', combine_rect=1)
     fig.show()
