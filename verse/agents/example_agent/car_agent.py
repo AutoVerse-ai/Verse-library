@@ -90,7 +90,7 @@ class CarAgent(BaseAgent):
             self.switch_duration += 0.1
         elif vehicle_mode == "Brake":
             d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
-            a = -1    
+            a = max(-1,-v)  
             self.switch_duration = 0
         elif vehicle_mode == "Accel":
             d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
