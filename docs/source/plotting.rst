@@ -23,13 +23,13 @@ We will omit them in the remaining functions and only list some specific paramet
 
 Usage::
 
-  simulation_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, print_dim_list=None, map_type='lines', scale_type='trace', label_mode='None', sample_rate=1)
+  simulation_tree(root, map=None, fig=go.Figure(), x_dim = 1, y_dim = 2, print_dim_list=None, map_type='lines', scale_type='trace', label_mode='None', sample_rate=1)
 
 Parameters:
 
 * ``root``: root node of a simulation trace. Typically, return value of ``Scenario.simulate()``.
 
-* ``map``: the map of the scenario plotted as a background. 
+* ``map``: the map of the scenario plotted as a background. Use ``None`` if there is no map. You may check tutorial for more details. 
 
 * ``fig``: figure object of type ``plotly.graph_objects.Figure()``.
 
@@ -63,7 +63,7 @@ It shows the animation of the simulation with/without trail.
 
 Usage::
 
-  simulation_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, print_dim_list=None, map_type='lines', scale_type='trace', label_mode='None', sample_rate=1, time_step=None, speed_rate=1, anime_mode='normal', full_trace=False)
+  simulation_anime(root, map=None, fig=go.Figure(), x_dim = 1, y_dim = 2, print_dim_list=None, map_type='lines', scale_type='trace', label_mode='None', sample_rate=1, time_step=None, speed_rate=1, anime_mode='normal', full_trace=False)
 
 Parameters not occurred in ``simulation_tree``:
 
@@ -88,7 +88,7 @@ It statically shows the reachtubes, possibly with multiple brances.
 
 Usage::
 
-	reachtube_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, print_dim_list=None, map_type='lines', scale_type='trace', label_mode='None', sample_rate=1, combine_rect=1):
+	reachtube_tree(root, map=None, fig=go.Figure(), x_dim = 1, y_dim = 2, print_dim_list=None, map_type='lines', scale_type='trace', label_mode='None', sample_rate=1, combine_rect=1):
 
 Parameters not occurred in ``simulation_tree``:
 
@@ -101,7 +101,7 @@ It shows the animation of the reachtube.
 
 Usage::
 
-  reachtube_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, print_dim_list=None, map_type='lines', scale_type='trace', label_mode='None', sample_rate=1, time_step=None, speed_rate=1, combine_rect=None)
+  reachtube_anime(root, map=None, fig=go.Figure(), x_dim = 1, y_dim = 2, print_dim_list=None, map_type='lines', scale_type='trace', label_mode='None', sample_rate=1, time_step=None, speed_rate=1, combine_rect=None)
 
 Parameters not occurred in ``simulation_tree``:
 
