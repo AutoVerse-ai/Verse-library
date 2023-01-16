@@ -67,6 +67,7 @@ def run(sim, meas=False):
         scenario.verifier.tube_cache_hits = (0,0)
         scenario.verifier.trans_cache_hits = (0,0)
         traces = scenario.verify(60, 0.1)
+    dur = timeit.default_timer() - time
 
     if 'd' in arg:
         traces.dump_tree()
@@ -87,7 +88,7 @@ def run(sim, meas=False):
         cache_size = asizeof.asizeof(scenario.verifier.cache) + asizeof.asizeof(scenario.verifier.trans_cache)
     if meas:
         pp({
-            "dur": timeit.default_timer() - time,
+            "dur": dur,
             "cache_size": cache_size,
             "node_count": ((0 if sim else scenario.verifier.num_transitions), len(traces.nodes)),
             "hits": scenario.simulator.cache_hits if sim else (scenario.verifier.tube_cache_hits, scenario.verifier.trans_cache_hits),
@@ -95,7 +96,7 @@ def run(sim, meas=False):
 
 if __name__ == "__main__":
     input_code_name = './demo/tacas2023/exp11/decision_logic/inc-expr6.py' if "6" in arg else './demo/tacas2023/exp11/decision_logic/inc-expr.py'
-    config = ScenarioConfig()
+    config = ScenarioConfig(parallel_sim_ahead=20)
     config.incremental = 'i' in arg
     scenario = Scenario(config)
 
