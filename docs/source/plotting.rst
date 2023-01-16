@@ -1,38 +1,51 @@
 Visualization
 =============
 
+
 simulation_tree
 ~~~~~~~~~~~~~~~~
-Shows an  animation of a simulation with or without trails.
+Plots a simulation tree using ``plotly``.
 
 Usage::
 
-  simulation_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, print_dim_list=None, map_type='lines', scale_type='trace', label_mode='None', sample_rate=1)
+  simulation_tree(root, map, fig, x_dim: int = 1, y_dim: int = 2, print_dim_list=None, map_type='lines', scale_type='trace', label_mode='None', sample_rate=1)
 
 * ``root``: root node of a simulation trace. Typically, return value ``Scenario.simulate()``.
 
-* ``map``: the map of the scenario plotted as a background. 
+* ``map``: the map of the scenario plotted as a background. Use ``None`` if there is no map. 
 
 * ``fig``: figure object of type ``plotly.graph_objects.Figure()``.
 
-- **x_dim:** the dimension of x coordinate in the trace list of every time step. The default value is **1**.
-- **y_dim:** the dimension of y coordinate in the trace list of every time step. The default value is **2**.
-- **print_dim_list** the list containing the dimensions of data which will be shown directly or indirectly when the mouse hovers on the point. The default value is **None**. And then all dimensions will be shown.
-- **map_type** the way to draw the map. It should be **'lines'** or **'fill'** or **'detailed'**. The default value is **'lines'**.
-  - For the **'lines'** mode, map is only drawn by margins of lanes. 
-  - For the **'fill'** mode, the lanes will be filled with semitransparent colors. 
-  - For the **'detailed'** mode, the lanes will be filled some colors according to the speed limits of lanes(if the information is given). Otherwise, it is the same as the 'lines' mode.
-- **scale_type** the way to scale the coordinate axises. It should be **'trace'** or **'map'**. The default value is **'trace'**. 
-  -  For the **'trace'** mode, the traces will be in the center of the plot with an appropriate scale. 
-  - For the **'map'** mode, the map will be in the center of the plot with an appropriate scale. 
-- **label_mode** the mode to display labels or not. if it is 'None', then labels will not be displayed. Otherwise, labels will be displayed. The default value is **'None'**. 
+* ``x_dim``: dimension plotted alomg x-axis. Default value is **1**. Use **0** for time. 
+
+* ``y_dim``: dimension(s) plotted along y-axis. Default value is **2**.
+
+* ``print_dim_list``: the list containing the dimensions of data which will be shown directly or indirectly when the mouse hovers on the point. The default value is **None**. And then all dimensions will be shown.
+
+* ``map_type``: the way to draw the map. It should be **'lines'** or **'fill'** or **'detailed'**. The default value is **'lines'**.
+
+* For the **'lines'** mode, map is only drawn by margins of lanes. 
+
+* For the **'fill'** mode, the lanes will be filled with semitransparent colors. 
+
+* For the **'detailed'** mode, the lanes will be filled some colors according to the speed limits of lanes(if the information is given). Otherwise, it is the same as the 'lines' mode.
+
+* **scale_type** the way to scale the coordinate 
+axises. It should be **'trace'** or **'map'**. The default value is **'trace'**. 
+
+*  For the **'trace'** mode, the traces will be in the center of the plot with an appropriate scale. 
+
+* For the **'map'** mode, the map will be in the center of the plot with an appropriate scale. 
+
+* ``label_mode``: the mode to display labels or not. if it is 'None', then labels will not be displayed. Otherwise, labels will be displayed. The default value is **'None'**. 
+
 - **sample_rate** it determines the points used in the plot. if sample_rate = n which is a positive integer, it means that the plotter sample a point within n points. it is useful when the points are too much and the response of the plot is slow. The default value is **1**.  
 
 
 simulation_anime
 ~~~~~~~~~~~~~~~~
 
-Shows simulation traces possibly with multiple brances. 
+Shows an  animation of simulation traces possibly with multiple brances. 
 
 
 
