@@ -12,6 +12,7 @@ from verse.scenario.scenario import ScenarioConfig
 import functools, pprint
 pp = functools.partial(pprint.pprint, compact=True, width=130)
 from typing import List
+import ray
 
 class AgentMode(Enum):
     Normal = auto()
@@ -96,7 +97,7 @@ def run(sim, meas=False):
 
 if __name__ == "__main__":
     input_code_name = './demo/tacas2023/exp11/decision_logic/inc-expr6.py' if "6" in arg else './demo/tacas2023/exp11/decision_logic/inc-expr.py'
-    config = ScenarioConfig(parallel_sim_ahead=20)
+    config = ScenarioConfig()
     config.incremental = 'i' in arg
     scenario = Scenario(config)
 
@@ -168,6 +169,7 @@ if __name__ == "__main__":
         cont_inits = jerks(cont_inits, _jerks)
     scenario.set_init(cont_inits, *mode_inits)
 
+    ray.init()
     if 'b' in arg:
         run(sim, True)
     elif 'r' in arg:
