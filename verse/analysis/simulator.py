@@ -1,5 +1,6 @@
 from typing import Dict, List, Optional, Tuple
 import copy, itertools, functools, pprint, ray
+from pympler.asizeof import asizeof
 
 from verse.agents.base_agent import BaseAgent
 from verse.analysis.incremental import SimTraceCache, convert_sim_trans, to_simulate
@@ -196,6 +197,7 @@ class Simulator:
         simulation_queue: List[Tuple[AnalysisTreeNode, int]] = [(root, 0)]
         result_refs = []
         nodes = [root]
+        cached = 0
         # Perform BFS through the simulation tree to loop through all possible transitions
         while True:
             wait = False
@@ -228,9 +230,14 @@ class Simulator:
                 simulation_queue.sort(key=lambda p: p[1:])
                 nodes.extend(next_nodes)
                 for update in cache_updates:
-                    self.cache.add_segment(*update)
+                    aid = update[0]
+                    if not self.cache.check_hit(aid, update[1].mode[aid], update[1].init[aid], update[1].init):
+                        self.cache.add_segment(*update)
+                        cached += 1
+                print("cache", asizeof(self.cache))
                 result_refs = remaining
         
+        print("cached", cached)
         self.simulation_tree = AnalysisTree(root)
         return self.simulation_tree
 
