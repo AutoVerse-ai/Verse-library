@@ -161,7 +161,7 @@ class SimTraceCache:
     @staticmethod
     def iter_tree(tree, depth: int) -> List[List[float]]:
         if depth == 0:
-            return [[(i.begin + i.end) / 2, (i.data.run_num, i.data.node_id, [t.transition for t in i.data.transitions])] for i in tree]
+            return [[(i.begin + i.end) / 2, (i.data.run_num, i.data.node_id, [t.transition for t in i.data.transitions], len(i.data.trace))] for i in tree]
         res = []
         for i in tree:
             mid = (i.begin + i.end) / 2
@@ -173,7 +173,7 @@ class SimTraceCache:
         inits = defaultdict(list)
         for key, tree in self.cache.items():
             inits[key[0]].extend((*key[1:], *init) for init in self.iter_tree(tree, n))
-        inits = dict(inits)
+        inits = {k: sorted(v) for k, v in inits.items()}
         return inits
 
     @staticmethod
