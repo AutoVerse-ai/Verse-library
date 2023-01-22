@@ -24,7 +24,6 @@ class CachedSegment:
     trace: List[List[float]]
     asserts: List[str]
     transitions: List[CachedTransition]
-    controller: ControllerIR
     run_num: int
     node_id: int
 
@@ -42,7 +41,6 @@ class CachedReachTrans:
 class CachedRTTrans:
     asserts: List[str]
     transitions: List[CachedReachTrans]
-    controller: ControllerIR
     run_num: int
     node_id: int
 
@@ -149,7 +147,7 @@ class SimTraceCache:
         for i, val in enumerate(init):
             if i == len(init) - 1:
                 transitions = convert_sim_trans(agent_id, transit_agents, node.init, transition, trans_ind)
-                entry = CachedSegment(trace, assert_hits.get(agent_id), transitions, node.agent[agent_id].decision_logic, run_num, node.id)
+                entry = CachedSegment(trace, assert_hits.get(agent_id), transitions, run_num, node.id)
                 tree[val - _EPSILON:val + _EPSILON] = entry
                 return entry
             else:
