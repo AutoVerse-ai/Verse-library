@@ -1,8 +1,5 @@
-import functools
-import itertools
-import pprint
+import copy, itertools, functools, pprint, ray
 from typing import List
-import copy
 
 import numpy as np
 
@@ -100,6 +97,25 @@ class Verifier:
                 )
         return res_tube.tolist()
 
+    @ray.remote
+    def compute_full_reachtube_step(
+        self,
+        init_list: List[float],
+        init_mode_list: List[str],
+        static_list: List[str],
+        uncertain_param_list: List[float],
+        agent_list,
+        transition_graph,
+        time_horizon,
+        time_step,
+        lane_map,
+        init_seg_length,
+        reachability_method,
+        run_num,
+        past_runs,
+        params = {},
+    ):
+        return
 
     def compute_full_reachtube(
         self,
