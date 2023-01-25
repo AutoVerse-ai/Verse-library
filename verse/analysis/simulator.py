@@ -13,7 +13,7 @@ from verse.parser.parser import ModePath, find
 pp = functools.partial(pprint.pprint, compact=True, width=130)
 
 # from verse.agents.base_agent import BaseAgent
-from verse.analysis.analysis_tree import AnalysisTreeNode, AnalysisTree
+from verse.analysis.analysis_tree import AnalysisTreeNode, AnalysisTree, TraceType
 
 PathDiffs = List[Tuple[BaseAgent, ModePath]]
 
@@ -29,7 +29,7 @@ class Simulator:
         self.cache_hits = (0, 0)
 
     @ray.remote
-    def simulate_one(config: "ScenarioConfig", cache, node: AnalysisTreeNode, later: int, remain_time: float, time_step: float, lane_map: LaneMap, run_num: int, past_runs: List[AnalysisTree], transition_graph: "Scenario") -> Tuple[int, int, List[AnalysisTreeNode], Dict[str, list], list]:
+    def simulate_one(config: "ScenarioConfig", cache, node: AnalysisTreeNode, later: int, remain_time: float, time_step: float, lane_map: LaneMap, run_num: int, past_runs: List[AnalysisTree], transition_graph: "Scenario") -> Tuple[int, int, List[AnalysisTreeNode], Dict[str, TraceType], list]:
         print(f"node id: {node.id}")
         cached_segments = {}
         cache_updates = []
@@ -58,10 +58,8 @@ class Simulator:
                 else:
                     # pp(("sim", agent_id, *mode, *init))
                     # Simulate the trace starting from initial condition
-                    trace = node.agent[agent_id].TC_simulate(
-                        mode, init, remain_time, time_step, lane_map)
+                    trace = node.agent[agent_id].TC_simulate(mode, init, remain_time, time_step, lane_map)
                     trace[:, 0] += node.start_time
-                    trace = trace.tolist()
                     node.trace[agent_id] = trace
         # pp(("cached_segments", cached_segments.keys()))
         # TODO: for now, make sure all the segments comes from the same node; maybe we can do
@@ -86,7 +84,8 @@ class Simulator:
         # pp(("next init:", {a: trace[transition_idx] for a, trace in node.trace.items()}))
 
         # truncate the computed trajectories from idx and store the content after truncate
-        truncated_trace, full_traces = {}, {}
+        truncated_trace: Dict[str, TraceType] = {}
+        full_traces: Dict[str, TraceType] = {}
         for agent_idx in node.agent:
             full_traces[agent_idx] = node.trace[agent_idx]
             if transitions:
@@ -151,7 +150,7 @@ class Simulator:
                 for agent_idx in next_node_agent:
                     if agent_idx not in next_node_init:
                         next_node_trace[agent_idx] = truncated_trace[agent_idx]
-                        next_node_init[agent_idx] = truncated_trace[agent_idx][0][1:]
+                        next_node_init[agent_idx] = truncated_trace[agent_idx][0][1:].tolist()
 
                 all_transition_paths.append(transition_paths)
                 tmp = AnalysisTreeNode(
@@ -293,7 +292,6 @@ class Simulator:
                 trace = node.agent[agent_id].TC_simulate(
                     mode, init, remain_time, time_step, lane_map)
                 trace[:, 0] += node.start_time
-                trace = trace.tolist()
                 node.trace[agent_id] = trace
             # pp(("cached_segments", cached_segments.keys()))
             # TODO: for now, make sure all the segments comes from the same node; maybe we can do
