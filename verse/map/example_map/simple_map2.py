@@ -127,6 +127,7 @@ class SimpleMap4(LaneMap):
         }
 
     def left_lane(self, lane_mode):
+        print("left_lane", lane_mode)
         return self.left_dict[lane_mode]
 
     def right_lane(self,lane_mode):

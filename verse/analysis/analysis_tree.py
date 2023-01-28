@@ -1,6 +1,7 @@
 from typing import List, Dict, Any
 import json
 from treelib import Tree
+import numpy as np
 
 class AnalysisTreeNode:
     """AnalysisTreeNode class
@@ -94,6 +95,35 @@ class AnalysisTreeNode:
             type = data['type'],
         )
 
+    def __eq__(self, __o: object) -> bool:
+        assert isinstance(__o, AnalysisTreeNode)  
+        if not (self.init==__o.init and 
+                self.mode==__o.mode and 
+                self.agent==__o.agent and 
+                self.start_time==__o.start_time and 
+                self.assert_hits==__o.assert_hits and 
+                self.type==__o.type and 
+                self.static==__o.static and 
+                self.uncertain_param==__o.uncertain_param and 
+                self.id==__o.id):
+            return False
+        if self.type=='simtrace':
+            for agent, trace in self.trace.items():
+                trace_other = __o.trace[agent]
+                for (step, step_other) in zip(trace, trace_other):
+                    if not np.allclose(step, step_other, equal_nan=True):
+                        print("diff in trace:", step, step_other)
+                        return False
+        elif self.type=='reachtube':
+            for agent, trace in self.trace.items():
+                trace_other = __o.trace[agent]
+                for (step, step_other) in zip(trace, trace_other):
+                    if not np.allclose(step, step_other, equal_nan=True):
+                        print("diff in trace:", step, step_other)
+                        return False
+        else:
+            raise ValueError
+
 class AnalysisTree:
     def __init__(self, root):
         self.root:AnalysisTreeNode = root
@@ -162,3 +192,13 @@ class AnalysisTree:
         for child in node.child:
             nid = AnalysisTree._dump_tree(child, tree, id, nid)
         return nid + 1
+
+
+    def __eq__(self, __o: object) -> bool:
+        assert isinstance(__o, AnalysisTree)
+        if len(self.nodes) != len(__o.nodes):
+            return False
+        for (node, node_other) in zip(self.nodes, __o.nodes):
+            if not (node == node_other):
+                return False
+        return True

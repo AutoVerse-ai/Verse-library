@@ -201,6 +201,7 @@ class Verifier:
         asserts, all_possible_transitions = transition_graph.get_transition_verify(new_cache, paths_to_sim, node)
         # pp(("transitions:", [(t[0], t[2]) for t in all_possible_transitions]))
         node.assert_hits = asserts
+        print(asserts)
         if asserts != None:
             asserts, idx = asserts
             for agent in node.agent:
@@ -325,7 +326,7 @@ class Verifier:
             child=[],
             start_time = 0,
             ndigits = 10,
-            type = 'simtrace',
+            type = 'reachtube',
             id = 0
         )
         for i, agent in enumerate(agent_list):
@@ -334,7 +335,6 @@ class Verifier:
             root.static[agent.id] = [elem.name for elem in static_list[i]]
             root.uncertain_param[agent.id] = uncertain_param_list[i]
             root.agent[agent.id] = agent
-            root.type = 'reachtube'
         verification_queue = [root]
         result_refs = []
         nodes = [root]
@@ -377,7 +377,7 @@ class Verifier:
 
         return self.reachtube_tree
 
-    def compute_full_reachtube_simple(
+    def compute_full_reachtube_ser(
         self,
         init_list: List[float],
         init_mode_list: List[str],
@@ -405,7 +405,7 @@ class Verifier:
             child=[],
             start_time = 0,
             ndigits = 10,
-            type = 'simtrace',
+            type = 'reachtube',
             id = 0
         )
         # root = AnalysisTreeNode()
@@ -417,7 +417,6 @@ class Verifier:
             root.static[agent.id] = init_static
             root.uncertain_param[agent.id] = uncertain_param_list[i]
             root.agent[agent.id] = agent
-            root.type = 'reachtube'
         verification_queue = []
         verification_queue.append(root)
         num_calls = 0

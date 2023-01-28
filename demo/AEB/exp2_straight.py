@@ -5,6 +5,7 @@ from verse.scenario import ScenarioConfig
 # from noisy_sensor import NoisyVehicleSensor
 from verse.plotter.plotter2D import *
 import os
+import ray
 
 from enum import Enum, auto
 import time
@@ -75,10 +76,10 @@ if __name__ == "__main__":
 #            (AgentMode.Normal, TrackMode.T0),
         ]
     )
-
+    ray.init(include_dashboard=True)
     start_time = time.time()
-    # traces = scenario.verify(40, 0.1, params={"bloating_method": 'GLOBAL'})
-    traces = scenario.simulate(100,0.1)
+    traces = scenario.verify(20, 0.1, params={"bloating_method": 'GLOBAL'})
+    # traces = scenario.simulate(100,0.1)
     run_time = time.time()-start_time 
     traces.dump(parent_dir+'/sim_straight.json')
 
@@ -93,7 +94,8 @@ if __name__ == "__main__":
     })
 
     fig = go.Figure()
-    fig = simulation_tree(traces, tmp_map, fig, 1, 2, None, 'lines', 'trace')
+    # fig = simulation_tree(traces, tmp_map, fig, 1, 2, None, 'lines', 'trace')
     # fig = simulation_anime(traces, tmp_map, fig, 1, 2,None, 'lines', 'trace', time_step=0.1)
-    # fig = reachtube_anime(traces, tmp_map, fig, 1, 2, None,'lines', 'trace', combine_rect=1)
+    fig = reachtube_tree(traces, tmp_map, fig, 1, 2, None,'lines', 'trace', combine_rect=1)
     fig.show()
+    ray.shutdown()

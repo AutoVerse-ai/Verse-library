@@ -12,6 +12,7 @@ from verse.scenario.scenario import ScenarioConfig
 import functools, pprint
 pp = functools.partial(pprint.pprint, compact=True, width=130)
 from typing import List
+import ray
 
 class AgentMode(Enum):
     Normal = auto()
@@ -61,9 +62,10 @@ if 'p' in arg:
 def run(sim, meas=False):
     time = timeit.default_timer()
     if sim:
-        traces = scenario.simulate(60, 0.1)
+        traces = scenario.simulate(60, 0.1, seed=4)
     else:
-        traces = scenario.verify(60, 0.1)
+        traces = scenario.verify(1, 0.1)
+    dur = timeit.default_timer() - time
 
     if 'd' in arg:
         traces.dump_tree()
@@ -84,7 +86,7 @@ def run(sim, meas=False):
         cache_size = asizeof.asizeof(scenario.verifier.cache) + asizeof.asizeof(scenario.verifier.trans_cache)
     if meas:
         pp({
-            "dur": timeit.default_timer() - time,
+            "dur": dur,
             "cache_size": cache_size,
             "node_count": ((0 if sim else scenario.verifier.num_transitions), len(traces.nodes)),
             "hits": scenario.simulator.cache_hits if sim else (scenario.verifier.tube_cache_hits, scenario.verifier.trans_cache_hits),
@@ -164,6 +166,7 @@ if __name__ == "__main__":
         cont_inits = jerks(cont_inits, _jerks)
     scenario.set_init(cont_inits, *mode_inits)
 
+    ray.init()
     if 'b' in arg:
         run(sim, True)
     elif 'r' in arg:

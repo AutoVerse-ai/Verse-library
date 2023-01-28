@@ -1,5 +1,5 @@
 from typing import Dict, List, Optional, Tuple
-import copy, itertools, functools, pprint, ray
+import copy, itertools, functools, pprint, ray, time
 
 from verse.agents.base_agent import BaseAgent
 from verse.analysis.incremental import SimTraceCache, convert_sim_trans, to_simulate
@@ -164,7 +164,7 @@ class Simulator:
             print(len(next_nodes))
             return (node.id, next_nodes, node.trace)
 
-    def simulate(self, init_list, init_mode_list, static_list, uncertain_param_list, agent_list,
+    def simulate_par(self, init_list, init_mode_list, static_list, uncertain_param_list, agent_list,
                  transition_graph, time_horizon, time_step, lane_map, run_num, past_runs):
         # Setup the root of the simulation tree
         root = AnalysisTreeNode(
@@ -177,6 +177,7 @@ class Simulator:
             child=[],
             start_time=0,
         )
+        start=time.perf_counter()
         for i, agent in enumerate(agent_list):
             root.init[agent.id] = init_list[i]
             init_mode = [elem.name for elem in init_mode_list[i]]
@@ -223,9 +224,11 @@ class Simulator:
                 result_refs = remaining
         
         self.simulation_tree = AnalysisTree(root)
+        end=time.perf_counter()
+        print("simulate time in (s):", end-start)
         return self.simulation_tree
 
-    def simulate_simple(self, init_list, init_mode_list, static_list, uncertain_param_list, agent_list,
+    def simulate(self, init_list, init_mode_list, static_list, uncertain_param_list, agent_list,
                  transition_graph, time_horizon, time_step, lane_map, run_num, past_runs):
         # Setup the root of the simulation tree
         root = AnalysisTreeNode(
@@ -238,6 +241,7 @@ class Simulator:
             child=[],
             start_time=0,
         )
+        # start=time.perf_counter()
         for i, agent in enumerate(agent_list):
             root.init[agent.id] = init_list[i]
             init_mode = [elem.name for elem in init_mode_list[i]]
@@ -355,5 +359,7 @@ class Simulator:
             # simulation_queue += node.child
         
         self.simulation_tree = AnalysisTree(root)
+        # end=time.perf_counter()
+        # print("simulate time in (s):", end-start)
         return self.simulation_tree
 

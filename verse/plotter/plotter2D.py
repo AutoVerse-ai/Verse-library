@@ -492,6 +492,7 @@ def reachtube_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go
                         showlegend=False,
                     ))
                     previous_mode[agent_id] = node.mode[agent_id]
+            print(node.assert_hits)
             if node.assert_hits != None and agent_id in node.assert_hits[0]:
                 fig.add_trace(go.Scatter(x=[trace[-1, x_dim]], y=[trace[-1, y_dim]],
                                          mode='markers+text',
@@ -636,14 +637,14 @@ def reachtube_anime(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=g
                         showlegend=False,
                     ))
                     previous_mode[agent_id] = node.mode[agent_id]
-            if node.assert_hits != None and agent_id in node.assert_hits:
-                fig.add_trace(go.Scatter(x=[trace[-1, x_dim]], y=[trace[-1, y_dim]],
-                                         mode='markers+text',
-                                         text=['HIT:\n' +
-                                               a for a in node.assert_hits[agent_id]],
-                                         textfont={'color': 'black'},
-                                         marker={'size': 4, 'color': 'black'},
-                                         showlegend=False))
+                if node.assert_hits != None and agent_id in node.assert_hits:
+                    fig.add_trace(go.Scatter(x=[trace[-1, x_dim]], y=[trace[-1, y_dim]],
+                                            mode='markers+text',
+                                            text=['HIT:\n' +
+                                                a for a in node.assert_hits[agent_id]],
+                                            textfont={'color': 'black'},
+                                            marker={'size': 4, 'color': 'black'},
+                                            showlegend=False))
         queue += node.child
     if scale_type == 'trace':
         fig.update_xaxes(
