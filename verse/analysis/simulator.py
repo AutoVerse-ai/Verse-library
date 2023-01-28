@@ -25,7 +25,8 @@ class Simulator:
         self.cache_hits = (0, 0)
 
     @ray.remote
-    def simulate_one(self, node: AnalysisTreeNode, remain_time: float, time_step: float, lane_map: LaneMap, run_num: int, past_runs: List[AnalysisTree], transition_graph: "Scenario") -> Tuple[int, List[AnalysisTreeNode], Dict[str, list]]:
+    def simulate_one(self, node: AnalysisTreeNode, remain_time: float, time_step: float, lane_map: LaneMap, run_num: int, past_runs: List[AnalysisTree], transition_graph: "Scenario"):
+    # -> Tuple[int, List[AnalysisTreeNode], Dict[str, list]]:
         print(f"node id: {node.id}")
         cached_segments = {}
         for agent_id in node.agent:
@@ -89,7 +90,7 @@ class Simulator:
                 node.trace[agent_idx] = node.trace[agent_idx][:transition_idx+1]
 
         if asserts != None:     # FIXME
-            return (node.id, [], node.trace)
+            return node
             # print(transition_idx)
             # pp({a: len(t) for a, t in node.trace.items()})
         else:
@@ -100,7 +101,7 @@ class Simulator:
                         if agent_id not in cached_segments:
                             self.cache.add_segment(agent_id, node, [], full_traces[agent_id], [], transition_idx, run_num)
                 # print(red("no trans"))
-                return (node.id, [], node.trace)
+                return node
 
             transit_agents = transitions.keys()
             # pp(("transit agents", transit_agents))
@@ -161,8 +162,9 @@ class Simulator:
                     type='simtrace'
                 )
                 next_nodes.append(tmp)
-            print(len(next_nodes))
-            return (node.id, next_nodes, node.trace)
+            # print(len(next_nodes))
+            node.child.extend(next_nodes)
+            return node
 
     def simulate(self, init_list, init_mode_list, static_list, uncertain_param_list, agent_list,
                  transition_graph, time_horizon, time_step, lane_map, run_num, past_runs):
@@ -211,18 +213,19 @@ class Simulator:
             print(len(simulation_queue), len(result_refs))
             if wait:
                 [res], remaining = ray.wait(result_refs)
-                id, next_nodes, traces = ray.get(res)
+                node= ray.get(res)
+                id=node.id
+                next_nodes = node.child
                 print("got id:", id)
-                nodes[id].child = next_nodes
-                nodes[id].trace = traces
+                nodes[id]=node
                 last_id = nodes[-1].id
                 for i, node in enumerate(next_nodes):
                     node.id = i + 1 + last_id
                 simulation_queue.extend(next_nodes)
                 nodes.extend(next_nodes)
                 result_refs = remaining
-        
-        self.simulation_tree = AnalysisTree(root)
+        print('root',root,root.child)
+        self.simulation_tree = AnalysisTree(nodes[0])
         return self.simulation_tree
 
     def simulate_simple(self, init_list, init_mode_list, static_list, uncertain_param_list, agent_list,

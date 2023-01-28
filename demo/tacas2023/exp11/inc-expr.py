@@ -62,7 +62,7 @@ if 'p' in arg:
 def run(sim, meas=False):
     time = timeit.default_timer()
     if sim:
-        traces = scenario.simulate(60, 0.1, seed=4)
+        traces = scenario.simulate(30, 0.1, seed=4)
     else:
         traces = scenario.verify(60, 0.1)
     dur = timeit.default_timer() - time
