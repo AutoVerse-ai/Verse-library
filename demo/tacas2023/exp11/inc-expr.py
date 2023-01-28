@@ -188,3 +188,4 @@ if __name__ == "__main__":
         run(sim)
         scenario.agent_dict["car8"] = CarAgent('car8', file_name=input_code_name.replace(".py", "-fsw4.py"))
         run(sim, True)
+    ray.shutdown()
