@@ -1,7 +1,7 @@
 import copy
 import importlib
 import itertools
-from typing import Tuple, Dict, Callable, List, Optional, Union, Sequence
+from typing import Any, Tuple, Dict, Callable, List, Optional, Type, TypeVar, Union, Sequence
 
 import numpy as np
 
@@ -385,10 +385,12 @@ def sample_rect(rect: List[List[float]], seed = None) -> List[float]:
     res = np.random.uniform(rect[0], rect[1]).tolist()
     return res
 
-def dedup(l, f=lambda a:a):
+T = TypeVar("T")
+
+def dedup(l: List[T], f: Callable[[T], Any] = (lambda a:a)) -> List[T]:
     o = []
-    l = [(i, f(i)) for i in l]
-    for i, k in l:
+    dl = [(i, f(i)) for i in l]
+    for i, k in dl:
         for _, k_ in o:
             if k == k_:
                 break
