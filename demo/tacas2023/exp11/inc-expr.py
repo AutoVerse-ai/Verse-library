@@ -64,7 +64,7 @@ def run(sim, meas=False):
     if sim:
         traces = scenario.simulate(60, 0.1, seed=4)
     else:
-        traces = scenario.verify(1, 0.1)
+        traces = scenario.verify(60, 0.1)
     dur = timeit.default_timer() - time
 
     if 'd' in arg:
@@ -188,3 +188,4 @@ if __name__ == "__main__":
         run(sim)
         scenario.agent_dict["car8"] = CarAgent('car8', file_name=input_code_name.replace(".py", "-fsw4.py"))
         run(sim, True)
+    ray.shutdown()
