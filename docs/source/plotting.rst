@@ -13,7 +13,7 @@ Verse has two different sets of visualization functions for generating plots and
 ----------------------
 simulation_tree
 ----------------------
-It statically shows simulation traces, possibly with multiple brances.
+Shows simulation traces, possibly with multiple brances.
 
 Note: Since the plotter functions have similar APIs, 
 in this document, we treat this function as a base function. 
