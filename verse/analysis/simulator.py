@@ -25,8 +25,7 @@ class Simulator:
         self.cache_hits = (0, 0)
 
     @ray.remote
-    def simulate_one(self, node: AnalysisTreeNode, remain_time: float, time_step: float, lane_map: LaneMap, run_num: int, past_runs: List[AnalysisTree], transition_graph: "Scenario"):
-    # -> Tuple[int, List[AnalysisTreeNode], Dict[str, list]]:
+    def simulate_one(self, node: AnalysisTreeNode, remain_time: float, time_step: float, lane_map: LaneMap, run_num: int, past_runs: List[AnalysisTree], transition_graph: "Scenario") -> AnalysisTreeNode:
         print(f"node id: {node.id}")
         cached_segments = {}
         for agent_id in node.agent:
@@ -212,7 +211,7 @@ class Simulator:
                 break
             print(len(simulation_queue), len(result_refs))
             if wait:
-                [res], remaining = ray.wait(result_refs)
+                [res], result_refs = ray.wait(result_refs)
                 node= ray.get(res)
                 id=node.id
                 next_nodes = node.child
@@ -225,7 +224,6 @@ class Simulator:
                     node.id = i + 1 + last_id
                 simulation_queue.extend(next_nodes)
                 nodes.extend(next_nodes)
-                result_refs = remaining
         self.simulation_tree = AnalysisTree(root)
         return self.simulation_tree
 

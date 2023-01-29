@@ -201,12 +201,12 @@ class Verifier:
         asserts, all_possible_transitions = transition_graph.get_transition_verify(new_cache, paths_to_sim, node)
         # pp(("transitions:", [(t[0], t[2]) for t in all_possible_transitions]))
         node.assert_hits = asserts
-        print(asserts)
+
         if asserts != None:
             asserts, idx = asserts
             for agent in node.agent:
                 node.trace[agent] = node.trace[agent][:(idx + 1) * 2]
-            return (node.id, [], node.trace)
+            return node
 
         transit_map = {k: list(l) for k, l in itertools.groupby(all_possible_transitions, key=lambda p:p[0])}
         transit_agents = transit_map.keys()
@@ -296,7 +296,8 @@ class Verifier:
             for agent_idx in node.agent:
                 node.trace[agent_idx] = node.trace[agent_idx][:(
                     max_end_idx+1)*2]
-        return (node.id, next_nodes, node.trace)
+        node.child.extend(next_nodes)
+        return node
 
     def compute_full_reachtube(
         self,
@@ -344,6 +345,7 @@ class Verifier:
             wait = False
             if len(verification_queue) > 0:
                 node: AnalysisTreeNode = verification_queue.pop(0)
+                num_transitions+=1
                 # pp(("start ver", node.start_time, {a: (*node.mode[a], *node.init[a]) for a in node.mode}))
                 remain_time = round(time_horizon - node.start_time, 10)
                 if remain_time <= 0:
@@ -359,17 +361,19 @@ class Verifier:
                 break
             print(len(verification_queue), len(result_refs))
             if wait:
-                [res], remaining = ray.wait(result_refs)
-                id, next_nodes, traces = ray.get(res)
+                [res], result_refs = ray.wait(result_refs)
+                node= ray.get(res)
+                id=node.id
+                next_nodes = node.child
                 print("got id:", id)
-                nodes[id].child = next_nodes
-                nodes[id].trace = traces
+                nodes[id].assert_hits=node.assert_hits
+                nodes[id].child=next_nodes
+                nodes[id].trace=node.trace
                 last_id = nodes[-1].id
                 for i, node in enumerate(next_nodes):
                     node.id = i + 1 + last_id
                 verification_queue.extend(next_nodes)
                 nodes.extend(next_nodes)
-                result_refs = remaining
         self.reachtube_tree = AnalysisTree(root)
         # print(f">>>>>>>> Number of calls to reachability engine: {num_calls}")
         # print(f">>>>>>>> Number of transitions happening: {num_transitions}")

@@ -62,7 +62,7 @@ if 'p' in arg:
 def run(sim, meas=False):
     time = timeit.default_timer()
     if sim:
-        traces = scenario.simulate(30, 0.1, seed=4)
+        traces = scenario.simulate(60, 0.1, seed=4)
     else:
         traces = scenario.verify(60, 0.1)
     dur = timeit.default_timer() - time
@@ -95,6 +95,7 @@ def run(sim, meas=False):
 if __name__ == "__main__":
     input_code_name = './demo/tacas2023/exp11/decision_logic/inc-expr6.py' if "6" in arg else './demo/tacas2023/exp11/decision_logic/inc-expr.py'
     config = ScenarioConfig()
+    print(arg)
     config.incremental = 'i' in arg
     scenario = Scenario(config)
 

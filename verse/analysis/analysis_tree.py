@@ -104,8 +104,10 @@ class AnalysisTreeNode:
                 self.assert_hits==__o.assert_hits and 
                 self.type==__o.type and 
                 self.static==__o.static and 
-                self.uncertain_param==__o.uncertain_param and 
-                self.id==__o.id):
+                self.uncertain_param==__o.uncertain_param and
+                True
+                #  self.id==__o.id
+                 ):
             return False
         if self.type=='simtrace':
             for agent, trace in self.trace.items():
@@ -136,7 +138,7 @@ class AnalysisTree:
         node_id = 0
         while queue:
             node = queue.pop(0)
-            # node.id = node_id 
+            node.id = node_id 
             res.append(node)
             node_id += 1
             queue += node.child
