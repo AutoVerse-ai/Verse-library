@@ -1,8 +1,7 @@
 """""""""""""""""
 Visualization
 """""""""""""""""
-We implement a plotter for 2D/3D scenarios using `Plotly Open Source Graphing Library for Python <https://plotly.com/python/>`_ 
-and offer some highlevel functions for you to generate plots or animations of the simulation or verfication results.
+Verse has two different sets of visualization functions for generating plots and animations. Functions for 2D plots use `Plotly Open Source Graphing Library for Python <https://plotly.com/python/>`_.
 
 
 .. contents:: Function list
