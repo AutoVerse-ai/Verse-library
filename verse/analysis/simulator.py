@@ -217,15 +217,16 @@ class Simulator:
                 id=node.id
                 next_nodes = node.child
                 print("got id:", id)
-                nodes[id]=node
+                nodes[id].assert_hits=node.assert_hits
+                nodes[id].child=next_nodes
+                nodes[id].trace=node.trace
                 last_id = nodes[-1].id
                 for i, node in enumerate(next_nodes):
                     node.id = i + 1 + last_id
                 simulation_queue.extend(next_nodes)
                 nodes.extend(next_nodes)
                 result_refs = remaining
-        print('root',root,root.child)
-        self.simulation_tree = AnalysisTree(nodes[0])
+        self.simulation_tree = AnalysisTree(root)
         return self.simulation_tree
 
     def simulate_simple(self, init_list, init_mode_list, static_list, uncertain_param_list, agent_list,
