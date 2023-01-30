@@ -335,7 +335,7 @@ class Scenario:
         self.past_runs.append(tree)
         return tree
 
-    def verify(self, time_horizon, time_step, params={}) -> AnalysisTree:
+    def verify(self, time_horizon, time_step, params={}, mode='ser') -> AnalysisTree:
         self.check_init()
         init_list = []
         init_mode_list = []
@@ -352,7 +352,11 @@ class Scenario:
             static_list.append(self.static_dict[agent_id])
             uncertain_param_list.append(self.uncertain_param_dict[agent_id])
             agent_list.append(self.agent_dict[agent_id])
-        tree = self.verifier.compute_full_reachtube(init_list, init_mode_list, static_list, uncertain_param_list, agent_list, self, time_horizon,
+        if mode == 'ser':
+            tree = self.verifier.compute_full_reachtube_ser(init_list, init_mode_list, static_list, uncertain_param_list, agent_list, self, time_horizon,
+                                                    time_step, self.map, self.config.init_seg_length, self.config.reachability_method, len(self.past_runs), self.past_runs, params)
+        else:
+            tree = self.verifier.compute_full_reachtube(init_list, init_mode_list, static_list, uncertain_param_list, agent_list, self, time_horizon,
                                                     time_step, self.map, self.config.init_seg_length, self.config.reachability_method, len(self.past_runs), self.past_runs, params)
         self.past_runs.append(tree)
         return tree

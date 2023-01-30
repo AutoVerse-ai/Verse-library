@@ -111,8 +111,8 @@ class Verifier:
         params = {},
     ):
         combined_inits = {a: combine_all(inits) for a, inits in node.init.items()}
-        print(node.init)
-        print(node.mode)
+        # print(node.init)
+        # print(node.mode)
         print("###############")
         # num_transitions += 1
         cached_tubes = {}
@@ -428,8 +428,8 @@ class Verifier:
         while verification_queue != []:
             node: AnalysisTreeNode = verification_queue.pop(0)
             combined_inits = {a: combine_all(inits) for a, inits in node.init.items()}
-            print(node.init)
-            print(node.mode)
+            # print(node.init)
+            # print(node.mode)
             print("###############")
             # pp(("start sim", node.start_time, {a: (*node.mode[a], *combined_inits[a]) for a in node.mode}))
             remain_time = round(time_horizon - node.start_time, 10)
