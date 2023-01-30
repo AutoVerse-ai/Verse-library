@@ -5,7 +5,7 @@ import copy, itertools, functools, pprint, ray
 from pympler.asizeof import asizeof
 
 from verse.agents.base_agent import BaseAgent
-from verse.analysis.incremental import SimTraceCache, convert_sim_trans, to_simulate
+from verse.analysis.incremental import CachedSegment, SimTraceCache, convert_sim_trans, to_simulate
 from verse.analysis.utils import dedup
 from verse.map.lane_map import LaneMap
 from verse.parser.parser import ModePath, find
@@ -30,40 +30,22 @@ class Simulator:
         self.cache_hits = (0, 0)
 
     @ray.remote
-    def simulate_one(config: "ScenarioConfig", cache, node: AnalysisTreeNode, later: int, remain_time: float, time_step: float, lane_map: LaneMap, run_num: int, past_runs: List[AnalysisTree], transition_graph: "Scenario") -> Tuple[int, int, List[AnalysisTreeNode], Dict[str, TraceType], list]:
+    def simulate_one(config: "ScenarioConfig", cached_segments: Dict[str, Optional[CachedSegment]], node: AnalysisTreeNode, later: int, remain_time: float, time_step: float, lane_map: LaneMap, run_num: int, past_runs: List[AnalysisTree], transition_graph: "Scenario") -> Tuple[int, int, List[AnalysisTreeNode], Dict[str, TraceType], list]:
         t = timeit.default_timer()
         print(f"node {node.id} start: {t}")
-        cached_segments = {}
+        # print(f"node id: {node.id}")
         cache_updates = []
         for agent_id in node.agent:
-
-            mode = node.mode[agent_id]
-            init = node.init[agent_id]
-            if config.incremental:
-                # pp(("check hit", agent_id, mode, init))
-                cached = cache.check_hit(agent_id, mode, init, node.init)
-                # if cached != None:
-                #     self.cache_hits = self.cache_hits[0] + 1, self.cache_hits[1]
-                # else:
-                #     self.cache_hits = self.cache_hits[0], self.cache_hits[1] + 1
-                # pp(("check hit res", agent_id, len(cached.transitions) if cached != None else None))
-            else:
-                cached = None
-            if agent_id in node.trace:
-                if cached != None:
-                    cached_segments[agent_id] = cached
-            else:
-                if cached != None:
-                    node.trace[agent_id] = cached.trace
-                    if len(cached.trace) < remain_time / time_step:
-                        node.trace[agent_id] += node.agent[agent_id].TC_simulate(mode, cached.trace[-1], remain_time - time_step * len(cached.trace), lane_map)
-                    cached_segments[agent_id] = cached
-                else:
-                    # pp(("sim", agent_id, *mode, *init))
-                    # Simulate the trace starting from initial condition
-                    trace = node.agent[agent_id].TC_simulate(mode, init, remain_time, time_step, lane_map)
-                    trace[:, 0] += node.start_time
-                    node.trace[agent_id] = trace
+            if agent_id not in cached_segments:
+                # pp(("sim", agent_id, *mode, *init))
+                # Simulate the trace starting from initial condition
+                mode = node.mode[agent_id]
+                init = node.init[agent_id]
+                trace = node.agent[agent_id].TC_simulate(mode, init, remain_time, time_step, lane_map)
+                trace[:, 0] += node.start_time
+                node.trace[agent_id] = trace
+            elif agent_id in cached_segments:
+                node.trace[agent_id] = cached_segments[agent_id].trace
         # pp(("cached_segments", cached_segments.keys()))
         # TODO: for now, make sure all the segments comes from the same node; maybe we can do
         # something to combine results from different nodes in the future
@@ -116,12 +98,14 @@ class Simulator:
             if config.incremental:
                 for agent_id in node.agent:
                     transition = transitions[agent_id] if agent_id in transit_agents else []
-                    if agent_id in cached_segments:
-                        cached_segments[agent_id].transitions.extend(convert_sim_trans(agent_id, transit_agents, node.init, transition, transition_idx))
-                        cached_segments[agent_id].transitions = dedup(cached_segments[agent_id].transitions, lambda i: (i.disc, i.cont, i.inits))
-                        # pre_len = len(cached_segments[agent_id].transitions)
-                        # pp(("dedup!", pre_len, len(cached_segments[agent_id].transitions)))
-                    else:
+                    # TODO: update current transitions
+                    # if agent_id in cached_segments:
+                    #     cached_segments[agent_id].transitions.extend(convert_sim_trans(agent_id, transit_agents, node.init, transition, transition_idx))
+                    #     cached_segments[agent_id].transitions = dedup(cached_segments[agent_id].transitions, lambda i: (i.disc, i.cont, i.inits))
+                    #     # pre_len = len(cached_segments[agent_id].transitions)
+                    #     # pp(("dedup!", pre_len, len(cached_segments[agent_id].transitions)))
+                    # else:
+                    if agent_id not in cached_segments:
                         cache_updates.append((agent_id, node, transit_agents, full_traces[agent_id], transition, transition_idx, run_num))
             # pp(("cached inits", self.cache.get_cached_inits(3)))
             # Generate the transition combinations if multiple agents can transit at the same time step
@@ -204,7 +188,7 @@ class Simulator:
         simulation_queue: List[Tuple[AnalysisTreeNode, int]] = [(root, 0)]
         result_refs = []
         nodes = [root]
-        cached = 0
+        num_cached = 0
         # Perform BFS through the simulation tree to loop through all possible transitions
         while True:
             wait = False
@@ -217,9 +201,32 @@ class Simulator:
                 if remain_time <= 0:
                     continue
                 # For trace not already simulated
+                cached_segments = {}
+                for agent_id in node.agent:
+                    mode = node.mode[agent_id]
+                    init = node.init[agent_id]
+                    if self.config.incremental:
+                        # pp(("check hit", agent_id, mode, init))
+                        cached = self.cache.check_hit(agent_id, mode, init, node.init)
+                        # if cached != None:
+                        #     self.cache_hits = self.cache_hits[0] + 1, self.cache_hits[1]
+                        # else:
+                        #     self.cache_hits = self.cache_hits[0], self.cache_hits[1] + 1
+                        # pp(("check hit res", agent_id, len(cached.transitions) if cached != None else None))
+                    else:
+                        cached = None
+                    if agent_id in node.trace:
+                        if cached != None:
+                            cached_segments[agent_id] = cached
+                    else:
+                        if cached != None:
+                            # node.trace[agent_id] = cached.trace
+                            # if len(cached.trace) < remain_time / time_step:
+                            #     node.trace[agent_id] += node.agent[agent_id].TC_simulate(mode, cached.trace[-1], remain_time - time_step * len(cached.trace), lane_map)
+                            cached_segments[agent_id] = cached
                 t = timeit.default_timer()
                 print(f"before remote {t}")
-                result_refs.append(self.simulate_one.remote(self.config, self.cache, node, later, remain_time, time_step, lane_map, run_num, past_runs, transition_graph))
+                result_refs.append(self.simulate_one.remote(self.config, cached_segments, node, later, remain_time, time_step, lane_map, run_num, past_runs, transition_graph))
                 print(f"remote dur {timeit.default_timer() - t}")
                 if len(result_refs) >= self.config.parallel_sim_ahead:
                     wait = True
@@ -249,12 +256,12 @@ class Simulator:
                     aid = update[0]
                     if not self.cache.check_hit(aid, update[1].mode[aid], update[1].init[aid], update[1].init):
                         self.cache.add_segment(*update)
-                        cached += 1
+                        num_cached += 1
                 print("cache", asizeof(self.cache))
                 result_refs = remaining
                 print(f"proc dur {timeit.default_timer() - t}")
         print(f"done {timeit.default_timer()}")
-        print("cached", cached)
+        print("cached", num_cached)
         pp(self.cache.get_cached_inits(3))
         self.simulation_tree = AnalysisTree(root)
         return self.simulation_tree
