@@ -58,10 +58,12 @@ if __name__ == "__main__":
     # traces = scenario.simulate(40, time_step, seed=4)
     # traces.dump("./output1.json")
     # traces = AnalysisTree.load('./output1.json')
+    mode='ser'
+    mode='par'
     start_time = time.time()
-    traces = scenario.verify(40, time_step, mode='ser')
+    traces = scenario.verify(40, time_step, mode=mode)
     run_time = time.time() - start_time
-    traces.dump('demo/tacas2023/exp1/output1.json')
+    traces.dump('demo/tacas2023/exp1/output_'+mode+'.json')
     print({
         "#A": len(scenario.agent_dict),
         "A": "Q",

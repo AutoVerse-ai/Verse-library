@@ -61,11 +61,12 @@ if __name__ == "__main__":
     # fig = go.Figure()
     # fig = simulation_tree_3d(traces, tmp_map, fig, 1, 2, 3, [1, 2, 3])
     # fig.show()
-
+    mode='ser'
+    mode='par'
     start_time = time.time()
-    traces = scenario.verify(60, time_step)
+    traces = scenario.verify(60, time_step, mode=mode)
     run_time = time.time() - start_time
-    traces.dump('./demo/tacas2023/exp9/output9_dryvr.json')
+    traces.dump('./demo/tacas2023/exp9/output9_dryvr_'+mode+'.json')
     print({
         "#A": len(scenario.agent_dict),
         "A": "Q",

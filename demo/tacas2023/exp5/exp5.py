@@ -62,10 +62,12 @@ if __name__ == "__main__":
         ]
     )
     # scenario.config.init_seg_length = 5
+    mode='ser'
+    # mode='par'
     start_time = time.time()
-    traces = scenario.verify(60, 0.1)  # traces.dump('./output1.json')
+    traces = scenario.verify(60, 0.1, mode=mode)  # traces.dump('./output1.json')
     run_time = time.time()-start_time
-    traces.dump("./demo/tacas2023/exp5/output5.json")
+    traces.dump('./demo/tacas2023/exp5/output5_'+mode+'.json')
     print({
         "#A": len(scenario.agent_dict),
         "A": "C",

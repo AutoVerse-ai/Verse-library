@@ -65,6 +65,8 @@ if __name__ == "__main__":
 
     # traces = scenario.verify(60, time_step)
     # traces.dump('./demo/tacas2023/exp9/output9_DryVR.json')
+    mode='ser'
+    # mode='par'
     start_time = time.time()
     traces = scenario.verify(60, time_step,
                              params={
@@ -78,7 +80,7 @@ if __name__ == "__main__":
                              }
                             )
     run_time = time.time() - start_time
-    traces.dump('./demo/tacas2023/exp9/output9_neureach.json')
+    traces.dump('./demo/tacas2023/exp9/output9_neureach_'+mode+'.json')
 
     print({
         "#A": len(scenario.agent_dict),

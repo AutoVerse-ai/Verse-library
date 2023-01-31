@@ -78,11 +78,12 @@ if __name__ == "__main__":
     # fig = simulation_anime(traces, tmp_map, fig, 1, 2, [
     #                        1, 2], 'lines', 'trace', sample_rate=1)
     # fig.show()
-
+    mode='ser'
+    mode='par'
     start_time = time.time()
-    traces = scenario.verify(80, 0.05)
+    traces = scenario.verify(80, 0.05, mode=mode)
     run_time = time.time()-start_time 
-    traces.dump("./demo/tacas2023/exp3/output3.json")
+    traces.dump('./demo/tacas2023/exp3/output3_'+mode+'.json')
 
     print({
         "#A": len(scenario.agent_dict),

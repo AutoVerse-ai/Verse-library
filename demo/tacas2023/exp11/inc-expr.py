@@ -60,17 +60,19 @@ if 'p' in arg:
     from verse.plotter.plotter2D import simulation_tree
 
 def run(sim, meas=False):
+    mode='ser'
+    # mode='par'
     time = timeit.default_timer()
     if sim:
         traces = scenario.simulate(60, 0.1, seed=4)
     else:
-        traces = scenario.verify(60, 0.1)
+        traces = scenario.verify(60, 0.1, mode=mode)
     dur = timeit.default_timer() - time
 
     if 'd' in arg:
-        traces.dump_tree()
-        traces.dump("main.json") 
-        traces.dump("tree2.json" if meas else "tree1.json") 
+        # traces.dump_tree()
+        traces.dump('./demo/tacas2023/exp11/main_'+mode+'.json')
+        # traces.dump("./demo/tacas2023/exp11/tree2.json" if meas else "./demo/tacas2023/exp11/tree1.json") 
 
     if 'p' in arg and meas:
         fig = go.Figure()
@@ -95,7 +97,6 @@ def run(sim, meas=False):
 if __name__ == "__main__":
     input_code_name = './demo/tacas2023/exp11/decision_logic/inc-expr6.py' if "6" in arg else './demo/tacas2023/exp11/decision_logic/inc-expr.py'
     config = ScenarioConfig()
-    print(arg)
     config.incremental = 'i' in arg
     scenario = Scenario(config)
 
@@ -167,7 +168,7 @@ if __name__ == "__main__":
         cont_inits = jerks(cont_inits, _jerks)
     scenario.set_init(cont_inits, *mode_inits)
 
-    ray.init()
+    # ray.init()
     if 'b' in arg:
         run(sim, True)
     elif 'r' in arg:
@@ -189,4 +190,4 @@ if __name__ == "__main__":
         run(sim)
         scenario.agent_dict["car8"] = CarAgent('car8', file_name=input_code_name.replace(".py", "-fsw4.py"))
         run(sim, True)
-    ray.shutdown()
+    # ray.shutdown()

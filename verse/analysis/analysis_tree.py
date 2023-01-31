@@ -95,7 +95,7 @@ class AnalysisTreeNode:
             type = data['type'],
         )
 
-    def __eq__(self, __o: object) -> bool:
+    def quick_check(self, __o: object) -> bool:
         assert isinstance(__o, AnalysisTreeNode)  
         if not (self.init==__o.init and 
                 self.mode==__o.mode and 
@@ -105,9 +105,15 @@ class AnalysisTreeNode:
                 self.type==__o.type and 
                 self.static==__o.static and 
                 self.uncertain_param==__o.uncertain_param and
+                len(self.child) == len(__o.child) and
                 True
                 #  self.id==__o.id
                  ):
+            return False
+        return True 
+
+    def __eq__(self, __o: object) -> bool:
+        if not self.quick_check(__o):
             return False
         if self.type=='simtrace':
             for agent, trace in self.trace.items():
@@ -125,6 +131,16 @@ class AnalysisTreeNode:
                         return False
         else:
             raise ValueError
+        child_match = 0
+        for child in self.child:
+            for child_other in __o.child:
+               if child == child_other:
+                    child_match+=1
+                    break
+        if child_match == len(self.child):
+            return True
+        return False
+
 
 class AnalysisTree:
     def __init__(self, root):

@@ -9,7 +9,7 @@ from dataclasses import dataclass
 import types
 import sys
 from enum import Enum
-
+import ray
 import numpy as np
 
 from verse.agents.base_agent import BaseAgent
@@ -356,8 +356,10 @@ class Scenario:
             tree = self.verifier.compute_full_reachtube_ser(init_list, init_mode_list, static_list, uncertain_param_list, agent_list, self, time_horizon,
                                                     time_step, self.map, self.config.init_seg_length, self.config.reachability_method, len(self.past_runs), self.past_runs, params)
         else:
+            ray.init()
             tree = self.verifier.compute_full_reachtube(init_list, init_mode_list, static_list, uncertain_param_list, agent_list, self, time_horizon,
                                                     time_step, self.map, self.config.init_seg_length, self.config.reachability_method, len(self.past_runs), self.past_runs, params)
+            ray.shutdown()
         self.past_runs.append(tree)
         return tree
 
