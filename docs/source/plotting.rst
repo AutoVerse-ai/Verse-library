@@ -6,6 +6,11 @@ Verse has two different sets of visualization functions for generating plots and
 
 .. contents:: Function list
    :depth: 3
+===================
+Common paramteres
+===================
+
+* ``time_step`` determines the num of digits of time points. Normally, it should be the time step used to compute  simulation/verification. Default value is ``None`` which is set as 3. 
 
 ===================
 2D Visualization
@@ -104,9 +109,7 @@ Usage::
 
 Parameters not occurred in ``simulation_tree``:
 
-* ``time_step`` it is used to determine the num of digits of time points. Normally, it should be the time step of simulation/verification and provoided by the user. (May improve to auto determine) The default value is ``None``.
-   * If it's ``None``, then the num of digits is set as 3. 
-   * Otherwise, the num of digits is set as the num of digits of the given ``time_step``. 
+
 
 * ``speed_rate`` it determines the speed up rate of anime. Due to the performance, it maybe be limited when the response of the plot is slow. The default value is ``1``.  
 
