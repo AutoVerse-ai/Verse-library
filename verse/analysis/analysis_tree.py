@@ -136,7 +136,8 @@ class AnalysisTreeNode:
                 # when considering error, a - b >= -error is trusted as a>=b
                 ge_other = np.subtract(trace, trace_other) + atol >= 0
                 le_other = np.subtract(trace, trace_other) - atol <= 0
-                if not ((np.all(le_other[0::2]) == False) and (np.all(ge_other[1::2]) == True)):
+                # exclude the time dim
+                if not ((np.all(le_other[0::2, 1:]) == False) and (np.all(ge_other[1::2, 1:]) == True)):
                     return False 
         else:
             raise ValueError
