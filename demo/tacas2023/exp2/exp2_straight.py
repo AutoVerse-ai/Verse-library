@@ -79,7 +79,7 @@ if __name__ == "__main__":
     )
 
     start_time = time.time()
-    traces = scenario.verify(4, 0.1, params={"bloating_method": 'GLOBAL'})
+    traces = scenario.verify(40, 0.1, params={"bloating_method": 'GLOBAL'})
     run_time = time.time()-start_time 
     traces.dump('./demo/tacas2023/exp2/output2_straight.json')
 
