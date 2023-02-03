@@ -58,10 +58,12 @@ class sleeve_agent(BaseAgent):
         init = initialCondition
         trace = [[0]+init]
         for i in range(len(t)):
-            if mode[0] == 'Meshed':
+            if mode[0] == 'Free':
+                r = ode(self.dynamic_free)
+            elif mode[0] == 'Meshed':
                 r = ode(self.dynamic_meshed)  
             else:
-                r = ode(self.dynamic_free)       
+                raise ValueError        
             r.set_initial_value(init)
             res: np.ndarray = r.integrate(r.t + time_step)
             init = res.flatten().tolist()  

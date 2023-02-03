@@ -86,8 +86,6 @@ class Verifier:
                 res_tube = cur_bloated_tube
                 tube_length = cur_bloated_tube.shape[0]
             else:
-                if (tube_length - combine_seg_idx*2 <= 0):
-                    break
                 cur_bloated_tube = cur_bloated_tube[:tube_length - combine_seg_idx*2,:]
                 # Handle Lower Bound
                 res_tube[combine_seg_idx*2::2,1:] = np.minimum(
