@@ -54,11 +54,11 @@ def decisionLogic(ego: State):
             output.agent_mode = AgentMode.Meshed
             if (ego.vx >= 0) and (ego.vy >= 0):
                 output.i=ego.i+ms*ego.vx+ms*ego.vy
-            if (ego.vx >= 0) and (ego.vy < 0):
+            elif (ego.vx >= 0) and (ego.vy < 0):
                 output.i=ego.i+ms*ego.vx-ms*ego.vy
-            if (ego.vx < 0) and (ego.vy >= 0):
+            elif (ego.vx < 0) and (ego.vy >= 0):
                 output.i=ego.i-ms*ego.vx+ms*ego.vy
-            if (ego.vx < 0) and (ego.vy < 0):
+            elif (ego.vx < 0) and (ego.vy < 0):
                 output.i=ego.i-ms*ego.vx-ms*ego.vy
             output.vx=0
             output.vy=0

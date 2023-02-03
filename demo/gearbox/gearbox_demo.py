@@ -12,8 +12,8 @@ class AgentMode(Enum):
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/gearbox/sleeve_controller.py'
-    config=ScenarioConfig(init_seg_length=10000)
+    input_code_name = './demo/gearbox/sleeve_controller2.py'
+    config=ScenarioConfig(init_seg_length=1)
     scenario = Scenario(config=config)
 
     car = sleeve_agent('sleeve', file_name=input_code_name)
@@ -27,7 +27,7 @@ if __name__ == "__main__":
             tuple([AgentMode.Free]),
         ]
     )
-    traces = scenario.verify(0.2, 0.000001)
+    traces = scenario.verify(0.2, 0.00001)
     traces.dump('./demo/gearbox/output.json')
     fig = go.Figure()
     fig = reachtube_tree(traces, None, fig, 1, 2, [1, 2, 3, 4, 5], 'lines', 'trace', sample_rate=1)

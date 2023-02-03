@@ -12,7 +12,7 @@ class AgentMode(Enum):
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/gearbox/sleeve_controller.py'
+    input_code_name = './demo/gearbox/sleeve_controller2.py'
     scenario = Scenario()
 
     car = sleeve_agent('sleeve', file_name=input_code_name)
