@@ -18,6 +18,7 @@ class AnalysisTreeNode:
         static = {},
         uncertain_param = {},
         agent={},
+        height =0,
         assert_hits={},
         child=[],
         start_time = 0,
@@ -29,6 +30,7 @@ class AnalysisTreeNode:
         self.init: Dict[str, List[float]] = init
         self.mode: Dict[str, List[str]] = mode
         self.agent: Dict = agent
+        self.height: int = height
         self.child: List[AnalysisTreeNode] = child
         self.start_time: float = round(start_time, ndigits)
         self.assert_hits = assert_hits

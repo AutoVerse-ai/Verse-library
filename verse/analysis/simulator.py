@@ -15,7 +15,8 @@ pp = functools.partial(pprint.pprint, compact=True, width=130)
 from verse.analysis.analysis_tree import AnalysisTreeNode, AnalysisTree
 
 PathDiffs = List[Tuple[BaseAgent, ModePath]]
-
+#store in different file???
+MAX_DEPTH = 3
 def red(s):
     return "\x1b[31m" + s + "\x1b[0m" #]]
 
@@ -219,6 +220,7 @@ class Simulator:
             static={},
             uncertain_param={},
             agent={},
+            height =0,
             child=[],
             start_time=0,
         )
@@ -313,6 +315,10 @@ class Simulator:
                             next_node_init[agent_idx] = truncated_trace[agent_idx][0][1:]
 
                     all_transition_paths.append(transition_paths)
+                    if(node.height+1 > MAX_DEPTH ):
+                        print("max depth reached")
+                        continue
+
                     tmp = AnalysisTreeNode(
                         trace=next_node_trace,
                         init=next_node_init,
@@ -320,6 +326,7 @@ class Simulator:
                         static=next_node_static,
                         uncertain_param=next_node_uncertain_param,
                         agent=next_node_agent,
+                        height=node.height+1,
                         child=[],
                         start_time=next_node_start_time,
                         type='simtrace'
