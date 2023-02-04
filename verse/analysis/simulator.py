@@ -1,4 +1,5 @@
 import pickle
+import timeit
 from typing import Dict, List, Optional, Tuple
 import copy, itertools, functools, pprint, ray
 from pympler.asizeof import asizeof
@@ -30,10 +31,12 @@ class Simulator:
 
     @ray.remote
     def simulate_one(config: "ScenarioConfig", cache, node: AnalysisTreeNode, later: int, remain_time: float, time_step: float, lane_map: LaneMap, run_num: int, past_runs: List[AnalysisTree], transition_graph: "Scenario") -> Tuple[int, int, List[AnalysisTreeNode], Dict[str, TraceType], list]:
-        print(f"node id: {node.id}")
+        t = timeit.default_timer()
+        print(f"node {node.id} start: {t}")
         cached_segments = {}
         cache_updates = []
         for agent_id in node.agent:
+
             mode = node.mode[agent_id]
             init = node.init[agent_id]
             if config.incremental:
@@ -93,6 +96,7 @@ class Simulator:
                 node.trace[agent_idx] = node.trace[agent_idx][:transition_idx+1]
 
         if asserts != None:     # FIXME
+            print(f"node {node.id} dur {timeit.default_timer() - t}")
             return (node.id, later, [], node.trace, cache_updates)
             # print(transition_idx)
             # pp({a: len(t) for a, t in node.trace.items()})
@@ -104,6 +108,7 @@ class Simulator:
                         if agent_id not in cached_segments:
                             cache_updates.append((agent_id, node, [], full_traces[agent_id], [], transition_idx, run_num))
                 # print(red("no trans"))
+                print(f"node {node.id} dur {timeit.default_timer() - t}")
                 return (node.id, later, [], node.trace, cache_updates)
 
             transit_agents = transitions.keys()
@@ -166,6 +171,7 @@ class Simulator:
                 )
                 next_nodes.append(tmp)
             print(len(next_nodes))
+            print(f"node {node.id} dur {timeit.default_timer() - t}")
             return (node.id, later, next_nodes, node.trace, cache_updates)
 
     def simulate(self, init_list, init_mode_list, static_list, uncertain_param_list, agent_list,
@@ -202,6 +208,8 @@ class Simulator:
         # Perform BFS through the simulation tree to loop through all possible transitions
         while True:
             wait = False
+            start = timeit.default_timer()
+            print(f"loop start {start}")
             if len(simulation_queue) > 0:
                 node, later = simulation_queue.pop(0)
                 # pp(("start sim", node.start_time, {a: (*node.mode[a], *node.init[a]) for a in node.mode}))
@@ -209,7 +217,10 @@ class Simulator:
                 if remain_time <= 0:
                     continue
                 # For trace not already simulated
+                t = timeit.default_timer()
+                print(f"before remote {t}")
                 result_refs.append(self.simulate_one.remote(self.config, self.cache, node, later, remain_time, time_step, lane_map, run_num, past_runs, transition_graph))
+                print(f"remote dur {timeit.default_timer() - t}")
                 if len(result_refs) >= self.config.parallel_sim_ahead:
                     wait = True
             elif len(result_refs) > 0:
@@ -218,7 +229,11 @@ class Simulator:
                 break
             print(len(simulation_queue), len(result_refs))
             if wait:
+                t = timeit.default_timer()
+                print(f"before wait {t}")
                 [res], remaining = ray.wait(result_refs)
+                print(f"wait dur {timeit.default_timer() - t}")
+                t = timeit.default_timer()
                 id, later, next_nodes, traces, cache_updates = ray.get(res)
                 print("got id:", id)
                 nodes[id].child = next_nodes
@@ -237,7 +252,8 @@ class Simulator:
                         cached += 1
                 print("cache", asizeof(self.cache))
                 result_refs = remaining
-        
+                print(f"proc dur {timeit.default_timer() - t}")
+        print(f"done {timeit.default_timer()}")
         print("cached", cached)
         pp(self.cache.get_cached_inits(3))
         self.simulation_tree = AnalysisTree(root)
