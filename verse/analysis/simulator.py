@@ -37,6 +37,7 @@ class Simulator:
             mode={},
             static={},
             uncertain_param={},
+            height = 0,
             agent={},
             child=[],
             start_time=0,
@@ -56,6 +57,8 @@ class Simulator:
         # Perform BFS through the simulation tree to loop through all possible transitions
         while simulation_queue != []:
             node: AnalysisTreeNode = simulation_queue.pop(0)
+            # Setup the root of the simulation tree
+
             # pp(("start sim", node.start_time, {a: (*node.mode[a], *node.init[a]) for a in node.mode}))
             remain_time = round(time_horizon - node.start_time, 10)
             if remain_time <= 0:
@@ -135,6 +138,9 @@ class Simulator:
                                 self.cache.add_segment(agent_id, node, [], full_traces[agent_id], [], transition_idx, run_num)
                     # print(red("no trans"))
                     continue
+                if (node.height >= MAX_DEPTH):
+                    print("max depth reached")
+                    continue
 
                 transit_agents = transitions.keys()
                 # pp(("transit agents", transit_agents))
@@ -182,6 +188,7 @@ class Simulator:
                             next_node_init[agent_idx] = truncated_trace[agent_idx][0][1:]
 
                     all_transition_paths.append(transition_paths)
+
                     tmp = AnalysisTreeNode(
                         trace=next_node_trace,
                         init=next_node_init,
@@ -189,6 +196,7 @@ class Simulator:
                         static=next_node_static,
                         uncertain_param=next_node_uncertain_param,
                         agent=next_node_agent,
+                        height=node.height+1,
                         child=[],
                         start_time=next_node_start_time,
                         type='simtrace'
@@ -239,6 +247,8 @@ class Simulator:
         # Perform BFS through the simulation tree to loop through all possible transitions
         while simulation_queue != []:
             node: AnalysisTreeNode = simulation_queue.pop(0)
+            #continue if we are at the depth limit
+
             pp(("start sim", node.start_time, {a: (*node.mode[a], *node.init[a]) for a in node.mode}))
             remain_time = round(time_horizon - node.start_time, 10)
             if remain_time <= 0:
@@ -280,6 +290,9 @@ class Simulator:
                 # If there's no transitions (returned transitions is empty), continue
                 if not transitions:
                     continue
+                if (node.height >= MAX_DEPTH):
+                    print("max depth reached")
+                    continue
 
                 # pp(("transit agents", transit_agents))
                 
@@ -315,9 +328,7 @@ class Simulator:
                             next_node_init[agent_idx] = truncated_trace[agent_idx][0][1:]
 
                     all_transition_paths.append(transition_paths)
-                    if(node.height+1 > MAX_DEPTH ):
-                        print("max depth reached")
-                        continue
+
 
                     tmp = AnalysisTreeNode(
                         trace=next_node_trace,
