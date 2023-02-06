@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import pickle
 import timeit
 from typing import Dict, List, Optional, Tuple
@@ -22,6 +23,14 @@ PathDiffs = List[Tuple[BaseAgent, ModePath]]
 def red(s):
     return "\x1b[31m" + s + "\x1b[0m" #]]
 
+@dataclass
+class SimConsts:
+    time_step: float
+    lane_map: LaneMap
+    run_num: int
+    past_runs: List[AnalysisTree]
+    transition_graph: "Scenario"
+
 class Simulator:
     def __init__(self, config):
         self.simulation_tree = None
@@ -30,22 +39,23 @@ class Simulator:
         self.cache_hits = (0, 0)
 
     @ray.remote
-    def simulate_one(config: "ScenarioConfig", cached_segments: Dict[str, Optional[CachedSegment]], node: AnalysisTreeNode, later: int, remain_time: float, time_step: float, lane_map: LaneMap, run_num: int, past_runs: List[AnalysisTree], transition_graph: "Scenario") -> Tuple[int, int, List[AnalysisTreeNode], Dict[str, TraceType], list]:
+    def simulate_one(config: "ScenarioConfig", cached_segments: Dict[str, Optional[CachedSegment]], node: AnalysisTreeNode, later: int, remain_time: float, consts: SimConsts) -> Tuple[int, int, List[AnalysisTreeNode], Dict[str, TraceType], list]:
         t = timeit.default_timer()
         print(f"node {node.id} start: {t}")
         # print(f"node id: {node.id}")
         cache_updates = []
         for agent_id in node.agent:
-            if agent_id not in cached_segments:
-                # pp(("sim", agent_id, *mode, *init))
-                # Simulate the trace starting from initial condition
-                mode = node.mode[agent_id]
-                init = node.init[agent_id]
-                trace = node.agent[agent_id].TC_simulate(mode, init, remain_time, time_step, lane_map)
-                trace[:, 0] += node.start_time
-                node.trace[agent_id] = trace
-            elif agent_id in cached_segments:
-                node.trace[agent_id] = cached_segments[agent_id].trace
+            if agent_id not in node.trace:
+                if agent_id in cached_segments:
+                    node.trace[agent_id] = cached_segments[agent_id].trace
+                else:
+                    # pp(("sim", agent_id, *mode, *init))
+                    # Simulate the trace starting from initial condition
+                    mode = node.mode[agent_id]
+                    init = node.init[agent_id]
+                    trace = node.agent[agent_id].TC_simulate(mode, init, remain_time, consts.time_step, consts.lane_map)
+                    trace[:, 0] += node.start_time
+                    node.trace[agent_id] = trace
         # pp(("cached_segments", cached_segments.keys()))
         # TODO: for now, make sure all the segments comes from the same node; maybe we can do
         # something to combine results from different nodes in the future
@@ -54,15 +64,15 @@ class Simulator:
         new_cache, paths_to_sim = {}, []
         if len(node_ids) == 1 and len(cached_segments.keys()) == len(node.agent):
             old_run_num, old_node_id = node_ids[0]
-            if old_run_num != run_num:
-                old_node = find(past_runs[old_run_num].nodes, lambda n: n.id == old_node_id)
+            if old_run_num != consts.run_num:
+                old_node = find(consts.past_runs[old_run_num].nodes, lambda n: n.id == old_node_id)
                 assert old_node != None
                 new_cache, paths_to_sim = to_simulate(old_node.agent, node.agent, cached_segments)
                 # pp(("to sim", new_cache.keys(), len(paths_to_sim)))
             # else:
             #     print("!!!")
 
-        asserts, transitions, transition_idx = transition_graph.get_transition_simulate(new_cache, paths_to_sim, node)
+        asserts, transitions, transition_idx = consts.transition_graph.get_transition_simulate(new_cache, paths_to_sim, node)
         # pp(("transitions:", transition_idx, transitions))
 
         node.assert_hits = asserts
@@ -88,7 +98,7 @@ class Simulator:
                 if config.incremental:
                     for agent_id in node.agent:
                         if agent_id not in cached_segments:
-                            cache_updates.append((agent_id, node, [], full_traces[agent_id], [], transition_idx, run_num))
+                            cache_updates.append((agent_id, node, [], full_traces[agent_id], [], transition_idx, consts.run_num))
                 # print(red("no trans"))
                 print(f"node {node.id} dur {timeit.default_timer() - t}")
                 return (node.id, later, [], node.trace, cache_updates)
@@ -106,7 +116,7 @@ class Simulator:
                     #     # pp(("dedup!", pre_len, len(cached_segments[agent_id].transitions)))
                     # else:
                     if agent_id not in cached_segments:
-                        cache_updates.append((agent_id, node, transit_agents, full_traces[agent_id], transition, transition_idx, run_num))
+                        cache_updates.append((agent_id, node, transit_agents, full_traces[agent_id], transition, transition_idx, consts.run_num))
             # pp(("cached inits", self.cache.get_cached_inits(3)))
             # Generate the transition combinations if multiple agents can transit at the same time step
             transition_list = list(transitions.values())
@@ -190,6 +200,7 @@ class Simulator:
         nodes = [root]
         num_cached = 0
         # Perform BFS through the simulation tree to loop through all possible transitions
+        consts = ray.put(SimConsts(time_step, lane_map, run_num, past_runs, transition_graph))
         while True:
             wait = False
             start = timeit.default_timer()
@@ -226,7 +237,7 @@ class Simulator:
                             cached_segments[agent_id] = cached
                 t = timeit.default_timer()
                 print(f"before remote {t}")
-                result_refs.append(self.simulate_one.remote(self.config, cached_segments, node, later, remain_time, time_step, lane_map, run_num, past_runs, transition_graph))
+                result_refs.append(self.simulate_one.remote(self.config, cached_segments, node, later, remain_time, consts))
                 print(f"remote dur {timeit.default_timer() - t}")
                 if len(result_refs) >= self.config.parallel_sim_ahead:
                     wait = True
