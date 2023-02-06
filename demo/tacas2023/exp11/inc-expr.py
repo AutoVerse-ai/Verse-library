@@ -99,6 +99,7 @@ if __name__ == "__main__":
     input_code_name = './demo/tacas2023/exp11/decision_logic/inc-expr6.py' if "6" in arg else './demo/tacas2023/exp11/decision_logic/inc-expr.py'
     config = ScenarioConfig()
     config.incremental = 'i' in arg
+    config.parallel = 'l' in arg
     scenario = Scenario(config)
 
     scenario.add_agent(CarAgent('car1', file_name=input_code_name))
@@ -169,7 +170,6 @@ if __name__ == "__main__":
         cont_inits = jerks(cont_inits, _jerks)
     scenario.set_init(cont_inits, *mode_inits)
 
-    ray.init()
     if 'b' in arg:
         run(sim, True)
     elif 'r' in arg:
