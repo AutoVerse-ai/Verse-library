@@ -242,7 +242,6 @@ class Verifier:
 
             # Get all possible transitions to next mode
             asserts, all_possible_transitions = transition_graph.get_transition_verify(new_cache, paths_to_sim, node)
-            pp(("transitions:", [(t[0], t[2]) for t in all_possible_transitions]))
             node.assert_hits = asserts
             if asserts != None:
                 asserts, idx = asserts
@@ -250,6 +249,7 @@ class Verifier:
                     node.trace[agent] = node.trace[agent][:(idx + 1) * 2]
                 continue
 
+            pp(("transitions:", [(t[0], t[2]) for t in all_possible_transitions]))
             transit_map = {k: list(l) for k, l in itertools.groupby(all_possible_transitions, key=lambda p:p[0])}
             transit_agents = transit_map.keys()
             # pp(("transit agents", transit_agents))
