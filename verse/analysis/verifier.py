@@ -11,6 +11,8 @@ from verse.map.lane_map import LaneMap
 from verse.parser.parser import find
 pp = functools.partial(pprint.pprint, compact=True, width=130)
 
+import time
+
 class Verifier:
     def __init__(self, config):
         self.reachtube_tree = None
@@ -412,7 +414,7 @@ class Verifier:
             type = 'reachtube',
             id = 0
         )
-        # root = AnalysisTreeNode()
+        print('start init')
         for i, agent in enumerate(agent_list):
             root.init[agent.id] = [init_list[i]]
             init_mode = [elem.name for elem in init_mode_list[i]]
@@ -425,12 +427,16 @@ class Verifier:
         verification_queue.append(root)
         num_calls = 0
         num_transitions = 0
+        time_reachtube = 0
+        time_transition = 0
+        print('start bfs')
         while verification_queue != []:
+            print('start a new node')
             node: AnalysisTreeNode = verification_queue.pop(0)
             combined_inits = {a: combine_all(inits) for a, inits in node.init.items()}
             # print(node.init)
             # print(node.mode)
-            print("###############")
+            # print("###############")
             # pp(("start sim", node.start_time, {a: (*node.mode[a], *combined_inits[a]) for a in node.mode}))
             remain_time = round(time_horizon - node.start_time, 10)
             if remain_time <= 0:
@@ -440,6 +446,7 @@ class Verifier:
             # For reachtubes not already computed
             # TODO: can add parallalization for this loop
             for agent_id in node.agent:
+                start = time.perf_counter()
                 mode = node.mode[agent_id]
                 inits = node.init[agent_id]
                 combined = combine_all(inits)
@@ -509,7 +516,10 @@ class Verifier:
                     trace = np.array(cur_bloated_tube)
                     trace[:, 0] += node.start_time
                     node.trace[agent_id] = trace.tolist()
+                time_reachtube += time.perf_counter() - start
+                print('time for one agent:', time.perf_counter() - start)
             # pp(("cached tubes", cached_tubes.keys()))
+            start = time.perf_counter()
             node_ids = list(set((s.run_num, s.node_id) for s in cached_tubes.values()))
             # assert len(node_ids) <= 1, f"{node_ids}"
             new_cache, paths_to_sim = {}, []
@@ -557,11 +567,13 @@ class Verifier:
             transition_list = list(transition_dict.values())
             combined_transitions = list(itertools.product(*transition_list))
             aligned_transitions = self.align_transitions(combined_transitions)
-
+            time_transition += time.perf_counter() - start
+            # print('time for getting transitions:', time.perf_counter() - start)
             for all_agent_transition in aligned_transitions:
                 # Each transition will contain a list of rectangles and their corresponding indexes in the original list
                 # if len(transition) != 6:
                 #     pp(("weird trans", transition))
+                # start = time.perf_counter()
                 if not all_agent_transition:
                     continue
                 next_node_mode = copy.deepcopy(node.mode)
@@ -612,14 +624,17 @@ class Verifier:
                 )
                 node.child.append(tmp)
                 verification_queue.append(tmp)
-
+            print('time for one transition:', time.perf_counter() - start)
+            # start = time.perf_counter()
             """Truncate trace of current node based on max_end_idx"""
             """Only truncate when there's transitions"""
             if all_possible_transitions:
                 for agent_idx in node.agent:
                     node.trace[agent_idx] = node.trace[agent_idx][:(
                         max_end_idx+1)*2]
-
+            # print('time for truncation:', time.perf_counter() - start)
+        print('end bfs')
+        print('reachtube time:', time_reachtube, 'transition time:', time_transition )
         self.reachtube_tree = AnalysisTree(root)
         # print(f">>>>>>>> Number of calls to reachability engine: {num_calls}")
         # print(f">>>>>>>> Number of transitions happening: {num_transitions}")
