@@ -14,7 +14,7 @@ from verse.analysis.incremental import ReachTubeCache, TubeCache, convert_reach_
 from verse.analysis.utils import dedup
 from verse.parser.parser import find
 pp = functools.partial(pprint.pprint, compact=True, width=130)
-
+MAX_HEIGHT = 6
 class Verifier:
     def __init__(self, config):
         self.reachtube_tree = None
@@ -264,7 +264,9 @@ class Verifier:
                         # pp(("dedup!", pre_len, len(cached_tubes[agent_id].transitions)))
                     else:
                         self.trans_cache.add_tube(agent_id, combined_inits, node, transit_agents, transition, transit_ind, run_num)
-
+            if (node.height >= MAX_HEIGHT):
+                print("max depth reached")
+                continue
             max_end_idx = 0
             for transition in all_possible_transitions:
                 # Each transition will contain a list of rectangles and their corresponding indexes in the original list
@@ -302,6 +304,7 @@ class Verifier:
                     trace=next_node_trace,
                     init=next_node_init,
                     mode=next_node_mode,
+                    height=node.height+1,
                     static = next_node_static,
                     uncertain_param = next_node_uncertain_param,
                     agent=next_node_agent,

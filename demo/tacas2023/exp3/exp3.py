@@ -73,28 +73,28 @@ if __name__ == "__main__":
         ]
     )
 
-    # traces = scenario.simulate(80, 0.05)
-    # fig = go.Figure()
-    # fig = simulation_anime(traces, tmp_map, fig, 1, 2, [
-    #                        1, 2], 'lines', 'trace', sample_rate=1)
-    # fig.show()
+    traces = scenario.simulate(80, 0.05)
+    fig = go.Figure()
+    fig = simulation_anime(traces, tmp_map, fig, 1, 2, [
+                           1, 2], 'lines', 'trace', sample_rate=1)
+    fig.show()
 
-    start_time = time.time()
-    traces = scenario.verify(80, 0.05)
-    run_time = time.time()-start_time 
-    traces.dump("./demo/tacas2023/exp3/output3.json")
-
-    print({
-        "#A": len(scenario.agent_dict),
-        "A": "C",
-        "Map": "M2",
-        "postCont": "DryVR",
-        "Noisy S": "No",
-        "# Tr": len(traces.nodes),
-        "Run Time": run_time,
-    })
-
-    if len(sys.argv)>1 and sys.argv[1]=='p':
-        fig = go.Figure()
-        fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace', combine_rect=3)
-        fig.show()
+    # start_time = time.time()
+    # traces = scenario.verify(80, 0.05)
+    # run_time = time.time() - start_time
+    # traces.dump("./demo/tacas2023/exp3/output3.json")
+    #
+    # print({
+    #     "#A": len(scenario.agent_dict),
+    #     "A": "C",
+    #     "Map": "M2",
+    #     "postCont": "DryVR",
+    #     "Noisy S": "No",
+    #     "# Tr": len(traces.nodes),
+    #     "Run Time": run_time,
+    # })
+    #
+    # if len(sys.argv)>1 and sys.argv[1]=='p':
+    #     fig = go.Figure()
+    #     fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace', combine_rect=3)
+    #     fig.show()

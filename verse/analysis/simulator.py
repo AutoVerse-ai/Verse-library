@@ -15,8 +15,9 @@ pp = functools.partial(pprint.pprint, compact=True, width=130)
 from verse.analysis.analysis_tree import AnalysisTreeNode, AnalysisTree
 
 PathDiffs = List[Tuple[BaseAgent, ModePath]]
-#store in different file???
-MAX_DEPTH = 3
+
+MAX_HEIGHT = 3
+
 def red(s):
     return "\x1b[31m" + s + "\x1b[0m" #]]
 
@@ -124,6 +125,9 @@ class Simulator:
                 if transitions:
                     truncated_trace[agent_idx] = node.trace[agent_idx][transition_idx:]
                     node.trace[agent_idx] = node.trace[agent_idx][:transition_idx+1]
+            if (node.height >= MAX_HEIGHT):
+                print("max depth reached")
+                continue
 
             if asserts != None:
                 pass
@@ -138,9 +142,7 @@ class Simulator:
                                 self.cache.add_segment(agent_id, node, [], full_traces[agent_id], [], transition_idx, run_num)
                     # print(red("no trans"))
                     continue
-                if (node.height >= MAX_DEPTH):
-                    print("max depth reached")
-                    continue
+
 
                 transit_agents = transitions.keys()
                 # pp(("transit agents", transit_agents))
@@ -214,7 +216,6 @@ class Simulator:
             #         start_time = next_node_start_time
             #     ))
             # simulation_queue += node.child
-        
         self.simulation_tree = AnalysisTree(root)
         return self.simulation_tree
 
@@ -281,6 +282,9 @@ class Simulator:
                 if transitions or asserts:
                     truncated_trace[agent_idx] = node.trace[agent_idx][transition_idx:]
                     node.trace[agent_idx] = node.trace[agent_idx][:transition_idx+1]
+            if (node.height >= MAX_HEIGHT):
+                print("max depth reached")
+                continue
 
             if asserts != None:
                 pass
@@ -290,9 +294,7 @@ class Simulator:
                 # If there's no transitions (returned transitions is empty), continue
                 if not transitions:
                     continue
-                if (node.height >= MAX_DEPTH):
-                    print("max depth reached")
-                    continue
+
 
                 # pp(("transit agents", transit_agents))
                 

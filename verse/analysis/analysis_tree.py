@@ -46,7 +46,8 @@ class AnalysisTreeNode:
             'child': [], 
             'agent': {}, 
             'init': self.init, 
-            'mode': self.mode, 
+            'mode': self.mode,
+            'height': self.height,
             'static': self.static, 
             'start_time': self.start_time,
             'trace': self.trace, 
@@ -88,6 +89,7 @@ class AnalysisTreeNode:
             trace = data['trace'],
             init = data['init'],
             mode = data['mode'],
+            height = data['height'],
             static = data['static'],
             agent = data['agent'],
             assert_hits = data['assert_hits'],
@@ -105,9 +107,11 @@ class AnalysisTree:
         # Perform BFS/DFS to store all the tree node in a list
         res = []
         queue = [root]
+        print("ROOT", root)
         node_id = 0
         while queue:
             node = queue.pop(0)
+            print("NODE: ", node)
             node.id = node_id 
             res.append(node)
             node_id += 1
