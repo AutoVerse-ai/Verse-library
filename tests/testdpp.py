@@ -47,7 +47,7 @@ def controller(ego:State):
 
     return output_vehicle_mode, output_lane_mode
 
-from verse.example.example_agent.car_agent import CarAgent
+from verse.agents.example_agent.car_agent import CarAgent
 from verse.scenario.scenario import Scenario
 from verse.map.example_map.simple_map import SimpleMap2
 
@@ -55,11 +55,13 @@ from verse.map.example_map.simple_map import SimpleMap2
 class TestSimulatorMethods(unittest.TestCase):
     def setUp(self):
         self.scenario = Scenario()
-        self.car = CarAgent('ego', file_name='example_controller1.py')
-        self.car2 = CarAgent('other', file_name='example_controller1.py')
+        # Relative path to ../tests/example_controller1.py does not work. 
+        self.car = CarAgent('ego', file_name='../demo/tacas2023/exp2/example_controller5.py')
+        self.car2 = CarAgent('other', file_name='../demo/tacas2023/exp2/example_controller5.py')
         self.scenario.add_agent(self.car)
         self.scenario.add_agent(self.car2)
-        self.scenario.add_map(SimpleMap2())
+        tmp_map = SimpleMap2()
+        self.scenario.set_map(tmp_map)
         # self.scenario.set_sensor(FakeSensor1())
         # self.scenario.set_init(
         #     [[0, 3, 0, 0.5]],

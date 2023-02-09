@@ -61,8 +61,11 @@ if 'p' in arg:
 def run(sim, meas=False):
     time = timeit.default_timer()
     if sim:
+        scenario.simulator.cache_hits = (0, 0)
         traces = scenario.simulate(60, 0.1)
     else:
+        scenario.verifier.tube_cache_hits = (0,0)
+        scenario.verifier.trans_cache_hits = (0,0)
         traces = scenario.verify(60, 0.1)
 
     if 'd' in arg:
