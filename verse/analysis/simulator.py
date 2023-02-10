@@ -39,7 +39,7 @@ class Simulator:
         self.cache_hits = (0, 0)
 
     @staticmethod
-    def simulate_one(config: "ScenarioConfig", cached_segments: Dict[str, Optional[CachedSegment]], node: AnalysisTreeNode, later: int, remain_time: float, consts: SimConsts) -> Tuple[int, int, List[AnalysisTreeNode], Dict[str, TraceType], list]:
+    def simulate_one(config: "ScenarioConfig", cached_segments: Dict[str, CachedSegment], node: AnalysisTreeNode, later: int, remain_time: float, consts: SimConsts) -> Tuple[int, int, List[AnalysisTreeNode], Dict[str, TraceType], list]:
         t = timeit.default_timer()
         print(f"node {node.id} start: {t}")
         # print(f"node id: {node.id}")
@@ -59,20 +59,22 @@ class Simulator:
         # pp(("cached_segments", cached_segments.keys()))
         # TODO: for now, make sure all the segments comes from the same node; maybe we can do
         # something to combine results from different nodes in the future
-        node_ids = list(set((s.run_num, s.node_id) for s in cached_segments.values()))
-        # assert len(node_ids) <= 1, f"{node_ids}"
         new_cache, paths_to_sim = {}, []
-        if len(node_ids) == 1 and len(cached_segments) == len(node.agent):
-            old_run_num, old_node_id = node_ids[0]
-            if old_run_num != consts.run_num:
-                old_node = find(consts.past_runs[old_run_num].nodes, lambda n: n.id == old_node_id)
-                assert old_node != None
-                new_cache, paths_to_sim = to_simulate(old_node.agent, node.agent, cached_segments)
-                # pp(("to sim", new_cache.keys(), len(paths_to_sim)))
+        node_ids = [s.node_ids for s in cached_segments.values()]
+        if len(cached_segments) == len(node.agent):
+            node_ids = list(functools.reduce(lambda a, b: a.intersection(b), node_ids))
+            # assert len(node_ids) <= 1, f"{node_ids}"
+            if len(node_ids) > 0:
+                old_run_num, old_node_id = node_ids[0]
+                if old_run_num != consts.run_num:
+                    old_node = find(consts.past_runs[old_run_num].nodes, lambda n: n.id == old_node_id)
+                    assert old_node != None
+                    new_cache, paths_to_sim = to_simulate(old_node.agent, node.agent, cached_segments)
+                    # pp(("to sim", new_cache.keys(), len(paths_to_sim)))
             # else:
             #     print("!!!")
-        else:
-            print(f"not full {node.id}: {node_ids}, {len(cached_segments) == len(node.agent)}")
+            else:
+                print(f"not full {node.id}: {node_ids}, {len(cached_segments) == len(node.agent)}")
 
         asserts, transitions, transition_idx = consts.transition_graph.get_transition_simulate(new_cache, paths_to_sim, node)
         # pp(("transitions:", transition_idx, transitions))
@@ -167,7 +169,7 @@ class Simulator:
             return (node.id, later, next_nodes, node.trace, cache_updates)
 
     @ray.remote
-    def simulate_one_remote(config: "ScenarioConfig", cached_segments: Dict[str, Optional[CachedSegment]], node: AnalysisTreeNode, later: int, remain_time: float, consts: SimConsts) -> Tuple[int, int, List[AnalysisTreeNode], Dict[str, TraceType], list]:
+    def simulate_one_remote(config: "ScenarioConfig", cached_segments: Dict[str, CachedSegment], node: AnalysisTreeNode, later: int, remain_time: float, consts: SimConsts) -> Tuple[int, int, List[AnalysisTreeNode], Dict[str, TraceType], list]:
         return Simulator.simulate_one(config, cached_segments, node, later, remain_time, consts)
 
     def proc_result(self, id, later, next_nodes, traces, cache_updates):
@@ -185,15 +187,17 @@ class Simulator:
         for new, aid, node, transit_agents, full_trace, transition, transition_idx, run_num in cache_updates:
             cached = self.cache.check_hit(aid, node.mode[aid], node.init[aid], node.init)
             if new:
-                if not cached:
+                if cached:
+                    cached.node_ids.add((run_num, node.id))
+                    print(f"dup {aid}: => {cached.node_ids}")
+                else:
                     self.cache.add_segment(aid, node, transit_agents, full_trace, transition, transition_idx, run_num)
                     self.num_cached += 1
-                else:
-                    print(f"dup {aid}: {(run_num, node.id)}")
             else:
                 assert cached != None
                 cached.transitions.extend(convert_sim_trans(aid, transit_agents, node.init, transition, transition_idx))
                 cached.transitions = dedup(cached.transitions, lambda i: (i.disc, i.cont, i.inits))
+                cached.node_ids.add((run_num, node.id))
             # pre_len = len(cached_segments[aid].transitions)
             # pp(("dedup!", pre_len, len(cached_segments[aid].transitions)))
         print("cache", asizeof(self.cache))

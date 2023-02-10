@@ -1,7 +1,7 @@
 from collections import defaultdict
 from dataclasses import dataclass
 from pprint import pp
-from typing import Any, DefaultDict, List, Tuple, Optional, Dict
+from typing import Any, DefaultDict, List, Tuple, Optional, Dict, Set
 from verse.agents.base_agent import BaseAgent
 from verse.analysis import AnalysisTreeNode
 from intervaltree import IntervalTree
@@ -24,8 +24,7 @@ class CachedSegment:
     trace: nptyp.NDArray[np.float_]
     asserts: List[str]
     transitions: List[CachedTransition]
-    run_num: int
-    node_id: int
+    node_ids: Set[Tuple[int, int]]
 
 @dataclass
 class CachedReachTrans:
@@ -147,7 +146,7 @@ class SimTraceCache:
         for i, val in enumerate(init):
             if i == len(init) - 1:
                 transitions = convert_sim_trans(agent_id, transit_agents, node.init, transition, trans_ind)
-                entry = CachedSegment(trace, assert_hits.get(agent_id), transitions, run_num, node.id)
+                entry = CachedSegment(trace, assert_hits.get(agent_id), transitions, set([(run_num, node.id)]))
                 tree[val - _EPSILON:val + _EPSILON] = entry
                 return entry
             else:
@@ -159,7 +158,7 @@ class SimTraceCache:
     @staticmethod
     def iter_tree(tree, depth: int) -> List[List[float]]:
         if depth == 0:
-            return [[(i.begin + i.end) / 2, (i.data.run_num, i.data.node_id, [t.transition for t in i.data.transitions], len(i.data.trace))] for i in tree]
+            return [[(i.begin + i.end) / 2, (i.data.node_ids, [t.transition for t in i.data.transitions], len(i.data.trace))] for i in tree]
         res = []
         for i in tree:
             mid = (i.begin + i.end) / 2
