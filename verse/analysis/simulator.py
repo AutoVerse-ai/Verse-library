@@ -101,8 +101,7 @@ class Simulator:
             if not transitions:
                 if config.incremental:
                     for agent_id in node.agent:
-                        if agent_id not in cached_segments:
-                            cache_updates.append((True, agent_id, node, [], full_traces[agent_id], [], transition_idx, consts.run_num))
+                        cache_updates.append((agent_id not in cached_segments, agent_id, node, [], full_traces[agent_id], [], transition_idx, consts.run_num))
                 # print(red("no trans"))
                 print(f"node {node.id} dur {timeit.default_timer() - t}")
                 return (node.id, later, [], node.trace, cache_updates)
@@ -113,10 +112,7 @@ class Simulator:
                 for agent_id in node.agent:
                     transition = transitions[agent_id] if agent_id in transit_agents else []
                     # TODO: update current transitions
-                    if agent_id in cached_segments:
-                        cache_updates.append((False, agent_id, node, transit_agents, full_traces[agent_id], transition, transition_idx, consts.run_num))
-                    else:
-                        cache_updates.append((True, agent_id, node, transit_agents, full_traces[agent_id], transition, transition_idx, consts.run_num))
+                    cache_updates.append((agent_id not in cached_segments, agent_id, node, transit_agents, full_traces[agent_id], transition, transition_idx, consts.run_num))
             # pp(("cached inits", self.cache.get_cached_inits(3)))
             # Generate the transition combinations if multiple agents can transit at the same time step
             transition_list = list(transitions.values())
@@ -260,16 +256,7 @@ class Simulator:
                         # else:
                         #     self.cache_hits = self.cache_hits[0], self.cache_hits[1] + 1
                         # pp(("check hit res", agent_id, len(cached.transitions) if cached != None else None))
-                    else:
-                        cached = None
-                    if agent_id in node.trace:
                         if cached != None:
-                            cached_segments[agent_id] = cached
-                    else:
-                        if cached != None:
-                            # node.trace[agent_id] = cached.trace
-                            # if len(cached.trace) < remain_time / time_step:
-                            #     node.trace[agent_id] += node.agent[agent_id].TC_simulate(mode, cached.trace[-1], remain_time - time_step * len(cached.trace), lane_map)
                             cached_segments[agent_id] = cached
                 if not self.config.parallel or len(cached_segments) == len(node.agent):
                     print("local")
