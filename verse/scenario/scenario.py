@@ -1,9 +1,9 @@
 from pprint import pp
-from typing import DefaultDict, NamedTuple, Optional, Tuple, List, Dict, Any
+from typing import DefaultDict, Optional, Tuple, List, Dict, Any
 import copy
 import itertools
 import warnings
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 import ast
 from dataclasses import dataclass
 import types
@@ -11,6 +11,7 @@ import sys
 from enum import Enum
 
 import numpy as np
+from types import SimpleNamespace
 
 from verse.agents.base_agent import BaseAgent
 from verse.analysis.dryvr import _EPSILON
@@ -52,50 +53,34 @@ def disc_field(field:str, agent:BaseAgent):
             return True 
     return False
 
-def namedTupleToClass(inp: NamedTuple):
-    res = types.SimpleNamespace()
-    for field in inp._fields:
-        setattr(res, field, getattr(inp, field))
-    return res
-
 def red(s):
     return "\x1b[31m" + s + "\x1b[0m"
 
-def pack_env(agent: BaseAgent, ego_ty_name: str, cont: Dict[str, float], disc: Dict[str, str], track_map):
-    state_ty = None #namedtuple(ego_ty_name, agent.decision_logic.state_defs[ego_ty_name].all_vars())
+def pack_env(agent: BaseAgent, ego_ty_name: str, cont: Dict[str, float], disc: Dict[str, str], track_map) -> Dict[str, Any]:
     packed: DefaultDict[str, Any] = defaultdict(dict)
     # packed = {}
     for e in [cont, disc]:
         for k, v in e.items():
             k1, k2 = k.split(".")
             packed[k1][k2] = v
-    ego_keys, ego_vals = tuple(map(list, zip(*packed[EGO].items())))
-    state_ty = namedtuple(ego_ty_name, ego_keys)
+    env: Dict[str, Any] = {EGO: SimpleNamespace(**packed[EGO])}
     for arg in agent.decision_logic.args:
         if "map" in arg.name:
-            packed[arg.name] = track_map
+            env[arg.name] = track_map
         elif arg.name != EGO:
             other = arg.name
             if other in packed:
                 other_keys, other_vals = tuple(map(list, zip(*packed[other].items())))
-                state_ty = namedtuple(ego_ty_name, other_keys)
-                packed[other] = list(map(lambda v: state_ty(*v), zip(*other_vals)))
+                env[other] = list(map(lambda v: SimpleNamespace(**{k: v for k, v in zip(other_keys, v)}), zip(*other_vals)))
                 if not arg.is_list:
-                    packed[other] = packed[other][0]
+                    env[other] = packed[other][0]
             else:
                 if arg.is_list:
-                    packed[other] = []
+                    env[other] = []
                 else:
                     raise ValueError(f"Expected one {ego_ty_name} for {other}, got none")
 
-    packed[EGO] = state_ty(**packed[EGO])
-    return dict(packed.items())
-
-def is_equivalent(inp1:NamedTuple, inp2:NamedTuple):
-    for field in inp1._fields:
-        if getattr(inp1, field) != getattr(inp2, field):
-            return False
-    return True
+    return env
 
 def check_sim_transitions(agent: BaseAgent, guards: List[Tuple], cont, disc, map, state, mode):
     asserts = []
@@ -596,7 +581,7 @@ class Scenario:
                 env = pack_env(agent, EGO, continuous_variable_dict, orig_disc_vars, track_map)
                 for arg in agent.decision_logic.args:
                     if arg.name == EGO:
-                        ego = namedTupleToClass(env[EGO])
+                        ego = env[EGO]
                         ego = convertStrToEnum(ego, agent, dl)
                         arg_list.append(ego)
                     elif arg.name == 'track_map':
@@ -605,13 +590,11 @@ class Scenario:
                         if isinstance(env[arg.name], list):
                             tmp_list = []
                             for item in env[arg.name]:
-                                tmp = namedTupleToClass(item)
-                                tmp = convertStrToEnum(tmp, agent, dl)
+                                tmp = convertStrToEnum(item, agent, dl)
                                 tmp_list.append(tmp)
                             arg_list.append(tmp_list)
                         else:
-                            tmp = namedTupleToClass(env[arg.name])
-                            tmp = convertStrToEnum(tmp, agent, dl)
+                            tmp = convertStrToEnum(env[arg.name], agent, dl)
                             arg_list.append(tmp)
 
                 try:
@@ -619,7 +602,7 @@ class Scenario:
                     output = dl.decisionLogic(*arg_list)   
                     output = convertEnumToStr(output, agent, dl)   
                     # Check if output is the same as ego
-                    if not is_equivalent(env[EGO], output):
+                    if env[EGO] != output:
                         # If not, a transition happen, get source and destination, break
                         next_init = []
                         pure_dest = []
