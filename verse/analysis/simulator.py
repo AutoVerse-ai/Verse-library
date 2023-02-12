@@ -16,7 +16,6 @@ from verse.analysis.analysis_tree import AnalysisTreeNode, AnalysisTree
 
 PathDiffs = List[Tuple[BaseAgent, ModePath]]
 
-MAX_HEIGHT = 3
 
 def red(s):
     return "\x1b[31m" + s + "\x1b[0m" #]]
@@ -30,8 +29,10 @@ class Simulator:
         self.cache_hits = (0, 0)
 
     def simulate(self, init_list, init_mode_list, static_list, uncertain_param_list, agent_list,
-                 transition_graph, time_horizon, time_step, lane_map, run_num, past_runs):
+                 transition_graph, time_horizon, time_step, max_height, lane_map, run_num, past_runs):
         # Setup the root of the simulation tree
+        if(max_height == None):
+            max_height = float('inf')
         root = AnalysisTreeNode(
             trace={},
             init={},
@@ -125,7 +126,7 @@ class Simulator:
                 if transitions:
                     truncated_trace[agent_idx] = node.trace[agent_idx][transition_idx:]
                     node.trace[agent_idx] = node.trace[agent_idx][:transition_idx+1]
-            if (node.height >= MAX_HEIGHT):
+            if (node.height >= max_height):
                 print("max depth reached")
                 continue
 
@@ -216,12 +217,16 @@ class Simulator:
             #         start_time = next_node_start_time
             #     ))
             # simulation_queue += node.child
+        #checkHeight(root, max_height)
+
         self.simulation_tree = AnalysisTree(root)
         return self.simulation_tree
 
     def simulate_simple(self, init_list, init_mode_list, static_list, uncertain_param_list, agent_list,
-                 transition_graph, time_horizon, time_step, lane_map, run_num, past_runs):
+                 transition_graph, time_horizon, time_step, max_height, lane_map, run_num, past_runs):
         # Setup the root of the simulation tree
+        if(max_height == None):
+            max_height = float('inf')
         root = AnalysisTreeNode(
             trace={},
             init={},
@@ -282,7 +287,7 @@ class Simulator:
                 if transitions or asserts:
                     truncated_trace[agent_idx] = node.trace[agent_idx][transition_idx:]
                     node.trace[agent_idx] = node.trace[agent_idx][:transition_idx+1]
-            if (node.height >= MAX_HEIGHT):
+            if (node.height >= max_height):
                 print("max depth reached")
                 continue
 
@@ -357,7 +362,23 @@ class Simulator:
             #         start_time = next_node_start_time
             #     ))
             # simulation_queue += node.child
-        
+        #checkHeight(root, max_height)
+
         self.simulation_tree = AnalysisTree(root)
+
+
         return self.simulation_tree
+
+#print all height of leaves
+def checkHeight(root, max_height):
+    if root:
+        # First recur on left child
+        # then print the data of node
+        if(root.child == []):
+            print("HEIGHT", root.height)
+            if(root.height > max_height):
+                print("Exceeds max height")
+        for c in root.child:
+            checkHeight(c, max_height)
+
 

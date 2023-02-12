@@ -107,7 +107,6 @@ class AnalysisTree:
         # Perform BFS/DFS to store all the tree node in a list
         res = []
         queue = [root]
-        print("ROOT", root)
         node_id = 0
         while queue:
             node = queue.pop(0)

@@ -297,7 +297,7 @@ class Scenario:
             res_list.append(trace)
         return res_list
 
-    def simulate(self, time_horizon, time_step, seed = None) -> AnalysisTree:
+    def simulate(self, time_horizon, time_step, max_height=None, seed = None) -> AnalysisTree:
         self.check_init()
         init_list = []
         init_mode_list = []
@@ -311,11 +311,12 @@ class Scenario:
             uncertain_param_list.append(self.uncertain_param_dict[agent_id])
             agent_list.append(self.agent_dict[agent_id])
         print(init_list)
-        tree = self.simulator.simulate(init_list, init_mode_list, static_list, uncertain_param_list, agent_list, self, time_horizon, time_step, self.map, len(self.past_runs), self.past_runs)
+        tree = self.simulator.simulate(init_list, init_mode_list, static_list, uncertain_param_list, agent_list, self, time_horizon, time_step, max_height, self.map, len(self.past_runs), self.past_runs)
         self.past_runs.append(tree)
         return tree
 
-    def simulate_simple(self, time_horizon, time_step, seed = None) -> AnalysisTree:
+    def simulate_simple(self, time_horizon, time_step, max_height=None, seed = None) -> AnalysisTree:
+
         self.check_init()
         init_list = []
         init_mode_list = []
@@ -329,11 +330,11 @@ class Scenario:
             uncertain_param_list.append(self.uncertain_param_dict[agent_id])
             agent_list.append(self.agent_dict[agent_id])
         print(init_list)
-        tree = self.simulator.simulate_simple(init_list, init_mode_list, static_list, uncertain_param_list, agent_list, self, time_horizon, time_step, self.map, len(self.past_runs), self.past_runs)
+        tree = self.simulator.simulate_simple(init_list, init_mode_list, static_list, uncertain_param_list, agent_list, self, time_horizon, time_step, max_height, self.map, len(self.past_runs), self.past_runs)
         self.past_runs.append(tree)
         return tree
 
-    def verify(self, time_horizon, time_step, params={}) -> AnalysisTree:
+    def verify(self, time_horizon, time_step, max_height=None, params={}) -> AnalysisTree:
         self.check_init()
         init_list = []
         init_mode_list = []
@@ -351,7 +352,7 @@ class Scenario:
             uncertain_param_list.append(self.uncertain_param_dict[agent_id])
             agent_list.append(self.agent_dict[agent_id])
         tree = self.verifier.compute_full_reachtube(init_list, init_mode_list, static_list, uncertain_param_list, agent_list, self, time_horizon,
-                                                    time_step, self.map, self.config.init_seg_length, self.config.reachability_method, len(self.past_runs), self.past_runs, params)
+                                                    time_step, max_height, self.map, self.config.init_seg_length, self.config.reachability_method, len(self.past_runs), self.past_runs, params)
         self.past_runs.append(tree)
         return tree
 

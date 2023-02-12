@@ -14,7 +14,6 @@ from verse.analysis.incremental import ReachTubeCache, TubeCache, convert_reach_
 from verse.analysis.utils import dedup
 from verse.parser.parser import find
 pp = functools.partial(pprint.pprint, compact=True, width=130)
-MAX_HEIGHT = 6
 class Verifier:
     def __init__(self, config):
         self.reachtube_tree = None
@@ -111,6 +110,7 @@ class Verifier:
         transition_graph,
         time_horizon,
         time_step,
+        max_height,
         lane_map,
         init_seg_length,
         reachability_method,
@@ -118,6 +118,9 @@ class Verifier:
         past_runs,
         params = {},
     ):
+
+        if (max_height == None):
+            max_height = float('inf')
         root = AnalysisTreeNode(
             trace={},
             init={},
@@ -264,7 +267,7 @@ class Verifier:
                         # pp(("dedup!", pre_len, len(cached_tubes[agent_id].transitions)))
                     else:
                         self.trans_cache.add_tube(agent_id, combined_inits, node, transit_agents, transition, transit_ind, run_num)
-            if (node.height >= MAX_HEIGHT):
+            if (node.height >= max_height):
                 print("max depth reached")
                 continue
             max_end_idx = 0
@@ -322,12 +325,24 @@ class Verifier:
                 for agent_idx in node.agent:
                     node.trace[agent_idx] = node.trace[agent_idx][:(
                         max_end_idx+1)*2]
-
+        #checkHeight(root, max_height)
         self.reachtube_tree = AnalysisTree(root)
         # print(f">>>>>>>> Number of calls to reachability engine: {num_calls}")
         # print(f">>>>>>>> Number of transitions happening: {num_transitions}")
         self.num_transitions = num_transitions
 
         return self.reachtube_tree
+
+def checkHeight(root, max_height):
+    if root:
+        # First recur on left child
+        # then print the data of node
+        if(root.child == []):
+            print("HEIGHT", root.height)
+            if(root.height > max_height):
+                print("Exceeds max height")
+        for c in root.child:
+            checkHeight(c, max_height)
+
 
 
