@@ -76,12 +76,12 @@ if __name__ == "__main__":
 #            (AgentMode.Normal, TrackMode.T0),
         ]
     )
-    ray.init(include_dashboard=True)
+    # ray.init(include_dashboard=True)
     start_time = time.time()
     traces = scenario.verify(20, 0.1, params={"bloating_method": 'GLOBAL'})
     # traces = scenario.simulate(100,0.1)
     run_time = time.time()-start_time 
-    traces.dump(parent_dir+'/sim_straight.json')
+    traces.dump(parent_dir+'/output2_straight.json')
 
     print({
         "#A": len(scenario.agent_dict),
@@ -98,4 +98,4 @@ if __name__ == "__main__":
     # fig = simulation_anime(traces, tmp_map, fig, 1, 2,None, 'lines', 'trace', time_step=0.1)
     fig = reachtube_tree(traces, tmp_map, fig, 1, 2, None,'lines', 'trace', combine_rect=1)
     fig.show()
-    ray.shutdown()
+    # ray.shutdown()

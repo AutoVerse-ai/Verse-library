@@ -411,10 +411,10 @@ class Verifier:
             child=[],
             start_time = 0,
             ndigits = 10,
-            type = 'reachtube',
+            type = 'simtrace',
             id = 0
         )
-        print('start init')
+        # root = AnalysisTreeNode()
         for i, agent in enumerate(agent_list):
             root.init[agent.id] = [init_list[i]]
             init_mode = [elem.name for elem in init_mode_list[i]]
@@ -423,20 +423,18 @@ class Verifier:
             root.static[agent.id] = init_static
             root.uncertain_param[agent.id] = uncertain_param_list[i]
             root.agent[agent.id] = agent
+            root.type = 'reachtube'
         verification_queue = []
         verification_queue.append(root)
         num_calls = 0
         num_transitions = 0
         time_reachtube = 0
         time_transition = 0
-        print('start bfs')
+        time_transition_opt = 0
         while verification_queue != []:
-            print('start a new node')
             node: AnalysisTreeNode = verification_queue.pop(0)
             combined_inits = {a: combine_all(inits) for a, inits in node.init.items()}
-            # print(node.init)
-            # print(node.mode)
-            # print("###############")
+            print(node.mode)
             # pp(("start sim", node.start_time, {a: (*node.mode[a], *combined_inits[a]) for a in node.mode}))
             remain_time = round(time_horizon - node.start_time, 10)
             if remain_time <= 0:
@@ -517,9 +515,7 @@ class Verifier:
                     trace[:, 0] += node.start_time
                     node.trace[agent_id] = trace.tolist()
                 time_reachtube += time.perf_counter() - start
-                print('time for one agent:', time.perf_counter() - start)
             # pp(("cached tubes", cached_tubes.keys()))
-            start = time.perf_counter()
             node_ids = list(set((s.run_num, s.node_id) for s in cached_tubes.values()))
             # assert len(node_ids) <= 1, f"{node_ids}"
             new_cache, paths_to_sim = {}, []
@@ -532,7 +528,13 @@ class Verifier:
                     # pp(("to sim", new_cache.keys(), len(paths_to_sim)))
 
             # Get all possible transitions to next mode
+            start = time.perf_counter()
+            asserts_opt, all_possible_transitions_opt = transition_graph.get_transition_verify_opt(new_cache, paths_to_sim, node)
+            time_transition_opt += time.perf_counter() - start
+            start = time.perf_counter()
             asserts, all_possible_transitions = transition_graph.get_transition_verify(new_cache, paths_to_sim, node)
+            time_transition += time.perf_counter() - start
+            assert asserts == asserts_opt and all_possible_transitions_opt == all_possible_transitions
             # pp(("transitions:", [(t[0], t[2]) for t in all_possible_transitions]))
             node.assert_hits = asserts
             if asserts != None:
@@ -556,58 +558,37 @@ class Verifier:
                     else:
                         self.trans_cache.add_tube(agent_id, combined_inits, node, transit_agents, transition, transit_ind, run_num)
 
-            # Check if multiple agents can transit at the same time
             max_end_idx = 0
-            transition_dict = {}
             for transition in all_possible_transitions:
-                if transition[0] not in transition_dict:
-                    transition_dict[transition[0]] = [transition]
-                else:
-                    transition_dict[transition[0]].append(transition)
-            transition_list = list(transition_dict.values())
-            combined_transitions = list(itertools.product(*transition_list))
-            aligned_transitions = self.align_transitions(combined_transitions)
-            time_transition += time.perf_counter() - start
-            # print('time for getting transitions:', time.perf_counter() - start)
-            for all_agent_transition in aligned_transitions:
                 # Each transition will contain a list of rectangles and their corresponding indexes in the original list
                 # if len(transition) != 6:
                 #     pp(("weird trans", transition))
-                # start = time.perf_counter()
-                if not all_agent_transition:
-                    continue
-                next_node_mode = copy.deepcopy(node.mode)
-                next_node_static = node.static
-                next_node_uncertain_param = node.uncertain_param
-                start_idx, end_idx = all_agent_transition[0][4][0], all_agent_transition[0][4][-1]
+                transit_agent_idx, src_mode, dest_mode, next_init, idx, path = transition
+                start_idx, end_idx = idx[0], idx[-1]
+
                 truncated_trace = {}
                 for agent_idx in node.agent:
                     truncated_trace[agent_idx] = node.trace[agent_idx][start_idx*2:]
                 if end_idx > max_end_idx:
                     max_end_idx = end_idx
-                next_node_start_time = list(truncated_trace.values())[0][0][0]
+
+                if dest_mode is None:
+                    continue
+
+                next_node_mode = copy.deepcopy(node.mode)
+                next_node_static = node.static
+                next_node_uncertain_param = node.uncertain_param
+                next_node_mode[transit_agent_idx] = dest_mode
                 next_node_agent = node.agent
+                next_node_start_time = list(truncated_trace.values())[0][0][0]
                 next_node_init = {}
                 next_node_trace = {}
-                
-                transit_agent = []
-                for transition in all_agent_transition:
-                    transit_agent_idx, src_mode, dest_mode, next_init, idx, path = transition
-                    # start_idx, end_idx = idx[0], idx[-1]
-
-                    if dest_mode is None:
-                        continue
-
-                    next_node_mode[transit_agent_idx] = dest_mode
-                    # for agent_idx in next_node_agent:
-                        # if agent_idx == transit_agent_idx:
-                    next_node_init[transit_agent_idx] = next_init
-                    transit_agent.append(transit_agent_idx)
-                        # else:
-                        #     # pp(("infer init", agent_idx, next_node_init[agent_idx]))
-                for agent_idx in next_node_agent :
-                    if agent_idx not in transit_agent:
+                for agent_idx in next_node_agent:
+                    if agent_idx == transit_agent_idx:
+                        next_node_init[agent_idx] = next_init
+                    else:
                         next_node_init[agent_idx] = [[truncated_trace[agent_idx][0][1:], truncated_trace[agent_idx][1][1:]]]
+                        # pp(("infer init", agent_idx, next_node_init[agent_idx]))
                         next_node_trace[agent_idx] = truncated_trace[agent_idx]
 
                 tmp = AnalysisTreeNode(
@@ -624,23 +605,17 @@ class Verifier:
                 )
                 node.child.append(tmp)
                 verification_queue.append(tmp)
-            print('time for one transition:', time.perf_counter() - start)
-            # start = time.perf_counter()
+
             """Truncate trace of current node based on max_end_idx"""
             """Only truncate when there's transitions"""
             if all_possible_transitions:
                 for agent_idx in node.agent:
                     node.trace[agent_idx] = node.trace[agent_idx][:(
                         max_end_idx+1)*2]
-            # print('time for truncation:', time.perf_counter() - start)
-        print('end bfs')
-        print('reachtube time:', time_reachtube, 'transition time:', time_transition )
+
         self.reachtube_tree = AnalysisTree(root)
         # print(f">>>>>>>> Number of calls to reachability engine: {num_calls}")
         # print(f">>>>>>>> Number of transitions happening: {num_transitions}")
         self.num_transitions = num_transitions
-
+        print('reachtube time:', time_reachtube, 'transition time:', time_transition, 'transition opt time:', time_transition_opt)
         return self.reachtube_tree
-
-    def align_transitions(self, all_transition_list):
-        return all_transition_list
