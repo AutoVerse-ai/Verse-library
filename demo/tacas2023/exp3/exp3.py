@@ -81,7 +81,7 @@ if __name__ == "__main__":
 
     start_time = time.time()
     traces = scenario.verify(80, 0.05)
-    run_time = time.time()-start_time 
+    run_time = time.time() - start_time
     traces.dump("./demo/tacas2023/exp3/output3.json")
 
     print({
