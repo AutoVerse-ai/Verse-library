@@ -325,24 +325,11 @@ class Verifier:
                 for agent_idx in node.agent:
                     node.trace[agent_idx] = node.trace[agent_idx][:(
                         max_end_idx+1)*2]
-        #checkHeight(root, max_height)
         self.reachtube_tree = AnalysisTree(root)
         # print(f">>>>>>>> Number of calls to reachability engine: {num_calls}")
         # print(f">>>>>>>> Number of transitions happening: {num_transitions}")
         self.num_transitions = num_transitions
 
         return self.reachtube_tree
-
-def checkHeight(root, max_height):
-    if root:
-        # First recur on left child
-        # then print the data of node
-        if(root.child == []):
-            print("HEIGHT", root.height)
-            if(root.height > max_height):
-                print("Exceeds max height")
-        for c in root.child:
-            checkHeight(c, max_height)
-
 
 

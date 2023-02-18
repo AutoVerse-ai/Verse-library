@@ -217,7 +217,6 @@ class Simulator:
             #         start_time = next_node_start_time
             #     ))
             # simulation_queue += node.child
-        #checkHeight(root, max_height)
 
         self.simulation_tree = AnalysisTree(root)
         return self.simulation_tree
@@ -362,23 +361,11 @@ class Simulator:
             #         start_time = next_node_start_time
             #     ))
             # simulation_queue += node.child
-        #checkHeight(root, max_height)
 
         self.simulation_tree = AnalysisTree(root)
 
 
         return self.simulation_tree
 
-#print all height of leaves
-def checkHeight(root, max_height):
-    if root:
-        # First recur on left child
-        # then print the data of node
-        if(root.child == []):
-            print("HEIGHT", root.height)
-            if(root.height > max_height):
-                print("Exceeds max height")
-        for c in root.child:
-            checkHeight(c, max_height)
 
 
