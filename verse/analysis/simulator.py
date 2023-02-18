@@ -2,7 +2,7 @@ from dataclasses import dataclass
 import pickle
 import timeit
 from typing import Dict, List, Optional, Tuple
-import copy, itertools, functools, pprint, ray
+import copy, itertools, functools, pprint
 from pympler.asizeof import asizeof
 
 from verse.agents.base_agent import BaseAgent
@@ -37,6 +37,9 @@ class Simulator:
         self.cache = SimTraceCache()
         self.config = config
         self.cache_hits = (0, 0)
+        if self.config.parallel:
+            import ray
+            self.simulate_one_remote = ray.remote(Simulator.simulate_one)
 
     @staticmethod
     def simulate_one(config: "ScenarioConfig", cached_segments: Dict[str, CachedSegment], node: AnalysisTreeNode, old_node_id: Optional[Tuple[int, int]], later: int, remain_time: float, consts: SimConsts) -> Tuple[int, int, List[AnalysisTreeNode], Dict[str, TraceType], list]:
@@ -153,10 +156,6 @@ class Simulator:
             print(f"node {node.id} dur {timeit.default_timer() - t}")
             return (node.id, later, next_nodes, node.trace, cache_updates)
 
-    @ray.remote
-    def simulate_one_remote(config: "ScenarioConfig", cached_segments: Dict[str, CachedSegment], node: AnalysisTreeNode, old_node_id: Optional[Tuple[int, int]], later: int, remain_time: float, consts: SimConsts) -> Tuple[int, int, List[AnalysisTreeNode], Dict[str, TraceType], list]:
-        return Simulator.simulate_one(config, cached_segments, node, old_node_id, later, remain_time, consts)
-
     def proc_result(self, id, later, next_nodes, traces, cache_updates):
         t = timeit.default_timer()
         print("got id:", id)
@@ -218,7 +217,9 @@ class Simulator:
         self.num_cached = 0
         # Perform BFS through the simulation tree to loop through all possible transitions
         consts = SimConsts(time_step, lane_map, run_num, past_runs, transition_graph)
-        consts_ref = ray.put(consts)
+        if self.config.parallel:
+            import ray
+            consts_ref = ray.put(consts)
         while True:
             wait = False
             start = timeit.default_timer()

@@ -10,7 +10,6 @@ import types
 import sys
 from enum import Enum
 
-import ray
 import numpy as np
 from types import SimpleNamespace
 
@@ -27,6 +26,12 @@ from verse.sensor.base_sensor import BaseSensor
 from verse.map.lane_map import LaneMap
 
 EGO, OTHERS = "ego", "others"
+
+def check_ray_init(parallel: bool) -> None:
+    if parallel:
+        import ray
+        if not ray.is_initialized():
+            ray.init()
 
 def convertStrToEnum(inp, agent:BaseAgent, dl):
     res = inp
@@ -286,8 +291,7 @@ class Scenario:
         return res_list
 
     def simulate(self, time_horizon, time_step, max_height=None, seed=None) -> AnalysisTree:
-        if self.config.parallel and not ray.is_initialized():
-            ray.init()
+        check_ray_init(self.config.parallel)
         self.check_init()
         init_list = []
         init_mode_list = []
@@ -324,8 +328,7 @@ class Scenario:
         return tree
 
     def verify(self, time_horizon, time_step, max_height=None, params={}) -> AnalysisTree:
-        if self.config.parallel and not ray.is_initialized():
-            ray.init()
+        check_ray_init(self.config.parallel)
         self.check_init()
         init_list = []
         init_mode_list = []
