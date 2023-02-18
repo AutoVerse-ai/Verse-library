@@ -8,6 +8,7 @@ from verse import BaseAgent
 from verse import LaneMap
 from verse.analysis.utils import wrap_to_pi
 from verse.analysis.analysis_tree import TraceType
+from verse.analysis.utils import wrap_to_pi
 from verse.parser import ControllerIR
 
 class NPCAgent(BaseAgent):
