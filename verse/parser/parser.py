@@ -721,9 +721,13 @@ def proc(node: ast.AST, env: Env) -> Any:
     elif isinstance(node, ast.BoolOp):
         return ast.BoolOp(node.op, [proc(val, env) for val in node.values])
     elif isinstance(node, ast.Compare):
-        if len(node.ops) > 1 or len(node.comparators) > 1:
-            raise NotImplementedError("too many comparisons")
-        return ast.Compare(proc(node.left, env), node.ops, [proc(node.comparators[0], env)])
+        proc_comps = [proc(comp, env) for comp in node.comparators]
+        left = ast.Compare(proc(node.left, env), node.ops[:1], proc_comps[:1])
+        rest = [ast.Compare(proc_comps[i], node.ops[i + 1:i + 2], proc_comps[i + 1:i + 2]) for i in range(len(node.ops) - 1)]
+        if rest:
+            return ast.BoolOp(ast.And(), [left, *rest])
+        else:
+            return left
     elif isinstance(node, ast.Call):
         fun = proc(node.func, env)
 
