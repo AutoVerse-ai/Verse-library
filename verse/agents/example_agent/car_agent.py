@@ -6,6 +6,7 @@ from scipy.integrate import ode
 
 from verse import BaseAgent
 from verse import LaneMap
+from verse.analysis.utils import wrap_to_pi
 from verse.parser import ControllerIR
 
 class NPCAgent(BaseAgent):
@@ -59,9 +60,10 @@ class NPCAgent(BaseAgent):
         return np.array(trace)
 
 class CarAgent(BaseAgent):
-    def __init__(self, id, code = None, file_name = None, initial_state = None, initial_mode = None):
+    def __init__(self, id, code = None, file_name = None, initial_state = None, initial_mode = None, speed: float = 2, accel: float = 1):
         super().__init__(id, code, file_name, initial_state=initial_state, initial_mode=initial_mode)
-        self.switch_duration = 0
+        self.speed = speed
+        self.accel = accel
 
     @staticmethod
     def dynamic(t, state, u):
@@ -75,35 +77,26 @@ class CarAgent(BaseAgent):
 
     def action_handler(self, mode: List[str], state, lane_map:LaneMap)->Tuple[float, float]:
         x,y,theta,v = state
-        vehicle_mode = mode[0]
-        vehicle_lane = mode[1]
+        vehicle_mode, vehicle_lane = mode
         vehicle_pos = np.array([x,y])
         a = 0
-        if vehicle_mode == "Normal":
-            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
-            self.switch_duration = 0
+        lane = lane_map.lane_dict[vehicle_lane]
+        d = -lane.get_lateral_distance(vehicle_pos)
+        if vehicle_mode == "Normal" or vehicle_mode == 'Stop':
+            pass
         elif vehicle_mode == "SwitchLeft":
-            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos) + lane_map.get_lane_width(vehicle_lane) 
-            self.switch_duration += 0.1
+            d += lane.lane_width
         elif vehicle_mode == "SwitchRight":
-            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos) - lane_map.get_lane_width(vehicle_lane)
-            self.switch_duration += 0.1
+            d -= lane.lane_width
         elif vehicle_mode == "Brake":
-            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
-            a = max(-1,-v)  
-            self.switch_duration = 0
+            a = max(-self.accel, -v)
         elif vehicle_mode == "Accel":
-            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
-            a = 1
-            self.switch_duration = 0
-        elif vehicle_mode == 'Stop':
-            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
-            a = 0
-            self.switch_duration = 0
+            a = min(self.accel, self.speed - v)
         else:
             raise ValueError(f'Invalid mode: {vehicle_mode}')
 
-        psi = lane_map.get_lane_heading(vehicle_lane, vehicle_pos)-theta
+        heading = lane.get_heading(vehicle_pos)
+        psi = wrap_to_pi(heading - theta)
         steering = psi + np.arctan2(0.45*d, v)
         steering = np.clip(steering, -0.61, 0.61)
         return steering, a  
