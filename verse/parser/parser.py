@@ -731,9 +731,8 @@ def proc(node: ast.AST, env: Env) -> Any:
     elif isinstance(node, ast.Call):
         fun = proc(node.func, env)
 
-        if isinstance(fun, Lambda):
-            args = [proc(a, env) for a in node.args]
-            asserts, ret = fun.apply(args)
+        if isinstance(fun, Lambda):         # TODO fix substitution
+            asserts, ret = fun.apply([proc(a, env) for a in node.args])
             env.scopes[0].asserts.extend(asserts)
             return ret
         if isinstance(fun, ast.Attribute):
@@ -741,27 +740,18 @@ def proc(node: ast.AST, env: Env) -> Any:
                 if len(node.args) > 1:
                     raise ValueError("too many args to `copy.deepcopy`")
                 return proc(node.args[0], env)
-            ret = copy.deepcopy(node)
-            tmp = []
-            for a in ret.args:
-                if isinstance(a, ast.Attribute) and isinstance(a.value, ast.Name) and a.value.id in env.mode_defs:
-                    tmp.append(ast.Constant(a.attr, kind=None))
-                else: 
-                    tmp.append(a)
-            ret.args = tmp
-        
-            return ret
+            node.args = [proc(a, env) for a in node.args]
+            return node
         if isinstance(fun, ast.arg):
             if fun.arg == "copy.deepcopy":
                 raise Exception("unreachable")
             else:
-                ret = copy.deepcopy(node)
-                ret.args = [proc(a, env) for a in ret.args]
-            return ret
+                node.args = [proc(a, env) for a in node.args]
+                return node
         if isinstance(node.func, ast.Name):
             name = node.func.id
             if name not in ["any", "all"]:#, "max", "min", "sum"]:      # TODO
-                raise NotImplementedError(f"builtin function? {name}")
+                raise NotImplementedError(f"unknown function \"{name}\"")
             if len(node.args) != 1 or not isinstance(node.args[0], ast.GeneratorExp):
                 raise NotImplementedError("reduction on non-generators")
             gens = node.args[0]
@@ -795,10 +785,9 @@ def proc(node: ast.AST, env: Env) -> Any:
         return None
 
     # Literals
-    elif isinstance(node, ast.List):
-        return ast.List([proc(e, env) for e in node.elts])
-    elif isinstance(node, ast.Tuple):
-        return ast.Tuple([proc(e, env) for e in node.elts])
+    elif isinstance(node, (ast.List, ast.Tuple)):
+        node.elts = [proc(e, env) for e in node.elts]
+        return node
     elif isinstance(node, ast.Constant):
         return node         # XXX simplification?
     else:
