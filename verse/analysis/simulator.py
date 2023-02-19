@@ -202,8 +202,7 @@ class Simulator:
         )
         for i, agent in enumerate(agent_list):
             root.init[agent.id] = init_list[i]
-            init_mode = [elem.name for elem in init_mode_list[i]]
-            root.mode[agent.id] = init_mode
+            root.mode[agent.id] = tuple(elem if isinstance(elem, str) else elem.name for elem in init_mode_list[i])
             init_static = [elem.name for elem in static_list[i]]
             root.static[agent.id] = init_static
             root.uncertain_param[agent.id] = uncertain_param_list[i]
