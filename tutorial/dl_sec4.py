@@ -23,6 +23,6 @@ import copy
 def decisionLogic(ego:State, others: List[State], track_map):
     output = copy.deepcopy(ego)
     if ego.agent_mode == AgentMode.Normal:
-        if any( other.x-ego.x< 8 and other.x-ego.x>0 for other in others):
+        if any(0 < other.x-ego.x < 8 for other in others):
             output.agent_mode = AgentMode.Brake
     return output
