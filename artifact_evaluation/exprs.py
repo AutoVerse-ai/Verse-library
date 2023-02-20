@@ -32,7 +32,10 @@ expr_list = [
     "exp5/exp5.py",
     "exp4/exp4.py",
     "exp6/exp6_dryvr.py",
-    "exp6/exp6_neureach.py"
+    "exp6/exp6_neureach.py",
+    "exp12/vanderpol_demo2.py",
+    "exp12/rendezvous_demo.py ",
+    "exp12/gearbox_demo.py",
 ]
 rslts = []
 for expr in expr_list:

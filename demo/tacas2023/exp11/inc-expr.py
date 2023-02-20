@@ -12,7 +12,6 @@ from verse.scenario.scenario import ScenarioConfig
 import functools, pprint
 pp = functools.partial(pprint.pprint, compact=True, width=130)
 from typing import List
-import ray
 
 class AgentMode(Enum):
     Normal = auto()
@@ -64,15 +63,17 @@ def run(sim, meas=False):
     mode='par'
     time = timeit.default_timer()
     if sim:
-        traces = scenario.simulate(60, 0.1, seed=4)
+        scenario.simulator.cache_hits = (0, 0)
+        traces = scenario.simulate(60, 0.1)
     else:
+        scenario.verifier.tube_cache_hits = (0,0)
+        scenario.verifier.trans_cache_hits = (0,0)
         traces = scenario.verify(60, 0.1, mode=mode)
-    dur = timeit.default_timer() - time
 
     if 'd' in arg:
         # traces.dump_tree()
         traces.dump('./demo/tacas2023/exp11/main_'+mode+'.json')
-        # traces.dump("./demo/tacas2023/exp11/tree2.json" if meas else "./demo/tacas2023/exp11/tree1.json") 
+        # traces.dump("tree2.json" if meas else "tree1.json") 
 
     if 'p' in arg and meas:
         fig = go.Figure()
@@ -88,7 +89,7 @@ def run(sim, meas=False):
         cache_size = asizeof.asizeof(scenario.verifier.cache) + asizeof.asizeof(scenario.verifier.trans_cache)
     if meas:
         pp({
-            "dur": dur,
+            "dur": timeit.default_timer() - time,
             "cache_size": cache_size,
             "node_count": ((0 if sim else scenario.verifier.num_transitions), len(traces.nodes)),
             "hits": scenario.simulator.cache_hits if sim else (scenario.verifier.tube_cache_hits, scenario.verifier.trans_cache_hits),
@@ -168,7 +169,6 @@ if __name__ == "__main__":
         cont_inits = jerks(cont_inits, _jerks)
     scenario.set_init(cont_inits, *mode_inits)
 
-    # ray.init()
     if 'b' in arg:
         run(sim, True)
     elif 'r' in arg:
@@ -190,4 +190,3 @@ if __name__ == "__main__":
         run(sim)
         scenario.agent_dict["car8"] = CarAgent('car8', file_name=input_code_name.replace(".py", "-fsw4.py"))
         run(sim, True)
-    # ray.shutdown()

@@ -19,6 +19,7 @@ class AnalysisTreeNode:
         static = {},
         uncertain_param = {},
         agent={},
+        height =0,
         assert_hits={},
         child=[],
         start_time = 0,
@@ -30,6 +31,7 @@ class AnalysisTreeNode:
         self.init: Dict[str, List[float]] = init
         self.mode: Dict[str, List[str]] = mode
         self.agent: Dict = agent
+        self.height: int = height
         self.child: List[AnalysisTreeNode] = child
         self.start_time: float = round(start_time, ndigits)
         self.assert_hits = assert_hits
@@ -45,7 +47,8 @@ class AnalysisTreeNode:
             'child': [], 
             'agent': {}, 
             'init': self.init, 
-            'mode': self.mode, 
+            'mode': self.mode,
+            'height': self.height,
             'static': self.static, 
             'start_time': self.start_time,
             'trace': self.trace, 
@@ -87,6 +90,7 @@ class AnalysisTreeNode:
             trace = data['trace'],
             init = data['init'],
             mode = data['mode'],
+            height = data['height'],
             static = data['static'],
             agent = data['agent'],
             assert_hits = data['assert_hits'],
@@ -164,6 +168,7 @@ class AnalysisTree:
         node_id = 0
         while queue:
             node = queue.pop(0)
+            print("NODE: ", node)
             node.id = node_id 
             res.append(node)
             node_id += 1

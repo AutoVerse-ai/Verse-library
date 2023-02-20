@@ -299,6 +299,9 @@ class Verifier:
         past_runs,
         params = {},
     ):
+
+        # if (max_height == None):
+        #     max_height = float('inf')
         root = AnalysisTreeNode(
             trace={},
             init={},
@@ -524,6 +527,7 @@ class Verifier:
                     node.trace[agent] = node.trace[agent][:(idx + 1) * 2]
                 continue
 
+            pp(("transitions:", [(t[0], t[2]) for t in all_possible_transitions]))
             transit_map = {k: list(l) for k, l in itertools.groupby(all_possible_transitions, key=lambda p:p[0])}
             transit_agents = transit_map.keys()
             # pp(("transit agents", transit_agents))
@@ -538,7 +542,6 @@ class Verifier:
                         # pp(("dedup!", pre_len, len(cached_tubes[agent_id].transitions)))
                     else:
                         self.trans_cache.add_tube(agent_id, combined_inits, node, transit_agents, transition, transit_ind, run_num)
-
             max_end_idx = 0
             for transition in all_possible_transitions:
                 # Each transition will contain a list of rectangles and their corresponding indexes in the original list
@@ -576,6 +579,7 @@ class Verifier:
                     trace=next_node_trace,
                     init=next_node_init,
                     mode=next_node_mode,
+                    height=node.height+1,
                     static = next_node_static,
                     uncertain_param = next_node_uncertain_param,
                     agent=next_node_agent,
@@ -593,7 +597,7 @@ class Verifier:
                 for agent_idx in node.agent:
                     node.trace[agent_idx] = node.trace[agent_idx][:(
                         max_end_idx+1)*2]
-
+        #checkHeight(root, max_height)
         self.reachtube_tree = AnalysisTree(root)
         # print(f">>>>>>>> Number of calls to reachability engine: {num_calls}")
         # print(f">>>>>>>> Number of transitions happening: {num_transitions}")

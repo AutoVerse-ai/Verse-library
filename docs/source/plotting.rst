@@ -1,12 +1,16 @@
 """""""""""""""""
 Visualization
 """""""""""""""""
-We implement a plotter for 2D/3D scenarios using `Plotly Open Source Graphing Library for Python <https://plotly.com/python/>`_ 
-and offer some highlevel functions for you to generate plots or animations of the simulation or verfication results.
+Verse has two different sets of visualization functions for generating plots and animations. Functions for 2D plots use `Plotly Open Source Graphing Library for Python <https://plotly.com/python/>`_.
 
 
 .. contents:: Function list
    :depth: 3
+===================
+Common paramteres
+===================
+
+* ``time_step`` determines the num of digits of time points. Normally, it should be the time step used to compute  simulation/verification. Default value is ``None`` which is set as 3. 
 
 ===================
 2D Visualization
@@ -14,7 +18,7 @@ and offer some highlevel functions for you to generate plots or animations of th
 ----------------------
 simulation_tree
 ----------------------
-It statically shows simulation traces, possibly with multiple brances.
+Shows simulation traces, possibly with multiple brances.
 
 Note: Since the plotter functions have similar APIs, 
 in this document, we treat this function as a base function. 
@@ -105,9 +109,7 @@ Usage::
 
 Parameters not occurred in ``simulation_tree``:
 
-* ``time_step`` it is used to determine the num of digits of time points. Normally, it should be the time step of simulation/verification and provoided by the user. (May improve to auto determine) The default value is ``None``.
-   * If it's ``None``, then the num of digits is set as 3. 
-   * Otherwise, the num of digits is set as the num of digits of the given ``time_step``. 
+
 
 * ``speed_rate`` it determines the speed up rate of anime. Due to the performance, it maybe be limited when the response of the plot is slow. The default value is ``1``.  
 
