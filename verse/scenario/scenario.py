@@ -943,9 +943,11 @@ class Scenario:
         guard_hit = False
         reduction_rate = 10
         reduction_queue = [(0, trace_length, trace_length)]
-        for idx, end_idx,combine_len in reduction_queue:
+        # for idx, end_idx,combine_len in reduction_queue:
+        while reduction_queue:
+            idx, end_idx,combine_len = reduction_queue.pop()
             reduction_needed = False
-            print((idx, combine_len))
+            # print((idx, combine_len))
             if min_trans_ind != None and idx >= min_trans_ind:
                 return None, cached_trans
             any_contained = False
@@ -987,8 +989,7 @@ class Scenario:
                             else:
                                 new_len = math.ceil(combine_len/reduction_rate)
                                 next_list = [(i, min(i+new_len, end_idx) ,new_len) for i in range(idx,end_idx,new_len)]
-
-                                reduction_queue.extend(next_list)
+                                reduction_queue.extend(next_list[::-1])
                                 reduction_needed = True
                                 break
                 if reduction_needed:
@@ -1023,7 +1024,7 @@ class Scenario:
                     elif guard_satisfied and combine_len > 1:       
                         new_len = math.ceil(combine_len/reduction_rate)
                         next_list = [(i, min(i+new_len, end_idx) ,new_len) for i in range(idx,end_idx,new_len)]
-                        reduction_queue.extend(next_list)
+                        reduction_queue.extend(next_list[::-1])
                         reduction_needed = True
                         break
                 if reduction_needed:

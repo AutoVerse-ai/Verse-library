@@ -79,7 +79,7 @@ if __name__ == "__main__":
     #                        1, 2], 'lines', 'trace', sample_rate=1)
     # fig.show()
     mode='ser'
-    # mode='par'
+    mode='par'
     start_time = time.time()
     traces = scenario.verify(80, 0.05, mode=mode)
     run_time = time.time()-start_time 

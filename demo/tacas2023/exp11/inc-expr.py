@@ -61,7 +61,7 @@ if 'p' in arg:
 
 def run(sim, meas=False):
     mode='ser'
-    # mode='par'
+    mode='par'
     time = timeit.default_timer()
     if sim:
         traces = scenario.simulate(60, 0.1, seed=4)

@@ -200,8 +200,7 @@ class Verifier:
                 # pp(("to sim", new_cache.keys(), len(paths_to_sim)))
 
         # Get all possible transitions to next mode
-        asserts, all_possible_transitions = transition_graph.get_transition_verify(new_cache, paths_to_sim, node)
-        # pp(("transitions:", [(t[0], t[2]) for t in all_possible_transitions]))
+        asserts, all_possible_transitions = transition_graph.get_transition_verify_opt(new_cache, paths_to_sim, node)
         node.assert_hits = asserts
 
         if asserts != None:
@@ -210,6 +209,7 @@ class Verifier:
                 node.trace[agent] = node.trace[agent][:(idx + 1) * 2]
             return node
 
+        pp(("transitions:", [(t[0], t[2]) for t in all_possible_transitions]))
         transit_map = {k: list(l) for k, l in itertools.groupby(all_possible_transitions, key=lambda p:p[0])}
         transit_agents = transit_map.keys()
         # pp(("transit agents", transit_agents))
@@ -225,57 +225,38 @@ class Verifier:
                 else:
                     self.trans_cache.add_tube(agent_id, combined_inits, node, transit_agents, transition, transit_ind, run_num)
 
-        # Check if multiple agents can transit at the same time
-        max_end_idx = 0
-        transition_dict = {}
-        for transition in all_possible_transitions:
-            if transition[0] not in transition_dict:
-                transition_dict[transition[0]] = [transition]
-            else:
-                transition_dict[transition[0]].append(transition)
-        transition_list = list(transition_dict.values())
-        combined_transitions = list(itertools.product(*transition_list))
-        aligned_transitions = self.align_transitions(combined_transitions)
         next_nodes = []
-        
-        for all_agent_transition in aligned_transitions:
+        max_end_idx = 0
+        for transition in all_possible_transitions:
             # Each transition will contain a list of rectangles and their corresponding indexes in the original list
             # if len(transition) != 6:
             #     pp(("weird trans", transition))
-            if not all_agent_transition:
-                continue
-            next_node_mode = copy.deepcopy(node.mode)
-            next_node_static = node.static
-            next_node_uncertain_param = node.uncertain_param
-            start_idx, end_idx = all_agent_transition[0][4][0], all_agent_transition[0][4][-1]
+            transit_agent_idx, src_mode, dest_mode, next_init, idx, path = transition
+            start_idx, end_idx = idx[0], idx[-1]
+
             truncated_trace = {}
             for agent_idx in node.agent:
                 truncated_trace[agent_idx] = node.trace[agent_idx][start_idx*2:]
             if end_idx > max_end_idx:
                 max_end_idx = end_idx
-            next_node_start_time = list(truncated_trace.values())[0][0][0]
+
+            if dest_mode is None:
+                continue
+
+            next_node_mode = copy.deepcopy(node.mode)
+            next_node_static = node.static
+            next_node_uncertain_param = node.uncertain_param
+            next_node_mode[transit_agent_idx] = dest_mode
             next_node_agent = node.agent
+            next_node_start_time = list(truncated_trace.values())[0][0][0]
             next_node_init = {}
             next_node_trace = {}
-            
-            transit_agent = []
-            for transition in all_agent_transition:
-                transit_agent_idx, src_mode, dest_mode, next_init, idx, path = transition
-                # start_idx, end_idx = idx[0], idx[-1]
-
-                if dest_mode is None:
-                    continue
-
-                next_node_mode[transit_agent_idx] = dest_mode
-                # for agent_idx in next_node_agent:
-                    # if agent_idx == transit_agent_idx:
-                next_node_init[transit_agent_idx] = next_init
-                transit_agent.append(transit_agent_idx)
-                    # else:
-                    #     # pp(("infer init", agent_idx, next_node_init[agent_idx]))
-            for agent_idx in next_node_agent :
-                if agent_idx not in transit_agent:
+            for agent_idx in next_node_agent:
+                if agent_idx == transit_agent_idx:
+                    next_node_init[agent_idx] = next_init
+                else:
                     next_node_init[agent_idx] = [[truncated_trace[agent_idx][0][1:], truncated_trace[agent_idx][1][1:]]]
+                    # pp(("infer init", agent_idx, next_node_init[agent_idx]))
                     next_node_trace[agent_idx] = truncated_trace[agent_idx]
 
             tmp = AnalysisTreeNode(
@@ -529,12 +510,12 @@ class Verifier:
 
             # Get all possible transitions to next mode
             start = time.perf_counter()
-            asserts_opt, all_possible_transitions_opt = transition_graph.get_transition_verify_opt(new_cache, paths_to_sim, node)
+            asserts_orig, all_possible_transitions_orig = transition_graph.get_transition_verify(new_cache, paths_to_sim, node)
             time_transition_opt += time.perf_counter() - start
             start = time.perf_counter()
-            asserts, all_possible_transitions = transition_graph.get_transition_verify(new_cache, paths_to_sim, node)
+            asserts, all_possible_transitions = transition_graph.get_transition_verify_opt(new_cache, paths_to_sim, node)
             time_transition += time.perf_counter() - start
-            assert asserts == asserts_opt and all_possible_transitions_opt == all_possible_transitions
+            assert asserts == asserts_orig and all_possible_transitions_orig == all_possible_transitions
             # pp(("transitions:", [(t[0], t[2]) for t in all_possible_transitions]))
             node.assert_hits = asserts
             if asserts != None:

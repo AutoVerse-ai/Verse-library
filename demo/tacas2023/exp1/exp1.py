@@ -59,7 +59,7 @@ if __name__ == "__main__":
     # traces.dump("./output1.json")
     # traces = AnalysisTree.load('./output1.json')
     mode='ser'
-    # mode='par'
+    mode='par'
     start_time = time.time()
     traces = scenario.verify(40, time_step, mode=mode)
     run_time = time.time() - start_time

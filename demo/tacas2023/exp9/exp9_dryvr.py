@@ -62,7 +62,7 @@ if __name__ == "__main__":
     # fig = simulation_tree_3d(traces, tmp_map, fig, 1, 2, 3, [1, 2, 3])
     # fig.show()
     mode='ser'
-    # mode='par'
+    mode='par'
     start_time = time.time()
     traces = scenario.verify(60, time_step, mode=mode)
     run_time = time.time() - start_time

@@ -63,7 +63,7 @@ if __name__ == "__main__":
     )
     # scenario.config.init_seg_length = 5
     mode='ser'
-    # mode='par'
+    mode='par'
     start_time = time.time()
     traces = scenario.verify(60, 0.1, mode=mode)  # traces.dump('./output1.json')
     run_time = time.time()-start_time
