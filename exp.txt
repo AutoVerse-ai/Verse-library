@@ -1,743 +1,743 @@
 =========================exp1============================
 0 1
 0 1
-[2m[36m(compute_full_reachtube_step pid=79463)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79463)[0m ('transitions:',
-[2m[36m(compute_full_reachtube_step pid=79463)[0m  [('test1', ('MoveDown', 'M12')), ('test1', ('MoveUp', 'M10')), ('test2', ('MoveDown', 'M12')), ('test2', ('MoveUp', 'M10'))])
+[2m[36m(compute_full_reachtube_step pid=85429)[0m ###############
 got id: 0
 3 1
 2 2
+[2m[36m(compute_full_reachtube_step pid=85429)[0m ('transitions:',
+[2m[36m(compute_full_reachtube_step pid=85429)[0m  [('test1', ('MoveDown', 'M12')), ('test1', ('MoveUp', 'M10')), ('test2', ('MoveDown', 'M12')), ('test2', ('MoveUp', 'M10'))])
+[2m[36m(compute_full_reachtube_step pid=85429)[0m ###############
 1 3
-[2m[36m(compute_full_reachtube_step pid=79463)[0m ###############
 0 4
 0 4
 got id: 1
 0 4
 0 4
-[2m[36m(compute_full_reachtube_step pid=79463)[0m ('transitions:', [('test1', ('Normal', 'T2'))])
-[2m[36m(compute_full_reachtube_step pid=79463)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79460)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79457)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79458)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85429)[0m ('transitions:', [('test1', ('Normal', 'T2'))])
+[2m[36m(compute_full_reachtube_step pid=85429)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85426)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85428)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85423)[0m ###############
 got id: 5
 0 3
-[2m[36m(compute_full_reachtube_step pid=79463)[0m ('transitions:', [])
+[2m[36m(compute_full_reachtube_step pid=85429)[0m ('transitions:', [])
+[2m[36m(compute_full_reachtube_step pid=85423)[0m assert hit for test1: "Safe Seperation"
+[2m[36m(compute_full_reachtube_step pid=85423)[0m 57
 got id: 3
 0 2
-[2m[36m(compute_full_reachtube_step pid=79457)[0m assert hit for test1: "Safe Seperation"
-[2m[36m(compute_full_reachtube_step pid=79457)[0m 57
-[2m[36m(compute_full_reachtube_step pid=79457)[0m assert hit for test2: "Safe Seperation"
-[2m[36m(compute_full_reachtube_step pid=79457)[0m 57
-[2m[36m(compute_full_reachtube_step pid=79460)[0m ('transitions:', [('test1', ('Normal', 'T0'))])
+[2m[36m(compute_full_reachtube_step pid=85423)[0m assert hit for test2: "Safe Seperation"
+[2m[36m(compute_full_reachtube_step pid=85423)[0m 57
 got id: 2
+[2m[36m(compute_full_reachtube_step pid=85426)[0m ('transitions:', [('test1', ('Normal', 'T0'))])
 0 2
 0 2
-[2m[36m(compute_full_reachtube_step pid=79460)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85426)[0m ###############
 got id: 4
 0 2
 0 2
-[2m[36m(compute_full_reachtube_step pid=79458)[0m ('transitions:', [('test2', ('Normal', 'T0'))])
-[2m[36m(compute_full_reachtube_step pid=79458)[0m ###############
 got id: 6
 0 1
-[2m[36m(compute_full_reachtube_step pid=79460)[0m ('transitions:', [])
+[2m[36m(compute_full_reachtube_step pid=85426)[0m ('transitions:', [])
+[2m[36m(compute_full_reachtube_step pid=85428)[0m ('transitions:', [('test2', ('Normal', 'T0'))])
+[2m[36m(compute_full_reachtube_step pid=85428)[0m ###############
 got id: 7
-{'#A': 2, 'A': 'Q', 'Map': 'M6', 'postCont': 'DryVR', 'Noisy S': 'No', '# Tr': 8, 'Run Time': 36.88268303871155}
+{'#A': 2, 'A': 'Q', 'Map': 'M6', 'postCont': 'DryVR', 'Noisy S': 'No', '# Tr': 8, 'Run Time': 32.499340772628784}
 =========================exp3============================
 [(<AgentMode.Normal: 1>, <TrackMode.T1: 2>), (<AgentMode.Normal: 1>, <TrackMode.T1: 2>), (<AgentMode.Normal: 1>, <TrackMode.T0: 1>), (<AgentMode.Normal: 1>, <TrackMode.T0: 1>), (<AgentMode.Normal: 1>, <TrackMode.T1: 2>), (<AgentMode.Normal: 1>, <TrackMode.T2: 3>), (<AgentMode.Normal: 1>, <TrackMode.T3: 4>)]
 <class 'list'>
 0 1
 0 1
-[2m[36m(compute_full_reachtube_step pid=79514)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79514)[0m ('transitions:', [('car3', ('SwitchRight', 'M01')), ('car3', ('SwitchLeft', 'M04'))])
+[2m[36m(compute_full_reachtube_step pid=85477)[0m ###############
 got id: 0
 1 1
 0 2
 0 2
-[2m[36m(compute_full_reachtube_step pid=79514)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79516)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85477)[0m ('transitions:', [('car3', ('SwitchRight', 'M01')), ('car3', ('SwitchLeft', 'M04'))])
+[2m[36m(compute_full_reachtube_step pid=85477)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85478)[0m ###############
 got id: 1
-[2m[36m(compute_full_reachtube_step pid=79514)[0m ('transitions:', [('car1', ('SwitchRight', 'M12')), ('car1', ('SwitchLeft', 'M10'))])
 1 2
+[2m[36m(compute_full_reachtube_step pid=85477)[0m ('transitions:', [('car1', ('SwitchRight', 'M12')), ('car1', ('SwitchLeft', 'M10'))])
 0 3
 0 3
-[2m[36m(compute_full_reachtube_step pid=79514)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85477)[0m ###############
 got id: 2
 1 3
+[2m[36m(compute_full_reachtube_step pid=85478)[0m ('transitions:', [('car1', ('SwitchRight', 'M12')), ('car1', ('SwitchLeft', 'M10'))])
 0 4
 0 4
-[2m[36m(compute_full_reachtube_step pid=79516)[0m ('transitions:', [('car1', ('SwitchRight', 'M12')), ('car1', ('SwitchLeft', 'M10'))])
-[2m[36m(compute_full_reachtube_step pid=79516)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79515)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79514)[0m ('transitions:', [('car3', ('Normal', 'T1'))])
+[2m[36m(compute_full_reachtube_step pid=85478)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85476)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85477)[0m ('transitions:', [('car3', ('Normal', 'T1'))])
 got id: 3
 0 4
 0 4
-[2m[36m(compute_full_reachtube_step pid=79514)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79513)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85477)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85475)[0m ###############
 got id: 5
-[2m[36m(compute_full_reachtube_step pid=79516)[0m ('transitions:', [('car3', ('Normal', 'T4'))])
 0 4
 0 4
-[2m[36m(compute_full_reachtube_step pid=79516)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85478)[0m ('transitions:', [('car3', ('Normal', 'T4'))])
+[2m[36m(compute_full_reachtube_step pid=85478)[0m ###############
 got id: 4
-[2m[36m(compute_full_reachtube_step pid=79515)[0m ('transitions:', [('car3', ('Normal', 'T1'))])
 0 4
 0 4
-[2m[36m(compute_full_reachtube_step pid=79515)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79513)[0m ('transitions:', [('car3', ('Normal', 'T4'))])
+[2m[36m(compute_full_reachtube_step pid=85476)[0m ('transitions:', [('car3', ('Normal', 'T1'))])
+[2m[36m(compute_full_reachtube_step pid=85476)[0m ###############
 got id: 6
+[2m[36m(compute_full_reachtube_step pid=85475)[0m ('transitions:', [('car3', ('Normal', 'T4'))])
 0 4
 0 4
+[2m[36m(compute_full_reachtube_step pid=85475)[0m ###############
 got id: 7
-[2m[36m(compute_full_reachtube_step pid=79514)[0m ('transitions:', [('car1', ('Normal', 'T2'))])
+[2m[36m(compute_full_reachtube_step pid=85477)[0m ('transitions:', [('car1', ('Normal', 'T2'))])
 0 4
 0 4
-[2m[36m(compute_full_reachtube_step pid=79513)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79514)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85477)[0m ###############
 got id: 8
 0 4
 0 4
-[2m[36m(compute_full_reachtube_step pid=79516)[0m ('transitions:', [('car1', ('Normal', 'T2'))])
-[2m[36m(compute_full_reachtube_step pid=79516)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85478)[0m ('transitions:', [('car1', ('Normal', 'T2'))])
+[2m[36m(compute_full_reachtube_step pid=85478)[0m ###############
 got id: 9
-[2m[36m(compute_full_reachtube_step pid=79515)[0m ('transitions:', [('car1', ('Normal', 'T0'))])
 0 4
 0 4
-[2m[36m(compute_full_reachtube_step pid=79515)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85476)[0m ('transitions:', [('car1', ('Normal', 'T0'))])
+[2m[36m(compute_full_reachtube_step pid=85476)[0m ###############
 got id: 10
-[2m[36m(compute_full_reachtube_step pid=79513)[0m ('transitions:', [('car1', ('Normal', 'T0'))])
+[2m[36m(compute_full_reachtube_step pid=85475)[0m ('transitions:', [('car1', ('Normal', 'T0'))])
 0 4
 0 4
-[2m[36m(compute_full_reachtube_step pid=79513)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79516)[0m ('transitions:', [('car1', ('SwitchRight', 'M23')), ('car1', ('SwitchLeft', 'M21'))])
+[2m[36m(compute_full_reachtube_step pid=85475)[0m ###############
 got id: 12
 1 4
+[2m[36m(compute_full_reachtube_step pid=85478)[0m ('transitions:', [('car1', ('SwitchRight', 'M23')), ('car1', ('SwitchLeft', 'M21'))])
 0 5
 0 5
-[2m[36m(compute_full_reachtube_step pid=79516)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85478)[0m ###############
 got id: 14
-[2m[36m(compute_full_reachtube_step pid=79513)[0m ('transitions:', [('car1', ('SwitchRight', 'M01'))])
+[2m[36m(compute_full_reachtube_step pid=85475)[0m ('transitions:', [('car1', ('SwitchRight', 'M01'))])
 0 5
 0 5
-[2m[36m(compute_full_reachtube_step pid=79513)[0m ###############
-got id: 15
-0 5
-0 5
-[2m[36m(compute_full_reachtube_step pid=79516)[0m ('transitions:', [('car1', ('Normal', 'T3'))])
+[2m[36m(compute_full_reachtube_step pid=85475)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85477)[0m ('transitions:', [('car1', ('SwitchRight', 'M23'))])
 got id: 11
 0 5
 0 5
-[2m[36m(compute_full_reachtube_step pid=79514)[0m ('transitions:', [('car1', ('SwitchRight', 'M23'))])
-[2m[36m(compute_full_reachtube_step pid=79516)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79514)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79520)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85477)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85478)[0m ('transitions:', [('car1', ('Normal', 'T3'))])
+got id: 15
+0 5
+0 5
+[2m[36m(compute_full_reachtube_step pid=85478)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85479)[0m ###############
 got id: 13
 0 5
 0 5
-[2m[36m(compute_full_reachtube_step pid=79515)[0m ('transitions:', [('car1', ('SwitchLeft', 'M04'))])
-[2m[36m(compute_full_reachtube_step pid=79515)[0m ###############
-got id: 19
-[2m[36m(compute_full_reachtube_step pid=79514)[0m ('transitions:', [('car1', ('Normal', 'T3'))])
+[2m[36m(compute_full_reachtube_step pid=85476)[0m ('transitions:', [('car1', ('SwitchLeft', 'M04'))])
+[2m[36m(compute_full_reachtube_step pid=85476)[0m ###############
+got id: 18
 0 5
 0 5
+[2m[36m(compute_full_reachtube_step pid=85477)[0m ('transitions:', [('car1', ('Normal', 'T3'))])
+[2m[36m(compute_full_reachtube_step pid=85477)[0m ###############
 got id: 17
 0 5
 0 5
-[2m[36m(compute_full_reachtube_step pid=79514)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79513)[0m ('transitions:', [('car1', ('Normal', 'T1'))])
-[2m[36m(compute_full_reachtube_step pid=79513)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85475)[0m ('transitions:', [('car1', ('Normal', 'T1'))])
+[2m[36m(compute_full_reachtube_step pid=85475)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85479)[0m ('transitions:', [('car1', ('Normal', 'T1'))])
 got id: 16
-[2m[36m(compute_full_reachtube_step pid=79520)[0m ('transitions:', [('car1', ('Normal', 'T1'))])
 0 5
 0 5
-[2m[36m(compute_full_reachtube_step pid=79520)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85479)[0m ###############
 got id: 20
-[2m[36m(compute_full_reachtube_step pid=79515)[0m ('transitions:', [('car1', ('Normal', 'T4'))])
 0 5
 0 5
-[2m[36m(compute_full_reachtube_step pid=79515)[0m ###############
-got id: 18
-[2m[36m(compute_full_reachtube_step pid=79516)[0m ('transitions:', [('car1', ('SwitchLeft', 'M32'))])
+[2m[36m(compute_full_reachtube_step pid=85476)[0m ('transitions:', [('car1', ('Normal', 'T4'))])
+[2m[36m(compute_full_reachtube_step pid=85476)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85478)[0m ('transitions:', [('car1', ('SwitchLeft', 'M32'))])
+got id: 19
 0 5
 0 5
-[2m[36m(compute_full_reachtube_step pid=79516)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85478)[0m ###############
 got id: 25
 0 5
 0 5
-[2m[36m(compute_full_reachtube_step pid=79516)[0m ('transitions:', [('car1', ('Normal', 'T2'))])
-[2m[36m(compute_full_reachtube_step pid=79516)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85478)[0m ('transitions:', [('car1', ('Normal', 'T2'))])
+[2m[36m(compute_full_reachtube_step pid=85478)[0m ###############
 got id: 24
 0 4
-[2m[36m(compute_full_reachtube_step pid=79515)[0m ('transitions:', [])
+[2m[36m(compute_full_reachtube_step pid=85476)[0m ('transitions:', [])
 got id: 26
 0 3
-[2m[36m(compute_full_reachtube_step pid=79516)[0m ('transitions:', [])
+[2m[36m(compute_full_reachtube_step pid=85478)[0m ('transitions:', [])
 got id: 22
 1 3
 0 4
 0 4
-[2m[36m(compute_full_reachtube_step pid=79513)[0m ('transitions:', [('car1', ('SwitchLeft', 'M10')), ('car1', ('SwitchRight', 'M12'))])
-[2m[36m(compute_full_reachtube_step pid=79513)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79516)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85478)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85475)[0m ('transitions:', [('car1', ('SwitchLeft', 'M10')), ('car1', ('SwitchRight', 'M12'))])
+[2m[36m(compute_full_reachtube_step pid=85475)[0m ###############
 got id: 23
+[2m[36m(compute_full_reachtube_step pid=85479)[0m ('transitions:', [('car1', ('SwitchLeft', 'M10')), ('car1', ('SwitchRight', 'M12'))])
 1 4
-[2m[36m(compute_full_reachtube_step pid=79520)[0m ('transitions:', [('car1', ('SwitchLeft', 'M10')), ('car1', ('SwitchRight', 'M12'))])
 0 5
 0 5
-[2m[36m(compute_full_reachtube_step pid=79520)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79515)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79514)[0m ('transitions:', [('car1', ('SwitchLeft', 'M32'))])
+[2m[36m(compute_full_reachtube_step pid=85479)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85476)[0m ###############
 got id: 21
+[2m[36m(compute_full_reachtube_step pid=85477)[0m ('transitions:', [('car1', ('SwitchLeft', 'M32'))])
 0 5
 0 5
-[2m[36m(compute_full_reachtube_step pid=79514)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85477)[0m ###############
 got id: 27
 0 5
 0 5
-[2m[36m(compute_full_reachtube_step pid=79513)[0m ('transitions:', [('car1', ('Normal', 'T0'))])
-[2m[36m(compute_full_reachtube_step pid=79513)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85475)[0m ('transitions:', [('car1', ('Normal', 'T0'))])
+[2m[36m(compute_full_reachtube_step pid=85475)[0m ###############
 got id: 28
 0 5
 0 5
-[2m[36m(compute_full_reachtube_step pid=79516)[0m ('transitions:', [('car1', ('Normal', 'T2'))])
-[2m[36m(compute_full_reachtube_step pid=79516)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85478)[0m ('transitions:', [('car1', ('Normal', 'T2'))])
+[2m[36m(compute_full_reachtube_step pid=85478)[0m ###############
 got id: 29
+[2m[36m(compute_full_reachtube_step pid=85479)[0m ('transitions:', [('car1', ('Normal', 'T0'))])
 0 5
 0 5
-[2m[36m(compute_full_reachtube_step pid=79515)[0m ('transitions:', [('car1', ('Normal', 'T2'))])
-[2m[36m(compute_full_reachtube_step pid=79520)[0m ('transitions:', [('car1', ('Normal', 'T0'))])
 got id: 30
 0 5
 0 5
-[2m[36m(compute_full_reachtube_step pid=79515)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79520)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85476)[0m ('transitions:', [('car1', ('Normal', 'T2'))])
+[2m[36m(compute_full_reachtube_step pid=85476)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85479)[0m ###############
+got id: 31
+0 5
+0 5
+[2m[36m(compute_full_reachtube_step pid=85477)[0m ('transitions:', [('car1', ('Normal', 'T2'))])
+[2m[36m(compute_full_reachtube_step pid=85477)[0m ###############
 got id: 32
 0 4
+[2m[36m(compute_full_reachtube_step pid=85478)[0m ('transitions:', [])
+[2m[36m(compute_full_reachtube_step pid=85475)[0m ('transitions:', [])
 got id: 33
 0 3
-[2m[36m(compute_full_reachtube_step pid=79516)[0m ('transitions:', [])
-[2m[36m(compute_full_reachtube_step pid=79513)[0m ('transitions:', [])
-got id: 31
-0 3
-0 3
-[2m[36m(compute_full_reachtube_step pid=79514)[0m ('transitions:', [('car1', ('Normal', 'T2'))])
-[2m[36m(compute_full_reachtube_step pid=79514)[0m ###############
 got id: 36
 0 2
-[2m[36m(compute_full_reachtube_step pid=79514)[0m ('transitions:', [])
 got id: 35
 0 1
-[2m[36m(compute_full_reachtube_step pid=79515)[0m ('transitions:', [])
+[2m[36m(compute_full_reachtube_step pid=85477)[0m ('transitions:', [])
+[2m[36m(compute_full_reachtube_step pid=85476)[0m ('transitions:', [])
 got id: 34
-{'#A': 7, 'A': 'C', 'Map': 'M2', 'postCont': 'DryVR', 'Noisy S': 'No', '# Tr': 37, 'Run Time': 81.48307132720947}
+{'#A': 7, 'A': 'C', 'Map': 'M2', 'postCont': 'DryVR', 'Noisy S': 'No', '# Tr': 37, 'Run Time': 75.36234498023987}
 =========================exp5============================
 [(<AgentMode.Normal: 1>, <TrackMode.T1: 2>), (<AgentMode.Normal: 1>, <TrackMode.T1: 2>), (<AgentMode.Normal: 1>, <TrackMode.T2: 3>)]
 <class 'list'>
 0 1
 0 1
-[2m[36m(compute_full_reachtube_step pid=79598)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85539)[0m ###############
 got id: 0
 1 1
 0 2
 0 2
-[2m[36m(compute_full_reachtube_step pid=79598)[0m ('transitions:', [('car1', ('SwitchRight', 'M10')), ('car1', ('SwitchLeft', 'M12'))])
-[2m[36m(compute_full_reachtube_step pid=79598)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79599)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85539)[0m ('transitions:', [('car1', ('SwitchRight', 'M10')), ('car1', ('SwitchLeft', 'M12'))])
+[2m[36m(compute_full_reachtube_step pid=85539)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85541)[0m ###############
 got id: 1
 0 2
 0 2
-[2m[36m(compute_full_reachtube_step pid=79598)[0m ('transitions:', [('car1', ('Normal', 'T0'))])
-[2m[36m(compute_full_reachtube_step pid=79598)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85539)[0m ('transitions:', [('car1', ('Normal', 'T0'))])
+[2m[36m(compute_full_reachtube_step pid=85539)[0m ###############
 got id: 2
 0 2
 0 2
-[2m[36m(compute_full_reachtube_step pid=79599)[0m ('transitions:', [('car1', ('Normal', 'T2'))])
-[2m[36m(compute_full_reachtube_step pid=79599)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85541)[0m ('transitions:', [('car1', ('Normal', 'T2'))])
+[2m[36m(compute_full_reachtube_step pid=85541)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85539)[0m ('transitions:', [])
 got id: 3
 0 1
-[2m[36m(compute_full_reachtube_step pid=79598)[0m ('transitions:', [])
 got id: 4
 0 1
 0 1
-[2m[36m(compute_full_reachtube_step pid=79599)[0m ('transitions:', [('car1', ('SwitchRight', 'M21'))])
-[2m[36m(compute_full_reachtube_step pid=79599)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79599)[0m ('transitions:', [('car1', ('Normal', 'T1'))])
+[2m[36m(compute_full_reachtube_step pid=85541)[0m ('transitions:', [('car1', ('SwitchRight', 'M21'))])
+[2m[36m(compute_full_reachtube_step pid=85541)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85541)[0m ('transitions:', [('car1', ('Normal', 'T1'))])
 got id: 5
 0 1
 0 1
-[2m[36m(compute_full_reachtube_step pid=79599)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85541)[0m ###############
 got id: 6
-{'#A': 3, 'A': 'C', 'Map': 'M4', 'postCont': 'DryVR', 'Noisy S': 'No', '# Tr': 7, 'Run Time': 106.84231305122375}
+{'#A': 3, 'A': 'C', 'Map': 'M4', 'postCont': 'DryVR', 'Noisy S': 'No', '# Tr': 7, 'Run Time': 106.6366879940033}
 =========================exp9============================
 0 1
 0 1
-[2m[36m(compute_full_reachtube_step pid=79644)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85652)[0m ###############
 got id: 0
 1 1
 0 2
 0 2
-[2m[36m(compute_full_reachtube_step pid=79644)[0m ('transitions:', [('test1', ('MoveDown', 'M12')), ('test1', ('MoveUp', 'M10'))])
-[2m[36m(compute_full_reachtube_step pid=79644)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85652)[0m ('transitions:', [('test1', ('MoveDown', 'M12')), ('test1', ('MoveUp', 'M10'))])
+[2m[36m(compute_full_reachtube_step pid=85652)[0m ###############
 got id: 1
 0 2
 0 2
-[2m[36m(compute_full_reachtube_step pid=79644)[0m ('transitions:', [('test1', ('Normal', 'T2'))])
-[2m[36m(compute_full_reachtube_step pid=79644)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79650)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85652)[0m ('transitions:', [('test1', ('Normal', 'T2'))])
+[2m[36m(compute_full_reachtube_step pid=85652)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85654)[0m ###############
 got id: 3
 0 1
-[2m[36m(compute_full_reachtube_step pid=79644)[0m ('transitions:', [])
+[2m[36m(compute_full_reachtube_step pid=85652)[0m ('transitions:', [])
 got id: 2
 0 1
 0 1
-[2m[36m(compute_full_reachtube_step pid=79650)[0m ('transitions:', [('test1', ('Normal', 'T0'))])
-[2m[36m(compute_full_reachtube_step pid=79650)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85654)[0m ('transitions:', [('test1', ('Normal', 'T0'))])
+[2m[36m(compute_full_reachtube_step pid=85654)[0m ###############
 got id: 4
-{'#A': 2, 'A': 'Q', 'Map': 'M5', 'postCont': 'DryVR', 'Noisy S': 'No', '# Tr': 5, 'Run Time': 22.50593876838684}
+{'#A': 2, 'A': 'Q', 'Map': 'M5', 'postCont': 'DryVR', 'Noisy S': 'No', '# Tr': 5, 'Run Time': 21.13433003425598}
 =========================exp11============================
 [(<AgentMode.Normal: 1>, <TrackMode.T1: 2>), (<AgentMode.Normal: 1>, <TrackMode.T1: 2>), (<AgentMode.Normal: 1>, <TrackMode.T0: 1>), (<AgentMode.Normal: 1>, <TrackMode.T0: 1>), (<AgentMode.Normal: 1>, <TrackMode.T1: 2>), (<AgentMode.Normal: 1>, <TrackMode.T2: 3>), (<AgentMode.Normal: 1>, <TrackMode.T2: 3>), (<AgentMode.Normal: 1>, <TrackMode.T2: 3>)]
 <class 'list'>
 0 1
 0 1
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85687)[0m ###############
 got id: 0
 3 1
 2 2
 1 3
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ('transitions:',
-[2m[36m(compute_full_reachtube_step pid=79686)[0m  [('car3', ('SwitchRight', 'M01')), ('car3', ('SwitchLeft', 'M04')), ('car1', ('SwitchRight', 'M12')),
-[2m[36m(compute_full_reachtube_step pid=79686)[0m   ('car1', ('SwitchLeft', 'M10'))])
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ###############
 0 4
 0 4
-[2m[36m(compute_full_reachtube_step pid=79685)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79691)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79690)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85687)[0m ('transitions:',
+[2m[36m(compute_full_reachtube_step pid=85687)[0m  [('car3', ('SwitchRight', 'M01')), ('car3', ('SwitchLeft', 'M04')), ('car1', ('SwitchRight', 'M12')),
+[2m[36m(compute_full_reachtube_step pid=85687)[0m   ('car1', ('SwitchLeft', 'M10'))])
+[2m[36m(compute_full_reachtube_step pid=85687)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85691)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85686)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85690)[0m ###############
 got id: 1
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ('transitions:', [('car1', ('SwitchRight', 'M12')), ('car1', ('SwitchLeft', 'M10'))])
 1 4
 0 5
 0 5
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85687)[0m ('transitions:', [('car1', ('SwitchRight', 'M12')), ('car1', ('SwitchLeft', 'M10'))])
+[2m[36m(compute_full_reachtube_step pid=85687)[0m ###############
+got id: 5
+0 5
+0 5
+[2m[36m(compute_full_reachtube_step pid=85687)[0m ('transitions:', [('car1', ('Normal', 'T2'))])
 got id: 2
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ('transitions:', [('car1', ('Normal', 'T2'))])
-[2m[36m(compute_full_reachtube_step pid=79685)[0m ('transitions:', [('car1', ('SwitchRight', 'M12')), ('car1', ('SwitchLeft', 'M10'))])
+[2m[36m(compute_full_reachtube_step pid=85691)[0m ('transitions:', [('car1', ('SwitchRight', 'M12')), ('car1', ('SwitchLeft', 'M10'))])
+[2m[36m(compute_full_reachtube_step pid=85691)[0m ###############
 1 5
 0 6
 0 6
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ###############
-got id: 5
-[2m[36m(compute_full_reachtube_step pid=79691)[0m ('transitions:', [('car3', ('SwitchRight', 'M01')), ('car3', ('SwitchLeft', 'M04'))])
-[2m[36m(compute_full_reachtube_step pid=79690)[0m ('transitions:', [('car3', ('SwitchRight', 'M01')), ('car3', ('SwitchLeft', 'M04'))])
-0 6
-0 6
-got id: 3
-1 6
-[2m[36m(compute_full_reachtube_step pid=79685)[0m ###############
-0 7
-0 7
+[2m[36m(compute_full_reachtube_step pid=85687)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85690)[0m ('transitions:', [('car3', ('SwitchRight', 'M01')), ('car3', ('SwitchLeft', 'M04'))])
 got id: 4
+1 6
+0 7
+0 7
+got id: 3
+[2m[36m(compute_full_reachtube_step pid=85686)[0m ('transitions:', [('car3', ('SwitchRight', 'M01')), ('car3', ('SwitchLeft', 'M04'))])
 1 7
 0 8
-[2m[36m(compute_full_reachtube_step pid=79691)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79690)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79689)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85686)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85690)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85688)[0m ###############
 got id: 7
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ('transitions:', [('car1', ('Normal', 'T2'))])
+[2m[36m(compute_full_reachtube_step pid=85691)[0m ('transitions:', [('car3', ('Normal', 'T1'))])
 0 8
 got id: 8
+[2m[36m(compute_full_reachtube_step pid=85687)[0m ('transitions:', [('car1', ('Normal', 'T2'))])
+[2m[36m(compute_full_reachtube_step pid=85691)[0m ###############
 0 8
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79685)[0m ('transitions:', [('car1', ('Normal', 'T0'))])
-[2m[36m(compute_full_reachtube_step pid=79685)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79689)[0m ('transitions:', [('car1', ('Normal', 'T0'))])
-got id: 6
-0 8
-[2m[36m(compute_full_reachtube_step pid=79690)[0m ('transitions:', [('car3', ('Normal', 'T1'))])
-got id: 9
-[2m[36m(compute_full_reachtube_step pid=79689)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79688)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79687)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79684)[0m ###############
-0 8
-[2m[36m(compute_full_reachtube_step pid=79690)[0m ###############
-got id: 10
-[2m[36m(compute_full_reachtube_step pid=79691)[0m ('transitions:', [('car1', ('Normal', 'T2'))])
-0 8
-[2m[36m(compute_full_reachtube_step pid=79691)[0m ###############
-got id: 15
-0 8
-[2m[36m(compute_full_reachtube_step pid=79685)[0m ('transitions:', [('car3', ('Normal', 'T4'))])
-got id: 14
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ('transitions:', [('car3', ('Normal', 'T4'))])
-0 8
-got id: 16
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ###############
-0 8
-[2m[36m(compute_full_reachtube_step pid=79685)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79689)[0m ('transitions:', [('car3', ('Normal', 'T1'))])
-[2m[36m(compute_full_reachtube_step pid=79689)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85690)[0m ('transitions:', [('car1', ('Normal', 'T0'))])
 got id: 11
 0 8
-[2m[36m(compute_full_reachtube_step pid=79687)[0m ('transitions:', [('car1', ('Normal', 'T2'))])
-[2m[36m(compute_full_reachtube_step pid=79687)[0m ###############
-got id: 13
-[2m[36m(compute_full_reachtube_step pid=79684)[0m ('transitions:', [('car1', ('Normal', 'T0'))])
+[2m[36m(compute_full_reachtube_step pid=85690)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85692)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85688)[0m ('transitions:', [('car1', ('Normal', 'T0'))])
+[2m[36m(compute_full_reachtube_step pid=85689)[0m ###############
+got id: 6
+[2m[36m(compute_full_reachtube_step pid=85687)[0m ###############
 0 8
-[2m[36m(compute_full_reachtube_step pid=79684)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79688)[0m ('transitions:', [('car1', ('Normal', 'T0'))])
+[2m[36m(compute_full_reachtube_step pid=85685)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85686)[0m ('transitions:', [('car1', ('Normal', 'T0'))])
+got id: 10
+0 8
+[2m[36m(compute_full_reachtube_step pid=85686)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85688)[0m ###############
+got id: 9
+[2m[36m(compute_full_reachtube_step pid=85692)[0m ('transitions:', [('car1', ('Normal', 'T0'))])
+0 8
+got id: 17
+0 8
+got id: 15
+[2m[36m(compute_full_reachtube_step pid=85687)[0m ('transitions:', [('car3', ('Normal', 'T4'))])
+[2m[36m(compute_full_reachtube_step pid=85687)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85688)[0m ('transitions:', [('car3', ('Normal', 'T1'))])
+[2m[36m(compute_full_reachtube_step pid=85692)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85685)[0m ('transitions:', [('car1', ('Normal', 'T2'))])
+0 8
+got id: 13
+0 8
+[2m[36m(compute_full_reachtube_step pid=85688)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85685)[0m ###############
 got id: 12
 0 8
-[2m[36m(compute_full_reachtube_step pid=79688)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79691)[0m ('transitions:', [('car3', ('Normal', 'T1'))])
+[2m[36m(compute_full_reachtube_step pid=85689)[0m ('transitions:', [('car1', ('Normal', 'T2'))])
+[2m[36m(compute_full_reachtube_step pid=85689)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85690)[0m ('transitions:', [('car3', ('Normal', 'T4'))])
+got id: 16
+0 8
+[2m[36m(compute_full_reachtube_step pid=85690)[0m ###############
 got id: 18
 0 8
-[2m[36m(compute_full_reachtube_step pid=79691)[0m ###############
-got id: 23
-[2m[36m(compute_full_reachtube_step pid=79684)[0m ('transitions:', [('car3', ('Normal', 'T4'))])
+[2m[36m(compute_full_reachtube_step pid=85686)[0m ('transitions:', [('car3', ('Normal', 'T1'))])
+[2m[36m(compute_full_reachtube_step pid=85686)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85692)[0m ('transitions:', [('car3', ('Normal', 'T4'))])
+got id: 19
 0 8
-[2m[36m(compute_full_reachtube_step pid=79684)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85692)[0m ###############
 got id: 22
-[2m[36m(compute_full_reachtube_step pid=79687)[0m ('transitions:', [('car3', ('Normal', 'T4'))])
+[2m[36m(compute_full_reachtube_step pid=85685)[0m ('transitions:', [('car3', ('Normal', 'T4'))])
 0 8
-[2m[36m(compute_full_reachtube_step pid=79688)[0m ('transitions:', [('car3', ('Normal', 'T1'))])
-[2m[36m(compute_full_reachtube_step pid=79687)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85685)[0m ###############
+got id: 23
+[2m[36m(compute_full_reachtube_step pid=85689)[0m ('transitions:', [('car3', ('Normal', 'T1'))])
+0 8
+[2m[36m(compute_full_reachtube_step pid=85689)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85690)[0m ('transitions:', [('car1', ('SwitchRight', 'M01'))])
 got id: 24
 0 8
-[2m[36m(compute_full_reachtube_step pid=79688)[0m ###############
-got id: 19
-[2m[36m(compute_full_reachtube_step pid=79685)[0m ('transitions:', [('car1', ('SwitchRight', 'M01'))])
-0 8
-[2m[36m(compute_full_reachtube_step pid=79685)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85690)[0m ###############
 got id: 26
-[2m[36m(compute_full_reachtube_step pid=79684)[0m ('transitions:', [('car1', ('SwitchRight', 'M01'))])
+[2m[36m(compute_full_reachtube_step pid=85692)[0m ('transitions:', [('car1', ('SwitchRight', 'M01'))])
 0 8
-[2m[36m(compute_full_reachtube_step pid=79684)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79685)[0m ('transitions:', [('car1', ('Normal', 'T1'))])
+[2m[36m(compute_full_reachtube_step pid=85692)[0m ###############
 got id: 29
+[2m[36m(compute_full_reachtube_step pid=85690)[0m ('transitions:', [('car1', ('Normal', 'T1'))])
 0 8
-[2m[36m(compute_full_reachtube_step pid=79685)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79689)[0m ('transitions:', [('car1', ('SwitchLeft', 'M04'))])
-got id: 21
+[2m[36m(compute_full_reachtube_step pid=85687)[0m ('transitions:', [('car1', ('SwitchLeft', 'M04'))])
+got id: 20
+[2m[36m(compute_full_reachtube_step pid=85690)[0m ###############
 0 8
-[2m[36m(compute_full_reachtube_step pid=79689)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85687)[0m ###############
+got id: 25
+0 8
+[2m[36m(compute_full_reachtube_step pid=85686)[0m ('transitions:', [('car1', ('SwitchLeft', 'M04'))])
+[2m[36m(compute_full_reachtube_step pid=85686)[0m ###############
 got id: 30
 0 8
-[2m[36m(compute_full_reachtube_step pid=79684)[0m ('transitions:', [('car1', ('Normal', 'T1'))])
-[2m[36m(compute_full_reachtube_step pid=79684)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79688)[0m ('transitions:', [('car1', ('SwitchLeft', 'M04'))])
-got id: 28
-0 8
-[2m[36m(compute_full_reachtube_step pid=79688)[0m ###############
-got id: 20
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ('transitions:', [('car8', ('SwitchRight', 'M23')), ('car8', ('SwitchLeft', 'M21'))])
+[2m[36m(compute_full_reachtube_step pid=85692)[0m ('transitions:', [('car1', ('Normal', 'T1'))])
+[2m[36m(compute_full_reachtube_step pid=85692)[0m ###############
+got id: 21
 1 8
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85688)[0m ('transitions:', [('car8', ('SwitchRight', 'M23')), ('car8', ('SwitchLeft', 'M21'))])
+[2m[36m(compute_full_reachtube_step pid=85688)[0m ###############
 got id: 32
 1 8
-[2m[36m(compute_full_reachtube_step pid=79689)[0m ('transitions:', [('car1', ('Normal', 'T4'))])
-[2m[36m(compute_full_reachtube_step pid=79689)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85687)[0m ('transitions:', [('car1', ('Normal', 'T4'))])
+[2m[36m(compute_full_reachtube_step pid=85687)[0m ###############
+got id: 33
+[2m[36m(compute_full_reachtube_step pid=85686)[0m ('transitions:', [('car1', ('Normal', 'T4'))])
+1 8
+[2m[36m(compute_full_reachtube_step pid=85686)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85685)[0m ('transitions:', [('car8', ('SwitchRight', 'M23')), ('car8', ('SwitchLeft', 'M21'))])
 got id: 27
-[2m[36m(compute_full_reachtube_step pid=79687)[0m ('transitions:', [('car8', ('SwitchRight', 'M23')), ('car8', ('SwitchLeft', 'M21'))])
 2 8
-[2m[36m(compute_full_reachtube_step pid=79687)[0m ###############
-got id: 34
-2 8
-[2m[36m(compute_full_reachtube_step pid=79688)[0m ('transitions:', [('car1', ('Normal', 'T4'))])
-[2m[36m(compute_full_reachtube_step pid=79688)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85685)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85688)[0m ('transitions:', [('car1', ('SwitchRight', 'M23'))])
 got id: 35
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ('transitions:', [('car1', ('SwitchRight', 'M23'))])
 2 8
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79685)[0m ('transitions:', [('car8', ('SwitchRight', 'M23')), ('car8', ('SwitchLeft', 'M21'))])
+[2m[36m(compute_full_reachtube_step pid=85688)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85690)[0m ('transitions:', [('car8', ('SwitchRight', 'M23')), ('car8', ('SwitchLeft', 'M21'))])
 got id: 31
 3 8
-[2m[36m(compute_full_reachtube_step pid=79685)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85690)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85691)[0m ('transitions:', [('car8', ('SwitchRight', 'M23')), ('car8', ('SwitchLeft', 'M21'))])
+got id: 14
+4 8
+[2m[36m(compute_full_reachtube_step pid=85691)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85687)[0m ('transitions:', [('car1', ('SwitchRight', 'M23'))])
 got id: 36
-3 8
-[2m[36m(compute_full_reachtube_step pid=79689)[0m ('transitions:', [('car1', ('SwitchRight', 'M23'))])
-[2m[36m(compute_full_reachtube_step pid=79689)[0m ###############
-got id: 17
 4 8
-[2m[36m(compute_full_reachtube_step pid=79690)[0m ('transitions:', [('car8', ('SwitchRight', 'M23')), ('car8', ('SwitchLeft', 'M21'))])
-[2m[36m(compute_full_reachtube_step pid=79690)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85687)[0m ###############
 got id: 41
-[2m[36m(compute_full_reachtube_step pid=79689)[0m ('transitions:', [('car8', ('Normal', 'T3'))])
+[2m[36m(compute_full_reachtube_step pid=85691)[0m ('transitions:', [('car8', ('Normal', 'T3'))])
 4 8
-[2m[36m(compute_full_reachtube_step pid=79689)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79684)[0m ('transitions:', [('car8', ('SwitchRight', 'M23')), ('car8', ('SwitchLeft', 'M21'))])
-got id: 33
-5 8
-[2m[36m(compute_full_reachtube_step pid=79684)[0m ###############
-got id: 38
-[2m[36m(compute_full_reachtube_step pid=79688)[0m ('transitions:', [('car1', ('SwitchRight', 'M23'))])
-5 8
-[2m[36m(compute_full_reachtube_step pid=79688)[0m ###############
-got id: 25
-[2m[36m(compute_full_reachtube_step pid=79691)[0m ('transitions:', [('car8', ('SwitchRight', 'M23')), ('car8', ('SwitchLeft', 'M21'))])
-6 8
+[2m[36m(compute_full_reachtube_step pid=85691)[0m ###############
+got id: 34
+[2m[36m(compute_full_reachtube_step pid=85692)[0m ('transitions:', [('car8', ('SwitchRight', 'M23')), ('car8', ('SwitchLeft', 'M21'))])
+[2m[36m(compute_full_reachtube_step pid=85692)[0m ###############
 got id: 39
-6 8
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ('transitions:', [('car1', ('SwitchRight', 'M23'))])
-[2m[36m(compute_full_reachtube_step pid=79691)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ###############
-got id: 44
-[2m[36m(compute_full_reachtube_step pid=79684)[0m ('transitions:', [('car8', ('Normal', 'T1'))])
-6 8
-[2m[36m(compute_full_reachtube_step pid=79684)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ('transitions:', [('car1', ('Normal', 'T3'))])
-got id: 47
-6 8
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ###############
-got id: 37
-[2m[36m(compute_full_reachtube_step pid=79687)[0m ('transitions:', [('car8', ('SwitchRight', 'M23')), ('car8', ('SwitchLeft', 'M21'))])
-7 8
-[2m[36m(compute_full_reachtube_step pid=79687)[0m ###############
-got id: 50
-[2m[36m(compute_full_reachtube_step pid=79687)[0m ('transitions:', [('car8', ('Normal', 'T3'))])
-7 8
-[2m[36m(compute_full_reachtube_step pid=79687)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79685)[0m ('transitions:', [('car8', ('SwitchRight', 'M23')), ('car8', ('SwitchLeft', 'M21'))])
+5 8
+[2m[36m(compute_full_reachtube_step pid=85688)[0m ('transitions:', [('car1', ('SwitchRight', 'M23'))])
+[2m[36m(compute_full_reachtube_step pid=85688)[0m ###############
 got id: 40
-8 8
-[2m[36m(compute_full_reachtube_step pid=79685)[0m ###############
-got id: 45
-[2m[36m(compute_full_reachtube_step pid=79688)[0m ('transitions:', [('car1', ('SwitchRight', 'M23'))])
-8 8
-[2m[36m(compute_full_reachtube_step pid=79688)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85690)[0m ('transitions:', [('car1', ('SwitchRight', 'M23'))])
+5 8
+[2m[36m(compute_full_reachtube_step pid=85690)[0m ###############
+got id: 28
+6 8
+[2m[36m(compute_full_reachtube_step pid=85689)[0m ('transitions:', [('car8', ('SwitchRight', 'M23')), ('car8', ('SwitchLeft', 'M21'))])
 got id: 46
-[2m[36m(compute_full_reachtube_step pid=79691)[0m ('transitions:', [('car1', ('SwitchRight', 'M23'))])
+6 8
+[2m[36m(compute_full_reachtube_step pid=85686)[0m ('transitions:', [('car8', ('SwitchRight', 'M23')), ('car8', ('SwitchLeft', 'M21'))])
+got id: 37
+[2m[36m(compute_full_reachtube_step pid=85690)[0m ('transitions:', [('car8', ('Normal', 'T1'))])
+[2m[36m(compute_full_reachtube_step pid=85690)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85689)[0m ###############
+7 8
+[2m[36m(compute_full_reachtube_step pid=85686)[0m ###############
+got id: 47
+[2m[36m(compute_full_reachtube_step pid=85689)[0m ('transitions:', [('car1', ('Normal', 'T3'))])
+7 8
+[2m[36m(compute_full_reachtube_step pid=85689)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85685)[0m ('transitions:', [('car8', ('SwitchRight', 'M23')), ('car8', ('SwitchLeft', 'M21'))])
+got id: 38
 8 8
-[2m[36m(compute_full_reachtube_step pid=79691)[0m ###############
-got id: 42
-[2m[36m(compute_full_reachtube_step pid=79690)[0m ('transitions:', [('car1', ('SwitchLeft', 'M10')), ('car8', ('Normal', 'T3'))])
-9 8
-[2m[36m(compute_full_reachtube_step pid=79690)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79688)[0m ('transitions:', [('car8', ('Normal', 'T1'))])
-got id: 53
-9 8
-[2m[36m(compute_full_reachtube_step pid=79688)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79691)[0m ('transitions:', [('car1', ('Normal', 'T3'))])
-got id: 43
-[2m[36m(compute_full_reachtube_step pid=79689)[0m ('transitions:', [('car1', ('SwitchLeft', 'M10')), ('car8', ('Normal', 'T1'))])
-10 8
+[2m[36m(compute_full_reachtube_step pid=85685)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85689)[0m ('transitions:', [('car8', ('Normal', 'T3'))])
+got id: 50
+8 8
+[2m[36m(compute_full_reachtube_step pid=85689)[0m ###############
+got id: 51
+8 8
+[2m[36m(compute_full_reachtube_step pid=85685)[0m ('transitions:', [('car8', ('Normal', 'T1'))])
+[2m[36m(compute_full_reachtube_step pid=85685)[0m ###############
+got id: 44
+[2m[36m(compute_full_reachtube_step pid=85692)[0m ('transitions:', [('car1', ('SwitchRight', 'M23'))])
+8 8
+[2m[36m(compute_full_reachtube_step pid=85692)[0m ###############
 got id: 54
-[2m[36m(compute_full_reachtube_step pid=79690)[0m ('transitions:', [])
+[2m[36m(compute_full_reachtube_step pid=85692)[0m ('transitions:', [('car1', ('Normal', 'T3'))])
+8 8
+[2m[36m(compute_full_reachtube_step pid=85692)[0m ###############
+got id: 45
+8 8
+[2m[36m(compute_full_reachtube_step pid=85688)[0m ('transitions:', [('car1', ('SwitchRight', 'M23'))])
+[2m[36m(compute_full_reachtube_step pid=85688)[0m ###############
+got id: 42
+[2m[36m(compute_full_reachtube_step pid=85687)[0m ('transitions:', [('car1', ('SwitchLeft', 'M10')), ('car8', ('Normal', 'T3'))])
+9 8
+[2m[36m(compute_full_reachtube_step pid=85687)[0m ###############
+got id: 43
+[2m[36m(compute_full_reachtube_step pid=85691)[0m ('transitions:', [('car1', ('SwitchLeft', 'M10')), ('car8', ('Normal', 'T1'))])
 10 8
+[2m[36m(compute_full_reachtube_step pid=85691)[0m ###############
+got id: 57
+9 8
+[2m[36m(compute_full_reachtube_step pid=85687)[0m ('transitions:', [])
 got id: 55
 9 8
-[2m[36m(compute_full_reachtube_step pid=79691)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79690)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79689)[0m ###############
-got id: 58
-[2m[36m(compute_full_reachtube_step pid=79691)[0m ('transitions:', [('car1', ('Normal', 'T3'))])
-9 8
-[2m[36m(compute_full_reachtube_step pid=79691)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85687)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85692)[0m ('transitions:', [('car8', ('Normal', 'T3'))])
+[2m[36m(compute_full_reachtube_step pid=85692)[0m ###############
 got id: 56
 9 8
-[2m[36m(compute_full_reachtube_step pid=79688)[0m ('transitions:', [('car8', ('Normal', 'T3'))])
-[2m[36m(compute_full_reachtube_step pid=79688)[0m ###############
-got id: 48
-10 8
-[2m[36m(compute_full_reachtube_step pid=79684)[0m ('transitions:', [('car1', ('SwitchLeft', 'M10')), ('car8', ('Normal', 'T3'))])
-[2m[36m(compute_full_reachtube_step pid=79684)[0m ###############
-got id: 59
-[2m[36m(compute_full_reachtube_step pid=79690)[0m ('transitions:', [('car8', ('Normal', 'T1'))])
-[2m[36m(compute_full_reachtube_step pid=79689)[0m ('transitions:', [('car8', ('Normal', 'T3'))])
-10 8
-got id: 57
-10 8
-[2m[36m(compute_full_reachtube_step pid=79690)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79689)[0m ###############
-got id: 49
-11 8
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ('transitions:', [('car1', ('SwitchLeft', 'M10')), ('car8', ('Normal', 'T1'))])
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79691)[0m ('transitions:', [('car8', ('Normal', 'T1'))])
+[2m[36m(compute_full_reachtube_step pid=85688)[0m ('transitions:', [('car8', ('Normal', 'T1'))])
+[2m[36m(compute_full_reachtube_step pid=85688)[0m ###############
 got id: 60
-11 8
-[2m[36m(compute_full_reachtube_step pid=79691)[0m ###############
-got id: 61
-[2m[36m(compute_full_reachtube_step pid=79690)[0m ('transitions:', [('car8', ('Normal', 'T3'))])
-[2m[36m(compute_full_reachtube_step pid=79688)[0m ('transitions:', [('car8', ('Normal', 'T3'))])
-11 8
-got id: 63
-11 8
-got id: 51
-[2m[36m(compute_full_reachtube_step pid=79690)[0m ###############
-11 8
-[2m[36m(compute_full_reachtube_step pid=79687)[0m ('transitions:', [('car1', ('SwitchRight', 'M23'))])
-[2m[36m(compute_full_reachtube_step pid=79688)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79687)[0m ###############
-got id: 62
-[2m[36m(compute_full_reachtube_step pid=79684)[0m ('transitions:', [('car8', ('Normal', 'T1'))])
-11 8
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ('transitions:', [('car1', ('Normal', 'T3'))])
-[2m[36m(compute_full_reachtube_step pid=79684)[0m ###############
-got id: 65
-11 8
-got id: 68
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79687)[0m ('transitions:', [])
-10 8
-[2m[36m(compute_full_reachtube_step pid=79687)[0m ###############
-got id: 52
-10 8
-[2m[36m(compute_full_reachtube_step pid=79685)[0m ('transitions:', [('car1', ('SwitchRight', 'M23'))])
-[2m[36m(compute_full_reachtube_step pid=79685)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79691)[0m ('transitions:', [('car8', ('Normal', 'T1'))])
-got id: 66
-10 8
-[2m[36m(compute_full_reachtube_step pid=79691)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79684)[0m ('transitions:', [])
-got id: 70
 9 8
-[2m[36m(compute_full_reachtube_step pid=79684)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79688)[0m ('transitions:', [])
-got id: 69
-[2m[36m(compute_full_reachtube_step pid=79685)[0m ('transitions:', [])
+[2m[36m(compute_full_reachtube_step pid=85692)[0m ('transitions:', [('car1', ('Normal', 'T3'))])
+[2m[36m(compute_full_reachtube_step pid=85692)[0m ###############
+got id: 58
+[2m[36m(compute_full_reachtube_step pid=85691)[0m ('transitions:', [('car8', ('Normal', 'T3'))])
+9 8
+[2m[36m(compute_full_reachtube_step pid=85691)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85688)[0m ('transitions:', [('car1', ('Normal', 'T3'))])
+got id: 61
+9 8
+got id: 59
+[2m[36m(compute_full_reachtube_step pid=85687)[0m ('transitions:', [('car8', ('Normal', 'T1'))])
+[2m[36m(compute_full_reachtube_step pid=85688)[0m ###############
+9 8
+[2m[36m(compute_full_reachtube_step pid=85687)[0m ###############
+got id: 63
 8 8
-got id: 73
-[2m[36m(compute_full_reachtube_step pid=79685)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85691)[0m ('transitions:', [])
+[2m[36m(compute_full_reachtube_step pid=85691)[0m ###############
+got id: 52
+8 8
+[2m[36m(compute_full_reachtube_step pid=85689)[0m ('transitions:', [('car1', ('SwitchRight', 'M23'))])
+[2m[36m(compute_full_reachtube_step pid=85689)[0m ###############
+got id: 62
+8 8
+[2m[36m(compute_full_reachtube_step pid=85692)[0m ('transitions:', [('car8', ('Normal', 'T3'))])
+[2m[36m(compute_full_reachtube_step pid=85692)[0m ###############
+got id: 53
+[2m[36m(compute_full_reachtube_step pid=85685)[0m ('transitions:', [('car1', ('SwitchRight', 'M23'))])
+8 8
+[2m[36m(compute_full_reachtube_step pid=85687)[0m ('transitions:', [('car8', ('Normal', 'T3'))])
+[2m[36m(compute_full_reachtube_step pid=85685)[0m ###############
+got id: 65
+8 8
+[2m[36m(compute_full_reachtube_step pid=85687)[0m ###############
+got id: 69
+[2m[36m(compute_full_reachtube_step pid=85690)[0m ('transitions:', [('car1', ('SwitchLeft', 'M10')), ('car8', ('Normal', 'T3'))])
 7 8
+[2m[36m(compute_full_reachtube_step pid=85685)[0m ('transitions:', [])
+got id: 48
+8 8
+[2m[36m(compute_full_reachtube_step pid=85690)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85685)[0m ###############
+got id: 67
+8 8
+got id: 64
+[2m[36m(compute_full_reachtube_step pid=85686)[0m ('transitions:', [('car1', ('SwitchLeft', 'M10')), ('car8', ('Normal', 'T1'))])
+[2m[36m(compute_full_reachtube_step pid=85688)[0m ('transitions:', [('car8', ('Normal', 'T1'))])
+[2m[36m(compute_full_reachtube_step pid=85689)[0m ('transitions:', [('car8', ('Normal', 'T1'))])
+8 8
+got id: 49
+9 8
+[2m[36m(compute_full_reachtube_step pid=85686)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85688)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85689)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85687)[0m ('transitions:', [])
+got id: 70
+8 8
+[2m[36m(compute_full_reachtube_step pid=85687)[0m ###############
+got id: 72
+[2m[36m(compute_full_reachtube_step pid=85685)[0m ('transitions:', [])
+[2m[36m(compute_full_reachtube_step pid=85688)[0m ('transitions:', [])
+7 8
+got id: 73
+6 8
 got id: 74
-[2m[36m(compute_full_reachtube_step pid=79691)[0m ('transitions:', [])
-[2m[36m(compute_full_reachtube_step pid=79688)[0m ###############
-6 8
-[2m[36m(compute_full_reachtube_step pid=79691)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85686)[0m ('transitions:', [])
+[2m[36m(compute_full_reachtube_step pid=85688)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85685)[0m ###############
+5 8
+[2m[36m(compute_full_reachtube_step pid=85686)[0m ###############
 got id: 71
-6 8
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ('transitions:', [('car8', ('Normal', 'T3'))])
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ###############
-got id: 77
-[2m[36m(compute_full_reachtube_step pid=79688)[0m ('transitions:', [])
-5 8
-[2m[36m(compute_full_reachtube_step pid=79688)[0m ###############
-got id: 75
-5 8
-[2m[36m(compute_full_reachtube_step pid=79684)[0m ('transitions:', [('car8', ('Normal', 'T1'))])
-[2m[36m(compute_full_reachtube_step pid=79684)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ('transitions:', [('car1', ('Normal', 'T0'))])
-got id: 79
-5 8
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ###############
+4 8
+[2m[36m(compute_full_reachtube_step pid=85690)[0m ('transitions:', [])
+[2m[36m(compute_full_reachtube_step pid=85690)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85685)[0m ('transitions:', [('car1', ('Normal', 'T0'))])
 got id: 78
-5 8
-[2m[36m(compute_full_reachtube_step pid=79691)[0m ('transitions:', [('car1', ('Normal', 'T3'))])
-[2m[36m(compute_full_reachtube_step pid=79691)[0m ###############
-got id: 82
 4 8
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ('transitions:', [])
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79688)[0m ('transitions:', [('car8', ('Normal', 'T3'))])
-got id: 80
+got id: 76
 4 8
-[2m[36m(compute_full_reachtube_step pid=79688)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79684)[0m ('transitions:', [('car1', ('Normal', 'T3'))])
+[2m[36m(compute_full_reachtube_step pid=85687)[0m ('transitions:', [('car1', ('Normal', 'T3'))])
+[2m[36m(compute_full_reachtube_step pid=85687)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85685)[0m ###############
+got id: 75
+4 8
+[2m[36m(compute_full_reachtube_step pid=85686)[0m ('transitions:', [('car8', ('Normal', 'T3'))])
+[2m[36m(compute_full_reachtube_step pid=85689)[0m ('transitions:', [('car8', ('Normal', 'T3'))])
+[2m[36m(compute_full_reachtube_step pid=85689)[0m ###############
+got id: 79
+4 8
+[2m[36m(compute_full_reachtube_step pid=85686)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85688)[0m ('transitions:', [('car8', ('Normal', 'T1'))])
+got id: 77
+4 8
+[2m[36m(compute_full_reachtube_step pid=85688)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85685)[0m ('transitions:', [('car1', ('Normal', 'T0'))])
 got id: 81
 4 8
-[2m[36m(compute_full_reachtube_step pid=79684)[0m ###############
-got id: 84
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ('transitions:', [('car1', ('Normal', 'T0'))])
-4 8
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85685)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85688)[0m ('transitions:', [])
+[2m[36m(compute_full_reachtube_step pid=85689)[0m ('transitions:', [('car8', ('Normal', 'T1'))])
+    got id: 85
+3 8
 got id: 83
-[2m[36m(compute_full_reachtube_step pid=79691)[0m ('transitions:', [('car8', ('Normal', 'T1'))])
-4 8
-[2m[36m(compute_full_reachtube_step pid=79691)[0m ###############
-got id: 85
-[2m[36m(compute_full_reachtube_step pid=79688)[0m ('transitions:', [('car1', ('Normal', 'T0'))])
-4 8
-[2m[36m(compute_full_reachtube_step pid=79688)[0m ###############
+3 8
+[2m[36m(compute_full_reachtube_step pid=85688)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85689)[0m ###############
+got id: 82
+3 8
+[2m[36m(compute_full_reachtube_step pid=85687)[0m ('transitions:', [('car1', ('Normal', 'T3'))])
+[2m[36m(compute_full_reachtube_step pid=85687)[0m ###############
+got id: 88
+3 8
+[2m[36m(compute_full_reachtube_step pid=85688)[0m ('transitions:', [('car1', ('Normal', 'T0'))])
+[2m[36m(compute_full_reachtube_step pid=85688)[0m ###############
 got id: 87
+[2m[36m(compute_full_reachtube_step pid=85689)[0m ('transitions:', [('car1', ('Normal', 'T3'))])
 3 8
-got id: 64
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ('transitions:', [])
-[2m[36m(compute_full_reachtube_step pid=79689)[0m ('transitions:', [('car1', ('SwitchLeft', 'M10'))])
-3 8
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79689)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85688)[0m ('transitions:', [])
+[2m[36m(compute_full_reachtube_step pid=85689)[0m ###############
 got id: 90
 2 8
-got id: 91
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ('transitions:', [])
-[2m[36m(compute_full_reachtube_step pid=79689)[0m ('transitions:', [])
-[2m[36m(compute_full_reachtube_step pid=79689)[0m ###############
-1 8
+[2m[36m(compute_full_reachtube_step pid=85688)[0m ###############
+got id: 66
+[2m[36m(compute_full_reachtube_step pid=85691)[0m ('transitions:', [('car1', ('SwitchLeft', 'M10'))])
+2 8
+[2m[36m(compute_full_reachtube_step pid=85691)[0m ###############
 got id: 86
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79684)[0m ('transitions:', [('car1', ('Normal', 'T0'))])
 1 8
-[2m[36m(compute_full_reachtube_step pid=79684)[0m ###############
-got id: 89
-1 8
-[2m[36m(compute_full_reachtube_step pid=79688)[0m ('transitions:', [('car1', ('Normal', 'T3'))])
-[2m[36m(compute_full_reachtube_step pid=79688)[0m ###############
-got id: 93
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ('transitions:', [])
-0 8
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ###############
-got id: 88
-0 7
-[2m[36m(compute_full_reachtube_step pid=79691)[0m ('transitions:', [])
-got id: 95
-0 6
-[2m[36m(compute_full_reachtube_step pid=79688)[0m ('transitions:', [])
-[2m[36m(compute_full_reachtube_step pid=79684)[0m ('transitions:', [('car1', ('Normal', 'T0'))])
-got id: 94
-0 6
-0 6
-[2m[36m(compute_full_reachtube_step pid=79687)[0m ('transitions:', [('car1', ('SwitchLeft', 'M10'))])
-[2m[36m(compute_full_reachtube_step pid=79684)[0m ###############
-got id: 72
-0 6
-0 6
-[2m[36m(compute_full_reachtube_step pid=79687)[0m ###############
-got id: 97
-0 5
-[2m[36m(compute_full_reachtube_step pid=79684)[0m ('transitions:', [])
-got id: 98
-[2m[36m(compute_full_reachtube_step pid=79689)[0m ('transitions:', [('car1', ('Normal', 'T3'))])
-[2m[36m(compute_full_reachtube_step pid=79687)[0m ('transitions:', [('car1', ('Normal', 'T0'))])
-0 5
-0 5
+[2m[36m(compute_full_reachtube_step pid=85685)[0m ('transitions:', [])
+[2m[36m(compute_full_reachtube_step pid=85685)[0m ###############
 got id: 92
-0 5
-0 5
-[2m[36m(compute_full_reachtube_step pid=79689)[0m ###############
-[2m[36m(compute_full_reachtube_step pid=79687)[0m ###############
+0 8
+[2m[36m(compute_full_reachtube_step pid=85688)[0m ('transitions:', [])
+got id: 93
+0 7
+[2m[36m(compute_full_reachtube_step pid=85691)[0m ('transitions:', [])
+[2m[36m(compute_full_reachtube_step pid=85688)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85687)[0m ('transitions:', [('car1', ('Normal', 'T3'))])
+got id: 89
+0 7
+0 7
+got id: 91
+[2m[36m(compute_full_reachtube_step pid=85687)[0m ###############
+0 7
+0 7
+[2m[36m(compute_full_reachtube_step pid=85689)[0m ('transitions:', [('car1', ('Normal', 'T0'))])
+[2m[36m(compute_full_reachtube_step pid=85689)[0m ###############
+got id: 95
+0 7
+0 7
+[2m[36m(compute_full_reachtube_step pid=85688)[0m ('transitions:', [('car1', ('Normal', 'T0'))])
+[2m[36m(compute_full_reachtube_step pid=85688)[0m ###############
+got id: 97
+0 6
 got id: 96
+0 5
+[2m[36m(compute_full_reachtube_step pid=85687)[0m ('transitions:', [])
+[2m[36m(compute_full_reachtube_step pid=85689)[0m ('transitions:', [])
+got id: 98
 0 4
-[2m[36m(compute_full_reachtube_step pid=79686)[0m ('transitions:', [])
-got id: 99
+[2m[36m(compute_full_reachtube_step pid=85688)[0m ('transitions:', [])
+got id: 94
 0 3
-[2m[36m(compute_full_reachtube_step pid=79689)[0m ('transitions:', [])
-[2m[36m(compute_full_reachtube_step pid=79687)[0m ('transitions:', [])
+[2m[36m(compute_full_reachtube_step pid=85685)[0m ('transitions:', [])
+got id: 80
+0 3
+0 3
+[2m[36m(compute_full_reachtube_step pid=85690)[0m ('transitions:', [('car1', ('SwitchLeft', 'M10'))])
+[2m[36m(compute_full_reachtube_step pid=85690)[0m ###############
+got id: 99
+[2m[36m(compute_full_reachtube_step pid=85690)[0m ('transitions:', [('car1', ('Normal', 'T0'))])
+0 3
+0 3
+[2m[36m(compute_full_reachtube_step pid=85690)[0m ###############
 got id: 100
 0 2
-got id: 67
+[2m[36m(compute_full_reachtube_step pid=85690)[0m ('transitions:', [])
+got id: 68
 0 2
 0 2
-[2m[36m(compute_full_reachtube_step pid=79690)[0m ('transitions:', [('car1', ('SwitchLeft', 'M10'))])
-[2m[36m(compute_full_reachtube_step pid=79690)[0m ###############
-got id: 76
-[2m[36m(compute_full_reachtube_step pid=79685)[0m ('transitions:', [('car1', ('SwitchLeft', 'M10'))])
-0 2
-0 2
-[2m[36m(compute_full_reachtube_step pid=79685)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85692)[0m ('transitions:', [('car1', ('SwitchLeft', 'M10'))])
+[2m[36m(compute_full_reachtube_step pid=85692)[0m ###############
 got id: 101
 0 2
 0 2
-[2m[36m(compute_full_reachtube_step pid=79690)[0m ('transitions:', [('car1', ('Normal', 'T0'))])
-[2m[36m(compute_full_reachtube_step pid=79690)[0m ###############
-got id: 103
-0 1
-[2m[36m(compute_full_reachtube_step pid=79690)[0m ('transitions:', [])
+[2m[36m(compute_full_reachtube_step pid=85692)[0m ('transitions:', [('car1', ('Normal', 'T0'))])
+[2m[36m(compute_full_reachtube_step pid=85692)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=85692)[0m ('transitions:', [])
 got id: 102
 0 1
+got id: 84
 0 1
-[2m[36m(compute_full_reachtube_step pid=79685)[0m ('transitions:', [('car1', ('Normal', 'T0'))])
-[2m[36m(compute_full_reachtube_step pid=79685)[0m ###############
+0 1
+[2m[36m(compute_full_reachtube_step pid=85686)[0m ('transitions:', [('car1', ('SwitchLeft', 'M10'))])
+[2m[36m(compute_full_reachtube_step pid=85686)[0m ###############
+got id: 103
+0 1
+0 1
+[2m[36m(compute_full_reachtube_step pid=85686)[0m ('transitions:', [('car1', ('Normal', 'T0'))])
+[2m[36m(compute_full_reachtube_step pid=85686)[0m ###############
 got id: 104
-{'cache_size': 896, 'dur': 132.77478907, 'hits': ((0, 0), (0, 0)), 'node_count': (105, 105)}
+{'cache_size': 896, 'dur': 129.922926117, 'hits': ((0, 0), (0, 0)), 'node_count': (105, 105)}

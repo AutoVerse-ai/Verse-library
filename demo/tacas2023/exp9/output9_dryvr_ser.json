@@ -2354,7 +2354,7 @@
         "child": [
             3
         ],
-        "height": 0,
+        "height": 1,
         "id": 1,
         "init": {
             "test1": [
@@ -4483,7 +4483,7 @@
         "child": [
             4
         ],
-        "height": 0,
+        "height": 1,
         "id": 2,
         "init": {
             "test1": [
@@ -6502,7 +6502,7 @@
         },
         "assert_hits": null,
         "child": [],
-        "height": 0,
+        "height": 2,
         "id": 3,
         "init": {
             "test1": [
@@ -13615,7 +13615,7 @@
         },
         "assert_hits": null,
         "child": [],
-        "height": 0,
+        "height": 2,
         "id": 4,
         "init": {
             "test1": [

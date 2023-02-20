@@ -263,6 +263,7 @@ class Verifier:
                 trace=next_node_trace,
                 init=next_node_init,
                 mode=next_node_mode,
+                height=node.height+1,
                 static = next_node_static,
                 uncertain_param = next_node_uncertain_param,
                 agent=next_node_agent,
@@ -414,7 +415,7 @@ class Verifier:
         num_transitions = 0
         time_reachtube = 0
         time_transition = 0
-        time_transition_opt = 0
+        time_transition_orig = 0
         while verification_queue != []:
             node: AnalysisTreeNode = verification_queue.pop(0)
             combined_inits = {a: combine_all(inits) for a, inits in node.init.items()}
@@ -514,7 +515,7 @@ class Verifier:
             # Get all possible transitions to next mode
             start = time.perf_counter()
             asserts_orig, all_possible_transitions_orig = transition_graph.get_transition_verify(new_cache, paths_to_sim, node)
-            time_transition_opt += time.perf_counter() - start
+            time_transition_orig += time.perf_counter() - start
             start = time.perf_counter()
             asserts, all_possible_transitions = transition_graph.get_transition_verify_opt(new_cache, paths_to_sim, node)
             time_transition += time.perf_counter() - start
@@ -602,5 +603,5 @@ class Verifier:
         # print(f">>>>>>>> Number of calls to reachability engine: {num_calls}")
         # print(f">>>>>>>> Number of transitions happening: {num_transitions}")
         self.num_transitions = num_transitions
-        print('reachtube time:', time_reachtube, 'transition time:', time_transition, 'transition opt time:', time_transition_opt)
+        print('reachtube time:', time_reachtube, 'transition time:', time_transition_orig, 'transition opt time:', time_transition)
         return self.reachtube_tree
