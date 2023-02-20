@@ -168,7 +168,7 @@ class AnalysisTree:
         node_id = 0
         while queue:
             node = queue.pop(0)
-            print("NODE: ", node)
+            # print("NODE: ", node)
             node.id = node_id 
             res.append(node)
             node_id += 1

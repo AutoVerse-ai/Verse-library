@@ -10,6 +10,7 @@
             1,
             2
         ],
+        "height": 0,
         "id": 0,
         "init": {
             "car1": [
@@ -6612,6 +6613,7 @@
         "child": [
             3
         ],
+        "height": 0,
         "id": 1,
         "init": {
             "car1": [
@@ -8062,6 +8064,7 @@
         "child": [
             4
         ],
+        "height": 0,
         "id": 2,
         "init": {
             "car1": [
@@ -9552,6 +9555,7 @@
         },
         "assert_hits": null,
         "child": [],
+        "height": 0,
         "id": 3,
         "init": {
             "car1": [
@@ -28404,6 +28408,7 @@
         "child": [
             5
         ],
+        "height": 0,
         "id": 4,
         "init": {
             "car1": [
@@ -43504,6 +43509,7 @@
         "child": [
             6
         ],
+        "height": 0,
         "id": 5,
         "init": {
             "car1": [
@@ -45694,6 +45700,7 @@
         },
         "assert_hits": null,
         "child": [],
+        "height": 0,
         "id": 6,
         "init": {
             "car1": [

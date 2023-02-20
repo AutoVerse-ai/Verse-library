@@ -14,7 +14,7 @@ diff demo/tacas2023/exp5/output5_par.json demo/tacas2023/exp5/output5_ser.json >
 echo '=========================exp9============================'
 echo '=========================exp9============================' >> exp.txt
 python demo/tacas2023/exp9/exp9_dryvr.py >> exp.txt
-iff demo/tacas2023/exp9/output9_dryvr_par.json demo/tacas2023/exp9/output9_dryvr_ser.json >> diff.txt
+diff demo/tacas2023/exp9/output9_dryvr_par.json demo/tacas2023/exp9/output9_dryvr_ser.json >> diff.txt
 echo '=========================exp11============================'
 echo '=========================exp11============================' >> exp.txt
 python demo/tacas2023/exp11/inc-expr.py vbd >> exp.txt

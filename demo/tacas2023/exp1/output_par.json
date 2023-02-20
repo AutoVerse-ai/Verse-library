@@ -11,6 +11,7 @@
             3,
             4
         ],
+        "height": 0,
         "id": 0,
         "init": {
             "test1": [
@@ -3507,6 +3508,7 @@
         "child": [
             5
         ],
+        "height": 0,
         "id": 1,
         "init": {
             "test1": [
@@ -5653,6 +5655,7 @@
         "child": [
             6
         ],
+        "height": 0,
         "id": 2,
         "init": {
             "test1": [
@@ -7699,6 +7702,7 @@
             57
         ],
         "child": [],
+        "height": 0,
         "id": 3,
         "init": {
             "test1": [
@@ -10097,6 +10101,7 @@
         "child": [
             7
         ],
+        "height": 0,
         "id": 4,
         "init": {
             "test1": [
@@ -15481,6 +15486,7 @@
         },
         "assert_hits": null,
         "child": [],
+        "height": 0,
         "id": 5,
         "init": {
             "test1": [
@@ -25779,6 +25785,7 @@
         },
         "assert_hits": null,
         "child": [],
+        "height": 0,
         "id": 6,
         "init": {
             "test1": [
@@ -36293,6 +36300,7 @@
         },
         "assert_hits": null,
         "child": [],
+        "height": 0,
         "id": 7,
         "init": {
             "test1": [
