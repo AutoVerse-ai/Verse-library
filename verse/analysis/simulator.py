@@ -16,6 +16,7 @@ from verse.analysis.analysis_tree import AnalysisTreeNode, AnalysisTree
 
 PathDiffs = List[Tuple[BaseAgent, ModePath]]
 
+
 def red(s):
     return "\x1b[31m" + s + "\x1b[0m" #]]
 
@@ -28,14 +29,17 @@ class Simulator:
         self.cache_hits = (0, 0)
 
     def simulate(self, init_list, init_mode_list, static_list, uncertain_param_list, agent_list,
-                 transition_graph, time_horizon, time_step, lane_map, run_num, past_runs):
+                 transition_graph, time_horizon, time_step, max_height, lane_map, run_num, past_runs):
         # Setup the root of the simulation tree
+        if(max_height == None):
+            max_height = float('inf')
         root = AnalysisTreeNode(
             trace={},
             init={},
             mode={},
             static={},
             uncertain_param={},
+            height = 0,
             agent={},
             child=[],
             start_time=0,
@@ -55,6 +59,8 @@ class Simulator:
         # Perform BFS through the simulation tree to loop through all possible transitions
         while simulation_queue != []:
             node: AnalysisTreeNode = simulation_queue.pop(0)
+            # Setup the root of the simulation tree
+
             # pp(("start sim", node.start_time, {a: (*node.mode[a], *node.init[a]) for a in node.mode}))
             remain_time = round(time_horizon - node.start_time, 10)
             if remain_time <= 0:
@@ -120,6 +126,9 @@ class Simulator:
                 if transitions:
                     truncated_trace[agent_idx] = node.trace[agent_idx][transition_idx:]
                     node.trace[agent_idx] = node.trace[agent_idx][:transition_idx+1]
+            if (node.height >= max_height):
+                print("max depth reached")
+                continue
 
             if asserts != None:
                 pass
@@ -134,6 +143,7 @@ class Simulator:
                                 self.cache.add_segment(agent_id, node, [], full_traces[agent_id], [], transition_idx, run_num)
                     # print(red("no trans"))
                     continue
+
 
                 transit_agents = transitions.keys()
                 # pp(("transit agents", transit_agents))
@@ -181,6 +191,7 @@ class Simulator:
                             next_node_init[agent_idx] = truncated_trace[agent_idx][0][1:]
 
                     all_transition_paths.append(transition_paths)
+
                     tmp = AnalysisTreeNode(
                         trace=next_node_trace,
                         init=next_node_init,
@@ -188,6 +199,7 @@ class Simulator:
                         static=next_node_static,
                         uncertain_param=next_node_uncertain_param,
                         agent=next_node_agent,
+                        height=node.height+1,
                         child=[],
                         start_time=next_node_start_time,
                         type='simtrace'
@@ -205,13 +217,16 @@ class Simulator:
             #         start_time = next_node_start_time
             #     ))
             # simulation_queue += node.child
-        
+        #checkHeight(root, max_height)
+
         self.simulation_tree = AnalysisTree(root)
         return self.simulation_tree
 
     def simulate_simple(self, init_list, init_mode_list, static_list, uncertain_param_list, agent_list,
-                 transition_graph, time_horizon, time_step, lane_map, run_num, past_runs):
+                 transition_graph, time_horizon, time_step, max_height, lane_map, run_num, past_runs):
         # Setup the root of the simulation tree
+        if(max_height == None):
+            max_height = float('inf')
         root = AnalysisTreeNode(
             trace={},
             init={},
@@ -219,6 +234,7 @@ class Simulator:
             static={},
             uncertain_param={},
             agent={},
+            height =0,
             child=[],
             start_time=0,
         )
@@ -237,6 +253,8 @@ class Simulator:
         # Perform BFS through the simulation tree to loop through all possible transitions
         while simulation_queue != []:
             node: AnalysisTreeNode = simulation_queue.pop(0)
+            #continue if we are at the depth limit
+
             pp(("start sim", node.start_time, {a: (*node.mode[a], *node.init[a]) for a in node.mode}))
             remain_time = round(time_horizon - node.start_time, 10)
             if remain_time <= 0:
@@ -269,6 +287,9 @@ class Simulator:
                 if transitions or asserts:
                     truncated_trace[agent_idx] = node.trace[agent_idx][transition_idx:]
                     node.trace[agent_idx] = node.trace[agent_idx][:transition_idx+1]
+            if (node.height >= max_height):
+                print("max depth reached")
+                continue
 
             if asserts != None:
                 pass
@@ -278,6 +299,7 @@ class Simulator:
                 # If there's no transitions (returned transitions is empty), continue
                 if not transitions:
                     continue
+
 
                 # pp(("transit agents", transit_agents))
                 
@@ -313,6 +335,8 @@ class Simulator:
                             next_node_init[agent_idx] = truncated_trace[agent_idx][0][1:]
 
                     all_transition_paths.append(transition_paths)
+
+
                     tmp = AnalysisTreeNode(
                         trace=next_node_trace,
                         init=next_node_init,
@@ -320,6 +344,7 @@ class Simulator:
                         static=next_node_static,
                         uncertain_param=next_node_uncertain_param,
                         agent=next_node_agent,
+                        height=node.height+1,
                         child=[],
                         start_time=next_node_start_time,
                         type='simtrace'
@@ -337,7 +362,23 @@ class Simulator:
             #         start_time = next_node_start_time
             #     ))
             # simulation_queue += node.child
-        
+        #checkHeight(root, max_height)
+
         self.simulation_tree = AnalysisTree(root)
+
+
         return self.simulation_tree
+
+#print all height of leaves
+def checkHeight(root, max_height):
+    if root:
+        # First recur on left child
+        # then print the data of node
+        if(root.child == []):
+            print("HEIGHT", root.height)
+            if(root.height > max_height):
+                print("Exceeds max height")
+        for c in root.child:
+            checkHeight(c, max_height)
+
 
