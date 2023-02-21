@@ -59,8 +59,6 @@ if 'p' in arg:
     from verse.plotter.plotter2D import simulation_tree
 
 def run(sim, meas=False):
-    mode='ser'
-    mode='par'
     time = timeit.default_timer()
     if sim:
         scenario.simulator.cache_hits = (0, 0)
@@ -68,11 +66,14 @@ def run(sim, meas=False):
     else:
         scenario.verifier.tube_cache_hits = (0,0)
         scenario.verifier.trans_cache_hits = (0,0)
-        traces = scenario.verify(60, 0.1, mode=mode)
+        traces = scenario.verify(60, 0.1)
 
     if 'd' in arg:
         # traces.dump_tree()
-        traces.dump('./demo/tacas2023/exp11/main_'+mode+'.json')
+        if scenario.config.parallel:
+            traces.dump('./demo/tacas2023/exp11/main_par.json')
+        else:
+            traces.dump('./demo/tacas2023/exp11/main_ser.json')
         # traces.dump("tree2.json" if meas else "tree1.json") 
 
     if 'p' in arg and meas:
@@ -97,7 +98,8 @@ def run(sim, meas=False):
 
 if __name__ == "__main__":
     input_code_name = './demo/tacas2023/exp11/decision_logic/inc-expr6.py' if "6" in arg else './demo/tacas2023/exp11/decision_logic/inc-expr.py'
-    config = ScenarioConfig()
+    para = True
+    config = ScenarioConfig(parallel=para)
     config.incremental = 'i' in arg
     scenario = Scenario(config)
 

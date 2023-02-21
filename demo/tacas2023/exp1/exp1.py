@@ -1,5 +1,6 @@
 from quadrotor_agent import QuadrotorAgent
 from verse import Scenario
+from verse.scenario.scenario import ScenarioConfig
 from verse.plotter.plotter3D_new import *
 from verse.plotter.plotter3D import *
 from verse.map.example_map.map_tacas import M6 
@@ -28,8 +29,9 @@ class TrackMode(Enum):
 
 if __name__ == "__main__":
     input_code_name = './demo/tacas2023/exp1/quadrotor_controller3.py'
-
-    scenario = Scenario()
+    para = True
+    config = ScenarioConfig(parallel=para)
+    scenario = Scenario(config)
     time_step = 0.1
     quadrotor1 = QuadrotorAgent(
         'test1', file_name=input_code_name, t_v_pair=(1, 1), box_side=[0.4]*3)
@@ -58,12 +60,13 @@ if __name__ == "__main__":
     # traces = scenario.simulate(40, time_step, seed=4)
     # traces.dump("./output1.json")
     # traces = AnalysisTree.load('./output1.json')
-    mode='ser'
-    mode='par'
     start_time = time.time()
-    traces = scenario.verify(40, time_step, mode=mode)
+    traces = scenario.verify(40, time_step)
     run_time = time.time() - start_time
-    traces.dump('demo/tacas2023/exp1/output_'+mode+'.json')
+    if scenario.config.parallel:
+        traces.dump('demo/tacas2023/exp1/output_par.json')
+    else:
+        traces.dump('demo/tacas2023/exp1/output_ser.json')
     print({
         "#A": len(scenario.agent_dict),
         "A": "Q",

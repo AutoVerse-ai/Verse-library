@@ -38,7 +38,8 @@ class TrackMode(Enum):
 if __name__ == "__main__":
     input_code_name = './demo/tacas2023/exp5/example_controller5.py'    
     # config = 
-    scenario = Scenario(ScenarioConfig(init_seg_length=1))
+    para = True
+    scenario = Scenario(ScenarioConfig(init_seg_length=1,parallel=para))
     scenario.add_agent(CarAgent('car1', file_name=input_code_name))
     scenario.add_agent(NPCAgent('car2'))
     scenario.add_agent(NPCAgent('car3'))
@@ -62,12 +63,14 @@ if __name__ == "__main__":
         ]
     )
     # scenario.config.init_seg_length = 5
-    mode='ser'
-    mode='par'
     start_time = time.time()
-    traces = scenario.verify(60, 0.1, mode=mode)  # traces.dump('./output1.json')
+    traces = scenario.verify(60, 0.1)  # traces.dump('./output1.json')
     run_time = time.time()-start_time
-    traces.dump('./demo/tacas2023/exp5/output5_'+mode+'.json')
+    if scenario.config.parallel:
+        traces.dump('./demo/tacas2023/exp5/output5_par.json')
+    else:
+        traces.dump('./demo/tacas2023/exp5/output5_ser.json')
+
     print({
         "#A": len(scenario.agent_dict),
         "A": "C",

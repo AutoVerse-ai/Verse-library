@@ -1,5 +1,6 @@
 from quadrotor_agent import QuadrotorAgent
 from verse import Scenario
+from verse.scenario.scenario import ScenarioConfig
 from verse.plotter.plotter2D import reachtube_tree
 from verse.plotter.plotter3D_new import *
 from verse.plotter.plotter3D import *
@@ -31,7 +32,9 @@ if __name__ == "__main__":
     input_code_name = './demo/tacas2023/exp9/quadrotor_controller3.py'
     input_code_name2 = './demo/tacas2023/exp9/quadrotor_controller4.py'
 
-    scenario = Scenario()
+    para = True
+    config = ScenarioConfig(parallel=para)
+    scenario = Scenario(config)
     time_step = 0.2
     quadrotor1 = QuadrotorAgent(
         'test1', file_name=input_code_name, t_v_pair=(1, 1), box_side=[0.4]*3)
@@ -61,12 +64,14 @@ if __name__ == "__main__":
     # fig = go.Figure()
     # fig = simulation_tree_3d(traces, tmp_map, fig, 1, 2, 3, [1, 2, 3])
     # fig.show()
-    mode='ser'
-    mode='par'
+
     start_time = time.time()
-    traces = scenario.verify(60, time_step, mode=mode)
+    traces = scenario.verify(60, time_step)
     run_time = time.time() - start_time
-    traces.dump('./demo/tacas2023/exp9/output9_dryvr_'+mode+'.json')
+    if scenario.config.parallel:
+        traces.dump('./demo/tacas2023/exp9/output9_dryvr_par.json')
+    else:
+        traces.dump('./demo/tacas2023/exp9/output9_dryvr_ser.json')
     print({
         "#A": len(scenario.agent_dict),
         "A": "Q",

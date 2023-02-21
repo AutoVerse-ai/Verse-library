@@ -158,6 +158,7 @@ class ScenarioConfig:
     reachability_method: str = 'DRYVR'
     parallel_sim_ahead: int = 8
     parallel_ver_ahead: int = 8
+    parallel: bool = True
 
 class Scenario:
     def __init__(self, config=ScenarioConfig()):
@@ -322,7 +323,7 @@ class Scenario:
         self.past_runs.append(tree)
         return tree
 
-    def verify(self, time_horizon, time_step, params={}, mode='ser') -> AnalysisTree:
+    def verify(self, time_horizon, time_step, params={}, max_height=None) -> AnalysisTree:
         self.check_init()
         init_list = []
         init_mode_list = []
@@ -339,13 +340,13 @@ class Scenario:
             static_list.append(self.static_dict[agent_id])
             uncertain_param_list.append(self.uncertain_param_dict[agent_id])
             agent_list.append(self.agent_dict[agent_id])
-        if mode == 'ser':
+        if not self.config.parallel:
             tree = self.verifier.compute_full_reachtube_ser(init_list, init_mode_list, static_list, uncertain_param_list, agent_list, self, time_horizon,
-                                                    time_step, self.map, self.config.init_seg_length, self.config.reachability_method, len(self.past_runs), self.past_runs, params)
+                                                    time_step, max_height,self.map, self.config.init_seg_length, self.config.reachability_method, len(self.past_runs), self.past_runs, params)
         else:
             ray.init()
             tree = self.verifier.compute_full_reachtube(init_list, init_mode_list, static_list, uncertain_param_list, agent_list, self, time_horizon,
-                                                    time_step, self.map, self.config.init_seg_length, self.config.reachability_method, len(self.past_runs), self.past_runs, params)
+                                                    time_step, max_height, self.map, self.config.init_seg_length, self.config.reachability_method, len(self.past_runs), self.past_runs, params)
             ray.shutdown()
         self.past_runs.append(tree)
         return tree

@@ -104,6 +104,7 @@ class Verifier:
         node: AnalysisTreeNode,
         remain_time: float,
         time_step: float,
+        max_height: int,
         lane_map: LaneMap,
         init_seg_length,
         reachability_method,
@@ -112,6 +113,8 @@ class Verifier:
         transition_graph,
         params = {},
     ):
+        if (max_height == None):
+            max_height = float('inf')
         combined_inits = {a: combine_all(inits) for a, inits in node.init.items()}
         # print(node.init)
         # print(node.mode)
@@ -224,7 +227,9 @@ class Verifier:
                     # pp(("dedup!", pre_len, len(cached_tubes[agent_id].transitions)))
                 else:
                     self.trans_cache.add_tube(agent_id, combined_inits, node, transit_agents, transition, transit_ind, run_num)
-
+        if (node.height >= max_height):
+            print("max depth reached")
+            return node
         next_nodes = []
         max_end_idx = 0
         for transition in all_possible_transitions:
@@ -293,6 +298,7 @@ class Verifier:
         transition_graph,
         time_horizon,
         time_step,
+        max_height,
         lane_map,
         init_seg_length,
         reachability_method,
@@ -301,8 +307,8 @@ class Verifier:
         params = {},
     ):
 
-        # if (max_height == None):
-        #     max_height = float('inf')
+        if (max_height == None):
+            max_height = float('inf')
         root = AnalysisTreeNode(
             trace={},
             init={},
@@ -310,6 +316,7 @@ class Verifier:
             static = {},
             uncertain_param={},
             agent={},
+            height=0,
             assert_hits={},
             child=[],
             start_time = 0,
@@ -331,6 +338,7 @@ class Verifier:
         while True:
             wait = False
             if len(verification_queue) > 0:
+                print([node.id for node in verification_queue])
                 node: AnalysisTreeNode = verification_queue.pop(0)
                 num_transitions+=1
                 # pp(("start ver", node.start_time, {a: (*node.mode[a], *node.init[a]) for a in node.mode}))
@@ -339,28 +347,29 @@ class Verifier:
                     continue
                 # For trace not already verified
                 result_refs.append(self.compute_full_reachtube_step.remote
-                                (self, node, remain_time, time_step, lane_map, init_seg_length, reachability_method,run_num, past_runs, transition_graph, params))
+                                (self, node, remain_time, time_step, max_height, lane_map, init_seg_length, reachability_method,run_num, past_runs, transition_graph, params))
                 if len(result_refs) >= self.config.parallel_ver_ahead:
                     wait = True
             elif len(result_refs) > 0:
                 wait = True
             else:
                 break
-            print(len(verification_queue), len(result_refs))
+            # print(len(verification_queue), len(result_refs))
             if wait:
                 [res], result_refs = ray.wait(result_refs)
                 node= ray.get(res)
                 id=node.id
                 next_nodes = node.child
-                print("got id:", id)
+                # print("got id:", id)
                 nodes[id].assert_hits=node.assert_hits
                 nodes[id].child=next_nodes
                 nodes[id].trace=node.trace
                 last_id = nodes[-1].id
                 for i, node in enumerate(next_nodes):
                     node.id = i + 1 + last_id
-                verification_queue.extend(next_nodes)
-                nodes.extend(next_nodes)
+                if node.height <= max_height:
+                    verification_queue.extend(next_nodes)
+                    nodes.extend(next_nodes)
         self.reachtube_tree = AnalysisTree(root)
         # print(f">>>>>>>> Number of calls to reachability engine: {num_calls}")
         # print(f">>>>>>>> Number of transitions happening: {num_transitions}")
@@ -378,6 +387,7 @@ class Verifier:
         transition_graph,
         time_horizon,
         time_step,
+        max_height,
         lane_map,
         init_seg_length,
         reachability_method,
@@ -392,6 +402,7 @@ class Verifier:
             static = {},
             uncertain_param={},
             agent={},
+            height=0,
             assert_hits={},
             child=[],
             start_time = 0,
@@ -513,13 +524,13 @@ class Verifier:
                     # pp(("to sim", new_cache.keys(), len(paths_to_sim)))
 
             # Get all possible transitions to next mode
-            start = time.perf_counter()
-            asserts_orig, all_possible_transitions_orig = transition_graph.get_transition_verify(new_cache, paths_to_sim, node)
-            time_transition_orig += time.perf_counter() - start
+            # start = time.perf_counter()
+            # asserts_orig, all_possible_transitions_orig = transition_graph.get_transition_verify(new_cache, paths_to_sim, node)
+            # time_transition_orig += time.perf_counter() - start
             start = time.perf_counter()
             asserts, all_possible_transitions = transition_graph.get_transition_verify_opt(new_cache, paths_to_sim, node)
             time_transition += time.perf_counter() - start
-            assert asserts == asserts_orig and all_possible_transitions_orig == all_possible_transitions
+            # assert asserts == asserts_orig and all_possible_transitions_orig == all_possible_transitions
             # pp(("transitions:", [(t[0], t[2]) for t in all_possible_transitions]))
             node.assert_hits = asserts
             if asserts != None:
@@ -543,6 +554,9 @@ class Verifier:
                         # pp(("dedup!", pre_len, len(cached_tubes[agent_id].transitions)))
                     else:
                         self.trans_cache.add_tube(agent_id, combined_inits, node, transit_agents, transition, transit_ind, run_num)
+            if (node.height >= max_height):
+                print("max depth reached")
+                continue
             max_end_idx = 0
             for transition in all_possible_transitions:
                 # Each transition will contain a list of rectangles and their corresponding indexes in the original list
@@ -605,3 +619,14 @@ class Verifier:
         self.num_transitions = num_transitions
         print('reachtube time:', time_reachtube, 'transition time:', time_transition_orig, 'transition opt time:', time_transition)
         return self.reachtube_tree
+
+def checkHeight(root, max_height):
+    if root:
+        # First recur on left child
+        # then print the data of node
+        if(root.child == []):
+            print("HEIGHT", root.height)
+            if(root.height > max_height):
+                print("Exceeds max height")
+        for c in root.child:
+            checkHeight(c, max_height)

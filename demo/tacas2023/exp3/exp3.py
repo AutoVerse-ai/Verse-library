@@ -1,6 +1,7 @@
 from verse.agents.example_agent import CarAgent, NPCAgent
 from verse.map.example_map.map_tacas import M2
 from verse import Scenario
+from verse.scenario.scenario import ScenarioConfig
 from verse.plotter.plotter2D import *
 
 from enum import Enum, auto
@@ -34,7 +35,9 @@ class TrackMode(Enum):
 
 if __name__ == "__main__":
     input_code_name = './demo/tacas2023/exp3/example_controller7.py'
-    scenario = Scenario()
+    para = True
+    config = ScenarioConfig(parallel=para)
+    scenario = Scenario(config)
 
     car = CarAgent('car1', file_name=input_code_name)
     scenario.add_agent(car)
@@ -78,12 +81,13 @@ if __name__ == "__main__":
     # fig = simulation_anime(traces, tmp_map, fig, 1, 2, [
     #                        1, 2], 'lines', 'trace', sample_rate=1)
     # fig.show()
-    mode='ser'
-    mode='par'
     start_time = time.time()
-    traces = scenario.verify(80, 0.05, mode=mode)
+    traces = scenario.verify(80, 0.05)
     run_time = time.time()-start_time 
-    traces.dump('./demo/tacas2023/exp3/output3_'+mode+'.json')
+    if scenario.config.parallel:
+        traces.dump('./demo/tacas2023/exp3/output3_par.json')
+    else:
+        traces.dump('./demo/tacas2023/exp3/output3_ser.json')
 
     print({
         "#A": len(scenario.agent_dict),
