@@ -85,13 +85,17 @@ class Intersection(LaneMap):
             else:
                 lanes, ind = lane_idx.split(".")
                 ind = int(ind)
-                if "Left" in mode_dest and ind > 0:
+                if "Left" in mode_src and ind > 0:
                     return f"{lanes}.{ind - 1}"
-                if "Right" in mode_dest and ind < self.lanes - 1:
+                if "Right" in mode_src and ind < self.lanes - 1:
                     return f"{lanes}.{ind + 1}"
                 return None
         else:
             if dst_sw:
-                return lane_idx
+                lanes, ind = lane_idx.split(".")
+                ind = int(ind)
+                if "Left" in mode_dest and ind > 0 or "Right" in mode_dest and ind < self.lanes - 1:
+                    return lane_idx
+                return None
             else:
                 return lane_idx
