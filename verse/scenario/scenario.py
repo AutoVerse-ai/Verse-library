@@ -155,7 +155,7 @@ def check_sim_transitions(agent: BaseAgent, guards: List[Tuple], cont, disc, map
             satisfied_guard.append((agent_id, pure_dest, next_init, paths))
     return None, satisfied_guard
 
-@dataclass
+@dataclass(frozen=True)
 class ScenarioConfig:
     incremental: bool = False
     unsafe_continue: bool = False
