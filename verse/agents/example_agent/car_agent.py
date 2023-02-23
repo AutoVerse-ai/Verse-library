@@ -44,7 +44,7 @@ class NPCAgent(BaseAgent):
         a = 0
         return steering, a  
 
-    def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step, lane_map:LaneMap=None)->TraceType:
+    def TC_simulate(self, mode: Tuple[str], initialCondition, time_bound, time_step, lane_map:LaneMap=None)->TraceType:
         time_bound = float(time_bound)
         number_points = int(np.ceil(time_bound/time_step))
 

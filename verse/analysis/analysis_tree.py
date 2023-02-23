@@ -1,6 +1,6 @@
 from functools import reduce
 import pickle
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 import json
 from treelib import Tree
 import numpy.typing as nptyp, numpy as np, portion
@@ -35,7 +35,7 @@ class AnalysisTreeNode:
     ):
         self.trace: Dict[str, TraceType] = trace
         self.init: Dict[str, List[float]] = init
-        self.mode: Dict[str, List[str]] = mode
+        self.mode: Dict[str, Tuple[str]] = mode
         self.agent: Dict = agent
         self.height: int = height
         self.child: List[AnalysisTreeNode] = child
