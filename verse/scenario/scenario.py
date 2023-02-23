@@ -107,9 +107,8 @@ def check_sim_transitions(agent: BaseAgent, guards: List[Tuple], cont, disc, map
         return asserts, satisfied_guard
 
     all_resets = defaultdict(list)
+    env = pack_env(agent, ego_ty_name, cont, disc, map)    # TODO: diff disc -> disc_vars?
     for path, disc_vars in guards:
-        env = pack_env(agent, ego_ty_name, cont, disc, map)    # TODO: diff disc -> disc_vars?
-
         # Collect all the hit guards for this agent at this time step
         if eval(path.cond, env):
             # If the guard can be satisfied, handle resets
