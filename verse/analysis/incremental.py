@@ -131,7 +131,7 @@ class CachedTube:
     def __eq__(self, other) -> bool:
         if other is None:
             return False
-        return (self.tube == other.tube).any()
+        return (self.tube == other.tube).all()
 
 class SimTraceCache:
     def __init__(self):
