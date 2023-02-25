@@ -10,8 +10,7 @@ from verse.analysis.incremental import CachedSegment, SimTraceCache, convert_sim
 from verse.analysis.utils import dedup
 from verse.map.lane_map import LaneMap
 from verse.parser.parser import ModePath, find
-# from verse.scenario.scenario import ScenarioConfig
-# from verse.scenario.scenario import Scenario
+# from verse.scenario.scenario import ScenarioConfig, Scenario
 pp = functools.partial(pprint.pprint, compact=True, width=130)
 
 # from verse.agents.base_agent import BaseAgent
