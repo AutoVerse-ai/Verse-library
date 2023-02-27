@@ -70,14 +70,14 @@ class thermo_agent(BaseAgent):
         t = [round(i*time_step, 10) for i in range(0, number_points)]
 
         init = initialCondition
-        trace = [[0]+init]
+        trace = np.array([0, *init])
         for i in range(len(t)):
             rate = self.action_handler(mode[0])
             r = ode(self.dynamic)
             r.set_initial_value(init).set_f_params(rate)
             res: np.ndarray = r.integrate(r.t + time_step)
             init = res.flatten().tolist()
-            trace.append([t[i] + time_step] + init)
+            trace = np.vstack((trace, np.insert(init, 0, time_step * (i + 1))))
         return np.array(trace)
 
 

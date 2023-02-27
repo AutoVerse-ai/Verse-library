@@ -4,13 +4,18 @@ import timeit
 from typing import Dict, List, Optional, Tuple
 import copy, itertools, functools, pprint
 from pympler.asizeof import asizeof
+from collections import defaultdict
+from typing import DefaultDict, Optional, Tuple, List, Dict, Any
+from types import SimpleNamespace
+import warnings
 
 from verse.agents.base_agent import BaseAgent
 from verse.analysis.incremental import CachedSegment, SimTraceCache, convert_sim_trans, to_simulate
 from verse.analysis.utils import dedup
 from verse.map.lane_map import LaneMap
 from verse.parser.parser import ModePath, find
-# from verse.scenario.scenario import ScenarioConfig, Scenario
+from verse.analysis.incremental import CachedRTTrans, CachedSegment, combine_all, reach_trans_suit, sim_trans_suit
+
 pp = functools.partial(pprint.pprint, compact=True, width=130)
 
 # from verse.agents.base_agent import BaseAgent
@@ -18,9 +23,102 @@ from verse.analysis.analysis_tree import AnalysisTreeNode, AnalysisTree, TraceTy
 
 PathDiffs = List[Tuple[BaseAgent, ModePath]]
 
+EGO, OTHERS = "ego", "others"
 
 def red(s):
     return "\x1b[31m" + s + "\x1b[0m" #]]
+
+def pack_env(agent: BaseAgent, ego_ty_name: str, cont: Dict[str, float], disc: Dict[str, str], track_map) -> Dict[str, Any]:
+    packed: DefaultDict[str, Any] = defaultdict(dict)
+    # packed = {}
+    for e in [cont, disc]:
+        for k, v in e.items():
+            k1, k2 = k.split(".")
+            packed[k1][k2] = v
+    env: Dict[str, Any] = {EGO: SimpleNamespace(**packed[EGO])}
+    for arg in agent.decision_logic.args:
+        if "map" in arg.name:
+            env[arg.name] = track_map
+        elif arg.name != EGO:
+            other = arg.name
+            if other in packed:
+                other_keys, other_vals = tuple(map(list, zip(*packed[other].items())))
+                env[other] = list(map(lambda v: SimpleNamespace(**{k: v for k, v in zip(other_keys, v)}), zip(*other_vals)))
+                if not arg.is_list:
+                    env[other] = packed[other][0]
+            else:
+                if arg.is_list:
+                    env[other] = []
+                else:
+                    raise ValueError(f"Expected one {ego_ty_name} for {other}, got none")
+
+    return env
+
+def check_sim_transitions(agent: BaseAgent, guards: List[Tuple], cont, disc, map, state, mode):
+    asserts = []
+    satisfied_guard = []
+    agent_id = agent.id
+    # Unsafety checking
+    ego_ty_name = find(agent.decision_logic.args, lambda a: a.name == EGO).typ
+    packed_env = pack_env(agent, ego_ty_name, cont, disc, map)
+
+    # Check safety conditions
+    for assertion in agent.decision_logic.asserts:
+        if eval(assertion.pre, packed_env):
+            if not eval(assertion.cond, packed_env):
+                del packed_env["__builtins__"]
+                print(f"assert hit for {agent_id}: \"{assertion.label}\" @ {packed_env}")
+                asserts.append(assertion.label)
+    if len(asserts) != 0:
+        return asserts, satisfied_guard
+
+    all_resets = defaultdict(list)
+    env = pack_env(agent, ego_ty_name, cont, disc, map)    # TODO: diff disc -> disc_vars?
+    for path, disc_vars in guards:
+        # Collect all the hit guards for this agent at this time step
+        if eval(path.cond, env):
+            # If the guard can be satisfied, handle resets
+            all_resets[path.var].append((path.val, path))
+
+    iter_list = []
+    for vals in all_resets.values():
+        paths = [p for _, p in vals]
+        iter_list.append(zip(range(len(vals)), paths))
+    pos_list = list(itertools.product(*iter_list))
+    if len(pos_list) == 1 and pos_list[0] == ():
+        return None, satisfied_guard
+    for pos in pos_list:
+        next_init = copy.deepcopy(state)
+        dest = copy.deepcopy(mode)
+        possible_dest = [[elem] for elem in dest]
+        for j, (reset_idx, path) in enumerate(pos):
+            reset_variable = list(all_resets.keys())[j]
+            res = eval(all_resets[reset_variable][reset_idx][0], packed_env)
+            ego_type = agent.decision_logic.state_defs[ego_ty_name]
+            if "mode" in reset_variable:
+                var_loc = ego_type.disc.index(reset_variable)
+                assert not isinstance(res, list), res
+                possible_dest[var_loc] = [(res, path)]
+            else:
+                var_loc = ego_type.cont.index(reset_variable)
+                next_init[var_loc] = res
+        all_dest = list(itertools.product(*possible_dest))
+        if not all_dest:
+            warnings.warn(
+                f"Guard hit for mode {mode} for agent {agent_id} without available next mode")
+            all_dest.append(None)
+        for dest in all_dest:
+            assert isinstance(dest, tuple)
+            paths = []
+            pure_dest = []
+            for d in dest:
+                if isinstance(d, tuple):
+                    pure_dest.append(d[0])
+                    paths.append(d[1])
+                else:
+                    pure_dest.append(d)
+            satisfied_guard.append((agent_id, pure_dest, next_init, paths))
+    return None, satisfied_guard
 
 @dataclass
 class SimConsts:
@@ -28,7 +126,8 @@ class SimConsts:
     lane_map: LaneMap
     run_num: int
     past_runs: List[AnalysisTree]
-    transition_graph: "Scenario"
+    sensor: "BaseSensor"
+    agent_dict: Dict
 
 class Simulator:
     def __init__(self, config):
@@ -68,7 +167,7 @@ class Simulator:
                 assert old_node != None
                 new_cache, paths_to_sim = to_simulate(old_node.agent, node.agent, cached_segments)
 
-        asserts, transitions, transition_idx = consts.transition_graph.get_transition_simulate(new_cache, paths_to_sim, node)
+        asserts, transitions, transition_idx = Simulator.get_transition_simulate(new_cache, paths_to_sim, node, consts.lane_map, consts.sensor, consts.agent_dict)
         # pp(("transitions:", transition_idx, transitions))
 
         node.assert_hits = asserts
@@ -183,8 +282,8 @@ class Simulator:
             # pp(("dedup!", pre_len, len(cached_segments[aid].transitions)))
         print(f"proc dur {timeit.default_timer() - t}")
 
-    def simulate(self, init_list, init_mode_list, static_list, uncertain_param_list, agent_list,
-                 transition_graph, time_horizon, time_step, max_height, lane_map, run_num, past_runs):
+    def simulate(self, init_list, init_mode_list, static_list, uncertain_param_list, agent_dict,
+                 sensor, time_horizon, time_step, max_height, lane_map, run_num, past_runs):
         # Setup the root of the simulation tree
         if(max_height == None):
             max_height = float('inf')
@@ -199,7 +298,7 @@ class Simulator:
             child=[],
             start_time=0,
         )
-        for i, agent in enumerate(agent_list):
+        for i, agent in enumerate(agent_dict.values()):
             root.init[agent.id] = init_list[i]
             root.mode[agent.id] = tuple(elem if isinstance(elem, str) else elem.name for elem in init_mode_list[i])
             init_static = [elem.name for elem in static_list[i]]
@@ -214,7 +313,7 @@ class Simulator:
         self.nodes = [root]
         self.num_cached = 0
         # Perform BFS through the simulation tree to loop through all possible transitions
-        consts = SimConsts(time_step, lane_map, run_num, past_runs, transition_graph)
+        consts = SimConsts(time_step, lane_map, run_num, past_runs, sensor, agent_dict)
         if self.config.parallel:
             import ray
             consts_ref = ray.put(consts)
@@ -418,6 +517,99 @@ class Simulator:
 
 
         return self.simulation_tree
+
+    @staticmethod
+    def get_transition_simulate(cache: Dict[str, CachedSegment], paths: PathDiffs, node: AnalysisTreeNode, track_map: LaneMap, sensor, agent_dict) -> Tuple[Optional[Dict[str, List[str]]], Optional[Dict[str, List[Tuple[str, List[str], List[float]]]]], int]:
+        trace_length = len(list(node.trace.values())[0])
+
+        # For each agent
+        agent_guard_dict = defaultdict(list)
+        cached_guards = defaultdict(list)
+        min_trans_ind = None
+        cached_trans = defaultdict(list)
+
+        if not cache:
+            paths = [(agent, p) for agent in node.agent.values() for p in agent.decision_logic.paths]
+        else:
+            _transitions = [(aid, trans) for aid, seg in cache.items() for trans in seg.transitions if sim_trans_suit(trans.inits, node.init)]
+            # pp(("cached trans", _transitions))
+            if len(_transitions) > 0:
+                min_trans_ind = min([t.transition for _, t in _transitions])
+                # pp(("min", min_trans_ind))
+                for aid, trans in _transitions:
+                    # TODO: check for asserts
+                    if trans.transition == min_trans_ind:
+                        # pp(("chosen tran", aid, trans))
+                        cached_trans[aid].append((aid, trans.disc, trans.cont, trans.paths))
+                for agent_id in cached_trans:
+                    cached_trans[agent_id] = dedup(cached_trans[agent_id], lambda p: p[:3])
+                if len(paths) == 0:
+                    # print(red("full cache"))
+                    return None, dict(cached_trans), min_trans_ind
+
+                path_transitions = defaultdict(int)
+                for seg in cache.values():
+                    for tran in seg.transitions:
+                        for p in tran.paths:
+                            path_transitions[p.cond] = max(path_transitions[p.cond], tran.transition)
+                for agent_id, segment in cache.items():
+                    agent = node.agent[agent_id]
+                    if len(agent.decision_logic.args) == 0:
+                        continue
+                    state_dict = {aid: (node.trace[aid][0], node.mode[aid], node.static[aid]) for aid in node.agent}
+                    agent_paths = dedup([p for tran in segment.transitions for p in tran.paths], lambda i: (i.var, i.cond, i.val))
+                    cont_var_dict_template, discrete_variable_dict, len_dict = sensor.sense(agent, state_dict, track_map)
+                    for path in agent_paths:
+                        cached_guards[agent_id].append((path, discrete_variable_dict, path_transitions[path.cond]))
+
+        for agent, path in paths:
+            # Get guard
+            if len(agent.decision_logic.args) == 0:
+                continue
+            agent_id = agent.id
+            agent_mode = node.mode[agent_id]
+            state_dict = {aid: (node.trace[aid][0], node.mode[aid], node.static[aid]) for aid in node.agent}
+            cont_var_dict_template, discrete_variable_dict, len_dict = sensor.sense(agent, state_dict, track_map)
+            agent_guard_dict[agent_id].append((path, discrete_variable_dict))
+
+        transitions = defaultdict(list)
+        # TODO: We can probably rewrite how guard hit are detected and resets are handled for simulation
+        for idx in range(trace_length):
+            if min_trans_ind != None and idx >= min_trans_ind:
+                return None, dict(cached_trans), min_trans_ind
+            satisfied_guard = []
+            all_asserts = defaultdict(list)
+            for agent_id in agent_guard_dict:
+                agent: BaseAgent = agent_dict[agent_id]
+                state_dict = {aid: (node.trace[aid][idx], node.mode[aid], node.static[aid]) for aid in node.agent}
+                agent_state, agent_mode, agent_static = state_dict[agent_id]
+                agent_state = agent_state[1:]
+                continuous_variable_dict, orig_disc_vars, _ = sensor.sense(agent, state_dict, track_map)
+                unchecked_cache_guards = [g[:2] for g in cached_guards[agent_id] if g[2] < idx]     # FIXME: off by 1?
+                asserts, satisfied = check_sim_transitions(agent, agent_guard_dict[agent_id] + unchecked_cache_guards, continuous_variable_dict, orig_disc_vars, track_map, agent_state, agent_mode)
+                if asserts != None:
+                    all_asserts[agent_id] = asserts
+                    continue
+                if len(satisfied) != 0:
+                    satisfied_guard.extend(satisfied)
+                    # assert all(len(s[2]) == 4 for s in satisfied)
+            if len(all_asserts) > 0:
+                return all_asserts, dict(transitions), idx
+            if len(satisfied_guard) > 0:
+                for agent_idx, dest, next_init, paths in satisfied_guard:
+                    assert isinstance(paths, list)
+                    dest = tuple(dest)
+                    src_mode = node.get_mode(agent_idx, node.mode[agent_idx])
+                    src_track = node.get_track(agent_idx, node.mode[agent_idx])
+                    dest_mode = node.get_mode(agent_idx, dest)
+                    dest_track = node.get_track(agent_idx, dest)
+                    # pp(("dbg", src_track, src_mode, dest, dest_mode, dest_track))
+                    # pp((track_map.h(src_track, src_mode, dest_mode)))
+                    if dest_track == track_map.h(src_track, src_mode, dest_mode):
+                        transitions[agent_idx].append((agent_idx, dest, next_init, paths))
+                # print("transitions", transitions)
+                break
+        return None, dict(transitions), idx
 
 #print all height of leaves
 def checkHeight(root, max_height):
