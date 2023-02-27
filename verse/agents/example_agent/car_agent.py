@@ -81,14 +81,14 @@ class CarAgent(BaseAgent):
         vehicle_mode, vehicle_lane = mode
         vehicle_pos = np.array([x,y])
         a = 0
-        lane = lane_map.lane_dict[vehicle_lane]
-        d = -lane.get_lateral_distance(vehicle_pos)
+        lane_width = lane_map.get_lane_width(vehicle_lane) 
+        d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
         if vehicle_mode == "Normal" or vehicle_mode == 'Stop':
             pass
         elif vehicle_mode == "SwitchLeft":
-            d += lane.lane_width
+            d += lane_width
         elif vehicle_mode == "SwitchRight":
-            d -= lane.lane_width
+            d -= lane_width
         elif vehicle_mode == "Brake":
             a = max(-self.accel, -v)
         elif vehicle_mode == "Accel":
@@ -96,7 +96,7 @@ class CarAgent(BaseAgent):
         else:
             raise ValueError(f'Invalid mode: {vehicle_mode}')
 
-        heading = lane.get_heading(vehicle_pos)
+        heading = lane_map.get_lane_heading(vehicle_lane, vehicle_pos)
         psi = wrap_to_pi(heading - theta)
         steering = psi + np.arctan2(0.45*d, v)
         steering = np.clip(steering, -0.61, 0.61)

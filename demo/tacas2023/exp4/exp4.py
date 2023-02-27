@@ -11,6 +11,8 @@ import sys
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 
+from verse.scenario.scenario import ScenarioConfig
+
 
 class AgentMode(Enum):
     Normal = auto()
@@ -32,6 +34,7 @@ class TrackMode(Enum):
 if __name__ == "__main__":
     input_code_name = './demo/tacas2023/exp4/example_controller5.py'
 
+    config = ScenarioConfig(init_seg_length=5)
     scenario = Scenario()
     car = CarAgent('car1', file_name=input_code_name)
     scenario.add_agent(car)
@@ -54,7 +57,7 @@ if __name__ == "__main__":
         ]
     )
     scenario.set_sensor(NoisyVehicleSensor((0.5, 0.5), (0.0, 0.0)))
-    scenario.config.init_seg_length = 5
+    # scenario.config.init_seg_length = 5
 
     start_time = time.time()
     traces = scenario.verify(40, 0.1, params={"bloating_method": 'GLOBAL'})
@@ -74,7 +77,7 @@ if __name__ == "__main__":
         fig = go.Figure()
         fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace')
 
-    scenario1 = Scenario()
+    scenario1 = Scenario(config)
     car = CarAgent('car1', file_name=input_code_name)
     scenario1.add_agent(car)
     car = NPCAgent('car2')
@@ -95,7 +98,7 @@ if __name__ == "__main__":
             (AgentMode.Normal, TrackMode.T0),
         ]
     )
-    scenario1.config.init_seg_length = 5
+    # scenario1.config.init_seg_length = 5
 
     traces = scenario1.verify(40, 0.1, params={"bloating_method": 'GLOBAL'})
     traces.dump("./demo/tacas2023/exp4/output4_nonoise.json")
