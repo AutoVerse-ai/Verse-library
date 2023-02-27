@@ -57,7 +57,7 @@ class AnalysisTreeNode:
             'height': self.height,
             'static': self.static, 
             'start_time': self.start_time,
-            'trace': {aid: t.tolist() for aid, t in self.trace.items()}, 
+            'trace': ({aid: t.tolist() for aid, t in self.trace.items()} if self.type == "simtrace" else self.trace), 
             'type': self.type, 
             'assert_hits': self.assert_hits
         }
@@ -93,7 +93,7 @@ class AnalysisTreeNode:
     @staticmethod
     def from_dict(data) -> "AnalysisTreeNode":
         return AnalysisTreeNode(
-            trace = {aid: np.array(data['trace'][aid]) for aid in data["agent"].keys()},
+            trace = ({aid: np.array(data['trace'][aid]) for aid in data["agent"].keys()} if data["type"] == "simtrace" else data["trace"]),
             init = data['init'],
             mode = data['mode'],
             height = data['height'],
