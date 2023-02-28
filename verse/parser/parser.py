@@ -1,11 +1,13 @@
 import ast, copy, warnings
-from typing import List, Dict, Union, Optional, Any, Tuple
+from typing import Callable, List, Dict, TypeVar, Union, Optional, Any, Tuple
 from dataclasses import dataclass, field, fields
 from enum import Enum, auto
 from verse.parser import astunparser
 
-def find(a, f):
-    for v in a:
+T = TypeVar("T")
+
+def find(l: List[T], f: Callable[[T], bool]) -> Optional[T]:
+    for v in l:
         if f(v):
             return v
     return None

@@ -10,9 +10,9 @@ from verse.scenario.scenario import ScenarioConfig, Scenario
 from typing import List
 pp = functools.partial(pprint.pprint, compact=True, width=130)
 
-from controller.intersection_car import AgentMode, TrackMode
+from controller.intersection_car import AgentMode
 
-CAR_NUM = 3
+CAR_NUM = 7
 CAR_ACCEL_RANGE = (0.7, 3)
 CAR_SPEED_RANGE = (1, 3)
 CAR_THETA_RANGE = (-0.1, 0.1)
@@ -64,7 +64,12 @@ if __name__ == "__main__":
     ctlr_src = "demo/vehicle/controller/intersection_car.py"
     config = ScenarioConfig(incremental='i' in arg, parallel='l' in arg)
     scenario = Scenario(config)
-    random.seed(0)
+    import time
+    if len(sys.argv) == 3:
+        seed = int(sys.argv[2])
+    else:
+        seed = int(time.time())
+    random.seed(seed)
 
     sim = "v" not in arg
     dirs = "WSEN"
@@ -72,16 +77,20 @@ if __name__ == "__main__":
     scenario.set_map(map)
     for i in range(CAR_NUM):
         car = CarAgent(f"car{i}", file_name=ctlr_src, speed=rand(*CAR_SPEED_RANGE), accel=rand(*CAR_ACCEL_RANGE))
+        # if i == 0:
+        #     for p in car.decision_logic.paths:
+        #         print(ast_dump(p.val_veri), "<=", ast_dump(p.cond_veri))
         scenario.add_agent(car)
         dir = random.randint(0, 3)
         src = dirs[dir]
         dst_dirs = list(dirs)
         dst_dirs.remove(src)
         dst = dst_dirs[random.randint(0, 2)]
-        start, off = map.size + rand(0, map.length * 0.3), rand(0, map.width)
+        lane = random.randint(0, map.lanes - 1)
+        start, off = map.size + rand(0, map.length * 0.3), rand(0, map.width) + map.width * lane
         pos = { "N": (-off, start), "S": (off, -start), "W": (-start, -off), "E": (start, off) }[src]
         init = [*pos, wrap_to_pi(dir * math.pi / 2 + rand(*CAR_THETA_RANGE)), rand(*CAR_SPEED_RANGE)]
-        modes = (AgentMode.Accel, getattr(TrackMode, src + dst))
+        modes = (AgentMode.Accel, f"{src}{dst}.{lane}")
         scenario.set_init_single(car.id, (init,), modes)
 
     if 'b' in arg:
@@ -89,3 +98,4 @@ if __name__ == "__main__":
     elif 'r' in arg:
         run(sim)
         run(sim, True)
+    print("seed:", seed)

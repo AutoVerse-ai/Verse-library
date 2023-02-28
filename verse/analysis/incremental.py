@@ -1,11 +1,11 @@
 from collections import defaultdict
 from dataclasses import dataclass
 from pprint import pp
-from typing import Any, DefaultDict, List, Tuple, Optional, Dict
+from typing import Any, DefaultDict, List, Tuple, Optional, Dict, Set
 from verse.agents.base_agent import BaseAgent
 from verse.analysis import AnalysisTreeNode
 from intervaltree import IntervalTree
-import itertools, copy, numpy as np
+import itertools, copy, numpy.typing as nptyp, numpy as np
 
 from verse.analysis.dryvr import _EPSILON
 # from verse.analysis.simulator import PathDiffs
@@ -21,12 +21,10 @@ class CachedTransition:
 
 @dataclass
 class CachedSegment:
-    trace: List[List[float]]
+    trace: nptyp.NDArray[np.float_]
     asserts: List[str]
     transitions: List[CachedTransition]
-    controller: ControllerIR
-    run_num: int
-    node_id: int
+    node_ids: Set[Tuple[int, int]]
 
 @dataclass
 class CachedReachTrans:
@@ -42,7 +40,6 @@ class CachedReachTrans:
 class CachedRTTrans:
     asserts: List[str]
     transitions: List[CachedReachTrans]
-    controller: ControllerIR
     run_num: int
     node_id: int
 
@@ -99,7 +96,7 @@ def to_simulate(old_agents: Dict[str, BaseAgent], new_agents: Dict[str, BaseAgen
 
 def convert_sim_trans(agent_id, transit_agents, inits, transition, trans_ind):
     if agent_id in transit_agents:
-        return [CachedTransition(inits, trans_ind, mode, init, paths) for _id, mode, init, paths in transition]
+        return [CachedTransition({k: list(v) for k, v in inits.items()}, trans_ind, mode, list(init), paths) for _id, mode, init, paths in transition]
     else:
         return []
 
@@ -134,13 +131,13 @@ class CachedTube:
     def __eq__(self, other) -> bool:
         if other is None:
             return False
-        return (self.tube == other.tube).any()
+        return (self.tube == other.tube).all()
 
 class SimTraceCache:
     def __init__(self):
         self.cache: DefaultDict[tuple, IntervalTree] = defaultdict(IntervalTree)
 
-    def add_segment(self, agent_id: str, node: AnalysisTreeNode, transit_agents: List[str], trace: List[List[float]], transition, trans_ind: int, run_num: int):
+    def add_segment(self, agent_id: str, node: AnalysisTreeNode, transit_agents: List[str], trace: nptyp.NDArray[np.float_], transition, trans_ind: int, run_num: int):
         key = (agent_id,) + tuple(node.mode[agent_id])
         init = node.init[agent_id]
         tree = self.cache[key]
@@ -149,7 +146,7 @@ class SimTraceCache:
         for i, val in enumerate(init):
             if i == len(init) - 1:
                 transitions = convert_sim_trans(agent_id, transit_agents, node.init, transition, trans_ind)
-                entry = CachedSegment(trace, assert_hits.get(agent_id), transitions, node.agent[agent_id].decision_logic, run_num, node.id)
+                entry = CachedSegment(trace, assert_hits.get(agent_id), transitions, set([(run_num, node.id)]))
                 tree[val - _EPSILON:val + _EPSILON] = entry
                 return entry
             else:
@@ -161,7 +158,7 @@ class SimTraceCache:
     @staticmethod
     def iter_tree(tree, depth: int) -> List[List[float]]:
         if depth == 0:
-            return [[(i.begin + i.end) / 2, (i.data.run_num, i.data.node_id, [t.transition for t in i.data.transitions])] for i in tree]
+            return [[(i.begin + i.end) / 2, (i.data.node_ids, [t.transition for t in i.data.transitions], len(i.data.trace))] for i in tree]
         res = []
         for i in tree:
             mid = (i.begin + i.end) / 2
@@ -173,7 +170,7 @@ class SimTraceCache:
         inits = defaultdict(list)
         for key, tree in self.cache.items():
             inits[key[0]].extend((*key[1:], *init) for init in self.iter_tree(tree, n))
-        inits = dict(inits)
+        inits = {k: sorted(v) for k, v in inits.items()}
         return inits
 
     @staticmethod

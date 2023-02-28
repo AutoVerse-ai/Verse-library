@@ -12,6 +12,7 @@ from verse.scenario.scenario import ScenarioConfig
 import functools, pprint
 pp = functools.partial(pprint.pprint, compact=True, width=130)
 from typing import List
+import ray
 
 class AgentMode(Enum):
     Normal = auto()
@@ -67,6 +68,7 @@ def run(sim, meas=False):
         scenario.verifier.tube_cache_hits = (0,0)
         scenario.verifier.trans_cache_hits = (0,0)
         traces = scenario.verify(60, 0.1)
+    dur = timeit.default_timer() - time
 
     if 'd' in arg:
         traces.dump_tree()
@@ -87,7 +89,7 @@ def run(sim, meas=False):
         cache_size = asizeof.asizeof(scenario.verifier.cache) + asizeof.asizeof(scenario.verifier.trans_cache)
     if meas:
         pp({
-            "dur": timeit.default_timer() - time,
+            "dur": dur,
             "cache_size": cache_size,
             "node_count": ((0 if sim else scenario.verifier.num_transitions), len(traces.nodes)),
             "hits": scenario.simulator.cache_hits if sim else (scenario.verifier.tube_cache_hits, scenario.verifier.trans_cache_hits),
@@ -97,6 +99,7 @@ if __name__ == "__main__":
     input_code_name = './demo/tacas2023/exp11/decision_logic/inc-expr6.py' if "6" in arg else './demo/tacas2023/exp11/decision_logic/inc-expr.py'
     config = ScenarioConfig()
     config.incremental = 'i' in arg
+    config.parallel = 'l' in arg
     scenario = Scenario(config)
 
     scenario.add_agent(CarAgent('car1', file_name=input_code_name))

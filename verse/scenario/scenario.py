@@ -9,8 +9,9 @@ from dataclasses import dataclass
 import types
 import sys
 from enum import Enum
-
+import ray
 import numpy as np
+import math
 from types import SimpleNamespace
 
 from verse.agents.base_agent import BaseAgent
@@ -26,6 +27,12 @@ from verse.sensor.base_sensor import BaseSensor
 from verse.map.lane_map import LaneMap
 
 EGO, OTHERS = "ego", "others"
+
+def check_ray_init(parallel: bool) -> None:
+    if parallel:
+        import ray
+        if not ray.is_initialized():
+            ray.init()
 
 def convertStrToEnum(inp, agent:BaseAgent, dl):
     res = inp
@@ -101,9 +108,8 @@ def check_sim_transitions(agent: BaseAgent, guards: List[Tuple], cont, disc, map
         return asserts, satisfied_guard
 
     all_resets = defaultdict(list)
+    env = pack_env(agent, ego_ty_name, cont, disc, map)    # TODO: diff disc -> disc_vars?
     for path, disc_vars in guards:
-        env = pack_env(agent, ego_ty_name, cont, disc, map)    # TODO: diff disc -> disc_vars?
-
         # Collect all the hit guards for this agent at this time step
         if eval(path.cond, env):
             # If the guard can be satisfied, handle resets
@@ -149,12 +155,15 @@ def check_sim_transitions(agent: BaseAgent, guards: List[Tuple], cont, disc, map
             satisfied_guard.append((agent_id, pure_dest, next_init, paths))
     return None, satisfied_guard
 
-@dataclass
+@dataclass(frozen=True)
 class ScenarioConfig:
     incremental: bool = False
     unsafe_continue: bool = False
     init_seg_length: int = 1000
     reachability_method: str = 'DRYVR'
+    parallel_sim_ahead: int = 8
+    parallel_ver_ahead: int = 8
+    parallel: bool = True
 
 class Scenario:
     def __init__(self, config=ScenarioConfig()):
@@ -282,7 +291,8 @@ class Scenario:
             res_list.append(trace)
         return res_list
 
-    def simulate(self, time_horizon, time_step, max_height=None, seed = None) -> AnalysisTree:
+    def simulate(self, time_horizon, time_step, max_height=None, seed=None) -> AnalysisTree:
+        check_ray_init(self.config.parallel)
         self.check_init()
         init_list = []
         init_mode_list = []
@@ -301,7 +311,6 @@ class Scenario:
         return tree
 
     def simulate_simple(self, time_horizon, time_step, max_height=None, seed = None) -> AnalysisTree:
-
         self.check_init()
         init_list = []
         init_mode_list = []
@@ -320,6 +329,7 @@ class Scenario:
         return tree
 
     def verify(self, time_horizon, time_step, max_height=None, params={}) -> AnalysisTree:
+        check_ray_init(self.config.parallel)
         self.check_init()
         init_list = []
         init_mode_list = []
@@ -336,7 +346,11 @@ class Scenario:
             static_list.append(self.static_dict[agent_id])
             uncertain_param_list.append(self.uncertain_param_dict[agent_id])
             agent_list.append(self.agent_dict[agent_id])
-        tree = self.verifier.compute_full_reachtube(init_list, init_mode_list, static_list, uncertain_param_list, agent_list, self, time_horizon,
+        if not self.config.parallel:
+            tree = self.verifier.compute_full_reachtube_ser(init_list, init_mode_list, static_list, uncertain_param_list, agent_list, self, time_horizon,
+                                                    time_step, max_height,self.map, self.config.init_seg_length, self.config.reachability_method, len(self.past_runs), self.past_runs, params)
+        else:
+            tree = self.verifier.compute_full_reachtube(init_list, init_mode_list, static_list, uncertain_param_list, agent_list, self, time_horizon,
                                                     time_step, max_height, self.map, self.config.init_seg_length, self.config.reachability_method, len(self.past_runs), self.past_runs, params)
         self.past_runs.append(tree)
         return tree
@@ -831,5 +845,266 @@ class Scenario:
                     dest_track = node.get_track(agent, dest)
                     if dest_track == track_map.h(src_track, src_mode, dest_mode):
                         possible_transitions.append(transition)
+                        print(transition[4])
         # Return result
         return None, possible_transitions
+
+    def get_transition_verify_opt(self, cache: Dict[str, CachedRTTrans], paths: PathDiffs, node: AnalysisTreeNode) -> Tuple[Optional[Dict[str, List[str]]], Optional[Dict[str, List[Tuple[str, List[str], List[float]]]]]]:
+        track_map = self.map
+
+        # For each agent
+        agent_guard_dict = defaultdict(list)
+        cached_guards = defaultdict(list)
+        min_trans_ind = None
+        cached_trans = defaultdict(list)
+
+        if not cache:
+            paths = [(agent, p) for agent in node.agent.values() for p in agent.decision_logic.paths]
+        else:
+
+            # _transitions = [trans.transition for seg in cache.values() for trans in seg.transitions]
+            _transitions = [(aid, trans) for aid, seg in cache.items() for trans in seg.transitions if reach_trans_suit(trans.inits, node.init)]
+            # pp(("cached trans", len(_transitions)))
+            if len(_transitions) > 0:
+                min_trans_ind = min([t.transition for _, t in _transitions])
+                # TODO: check for asserts
+                cached_trans = [(aid, tran.mode, tran.dest, tran.reset, tran.reset_idx, tran.paths) for aid, tran in dedup(_transitions, lambda p: (p[0], p[1].mode, p[1].dest)) if tran.transition == min_trans_ind]
+                if len(paths) == 0:
+                    # print(red("full cache"))
+                    return None, cached_trans
+
+                path_transitions = defaultdict(int)
+                for seg in cache.values():
+                    for tran in seg.transitions:
+                        for p in tran.paths:
+                            path_transitions[p.cond] = max(path_transitions[p.cond], tran.transition)
+                for agent_id, segment in cache.items():
+                    agent = node.agent[agent_id]
+                    if len(agent.decision_logic.args) == 0:
+                        continue
+                    state_dict = {aid: (node.trace[aid][0], node.mode[aid], node.static[aid]) for aid in node.agent}
+
+                    agent_paths = dedup([p for tran in segment.transitions for p in tran.paths], lambda i: (i.var, i.cond, i.val))
+                    for path in agent_paths:
+                        cont_var_dict_template, discrete_variable_dict, length_dict = self.sensor.sense(
+                            self, agent, state_dict, self.map)
+                        reset = (path.var, path.val_veri)
+                        guard_expression = GuardExpressionAst([path.cond_veri])
+
+                        cont_var_updater = guard_expression.parse_any_all_new(
+                            cont_var_dict_template, discrete_variable_dict, length_dict)
+                        self.apply_cont_var_updater(
+                            cont_var_dict_template, cont_var_updater)
+                        guard_can_satisfied = guard_expression.evaluate_guard_disc(
+                            agent, discrete_variable_dict, cont_var_dict_template, self.map)
+                        if not guard_can_satisfied:
+                            continue
+                        cached_guards[agent_id].append((path, guard_expression, cont_var_updater, copy.deepcopy(discrete_variable_dict), reset, path_transitions[path.cond]))
+
+        # for aid, trace in node.trace.items():
+        #     if len(trace) < 2:
+        #         pp(("weird state", aid, trace))
+        for agent, path in paths:
+            if len(agent.decision_logic.args) == 0:
+                continue
+            agent_id = agent.id
+            state_dict = {aid: (node.trace[aid][0:2], node.mode[aid], node.static[aid]) for aid in node.agent}
+            cont_var_dict_template, discrete_variable_dict, length_dict = self.sensor.sense(
+                self, agent, state_dict, self.map)
+            # TODO-PARSER: Get equivalent for this function
+            # Construct the guard expression
+            guard_expression = GuardExpressionAst([path.cond_veri])
+
+            cont_var_updater = guard_expression.parse_any_all_new(
+                cont_var_dict_template, discrete_variable_dict, length_dict)
+            self.apply_cont_var_updater(
+                cont_var_dict_template, cont_var_updater)
+            guard_can_satisfied = guard_expression.evaluate_guard_disc(
+                agent, discrete_variable_dict, cont_var_dict_template, self.map)
+            if not guard_can_satisfied:
+                continue
+            agent_guard_dict[agent_id].append(
+                (guard_expression, cont_var_updater, copy.deepcopy(discrete_variable_dict), path))
+
+        trace_length = int(min(len(v) for v in node.trace.values()) // 2)
+        # pp(("trace len", trace_length, {a: len(t) for a, t in node.trace.items()}))
+        guard_hits = []
+        guard_hit = False
+        reduction_rate = 10
+        reduction_queue = [(0, trace_length, trace_length)]
+        # for idx, end_idx,combine_len in reduction_queue:
+        while reduction_queue:
+            idx, end_idx,combine_len = reduction_queue.pop()
+            reduction_needed = False
+            # print((idx, combine_len))
+            if min_trans_ind != None and idx >= min_trans_ind:
+                return None, cached_trans
+            any_contained = False
+            hits = []
+            # end_idx = min(idx+combine_len, trace_length)
+            state_dict = {aid: (combine_rect_v1(node.trace[aid][idx*2:end_idx*2]), node.mode[aid], node.static[aid]) for aid in node.agent}
+            
+            asserts = defaultdict(list)
+            for agent_id in self.agent_dict.keys():
+                agent: BaseAgent = self.agent_dict[agent_id]
+                if len(agent.decision_logic.args) == 0:
+                    continue
+                # if np.array(agent_state).ndim != 2:
+                #     pp(("weird state", agent_id, agent_state))
+                cont_vars, disc_vars, len_dict = self.sensor.sense(self, agent, state_dict, self.map)
+                resets = defaultdict(list)
+                # Check safety conditions
+                for i, a in enumerate(agent.decision_logic.asserts_veri):
+                    pre_expr = a.pre
+
+                    def eval_expr(expr):
+                        ge = GuardExpressionAst([copy.deepcopy(expr)])
+                        cont_var_updater = ge.parse_any_all_new(cont_vars, disc_vars, len_dict)
+                        self.apply_cont_var_updater(cont_vars, cont_var_updater)
+                        sat = ge.evaluate_guard_disc(agent, disc_vars, cont_vars, self.map)
+                        if sat:
+                            sat = ge.evaluate_guard_hybrid(agent, disc_vars, cont_vars, self.map)
+                            if sat:
+                                sat, contained = ge.evaluate_guard_cont(agent, cont_vars, self.map)
+                                sat = sat and contained
+                        return sat
+                    if eval_expr(pre_expr):
+                        if not eval_expr(a.cond):
+                            if combine_len == 1:
+                                label = a.label if a.label != None else f"<assert {i}>"
+                                print(f"assert hit for {agent_id}: \"{label}\"")
+                                print(idx)
+                                asserts[agent_id].append(label)
+                            else:
+                                new_len = math.ceil(combine_len/reduction_rate)
+                                next_list = [(i, min(i+new_len, end_idx) ,new_len) for i in range(idx,end_idx,new_len)]
+                                reduction_queue.extend(next_list[::-1])
+                                reduction_needed = True
+                                break
+                if reduction_needed:
+                    break
+                if agent_id in asserts:
+                    continue
+                if agent_id not in agent_guard_dict:
+                    continue
+
+                unchecked_cache_guards = [g[:-1] for g in cached_guards[agent_id] if g[-1] < idx]     # FIXME: off by 1?
+                for guard_expression, continuous_variable_updater, discrete_variable_dict, path in agent_guard_dict[agent_id] + unchecked_cache_guards:
+                    assert isinstance(path, ModePath)
+                    new_cont_var_dict = copy.deepcopy(cont_vars)
+                    one_step_guard: GuardExpressionAst = copy.deepcopy(guard_expression)
+
+                    self.apply_cont_var_updater(new_cont_var_dict, continuous_variable_updater)
+                    guard_can_satisfied = one_step_guard.evaluate_guard_hybrid(
+                        agent, discrete_variable_dict, new_cont_var_dict, self.map)
+                    if not guard_can_satisfied:
+                        continue
+                    guard_satisfied, is_contained = one_step_guard.evaluate_guard_cont(
+                        agent, new_cont_var_dict, self.map)
+                    if combine_len == 1:
+                        any_contained = any_contained or is_contained
+                    # TODO: Can we also store the cont and disc var dict so we don't have to call sensor again?
+                    if guard_satisfied and combine_len == 1:
+                        reset_expr = ResetExpression((path.var, path.val_veri))
+                        resets[reset_expr.var].append(
+                            (reset_expr, discrete_variable_dict,
+                             new_cont_var_dict, guard_expression.guard_idx, path)
+                        )
+                    elif guard_satisfied and combine_len > 1:       
+                        new_len = math.ceil(combine_len/reduction_rate)
+                        next_list = [(i, min(i+new_len, end_idx) ,new_len) for i in range(idx,end_idx,new_len)]
+                        reduction_queue.extend(next_list[::-1])
+                        reduction_needed = True
+                        break
+                if reduction_needed:
+                    break
+                if combine_len == 1:
+                    # Perform combination over all possible resets to generate all possible real resets
+                    combined_reset_list = list(itertools.product(*resets.values()))
+                    if len(combined_reset_list) == 1 and combined_reset_list[0] == ():
+                        continue
+                    for i in range(len(combined_reset_list)):
+                        # Compute reset_idx
+                        reset_idx = []
+                        for reset_info in combined_reset_list[i]:
+                            reset_idx.append(reset_info[3])
+                        # a list of reset expression
+                        hits.append((agent_id, tuple(reset_idx), combined_reset_list[i]))
+            
+            if reduction_needed or combine_len > 1:
+                continue
+            if len(asserts) > 0:
+                return (asserts, idx), None
+            if hits != []:
+                guard_hits.append((hits, state_dict, idx))
+                guard_hit = True
+            elif guard_hit:
+                break
+            if any_contained:
+                break
+
+        reset_dict = {}  # defaultdict(lambda: defaultdict(list))
+        for hits, all_agent_state, hit_idx in guard_hits:
+            for agent_id, reset_idx, reset_list in hits:
+                # TODO: Need to change this function to handle the new reset expression and then I am done
+                dest_list, reset_rect = self.apply_reset(node.agent[agent_id], reset_list, all_agent_state)
+                # pp(("dests", dest_list, *[astunparser.unparse(reset[-1].val_veri) for reset in reset_list]))
+                if agent_id not in reset_dict:
+                    reset_dict[agent_id] = {}
+                if not dest_list:
+                    warnings.warn(
+                        f"Guard hit for mode {node.mode[agent_id]} for agent {agent_id} without available next mode")
+                    dest_list.append(None)
+                if reset_idx not in reset_dict[agent_id]:
+                    reset_dict[agent_id][reset_idx] = {}
+                for dest in dest_list:
+                    if dest not in reset_dict[agent_id][reset_idx]:
+                        reset_dict[agent_id][reset_idx][dest] = []
+                    reset_dict[agent_id][reset_idx][dest].append((reset_rect, hit_idx, reset_list[-1]))
+
+        possible_transitions = []
+        # Combine reset rects and construct transitions
+        for agent in reset_dict:
+            for reset_idx in reset_dict[agent]:
+                for dest in reset_dict[agent][reset_idx]:
+                    reset_data = tuple(map(list, zip(*reset_dict[agent][reset_idx][dest])))
+                    paths = [r[-1] for r in reset_data[-1]]
+                    transition = (agent, node.mode[agent],dest, *reset_data[:-1], paths)
+                    src_mode = node.get_mode(agent, node.mode[agent])
+                    src_track = node.get_track(agent, node.mode[agent])
+                    dest_mode = node.get_mode(agent, dest)
+                    dest_track = node.get_track(agent, dest)
+                    if dest_track == track_map.h(src_track, src_mode, dest_mode):
+                        possible_transitions.append(transition)
+                        # print(transition[4])
+        # Return result
+        return None, possible_transitions
+
+def combine_rect_v1(trace):
+    trace = np.array(trace)
+    num_step, num_dim = trace.shape
+    assert num_step % 2 == 0
+    combined_trace = np.ndarray(shape=(2, num_dim))
+    combined_trace[0] = np.min(trace[::2], 0)
+    combined_trace[1] = np.max(trace[1::2], 0)
+    return combined_trace.tolist()
+
+
+def combine_rect_v2(trace: np.ndarray, rect_len):
+    trace = np.array(trace)
+    num_step, num_dim = trace.shape
+    assert num_step % 2 == 0
+    lower=trace[::2]
+    upper=trace[1::2]
+    total_rect_num = num_step / 2
+    combined_rect_num = math.ceil(total_rect_num/rect_len)
+    combined_trace = np.ndarray(shape=(2*combined_rect_num, num_dim))
+    for i in range(combined_rect_num-1):
+        combined_trace[2*i] = np.min(lower[i*rect_len: (i+1)*rect_len], 0)[1:]
+        combined_trace[2*i+1] = np.max(upper[i*rect_len: (i+1)*rect_len], 0)[1:]
+    i = combined_rect_num-1
+    combined_trace[2*i] = np.min(lower[i*rect_len:], 0)
+    combined_trace[2*i+1] = np.max(upper[i*rect_len:], 0)
+    return combined_trace.tolist()
+
+    
