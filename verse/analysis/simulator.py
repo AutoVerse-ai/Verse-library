@@ -8,6 +8,9 @@ from collections import defaultdict
 from typing import DefaultDict, Optional, Tuple, List, Dict, Any
 from types import SimpleNamespace
 import warnings
+import types
+import sys
+from enum import Enum
 
 from verse.agents.base_agent import BaseAgent
 from verse.analysis.incremental import CachedSegment, SimTraceCache, convert_sim_trans, to_simulate
@@ -119,6 +122,32 @@ def check_sim_transitions(agent: BaseAgent, guards: List[Tuple], cont, disc, map
                     pure_dest.append(d)
             satisfied_guard.append((agent_id, pure_dest, next_init, paths))
     return None, satisfied_guard
+
+def convertStrToEnum(inp, agent:BaseAgent, dl):
+    res = inp
+    for field in res.__dict__:
+        for state_def_name in agent.decision_logic.state_defs:
+            if field in agent.decision_logic.state_defs[state_def_name].disc:
+                idx = agent.decision_logic.state_defs[state_def_name].disc.index(field)
+                field_type = agent.decision_logic.state_defs[state_def_name].disc_type[idx]
+                enum_class = getattr(dl, field_type)
+                setattr(res, field, enum_class[getattr(res, field)])
+    return res
+
+def convertEnumToStr(inp, agent:BaseAgent, dl):
+    res = inp
+    for field in res.__dict__:
+        val = getattr(res, field)
+        if isinstance(val, Enum):
+            setattr(res, field, val.name)
+    return res
+
+def disc_field(field:str, agent:BaseAgent):
+    for state_def_name in agent.decision_logic.state_defs:
+        state_def = agent.decision_logic.state_defs[state_def_name]
+        if field in state_def.disc:
+            return True 
+    return False
 
 @dataclass
 class SimConsts:
@@ -373,7 +402,7 @@ class Simulator:
         return self.simulation_tree
 
     def simulate_simple(self, init_list, init_mode_list, static_list, uncertain_param_list, agent_list,
-                 transition_graph, time_horizon, time_step, max_height, lane_map, run_num, past_runs):
+                 time_horizon, time_step, max_height, lane_map, sensor, run_num, past_runs):
         # Setup the root of the simulation tree
         if(max_height == None):
             max_height = float('inf')
@@ -426,7 +455,7 @@ class Simulator:
             # TODO: for now, make sure all the segments comes from the same node; maybe we can do
             # something to combine results from different nodes in the future
             
-            asserts, transitions, transition_idx = transition_graph.get_transition_simulate_simple(node)
+            asserts, transitions, transition_idx = Simulator.get_transition_simulate_simple(node, lane_map, sensor)
             # pp(("transitions:", transition_idx, transitions))
 
             node.assert_hits = asserts
@@ -609,6 +638,95 @@ class Simulator:
                         transitions[agent_idx].append((agent_idx, dest, next_init, paths))
                 # print("transitions", transitions)
                 break
+        return None, dict(transitions), idx
+
+    @staticmethod
+    def get_transition_simulate_simple(node: AnalysisTreeNode, track_map, sensor) -> Tuple[Optional[Dict[str, List[str]]], Optional[Dict[str, List[Tuple[str, List[str], List[float]]]]], int]:
+        trace_length = len(list(node.trace.values())[0])
+
+        # For each agent
+        agent_guard_dict = defaultdict(list)
+        
+        paths = [(agent, p) for agent in node.agent.values() for p in agent.decision_logic.paths]
+        
+        for agent, path in paths:
+            # Get guard
+            if len(agent.decision_logic.args) == 0:
+                continue
+            agent_id = agent.id
+            state_dict = {aid: (node.trace[aid][0], node.mode[aid], node.static[aid]) for aid in node.agent}
+            cont_var_dict_template, discrete_variable_dict, len_dict = sensor.sense(agent, state_dict, track_map)
+            agent_guard_dict[agent_id].append((path, discrete_variable_dict))
+
+        transitions = defaultdict(list)
+        # TODO: We can probably rewrite how guard hit are detected and resets are handled for simulation
+        for idx in range(trace_length):
+            state_dict = {aid: (node.trace[aid][idx], node.mode[aid], node.static[aid]) for aid in node.agent}
+            satisfied_guard = []
+            all_asserts = defaultdict(list)
+            for agent_id in agent_guard_dict:
+                # Get agent controller 
+                # Reference: https://stackoverflow.com/questions/55905240/python-dynamically-import-modules-code-from-string-with-importlib
+                agent: BaseAgent = node.agent[agent_id]
+                dl = types.ModuleType('dl')
+                exec(agent.decision_logic.controller_code,dl.__dict__)
+                
+                # Get the input arguments for the controller function
+                # Pack the environment (create ego and others list)
+                continuous_variable_dict, orig_disc_vars, _ = sensor.sense(agent, state_dict, track_map)
+                arg_list = []
+                env = pack_env(agent, EGO, continuous_variable_dict, orig_disc_vars, track_map)
+                for arg in agent.decision_logic.args:
+                    if arg.name == EGO:
+                        ego = env[EGO]
+                        ego = convertStrToEnum(ego, agent, dl)
+                        arg_list.append(ego)
+                    elif arg.name == 'track_map':
+                        arg_list.append(track_map)
+                    else:
+                        if isinstance(env[arg.name], list):
+                            tmp_list = []
+                            for item in env[arg.name]:
+                                tmp = convertStrToEnum(item, agent, dl)
+                                tmp_list.append(tmp)
+                            arg_list.append(tmp_list)
+                        else:
+                            tmp = convertStrToEnum(env[arg.name], agent, dl)
+                            arg_list.append(tmp)
+
+                try:
+                    # Input the environment into the actual controller
+                    output = dl.decisionLogic(*arg_list)   
+                    # output = convertEnumToStr(output, agent, dl)   
+                    # Check if output is the same as ego
+                    if env[EGO] != output:
+                        # If not, a transition happen, get source and destination, break
+                        next_init = []
+                        pure_dest = []
+                        output = convertEnumToStr(output, agent, dl)   
+                        for field in env[EGO].__dict__:
+                            if disc_field(field, agent):
+                                pure_dest.append(getattr(output, field))
+                            else:
+                                next_init.append(getattr(output, field))  
+                        satisfied_guard.append((agent_id, pure_dest, next_init, []))
+                except AssertionError:
+                    # If assertion error happen, means assert hit happen
+                    # Get the which assert hit happen and return
+                    _, error, _ = sys.exc_info()
+                    assertion_label = error.args[0]
+                    all_asserts[agent_id] = assertion_label
+                    continue
+                
+            if len(all_asserts) > 0:
+                for agent_idx, dest, next_init, paths in satisfied_guard:
+                    transitions[agent_idx].append((agent_idx, dest, next_init, paths))
+                return all_asserts, dict(transitions), idx
+            if len(satisfied_guard)>0:
+                break
+            # Convert output to asserts, transition and idx
+        for agent_idx, dest, next_init, paths in satisfied_guard:
+            transitions[agent_idx].append((agent_idx, dest, next_init, paths))
         return None, dict(transitions), idx
 
 #print all height of leaves
