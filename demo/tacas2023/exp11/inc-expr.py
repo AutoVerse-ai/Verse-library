@@ -97,10 +97,7 @@ def run(sim, meas=False):
 
 if __name__ == "__main__":
     input_code_name = './demo/tacas2023/exp11/decision_logic/inc-expr6.py' if "6" in arg else './demo/tacas2023/exp11/decision_logic/inc-expr.py'
-    config = ScenarioConfig()
-    config.incremental = 'i' in arg
-    config.parallel = 'l' in arg
-    scenario = Scenario(config)
+    scenario = Scenario(ScenarioConfig(incremental='i' in arg, parallel='l' in arg))
 
     scenario.add_agent(CarAgent('car1', file_name=input_code_name))
     scenario.add_agent(NPCAgent('car2'))
