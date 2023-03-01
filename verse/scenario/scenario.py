@@ -346,11 +346,8 @@ class Scenario:
             static_list.append(self.static_dict[agent_id])
             uncertain_param_list.append(self.uncertain_param_dict[agent_id])
             agent_list.append(self.agent_dict[agent_id])
-        if not self.config.parallel:
-            tree = self.verifier.compute_full_reachtube_ser(init_list, init_mode_list, static_list, uncertain_param_list, agent_list, self, time_horizon,
-                                                    time_step, max_height,self.map, self.config.init_seg_length, self.config.reachability_method, len(self.past_runs), self.past_runs, params)
-        else:
-            tree = self.verifier.compute_full_reachtube(init_list, init_mode_list, static_list, uncertain_param_list, agent_list, self, time_horizon,
+        
+        tree = self.verifier.compute_full_reachtube(init_list, init_mode_list, static_list, uncertain_param_list, agent_list, self, time_horizon,
                                                     time_step, max_height, self.map, self.config.init_seg_length, self.config.reachability_method, len(self.past_runs), self.past_runs, params)
         self.past_runs.append(tree)
         return tree
@@ -942,7 +939,7 @@ class Scenario:
             any_contained = False
             hits = []
             # end_idx = min(idx+combine_len, trace_length)
-            state_dict = {aid: (combine_rect_v1(node.trace[aid][idx*2:end_idx*2]), node.mode[aid], node.static[aid]) for aid in node.agent}
+            state_dict = {aid: (combine_rect(node.trace[aid][idx*2:end_idx*2]), node.mode[aid], node.static[aid]) for aid in node.agent}
             
             asserts = defaultdict(list)
             for agent_id in self.agent_dict.keys():
@@ -1080,31 +1077,11 @@ class Scenario:
         # Return result
         return None, possible_transitions
 
-def combine_rect_v1(trace):
+def combine_rect(trace):
     trace = np.array(trace)
     num_step, num_dim = trace.shape
     assert num_step % 2 == 0
     combined_trace = np.ndarray(shape=(2, num_dim))
     combined_trace[0] = np.min(trace[::2], 0)
     combined_trace[1] = np.max(trace[1::2], 0)
-    return combined_trace.tolist()
-
-
-def combine_rect_v2(trace: np.ndarray, rect_len):
-    trace = np.array(trace)
-    num_step, num_dim = trace.shape
-    assert num_step % 2 == 0
-    lower=trace[::2]
-    upper=trace[1::2]
-    total_rect_num = num_step / 2
-    combined_rect_num = math.ceil(total_rect_num/rect_len)
-    combined_trace = np.ndarray(shape=(2*combined_rect_num, num_dim))
-    for i in range(combined_rect_num-1):
-        combined_trace[2*i] = np.min(lower[i*rect_len: (i+1)*rect_len], 0)[1:]
-        combined_trace[2*i+1] = np.max(upper[i*rect_len: (i+1)*rect_len], 0)[1:]
-    i = combined_rect_num-1
-    combined_trace[2*i] = np.min(lower[i*rect_len:], 0)
-    combined_trace[2*i+1] = np.max(upper[i*rect_len:], 0)
-    return combined_trace.tolist()
-
-    
+    return combined_trace.tolist()    
