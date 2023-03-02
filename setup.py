@@ -47,6 +47,7 @@ setup(
         "tqdm~=4.64.1",
         "z3-solver~=4.8.17.0",
         "treelib~=1.6.1",
+        "portion~=2.3.1",
     ],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',

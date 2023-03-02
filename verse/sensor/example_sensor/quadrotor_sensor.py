@@ -46,7 +46,7 @@ def add_states_3d_ball(cont, disc, thing, val):
 
 
 class QuadrotorSensor():
-    def sense(self, scenario, agent, state_dict, lane_map):
+    def sense(self, agent, state_dict, lane_map):
         cont = {}
         disc = {}
         len_dict = {'others': len(state_dict)-1}
