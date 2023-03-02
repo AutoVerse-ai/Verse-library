@@ -228,11 +228,8 @@ class Scenario:
             static_list.append(self.static_dict[agent_id])
             uncertain_param_list.append(self.uncertain_param_dict[agent_id])
             agent_list.append(self.agent_dict[agent_id])
-        if not self.config.parallel:
-            tree = self.verifier.compute_full_reachtube_ser(init_list, init_mode_list, static_list, uncertain_param_list, agent_list, self.sensor, time_horizon,
-                                                    time_step, max_height,self.map, self.config.init_seg_length, self.config.reachability_method, len(self.past_runs), self.past_runs, params)
-        else:
-            tree = self.verifier.compute_full_reachtube(init_list, init_mode_list, static_list, uncertain_param_list, agent_list, self.sensor, time_horizon,
+        
+        tree = self.verifier.compute_full_reachtube(init_list, init_mode_list, static_list, uncertain_param_list, agent_list, self.sensor, time_horizon,
                                                     time_step, max_height, self.map, self.config.init_seg_length, self.config.reachability_method, len(self.past_runs), self.past_runs, params)
         self.past_runs.append(tree)
         return tree

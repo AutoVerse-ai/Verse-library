@@ -41,6 +41,9 @@ class Verifier:
         self.tube_cache_hits = (0, 0)
         self.trans_cache_hits = (0, 0)
         self.config = config
+        if self.config.parallel:
+            # import ray
+            self.compute_full_reachtube_step_remote = ray.remote(Verifier.compute_full_reachtube_step)
 
     def calculate_full_bloated_tube(
         self,
@@ -118,7 +121,7 @@ class Verifier:
                 )
         return res_tube.tolist()
 
-    @ray.remote
+    # @ray.remote
     def compute_full_reachtube_step(
         self,
         node: AnalysisTreeNode,
@@ -308,6 +311,20 @@ class Verifier:
         node.child.extend(next_nodes)
         return node
 
+    def proc_result(self, node, max_height):
+        id=node.id
+        next_nodes = node.child
+        # print("got id:", id)
+        self.nodes[id].assert_hits=node.assert_hits
+        self.nodes[id].child=next_nodes
+        self.nodes[id].trace=node.trace
+        last_id = self.nodes[-1].id
+        for i, node in enumerate(next_nodes):
+            node.id = i + 1 + last_id
+        if node.height <= max_height:
+            self.verification_queue.extend(next_nodes)
+            self.nodes.extend(next_nodes)
+
     def compute_full_reachtube(
         self,
         init_list: List[float],
@@ -350,46 +367,50 @@ class Verifier:
             root.static[agent.id] = [elem.name for elem in static_list[i]]
             root.uncertain_param[agent.id] = uncertain_param_list[i]
             root.agent[agent.id] = agent
-        verification_queue = [root]
-        result_refs = []
-        nodes = [root]
+        self.verification_queue = [root]
+        self.result_refs = []
+        self.nodes = [root]
         num_calls = 0
         num_transitions = 0
         while True:
             wait = False
-            if len(verification_queue) > 0:
+            if len(self.verification_queue) > 0:
                 # print([node.id for node in verification_queue])
-                node: AnalysisTreeNode = verification_queue.pop(0)
+                node: AnalysisTreeNode = self.verification_queue.pop(0)
                 num_transitions+=1
                 # pp(("start ver", node.start_time, {a: (*node.mode[a], *node.init[a]) for a in node.mode}))
                 remain_time = round(time_horizon - node.start_time, 10)
                 if remain_time <= 0:
                     continue
-                # For trace not already verified
-                result_refs.append(self.compute_full_reachtube_step.remote
+                if not self.config.parallel:
+                    node = self.compute_full_reachtube_step(node, remain_time, time_step, max_height, lane_map, init_seg_length, reachability_method,run_num, past_runs, sensor, params)
+                    self.proc_result(node, max_height)
+                else:
+                    self.result_refs.append(self.compute_full_reachtube_step_remote.remote
                                 (self, node, remain_time, time_step, max_height, lane_map, init_seg_length, reachability_method,run_num, past_runs, sensor, params))
-                if len(result_refs) >= self.config.parallel_ver_ahead:
+                if len(self.result_refs) >= self.config.parallel_ver_ahead:
                     wait = True
-            elif len(result_refs) > 0:
+            elif len(self.result_refs) > 0:
                 wait = True
             else:
                 break
             # print(len(verification_queue), len(result_refs))
             if wait:
-                [res], result_refs = ray.wait(result_refs)
+                [res], self.result_refs = ray.wait(self.result_refs)
                 node= ray.get(res)
-                id=node.id
-                next_nodes = node.child
-                # print("got id:", id)
-                nodes[id].assert_hits=node.assert_hits
-                nodes[id].child=next_nodes
-                nodes[id].trace=node.trace
-                last_id = nodes[-1].id
-                for i, node in enumerate(next_nodes):
-                    node.id = i + 1 + last_id
-                if node.height <= max_height:
-                    verification_queue.extend(next_nodes)
-                    nodes.extend(next_nodes)
+                self.proc_result(node, max_height)
+                # id=node.id
+                # next_nodes = node.child
+                # # print("got id:", id)
+                # self.nodes[id].assert_hits=node.assert_hits
+                # self.nodes[id].child=next_nodes
+                # self.nodes[id].trace=node.trace
+                # last_id = self.nodes[-1].id
+                # for i, node in enumerate(next_nodes):
+                #     node.id = i + 1 + last_id
+                # if node.height <= max_height:
+                #     self.verification_queue.extend(next_nodes)
+                #     self.nodes.extend(next_nodes)
         self.reachtube_tree = AnalysisTree(root)
         # print(f">>>>>>>> Number of calls to reachability engine: {num_calls}")
         # print(f">>>>>>>> Number of transitions happening: {num_transitions}")
