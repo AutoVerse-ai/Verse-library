@@ -41,7 +41,8 @@ class CachedRTTrans:
     asserts: List[str]
     transitions: List[CachedReachTrans]
     run_num: int
-    node_id: int
+    # node_id: int
+    node_ids: Set[Tuple[int, int]]
 
 def to_simulate(old_agents: Dict[str, BaseAgent], new_agents: Dict[str, BaseAgent], cached: Dict[str, CachedSegment]) -> Tuple[Dict[str, CachedSegment], Any]: #s/Any/PathDiffs/
     assert set(old_agents.keys()) == set(new_agents.keys())

@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from collections import defaultdict
 import copy, itertools, functools, pprint, ray
 from typing import Dict, List, Optional, Tuple
@@ -6,7 +7,7 @@ import warnings
 import ast
 
 # from verse.agents.base_agent import BaseAgent
-from verse.analysis.analysis_tree import AnalysisTreeNode, AnalysisTree
+from verse.analysis.analysis_tree import AnalysisTreeNode, AnalysisTree, TraceType
 from verse.analysis.dryvr import calc_bloated_tube, SIMTRACENUM
 from verse.analysis.mixmonotone import calculate_bloated_tube_mixmono_cont, calculate_bloated_tube_mixmono_disc
 from verse.analysis.incremental import ReachTubeCache, TubeCache, convert_reach_trans, to_simulate, combine_all
@@ -33,6 +34,22 @@ def combine_rect(trace):
     combined_trace[1] = np.max(trace[1::2], 0)
     return combined_trace.tolist()
 
+def apply_cont_var_updater(self, cont_var_dict, updater):
+    for variable in updater:
+        for unrolled_variable, unrolled_variable_index in updater[variable]:
+            cont_var_dict[unrolled_variable] = cont_var_dict[variable][unrolled_variable_index]
+
+@dataclass
+class ReachConsts:
+    time_step: float
+    lane_map: LaneMap
+    init_seg_length: int
+    reachability_method: str
+    run_num: int
+    past_runs: List[AnalysisTree]
+    sensor: "BaseSensor"
+    agent_dict: Dict
+
 class Verifier:
     def __init__(self, config):
         self.reachtube_tree = None
@@ -44,6 +61,154 @@ class Verifier:
         if self.config.parallel:
             # import ray
             self.compute_full_reachtube_step_remote = ray.remote(Verifier.compute_full_reachtube_step)
+
+    def check_cache_bloated_tube(
+        self,
+        agent_id,
+        mode_label,
+        initial_set,
+        time_horizon,
+        time_step,
+        sim_func,
+        params,
+        kvalue,
+        sim_trace_num,
+        combine_seg_length = 1000,
+        guard_checker=None,
+        guard_str="",
+        lane_map = None
+    ):
+        # Handle Parameters
+        bloating_method = 'PW'
+        if 'bloating_method' in params:
+            bloating_method = params['bloating_method']
+        missing_seg_idx_list=[]
+        res_tube = None
+        tube_length = 0
+        for combine_seg_idx in range(0, len(initial_set), combine_seg_length):
+            rect_seg = initial_set[combine_seg_idx:combine_seg_idx+combine_seg_length]
+            combined_rect = None
+            for rect in rect_seg:
+                rect = np.array(rect)
+                if combined_rect is None:
+                    combined_rect = rect
+                else:
+                    combined_rect[0, :] = np.minimum(
+                        combined_rect[0, :], rect[0, :])
+                    combined_rect[1, :] = np.maximum(
+                        combined_rect[1, :], rect[1, :])
+            combined_rect = combined_rect.tolist()
+            if self.config.incremental:
+                cached = self.cache.check_hit(agent_id, mode_label, combined_rect)
+                if cached != None:
+                    self.tube_cache_hits = self.tube_cache_hits[0] + 1, self.tube_cache_hits[1]
+                else:
+                    self.tube_cache_hits = self.tube_cache_hits[0], self.tube_cache_hits[1] + 1
+            else:
+                cached = None
+            if cached != None:
+                cur_bloated_tube = cached.tube
+            else:
+                missing_seg_idx_list.append(combine_seg_idx)
+                continue
+                # cur_bloated_tube = calc_bloated_tube(mode_label,
+                #                             combined_rect,
+                #                             time_horizon,
+                #                             time_step, 
+                #                             sim_func,
+                #                             bloating_method,
+                #                             kvalue,
+                #                             sim_trace_num,
+                #                             lane_map = lane_map
+                #                             )
+                # if self.config.incremental:
+                #     self.cache.add_tube(agent_id, mode_label, combined_rect, cur_bloated_tube)
+            # FIXME
+            if res_tube == None:
+                res_tube = cur_bloated_tube
+                tube_length = cur_bloated_tube.shape[0]
+            else:
+                cur_bloated_tube = cur_bloated_tube[:tube_length - combine_seg_idx*2,:]
+                # Handle Lower Bound
+                res_tube[combine_seg_idx*2::2,1:] = np.minimum(
+                    res_tube[combine_seg_idx*2::2,1:],
+                    cur_bloated_tube[::2,1:]
+                )
+                # Handle Upper Bound
+                res_tube[combine_seg_idx*2+1::2,1:] = np.maximum(
+                    res_tube[combine_seg_idx*2+1::2,1:],
+                    cur_bloated_tube[1::2,1:]
+                )
+        return res_tube.tolist(), missing_seg_idx_list
+
+    def calculate_full_bloated_tube_simple(
+        self,
+        agent_id,
+        cached_tube_info,
+        incremental,
+        mode_label,
+        initial_set,
+        time_horizon,
+        time_step,
+        sim_func,
+        params,
+        kvalue,
+        sim_trace_num,
+        combine_seg_length = 1000,
+        guard_checker=None,
+        guard_str="",
+        lane_map = None
+    ):
+        # Handle Parameters
+        bloating_method = 'PW'
+        if 'bloating_method' in params:
+            bloating_method = params['bloating_method']
+        cache_tube_updates=[]
+        cached_tube, missing_seg_idx_list = cached_tube_info
+        res_tube = cached_tube
+        tube_length = 0
+        for combine_seg_idx in missing_seg_idx_list:
+            rect_seg = initial_set[combine_seg_idx:combine_seg_idx+combine_seg_length]
+            combined_rect = None
+            for rect in rect_seg:
+                rect = np.array(rect)
+                if combined_rect is None:
+                    combined_rect = rect
+                else:
+                    combined_rect[0, :] = np.minimum(
+                        combined_rect[0, :], rect[0, :])
+                    combined_rect[1, :] = np.maximum(
+                        combined_rect[1, :], rect[1, :])
+            combined_rect = combined_rect.tolist()
+            cur_bloated_tube = calc_bloated_tube(mode_label,
+                                            combined_rect,
+                                            time_horizon,
+                                            time_step, 
+                                            sim_func,
+                                            bloating_method,
+                                            kvalue,
+                                            sim_trace_num,
+                                            lane_map = lane_map
+                                            )
+            if incremental:
+                cache_tube_updates.append((agent_id, mode_label, combined_rect, cur_bloated_tube))
+            if res_tube == None:
+                res_tube = cur_bloated_tube
+                tube_length = cur_bloated_tube.shape[0]
+            else:
+                cur_bloated_tube = cur_bloated_tube[:tube_length - combine_seg_idx*2,:]
+                # Handle Lower Bound
+                res_tube[combine_seg_idx*2::2,1:] = np.minimum(
+                    res_tube[combine_seg_idx*2::2,1:],
+                    cur_bloated_tube[::2,1:]
+                )
+                # Handle Upper Bound
+                res_tube[combine_seg_idx*2+1::2,1:] = np.maximum(
+                    res_tube[combine_seg_idx*2+1::2,1:],
+                    cur_bloated_tube[1::2,1:]
+                )
+        return res_tube.tolist(), cache_tube_updates
+
 
     def calculate_full_bloated_tube(
         self,
@@ -120,6 +285,194 @@ class Verifier:
                     cur_bloated_tube[1::2,1:]
                 )
         return res_tube.tolist()
+
+    # @staticmethod
+    def compute_full_reachtube_step_new(
+        self,
+        config: "ScenarioConfig", 
+        cached_trans_tubes: Dict[str, CachedRTTrans], 
+        cached_tubes: Dict[str, Tuple], 
+        node: AnalysisTreeNode, 
+        old_node_id: Optional[Tuple[int, int]], 
+        later: int, 
+        remain_time: float,
+        consts: ReachConsts,
+        params = {},
+    )-> Tuple[int, int, List[AnalysisTreeNode], Dict[str, TraceType], list]:
+        # t = timeit.default_timer()
+        # print(f"node {node.id} start: {t}")
+        # print(f"node id: {node.id}")
+        cache_trans_tube_updates = []
+        cache_tube_updates = []
+        if (max_height == None):
+            max_height = float('inf')
+        combined_inits = {a: combine_all(inits) for a, inits in node.init.items()}
+
+        for agent_id in node.agent:
+            mode = node.mode[agent_id]
+            inits = node.init[agent_id]
+            combined = combine_all(inits)
+            if agent_id not in node.trace:
+                # Compute the trace starting from initial condition
+                uncertain_param = node.uncertain_param[agent_id]
+                if consts.reachability_method == "DRYVR":
+                    # pp(('tube', agent_id, mode, inits))
+                    cur_bloated_tube, cache_tube_update = self.calculate_full_bloated_tube_simple(agent_id,
+                                        cached_tubes[agent_id],
+                                        config.incremental,
+                                        mode,
+                                        inits,
+                                        remain_time,
+                                        consts.time_step, 
+                                        node.agent[agent_id].TC_simulate,
+                                        params,
+                                        100,
+                                        SIMTRACENUM,
+                                        combine_seg_length=consts.init_seg_length,
+                                        lane_map = consts.lane_map
+                                        )
+                    if config.incremental:
+                        cache_tube_updates.extend(cache_tube_update)
+                elif consts.reachability_method == "NeuReach":
+                    from verse.analysis.NeuReach.NeuReach_onestep_rect import postCont
+                    cur_bloated_tube = postCont(
+                        mode, 
+                        inits[0], 
+                        remain_time, 
+                        consts.time_step, 
+                        node.agent[agent_id].TC_simulate, 
+                        consts.lane_map,
+                        params, 
+                    )
+                elif consts.reachability_method == "MIXMONO_CONT":
+                    cur_bloated_tube = calculate_bloated_tube_mixmono_cont(
+                        mode, 
+                        inits, 
+                        uncertain_param, 
+                        remain_time,
+                        consts.time_step, 
+                        node.agent[agent_id],
+                        consts.lane_map
+                    )
+                elif consts.reachability_method == "MIXMONO_DISC":
+                    cur_bloated_tube = calculate_bloated_tube_mixmono_disc(
+                        mode, 
+                        inits, 
+                        uncertain_param,
+                        remain_time,
+                        consts.time_step,
+                        node.agent[agent_id],
+                        consts.lane_map
+                    ) 
+                else:
+                    raise ValueError(f"Reachability computation method {consts.reachability_method} not available.")
+                # num_calls += 1
+                trace = np.array(cur_bloated_tube)
+                trace[:, 0] += node.start_time
+                node.trace[agent_id] = trace.tolist()
+        # pp(("cached tubes", cached_tubes.keys()))
+        node_ids = list(set((s.run_num, s.node_id) for s in cached_trans_tubes.values()))
+        # assert len(node_ids) <= 1, f"{node_ids}"
+        new_cache, paths_to_sim = {}, []
+        if len(node_ids) == 1 and len(cached_trans_tubes.keys()) == len(node.agent):
+            old_run_num, old_node_id = node_ids[0]
+            if old_run_num != consts.run_num:
+                old_node = find(consts.past_runs[old_run_num].nodes, lambda n: n.id == old_node_id)
+                assert old_node != None
+                new_cache, paths_to_sim = to_simulate(old_node.agent, node.agent, cached_trans_tubes)
+                # pp(("to sim", new_cache.keys(), len(paths_to_sim)))
+        # pp(("cached trans tubes", cached_trans_tubes.keys()))
+        node_ids = list(set((s.run_num, s.node_id) for s in cached_trans_tubes.values()))
+        # assert len(node_ids) <= 1, f"{node_ids}"
+        new_cache, paths_to_sim = {}, []
+        if len(node_ids) == 1 and len(cached_trans_tubes.keys()) == len(node.agent):
+            old_run_num, old_node_id = node_ids[0]
+            if old_run_num != consts.run_num:
+                old_node = find(consts.past_runs[old_run_num].nodes, lambda n: n.id == old_node_id)
+                assert old_node != None
+                new_cache, paths_to_sim = to_simulate(old_node.agent, node.agent, cached_trans_tubes)
+                # pp(("to sim", new_cache.keys(), len(paths_to_sim)))
+
+        # Get all possible transitions to next mode
+        asserts, all_possible_transitions = self.get_transition_verify_opt(new_cache, paths_to_sim, node, consts.lane_map, consts.sensor)
+        node.assert_hits = asserts
+
+        if asserts != None:
+            asserts, idx = asserts
+            for agent in node.agent:
+                node.trace[agent] = node.trace[agent][:(idx + 1) * 2]
+            return (node, later, cache_tube_updates, cache_trans_tube_updates)    
+
+        # pp(("transitions:", [(t[0], t[2]) for t in all_possible_transitions]))
+        transit_map = {k: list(l) for k, l in itertools.groupby(all_possible_transitions, key=lambda p:p[0])}
+        transit_agents = transit_map.keys()
+        # pp(("transit agents", transit_agents))
+        if self.config.incremental:
+            transit_ind = max(l[-2][-1] for l in all_possible_transitions) if len(all_possible_transitions) > 0 else len(list(node.trace.values())[0])
+            for agent_id in node.agent:
+                transition = transit_map[agent_id] if agent_id in transit_agents else []
+                cache_trans_tube_updates.append((agent_id not in cached_trans_tubes, agent_id, transit_agents, node.init, transition, transit_ind, consts.run_num))
+
+        if (node.height >= max_height):
+            print("max depth reached")
+            return (node, later, cache_tube_updates, cache_trans_tube_updates)    
+        next_nodes = []
+        max_end_idx = 0
+        for transition in all_possible_transitions:
+            # Each transition will contain a list of rectangles and their corresponding indexes in the original list
+            # if len(transition) != 6:
+            #     pp(("weird trans", transition))
+            transit_agent_idx, src_mode, dest_mode, next_init, idx, path = transition
+            start_idx, end_idx = idx[0], idx[-1]
+
+            truncated_trace = {}
+            for agent_idx in node.agent:
+                truncated_trace[agent_idx] = node.trace[agent_idx][start_idx*2:]
+            if end_idx > max_end_idx:
+                max_end_idx = end_idx
+
+            if dest_mode is None:
+                continue
+
+            next_node_mode = copy.deepcopy(node.mode)
+            next_node_static = node.static
+            next_node_uncertain_param = node.uncertain_param
+            next_node_mode[transit_agent_idx] = dest_mode
+            next_node_agent = node.agent
+            next_node_start_time = list(truncated_trace.values())[0][0][0]
+            next_node_init = {}
+            next_node_trace = {}
+            for agent_idx in next_node_agent:
+                if agent_idx == transit_agent_idx:
+                    next_node_init[agent_idx] = next_init
+                else:
+                    next_node_init[agent_idx] = [[truncated_trace[agent_idx][0][1:], truncated_trace[agent_idx][1][1:]]]
+                    # pp(("infer init", agent_idx, next_node_init[agent_idx]))
+                    next_node_trace[agent_idx] = truncated_trace[agent_idx]
+
+            tmp = AnalysisTreeNode(
+                trace=next_node_trace,
+                init=next_node_init,
+                mode=next_node_mode,
+                height=node.height+1,
+                static = next_node_static,
+                uncertain_param = next_node_uncertain_param,
+                agent=next_node_agent,
+                assert_hits = {},
+                child=[],
+                start_time=round(next_node_start_time, 10),
+                type='reachtube'
+            )
+            next_nodes.append(tmp)
+
+        """Truncate trace of current node based on max_end_idx"""
+        """Only truncate when there's transitions"""
+        if all_possible_transitions:
+            for agent_idx in node.agent:
+                node.trace[agent_idx] = node.trace[agent_idx][:(
+                    max_end_idx+1)*2]
+        node.child.extend(next_nodes)
+        return (node, later, cache_tube_updates, cache_trans_tube_updates)    
 
     # @ray.remote
     def compute_full_reachtube_step(
@@ -311,7 +664,8 @@ class Verifier:
         node.child.extend(next_nodes)
         return node
 
-    def proc_result(self, node, max_height):
+    def proc_result(self, node:AnalysisTreeNode, later, cache_tube_updates, cache_trans_tube_updates, max_height):
+        # t = timeit.default_timer()
         id=node.id
         next_nodes = node.child
         # print("got id:", id)
@@ -321,9 +675,28 @@ class Verifier:
         last_id = self.nodes[-1].id
         for i, node in enumerate(next_nodes):
             node.id = i + 1 + last_id
+            later = 0 if i == 0 else 1
+            if node.height <= max_height:
+                self.verification_queue.append((node, later))
+        self.verification_queue.sort(key=lambda p: p[1:])
         if node.height <= max_height:
-            self.verification_queue.extend(next_nodes)
             self.nodes.extend(next_nodes)
+        combined_inits = {a: combine_all(inits) for a, inits in node.init.items()}
+        for new, aid, transit_agents, node.init, transition, transition_idx, run_num in cache_trans_tube_updates:
+            cached = self.trans_cache.check_hit(aid, node.mode[aid], node.init[aid], node.init)
+            if new and not cached:
+                self.trans_cache.add_tube(aid, combined_inits, node, transit_agents, transition, transition_idx, run_num)
+                self.trans_cache_hits = self.trans_cache_hits[0] + 1, self.trans_cache_hits[1]
+                self.num_cached += 1
+            else:
+                assert cached != None
+                self.trans_cache_hits = self.trans_cache_hits[0], self.trans_cache_hits[1] + 1
+                cached.transitions.extend(convert_reach_trans(aid, transit_agents, node.init, transition, transition_idx))
+                cached.transitions = dedup(cached.transitions, lambda i: (i.disc, i.cont, i.inits))
+                cached.node_ids.add((run_num, node.id))
+        for agent_id, mode_label, combined_rect, cur_bloated_tube in cache_tube_updates:
+            self.cache.add_tube(agent_id, mode_label, combined_rect, cur_bloated_tube)
+        # print(f"proc dur {timeit.default_timer() - t}")
 
     def compute_full_reachtube(
         self,
@@ -331,7 +704,7 @@ class Verifier:
         init_mode_list: List[str],
         static_list: List[str],
         uncertain_param_list: List[float],
-        agent_list,
+        agent_dict,
         sensor,
         time_horizon,
         time_step,
@@ -346,48 +719,93 @@ class Verifier:
 
         if (max_height == None):
             max_height = float('inf')
-        root = AnalysisTreeNode(
-            trace={},
-            init={},
-            mode={},
-            static = {},
-            uncertain_param={},
-            agent={},
-            height=0,
-            assert_hits={},
-            child=[],
-            start_time = 0,
-            ndigits = 10,
-            type = 'reachtube',
-            id = 0
-        )
-        for i, agent in enumerate(agent_list):
+        root = AnalysisTreeNode(type = 'reachtube')
+        for i, agent in enumerate(agent_dict.values()):
             root.init[agent.id] = [init_list[i]]
             root.mode[agent.id] = [elem.name for elem in init_mode_list[i]]
             root.static[agent.id] = [elem.name for elem in static_list[i]]
             root.uncertain_param[agent.id] = uncertain_param_list[i]
             root.agent[agent.id] = agent
-        self.verification_queue = [root]
+        
+        self.verification_queue: List[Tuple[AnalysisTreeNode, int]] = [(root, 0)]
         self.result_refs = []
         self.nodes = [root]
+        self.num_cached = 0
         num_calls = 0
         num_transitions = 0
+        consts = ReachConsts(time_step, lane_map, init_seg_length, reachability_method, run_num, past_runs, sensor, agent_dict)
+        if self.config.parallel:
+            # import ray
+            consts_ref = ray.put(consts)
         while True:
             wait = False
             if len(self.verification_queue) > 0:
                 # print([node.id for node in verification_queue])
-                node: AnalysisTreeNode = self.verification_queue.pop(0)
-                num_transitions+=1
+                node, later = self.verification_queue.pop(0)
+                # num_transitions+=1
                 # pp(("start ver", node.start_time, {a: (*node.mode[a], *node.init[a]) for a in node.mode}))
                 remain_time = round(time_horizon - node.start_time, 10)
                 if remain_time <= 0:
                     continue
-                if not self.config.parallel:
-                    node = self.compute_full_reachtube_step(node, remain_time, time_step, max_height, lane_map, init_seg_length, reachability_method,run_num, past_runs, sensor, params)
-                    self.proc_result(node, max_height)
+                cached_trans_tubes = {}
+                cached_tubes = {}
+                for agent_id in node.agent:
+                    mode = node.mode[agent_id]
+                    inits = node.init[agent_id]
+                    combined = combine_all(inits)
+                    if self.config.incremental:
+                        # CachedRTTrans
+                        cached = self.trans_cache.check_hit(agent_id, mode, combined, node.init)
+                        if cached != None:
+                            self.trans_cache_hits = self.trans_cache_hits[0] + 1, self.trans_cache_hits[1]
+                        else:
+                            self.trans_cache_hits = self.trans_cache_hits[0], self.trans_cache_hits[1] + 1
+                        # pp(("check hit", agent_id, mode, combined))
+                        if cached != None:
+                            cached_trans_tubes[agent_id] = cached
+                        # if incremental and DRYVR, check cache tube first
+                        if agent_id not in node.trace and reachability_method == "DRYVR":
+                            uncertain_param = node.uncertain_param[agent_id]
+                            # CachedTube.tube
+                            cur_bloated_tube, miss_seg_idx_list = self.check_cache_bloated_tube(agent_id,
+                                                        mode,
+                                                        inits,
+                                                        remain_time,
+                                                        time_step, 
+                                                        node.agent[agent_id].TC_simulate,
+                                                        params,
+                                                        100,
+                                                        SIMTRACENUM,
+                                                        combine_seg_length=init_seg_length,
+                                                        lane_map = lane_map
+                                                        )
+                            cached_tubes[agent_id] = (cur_bloated_tube, miss_seg_idx_list)
+            
+                old_node_id = None
+                if len(cached_trans_tubes) == len(node.agent):
+                    all_node_ids = [s.node_ids for s in cached_trans_tubes.values()]
+                    node_ids = list(functools.reduce(lambda a, b: a.intersection(b), all_node_ids))
+                    if len(node_ids) > 0:
+                        old_node_id = node_ids[0]
+                    else:
+                        print(f"not full {node.id}: {node_ids}, {len(cached_trans_tubes) == len(node.agent)} | {all_node_ids}")
+                if not self.config.parallel or old_node_id != None:
+                    # need to check tube cache
+                    if consts.reachability_method == "DRYVR":
+                        for agent_id in node.agent:
+                            if agent_id not in node.trace:
+                                if agent_id not in cached_trans_tubes:
+                                    node.trace[agent_id] = cached_trans_tubes[agent_id].trace
+                                else:
+                                    mode = node.mode[agent_id]
+                                    inits = node.init[agent_id]
+                                    uncertain_param = node.uncertain_param[agent_id]
+                                    
+                                    pass
+                    self.proc_result(*self.compute_full_reachtube_step_new(self.config, cached_trans_tubes, cached_tubes, node, old_node_id, later, remain_time, consts, params), max_height)
                 else:
                     self.result_refs.append(self.compute_full_reachtube_step_remote.remote
-                                (self, node, remain_time, time_step, max_height, lane_map, init_seg_length, reachability_method,run_num, past_runs, sensor, params))
+                                (self.config, cached_trans_tubes, cached_tubes, node, old_node_id, later, remain_time, consts, params))
                 if len(self.result_refs) >= self.config.parallel_ver_ahead:
                     wait = True
             elif len(self.result_refs) > 0:
@@ -397,20 +815,8 @@ class Verifier:
             # print(len(verification_queue), len(result_refs))
             if wait:
                 [res], self.result_refs = ray.wait(self.result_refs)
-                node= ray.get(res)
-                self.proc_result(node, max_height)
-                # id=node.id
-                # next_nodes = node.child
-                # # print("got id:", id)
-                # self.nodes[id].assert_hits=node.assert_hits
-                # self.nodes[id].child=next_nodes
-                # self.nodes[id].trace=node.trace
-                # last_id = self.nodes[-1].id
-                # for i, node in enumerate(next_nodes):
-                #     node.id = i + 1 + last_id
-                # if node.height <= max_height:
-                #     self.verification_queue.extend(next_nodes)
-                #     self.nodes.extend(next_nodes)
+                node, later, cache_tube_updates, cache_trans_tube_updates = ray.get(res)
+                self.proc_result(node, later, cache_tube_updates, cache_trans_tube_updates, max_height)
         self.reachtube_tree = AnalysisTree(root)
         # print(f">>>>>>>> Number of calls to reachability engine: {num_calls}")
         # print(f">>>>>>>> Number of transitions happening: {num_transitions}")
@@ -418,10 +824,7 @@ class Verifier:
 
         return self.reachtube_tree
 
-    def apply_cont_var_updater(self, cont_var_dict, updater):
-        for variable in updater:
-            for unrolled_variable, unrolled_variable_index in updater[variable]:
-                cont_var_dict[unrolled_variable] = cont_var_dict[variable][unrolled_variable_index]
+
 
     def get_transition_verify(self, cache: Dict[str, CachedRTTrans], paths: PathDiffs, node: AnalysisTreeNode, track_map, sensor) -> Tuple[Optional[Dict[str, List[str]]], Optional[Dict[str, List[Tuple[str, List[str], List[float]]]]]]:
         # For each agent
@@ -466,7 +869,7 @@ class Verifier:
 
                         cont_var_updater = guard_expression.parse_any_all_new(
                             cont_var_dict_template, discrete_variable_dict, length_dict)
-                        self.apply_cont_var_updater(
+                        apply_cont_var_updater(
                             cont_var_dict_template, cont_var_updater)
                         guard_can_satisfied = guard_expression.evaluate_guard_disc(
                             agent, discrete_variable_dict, cont_var_dict_template, track_map)
@@ -490,7 +893,7 @@ class Verifier:
 
             cont_var_updater = guard_expression.parse_any_all_new(
                 cont_var_dict_template, discrete_variable_dict, length_dict)
-            self.apply_cont_var_updater(
+            apply_cont_var_updater(
                 cont_var_dict_template, cont_var_updater)
             guard_can_satisfied = guard_expression.evaluate_guard_disc(
                 agent, discrete_variable_dict, cont_var_dict_template, track_map)
@@ -528,7 +931,7 @@ class Verifier:
                     def eval_expr(expr):
                         ge = GuardExpressionAst([copy.deepcopy(expr)])
                         cont_var_updater = ge.parse_any_all_new(cont_vars, disc_vars, len_dict)
-                        self.apply_cont_var_updater(cont_vars, cont_var_updater)
+                        apply_cont_var_updater(cont_vars, cont_var_updater)
                         sat = ge.evaluate_guard_disc(agent, disc_vars, cont_vars, track_map)
                         if sat:
                             sat = ge.evaluate_guard_hybrid(agent, disc_vars, cont_vars, track_map)
@@ -553,7 +956,7 @@ class Verifier:
                     new_cont_var_dict = copy.deepcopy(cont_vars)
                     one_step_guard: GuardExpressionAst = copy.deepcopy(guard_expression)
 
-                    self.apply_cont_var_updater(new_cont_var_dict, continuous_variable_updater)
+                    apply_cont_var_updater(new_cont_var_dict, continuous_variable_updater)
                     guard_can_satisfied = one_step_guard.evaluate_guard_hybrid(
                         agent, discrete_variable_dict, new_cont_var_dict, track_map)
                     if not guard_can_satisfied:
@@ -768,7 +1171,7 @@ class Verifier:
 
                         cont_var_updater = guard_expression.parse_any_all_new(
                             cont_var_dict_template, discrete_variable_dict, length_dict)
-                        self.apply_cont_var_updater(
+                        apply_cont_var_updater(
                             cont_var_dict_template, cont_var_updater)
                         guard_can_satisfied = guard_expression.evaluate_guard_disc(
                             agent, discrete_variable_dict, cont_var_dict_template, track_map)
@@ -792,7 +1195,7 @@ class Verifier:
 
             cont_var_updater = guard_expression.parse_any_all_new(
                 cont_var_dict_template, discrete_variable_dict, length_dict)
-            self.apply_cont_var_updater(
+            apply_cont_var_updater(
                 cont_var_dict_template, cont_var_updater)
             guard_can_satisfied = guard_expression.evaluate_guard_disc(
                 agent, discrete_variable_dict, cont_var_dict_template, track_map)
@@ -835,7 +1238,7 @@ class Verifier:
                     def eval_expr(expr):
                         ge = GuardExpressionAst([copy.deepcopy(expr)])
                         cont_var_updater = ge.parse_any_all_new(cont_vars, disc_vars, len_dict)
-                        self.apply_cont_var_updater(cont_vars, cont_var_updater)
+                        apply_cont_var_updater(cont_vars, cont_var_updater)
                         sat = ge.evaluate_guard_disc(agent, disc_vars, cont_vars, track_map)
                         if sat:
                             sat = ge.evaluate_guard_hybrid(agent, disc_vars, cont_vars, track_map)
@@ -869,7 +1272,7 @@ class Verifier:
                     new_cont_var_dict = copy.deepcopy(cont_vars)
                     one_step_guard: GuardExpressionAst = copy.deepcopy(guard_expression)
 
-                    self.apply_cont_var_updater(new_cont_var_dict, continuous_variable_updater)
+                    apply_cont_var_updater(new_cont_var_dict, continuous_variable_updater)
                     guard_can_satisfied = one_step_guard.evaluate_guard_hybrid(
                         agent, discrete_variable_dict, new_cont_var_dict, track_map)
                     if not guard_can_satisfied:
