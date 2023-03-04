@@ -65,13 +65,13 @@ def run(sim, meas=False):
         scenario.simulator.cache_hits = (0, 0)
         traces = scenario.simulate(60, 0.1)
     else:
-        scenario.verifier.tube_cache_hits = (0,0)
-        scenario.verifier.trans_cache_hits = (0,0)
-        traces = scenario.verify(60, 0.1)
+        # scenario.verifier.tube_cache_hits = (0,0)
+        # scenario.verifier.trans_cache_hits = (0,0)
+        traces = scenario.verify(10, 0.1)
     dur = timeit.default_timer() - time
 
     if 'd' in arg:
-        traces.dump_tree()
+        # traces.dump_tree()
         traces.dump("main.json") 
         traces.dump("tree2.json" if meas else "tree1.json") 
 

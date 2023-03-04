@@ -40,9 +40,7 @@ class CachedReachTrans:
 class CachedRTTrans:
     asserts: List[str]
     transitions: List[CachedReachTrans]
-    run_num: int
-    # node_id: int
-    node_ids: Set[Tuple[int, int]]
+    node_ids: Set[Tuple[int, int]] # run_num, node_id
 
 def to_simulate(old_agents: Dict[str, BaseAgent], new_agents: Dict[str, BaseAgent], cached: Dict[str, CachedSegment]) -> Tuple[Dict[str, CachedSegment], Any]: #s/Any/PathDiffs/
     assert set(old_agents.keys()) == set(new_agents.keys())
@@ -245,7 +243,7 @@ class ReachTubeCache:
         for i, (low, high) in enumerate(init):
             if i == len(init) - 1:
                 transitions = convert_reach_trans(agent_id, transit_agents, node.init, transition, trans_ind)
-                entry = CachedRTTrans(assert_hits.get(agent_id), transitions, node.agent[agent_id].decision_logic, run_num, node.id)
+                entry = CachedRTTrans(assert_hits.get(agent_id), transitions, set([(run_num, node.id)]))
                 tree[low:high + _EPSILON] = entry
                 return entry
             else:
