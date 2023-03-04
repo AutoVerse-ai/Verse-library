@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
     car = spacecraft_agent('test', file_name=input_code_name)
     scenario.add_agent(car)
-    scenario.set_sensor(CraftSensor())
+    ##scenario.set_sensor(CraftSensor())
     # modify mode list input
     scenario.set_init(
         [

@@ -212,7 +212,7 @@ class spacecraft_agent(BaseAgent):
 
         x_dot = vx
         y_dot = vy
-        K1 = np.array([[-28.8287, .1005, -1449.9754, .0046],[-.087, -33.2562, .00462, -1451.5013]])
+        K1 = np.array([[-28.8287, 0.1005, -1449.9754, 0.0046],[-.087, -33.2562, 0.00462, -1451.5013]])
         temp = K1@np.array([x,y,vx,vy]).T
         ux = temp[0]
         uy = temp[1]
@@ -234,8 +234,8 @@ class spacecraft_agent(BaseAgent):
 
         x_dot = vx
         y_dot = vy
-        K1 = np.array([[-288.0288, 0.1312, -9614.9898 ], [-0.1312, -288, 0, -9614.9883]])
-        temp = K1 @ np.array([x, y, vx, vy]).T
+        K2 = np.array([[-288.0288, 0.1312, -9614.9898,0], [-0.1312, -288, 0, -9614.9883]])
+        temp = K2 @ np.array([x, y, vx, vy]).T
         ux = temp[0]
         uy = temp[1]
         vx_dot = x*n**2 + 2*n*vy +mu/(r**2) - (mu/(rc**3))*(r+x) +ux/mc
