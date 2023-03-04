@@ -203,11 +203,11 @@ class spacecraft_agent(BaseAgent):
     @staticmethod
     def Approaching_dynamics(t, state):
         x, y, vx, vy, total_time, cycle_time = state
-        mu = 3.986e14 * 60 ** 2
+        mu = 3.986e14 * (60 ** 2)
         r = 43164e3
         mc = 500
         n = (mu / (r ** 3)) ** .5
-        rc = ((r + x**2) + y**2)**.5
+        rc = ((r + x)**2 + y**2)**.5
 
 
         x_dot = vx
@@ -216,7 +216,7 @@ class spacecraft_agent(BaseAgent):
         temp = K1@np.array([x,y,vx,vy]).T
         ux = temp[0]
         uy = temp[1]
-        vx_dot = x*n**2 + 2*n*vy +mu/r**2 - (mu/r**3)*(r+x) +ux/mc
+        vx_dot = x*n**2 + 2*n*vy +mu/(r**2) - (mu/(rc**3))*(r+x) +ux/mc
 
         vy_dot = y*n**2 - 2*n*vx - (mu/rc**3)*y +uy/mc
         total_time_dot = 1
@@ -230,17 +230,17 @@ class spacecraft_agent(BaseAgent):
         r = 43164e3
         mc = 500
         n = (mu / (r ** 3)) ** .5
-        rc = ((r + x ** 2) + y ** 2) ** .5
+        rc = ((r + x )**2 + y ** 2) ** .5
 
         x_dot = vx
         y_dot = vy
-        K1 = np.array([[-288.0288, 0.1312, -9614.9898 ], [-0.1312, -288, 0, -9614.988]])
+        K1 = np.array([[-288.0288, 0.1312, -9614.9898 ], [-0.1312, -288, 0, -9614.9883]])
         temp = K1 @ np.array([x, y, vx, vy]).T
         ux = temp[0]
         uy = temp[1]
-        vx_dot = x * n ** 2 + 2 * n * vy + mu / r ** 2 - (mu / r ** 3) * (r + x) + ux / mc
+        vx_dot = x*n**2 + 2*n*vy +mu/(r**2) - (mu/(rc**3))*(r+x) +ux/mc
 
-        vy_dot = y * n ** 2 - 2 * n * vx - (mu / r ** 3) * y + uy / mc
+        vy_dot = y*n**2 - 2*n*vx - (mu/rc**3)*y +uy/mc
         total_time_dot = 1
         cycle_time_dot = 1
         return [x_dot, y_dot, vx_dot, vy_dot, total_time_dot, cycle_time_dot]
@@ -252,15 +252,15 @@ class spacecraft_agent(BaseAgent):
         r = 43164e3
         mc = 500
         n = (mu / (r ** 3)) ** .5
-        rc = ((r + x ** 2) + y ** 2) ** .5
+        rc = ((r + x)**2 + y ** 2) ** .5
 
         x_dot = vx
         y_dot = vy
         ux = 0
         uy = 0
-        vx_dot = x * n ** 2 + 2 * n * vy + mu / r ** 2 - (mu / r ** 3) * (r + x) + ux / mc
+        vx_dot = x*n**2 + 2*n*vy +mu/(r**2) - (mu/(rc**3))*(r+x) +ux/mc
 
-        vy_dot = y * n ** 2 - 2 * n * vx - (mu / r ** 3) * y + uy / mc
+        vy_dot = y*n**2 - 2*n*vx - (mu/rc**3)*y +uy/mc
         total_time_dot = 1
         cycle_time_dot = 1
         return [x_dot, y_dot, vx_dot, vy_dot, total_time_dot, cycle_time_dot]
