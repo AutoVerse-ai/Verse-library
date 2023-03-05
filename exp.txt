@@ -1,0 +1,22 @@
+=========================inc-exp-r============================
+[(<AgentMode.Normal: 1>, <TrackMode.T1: 2>), (<AgentMode.Normal: 1>, <TrackMode.T1: 2>), (<AgentMode.Normal: 1>, <TrackMode.T0: 1>), (<AgentMode.Normal: 1>, <TrackMode.T0: 1>), (<AgentMode.Normal: 1>, <TrackMode.T1: 2>), (<AgentMode.Normal: 1>, <TrackMode.T2: 3>), (<AgentMode.Normal: 1>, <TrackMode.T2: 3>), (<AgentMode.Normal: 1>, <TrackMode.T2: 3>)]
+<class 'list'>
+{'cache_size': 4596968, 'dur': 146.510511297, 'hits': ((52, 60), (472, 368)), 'node_count': (105, 105)}
+{'cache_size': 4693672, 'dur': 20.12490052999999, 'hits': ((112, 0), (840, 0)), 'node_count': (105, 105)}
+=========================inc-exp-n============================
+[(<AgentMode.Normal: 1>, <TrackMode.T1: 2>), (<AgentMode.Normal: 1>, <TrackMode.T1: 2>), (<AgentMode.Normal: 1>, <TrackMode.T0: 1>), (<AgentMode.Normal: 1>, <TrackMode.T0: 1>), (<AgentMode.Normal: 1>, <TrackMode.T1: 2>), (<AgentMode.Normal: 1>, <TrackMode.T2: 3>), (<AgentMode.Normal: 1>, <TrackMode.T2: 3>), (<AgentMode.Normal: 1>, <TrackMode.T2: 3>)]
+<class 'list'>
+{'cache_size': 4609832, 'dur': 122.70458670800001, 'hits': ((49, 63), (462, 378)), 'node_count': (105, 105)}
+[(<AgentMode.Normal: 1>, <TrackMode.T1: 2>), (<AgentMode.Normal: 1>, <TrackMode.T1: 2>), (<AgentMode.Normal: 1>, <TrackMode.T0: 1>), (<AgentMode.Normal: 1>, <TrackMode.T0: 1>), (<AgentMode.Normal: 1>, <TrackMode.T1: 2>), (<AgentMode.Normal: 1>, <TrackMode.T2: 3>), (<AgentMode.Normal: 1>, <TrackMode.T2: 3>), (<AgentMode.Normal: 1>, <TrackMode.T2: 3>)]
+<class 'list'>
+{'cache_size': 6188744, 'dur': 80.037373564, 'hits': ((53, 3), (357, 35)), 'node_count': (49, 49)}
+=========================inc-exp-3============================
+[(<AgentMode.Normal: 1>, <TrackMode.T1: 2>), (<AgentMode.Normal: 1>, <TrackMode.T1: 2>), (<AgentMode.Normal: 1>, <TrackMode.T0: 1>), (<AgentMode.Normal: 1>, <TrackMode.T0: 1>), (<AgentMode.Normal: 1>, <TrackMode.T1: 2>), (<AgentMode.Normal: 1>, <TrackMode.T2: 3>), (<AgentMode.Normal: 1>, <TrackMode.T2: 3>), (<AgentMode.Normal: 1>, <TrackMode.T2: 3>)]
+<class 'list'>
+{'cache_size': 4593216, 'dur': 120.915297936, 'hits': ((53, 59), (490, 350)), 'node_count': (105, 105)}
+{'cache_size': 6251184, 'dur': 75.650998546, 'hits': ((62, 0), (408, 32)), 'node_count': (55, 55)}
+=========================inc-exp-8============================
+[(<AgentMode.Normal: 1>, <TrackMode.T1: 2>), (<AgentMode.Normal: 1>, <TrackMode.T1: 2>), (<AgentMode.Normal: 1>, <TrackMode.T0: 1>), (<AgentMode.Normal: 1>, <TrackMode.T0: 1>), (<AgentMode.Normal: 1>, <TrackMode.T1: 2>), (<AgentMode.Normal: 1>, <TrackMode.T2: 3>), (<AgentMode.Normal: 1>, <TrackMode.T2: 3>), (<AgentMode.Normal: 1>, <TrackMode.T2: 3>)]
+<class 'list'>
+{'cache_size': 4606312, 'dur': 130.72530120500002, 'hits': ((50, 62), (460, 380)), 'node_count': (105, 105)}
+{'cache_size': 6106728, 'dur': 112.34932256100001, 'hits': ((77, 23), (600, 144)), 'node_count': (93, 93)}
