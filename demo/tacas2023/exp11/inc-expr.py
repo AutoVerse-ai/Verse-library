@@ -59,15 +59,15 @@ if 'p' in arg:
     import plotly.graph_objects as go
     from verse.plotter.plotter2D import simulation_tree
 
-def run(sim, meas=False):
+def run(sim, meas=True):
     time = timeit.default_timer()
     if sim:
         scenario.simulator.cache_hits = (0, 0)
         traces = scenario.simulate(60, 0.1)
     else:
-        # scenario.verifier.tube_cache_hits = (0,0)
-        # scenario.verifier.trans_cache_hits = (0,0)
-        traces = scenario.verify(10, 0.1)
+        scenario.verifier.tube_cache_hits = (0,0)
+        scenario.verifier.trans_cache_hits = (0,0)
+        traces = scenario.verify(60, 0.1)
     dur = timeit.default_timer() - time
 
     if 'd' in arg:
