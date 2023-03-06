@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from pprint import pp
 from typing import DefaultDict, Optional, Tuple, List, Dict, Any
 import copy
@@ -237,5 +238,62 @@ class Scenario:
         self.past_runs.append(tree)
         return tree
 
+@dataclass
+class ExprConfig:
+    config: ScenarioConfig
+    args: str
+    rest: List[str]
+    plot: bool = False
+    dump: bool = False
+    sim: bool = True
 
-    
+    @staticmethod
+    def from_arg(a: List[str]) -> "ExprConfig":
+        arg = "" if len(a) < 2 else a[1]
+        sconfig = ScenarioConfig(incremental='i' in arg, parallel='l' in arg)
+        pds = "p" in arg, "d" in arg, "v" not in arg
+        for o in "ilpdv":
+            arg = arg.replace(o, "")
+        return ExprConfig(sconfig, arg, a[2:], *pds)
+
+from pympler import asizeof
+import timeit
+
+class Benchmark:
+    num_agent: int
+    map_name: str
+    # cont_engine: str
+    num_nodes: int
+    run_time: float
+    cache_size: float
+    cache_hits: Tuple[int, int]
+    _start_time: float
+
+    def __init__(self, argv: List[str]):
+        self.config = ExprConfig.from_arg(argv)
+        self.scenario = Scenario(self.config.config)
+
+    def run(self, *a, **kw):
+        f = self.scenario.simulate if self.config.sim else self.scenario.verify
+        self._start_time = timeit.default_timer()
+        self.traces = f(*a, **kw)
+        self.run_time = timeit.default_timer() - self._start_time
+        if self.config.sim:
+            self.cache_size = asizeof.asizeof(self.scenario.simulator.cache) / 1_000_000
+            self.cache_hits = self.scenario.simulator.cache_hits
+        else:
+            self.cache_size = (asizeof.asizeof(self.scenario.verifier.cache) + asizeof.asizeof(self.scenario.verifier.trans_cache)) / 1_000_000
+            self.cache_hits = (self.scenario.verifier.tube_cache_hits[0] + self.scenario.verifier.trans_cache_hits[0], self.scenario.verifier.tube_cache_hits[1] + self.scenario.verifier.trans_cache_hits[1])
+        self.num_agent = len(self.scenario.agent_dict)
+        self.map_name = self.scenario.map.__class__.__name__
+        self.num_nodes = len(self.traces.nodes)
+        return self.traces
+
+    def report(self):
+        print("report:")
+        print("#agents:", self.num_agent)
+        print("map name:", self.map_name)
+        print("#nodes:", self.num_nodes)
+        print(f"run time: {self.run_time:.2f}s")
+        print(f"cache size: {self.cache_size:.2f}MB")
+        print(f"cache hit: {(self.cache_hits[0] / self.cache_hits[0] + self.cache_hits[1]) / 100:.2f}%")
