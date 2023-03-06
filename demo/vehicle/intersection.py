@@ -1,13 +1,8 @@
-import functools, pprint, random, timeit
-import math
-from enum import Enum, auto
-from pympler import asizeof
-from verse.agents.example_agent import CarAgent, NPCAgent
+import functools, pprint, random, math
+from verse.agents.example_agent import CarAgent
 from verse.analysis.utils import wrap_to_pi
-from verse.parser.parser import ast_dump
 from verse.map.example_map.intersection import Intersection
-from verse.scenario.scenario import ScenarioConfig, Scenario
-from typing import List
+from verse.scenario.scenario import Benchmark
 pp = functools.partial(pprint.pprint, compact=True, width=130)
 
 from controller.intersection_car import AgentMode
@@ -20,50 +15,32 @@ CAR_THETA_RANGE = (-0.1, 0.1)
 def rand(start: float, end: float) -> float:
     return random.random() * (end - start) + start
 
-import sys
-arg = sys.argv[1]
+def run(meas=False):
+    traces = bench.run(60, 0.05)
 
-if 'p' in arg:
-    import plotly.graph_objects as go
-    from verse.plotter.plotter2D import reachtube_tree, simulation_tree
-
-def run(sim, meas=False):
-    time = timeit.default_timer()
-    if sim:
-        traces = scenario.simulate(60, 0.05)
-    else:
-        traces = scenario.verify(60, 0.05)
-    dur = timeit.default_timer() - time
-
-    if 'd' in arg:
+    if bench.config.dump:
         traces.dump_tree()
         traces.dump("main.json") 
         traces.dump("tree2.json" if meas else "tree1.json") 
 
-    if 'p' in arg and meas:
+    if bench.config.plot and meas:
+        import plotly.graph_objects as go
+        from verse.plotter.plotter2D import reachtube_tree, simulation_tree
+
         fig = go.Figure()
-        if sim:
-            fig = simulation_tree(traces, map, fig, 1, 2, print_dim_list=[1, 2])
+        if bench.config.sim:
+            fig = simulation_tree(traces, bench.scenario.map, fig, 1, 2, print_dim_list=[1, 2])
         else:
-            fig = reachtube_tree(traces, map, fig, 1, 2, [1, 2], 'lines',combine_rect=5)
+            fig = reachtube_tree(traces, bench.scenario.map, fig, 1, 2, [1, 2], 'lines',combine_rect=5)
         fig.show()
 
-    if sim:
-        cache_size = asizeof.asizeof(scenario.simulator.cache)
-    else:
-        cache_size = asizeof.asizeof(scenario.verifier.cache) + asizeof.asizeof(scenario.verifier.trans_cache)
     if meas:
-        pp({
-            "dur": dur,
-            "cache_size": cache_size,
-            "node_count": ((0 if sim else scenario.verifier.num_transitions), len(traces.nodes)),
-            "hits": scenario.simulator.cache_hits if sim else (scenario.verifier.tube_cache_hits, scenario.verifier.trans_cache_hits),
-        })
+        bench.report()
 
 if __name__ == "__main__":
+    import sys
+    bench = Benchmark(sys.argv)
     ctlr_src = "demo/vehicle/controller/intersection_car.py"
-    config = ScenarioConfig(incremental='i' in arg, parallel='l' in arg)
-    scenario = Scenario(config)
     import time
     if len(sys.argv) == 3:
         seed = int(sys.argv[2])
@@ -71,16 +48,15 @@ if __name__ == "__main__":
         seed = int(time.time())
     random.seed(seed)
 
-    sim = "v" not in arg
     dirs = "WSEN"
     map = Intersection()
-    scenario.set_map(map)
+    bench.scenario.set_map(map)
     for i in range(CAR_NUM):
         car = CarAgent(f"car{i}", file_name=ctlr_src, speed=rand(*CAR_SPEED_RANGE), accel=rand(*CAR_ACCEL_RANGE))
         # if i == 0:
         #     for p in car.decision_logic.paths:
         #         print(ast_dump(p.val_veri), "<=", ast_dump(p.cond_veri))
-        scenario.add_agent(car)
+        bench.scenario.add_agent(car)
         dir = random.randint(0, 3)
         src = dirs[dir]
         dst_dirs = list(dirs)
@@ -91,11 +67,11 @@ if __name__ == "__main__":
         pos = { "N": (-off, start), "S": (off, -start), "W": (-start, -off), "E": (start, off) }[src]
         init = [*pos, wrap_to_pi(dir * math.pi / 2 + rand(*CAR_THETA_RANGE)), rand(*CAR_SPEED_RANGE)]
         modes = (AgentMode.Accel, f"{src}{dst}.{lane}")
-        scenario.set_init_single(car.id, (init,), modes)
+        bench.scenario.set_init_single(car.id, (init,), modes)
 
-    if 'b' in arg:
-        run(sim, True)
-    elif 'r' in arg:
-        run(sim)
-        run(sim, True)
+    if 'b' in bench.config.args:
+        run(True)
+    elif 'r' in bench.config.args:
+        run()
+        run(True)
     print("seed:", seed)
