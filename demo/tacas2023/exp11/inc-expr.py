@@ -94,6 +94,7 @@ def run(sim, meas=True):
             "node_count": ((0 if sim else scenario.verifier.num_transitions), len(traces.nodes)),
             "hits": scenario.simulator.cache_hits if sim else (scenario.verifier.tube_cache_hits, scenario.verifier.trans_cache_hits),
         })
+    return traces
 
 if __name__ == "__main__":
     input_code_name = './demo/tacas2023/exp11/decision_logic/inc-expr6.py' if "6" in arg else './demo/tacas2023/exp11/decision_logic/inc-expr.py'
@@ -188,3 +189,10 @@ if __name__ == "__main__":
         run(sim)
         scenario.agent_dict["car8"] = CarAgent('car8', file_name=input_code_name.replace(".py", "-fsw4.py"))
         run(sim, True)
+    elif 'c' in arg:
+        scenario.config.parallel=True
+        par_traces = run(sim, True)
+        scenario.config.parallel=False
+        ser_traces = run(sim, True)
+        print("par_traces contains ser_traces?", par_traces.contains(ser_traces))
+        print("ser_traces contains par_traces?", ser_traces.contains(par_traces))
