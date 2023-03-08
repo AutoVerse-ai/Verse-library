@@ -32,9 +32,9 @@ def controller(ego:State):
     output_lane_mode = ego.lane_mode
     if ego.vehicle_mode == VehicleMode.Normal:
         if ego.lane_mode == TrackMode.Lane0:
-            if ego.x > 3 and ego.x < 5:
+            if 5 > ego.x > 3:
                 output_vehicle_mode = VehicleMode.SwitchLeft
-            if ego.x > 3 and ego.x < 5:
+            if 5 > ego.x > 3:
                 output_vehicle_mode = VehicleMode.SwitchRight
     if ego.vehicle_mode == VehicleMode.SwitchLeft:
         if ego.lane_mode == TrackMode.Lane0:

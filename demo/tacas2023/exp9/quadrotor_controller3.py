@@ -34,16 +34,12 @@ class State:
 
 
 def safe_seperation(ego, other):
-    res = ego.x-other.x < 1 and ego.x-other.x >-1 and \
-        ego.y-other.y < 1 and ego.y-other.y > -1 and \
-        ego.z-other.z < 1 and ego.z-other.z > -1
-    return res
+    return -1 < ego.x - other.x < 1 and -1 < ego.y - other.y < 1 and -1 < ego.z - other.z < 1
 
 def is_close(ego, other):
-    res = ((other.x - ego.x < 10 and other.x-ego.x > 8) or\
-        (other.y-ego.y < 10 and other.y-ego.y > 8) or\
-        (other.z-ego.z < 10 and other.z-ego.z > 8))
-    return res
+    return (8 < other.x - ego.x < 10
+        or 8 < other.y-ego.y < 10
+        or 8 < other.z-ego.z < 10)
 
 
 def decisionLogic(ego: State, others: List[State], track_map):
@@ -61,21 +57,23 @@ def decisionLogic(ego: State, others: List[State], track_map):
                     ego.track_mode, ego.craft_mode, CraftMode.MoveDown)
 
     if ego.craft_mode == CraftMode.MoveUp:
-        if track_map.altitude(ego.track_mode)-ego.z > -1 and track_map.altitude(ego.track_mode)-ego.z < 1:
+        if 1 > track_map.altitude(ego.track_mode)-ego.z > -1:
             next.craft_mode = CraftMode.Normal
             if track_map.h_exist(ego.track_mode, ego.craft_mode, CraftMode.Normal):
                 next.track_mode = track_map.h(
                     ego.track_mode, ego.craft_mode, CraftMode.Normal)
 
     if ego.craft_mode == CraftMode.MoveDown:
-        if track_map.altitude(ego.track_mode)-ego.z > -1 and track_map.altitude(ego.track_mode)-ego.z < 1:
+        if 1 > track_map.altitude(ego.track_mode)-ego.z > -1:
             next.craft_mode = CraftMode.Normal
             if track_map.h_exist(ego.track_mode, ego.craft_mode, CraftMode.Normal):
                 next.track_mode = track_map.h(
                     ego.track_mode, ego.craft_mode, CraftMode.Normal)
 
-    assert not any(ego.x-other.x < 1 and ego.x-other.x >-1 and \
-        ego.y-other.y < 1 and ego.y-other.y > -1 and \
-        ego.z-other.z < 1 and ego.z-other.z > -1 for other in others),\
+    assert not any(-1 < ego.x-other.x < 1
+        and -1 < ego.y-other.y < 1
+        and -1 < ego.z-other.z < 1
+        for other in others),\
         "Safe Seperation"
+
     return next

@@ -1,6 +1,13 @@
-from typing import List, Dict, Any
+from functools import reduce
+import pickle
+from typing import List, Dict, Any, Optional, Tuple
 import json
 from treelib import Tree
+import numpy.typing as nptyp, numpy as np, portion
+
+from verse.analysis.dryvr import _EPSILON
+
+TraceType = nptyp.NDArray[np.float_]
 
 class AnalysisTreeNode:
     """AnalysisTreeNode class
@@ -18,6 +25,7 @@ class AnalysisTreeNode:
         static = {},
         uncertain_param = {},
         agent={},
+        height =0,
         assert_hits={},
         child=[],
         start_time = 0,
@@ -25,10 +33,11 @@ class AnalysisTreeNode:
         type = 'simtrace',
         id = 0
     ):
-        self.trace:Dict = trace
+        self.trace: Dict[str, TraceType] = trace
         self.init: Dict[str, List[float]] = init
-        self.mode: Dict[str, List[str]] = mode
+        self.mode: Dict[str, Tuple[str]] = mode
         self.agent: Dict = agent
+        self.height: int = height
         self.child: List[AnalysisTreeNode] = child
         self.start_time: float = round(start_time, ndigits)
         self.assert_hits = assert_hits
@@ -43,11 +52,12 @@ class AnalysisTreeNode:
             'parent': None, 
             'child': [], 
             'agent': {}, 
-            'init': self.init, 
+            'init': {aid: list(init) for aid, init in self.init.items()}, 
             'mode': self.mode, 
+            'height': self.height,
             'static': self.static, 
             'start_time': self.start_time,
-            'trace': self.trace, 
+            'trace': ({aid: t.tolist() for aid, t in self.trace.items()} if self.type == "simtrace" else self.trace), 
             'type': self.type, 
             'assert_hits': self.assert_hits
         }
@@ -83,9 +93,10 @@ class AnalysisTreeNode:
     @staticmethod
     def from_dict(data) -> "AnalysisTreeNode":
         return AnalysisTreeNode(
-            trace = data['trace'],
+            trace = ({aid: np.array(data['trace'][aid]) for aid in data["agent"].keys()} if data["type"] == "simtrace" else data["trace"]),
             init = data['init'],
             mode = data['mode'],
+            height = data['height'],
             static = data['static'],
             agent = data['agent'],
             assert_hits = data['assert_hits'],
@@ -106,7 +117,6 @@ class AnalysisTree:
         node_id = 0
         while queue:
             node = queue.pop(0)
-            node.id = node_id 
             res.append(node)
             node_id += 1
             queue += node.child
@@ -162,3 +172,56 @@ class AnalysisTree:
         for child in node.child:
             nid = AnalysisTree._dump_tree(child, tree, id, nid)
         return nid + 1
+
+    def contains(self, other: "AnalysisTree", strict: bool = True, tol: Optional[float] = None) -> bool:
+        """
+        Returns, for reachability, whether the current tree fully contains the other tree or not;
+        for simulation, whether the other tree is close enough to the current tree.
+        strict: requires set of agents to be the same
+        """
+        tol = _EPSILON if tol == None else tol
+        cur_agents = set(self.nodes[0].agent.keys())
+        other_agents = set(other.nodes[0].agent.keys())
+        min_agents = list(other_agents)
+        types = list(set([n.type for n in self.nodes + other.nodes]))
+        assert len(types) == 1, f"Different types of nodes: {types}"
+        if not ((strict and cur_agents == other_agents) or (not strict and cur_agents.issuperset(other_agents))):
+            return False
+        if types[0] == "simtrace":                  # Simulation
+            if len(self.nodes) != len(other.nodes):
+                return False
+            def sim_seg_contains(a: Dict[str, TraceType], b: Dict[str, TraceType]) -> bool:
+                return all(a[aid].shape == b[aid].shape and bool(np.all(np.abs(a[aid][:, 1:] - b[aid][:, 1:]) < tol)) for aid in min_agents)
+            def sim_node_contains(a: AnalysisTreeNode, b: AnalysisTreeNode) -> bool:
+                if not sim_seg_contains(a.trace, b.trace):
+                    return False
+                if len(a.child) != len(b.child):
+                    return False
+                child_num = len(a.child)
+                other_not_paired = set(range(child_num))
+                for i in range(child_num):
+                    for j in other_not_paired:
+                        if sim_node_contains(a.child[i], b.child[j]):
+                            other_not_paired.remove(j)
+                            break
+                    else:
+                        return False
+                return True
+            return sim_node_contains(self.root, other.root)
+        else:                                       # Reachability
+            cont_num = len(other.nodes[0].trace[min_agents[0]][0]) - 1
+            def collect_ranges(n: AnalysisTreeNode) -> Dict[str, List[List[portion.Interval]]]:
+                trace_len = len(n.trace[min_agents[0]])
+                cur = {aid: [[portion.closed(n.trace[aid][i][j + 1], n.trace[aid][i + 1][j + 1]) for j in range(cont_num)] for i in range(trace_len)] for aid in min_agents}
+                if len(n.child) == 0:
+                    return cur
+                else:
+                    children = [collect_ranges(c) for c in n.child]
+                    child_num = len(children)
+                    trace_len = len(children[min_agents[0]][0])
+                    combined = {aid: [[reduce(portion.Interval.union, (children[i][aid][j][k] for k in range(child_num))) for j in range(cont_num)] for i in range(trace_len)] for aid in other_agents}
+                    return {aid: cur[aid] + combined[aid] for aid in other_agents}
+            this_tree, other_tree = collect_ranges(self.root), collect_ranges(other.root)
+            total_len = len(other_tree[min_agents[0]])
+            # bloat and containment
+            return all(other_tree[aid][i][j] in this_tree[aid][i][j].apply(lambda x: x.replace(lower=lambda v: v - tol, upper=lambda v: v + tol)) for aid in other_agents for i in range(total_len) for j in range(cont_num))

@@ -41,18 +41,15 @@ class State:
     type: LaneObjectMode = LaneObjectMode.Vehicle
 
 def car_front(ego, others, track_map, thresh_far, thresh_close):
-    return any((track_map.get_longitudinal_position(other.track_mode, [other.x,other.y]) - track_map.get_longitudinal_position(ego.track_mode, [ego.x,ego.y]) > thresh_close \
-            and track_map.get_longitudinal_position(other.track_mode, [other.x,other.y]) - track_map.get_longitudinal_position(ego.track_mode, [ego.x,ego.y]) < thresh_far \
+    return any((thresh_far > track_map.get_longitudinal_position(other.track_mode, [other.x,other.y]) - track_map.get_longitudinal_position(ego.track_mode, [ego.x,ego.y]) > thresh_close \
             and ego.track_mode == other.track_mode) for other in others)
 
 def car_left(ego, others, track_map):
-    return any((track_map.get_longitudinal_position(other.track_mode, [other.x,other.y]) - track_map.get_longitudinal_position(ego.track_mode, [ego.x,ego.y]) < 8 and \
-                 track_map.get_longitudinal_position(other.track_mode, [other.x,other.y]) - track_map.get_longitudinal_position(ego.track_mode, [ego.x,ego.y]) >-3 and \
+    return any((-3 < track_map.get_longitudinal_position(other.track_mode, [other.x,other.y]) - track_map.get_longitudinal_position(ego.track_mode, [ego.x,ego.y]) < 8 and \
                  other.track_mode==track_map.left_lane(ego.track_mode)) for other in others)
 
 def car_right(ego, others, track_map):
-    return any((track_map.get_longitudinal_position(other.track_mode, [other.x,other.y]) - track_map.get_longitudinal_position(ego.track_mode, [ego.x,ego.y]) < 8 and \
-                 track_map.get_longitudinal_position(other.track_mode, [other.x,other.y]) - track_map.get_longitudinal_position(ego.track_mode, [ego.x,ego.y]) >-3 and \
+    return any((-3 < track_map.get_longitudinal_position(other.track_mode, [other.x,other.y]) - track_map.get_longitudinal_position(ego.track_mode, [ego.x,ego.y]) < 8 and \
                  other.track_mode==track_map.right_lane(ego.track_mode)) for other in others)
 
 def decisionLogic(ego:State, others:List[State], track_map):
