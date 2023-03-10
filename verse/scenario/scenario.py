@@ -243,6 +243,7 @@ class ExprConfig:
     config: ScenarioConfig
     args: str
     rest: List[str]
+    compare: bool = False
     plot: bool = False
     dump: bool = False
     sim: bool = True
@@ -251,10 +252,10 @@ class ExprConfig:
     def from_arg(a: List[str]) -> "ExprConfig":
         arg = "" if len(a) < 2 else a[1]
         sconfig = ScenarioConfig(incremental='i' in arg, parallel='l' in arg)
-        pds = "p" in arg, "d" in arg, "v" not in arg
-        for o in "ilpdv":
+        cpds = "c" in arg, "p" in arg, "d" in arg, "v" not in arg
+        for o in "cilpdv":
             arg = arg.replace(o, "")
-        return ExprConfig(sconfig, arg, a[2:], *pds)
+        return ExprConfig(sconfig, arg, a[2:], *cpds)
 
 from pympler import asizeof
 import timeit
@@ -288,6 +289,19 @@ class Benchmark:
         self.map_name = self.scenario.map.__class__.__name__
         self.num_nodes = len(self.traces.nodes)
         return self.traces
+
+    def compare_run(self, *a, **kw):
+        assert not self.config.compare
+        traces1 = self.run( *a, **kw)
+        if len(self.config.rest) == 0:
+            traces2 = self.run( *a, **kw)
+            self.report()
+        else:
+            arg = self.config.rest[0]
+            self.config.config = ScenarioConfig(incremental='i' in arg, parallel='l' in arg)
+            traces2 = self.run( *a, **kw)
+            self.report()
+        return traces1, traces2
 
     def report(self):
         print("report:")
