@@ -4,7 +4,6 @@ from verse.agents.example_agent import CarAgent, NPCAgent
 from verse.map.example_map import SimpleMap4
 
 from enum import Enum, auto
-from verse.plotter.plotter2D import reachtube_tree
 from verse.scenario.scenario import Benchmark
 import functools, pprint
 pp = functools.partial(pprint.pprint, compact=True, width=130)
@@ -79,7 +78,7 @@ if __name__ == "__main__":
 
     if bench.config.plot:
         import plotly.graph_objects as go
-        from verse.plotter.plotter2D import simulation_tree
+        from verse.plotter.plotter2D import simulation_tree, reachtube_tree
 
     bench.scenario.add_agent(CarAgent('car1', file_name=input_code_name))
     bench.scenario.add_agent(NPCAgent('car2'))
@@ -130,7 +129,6 @@ if __name__ == "__main__":
                 (LaneObjectMode.Vehicle,), (LaneObjectMode.Vehicle,),
                 (LaneObjectMode.Vehicle,), (LaneObjectMode.Vehicle,),
             ])
-
         poses = [
             [0, 0, 0, 1.0], [10, 0, 0, 0.5],
             [14, 3, 0, 0.6], [20, 3, 0, 0.5],

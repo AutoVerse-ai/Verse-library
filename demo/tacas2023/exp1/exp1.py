@@ -54,13 +54,19 @@ if __name__ == "__main__":
     tmp_map = M6()
     bench.scenario.set_map(tmp_map)
     # scenario.set_sensor(QuadrotorSensor())
-    traces = bench.run(40, time_step)
-    if bench.config.plot:
-        import pyvista as pv
-        fig = pv.Plotter()
-        fig = plot3dMap(tmp_map, ax=fig, width=0.05)
-        fig = plot3dReachtube(traces, 'test1',1,2,3,'r',fig, edge = True)
-        fig = plot3dReachtube(traces, 'test2',1,2,3,'b',fig, edge = True)
-        fig.set_background('#e0e0e0')
-        fig.show()
-    bench.report()
+    if not bench.config.compare:
+        traces = bench.run(40, time_step)
+        if bench.config.plot:
+            import pyvista as pv
+            fig = pv.Plotter()
+            fig = plot3dMap(tmp_map, ax=fig, width=0.05)
+            fig = plot3dReachtube(traces, 'test1',1,2,3,'r',fig, edge = True)
+            fig = plot3dReachtube(traces, 'test2',1,2,3,'b',fig, edge = True)
+            fig.set_background('#e0e0e0')
+            fig.show()
+        if bench.config.dump:
+            traces.dump('demo/tacas2023/exp1/output1.json')
+        bench.report()
+    else:
+        traces1, traces2 = bench.compare_run(40, time_step)
+    
