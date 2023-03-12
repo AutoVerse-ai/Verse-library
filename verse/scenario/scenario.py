@@ -1,29 +1,11 @@
-from abc import ABC, abstractmethod
-from pprint import pp
 from typing import DefaultDict, Optional, Tuple, List, Dict, Any
 import copy
-import itertools
-import warnings
-from collections import defaultdict
-import ast
 from dataclasses import dataclass
-import types
-import sys
-from enum import Enum
-import ray
 import numpy as np
-import math
-from types import SimpleNamespace
 
 from verse.agents.base_agent import BaseAgent
-from verse.analysis.dryvr import _EPSILON
-from verse.analysis.incremental import CachedRTTrans, CachedSegment, combine_all, reach_trans_suit, sim_trans_suit
-from verse.analysis.simulator import PathDiffs
-from verse.automaton import GuardExpressionAst, ResetExpression
 from verse.analysis import Simulator, Verifier, AnalysisTreeNode, AnalysisTree
 from verse.analysis.utils import dedup, sample_rect
-from verse.parser import astunparser
-from verse.parser.parser import ControllerIR, ModePath, find
 from verse.sensor.base_sensor import BaseSensor
 from verse.map.lane_map import LaneMap
 
@@ -229,11 +211,8 @@ class Scenario:
             static_list.append(self.static_dict[agent_id])
             uncertain_param_list.append(self.uncertain_param_dict[agent_id])
             agent_list.append(self.agent_dict[agent_id])
-        if not self.config.parallel:
-            tree = self.verifier.compute_full_reachtube_ser(init_list, init_mode_list, static_list, uncertain_param_list, agent_list, self.sensor, time_horizon,
-                                                    time_step, max_height,self.map, self.config.init_seg_length, self.config.reachability_method, len(self.past_runs), self.past_runs, params)
-        else:
-            tree = self.verifier.compute_full_reachtube(init_list, init_mode_list, static_list, uncertain_param_list, agent_list, self.sensor, time_horizon,
+        
+        tree = self.verifier.compute_full_reachtube(init_list, init_mode_list, static_list, uncertain_param_list, self.agent_dict, self.sensor, time_horizon,
                                                     time_step, max_height, self.map, self.config.init_seg_length, self.config.reachability_method, len(self.past_runs), self.past_runs, params)
         self.past_runs.append(tree)
         return tree
