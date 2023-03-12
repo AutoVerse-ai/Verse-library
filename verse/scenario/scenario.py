@@ -47,6 +47,11 @@ class Scenario:
         # Parameters
         self.config = config
 
+    def update_config(self, config):
+        self.config = config
+        self.verifier.config = config
+        self.simulator.config = config
+
     def set_sensor(self, sensor):
         self.sensor = sensor
 
@@ -235,7 +240,9 @@ class ExprConfig:
         cpds = "c" in arg, "p" in arg, "d" in arg, "v" not in arg
         for o in "cilpdv":
             arg = arg.replace(o, "")
-        return ExprConfig(sconfig, arg, a[2:], *cpds)
+        expconfig = ExprConfig(sconfig, arg, a[2:], *cpds)
+        expconfig.kw=kw
+        return expconfig
     def disp(self):
         print('args', self.args)
         print('rest', self.rest)
@@ -291,7 +298,8 @@ class Benchmark:
             traces2 = self.run( *a, **kw)
         else:
             arg = self.config.rest[0]
-            self.config.config = ScenarioConfig(incremental='i' in arg, parallel='l' in arg)
+            self.config.config = ScenarioConfig(incremental='i' in arg, parallel='l' in arg, **self.config.kw)
+            self.scenario.update_config(self.config.config)
             traces2 = self.run( *a, **kw)
         self.report()
         print("trace1 contains trace2?", traces1.contains(traces2))

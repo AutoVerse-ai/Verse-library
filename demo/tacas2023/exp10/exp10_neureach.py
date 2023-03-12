@@ -32,7 +32,7 @@ if __name__ == "__main__":
     input_code_name2 = './demo/tacas2023/exp10/quadrotor_controller4.py'
 
     bench = Benchmark(sys.argv, reachability_method='NeuReach')
-    bench.agent_type = "Q"
+    bench.agent_type = "D"
     bench.noisy_s = "No"
     time_step = 0.2
     quadrotor1 = QuadrotorAgent(
