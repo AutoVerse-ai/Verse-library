@@ -1,8 +1,8 @@
 from origin_agent import vanderpol_agent
-from verse import Scenario
+from verse.scenario.scenario import Benchmark
 from verse.plotter.plotter2D import *
 import time 
-import  sys 
+import sys 
 
 import plotly.graph_objects as go
 from enum import Enum, auto
@@ -14,12 +14,13 @@ class AgentMode(Enum):
 
 if __name__ == "__main__":
     input_code_name = './demo/tacas2023/exp12/vanderpol_controller.py'
-    scenario = Scenario()
-
+    bench = Benchmark(sys.argv)
+    bench.agent_type = "V"
+    bench.noisy_s = "No"
     car = vanderpol_agent('car1', file_name=input_code_name)
-    scenario.add_agent(car)
+    bench.scenario.add_agent(car)
     # modify mode list input
-    scenario.set_init(
+    bench.scenario.set_init(
         [
             [[1.25, 2.25], [1.55, 2.35]],
         ],
@@ -27,22 +28,15 @@ if __name__ == "__main__":
             tuple([AgentMode.Default]),
         ]
     )
-    start_time = time.time()
-    traces = scenario.verify(
-        7, 0.01,
-    )
-    run_time = time.time() - start_time 
-    print({
-        "#A": len(scenario.agent_dict),
-        "A": "V",
-        "Map": "N/A",
-        "postCont": "DryVR",
-        "Noisy S": "N/A",
-        "# Tr": len(traces.nodes),
-        "Run Time": run_time,
-    })
-    if len(sys.argv) > 1 and sys.argv[1]=='p':        
+    time_step = 0.01
+    if bench.config.compare:
+        traces1, traces2 = bench.compare_run(7, time_step)
+        exit(0)
+    traces = bench.run(7, time_step)
+
+    if bench.config.plot:       
         fig = go.Figure()
         fig = reachtube_tree(traces, None, fig, 1, 2, [1, 2],
                             'lines', 'trace')
         fig.show()
+    bench.report()

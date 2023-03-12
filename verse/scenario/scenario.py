@@ -2,6 +2,7 @@ from typing import DefaultDict, Optional, Tuple, List, Dict, Any
 import copy
 from dataclasses import dataclass
 import numpy as np
+from pprint import pp
 
 from verse.agents.base_agent import BaseAgent
 from verse.analysis import Simulator, Verifier, AnalysisTreeNode, AnalysisTree
@@ -228,33 +229,44 @@ class ExprConfig:
     sim: bool = True
 
     @staticmethod
-    def from_arg(a: List[str]) -> "ExprConfig":
+    def from_arg(a: List[str], **kw) -> "ExprConfig":
         arg = "" if len(a) < 2 else a[1]
-        sconfig = ScenarioConfig(incremental='i' in arg, parallel='l' in arg)
+        sconfig = ScenarioConfig(incremental='i' in arg, parallel='l' in arg, **kw)
         cpds = "c" in arg, "p" in arg, "d" in arg, "v" not in arg
         for o in "cilpdv":
             arg = arg.replace(o, "")
         return ExprConfig(sconfig, arg, a[2:], *cpds)
+    def disp(self):
+        print('args', self.args)
+        print('rest', self.rest)
+        print('compare', self.compare)
+        print('plot', self.plot)
+        print('dump', self.dump)
+        print('sim', self.sim)
 
 from pympler import asizeof
 import timeit
 
 class Benchmark:
+    agent_type: str
     num_agent: int
     map_name: str
-    # cont_engine: str
+    cont_engine: str
+    noisy_s: str
     num_nodes: int
     run_time: float
     cache_size: float
     cache_hits: Tuple[int, int]
     _start_time: float
 
-    def __init__(self, argv: List[str]):
-        self.config = ExprConfig.from_arg(argv)
+    def __init__(self, argv: List[str], **kw):
+        self.config = ExprConfig.from_arg(argv, **kw)
+        # self.config.disp()
         self.scenario = Scenario(self.config.config)
 
-    def run(self, *a, **kw):
+    def run(self, *a, **kw)->AnalysisTree:
         f = self.scenario.simulate if self.config.sim else self.scenario.verify
+        self.cont_engine = self.scenario.config.reachability_method
         self._start_time = timeit.default_timer()
         self.traces = f(*a, **kw)
         self.run_time = timeit.default_timer() - self._start_time
@@ -266,27 +278,42 @@ class Benchmark:
             self.cache_hits = (self.scenario.verifier.tube_cache_hits[0] + self.scenario.verifier.trans_cache_hits[0], self.scenario.verifier.tube_cache_hits[1] + self.scenario.verifier.trans_cache_hits[1])
         self.num_agent = len(self.scenario.agent_dict)
         self.map_name = self.scenario.map.__class__.__name__
+        if self.map_name == 'LaneMap':
+            self.map_name = 'N/A'
         self.num_nodes = len(self.traces.nodes)
         return self.traces
 
     def compare_run(self, *a, **kw):
-        assert not self.config.compare
+        assert self.config.compare
         traces1 = self.run( *a, **kw)
+        self.report()
         if len(self.config.rest) == 0:
             traces2 = self.run( *a, **kw)
-            self.report()
         else:
             arg = self.config.rest[0]
             self.config.config = ScenarioConfig(incremental='i' in arg, parallel='l' in arg)
             traces2 = self.run( *a, **kw)
-            self.report()
+        self.report()
+        print("trace1 contains trace2?", traces1.contains(traces2))
+        print("trace2 contains trace1?", traces2.contains(traces1))
         return traces1, traces2
 
     def report(self):
+        print_dict={"#A": self.num_agent,
+                    "A": self.agent_type,
+                    "Map": self.map_name,
+                    "postCont": self.cont_engine,
+                    "Noisy S": self.noisy_s,
+                    "# Tr": self.num_nodes,
+                    "Run Time": self.run_time
+                    }
+        print(print_dict)
         print("report:")
         print("#agents:", self.num_agent)
         print("map name:", self.map_name)
         print("#nodes:", self.num_nodes)
         print(f"run time: {self.run_time:.2f}s")
-        print(f"cache size: {self.cache_size:.2f}MB")
-        print(f"cache hit: {(self.cache_hits[0] / self.cache_hits[0] + self.cache_hits[1]) / 100:.2f}%")
+        if self.config.config.incremental:
+            print(f"cache size: {self.cache_size:.2f}MB")
+            print(f"cache hit rate: {(self.cache_hits[0], self.cache_hits[1])}")
+            print(f"cache hit rate: {self.cache_hits[0] / (self.cache_hits[0] + self.cache_hits[1]) * 100:.2f}%")

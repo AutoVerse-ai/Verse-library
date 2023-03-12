@@ -75,7 +75,8 @@ if __name__ == "__main__":
     import sys
     bench = Benchmark(sys.argv)
     input_code_name = './demo/tacas2023/exp11/decision_logic/inc-expr6.py' if "6" in bench.config.args else './demo/tacas2023/exp11/decision_logic/inc-expr.py'
-
+    bench.agent_type = "Q"
+    bench.noisy_s = "No"
     if bench.config.plot:
         import plotly.graph_objects as go
         from verse.plotter.plotter2D import simulation_tree, reachtube_tree
