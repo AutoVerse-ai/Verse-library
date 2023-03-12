@@ -1,17 +1,12 @@
 from verse.agents.example_agent import CarAgent, NPCAgent
-# from verse.map.example_map import SimpleMap3, SimpleMap6
 from verse.map.example_map.map_tacas import M3
-from verse import Scenario
-from verse.scenario import ScenarioConfig
+from verse.scenario.scenario import Benchmark
 # from noisy_sensor import NoisyVehicleSensor
 from verse.plotter.plotter2D import *
-# from verse.plotter.plotter2D_old import plot_reachtube_tree, plot_map
 
 from enum import Enum, auto
-import time
 import sys
 import plotly.graph_objects as go
-import matplotlib.pyplot as plt
 
 import pyvista as pv 
 from verse.plotter.plotter3D import *
@@ -56,17 +51,19 @@ class State:
 
 if __name__ == "__main__":
     input_code_name = './demo/tacas2023/exp2/example_controller5.py'
-    scenario = Scenario(ScenarioConfig(init_seg_length=5))
 
+    bench = Benchmark(sys.argv, init_seg_length=5)
+    bench.agent_type = "C"
+    bench.noisy_s = "No"
     car = CarAgent('car1', file_name=input_code_name)
-    scenario.add_agent(car)
+    bench.scenario.add_agent(car)
     car = NPCAgent('car2')
-    scenario.add_agent(car)
+    bench.scenario.add_agent(car)
     car = NPCAgent('car3')
-    scenario.add_agent(car)
+    bench.scenario.add_agent(car)
     tmp_map = M3()
-    scenario.set_map(tmp_map)
-    scenario.set_init(
+    bench.scenario.set_map(tmp_map)
+    bench.scenario.set_init(
         [
             [[5, -0.5, 0, 1.0], [5.5, 0.5, 0, 1.0]],
             [[20, -0.2, 0, 0.5], [20, 0.2, 0, 0.5]],
@@ -78,26 +75,19 @@ if __name__ == "__main__":
             (AgentMode.Normal, TrackMode.T0),
         ]
     )
+    time_step = 0.1
+    if bench.config.compare:
+        traces1, traces2 = bench.compare_run(40, time_step, params={"bloating_method": 'GLOBAL'})
+        exit(0)
+    traces = bench.run(40, time_step, params={"bloating_method": 'GLOBAL'})
 
-    start_time = time.time()
-    traces = scenario.verify(40, 0.1, params={"bloating_method": 'GLOBAL'})
-    run_time = time.time()-start_time
-    traces.dump('./demo/tacas2023/exp2/output2_curve.json')
-    print({
-        "#A": len(scenario.agent_dict),
-        "A": "C",
-        "Map": "M3",
-        "postCont": "DryVR",
-        "Noisy S": "No",
-        "# Tr": len(traces.nodes),
-        "Run Time": run_time,
-    })
-
-    if len(sys.argv)>1 and sys.argv[1] == 'p':
+    if bench.config.dump:
+        traces.dump('./demo/tacas2023/exp2/output2_curve.json')
+    if bench.config.plot:
         fig = go.Figure()
         fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace')
         fig.show()
-
+    bench.report()
     # fig = go.Figure()
     # fig = reachtube_anime(traces, tmp_map, fig, 1,
     #                       2, 'lines', 'trace', combine_rect=1)

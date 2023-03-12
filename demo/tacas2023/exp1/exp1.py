@@ -1,11 +1,11 @@
 from quadrotor_agent import QuadrotorAgent
-from verse import Scenario
+from verse.scenario.scenario import Benchmark
 from verse.plotter.plotter3D_new import *
 from verse.plotter.plotter3D import *
 from verse.map.example_map.map_tacas import M6 
-from verse.scenario.scenario import Benchmark
 from enum import Enum, auto
 import warnings
+import sys
 
 warnings.filterwarnings("ignore")
 
@@ -26,10 +26,11 @@ class TrackMode(Enum):
 
 
 if __name__ == "__main__":
-    import sys
     input_code_name = './demo/tacas2023/exp1/quadrotor_controller3.py'
 
     bench = Benchmark(sys.argv)
+    bench.agent_type = "Q"
+    bench.noisy_s = "No"
     time_step = 0.1
     quadrotor1 = QuadrotorAgent(
         'test1', file_name=input_code_name, t_v_pair=(1, 1), box_side=[0.4]*3)
@@ -54,19 +55,19 @@ if __name__ == "__main__":
     tmp_map = M6()
     bench.scenario.set_map(tmp_map)
     # scenario.set_sensor(QuadrotorSensor())
-    if not bench.config.compare:
-        traces = bench.run(40, time_step)
-        if bench.config.plot:
-            import pyvista as pv
-            fig = pv.Plotter()
-            fig = plot3dMap(tmp_map, ax=fig, width=0.05)
-            fig = plot3dReachtube(traces, 'test1',1,2,3,'r',fig, edge = True)
-            fig = plot3dReachtube(traces, 'test2',1,2,3,'b',fig, edge = True)
-            fig.set_background('#e0e0e0')
-            fig.show()
-        if bench.config.dump:
-            traces.dump('demo/tacas2023/exp1/output1.json')
-        bench.report()
-    else:
+    if bench.config.compare:
         traces1, traces2 = bench.compare_run(40, time_step)
-    
+        exit(0)
+    traces = bench.run(40, time_step)
+    if bench.config.plot:
+        import pyvista as pv
+        fig = pv.Plotter()
+        fig = plot3dMap(tmp_map, ax=fig, width=0.05)
+        fig = plot3dReachtube(traces, 'test1',1,2,3,'r',fig, edge = True)
+        fig = plot3dReachtube(traces, 'test2',1,2,3,'b',fig, edge = True)
+        fig.set_background('#e0e0e0')
+        fig.show()
+    if bench.config.dump:
+        traces.dump('demo/tacas2023/exp1/output1.json')
+    bench.report()
+        
