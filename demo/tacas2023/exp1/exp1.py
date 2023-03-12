@@ -29,7 +29,7 @@ if __name__ == "__main__":
     input_code_name = './demo/tacas2023/exp1/quadrotor_controller3.py'
 
     bench = Benchmark(sys.argv)
-    bench.agent_type = "Q"
+    bench.agent_type = "D"
     bench.noisy_s = "No"
     time_step = 0.1
     quadrotor1 = QuadrotorAgent(

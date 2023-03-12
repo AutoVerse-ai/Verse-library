@@ -3,7 +3,7 @@ from verse.scenario.scenario import Benchmark
 from verse.plotter.plotter2D import reachtube_tree
 from verse.plotter.plotter3D_new import *
 from verse.plotter.plotter3D import *
-from verse.map.example_map.simple_map_3d import SimpleMap7
+from verse.map.example_map.map_tacas import M5
 import pyvista as pv
 from enum import Enum, auto
 import polytope as pc 
@@ -33,7 +33,7 @@ if __name__ == "__main__":
     input_code_name2 = './demo/tacas2023/exp10/quadrotor_controller4.py'
 
     bench = Benchmark(sys.argv)
-    bench.agent_type = "Q"
+    bench.agent_type = "D"
     bench.noisy_s = "No"
     time_step = 0.2
     quadrotor1 = QuadrotorAgent(
@@ -67,7 +67,7 @@ if __name__ == "__main__":
     bench.scenario.add_agent(quadrotor3)
 
 
-    tmp_map = SimpleMap7()
+    tmp_map = M5()
     bench.scenario.set_map(tmp_map)
     # scenario.set_sensor(QuadrotorSensor())
 
