@@ -364,7 +364,7 @@ class Verifier:
         )
         for i, agent in enumerate(agent_list):
             root.init[agent.id] = [init_list[i]]
-            root.mode[agent.id] = [elem.name for elem in init_mode_list[i]]
+            root.mode[agent.id] = [(elem if isinstance(elem, str) else elem.name) for elem in init_mode_list[i]]
             root.static[agent.id] = [elem.name for elem in static_list[i]]
             root.uncertain_param[agent.id] = uncertain_param_list[i]
             root.agent[agent.id] = agent
