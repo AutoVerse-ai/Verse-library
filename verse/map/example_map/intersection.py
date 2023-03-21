@@ -66,10 +66,10 @@ class Intersection(LaneMap):
             ("WE", "WR", "WER", "EL"),
             ("EW", "ER", "WEL", "WL"),
         ]
-        self.add_lanes([Lane(f"{straight[0]}.{i}", [segs[seg + str(i)] for seg in straight[1:]]) for straight in straights for i in range(lanes)])
+        self.add_lanes([Lane(f"{straight[0]}_{i}", [segs[seg + str(i)] for seg in straight[1:]]) for straight in straights for i in range(lanes)])
         # curve
         curves = ["NWI", "NEO", "WNO", "ENI", "SWO", "SEI", "WSI", "ESO"]
-        self.add_lanes([Lane(f"{s}{e}.{i}", [segs[s + "R" + str(i)], segs.get(s + e + d + str(i), None) or segs[e + s + d + str(i)], segs[e + "L" + str(i)]])
+        self.add_lanes([Lane(f"{s}{e}_{i}", [segs[s + "R" + str(i)], segs.get(s + e + d + str(i), None) or segs[e + s + d + str(i)], segs[e + "L" + str(i)]])
                         for s, e, d in curves for i in range(lanes)])
 
     def h(self, lane_idx: str, mode_src: str, mode_dest: str) -> Optional[str]:
@@ -83,7 +83,7 @@ class Intersection(LaneMap):
             if dst_sw:
                 return None
             else:
-                lanes, ind = lane_idx.split(".")
+                lanes, ind = lane_idx.split("_")
                 ind = int(ind)
                 if "Left" in mode_src and ind > 0:
                     return f"{lanes}.{ind - 1}"
@@ -92,7 +92,7 @@ class Intersection(LaneMap):
                 return None
         else:
             if dst_sw:
-                lanes, ind = lane_idx.split(".")
+                lanes, ind = lane_idx.split("_")
                 ind = int(ind)
                 if "Left" in mode_dest and ind > 0 or "Right" in mode_dest and ind < self.lanes - 1:
                     return lane_idx

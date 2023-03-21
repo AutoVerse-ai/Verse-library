@@ -20,7 +20,7 @@ class State:
     y = 0.0
     theta = 0.0
     v = 0.0
-    vehicle_mode: AgentMode = AgentMode.Accel
+    agent_mode: AgentMode = AgentMode.Accel
     track_mode: TrackMode = TrackMode.none
     # type: LaneObjectMode = LaneObjectMode.Vehicle
 
@@ -30,7 +30,7 @@ class State:
     #     y,
     #     theta,
     #     v,
-    #     vehicle_mode: AgentMode,
+    #     agent_mode: AgentMode,
     #     track_mode: TrackMode,
     #     # type: LaneObjectMode,
     # ):
@@ -51,17 +51,17 @@ def cars_front(ego, others, track_map):
 
 def decisionLogic(ego: State, others: List[State], track_map):
     output = copy.deepcopy(ego)
-    if ego.vehicle_mode == AgentMode.Accel and cars_front(ego, others, track_map):
-        left_lane = track_map.h(ego.track_mode, ego.vehicle_mode, AgentMode.SwitchLeft)
-        right_lane = track_map.h(ego.track_mode, ego.vehicle_mode, AgentMode.SwitchRight)
+    if ego.agent_mode == AgentMode.Accel and cars_front(ego, others, track_map):
+        left_lane = track_map.h(ego.track_mode, ego.agent_mode, AgentMode.SwitchLeft)
+        right_lane = track_map.h(ego.track_mode, ego.agent_mode, AgentMode.SwitchRight)
         if left_lane != None:
-            output.vehicle_mode = AgentMode.SwitchLeft
+            output.agent_mode = AgentMode.SwitchLeft
             output.track_mode = left_lane
         elif right_lane != None:
-            output.vehicle_mode = AgentMode.SwitchRight
+            output.agent_mode = AgentMode.SwitchRight
             output.track_mode = right_lane
         else:
-            output.vehicle_mode = AgentMode.Brake
-    if ego.vehicle_mode == AgentMode.Brake and not cars_front(ego, others, track_map):
-        output.vehicle_mode = AgentMode.Accel
+            output.agent_mode = AgentMode.Brake
+    if ego.agent_mode == AgentMode.Brake and not cars_front(ego, others, track_map):
+        output.agent_mode = AgentMode.Accel
     return output
