@@ -1,0 +1,102 @@
+{'#A': 2, 'A': 'D', 'Map': 'M6', 'postCont': 'DRYVR', 'Noisy S': 'No', '# Tr': 1, 'Run Time': 7.8028312479999995}
+report:
+#agents: 2
+map name: M6
+#nodes: 1
+run time: 7.80s
+[2m[36m(simulate_one pid=19008)[0m assert hit for test1: "Safe Seperation" @ {'ego': namespace(x=-0.3323338855333826, y=9.948375784489533, z=0.07225257531277243, vx=-1.0827114464740963, vy=-0.09842831331582601, vz=-0.2000000000000061, tactical_mode='Normal', track_mode='T1'), 'others': [namespace(x=-1.3081876408941804, y=9.87495169865135, z=0.07140617007874075, vx=-0.2952849399474821, vy=0.0984283133158269, vz=-0.20000000000000834, tactical_mode='Normal', track_mode='T1')], 'track_map': <verse.map.example_map.map_tacas.M6 object at 0x7ff2464dad00>}
+[2m[36m(simulate_one pid=19008)[0m assert hit for test2: "Safe Seperation" @ {'ego': namespace(x=-1.3081876408941804, y=9.87495169865135, z=0.07140617007874075, vx=-0.2952849399474821, vy=0.0984283133158269, vz=-0.20000000000000834, tactical_mode='Normal', track_mode='T1'), 'others': [namespace(x=-0.3323338855333826, y=9.948375784489533, z=0.07225257531277243, vx=-1.0827114464740963, vy=-0.09842831331582601, vz=-0.2000000000000061, tactical_mode='Normal', track_mode='T1')], 'track_map': <verse.map.example_map.map_tacas.M6 object at 0x7ff2464dad00>}
+=========================exp9_dryvr============================
+{'#A': 2, 'A': 'D', 'Map': 'M5', 'postCont': 'DRYVR', 'Noisy S': 'No', '# Tr': 5, 'Run Time': 10.812816893}
+report:
+#agents: 2
+map name: M5
+#nodes: 5
+run time: 10.81s
+=========================exp10_dryvr============================
+[2m[36m(simulate_one pid=19070)[0m assert hit for test1: "Unsafe Region" @ {'ego': namespace(x=40.17275821262865, y=-0.004530458342537874, z=-7.941941930291457, vx=1.1811397597899236, vy=1.3322676295501878e-15, vz=-1.554312234475219e-14, craft_mode='Normal', track_mode='T2'), 'others': [namespace(x=40.37163652806304, y=-0.018932762035895348, z=0.0327793177118505, vx=0.3937132532633064, vy=-2.7755575615628914e-15, vz=-1.27675647831893e-14, craft_mode='Normal', track_mode='T1'), namespace(x=65.20527251589164, y=-0.05236392358310278, z=8.027565893844223, vx=0.3937132532633081, vy=-3.0531133177191805e-15, vz=-1.4988010832439613e-14, craft_mode='Normal', track_mode='T0')], 'track_map': <verse.map.example_map.map_tacas.M5 object at 0x7f97546f9d60>}
+{'#A': 3, 'A': 'D', 'Map': 'M5', 'postCont': 'DRYVR', 'Noisy S': 'No', '# Tr': 7, 'Run Time': 11.637346784}
+report:
+#agents: 3
+map name: M5
+#nodes: 7
+run time: 11.64s
+=========================exp3============================
+[(<AgentMode.Normal: 1>, <TrackMode.T1: 2>), (<AgentMode.Normal: 1>, <TrackMode.T1: 2>), (<AgentMode.Normal: 1>, <TrackMode.T0: 1>), (<AgentMode.Normal: 1>, <TrackMode.T0: 1>), (<AgentMode.Normal: 1>, <TrackMode.T1: 2>), (<AgentMode.Normal: 1>, <TrackMode.T2: 3>), (<AgentMode.Normal: 1>, <TrackMode.T3: 4>)]
+<class 'list'>
+{'#A': 7, 'A': 'C', 'Map': 'M2', 'postCont': 'DRYVR', 'Noisy S': 'No', '# Tr': 33, 'Run Time': 15.906235728000002}
+report:
+#agents: 7
+map name: M2
+#nodes: 33
+run time: 15.91s
+=========================exp2_straight============================
+[(<AgentMode.Normal: 1>, <TrackMode.T1: 2>), (<AgentMode.Normal: 1>, <TrackMode.T1: 2>), (<AgentMode.Normal: 1>, <TrackMode.T0: 1>)]
+<class 'list'>
+{'#A': 3, 'A': 'C', 'Map': 'M1', 'postCont': 'DRYVR', 'Noisy S': 'No', '# Tr': 5, 'Run Time': 6.926238617999999}
+report:
+#agents: 3
+map name: M1
+#nodes: 5
+run time: 6.93s
+=========================exp2_curve============================
+[(<AgentMode.Normal: 1>, <TrackMode.T1: 2>), (<AgentMode.Normal: 1>, <TrackMode.T1: 2>), (<AgentMode.Normal: 1>, <TrackMode.T0: 1>)]
+<class 'list'>
+{'#A': 3, 'A': 'C', 'Map': 'M3', 'postCont': 'DRYVR', 'Noisy S': 'No', '# Tr': 5, 'Run Time': 7.260939072999999}
+report:
+#agents: 3
+map name: M3
+#nodes: 5
+run time: 7.26s
+=========================exp5============================
+[(<AgentMode.Normal: 1>, <TrackMode.T1: 2>), (<AgentMode.Normal: 1>, <TrackMode.T1: 2>), (<AgentMode.Normal: 1>, <TrackMode.T2: 3>)]
+<class 'list'>
+{'#A': 3, 'A': 'C', 'Map': 'N/A', 'postCont': 'DRYVR', 'Noisy S': 'No', '# Tr': 7, 'Run Time': 9.941785501000002}
+report:
+#agents: 3
+map name: N/A
+#nodes: 7
+run time: 9.94s
+=========================exp4_noise============================
+[(<AgentMode.Normal: 1>, <TrackMode.T1: 2>), (<AgentMode.Normal: 1>, <TrackMode.T1: 2>), (<AgentMode.Normal: 1>, <TrackMode.T0: 1>)]
+<class 'list'>
+{'#A': 3, 'A': 'C', 'Map': 'M1', 'postCont': 'DRYVR', 'Noisy S': 'Yes', '# Tr': 5, 'Run Time': 6.752906102999999}
+report:
+#agents: 3
+map name: M1
+#nodes: 5
+run time: 6.75s
+=========================exp6_dryvr============================
+{'#A': 2, 'A': 'C', 'Map': 'M1', 'postCont': 'DRYVR', 'Noisy S': 'No', '# Tr': 5, 'Run Time': 6.814578967000001}
+report:
+#agents: 2
+map name: M1
+#nodes: 5
+run time: 6.81s
+=========================vanderpol_demo2============================
+[(<AgentMode.Default: 1>,)]
+<class 'list'>
+{'#A': 1, 'A': 'V', 'Map': 'N/A', 'postCont': 'DRYVR', 'Noisy S': 'N/A', '# Tr': 1, 'Run Time': 4.712079748}
+report:
+#agents: 1
+map name: N/A
+#nodes: 1
+run time: 4.71s
+=========================rendezvous_demo============================
+[(<CraftMode.ProxA: 1>,)]
+<class 'list'>
+{'#A': 1, 'A': 'S', 'Map': 'N/A', 'postCont': 'DRYVR', 'Noisy S': 'N/A', '# Tr': 3, 'Run Time': 4.941438852}
+report:
+#agents: 1
+map name: N/A
+#nodes: 3
+run time: 4.94s
+=========================gearbox_demo============================
+[(<AgentMode.Free: 1>,)]
+<class 'list'>
+{'#A': 1, 'A': 'G', 'Map': 'N/A', 'postCont': 'DRYVR', 'Noisy S': 'N/A', '# Tr': 3, 'Run Time': 4.90584705}
+report:
+#agents: 1
+map name: N/A
+#nodes: 3
+run time: 4.91s

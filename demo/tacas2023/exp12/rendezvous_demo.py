@@ -19,7 +19,7 @@ if __name__ == "__main__":
     input_code_name = './demo/tacas2023/exp12/rendezvous_controller.py'
     bench = Benchmark(sys.argv)
     bench.agent_type = "S"
-    bench.noisy_s = "No"
+    bench.noisy_s = "N/A"
     car = craft_agent('test', file_name=input_code_name)
     bench.scenario.add_agent(car)
     bench.scenario.set_sensor(CraftSensor())

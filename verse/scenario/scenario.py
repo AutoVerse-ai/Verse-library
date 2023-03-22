@@ -47,6 +47,11 @@ class Scenario:
         # Parameters
         self.config = config
 
+    def cleanup_cache(self):
+        self.past_runs = []
+        self.simulator = Simulator(self.config)
+        self.verifier = Verifier(self.config)
+
     def update_config(self, config):
         self.config = config
         self.verifier.config = config
@@ -176,7 +181,7 @@ class Scenario:
             static_list.append(self.static_dict[agent_id])
             uncertain_param_list.append(self.uncertain_param_dict[agent_id])
             # agent_list.append(self.agent_dict[agent_id])
-        print(init_list)
+        # print(init_list)
         tree = self.simulator.simulate(init_list, init_mode_list, static_list, uncertain_param_list, self.agent_dict, self.sensor, time_horizon, time_step, max_height, self.map, len(self.past_runs), self.past_runs)
         self.past_runs.append(tree)
         return tree
@@ -275,7 +280,10 @@ class Benchmark:
         f = self.scenario.simulate if self.config.sim else self.scenario.verify
         self.cont_engine = self.scenario.config.reachability_method
         self._start_time = timeit.default_timer()
-        self.traces = f(*a, **kw)
+        if self.config.sim:
+            self.traces = f(*a)
+        else:
+            self.traces = f(*a, **kw)
         self.run_time = timeit.default_timer() - self._start_time
         if self.config.sim:
             self.cache_size = asizeof.asizeof(self.scenario.simulator.cache) / 1_000_000
@@ -297,14 +305,22 @@ class Benchmark:
         if len(self.config.rest) == 0:
             traces2 = self.run( *a, **kw)
         else:
-            arg = self.config.rest[0]
-            self.config.config = ScenarioConfig(incremental='i' in arg, parallel='l' in arg, **self.config.kw)
-            self.scenario.update_config(self.config.config)
+            # arg = self.config.rest[0]
+            # self.config.config = ScenarioConfig(incremental='i' in arg, parallel='l' in arg, **self.config.kw)
+            # self.scenario.update_config(self.config.config)
+            self.replace_scenario()
             traces2 = self.run( *a, **kw)
         self.report()
         print("trace1 contains trace2?", traces1.contains(traces2))
         print("trace2 contains trace1?", traces2.contains(traces1))
         return traces1, traces2
+
+    def replace_scenario(self, new_scenario):
+        arg = self.config.rest[0]
+        self.config.config = ScenarioConfig(incremental='i' in arg, parallel='l' in arg, **self.config.kw)
+        # self.scenario.cleanup_cache()
+        self.scenario = new_scenario
+        self.scenario.update_config(self.config.config)        
 
     def report(self):
         print_dict={"#A": self.num_agent,
@@ -315,13 +331,22 @@ class Benchmark:
                     "# Tr": self.num_nodes,
                     "Run Time": self.run_time
                     }
-        print(print_dict)
-        print("report:")
-        print("#agents:", self.num_agent)
-        print("map name:", self.map_name)
-        print("#nodes:", self.num_nodes)
-        print(f"run time: {self.run_time:.2f}s")
-        if self.config.config.incremental:
+        if not self.config.config.incremental:
+            print(print_dict)
+            print("report:")
+            print("#agents:", self.num_agent)
+            print("map name:", self.map_name)
+            print("#nodes:", self.num_nodes)
+            print(f"run time: {self.run_time:.2f}s")
+        else:
+            print_dict['cache_size'] = self.cache_size
+            print_dict['cache_hit'] = (self.cache_hits[0], self.cache_hits[1])
+            print(print_dict)
+            print("report:")
+            print("#agents:", self.num_agent)
+            print("map name:", self.map_name)
+            print("#nodes:", self.num_nodes)
+            print(f"run time: {self.run_time:.2f}s")            
             print(f"cache size: {self.cache_size:.2f}MB")
-            print(f"cache hit rate: {(self.cache_hits[0], self.cache_hits[1])}")
+            print(f"cache hit: {(self.cache_hits[0], self.cache_hits[1])}")
             print(f"cache hit rate: {self.cache_hits[0] / (self.cache_hits[0] + self.cache_hits[1]) * 100:.2f}%")
