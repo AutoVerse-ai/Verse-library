@@ -44,6 +44,8 @@ if __name__ == "__main__":
     scenario.add_agent(car)
     tmp_map = M1()
     scenario.set_map(tmp_map)
+    scenario.set_sensor(NoisyVehicleSensor(\
+        (0.5, 0.5), (0.0, 0.0)))
     scenario.set_init(
         [
             [[5, -0.5, 0, 1.0], [5.5, 0.5, 0, 1.0]],
@@ -56,7 +58,6 @@ if __name__ == "__main__":
             (AgentMode.Normal, TrackMode.T0),
         ]
     )
-    scenario.set_sensor(NoisyVehicleSensor((0.5, 0.5), (0.0, 0.0)))
     # scenario.config.init_seg_length = 5
 
     start_time = time.time()
