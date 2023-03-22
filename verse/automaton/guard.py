@@ -240,7 +240,7 @@ class GuardExpressionAst:
             if isinstance(node.op, ast.USub):
                 return -value
             elif isinstance(node.op, ast.Not):
-                z3_str = 'Not('+value+')'
+                z3_str = f'Not({value})'
                 return z3_str
             else:
                 raise NotImplementedError(f"UnaryOp {node.op} is not supported")

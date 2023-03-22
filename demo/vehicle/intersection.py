@@ -66,7 +66,7 @@ if __name__ == "__main__":
         start, off = map.size + rand(0, map.length * 0.3), rand(0, map.width) + map.width * lane
         pos = { "N": (-off, start), "S": (off, -start), "W": (-start, -off), "E": (start, off) }[src]
         init = [*pos, wrap_to_pi(dir * math.pi / 2 + rand(*CAR_THETA_RANGE)), rand(*CAR_SPEED_RANGE)]
-        modes = (AgentMode.Accel, f"{src}{dst}.{lane}")
+        modes = (AgentMode.Accel, f"{src}{dst}_{lane}")
         bench.scenario.set_init_single(car.id, (init,), modes)
 
     if 'b' in bench.config.args:
