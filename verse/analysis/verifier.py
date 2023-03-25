@@ -433,6 +433,9 @@ class Verifier:
         past_runs,
         params = {},
     ):
+        if (max_height == None):
+            max_height = float('inf')
+        
         root = AnalysisTreeNode(
             trace={},
             init={},
