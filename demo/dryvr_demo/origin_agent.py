@@ -36,6 +36,76 @@ class vanderpol_agent(BaseAgent):
             init = res.flatten().tolist()
             trace.append([t[i] + time_step] + init)
         return np.array(trace)
+
+class coupled_vanderpol_agent(BaseAgent):
+    def __init__(self, id, code=None, file_name=None):
+        # Calling the constructor of tha base class
+        super().__init__(id, code, file_name)
+
+    @staticmethod
+    def dynamic(t, state):
+        x1, y1, x2, y2,b = state
+        x1 = float(x1)
+        y1 = float(y1)
+        x2 = float(x2)
+        y2 = float(y2)
+        b = float(b)
+        mu =1
+        x1_dot = y1
+        y1_dot = mu*(1 - x1**2)*y1 + b*(x2 - x1) - x1
+        x2_dot = y2
+        y2_dot = mu*(1 - x2**2)*y2 - b*(x2 - x1) - x2
+        bdot =0
+        return [x1_dot, y1_dot, x2_dot, y2_dot,bdot]
+
+    def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step, track_map: LaneMap = None) -> np.ndarray:
+        time_bound = float(time_bound)
+        number_points = int(np.ceil(time_bound/time_step))
+        t = [round(i*time_step, 10) for i in range(0, number_points)]
+        # note: digit of time
+        init = initialCondition
+        trace = [[0]+init]
+        for i in range(len(t)):
+            r = ode(self.dynamic)
+            r.set_initial_value(init)
+            res: np.ndarray = r.integrate(r.t + time_step)
+            init = res.flatten().tolist()
+            trace.append([t[i] + time_step] + init)
+        return np.array(trace)
+class robertson_agent(BaseAgent):
+    def __init__(self, id, code=None, file_name=None):
+        # Calling the constructor of tha base class
+        super().__init__(id, code, file_name)
+
+    @staticmethod
+    def dynamic(t, state):
+
+        x, y,z,beta,gamma = state
+        x = float(x)
+        y = float(y)
+        z = float(z)
+
+        x_dot = -.4*x + beta*y*z
+        y_dot = .4*x - beta*y*z - gamma*y**2
+        z_dot  = gamma*y**2
+
+        return [x_dot, y_dot,z_dot, 0,0]
+
+    def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step, track_map: LaneMap = None) -> np.ndarray:
+        time_bound = float(time_bound)
+        number_points = int(np.ceil(time_bound/time_step))
+        t = [round(i*time_step, 10) for i in range(0, number_points)]
+        # note: digit of time
+        init = initialCondition
+        trace = [[0]+init]
+        for i in range(len(t)):
+            r = ode(self.dynamic)
+            r.set_initial_value(init)
+            res: np.ndarray = r.integrate(r.t + time_step)
+            init = res.flatten().tolist()
+            trace.append([t[i] + time_step] + init)
+        return np.array(trace)
+
 class laub_loomis_agent(BaseAgent):
     def __init__(self, id, code=None, file_name=None):
         # Calling the constructor of tha base class
@@ -43,7 +113,7 @@ class laub_loomis_agent(BaseAgent):
 
     @staticmethod
     def dynamic(t, state):
-        x1, x2, x3, x4,x5,x6, x7 = state
+        x1, x2, x3, x4,x5,x6, x7,W = state
         x1 = float(x1)
         x2 = float(x2)
         x3 = float(x3)
@@ -62,7 +132,39 @@ class laub_loomis_agent(BaseAgent):
         #x7_dot = 1.8*x6 − 1.5*x2*x7
 
 
-        return [x1_dot, x2_dot,x3_dot, x4_dot, x5_dot, x6_dot, x7_dot]
+        return [x1_dot, x2_dot,x3_dot, x4_dot, x5_dot, x6_dot, x7_dot,0]
+
+    def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step, track_map: LaneMap = None) -> np.ndarray:
+        time_bound = float(time_bound)
+        number_points = int(np.ceil(time_bound/time_step))
+        t = [round(i*time_step, 10) for i in range(0, number_points)]
+        # note: digit of time
+        init = initialCondition
+        trace = [[0]+init]
+        for i in range(len(t)):
+            r = ode(self.dynamic)
+            r.set_initial_value(init)
+            res: np.ndarray = r.integrate(r.t + time_step)
+            init = res.flatten().tolist()
+            trace.append([t[i] + time_step] + init)
+        return np.array(trace)
+
+class volterra_agent(BaseAgent):
+    def __init__(self, id, code=None, file_name=None):
+        # Calling the constructor of tha base class
+        super().__init__(id, code, file_name)
+
+    @staticmethod
+    def dynamic(t, state):
+        x, y = state
+        x = float(x)
+        y = float(y)
+
+        x_dot = 3*x - 3*x*y
+        y_dot = x*y - y
+
+
+        return [x_dot, y_dot]
 
     def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step, track_map: LaneMap = None) -> np.ndarray:
         time_bound = float(time_bound)
@@ -272,6 +374,203 @@ class spacecraft_agent(BaseAgent):
             return ode(self.Rendezvous_dynamics)
         elif mode == 'Aborting':
             return ode(self.Aborting_dynamics)
+        else:
+            raise ValueError
+
+    def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step, track_map: LaneMap = None) -> np.ndarray:
+        time_bound = float(time_bound)
+        number_points = int(np.ceil(time_bound/time_step))
+        t = [round(i*time_step, 10) for i in range(0, number_points)]
+
+        init = initialCondition
+        trace = [[0]+init]
+        for i in range(len(t)):
+            r = self.action_handler(mode[0])
+            r.set_initial_value(init)
+            res: np.ndarray = r.integrate(r.t + time_step)
+            init = res.flatten().tolist()
+            trace.append([t[i] + time_step] + init)
+        return np.array(trace)
+
+class spacecraft_linear_agent(BaseAgent):
+    def __init__(self, id, code=None, file_name=None):
+        # Calling the constructor of tha base class
+
+        super().__init__(id, code, file_name)
+
+    @staticmethod
+    def Approaching_dynamics(t, state):
+        x, y, vx, vy, ux, uy, total_time, cycle_time = state
+        #mu = 3.986e14 * (60 ** 2)
+        #r = 43164e3
+        #mc = 500
+        #n = (mu / (r ** 3)) ** .5
+        #rc = ((r + x)**2 + y**2)**.5
+
+
+        x_dot = vx
+        y_dot = vy
+        #K1 = np.array([[-28.8287, 0.1005, -1449.9754, 0.0046],[-.087, -33.2562, 0.00462, -1451.5013]])
+        #temp = K1@np.array([x,y,vx,vy]).T
+        #ux = #temp[0]
+        #uy = #temp[1]
+        vx_dot = 5.75894721132e-5*x+0.00876276*vy-0.002*ux
+        vy_dot = -0.00876276*vx-0.002*uy
+
+        ux_dot = 28.8286776769430*vx-0.100479948259883*vy+1449.97541985328*(5.75894721132e-5*x+0.00876276*vy-0.002*ux)-0.00462447231887482*(-0.00876276*vx-0.002*uy)
+        uy_dot = 0.0870156786852279*vx+33.2561992450513*vy-0.00462447231887482*(5.75894721132e-5*x+0.00876276*vy-0.002*ux)+1451.50134643428*(-0.00876276*vx-0.002*uy)
+        total_time_dot = 1
+        cycle_time_dot = 1
+        return [x_dot, y_dot, vx_dot, vy_dot, ux_dot, uy_dot, total_time_dot, cycle_time_dot]
+
+    @staticmethod
+    def Rendezvous_dynamics(t, state):
+        x, y, vx, vy, ux,uy,total_time, cycle_time = state
+        #mu = 3.986e14 * 60 ** 2
+        #r = 43164e3
+        #mc = 500
+        #n = (mu / (r ** 3)) ** .5
+        #rc = ((r + x )**2 + y ** 2) ** .5
+
+        x_dot = vx
+        y_dot = vy
+        #K2 = np.array([[-288.0288, 0.1312, -9614.9898,0], [-0.1312, -288, 0, -9614.9883]])
+        #temp = K2 @ np.array([x, y, vx, vy]).T
+        # ux = temp[0]
+        # uy = temp[1]
+        vx_dot = 5.75894721132e-5*x+0.00876276*vy-0.002*ux
+        vy_dot = -0.00876276*vx-0.002*uy
+        ux_dot = 288.028766271474*vx-0.131243039715836*vy+9614.98979543236*(5.75894721132e-5*x+0.00876276*vy-0.002*ux)+3.41199965400404e-7*(-0.00876276*vx-0.002*uy)
+        uy_dot = 0.131243040368934*vx+287.999970095943*vy+3.41199965400404e-7*(5.75894721132e-5*x+0.00876276*vy-0.002*ux)+9614.98829796995*(-0.00876276*vx-0.002*uy)
+        total_time_dot = 1
+        cycle_time_dot = 1
+        return [x_dot, y_dot, vx_dot, vy_dot, ux_dot, uy_dot, total_time_dot, cycle_time_dot]
+
+    @staticmethod
+    def Aborting_dynamics(t, state):
+        x, y, vx, vy, ux,uy ,total_time, cycle_time = state
+        mu = 3.986e14 * 60 ** 2
+        r = 43164e3
+        mc = 500
+        n = (mu / (r ** 3)) ** .5
+        rc = ((r + x)**2 + y ** 2) ** .5
+
+        x_dot = vx
+        y_dot = vy
+        # ux = 0
+        # uy = 0
+        vx_dot = x*n**2 + 2*n*vy +mu/(r**2) - (mu/(rc**3))*(r+x)
+        ux_dot =0
+        uy_dot =0
+
+        vy_dot = y*n**2 - 2*n*vx - (mu/rc**3)*y
+        total_time_dot = 1
+        cycle_time_dot = 1
+        return [x_dot, y_dot, vx_dot, vy_dot, ux_dot, uy_dot, total_time_dot, cycle_time_dot]
+
+    def action_handler(self, mode):
+        if mode == 'Approaching':
+            return ode(self.Approaching_dynamics)
+        elif mode == 'Rendezvous':
+            return ode(self.Rendezvous_dynamics)
+        elif mode == 'Aborting':
+            return ode(self.Aborting_dynamics)
+        else:
+            raise ValueError
+
+    def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step, track_map: LaneMap = None) -> np.ndarray:
+        time_bound = float(time_bound)
+        number_points = int(np.ceil(time_bound/time_step))
+        t = [round(i*time_step, 10) for i in range(0, number_points)]
+
+        init = initialCondition
+        trace = [[0]+init]
+        for i in range(len(t)):
+            r = self.action_handler(mode[0])
+            r.set_initial_value(init)
+            res: np.ndarray = r.integrate(r.t + time_step)
+            init = res.flatten().tolist()
+            trace.append([t[i] + time_step] + init)
+        return np.array(trace)
+
+class powertrain_agent(BaseAgent):
+    def __init__(self, id, code=None, file_name=None):
+        # Calling the constructor of tha base class
+
+        super().__init__(id, code, file_name)
+
+    @staticmethod
+    def negAngle_dynamics(t, state):
+        x1, x2, x3, x4, x5,x6, x7,x8,x9 ,total_time = state
+        x1_dot= 1.0 / 12.0 * x7 - x9
+        x2_dot= (0.5 * (12.0 * x4 - x7) + 0.5 * (12.0 * x3 - 12.0 * (x1 + x8)) + 0.5 * (12.0 * 5.0 - 1.0 / 0.3 * (x2 - 1.0 / 12.0 * 10000.0 * (x1 - -0.03) - 0.0 * x7)) - x2) / 0.1
+        x3_dot= x4
+        x4_dot= 5.0
+        x5_dot= x6
+        x6_dot= 1.0 / 140.0 * (100000.0 * (x8 - x5) - 5.6 * x6)
+        x7_dot= 1.0 / 0.3 * (x2 - 1.0 / 12.0 * 10000.0 * (x1 - -0.03) - 0.0 * x7)
+        x8_dot= x9
+        x9_dot= 0.01 * (10000.0 * (x1 - -0.03) - 100000.0 * (x8 - x5) - 1.0 * x9)
+        total_time_dot = 1
+        return [x1_dot, x2_dot, x3_dot, x4_dot, x5_dot, x6_dot,x7_dot,x8_dot,x9_dot, total_time_dot]
+
+    @staticmethod
+    def deadzone_dynamics(t, state):
+        x1, x2, x3, x4, x5,x6, x7,x8,x9 ,total_time = state
+        x1_dot= 1.0 / 12.0 * x7 - x9
+        x2_dot= (0.5 * (12.0 * x4 - x7) + 0.5 * (12.0 * x3 - 12.0 * (x1 + x8)) + 0.5 * (12.0 * 5.0 - 1.0 / 0.3 * (x2 - 1.0 / 12.0 * 0.0 * (x1 - -0.03) - 0.0 * x7)) - x2) / 0.1
+        x3_dot= x4
+        x4_dot= 5.0
+        x5_dot= x6
+        x6_dot= 1.0 / 140.0 * (100000.0 * (x8 - x5) - 5.6 * x6)
+        x7_dot= 1.0 / 0.3 * (x2 - 1.0 / 12.0 * 0.0 * (x1 - -0.03) - 0.0 * x7)
+        x8_dot= x9
+        x9_dot= 0.01 * (0.0 * (x1 - -0.03) - 100000.0 * (x8 - x5) - 1.0 * x9)
+
+        total_time_dot = 1
+        return [x1_dot, x2_dot, x3_dot, x4_dot, x5_dot, x6_dot,x7_dot,x8_dot,x9_dot, total_time_dot]
+
+    @staticmethod
+    def posAngle_dynamics(t, state):
+        x1, x2, x3, x4, x5,x6, x7,x8,x9, total_time = state
+        x1_dot = 1.0 / 12.0 * x7 - x9
+        x2_dot= (0.5 * (12.0 * x4 - x7) + 0.5 * (12.0 * x3 - 12.0 * (x1 + x8)) + 0.5 * (12.0 * 5.0 - 1.0 / 0.3 * (x2 - 1.0 / 12.0 * 10000.0 * (x1 - 0.03) - 0.0 * x7)) - x2) / 0.1
+        x3_dot= x4
+        x4_dot= 5.0
+        x5_dot= x6
+        x6_dot= 1.0 / 140.0 * (100000.0 * (x8 - x5) - 5.6 * x6)
+        x7_dot= 1.0 / 0.3 * (x2 - 1.0 / 12.0 * 10000.0 * (x1 - 0.03) - 0.0 * x7)
+        x8_dot= x9
+        x9_dot= 0.01 * (10000.0 * (x1 - 0.03) - 100000.0 * (x8 - x5) - 1.0 * x9)
+        total_time_dot = 1
+        return [x1_dot, x2_dot, x3_dot, x4_dot, x5_dot, x6_dot,x7_dot,x8_dot,x9_dot, total_time_dot]
+
+    @staticmethod
+    def negAngleInit_dynamics(t, state):
+        x1, x2, x3, x4, x5, x6, x7, x8, x9, total_time = state
+        x1_dot = 1.0 / 12.0 * x7 - x9
+        x2_dot = (0.5 * (12.0 * x4 - x7) + 0.5 * (12.0 * x3 - 12.0 * (x1 + x8)) + 0.5 * (12.0 * -5.0 - 1.0 / 0.3 * (x2 - 1.0 / 12.0 * 10000.0 * (x1 - -0.03) - 0.0 * x7)) - x2) / 0.1
+        x3_dot = x4
+        x4_dot = -5.0
+        x5_dot = x6
+        x6_dot = 1.0 / 140.0 * (100000.0 * (x8 - x5) - 5.6 * x6)
+        x7_dot = 1.0 / 0.3 * (x2 - 1.0 / 12.0 * 10000.0 * (x1 - -0.03) - 0.0 * x7)
+        x8_dot= x9
+        x9_dot= 0.01 * (10000.0 * (x1 - -0.03) - 100000.0 * (x8 - x5) - 1.0 * x9)
+
+
+        total_time_dot = 1
+        return [x1_dot, x2_dot, x3_dot, x4_dot, x5_dot, x6_dot,x7_dot,x8_dot,x9_dot, total_time_dot]
+
+    def action_handler(self, mode):
+        if mode == 'negAngle':
+            return ode(self.negAngle_dynamics)
+        elif mode == 'deadzone':
+            return ode(self.deadzone_dynamics)
+        elif mode == 'posAngle':
+            return ode(self.posAngle_dynamics)
+        elif mode == 'negAngleInit':
+            return ode(self.negAngleInit_dynamics)
         else:
             raise ValueError
 

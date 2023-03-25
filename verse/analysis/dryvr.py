@@ -5,7 +5,7 @@ from scipy import spatial
 _TRUE_MIN_CONST = -10
 _EPSILON = 1.0e-6
 _SMALL_EPSILON = 1e-10
-SIMTRACENUM = 10
+SIMTRACENUM = 1000
 
 PW = "PW"
 GLOBAL = "GLOBAL"

@@ -27,8 +27,8 @@ class BallAgent(BaseAgent):
         x, y, vx, vy = state
         x_dot = vx
         y_dot = vy
-        vx_dot = 0
-        vy_dot = 0
+        vx_dot = 0.0
+        vy_dot = 0.0
         return [x_dot, y_dot, vx_dot, vy_dot]
 
     def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step, lane_map: LaneMap = None) -> np.ndarray:
@@ -51,7 +51,8 @@ class BallAgent(BaseAgent):
 
 
 if __name__ == '__main__':
-    aball = BallAgent(
-        'red_ball', file_name="/Users/mitras/Dpp/GraphGeneration/demo/ball_bounces.py")
-    trace = aball.TC_simulate({'none'}, [5, 10, 2, 2], 10, 0.05)
-    print(trace)
+    # aball = BallAgent(
+    #     'red_ball', file_name="/Users/mitras/Dpp/GraphGeneration/demo/ball_bounces.py")
+    # trace = aball.TC_simulate({'none'}, [5, 10, 2, 2], 10, 0.05)
+    # print(trace)
+    pass

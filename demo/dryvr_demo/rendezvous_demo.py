@@ -29,7 +29,7 @@ if __name__ == "__main__":
             tuple([CraftMode.ProxA]),
         ]
     )
-    traces = scenario.verify(200, 1)
+    traces = scenario.verify(300, 1)
     fig = go.Figure()
     fig = reachtube_tree(traces, None, fig, 1, 2, [1, 2],
                          'lines', 'trace')

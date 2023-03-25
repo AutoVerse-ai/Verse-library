@@ -17,5 +17,5 @@ class State:
 
 def decisionLogic(ego: State):
     output = copy.deepcopy(ego)
-
+    assert (ego.y1 < 2.75  and ego.y2 < 2.75 ), "unsafe set"
     return output

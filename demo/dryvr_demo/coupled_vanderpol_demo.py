@@ -1,4 +1,4 @@
-from origin_agent import vanderpol_agent
+from origin_agent import coupled_vanderpol_agent
 from verse import Scenario
 from verse.plotter.plotter2D import *
 
@@ -11,10 +11,10 @@ class AgentMode(Enum):
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/dryvr_demo/vanderpol_controller.py'
+    input_code_name = './demo/dryvr_demo/coupled_vanderpol_controller.py'
     scenario = Scenario()
 
-    car = vanderpol_agent('car1', file_name=input_code_name)
+    car = coupled_vanderpol_agent('car1', file_name=input_code_name)
     scenario.add_agent(car)
     # car = vanderpol_agent('car2', file_name=input_code_name)
     # scenario.add_agent(car)
@@ -22,7 +22,7 @@ if __name__ == "__main__":
     # modify mode list input
     scenario.set_init(
         [
-            [[1.25, 2.25], [1.55, 2.25]],
+            [[1.25, 2.35, 1.25, 2.35,  1], [1.55, 2.45 , 1.55, 2.45, 3]],
             # [[1.55, 2.35], [1.55, 2.35]]
         ],
         [
@@ -30,8 +30,18 @@ if __name__ == "__main__":
             # tuple([AgentMode.Default]),
         ]
     )
-    traces = scenario.simulate(7, 0.05)
+    traces = scenario.verify(
+        7, 0.01
+    )
     fig = go.Figure()
-    fig = simulation_tree(traces, None, fig, 1, 2, [1, 2],
-                          'lines', 'trace')
+    fig = reachtube_tree(traces, None, fig, 1, 2, [1, 2],
+                         'lines', 'trace')
+    fig.update_layout(
+        xaxis_title="x1", yaxis_title="y1"
+    )
     fig.show()
+    # traces = scenario.simulate(7, 0.05)
+    # fig = go.Figure()
+    # fig = simulation_tree(traces, None, fig, 1, 2, [1, 2],
+    #                       'lines', 'trace')
+    # fig.show()
