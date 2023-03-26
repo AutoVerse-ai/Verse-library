@@ -1,5 +1,5 @@
 from origin_agent import spacecraft_agent
-from verse import Scenario
+from verse.scenario import Scenario, ScenarioConfig
 from verse.plotter.plotter2D import *
 from verse.sensor.example_sensor.craft_sensor import CraftSensor
 
@@ -15,7 +15,7 @@ class CraftMode(Enum):
 
 if __name__ == "__main__":
     input_code_name = './demo/dryvr_demo/spacecraft_controller.py'
-    scenario = Scenario()
+    scenario = Scenario(ScenarioConfig(init_seg_length=5))
 
     car = spacecraft_agent('test', file_name=input_code_name)
     scenario.add_agent(car)
@@ -38,10 +38,10 @@ if __name__ == "__main__":
 
 
 
-    traces = scenario.verify(200, 1)
+    traces = scenario.verify(200, 0.05)
+    traces.dump('output.json')
     fig = go.Figure()
     fig = reachtube_tree(traces, None, fig, 1, 2, [1, 2],
-                         'lines', 'trace')
-
+                         'lines', 'trace','true')
 
     fig.show()

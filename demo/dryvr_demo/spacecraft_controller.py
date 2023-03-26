@@ -45,7 +45,7 @@ def decisionLogic(ego: State):
     #         output.craft_mode = CraftMode.Approaching
     
     assert (ego.craft_mode!=CraftMode.Rendezvous or\
-         ego.x>=-100 and ego.y>=0.36397023426*ego.x and -1*ego.y>=0.36397023426*ego.x), "Line-of-sight"
+         (ego.y>=0.36397023426*ego.x and -1*ego.y>=0.36397023426*ego.x)), "Line-of-sight"
     # assert (ego.craft_mode != CraftMode.Rendezvous or \
     #         (ego.vx ** 2 + ego.vy ** 2) ** .5 <= 3.3), "velocity constraint"
     assert (ego.craft_mode!=CraftMode.Aborting or\
