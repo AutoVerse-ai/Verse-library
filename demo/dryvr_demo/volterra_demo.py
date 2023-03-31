@@ -1,5 +1,5 @@
 from origin_agent import volterra_agent
-from verse import Scenario
+from verse.scenario import Scenario, ScenarioConfig
 from verse.plotter.plotter2D import *
 from verse.sensor.example_sensor.craft_sensor import CraftSensor
 
@@ -14,7 +14,9 @@ class CraftMode(Enum):
 
 if __name__ == "__main__":
     input_code_name = './demo/dryvr_demo/volterra_controller.py'
-    scenario = Scenario()
+    #scenario = Scenario()
+    scenario = Scenario(ScenarioConfig(init_seg_length=5))
+
 
     car = volterra_agent('test', file_name=input_code_name)
     scenario.add_agent(car)
@@ -30,7 +32,7 @@ if __name__ == "__main__":
         ]
     )
 
-    # traces = scenario.simulate(200, 1)
+    # traces = scenario.simulate(3.64, .01)
     # fig = go.Figure()
     # fig = simulation_anime(traces, None, fig, 1, 2, [
     #                        1, 2], 'lines', 'trace', sample_rate=1)
@@ -38,7 +40,7 @@ if __name__ == "__main__":
 
 
 
-    traces = scenario.verify(3.64, .01)
+    traces = scenario.verify(3.64, .1)
     fig = go.Figure()
     fig = reachtube_tree(traces, None, fig, 1, 2, [1, 2],
                          'lines', 'trace')

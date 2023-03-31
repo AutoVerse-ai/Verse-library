@@ -8,7 +8,7 @@ from enum import Enum, auto
 
 class AgentMode(Enum):
     Default = auto()
-
+#traces.nodes[0].trace['car1'][-2:]
 if __name__ == "__main__":
     input_code_name = './demo/dryvr_demo/laub_loomis_controller.py'
     scenario = Scenario()

@@ -13,8 +13,6 @@ class State:
     y = 0.0
     vx = 0.0
     vy = 0.0
-    ux = 0.0
-    uy =0.0
     total_time = 0.0
     cycle_time = 0.0
     craft_mode: CraftMode = CraftMode.Approaching
@@ -26,30 +24,19 @@ class State:
 def decisionLogic(ego: State):
     output = copy.deepcopy(ego)
     if ego.craft_mode == CraftMode.Approaching:
-        # if ego.yp >= -100 and ego.xp+ego.yp >= -141.1 and ego.xp >= -100 and ego.yp-ego.xp <= 141.1 and ego.yp <= 100 and ego.xp+ego.yp <= 141.1 and ego.xp <= 100 and ego.yp-ego.xp >= -141.1:
-        #     output.craft_mode = CraftMode.ProxB
-        # if ego.cycle_time >= 120:
-        #     output.craft_mode = CraftMode.Passive
-        #     output.cycle_time = 0.0
-        if( ego.x < 100):
+        if( ego.x >= 100):
             output.craft_mode = CraftMode.Rendezvous
-        if(ego.total_time >= 120):
-            output.craft_mode = CraftMode.Aborting
+            output.x = 100
     if ego.craft_mode == CraftMode.Rendezvous:
-        if (120<= ego.total_time <= 150):
+        if (120<= ego.total_time ):
             output.craft_mode = CraftMode.Aborting
-        # if ( -1000 <= ego.x < -100):
-        #     output.craft_mode = CraftMode.Approaching
-    # if ego.craft_mode == CraftMode.Aborting:
-    #     if (ego.x >= -100):
-    #         output.craft_mode = CraftMode.Rendezvous
-    #     if ( -1000 <= ego.x < -100):
-    #         output.craft_mode = CraftMode.Approaching
     
     assert (ego.craft_mode!=CraftMode.Rendezvous or\
-         ego.x>=-100 and ego.y>=0.36397023426*ego.x and -ego.y>=0.36397023426*ego.x), "Line-of-sight"
+         ego.x>=-100 and ego.y>=0.57735026919*ego.x and -ego.y>=0.57735026919*ego.x), "Line-of-sight"
+    #len = 0.04209517756
+    #dist is 0.05081337428
     assert (ego.craft_mode != CraftMode.Rendezvous or \
-            (ego.vx ** 2 + ego.vy ** 2) ** .5 <= .055), "velocity constraint"
+            ego.vx <= 0.05081337428 and ego.vx >= -0.05081337428 and ego.vy <= 0.05081337428 and ego.vy >= 0.05081337428 and ego.vy <= (-ego.vx + 0.07186096307968522) and ego.vy <= (ego.vx + 0.07186096307968522) and ego.vy >= (-ego.vx - 0.07186096307968522) and ego.vy >= (ego.vx - 0.07186096307968522)) , "velocity constraint"
     assert (ego.craft_mode!=CraftMode.Aborting or\
          (ego.x<=-2 or ego.x>=2 or ego.y<=-2 or ego.y>=2)), "Collision avoidance"
     return output

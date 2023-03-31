@@ -311,7 +311,6 @@ class spacecraft_agent(BaseAgent):
         n = (mu / (r ** 3)) ** .5
         rc = ((r + x)**2 + y**2)**.5
 
-
         x_dot = vx
         y_dot = vy
         K1 = np.array([[-28.8287, 0.1005, -1449.9754, 0.0046],[-.087, -33.2562, 0.00462, -1451.5013]])
@@ -400,7 +399,7 @@ class spacecraft_linear_agent(BaseAgent):
 
     @staticmethod
     def Approaching_dynamics(t, state):
-        x, y, vx, vy, ux, uy, total_time, cycle_time = state
+        x, y, vx, vy, total_time, cycle_time = state
         #mu = 3.986e14 * (60 ** 2)
         #r = 43164e3
         #mc = 500
@@ -414,18 +413,20 @@ class spacecraft_linear_agent(BaseAgent):
         #temp = K1@np.array([x,y,vx,vy]).T
         #ux = #temp[0]
         #uy = #temp[1]
-        vx_dot = 5.75894721132e-5*x+0.00876276*vy-0.002*ux
-        vy_dot = -0.00876276*vx-0.002*uy
+        # vx_dot = 5.75894721132e-5*x+0.00876276*vy-0.002*ux
+        # vy_dot = -0.00876276*vx-0.002*uy
 
-        ux_dot = 28.8286776769430*vx-0.100479948259883*vy+1449.97541985328*(5.75894721132e-5*x+0.00876276*vy-0.002*ux)-0.00462447231887482*(-0.00876276*vx-0.002*uy)
-        uy_dot = 0.0870156786852279*vx+33.2561992450513*vy-0.00462447231887482*(5.75894721132e-5*x+0.00876276*vy-0.002*ux)+1451.50134643428*(-0.00876276*vx-0.002*uy)
+        vx_dot= -2.89995083970656*vx - 0.0575997658817729*x + 0.00877200894463775*vy + 0.000200959896519766*y
+        vy_dot= -0.00875351105536225*vx - 0.000174031357370456*x - 2.90300269286856*vy - 0.0665123984901026*y
+        #ux_dot = 28.8286776769430*vx-0.100479948259883*vy+1449.97541985328*(5.75894721132e-5*x+0.00876276*vy-0.002*ux)-0.00462447231887482*(-0.00876276*vx-0.002*uy)
+        #uy_dot = 0.0870156786852279*vx+33.2561992450513*vy-0.00462447231887482*(5.75894721132e-5*x+0.00876276*vy-0.002*ux)+1451.50134643428*(-0.00876276*vx-0.002*uy)
         total_time_dot = 1
         cycle_time_dot = 1
-        return [x_dot, y_dot, vx_dot, vy_dot, ux_dot, uy_dot, total_time_dot, cycle_time_dot]
+        return [x_dot, y_dot, vx_dot, vy_dot, total_time_dot, cycle_time_dot]
 
     @staticmethod
     def Rendezvous_dynamics(t, state):
-        x, y, vx, vy, ux,uy,total_time, cycle_time = state
+        x, y, vx, vy,total_time, cycle_time = state
         #mu = 3.986e14 * 60 ** 2
         #r = 43164e3
         #mc = 500
@@ -438,17 +439,19 @@ class spacecraft_linear_agent(BaseAgent):
         #temp = K2 @ np.array([x, y, vx, vy]).T
         # ux = temp[0]
         # uy = temp[1]
-        vx_dot = 5.75894721132e-5*x+0.00876276*vy-0.002*ux
-        vy_dot = -0.00876276*vx-0.002*uy
-        ux_dot = 288.028766271474*vx-0.131243039715836*vy+9614.98979543236*(5.75894721132e-5*x+0.00876276*vy-0.002*ux)+3.41199965400404e-7*(-0.00876276*vx-0.002*uy)
-        uy_dot = 0.131243040368934*vx+287.999970095943*vy+3.41199965400404e-7*(5.75894721132e-5*x+0.00876276*vy-0.002*ux)+9614.98829796995*(-0.00876276*vx-0.002*uy)
+        vx_dot= -19.2299795908647*vx - 0.575999943070835*x + 0.00876275931760007*vy + 0.000262486079431672*y
+        vy_dot= -0.00876276068239993*vx - 0.000262486080737868*x - 19.2299765959399*vy - 0.575999940191886*y
+        # vx_dot = 5.75894721132e-5*x+0.00876276*vy-0.002*ux
+        # vy_dot = -0.00876276*vx-0.002*uy
+        # ux_dot = 288.028766271474*vx-0.131243039715836*vy+9614.98979543236*(5.75894721132e-5*x+0.00876276*vy-0.002*ux)+3.41199965400404e-7*(-0.00876276*vx-0.002*uy)
+        # uy_dot = 0.131243040368934*vx+287.999970095943*vy+3.41199965400404e-7*(5.75894721132e-5*x+0.00876276*vy-0.002*ux)+9614.98829796995*(-0.00876276*vx-0.002*uy)
         total_time_dot = 1
         cycle_time_dot = 1
-        return [x_dot, y_dot, vx_dot, vy_dot, ux_dot, uy_dot, total_time_dot, cycle_time_dot]
+        return [x_dot, y_dot, vx_dot, vy_dot, total_time_dot, cycle_time_dot]
 
     @staticmethod
     def Aborting_dynamics(t, state):
-        x, y, vx, vy, ux,uy ,total_time, cycle_time = state
+        x, y, vx, vy ,total_time, cycle_time = state
         mu = 3.986e14 * 60 ** 2
         r = 43164e3
         mc = 500
@@ -457,16 +460,13 @@ class spacecraft_linear_agent(BaseAgent):
 
         x_dot = vx
         y_dot = vy
-        # ux = 0
-        # uy = 0
-        vx_dot = x*n**2 + 2*n*vy +mu/(r**2) - (mu/(rc**3))*(r+x)
-        ux_dot =0
-        uy_dot =0
+        vx_dot = 0.0000575894721132000*x+0.00876276*vy
+        vy = -0.00876276*vx
 
         vy_dot = y*n**2 - 2*n*vx - (mu/rc**3)*y
         total_time_dot = 1
         cycle_time_dot = 1
-        return [x_dot, y_dot, vx_dot, vy_dot, ux_dot, uy_dot, total_time_dot, cycle_time_dot]
+        return [x_dot, y_dot, vx_dot, vy_dot, total_time_dot, cycle_time_dot]
 
     def action_handler(self, mode):
         if mode == 'Approaching':
@@ -503,14 +503,14 @@ class powertrain_agent(BaseAgent):
     def negAngle_dynamics(t, state):
         x1, x2, x3, x4, x5,x6, x7,x8,x9 ,total_time = state
         x1_dot= 1.0 / 12.0 * x7 - x9
-        x2_dot= (0.5 * (12.0 * x4 - x7) + 0.5 * (12.0 * x3 - 12.0 * (x1 + x8)) + 0.5 * (12.0 * 5.0 - 1.0 / 0.3 * (x2 - 1.0 / 12.0 * 10000.0 * (x1 - -0.03) - 0.0 * x7)) - x2) / 0.1
+        x2_dot= (0.5 * (12.0 * x4 - x7) + 0.5 * (12.0 * x3 - 12.0 * (x1 + x8)) + 0.5 * (12.0 * 5.0 - 1.0 / 0.3 * (x2 - 1.0 / 12.0 * 10000.0 * (x1 - 0.03) - 0.0 * x7)) - x2) / 0.1
         x3_dot= x4
         x4_dot= 5.0
         x5_dot= x6
         x6_dot= 1.0 / 140.0 * (100000.0 * (x8 - x5) - 5.6 * x6)
-        x7_dot= 1.0 / 0.3 * (x2 - 1.0 / 12.0 * 10000.0 * (x1 - -0.03) - 0.0 * x7)
+        x7_dot= 1.0 / 0.3 * (x2 - 1.0 / 12.0 * 10000.0 * (x1 - 0.03) - 0.0 * x7)
         x8_dot= x9
-        x9_dot= 0.01 * (10000.0 * (x1 - -0.03) - 100000.0 * (x8 - x5) - 1.0 * x9)
+        x9_dot= 0.01 * (10000.0 * (x1 - 0.03) - 100000.0 * (x8 - x5) - 1.0 * x9)
         total_time_dot = 1
         return [x1_dot, x2_dot, x3_dot, x4_dot, x5_dot, x6_dot,x7_dot,x8_dot,x9_dot, total_time_dot]
 
@@ -518,14 +518,14 @@ class powertrain_agent(BaseAgent):
     def deadzone_dynamics(t, state):
         x1, x2, x3, x4, x5,x6, x7,x8,x9 ,total_time = state
         x1_dot= 1.0 / 12.0 * x7 - x9
-        x2_dot= (0.5 * (12.0 * x4 - x7) + 0.5 * (12.0 * x3 - 12.0 * (x1 + x8)) + 0.5 * (12.0 * 5.0 - 1.0 / 0.3 * (x2 - 1.0 / 12.0 * 0.0 * (x1 - -0.03) - 0.0 * x7)) - x2) / 0.1
+        x2_dot= (0.5 * (12.0 * x4 - x7) + 0.5 * (12.0 * x3 - 12.0 * (x1 + x8)) + 0.5 * (12.0 * 5.0 - 1.0 / 0.3 * (x2 - 1.0 / 12.0 * 0.0 * (x1 - 0.03) - 0.0 * x7)) - x2) / 0.1
         x3_dot= x4
         x4_dot= 5.0
         x5_dot= x6
         x6_dot= 1.0 / 140.0 * (100000.0 * (x8 - x5) - 5.6 * x6)
-        x7_dot= 1.0 / 0.3 * (x2 - 1.0 / 12.0 * 0.0 * (x1 - -0.03) - 0.0 * x7)
+        x7_dot= 1.0 / 0.3 * (x2 - 1.0 / 12.0 * 0.0 * (x1 - 0.03) - 0.0 * x7)
         x8_dot= x9
-        x9_dot= 0.01 * (0.0 * (x1 - -0.03) - 100000.0 * (x8 - x5) - 1.0 * x9)
+        x9_dot= 0.01 * (0.0 * (x1 - 0.03) - 100000.0 * (x8 - x5) - 1.0 * x9)
 
         total_time_dot = 1
         return [x1_dot, x2_dot, x3_dot, x4_dot, x5_dot, x6_dot,x7_dot,x8_dot,x9_dot, total_time_dot]
@@ -549,14 +549,14 @@ class powertrain_agent(BaseAgent):
     def negAngleInit_dynamics(t, state):
         x1, x2, x3, x4, x5, x6, x7, x8, x9, total_time = state
         x1_dot = 1.0 / 12.0 * x7 - x9
-        x2_dot = (0.5 * (12.0 * x4 - x7) + 0.5 * (12.0 * x3 - 12.0 * (x1 + x8)) + 0.5 * (12.0 * -5.0 - 1.0 / 0.3 * (x2 - 1.0 / 12.0 * 10000.0 * (x1 - -0.03) - 0.0 * x7)) - x2) / 0.1
+        x2_dot = (0.5 * (12.0 * x4 - x7) + 0.5 * (12.0 * x3 - 12.0 * (x1 + x8)) + 0.5 * (12.0 * -5.0 - 1.0 / 0.3 * (x2 - 1.0 / 12.0 * 10000.0 * (x1 - 0.03) - 0.0 * x7)) - x2) / 0.1
         x3_dot = x4
         x4_dot = -5.0
         x5_dot = x6
         x6_dot = 1.0 / 140.0 * (100000.0 * (x8 - x5) - 5.6 * x6)
-        x7_dot = 1.0 / 0.3 * (x2 - 1.0 / 12.0 * 10000.0 * (x1 - -0.03) - 0.0 * x7)
+        x7_dot = 1.0 / 0.3 * (x2 - 1.0 / 12.0 * 10000.0 * (x1 - 0.03) - 0.0 * x7)
         x8_dot= x9
-        x9_dot= 0.01 * (10000.0 * (x1 - -0.03) - 100000.0 * (x8 - x5) - 1.0 * x9)
+        x9_dot= 0.01 * (10000.0 * (x1 - 0.03) - 100000.0 * (x8 - x5) - 1.0 * x9)
 
 
         total_time_dot = 1
