@@ -1,8 +1,8 @@
 from origin_agent import coupled_vanderpol_agent
 from verse import Scenario
-from verse.plotter.plotter2D import *
+#from verse.plotter.plotter2D import *
 
-import plotly.graph_objects as go
+#import plotly.graph_objects as go
 from enum import Enum, auto
 
 
@@ -33,13 +33,13 @@ if __name__ == "__main__":
     traces = scenario.verify(
         7, 0.01
     )
-    fig = go.Figure()
-    fig = reachtube_tree(traces, None, fig, 1, 2, [1, 2],
-                         'lines', 'trace')
-    fig.update_layout(
-        xaxis_title="x1", yaxis_title="y1"
-    )
-    fig.show()
+    # fig = go.Figure()
+    # fig = reachtube_tree(traces, None, fig, 1, 2, [1, 2],
+    #                      'lines', 'trace')
+    # fig.update_layout(
+    #     xaxis_title="x1", yaxis_title="y1"
+    # )
+    # fig.show()
     # traces = scenario.simulate(7, 0.05)
     # fig = go.Figure()
     # fig = simulation_tree(traces, None, fig, 1, 2, [1, 2],
