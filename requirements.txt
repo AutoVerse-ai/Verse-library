@@ -2,7 +2,7 @@ numpy
 scipy
 matplotlib
 polytope
-pyvista
+pyvista~=0.38.3
 networkx
 sympy
 six
