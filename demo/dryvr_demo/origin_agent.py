@@ -163,7 +163,7 @@ class volterra_agent(BaseAgent):
 
     @staticmethod
     def dynamic(t, state):
-        x, y = state
+        x, y, t_loc = state
         x = float(x)
         y = float(y)
 
@@ -171,22 +171,41 @@ class volterra_agent(BaseAgent):
         y_dot = x*y - y
 
 
-        return [x_dot, y_dot]
+        return [x_dot, y_dot, 1]
 
     def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step, track_map: LaneMap = None) -> np.ndarray:
+        # time_bound = float(time_bound)
+        # number_points = int(np.ceil(time_bound/time_step))
+        # t = [round(i*time_step, 10) for i in range(0, number_points)]
+        # # note: digit of time
+        # init = initialCondition
+        # trace = [[0]+init]
+        # for i in range(len(t)):
+        #     r = ode(self.dynamic)
+        #     r.set_initial_value(init)
+        #     res: np.ndarray = r.integrate(r.t + time_step)
+        #     init = res.flatten().tolist()
+        #     trace.append([t[i] + time_step] + init)
+        # return np.array(trace)
         time_bound = float(time_bound)
         number_points = int(np.ceil(time_bound/time_step))
         t = [round(i*time_step, 10) for i in range(0, number_points)]
-        # note: digit of time
-        init = initialCondition
-        trace = [[0]+init]
-        for i in range(len(t)):
-            r = ode(self.dynamic)
-            r.set_initial_value(init)
-            res: np.ndarray = r.integrate(r.t + time_step)
-            init = res.flatten().tolist()
-            trace.append([t[i] + time_step] + init)
-        return np.array(trace)
+        # # note: digit of time
+        # init = initialCondition
+        # trace = [[0]+init]
+        # for i in range(len(t)):
+        #     r = ode(self.dynamic)
+        #     r.set_initial_value(init)
+        #     res: np.ndarray = r.integrate(r.t + time_step)
+        #     init = res.flatten().tolist()
+        #     trace.append([t[i] + time_step] + init)
+        # return np.array(trace)
+        t_span = [0, time_bound]
+        res = solve_ivp(self.dynamic, t_span = t_span, y0 = initialCondition, method='Radau', t_eval=t, atol=1e-4)
+        if not res.success:
+            print("stop here")
+        trace = np.vstack((res.t, res.y)).T
+        return trace
 
 
 class thermo_agent(BaseAgent):
