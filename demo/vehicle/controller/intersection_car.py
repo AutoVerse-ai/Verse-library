@@ -22,19 +22,6 @@ class State:
     v = 0.0
     agent_mode: AgentMode = AgentMode.Accel
     track_mode: TrackMode = TrackMode.none
-    # type: LaneObjectMode = LaneObjectMode.Vehicle
-
-    # def __init__(
-    #     self,
-    #     x,
-    #     y,
-    #     theta,
-    #     v,
-    #     agent_mode: AgentMode,
-    #     track_mode: TrackMode,
-    #     # type: LaneObjectMode,
-    # ):
-    #    pass
 
 lane_width = 3
 def cars_ahead(track, ego, others, track_map):
@@ -64,4 +51,11 @@ def decisionLogic(ego: State, others: List[State], track_map):
             output.agent_mode = AgentMode.Brake
     if ego.agent_mode == AgentMode.Brake and not cars_front(ego, others, track_map):
         output.agent_mode = AgentMode.Accel
+    # lat_dist = track_map.get_lateral_distance(ego.track_mode, [ego.x, ego.y])
+    # if ego.agent_mode == AgentMode.SwitchLeft and lat_dist <= 1:
+    #         output.agent_mode = AgentMode.Accel
+    #         output.track_mode = track_map.h(ego.track_mode, ego.agent_mode, AgentMode.Accel)
+    # if ego.agent_mode == AgentMode.SwitchRight and lat_dist >= -1:
+    #         output.agent_mode = AgentMode.Accel
+    #         output.track_mode = track_map.h(ego.track_mode, ego.agent_mode, AgentMode.Accel)
     return output

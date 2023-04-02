@@ -7,7 +7,7 @@ pp = functools.partial(pprint.pprint, compact=True, width=130)
 
 from controller.intersection_car import AgentMode
 
-CAR_NUM = 7
+CAR_NUM = 9
 CAR_ACCEL_RANGE = (0.7, 3)
 CAR_SPEED_RANGE = (1, 3)
 CAR_THETA_RANGE = (-0.1, 0.1)
@@ -16,7 +16,7 @@ def rand(start: float, end: float) -> float:
     return random.random() * (end - start) + start
 
 def run(meas=False):
-    traces = bench.run(60, 0.05)
+    traces = bench.run(60, 0.1)
 
     if bench.config.dump:
         traces.dump_tree()
@@ -29,7 +29,7 @@ def run(meas=False):
 
         fig = go.Figure()
         if bench.config.sim:
-            fig = simulation_tree(traces, bench.scenario.map, fig, 1, 2, print_dim_list=[1, 2])
+            fig = simulation_tree(traces, bench.scenario.map, fig, 1, 2, label_mode='label')
         else:
             fig = reachtube_tree(traces, bench.scenario.map, fig, 1, 2, [1, 2], 'lines',combine_rect=5)
         fig.show()
@@ -40,6 +40,8 @@ def run(meas=False):
 if __name__ == "__main__":
     import sys
     bench = Benchmark(sys.argv)
+    bench.agent_type = "C"
+    bench.noisy_s = "No"
     ctlr_src = "demo/vehicle/controller/intersection_car.py"
     import time
     if len(sys.argv) == 3:

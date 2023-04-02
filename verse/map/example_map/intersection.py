@@ -73,11 +73,12 @@ class Intersection(LaneMap):
                         for s, e, d in curves for i in range(lanes)])
 
     def h(self, lane_idx: str, mode_src: str, mode_dest: str) -> Optional[str]:
-        # ret = self._h(lane_idx, mode_src, mode_dest)
-        # print("H", lane_idx, mode_src, mode_dest, "->", ret)
-        # return ret
+        ret = self._h(lane_idx, mode_src, mode_dest)
+        if ret != None and ret != lane_idx:
+            print("H", lane_idx, mode_src, mode_dest, "->", ret)
+        return ret
 
-    # def _h(self, lane_idx: str, mode_src: str, mode_dest: str) -> Optional[str]:
+    def _h(self, lane_idx: str, mode_src: str, mode_dest: str) -> Optional[str]:
         src_sw, dst_sw = mode_src.startswith("Switch"), mode_dest.startswith("Switch")
         if src_sw:
             if dst_sw:
@@ -86,8 +87,10 @@ class Intersection(LaneMap):
                 lanes, ind = lane_idx.split("_")
                 ind = int(ind)
                 if "Left" in mode_src and ind > 0:
+                    print("To left", lane_idx, mode_src, mode_dest, "->")
                     return f"{lanes}.{ind - 1}"
                 if "Right" in mode_src and ind < self.lanes - 1:
+                    print("To right", lane_idx, mode_src, mode_dest, "->")
                     return f"{lanes}.{ind + 1}"
                 return None
         else:
