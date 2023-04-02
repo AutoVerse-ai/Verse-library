@@ -15,7 +15,7 @@ class CraftMode(Enum):
 if __name__ == "__main__":
     input_code_name = './demo/dryvr_demo/volterra_controller.py'
     #scenario = Scenario()
-    scenario = Scenario(ScenarioConfig(init_seg_length=5))
+    scenario = Scenario(ScenarioConfig(init_seg_length=1))
 
 
     car = volterra_agent('test', file_name=input_code_name)
@@ -25,7 +25,7 @@ if __name__ == "__main__":
     e = .012
     scenario.set_init(
         [
-            [[1.3 - e, 1], [1.3 + e, 1]],
+            [[1.3 - e, 1, 0], [1.3 + e, 1, 0]],
         ],
         [
             tuple([CraftMode.outside]),
@@ -40,8 +40,15 @@ if __name__ == "__main__":
 
 
 
-    traces = scenario.verify(3.64, .1)
+    traces = scenario.verify(3.64, .01)
     fig = go.Figure()
     fig = reachtube_tree(traces, None, fig, 1, 2, [1, 2],
                          'lines', 'trace')
+    fig.add_trace(go.Scatter(x=[
+            1+0.157,1+0.033,1+-0.033,1+-0.157,1+-0.157,1+-0.033,1+0.033,1+0.157,1+0.157
+        ],
+        y=[
+            1+0.033,1+0.157,1+0.157,1+0.033,1+-0.033,1+-0.157,1+-0.157,1+-0.033,1+0.033
+        ]
+    ))
     fig.show()
