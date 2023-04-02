@@ -3,6 +3,7 @@ from typing import Tuple, List
 
 import numpy as np
 from scipy.integrate import ode
+from scipy.integrate import solve_ivp
 
 from verse.agents import BaseAgent
 from verse.map import LaneMap
@@ -73,38 +74,44 @@ class coupled_vanderpol_agent(BaseAgent):
             trace.append([t[i] + time_step] + init)
         return np.array(trace)
 class robertson_agent(BaseAgent):
-    def __init__(self, id, code=None, file_name=None):
+    def __init__(self, id, beta, gamma, code=None, file_name=None):
         # Calling the constructor of tha base class
         super().__init__(id, code, file_name)
+        self.beta = beta 
+        self.gamma = gamma 
 
-    @staticmethod
-    def dynamic(t, state):
+    def dynamic(self, t, state):
 
-        x, y,z,beta,gamma = state
+        x, y,z = state
         x = float(x)
         y = float(y)
         z = float(z)
 
-        x_dot = -.4*x + beta*y*z
-        y_dot = .4*x - beta*y*z - gamma*y**2
-        z_dot  = gamma*y**2
+        x_dot = -.4*x +self.beta*y*z
+        y_dot = .4*x - self.beta*y*z - self.gamma*y**2
+        z_dot = self.gamma*y**2
 
-        return [x_dot, y_dot,z_dot, 0,0]
+        return [x_dot, y_dot,z_dot]
 
     def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step, track_map: LaneMap = None) -> np.ndarray:
         time_bound = float(time_bound)
         number_points = int(np.ceil(time_bound/time_step))
         t = [round(i*time_step, 10) for i in range(0, number_points)]
-        # note: digit of time
-        init = initialCondition
-        trace = [[0]+init]
-        for i in range(len(t)):
-            r = ode(self.dynamic)
-            r.set_initial_value(init)
-            res: np.ndarray = r.integrate(r.t + time_step)
-            init = res.flatten().tolist()
-            trace.append([t[i] + time_step] + init)
-        return np.array(trace)
+        # # note: digit of time
+        # init = initialCondition
+        # trace = [[0]+init]
+        # for i in range(len(t)):
+        #     r = ode(self.dynamic)
+        #     r.set_initial_value(init)
+        #     res: np.ndarray = r.integrate(r.t + time_step)
+        #     init = res.flatten().tolist()
+        #     trace.append([t[i] + time_step] + init)
+        # return np.array(trace)
+        t_span = [0, time_bound]
+        res = solve_ivp(self.dynamic, t_span = t_span, y0 = initialCondition, method='Radau', t_eval=t, rtol=4e-14, atol=1e-12)
+        trace = np.vstack((res.t, res.y)).T
+        return trace
+
 
 class laub_loomis_agent(BaseAgent):
     def __init__(self, id, code=None, file_name=None):
