@@ -5,7 +5,7 @@ import re
 from subprocess import PIPE, Popen
 from typing import Tuple, Union
 import csv
-
+import os
 @dataclass
 class ExperimentResult:
     tool: str
@@ -24,7 +24,8 @@ expr_list = [
     "coupled_vanderpol_demo.py",
     "laub_loomis_demo.py"
 ]
-with open('results.csv', 'w', newline='') as csvfile:
+#os.mkdir("./result")
+with open('result/results.csv', 'w', newline='') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',',
                             quotechar='|', quoting=csv.QUOTE_MINIMAL)
     for expr in expr_list:
