@@ -24,7 +24,10 @@ expr_list = [
     "coupled_vanderpol_demo.py",
     "laub_loomis_demo.py"
 ]
-#os.mkdir("./result")
+try:
+    os.mkdir("./result")
+except:
+    pass
 with open('result/results.csv', 'w', newline='') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',',
                             quotechar='|', quoting=csv.QUOTE_MINIMAL)
