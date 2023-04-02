@@ -1,6 +1,7 @@
 from origin_agent import coupled_vanderpol_agent
 from verse import Scenario
 #from verse.plotter.plotter2D import *
+import time
 
 #import plotly.graph_objects as go
 from enum import Enum, auto
@@ -30,6 +31,8 @@ if __name__ == "__main__":
             # tuple([AgentMode.Default]),
         ]
     )
+    start_time = time.time()
+
     traces = scenario.verify(
         7, 0.01
     )
@@ -45,3 +48,14 @@ if __name__ == "__main__":
     # fig = simulation_tree(traces, None, fig, 1, 2, [1, 2],
     #                       'lines', 'trace')
     # fig.show()
+
+    run_time = time.time() - start_time
+    print({
+        "tool": "verse",
+        "benchmark": "CVDP22",
+        "setup": "n/a",
+        "result": "1",
+        "time": run_time,
+        "metric2": "n/a",
+        "metric3": "n/a",
+    })
