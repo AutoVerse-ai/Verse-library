@@ -15,13 +15,8 @@ class CraftMode(Enum):
 
 if __name__ == "__main__":
     input_code_name = './demo/dryvr_demo/spacecraft_controller.py'
-<<<<<<< HEAD
-    #scenario = Scenario(ScenarioConfig(init_seg_length=5))
-    scenario = Scenario()
-=======
     scenario = Scenario(ScenarioConfig(init_seg_length=5))
 
->>>>>>> 674f0c043807b63cecd1fffe21121c56109cc0cd
     car = spacecraft_agent('test', file_name=input_code_name)
     scenario.add_agent(car)
 
