@@ -24,7 +24,6 @@ setup(
         "plotly",
         "beautifulsoup4",
         "lxml",
-        "torch",
         "tqdm",
         "intervaltree",
         "Pympler",
