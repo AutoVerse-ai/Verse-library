@@ -625,6 +625,7 @@ class Simulator:
             if len(all_asserts) > 0:
                 return all_asserts, dict(transitions), idx
             if len(satisfied_guard) > 0:
+                print(len(satisfied_guard))
                 for agent_idx, dest, next_init, paths in satisfied_guard:
                     assert isinstance(paths, list)
                     dest = tuple(dest)
@@ -632,9 +633,10 @@ class Simulator:
                     src_track = node.get_track(agent_idx, node.mode[agent_idx])
                     dest_mode = node.get_mode(agent_idx, dest)
                     dest_track = node.get_track(agent_idx, dest)
-                    # pp(("dbg", src_track, src_mode, dest, dest_mode, dest_track))
-                    # pp((track_map.h(src_track, src_mode, dest_mode)))
                     if dest_track == track_map.h(src_track, src_mode, dest_mode):
+                        pp(("dbg", src_track, src_mode, dest, dest_mode, dest_track))
+                        pp((track_map.h(src_track, src_mode, dest_mode)))
+                        pp((agent_idx, dest, next_init, paths))
                         transitions[agent_idx].append((agent_idx, dest, next_init, paths))
                 # print("transitions", transitions)
                 break

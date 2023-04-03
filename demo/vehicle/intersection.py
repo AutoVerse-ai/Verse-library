@@ -25,11 +25,12 @@ def run(meas=False):
 
     if bench.config.plot and meas:
         import plotly.graph_objects as go
-        from verse.plotter.plotter2D import reachtube_tree, simulation_tree
+        from verse.plotter.plotter2D import reachtube_tree, simulation_tree, simulation_anime
 
         fig = go.Figure()
         if bench.config.sim:
-            fig = simulation_tree(traces, bench.scenario.map, fig, 1, 2, label_mode='label')
+            # fig = simulation_anime(traces, bench.scenario.map, fig, 1, 2, [1, 2], label_mode='None', full_trace=True)
+            fig = simulation_tree(traces, bench.scenario.map, fig, 1, 2, [1, 2], label_mode='None')
         else:
             fig = reachtube_tree(traces, bench.scenario.map, fig, 1, 2, [1, 2], 'lines',combine_rect=5)
         fig.show()
@@ -51,7 +52,7 @@ if __name__ == "__main__":
     random.seed(seed)
 
     dirs = "WSEN"
-    map = Intersection()
+    map = Intersection(lanes=3)
     bench.scenario.set_map(map)
     for i in range(CAR_NUM):
         car = CarAgent(f"car{i}", file_name=ctlr_src, speed=rand(*CAR_SPEED_RANGE), accel=rand(*CAR_ACCEL_RANGE))

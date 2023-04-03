@@ -1120,7 +1120,7 @@ def sample_trace(root, sample_rate: int = 1):
         sample_rate = sample_rate*2
         while queue != []:
             node = queue.pop()
-            for agent_id in node.agent:
+            for agent_id in node.trace:
                 trace_length = len(node.trace[agent_id])
                 tmp = []
                 for i in range(0, trace_length, sample_rate):
@@ -1131,8 +1131,8 @@ def sample_trace(root, sample_rate: int = 1):
             queue += node.child
     else:
         while queue != []:
-            node = queue.pop()
-            for agent_id in node.agent:
+            node:AnalysisTreeNode = queue.pop()
+            for agent_id in node.trace:
                 node.trace[agent_id] = [node.trace[agent_id][i]
                                         for i in range(0, len(node.trace[agent_id]), sample_rate)]
             queue += node.child

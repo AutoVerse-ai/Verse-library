@@ -39,23 +39,38 @@ def cars_front(ego, others, track_map):
 def decisionLogic(ego: State, others: List[State], track_map):
     output = copy.deepcopy(ego)
     if ego.agent_mode == AgentMode.Accel and cars_front(ego, others, track_map):
-        left_lane = track_map.h(ego.track_mode, ego.agent_mode, AgentMode.SwitchLeft)
-        right_lane = track_map.h(ego.track_mode, ego.agent_mode, AgentMode.SwitchRight)
-        if left_lane != None:
+        alledged_left_lane = track_map.h(ego.track_mode, ego.agent_mode, AgentMode.SwitchLeft)
+        alledged_right_lane = track_map.h(ego.track_mode, ego.agent_mode, AgentMode.SwitchRight)
+        if alledged_left_lane != None:
             output.agent_mode = AgentMode.SwitchLeft
-            output.track_mode = left_lane
-        elif right_lane != None:
+            output.track_mode = alledged_left_lane
+        if alledged_right_lane != None:
             output.agent_mode = AgentMode.SwitchRight
-            output.track_mode = right_lane
-        else:
-            output.agent_mode = AgentMode.Brake
+            output.track_mode = alledged_right_lane
+        # else:
+        #     output.agent_mode = AgentMode.Brake
     if ego.agent_mode == AgentMode.Brake and not cars_front(ego, others, track_map):
         output.agent_mode = AgentMode.Accel
-    # lat_dist = track_map.get_lateral_distance(ego.track_mode, [ego.x, ego.y])
-    # if ego.agent_mode == AgentMode.SwitchLeft and lat_dist <= 1:
+    lat_dist = track_map.get_lateral_distance(ego.track_mode, [ego.x, ego.y])
+    lat = 2
+    if ego.agent_mode == AgentMode.SwitchLeft and lat_dist >= lat:
+        output.agent_mode = AgentMode.Accel
+        output.track_mode = track_map.h(ego.track_mode, ego.agent_mode, AgentMode.Accel)
+    if ego.agent_mode == AgentMode.SwitchRight and lat_dist <= -lat:
+        output.agent_mode = AgentMode.Accel
+        output.track_mode = track_map.h(ego.track_mode, ego.agent_mode, AgentMode.Accel)
+    # if ego.agent_mode == AgentMode.SwitchLeft:
+    #     if lat_dist >= lat:
     #         output.agent_mode = AgentMode.Accel
     #         output.track_mode = track_map.h(ego.track_mode, ego.agent_mode, AgentMode.Accel)
-    # if ego.agent_mode == AgentMode.SwitchRight and lat_dist >= -1:
+    #     if cars_front(ego, others, track_map):
+    #         output.agent_mode = AgentMode.Brake
+
+    # if ego.agent_mode == AgentMode.SwitchRight:
+    #     if lat_dist <= -lat:
     #         output.agent_mode = AgentMode.Accel
     #         output.track_mode = track_map.h(ego.track_mode, ego.agent_mode, AgentMode.Accel)
+    #     if cars_front(ego, others, track_map):
+    #         output.agent_mode = AgentMode.Brake
+
     return output
