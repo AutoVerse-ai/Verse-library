@@ -5,6 +5,9 @@ import json
 from treelib import Tree
 import numpy.typing as nptyp, numpy as np, portion
 
+import networkx as nx
+import matplotlib.pyplot as plt
+
 from verse.analysis.dryvr import _EPSILON
 
 TraceType = nptyp.NDArray[np.float_]
@@ -138,6 +141,30 @@ class AnalysisTree:
 
         with open(fn,'w+') as f:           
             json.dump(res_dict,f, indent=4, sort_keys=True)
+
+    def adj_list(self):
+        # build adjacency list
+        res = self.get_all_nodes(self.root)
+        adj = []
+        for node in res:
+            adj.append((node, node.child))
+        return adj
+    
+    def print_tree(self):
+        G = nx.Graph()
+        f = open("traces_output.txt", "w")
+        adj = self.adj_list()
+        for entry in adj:
+            parent, children = entry
+            G.add_node(parent.id,time=(parent.id,parent.start_time))
+            for child in children:
+                G.add_node(child.id,time=(child.id,child.start_time))
+                G.add_edge(parent.id, child.id)
+            f.write("Node id: "+str(parent.id)+", Start time: "+str(parent.start_time)+"\n")
+            f.write("Mode: "+str(parent.mode)+", Init: "+str(parent.init)+"\n")
+        labels = nx.get_node_attributes(G, 'time') 
+        nx.draw_spring(G,labels=labels)
+        plt.show()
 
     @staticmethod 
     def load(fn):
