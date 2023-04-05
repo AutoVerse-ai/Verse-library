@@ -163,7 +163,7 @@ class AnalysisTree:
             f.write("Node id: "+str(parent.id)+", Start time: "+str(parent.start_time)+"\n")
             f.write("Mode: "+str(parent.mode)+", Init: "+str(parent.init)+"\n")
         labels = nx.get_node_attributes(G, 'time') 
-        nx.draw_spring(G,labels=labels)
+        nx.draw_planar(G,labels=labels)
         plt.show()
 
     @staticmethod 
