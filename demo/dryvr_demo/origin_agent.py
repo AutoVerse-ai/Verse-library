@@ -518,7 +518,64 @@ class spacecraft_linear_agent(BaseAgent):
             init = res.flatten().tolist()
             trace.append([t[i] + time_step] + init)
         return np.array(trace)
+class gearbox_agent(BaseAgent):
+    def __init__(self, id, code=None, file_name=None):
+        # Calling the constructor of tha base class
 
+        super().__init__(id, code, file_name)
+
+    @staticmethod
+    def Move_dynamics(t, state):
+        vx, vy, px, py, ii, trans,one = state
+
+
+        vx_dot = 21.8750000000000
+        vy_dot = -0.114285714285710
+        px_dot = vx
+        py_dot = vy
+        ii_dot = 0
+        one_dot = 0
+        trans_dot = 0
+
+        return [vx_dot, vy_dot, px_dot, py_dot, ii_dot, one_dot, trans_dot]
+
+    @staticmethod
+    def Meshed_dynamics(t, state):
+        vx, vy, px, py, ii, trans, one = state
+
+        vx_dot = 0
+        vy_dot = 0
+        px_dot = vx
+        py_dot = vy
+        ii_dot = 0
+        one_dot = 0
+        trans_dot = 0
+
+        return [vx_dot, vy_dot, px_dot, py_dot, ii_dot, one_dot, trans_dot]
+
+
+    def action_handler(self, mode):
+        if mode == 'Move':
+            return ode(self.Move_dynamics)
+        elif mode == 'Meshed':
+            return ode(self.Meshed_dynamics)
+        else:
+            raise ValueError
+
+    def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step, track_map: LaneMap = None) -> np.ndarray:
+        time_bound = float(time_bound)
+        number_points = int(np.ceil(time_bound/time_step))
+        t = [round(i*time_step, 10) for i in range(0, number_points)]
+
+        init = initialCondition
+        trace = [[0]+init]
+        for i in range(len(t)):
+            r = self.action_handler(mode[0])
+            r.set_initial_value(init)
+            res: np.ndarray = r.integrate(r.t + time_step)
+            init = res.flatten().tolist()
+            trace.append([t[i] + time_step] + init)
+        return np.array(trace)
 class powertrain_agent(BaseAgent):
     def __init__(self, id, code=None, file_name=None):
         # Calling the constructor of tha base class

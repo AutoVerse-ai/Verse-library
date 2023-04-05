@@ -5,7 +5,7 @@ from verse.sensor.example_sensor.craft_sensor import CraftSensor
 
 import plotly.graph_objects as go
 from enum import Enum, auto
-
+import time
 
 class CraftMode(Enum):
     inside = auto()
@@ -39,8 +39,20 @@ if __name__ == "__main__":
     # fig.show()
 
 
+    start_time = time.time()
 
     traces = scenario.verify(3.64, .01)
+    run_time = time.time() - start_time
+
+    print({
+        "tool": "verse",
+        "benchmark": "LOVO21",
+        "setup": "n/a",
+        "result": "1",
+        "time": run_time,
+        "metric2": str( abs((traces.nodes[0].trace['test'][-1][1] - traces.nodes[0].trace['test'][-2][1] )*(traces.nodes[0].trace['test'][-1][2] - traces.nodes[0].trace['test'][-2][2] ) ) ),
+        "metric3": "n/a",
+    })
     fig = go.Figure()
     fig = reachtube_tree(traces, None, fig, 1, 2, [1, 2],
                          'lines', 'trace')

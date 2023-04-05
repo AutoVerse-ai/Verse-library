@@ -82,26 +82,39 @@ if __name__ == "__main__":
 
     # fig = reachtube_tree(traces, None, fig, 0, 4, [1, 2], 'lines', 'trace', combine_rect=3)
     #
-    # scenario2 = Scenario()
-    #
-    # car2 = laub_loomis_agent('car1', file_name=input_code_name)
-    # scenario2.add_agent(car2)
-    # # car = vanderpol_agent('car2', file_name=input_code_name)
-    # # scenario.add_agent(car)
-    # # scenario.set_sensor(FakeSensor2())
-    # # modify mode list input
-    # W = .01
-    # scenario2.set_init(
-    #     [
-    #         [[1.2 - W, 1.05 - W, 1.5 - W, 2.4 - W, 1 - W, .1 - W, .45 - W,W],
-    #          [1.2 + W, 1.05 + W, 1.5 + W, 2.4 + W, 1 + W, .1 + W, .45 + W,W]],
-    #     ],
-    #     [
-    #         tuple([AgentMode.Default]),
-    #         # tuple([AgentMode.Default]),
-    #     ]
-    # )
-    # traces = scenario2.verify(20, 0.02, params={"bloating_method": "GLOBAL"})
+    scenario2 = Scenario()
+
+    car2 = laub_loomis_agent('car1', file_name=input_code_name)
+    scenario2.add_agent(car2)
+    # car = vanderpol_agent('car2', file_name=input_code_name)
+    # scenario.add_agent(car)
+    # scenario.set_sensor(FakeSensor2())
+    # modify mode list input
+    W = .01
+    scenario2.set_init(
+        [
+            [[1.2 - W, 1.05 - W, 1.5 - W, 2.4 - W, 1 - W, .1 - W, .45 - W,W],
+             [1.2 + W, 1.05 + W, 1.5 + W, 2.4 + W, 1 + W, .1 + W, .45 + W,W]],
+        ],
+        [
+            tuple([AgentMode.Default]),
+            # tuple([AgentMode.Default]),
+        ]
+    )
+    start_time = time.time()
+
+    traces = scenario2.verify(20, 0.02, params={"bloating_method": "GLOBAL"})
+    run_time = time.time() - start_time
+
+    print({
+        "tool": "verse",
+        "benchmark": "LALO20",
+        "setup": "W001",
+        "result": "1",
+        "time": run_time,
+        "metric2": str(traces.nodes[0].trace['car1'][-1][4] - traces.nodes[0].trace['car1'][-2][4]),
+        "metric3": "n/a",
+    })
     # fig = reachtube_tree(traces, None, fig, 0, 4, [1, 2], 'lines', 'trace', combine_rect=3)
     # fig.update_layout(
     #     xaxis_title="t", yaxis_title="x4"

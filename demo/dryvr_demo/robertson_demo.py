@@ -4,7 +4,7 @@ from verse.plotter.plotter2D import *
 
 import plotly.graph_objects as go
 from enum import Enum, auto
-
+import time
 
 class AgentMode(Enum):
     Default = auto()
@@ -35,7 +35,7 @@ if __name__ == "__main__":
     fig = go.Figure()
 
     scenario1 = Scenario()
-    car1 = robertson_agent('car1', file_name=input_code_name, beta = 1e2, gamma=1e3)
+    car1 = robertson_agent('car1', file_name=input_code_name, beta = 1e3, gamma=1e7)
     scenario1.add_agent(car1)
     scenario1.set_init(
         [
@@ -46,44 +46,90 @@ if __name__ == "__main__":
             # tuple([AgentMode.Default]),
         ]
     )
+    start_time = time.time()
+
     traces1 = scenario1.verify(40, .1)
     traces1 = compute_xyz(traces1)
-    fig = reachtube_tree(traces1, None, fig, 0, 4, [0, 1], 'lines', 'trace', combine_rect=3)
-    # scenario = Scenario()
-    # car = robertson_agent('car1', file_name=input_code_name, beta = 1e3, gamma=1e5)
-    # scenario.add_agent(car)
-    # scenario.set_init(
-    #     [
-    #         [[1, 0, 0], [1, 0, 0]],
-    #     ],
-    #     [
-    #         tuple([AgentMode.Default]),
-    #         # tuple([AgentMode.Default]),
-    #     ]
-    # )
-    # traces = scenario.verify(40, .1)
-    # print(traces)
-    # traces = compute_xyz(traces)
-    # fig = reachtube_tree(traces, None, fig, 0, 1, [0, 1], 'lines', 'trace', combine_rect=3)
+    run_time = time.time() - start_time
 
-    # scenario2 = Scenario()
-    # car2 = robertson_agent('car1', file_name=input_code_name, beta = 1e3, gamma=1e7)
-    # scenario2.add_agent(car2)
-    # scenario2.set_init(
-    #     [
-    #         [[1, 0, 0], [1, 0, 0]],
-    #     ],
-    #     [
-    #         tuple([AgentMode.Default]),
-    #         # tuple([AgentMode.Default]),
-    #     ]
-    # )
-    # traces2 = scenario2.verify(40, .1)
-    # traces2 = compute_xyz(traces2)
-    # fig = reachtube_tree(traces2, None, fig, 0, 1, [0, 1], 'lines', 'trace', combine_rect=3)
-    # fig.update_layout(
-    #     xaxis_title="t", yaxis_title="s"
-    # )
+    print({
+        "tool": "verse",
+        "benchmark": "ROBE21",
+        "setup": "B3G7",
+        "result": "1",
+        "time": run_time,
+        "metric2": traces1.nodes[0].trace['car1'][-1][1] + traces1.nodes[0].trace['car1'][-1][2] +
+                   traces1.nodes[0].trace['car1'][-1][3] - (
+                           traces1.nodes[0].trace['car1'][-2][1] + traces1.nodes[0].trace['car1'][-2][2] +
+                           traces1.nodes[0].trace['car1'][-2][3]),
+        "metric3": "n/a",
+    })
+    fig = reachtube_tree(traces1, None, fig, 0, 4, [0, 1], 'lines', 'trace', combine_rect=3)
+    scenario = Scenario()
+    car = robertson_agent('car1', file_name=input_code_name, beta = 1e2, gamma=1e3)
+    scenario.add_agent(car)
+    scenario.set_init(
+        [
+            [[1, 0, 0], [1, 0, 0]],
+        ],
+        [
+            tuple([AgentMode.Default]),
+            # tuple([AgentMode.Default]),
+        ]
+    )
+    start_time = time.time()
+
+    traces = scenario.verify(40, .1)
+    traces = compute_xyz(traces)
+    run_time = time.time() - start_time
+
+    print({
+        "tool": "verse",
+        "benchmark": "ROBE21",
+        "setup": "B2G3",
+        "result": "1",
+        "time": run_time,
+        "metric2": traces.nodes[0].trace['car1'][-1][1] + traces.nodes[0].trace['car1'][-1][2] +
+                   traces.nodes[0].trace['car1'][-1][3] - (
+                               traces.nodes[0].trace['car1'][-2][1] + traces.nodes[0].trace['car1'][-2][2] +
+                               traces.nodes[0].trace['car1'][-2][3]),
+        "metric3": "n/a",
+    })
+    fig = reachtube_tree(traces, None, fig, 0, 4, [0, 1], 'lines', 'trace', combine_rect=3)
+
+    scenario2 = Scenario()
+    car2 = robertson_agent('car1', file_name=input_code_name, beta = 1e3, gamma=1e5)
+    scenario2.add_agent(car2)
+    scenario2.set_init(
+        [
+            [[1, 0, 0], [1, 0, 0]],
+        ],
+        [
+            tuple([AgentMode.Default]),
+            # tuple([AgentMode.Default]),
+        ]
+    )
+    start_time = time.time()
+
+    traces2 = scenario2.verify(40, .1)
+
+    traces2 = compute_xyz(traces2)
+    run_time = time.time() - start_time
+
+    print({
+        "tool": "verse",
+        "benchmark": "ROBE21",
+        "setup": "B3G5",
+        "result": "1",
+        "time": run_time,
+        "metric2": traces2.nodes[0].trace['car1'][-1][1] + traces2.nodes[0].trace['car1'][-1][2] + traces2.nodes[0].trace['car1'][-1][3]  - (traces2.nodes[0].trace['car1'][-2][1] + traces2.nodes[0].trace['car1'][-2][2] + traces2.nodes[0].trace['car1'][-2][3]) ,
+        "metric3": "n/a",
+    })
+    fig = reachtube_tree(traces2, None, fig, 0, 4, [0, 1], 'lines', 'trace', combine_rect=3)
+    fig.update_layout(
+        xaxis_title="t", yaxis_title="s"
+    )
+
 
 
     fig.show()

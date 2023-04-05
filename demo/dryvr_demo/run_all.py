@@ -21,8 +21,12 @@ class ExperimentResult:
 #     # "v" + 
 #     "".join(l) for l in product("brn8", ("", "i"))]
 expr_list = [
+    "volterra_demo.py",
+    "spacecraft_demo.py",
     "coupled_vanderpol_demo.py",
-    "laub_loomis_demo.py"
+    "laub_loomis_demo.py",
+    "robertson_demo.py"
+
 ]
 with open('results.csv', 'w', newline='') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',',
