@@ -139,6 +139,9 @@ class GuardExpressionAst:
             tmp_solver = Solver()
             tmp_solver.add(Not(cur_solver.assertions()[0]))
             for symbol in symbols:
+                if symbol == "ego_total_time":
+                    # tmp_solver.add(self.varDict[symbol] >= -1e8, self.varDict[symbol] <= 1e8)
+                    return res, False
                 start, end = continuous_variable_dict[symbols[symbol]]
                 tmp_solver.add(self.varDict[symbol] >= start, self.varDict[symbol] <= end)
             if tmp_solver.check() == unsat:
