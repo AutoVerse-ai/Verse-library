@@ -44,7 +44,8 @@ if __name__ == "__main__":
         init_mode.append((RobotMode.Wait,))
     swarm.set_init(init,init_mode)
     traces = swarm.simulate_simple(10, 0.01)
-    fig = go.Figure()
-    fig = simulation_tree(
-        traces, None, fig, 0, 1, [0, 1], 'lines', 'trace')
-    fig.show()
+    traces.print_tree()
+    #fig = go.Figure()
+    #fig = simulation_tree(
+    #    traces, None, fig, 0, 1, [0, 1], 'lines', 'trace')
+    #fig.show()
