@@ -1,6 +1,6 @@
 from functools import reduce
 import pickle
-from typing import List, Dict, Any, Optional, Tuple
+from typing import Iterable, List, Dict, Any, Optional, Tuple, TypeVar
 import json
 from treelib import Tree
 import numpy.typing as nptyp, numpy as np, portion
@@ -8,6 +8,14 @@ import numpy.typing as nptyp, numpy as np, portion
 from verse.analysis.dryvr import _EPSILON
 
 TraceType = nptyp.NDArray[np.float_]
+
+T = TypeVar("T")
+
+def index_of(l: Iterable[T], item: T) -> Optional[int]:
+    for i, v in enumerate(l):
+        if v == item:
+            return i
+    return None
 
 class AnalysisTreeNode:
     """AnalysisTreeNode class
@@ -69,26 +77,22 @@ class AnalysisTreeNode:
         return rst_dict
 
     def get_track(self, agent_id, D):
-        if 'TrackMode' not in self.agent[agent_id].decision_logic.mode_defs:
-            return ""
-        for d in D:
-            if d in self.agent[agent_id].decision_logic.mode_defs['TrackMode'].modes:
-                return d
-        return ""
+        mode_def_names = list(self.agent[agent_id].decision_logic.state_defs.values())[0].disc_type
+        track_mode_ind = index_of(mode_def_names, "TrackMode")
+        if track_mode_ind == None:
+            return None
+        return D[track_mode_ind]
 
     def get_mode(self, agent_id, D):
-        res = []
-        if 'TrackMode' not in self.agent[agent_id].decision_logic.mode_defs:
+        mode_def_names = list(self.agent[agent_id].decision_logic.state_defs.values())[0].disc_type
+        track_mode_ind = index_of(mode_def_names, "TrackMode")
+        if track_mode_ind == None:
             if len(D)==1:
                 return D[0]
             return D
-        for d in D:
-            if d not in self.agent[agent_id].decision_logic.mode_defs['TrackMode'].modes:
-                res.append(d)
-        if len(res) == 1:
-            return res[0]
-        else:
-            return tuple(res)
+        if len(mode_def_names) == 2:
+            return D[1 - track_mode_ind]
+        return tuple(v for i, v in enumerate(D) if i != track_mode_ind)
             
     @staticmethod
     def from_dict(data) -> "AnalysisTreeNode":
