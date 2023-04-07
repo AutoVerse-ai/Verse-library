@@ -80,6 +80,21 @@ class thermo_agent(BaseAgent):
             trace = np.vstack((trace, np.insert(init, 0, time_step * (i + 1))))
         return np.array(trace)
 
+class adv_thermo_agent(thermo_agent):
+    def __init__(self, id, code=None, file_name=None):
+        # Calling the constructor of tha base class
+        super().__init__(id, code, file_name)
+
+    def action_handler(self, mode):
+        if mode == 'WARM':
+            return 0.1
+        if mode == 'WARM_FAST':
+            return 0.15
+        if mode == 'COOL':
+            return -0.07
+        if mode == 'COOL_FAST':
+            return -0.1
+        raise ValueError(f'Invalid mode: {mode}')
 
 class craft_agent(BaseAgent):
     def __init__(self, id, code=None, file_name=None):
