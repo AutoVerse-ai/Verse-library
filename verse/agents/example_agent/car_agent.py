@@ -145,3 +145,37 @@ class WeirdCarAgent(CarAgent):
             return -self.gain, 0
         else:
             return 0, 0
+
+class CarAgentSwitch2(CarAgent):
+    def __init__(self, id, code = None, file_name = None):
+        super().__init__(id, code, file_name)
+
+    def action_handler(self, mode: List[str], state, lane_map:LaneMap)->Tuple[float, float]:
+        x,y,theta,v = state
+        vehicle_mode, vehicle_lane = mode
+        vehicle_pos = np.array([x,y])
+        a = 0
+        lane_width = lane_map.get_lane_width(vehicle_lane) 
+        d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
+        if vehicle_mode == "Normal" or vehicle_mode == 'Stop':
+            pass
+        elif vehicle_mode == "SwitchLeft":
+            d += lane_width
+        elif vehicle_mode == "SwitchRight":
+            d -= lane_width
+        elif vehicle_mode == "SwitchLeft2":
+            d += lane_width * 2
+        elif vehicle_mode == "SwitchRight2":
+            d -= lane_width * 2
+        elif vehicle_mode == "Brake":
+            a = max(-self.accel, -v)
+        elif vehicle_mode == "Accel":
+            a = min(self.accel, self.speed - v)
+        else:
+            raise ValueError(f'Invalid mode: {vehicle_mode}')
+
+        heading = lane_map.get_lane_heading(vehicle_lane, vehicle_pos)
+        psi = wrap_to_pi(heading - theta)
+        steering = psi + np.arctan2(0.45*d, v)
+        steering = np.clip(steering, -0.61, 0.61)
+        return steering, a  
