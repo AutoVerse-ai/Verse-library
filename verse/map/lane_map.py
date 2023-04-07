@@ -103,7 +103,7 @@ class LaneMap:
         if isinstance(agent_mode_dest, Enum):
             agent_mode_dest = agent_mode_dest.name
         if self.h_dict == {}:
-            return ""
+            return None
         return self.h_dict[(lane_idx, agent_mode_src, agent_mode_dest)]
 
     def h_exist(self, lane_idx, agent_mode_src, agent_mode_dest):
