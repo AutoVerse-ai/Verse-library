@@ -152,7 +152,7 @@ class CarAgentSwitch2(CarAgent):
 
     @staticmethod
     def dynamic(t, state, u):
-        return super().dynamic(t, state[:4], u) + [1]
+        return super(CarAgentSwitch2, CarAgentSwitch2).dynamic(t, state[:4], u) + [1]
 
     def action_handler(self, mode: List[str], state, lane_map:LaneMap)->Tuple[float, float]:
         x,y,theta,v,_ = state
