@@ -22,18 +22,21 @@ class NPCAgent(BaseAgent):
 
     @staticmethod
     def dynamic(t, state, u):
-        x, y, theta, v = state
+        theta, v = state[2:4]
         delta, a = u  
         x_dot = v*np.cos(theta+delta)
         y_dot = v*np.sin(theta+delta)
         theta_dot = v/1.75*np.sin(delta)
         v_dot = a 
-        return [x_dot, y_dot, theta_dot, v_dot]
+        dots = [x_dot, y_dot, theta_dot, v_dot]
+        if len(state) == 4:
+            return dots
+        return dots + [1]
 
     def action_handler(self, mode, state, lane_map:LaneMap)->Tuple[float, float]:
         ''' Computes steering and acceleration based on current lane, target lane and
             current state using a Stanley controller-like rule'''
-        x,y,theta,v = state
+        x,y,theta,v = state[:4]
         vehicle_mode = mode[0]
         vehicle_lane = mode[1]
         vehicle_pos = np.array([x,y])
@@ -144,11 +147,15 @@ class WeirdCarAgent(CarAgent):
             return 0, 0
 
 class CarAgentSwitch2(CarAgent):
-    def __init__(self, id, code = None, file_name = None):
-        super().__init__(id, code, file_name)
+    def __init__(self, id, code = None, file_name = None, initial_state = None, initial_mode = None, speed: float = 2, accel: float = 1):
+        super().__init__(id, code, file_name, initial_state=initial_state, initial_mode=initial_mode, speed=speed, accel=accel)
+
+    @staticmethod
+    def dynamic(t, state, u):
+        return super().dynamic(t, state[:4], u) + [1]
 
     def action_handler(self, mode: List[str], state, lane_map:LaneMap)->Tuple[float, float]:
-        x,y,theta,v = state
+        x,y,theta,v,_ = state
         vehicle_mode, vehicle_lane = mode
         vehicle_pos = np.array([x,y])
         a = 0
