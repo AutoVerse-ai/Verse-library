@@ -295,5 +295,6 @@ class Benchmark:
         print("map name:", self.map_name)
         print("#nodes:", self.num_nodes)
         print(f"run time: {self.run_time:.2f}s")
-        print(f"cache size: {self.cache_size:.2f}MB")
-        print(f"cache hit: {(self.cache_hits[0] / self.cache_hits[0] + self.cache_hits[1]) / 100:.2f}%")
+        if self.scenario.config.incremental:
+            print(f"cache size: {self.cache_size:.2f}MB")
+            print(f"cache hit: {(self.cache_hits[0] / (self.cache_hits[0] + self.cache_hits[1])) / 100:.2f}%")
