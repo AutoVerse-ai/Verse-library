@@ -625,7 +625,6 @@ class Simulator:
                 return all_asserts, dict(transitions), idx
             if len(satisfied_guard) > 0:
                 print(len(satisfied_guard))
-                count = 0
                 for agent_idx, dest, next_init, paths in satisfied_guard:
                     assert isinstance(paths, list)
                     dest = tuple(dest)
@@ -634,16 +633,10 @@ class Simulator:
                     dest_mode = node.get_mode(agent_idx, dest)
                     dest_track = node.get_track(agent_idx, dest)
                     if dest_track == track_map.h(src_track, src_mode, dest_mode):
-                        print(count)
-                        count+=1
-                        print(agent_idx, src_track, src_mode, dest_mode, '->', dest_track)
-                        print([unparse(path.cond_veri) for path in paths])
-                        print(next_init)
                         transitions[agent_idx].append((agent_idx, dest, next_init, paths))
-                # print("transitions", transitions)
                 break
-        transitions = {aid: dedup(v, lambda p: p[1:3]) for aid, v in transitions.items()}
-        return None, dict(transitions), idx
+        transitions = {aid: dedup(v, lambda p: p[1]) for aid, v in transitions.items()}
+        return None, transitions, idx
 
     @staticmethod
     def get_transition_simulate_simple(node: AnalysisTreeNode, track_map, sensor) -> Tuple[Optional[Dict[str, List[str]]], Optional[Dict[str, List[Tuple[str, List[str], List[float]]]]], int]:
