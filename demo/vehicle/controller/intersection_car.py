@@ -26,45 +26,33 @@ class State:
 
 lane_width = 3
 
-def car_left(ego, others, track_map):
-    return any((-7 < track_map.get_longitudinal_position(other.track_mode, [other.x,other.y]) - track_map.get_longitudinal_position(ego.track_mode, [ego.x,ego.y]) < 7 and \
-                 other.track_mode==track_map.left_lane(ego.track_mode)) for other in others)
-
-def car_right(ego, others, track_map):
-    return any((-7 < track_map.get_longitudinal_position(other.track_mode, [other.x,other.y]) - track_map.get_longitudinal_position(ego.track_mode, [ego.x,ego.y]) < 7 and \
-                 other.track_mode==track_map.right_lane(ego.track_mode)) for other in others)
-
-def cars_ahead(track, ego, others, track_map):
+def car_ahead(ego, others, track, track_map, thresh_far, thresh_close):
     def car_front(car):
         ego_long = track_map.get_longitudinal_position(track, [ego.x, ego.y])
         ego_lat = track_map.get_lateral_distance(track, [ego.x, ego.y])
         car_long = track_map.get_longitudinal_position(track, [car.x, car.y])
         car_lat = track_map.get_lateral_distance(track, [car.x, car.y])
-        return 0 < car_long - ego_long < 7 and -lane_width / 2 < car_lat - ego_lat < lane_width / 2
-    return any(car_front(other) for other in others)
-
-def cars_front(ego, others, track_map):
-    return cars_ahead(ego.track_mode, ego, others, track_map)
+        return thresh_close < car_long - ego_long < thresh_far and -lane_width / 2 < car_lat - ego_lat < lane_width / 2
+    return any(car_front(other) and other.track_mode == track for other in others)
 
 def decisionLogic(ego: State, others: List[State], track_map):
     output = copy.deepcopy(ego)
     if ego.sw_time >= 1:
-        if ego.agent_mode == AgentMode.Accel and cars_front(ego, others, track_map):
-            alledged_left_lane = track_map.h(ego.track_mode, ego.agent_mode, AgentMode.SwitchLeft)
-            alledged_right_lane = track_map.h(ego.track_mode, ego.agent_mode, AgentMode.SwitchRight)
-            # if alledged_left_lane != 'none' and not car_left(ego, others, track_map):
-            if alledged_left_lane != 'none':
+        car_front = car_ahead(ego, others, ego.track_mode, track_map, 7, 0)
+        if ego.agent_mode == AgentMode.Accel and car_front:
+            left_lane = track_map.h(ego.track_mode, ego.agent_mode, AgentMode.SwitchLeft)
+            right_lane = track_map.h(ego.track_mode, ego.agent_mode, AgentMode.SwitchRight)
+            if left_lane != None and not car_ahead(ego, others, left_lane, track_map, 8, -3):
                 output.agent_mode = AgentMode.SwitchLeft
-                output.track_mode = alledged_left_lane
+                output.track_mode = left_lane
                 output.sw_time = 0
-            # if alledged_right_lane != 'none' and not car_right(ego, others, track_map):
-            if alledged_right_lane != 'none':
+            if right_lane != None and not car_ahead(ego, others, right_lane, track_map, 8, -3):
                 output.agent_mode = AgentMode.SwitchRight
-                output.track_mode = alledged_right_lane
+                output.track_mode = right_lane
                 output.sw_time = 0
             # else:
             #     output.agent_mode = AgentMode.Brake
-        if ego.agent_mode == AgentMode.Brake and not cars_front(ego, others, track_map):
+        if ego.agent_mode == AgentMode.Brake and not car_front:
             output.agent_mode = AgentMode.Accel
             output.sw_time = 0
         lat_dist = track_map.get_lateral_distance(ego.track_mode, [ego.x, ego.y])
