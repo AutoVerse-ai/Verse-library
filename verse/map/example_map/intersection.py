@@ -74,16 +74,16 @@ class Intersection(LaneMap):
         return
     
     def h(self, lane_idx: str, mode_src: str, mode_dest: str) -> Optional[str]:
-        # ret = self._h(lane_idx, mode_src, mode_dest)
-        # if ret != None and ret != lane_idx:
-        #     print("H", lane_idx, mode_src, mode_dest, "->", ret)
-        # return ret
+    #     ret = self._h(lane_idx, mode_src, mode_dest)
+    #     if ret != None and ret != lane_idx:
+    #         print("H", lane_idx, mode_src, mode_dest, "->", ret)
+    #     return ret
 
     # def _h(self, lane_idx: str, mode_src: str, mode_dest: str) -> Optional[str]:
         src_sw, dst_sw = mode_src.startswith("Switch"), mode_dest.startswith("Switch")
         if src_sw:
             if dst_sw:
-                return None
+                return 'none'
             else:
                 lanes, _, ind = lane_idx.split("_", 2)
                 ind = int(ind)
@@ -97,7 +97,19 @@ class Intersection(LaneMap):
                 elif "Right" in mode_dest and ind < self.lanes - 1:
                     new_ind = ind + 1
                 else:
-                    return None
+                    return 'none'
                 return f"{lanes}_{ind}_{new_ind}"
             else:
                 return lane_idx
+
+    def left_lane(self, lane_mode):
+        lanes, ind = self.get_phys_lane(lane_mode).split("_")
+        ind = int(ind)
+        if ind > 0:
+            return f"{lanes}_{ind-1}"
+
+    def right_lane(self,lane_mode):
+        lanes, ind = self.get_phys_lane(lane_mode).split("_")
+        ind = int(ind)
+        if ind < self.lanes - 1:
+            return f"{lanes}_{ind+1}"

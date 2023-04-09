@@ -25,14 +25,14 @@ def run(meas=False):
 
     if bench.config.plot and meas:
         import plotly.graph_objects as go
-        from verse.plotter.plotter2D import reachtube_tree, simulation_tree, simulation_anime
+        from verse.plotter.plotter2D import reachtube_tree, simulation_tree, simulation_anime, reachtube_anime
 
         fig = go.Figure()
         if bench.config.sim:
             # fig = simulation_anime(traces, bench.scenario.map, fig, 1, 2, [1, 2], label_mode='None', full_trace=True)
-            fig = simulation_tree(traces, bench.scenario.map, fig, 1, 2, [1, 2], label_mode='None')
+            fig = simulation_tree(traces, bench.scenario.map, fig, 1, 2, [0, 1, 2], label_mode='None')
         else:
-            fig = reachtube_tree(traces, bench.scenario.map, fig, 1, 2, [1, 2], 'lines',combine_rect=5)
+            fig = reachtube_tree(traces, bench.scenario.map, fig, 1, 2, [0, 1, 2], 'lines',combine_rect=5)
         fig.show()
 
     if meas:
@@ -40,7 +40,7 @@ def run(meas=False):
 
 if __name__ == "__main__":
     import sys
-    bench = Benchmark(sys.argv)
+    bench = Benchmark(sys.argv, init_seg_length = 1)
     bench.agent_type = "C"
     bench.noisy_s = "No"
     ctlr_src = "demo/vehicle/controller/intersection_car.py"
