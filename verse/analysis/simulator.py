@@ -16,7 +16,7 @@ from verse.agents.base_agent import BaseAgent
 from verse.analysis.incremental import CachedSegment, SimTraceCache, convert_sim_trans, to_simulate
 from verse.analysis.utils import dedup
 from verse.map.lane_map import LaneMap
-from verse.parser.parser import ModePath, find
+from verse.parser.parser import ModePath, find, unparse
 from verse.analysis.incremental import CachedRTTrans, CachedSegment, combine_all, reach_trans_suit, sim_trans_suit
 
 pp = functools.partial(pprint.pprint, compact=True, width=130)
@@ -170,8 +170,7 @@ class Simulator:
 
     @staticmethod
     def simulate_one(config: "ScenarioConfig", cached_segments: Dict[str, CachedSegment], node: AnalysisTreeNode, old_node_id: Optional[Tuple[int, int]], later: int, remain_time: float, consts: SimConsts) -> Tuple[int, int, List[AnalysisTreeNode], Dict[str, TraceType], list]:
-        t = timeit.default_timer()
-        # print(f"node {node.id} start: {t}")
+        print(f"node {node.id} start: {node.start_time}")
         # print(f"node id: {node.id}")
         cache_updates = []
         for agent_id in node.agent:
@@ -625,7 +624,8 @@ class Simulator:
             if len(all_asserts) > 0:
                 return all_asserts, dict(transitions), idx
             if len(satisfied_guard) > 0:
-                # print(len(satisfied_guard))
+                print(len(satisfied_guard))
+                count = 0
                 for agent_idx, dest, next_init, paths in satisfied_guard:
                     assert isinstance(paths, list)
                     dest = tuple(dest)
@@ -634,7 +634,11 @@ class Simulator:
                     dest_mode = node.get_mode(agent_idx, dest)
                     dest_track = node.get_track(agent_idx, dest)
                     if dest_track == track_map.h(src_track, src_mode, dest_mode):
+                        print(count)
+                        count+=1
                         print(agent_idx, src_track, src_mode, dest_mode, '->', dest_track)
+                        print([unparse(path.cond_veri) for path in paths])
+                        print(next_init)
                         transitions[agent_idx].append((agent_idx, dest, next_init, paths))
                 # print("transitions", transitions)
                 break

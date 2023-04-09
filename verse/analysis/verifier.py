@@ -732,6 +732,8 @@ class Verifier:
 
         possible_transitions = []
         # Combine reset rects and construct transitions
+
+        count = 0
         for agent in reset_dict:
             for reset_idx in reset_dict[agent]:
                 for dest in reset_dict[agent][reset_idx]:
@@ -743,6 +745,8 @@ class Verifier:
                     dest_mode = node.get_mode(agent, dest)
                     dest_track = node.get_track(agent, dest)
                     if dest_track == track_map.h(src_track, src_mode, dest_mode):
+                        print(count)
+                        count+=1
                         print(agent, src_track, src_mode, dest_mode, '->', dest_track)
                         # print(unparse(paths[0].cond_veri))
                         possible_transitions.append(transition)
