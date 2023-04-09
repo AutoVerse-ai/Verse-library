@@ -642,6 +642,7 @@ class Simulator:
                         transitions[agent_idx].append((agent_idx, dest, next_init, paths))
                 # print("transitions", transitions)
                 break
+        transitions = {aid: dedup(v, lambda p: p[1:3]) for aid, v in transitions.items()}
         return None, dict(transitions), idx
 
     @staticmethod
