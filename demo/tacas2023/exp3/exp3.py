@@ -1,11 +1,10 @@
 from verse.agents.example_agent import CarAgent, NPCAgent
 from verse.map.example_map.map_tacas import M2
-from verse import Scenario
+from verse.scenario.scenario import Benchmark
 from verse.plotter.plotter2D import *
 
 from enum import Enum, auto
 import sys
-import time
 import plotly.graph_objects as go
 
 
@@ -34,25 +33,26 @@ class TrackMode(Enum):
 
 if __name__ == "__main__":
     input_code_name = './demo/tacas2023/exp3/example_controller7.py'
-    scenario = Scenario()
-
+    bench = Benchmark(sys.argv)
+    bench.agent_type = "C"
+    bench.noisy_s = "No"
     car = CarAgent('car1', file_name=input_code_name)
-    scenario.add_agent(car)
+    bench.scenario.add_agent(car)
     car = NPCAgent('car2')
-    scenario.add_agent(car)
+    bench.scenario.add_agent(car)
     car = CarAgent('car3', file_name=input_code_name)
-    scenario.add_agent(car)
+    bench.scenario.add_agent(car)
     car = NPCAgent('car4')
-    scenario.add_agent(car)
+    bench.scenario.add_agent(car)
     car = NPCAgent('car5')
-    scenario.add_agent(car)
+    bench.scenario.add_agent(car)
     car = NPCAgent('car6')
-    scenario.add_agent(car)
+    bench.scenario.add_agent(car)
     car = NPCAgent('car7')
-    scenario.add_agent(car)
+    bench.scenario.add_agent(car)
     tmp_map = M2()
-    scenario.set_map(tmp_map)
-    scenario.set_init(
+    bench.scenario.set_map(tmp_map)
+    bench.scenario.set_init(
         [
             [[0, -0.1, 0, 1.0], [0.0, 0.1, 0, 1.0]],
             [[10, -0.1, 0, 0.5], [10, 0.1, 0, 0.5]],
@@ -72,13 +72,19 @@ if __name__ == "__main__":
             (AgentMode.Normal, TrackMode.T3),
         ]
     )
-
-    traces = scenario.verify(80, 0.05)
-    fig = go.Figure()
-    fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [
-                           1, 2], 'lines', 'trace', sample_rate=1)
-    fig.show()
-
+    time_step = 0.05
+    if bench.config.compare:
+        traces1, traces2 = bench.compare_run(80, time_step)
+        exit(0)
+    traces = bench.run(80, time_step)
+    if bench.config.plot:
+        fig = go.Figure()
+        fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [
+                            1, 2], 'lines', 'trace', sample_rate=1)
+        fig.show()
+    if bench.config.dump:
+        traces.dump("./demo/tacas2023/exp3/output3.json")
+    bench.report()
     # start_time = time.time()
     # traces = scenario.verify(80, 0.05)
     # run_time = time.time() - start_time

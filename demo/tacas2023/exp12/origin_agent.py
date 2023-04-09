@@ -27,7 +27,7 @@ class vanderpol_agent(BaseAgent):
         number_points = int(np.ceil(time_bound/time_step))
         t = [round(i*time_step, 10) for i in range(0, number_points)]
         # note: digit of time
-        init = initialCondition
+        init = list(initialCondition)
         trace = [[0]+init]
         for i in range(len(t)):
             r = ode(self.dynamic)
@@ -69,7 +69,7 @@ class thermo_agent(BaseAgent):
         number_points = int(np.ceil(time_bound/time_step))
         t = [round(i*time_step, 10) for i in range(0, number_points)]
 
-        init = initialCondition
+        init = list(initialCondition)
         trace = [[0]+init]
         for i in range(len(t)):
             rate = self.action_handler(mode[0])
@@ -142,7 +142,7 @@ class craft_agent(BaseAgent):
         number_points = int(np.ceil(time_bound/time_step))
         t = [round(i*time_step, 10) for i in range(0, number_points)]
 
-        init = initialCondition
+        init = list(initialCondition)
         trace = [[0]+init]
         for i in range(len(t)):
             r = self.action_handler(mode[0])
@@ -151,7 +151,6 @@ class craft_agent(BaseAgent):
             init = res.flatten().tolist()
             trace.append([t[i] + time_step] + init)
         return np.array(trace)
-
 
 if __name__ == '__main__':
     aball = vanderpol_agent('agent1')

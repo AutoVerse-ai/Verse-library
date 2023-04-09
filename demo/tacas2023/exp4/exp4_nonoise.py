@@ -1,9 +1,8 @@
 from verse.agents.example_agent import CarAgent, NPCAgent
 from verse.map.example_map.map_tacas import M1
-from verse import Scenario
+from verse.scenario.scenario import Benchmark
 from noisy_sensor import NoisyVehicleSensor
 from verse.plotter.plotter2D import *
-from verse.plotter.plotter2D_old import plot_reachtube_tree, plot_map
 
 from enum import Enum, auto
 import time
@@ -34,17 +33,18 @@ class TrackMode(Enum):
 if __name__ == "__main__":
     input_code_name = './demo/tacas2023/exp4/example_controller5.py'
 
-    config = ScenarioConfig(init_seg_length=5)
-    scenario = Scenario()
+    bench = Benchmark(sys.argv, init_seg_length=5)
+    bench.agent_type = "C"
+    bench.noisy_s = "No"
     car = CarAgent('car1', file_name=input_code_name)
-    scenario.add_agent(car)
+    bench.scenario.add_agent(car)
     car = NPCAgent('car2')
-    scenario.add_agent(car)
+    bench.scenario.add_agent(car)
     car = NPCAgent('car3')
-    scenario.add_agent(car)
+    bench.scenario.add_agent(car)
     tmp_map = M1()
-    scenario.set_map(tmp_map)
-    scenario.set_init(
+    bench.scenario.set_map(tmp_map)
+    bench.scenario.set_init(
         [
             [[5, -0.5, 0, 1.0], [5.5, 0.5, 0, 1.0]],
             [[20, -0.2, 0, 0.5], [20, 0.2, 0, 0.5]],
@@ -56,53 +56,15 @@ if __name__ == "__main__":
             (AgentMode.Normal, TrackMode.T0),
         ]
     )
-    scenario.set_sensor(NoisyVehicleSensor((0.5, 0.5), (0.0, 0.0)))
-    # scenario.config.init_seg_length = 5
-
-    start_time = time.time()
-    traces = scenario.verify(40, 0.1, params={"bloating_method": 'GLOBAL'})
-    run_time = time.time()-start_time
-    traces.dump("./demo/tacas2023/exp4/output4_noisy.json")
-
-    print({
-        "#A": len(scenario.agent_dict),
-        "A": "C",
-        "Map": "M1",
-        "postCont": "DryVR",
-        "Noisy S": "Yes",
-        "# Tr": len(traces.nodes),
-        "Run Time": run_time,
-    })
-    if len(sys.argv)>1 and sys.argv[1]=='p':
+    time_step = 0.1
+    if bench.config.compare:
+        traces1, traces2 = bench.compare_run(40, time_step, params={"bloating_method": 'GLOBAL'})
+        exit(0)
+    traces = bench.run(40, time_step, params={"bloating_method": 'GLOBAL'})
+    if bench.config.dump:
+        traces.dump("./demo/tacas2023/exp4/output4_nonoise.json")
+    if bench.config.plot:
         fig = go.Figure()
-        fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace')
-
-    scenario1 = Scenario(config)
-    car = CarAgent('car1', file_name=input_code_name)
-    scenario1.add_agent(car)
-    car = NPCAgent('car2')
-    scenario1.add_agent(car)
-    car = NPCAgent('car3')
-    scenario1.add_agent(car)
-    tmp_map = M1()
-    scenario1.set_map(tmp_map)
-    scenario1.set_init(
-        [
-            [[5, -0.5, 0, 1.0], [5.5, 0.5, 0, 1.0]],
-            [[20, -0.2, 0, 0.5], [20, 0.2, 0, 0.5]],
-            [[4-2.5, 2.8, 0, 1.0], [4.5-2.5, 3.2, 0, 1.0]],
-        ],
-        [
-            (AgentMode.Normal, TrackMode.T1),
-            (AgentMode.Normal, TrackMode.T1),
-            (AgentMode.Normal, TrackMode.T0),
-        ]
-    )
-    # scenario1.config.init_seg_length = 5
-
-    traces = scenario1.verify(40, 0.1, params={"bloating_method": 'GLOBAL'})
-    traces.dump("./demo/tacas2023/exp4/output4_nonoise.json")
-    if len(sys.argv)>1 and sys.argv[1]=='p':
         fig = reachtube_tree(
             traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace',
             plot_color = [
@@ -122,3 +84,4 @@ if __name__ == "__main__":
             ]
         )
         fig.show()
+    bench.report()

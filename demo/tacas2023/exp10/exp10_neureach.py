@@ -1,5 +1,5 @@
 from quadrotor_agent import QuadrotorAgent
-from verse import Scenario
+from verse.scenario.scenario import Benchmark
 from verse.plotter.plotter2D import reachtube_tree
 from verse.plotter.plotter3D_new import *
 from verse.plotter.plotter3D import *
@@ -31,7 +31,9 @@ if __name__ == "__main__":
     input_code_name = './demo/tacas2023/exp10/quadrotor_controller3.py'
     input_code_name2 = './demo/tacas2023/exp10/quadrotor_controller4.py'
 
-    scenario = Scenario()
+    bench = Benchmark(sys.argv, reachability_method='NeuReach')
+    bench.agent_type = "D"
+    bench.noisy_s = "No"
     time_step = 0.2
     quadrotor1 = QuadrotorAgent(
         'test1', file_name=input_code_name, t_v_pair=(1, 1), box_side=[0.4]*3)
@@ -41,7 +43,7 @@ if __name__ == "__main__":
         [init_l_1, init_u_1],
         (CraftMode.Normal, TrackMode.T1)
     )
-    scenario.add_agent(quadrotor1)
+    bench.scenario.add_agent(quadrotor1)
 
     quadrotor2 = QuadrotorAgent(
         'test2', file_name=input_code_name2, t_v_pair=(1, 0.5), box_side=[0.4]*3)
@@ -51,7 +53,7 @@ if __name__ == "__main__":
         [init_l_2, init_u_2],
         (CraftMode.Normal, TrackMode.T1)
     )
-    scenario.add_agent(quadrotor2)
+    bench.scenario.add_agent(quadrotor2)
 
     quadrotor3 = QuadrotorAgent(
         'test3', file_name=input_code_name2, t_v_pair=(1, 0.5), box_side=[0.4]*3)
@@ -61,11 +63,11 @@ if __name__ == "__main__":
         [init_l_3, init_u_3],
         (CraftMode.Normal, TrackMode.T0)
     )
-    scenario.add_agent(quadrotor3)
+    bench.scenario.add_agent(quadrotor3)
 
 
     tmp_map = SimpleMap7()
-    scenario.set_map(tmp_map)
+    bench.scenario.set_map(tmp_map)
     # scenario.set_sensor(QuadrotorSensor())
 
     # traces = scenario.simulate(40, time_step, seed=4)
@@ -75,9 +77,8 @@ if __name__ == "__main__":
 
     # traces = scenario.verify(90, time_step)
     # traces.dump('./demo/tacas2023/exp10/output10.json')
-
-    traces = scenario.verify(90, time_step,
-                             reachability_method='NeuReach',
+    if bench.config.compare:
+        traces1, traces2 = bench.compare_run(90, time_step,
                              params={
                                  "N_X0": 1,
                                  "N_x0": 50,
@@ -88,7 +89,20 @@ if __name__ == "__main__":
                                  'r': 0,
                              }
                             )
-    traces.dump('./demo/tacas2023/exp10/output10_neureach.json')
+        exit(0)
+    traces = bench.run(90, time_step,
+                             params={
+                                 "N_X0": 1,
+                                 "N_x0": 50,
+                                 "N_t": 50,
+                                 "epochs": 50,
+                                 "_lambda": 10,
+                                 "use_cuda": True,
+                                 'r': 0,
+                             }
+                            )
+    if bench.config.dump:
+        traces.dump('./demo/tacas2023/exp10/output10_neureach.json')
     # fig = go.Figure()
     # fig = reachtube_tree(traces, None, fig, 0, 1, [0,1])
     # fig.show()
@@ -100,7 +114,7 @@ if __name__ == "__main__":
     # fig.show()
 
     # traces = AnalysisTree.load('demo/tacas2023/exp10/output10.json')
-    if len(sys.argv)>1 and sys.argv[1]=='p':
+    if bench.config.plot:
         fig = plot3dMap(tmp_map, ax=fig)
         fig = plot3dReachtube(traces, 'test1', 1, 2, 3, color = 'r', ax=fig)
         fig = plot3dReachtube(traces, 'test2', 1, 2, 3, color = 'b', ax=fig)
@@ -113,7 +127,7 @@ if __name__ == "__main__":
         poly = pc.box2poly(box)
         fig = plot_polytope_3d(poly.A, poly.b, fig, trans=0.1, color='yellow')
         fig.show()
-    
+    bench.report()
     # fig = go.Figure()
     # fig = reachtube_tree_3d(
     #     traces, 
