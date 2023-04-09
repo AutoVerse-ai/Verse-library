@@ -1,3 +1,4 @@
+from typing import Optional
 from verse.map import LaneMap, LaneSegment, StraightLane, CircularLane, Lane
 
 import numpy as np
@@ -131,6 +132,36 @@ class SimpleMap4(LaneMap):
 
     def right_lane(self,lane_mode):
         return self.right_dict[lane_mode]
+
+class SimpleMap4Switch2(LaneMap):
+    def __init__(self):
+        super().__init__()
+        self.add_lanes([Lane(f"T{i}", [StraightLane(f"seg{i}", [0, 6 - 3 * i], [100, 6 - 3 * i], 3)]) for i in range(5)])
+
+    def h(self, lane_idx: str, mode_src: str, mode_dest: str) -> Optional[str]:
+        src_sw, dst_sw = mode_src.startswith("Switch"), mode_dest.startswith("Switch")
+        if src_sw:
+            if dst_sw:
+                return None
+            else:
+                return "T" + lane_idx[2]
+        else:
+            if dst_sw:
+                typ = mode_dest[6:]
+                ind = int(lane_idx[1])
+                if typ == "Left" and ind > 0:
+                    new_ind = ind - 1
+                if typ == "Left2" and ind > 1:
+                    new_ind = ind - 2
+                elif typ == "Right" and ind < 4:
+                    new_ind = ind + 1
+                elif typ == "Right2" and ind < 3:
+                    new_ind = ind + 2
+                else:
+                    return None
+                return f"M{ind}{new_ind}"
+            else:
+                return lane_idx
 
 class SimpleMap5(LaneMap):
     def __init__(self):
