@@ -94,6 +94,7 @@ class AnalysisTreeNode:
     def from_dict(data) -> "AnalysisTreeNode":
         return AnalysisTreeNode(
             trace = ({aid: np.array(data['trace'][aid]) for aid in data["agent"].keys()} if data["type"] == "simtrace" else data["trace"]),
+            id = data['id'],
             init = data['init'],
             mode = data['mode'],
             height = data['height'],
