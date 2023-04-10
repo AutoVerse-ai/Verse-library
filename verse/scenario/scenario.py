@@ -269,12 +269,17 @@ class Benchmark:
     run_time: float
     cache_size: float
     cache_hits: Tuple[int, int]
+    leaves: int
     _start_time: float
+    parallelness: float
 
     def __init__(self, argv: List[str], **kw):
         self.config = ExprConfig.from_arg(argv, **kw)
         # self.config.disp()
         self.scenario = Scenario(self.config.config)
+        self.agent_type = "N/A"
+        self.noisy_s = "no"
+        self.parallelness = 0
 
     def run(self, *a, **kw)->AnalysisTree:
         f = self.scenario.simulate if self.config.sim else self.scenario.verify
@@ -296,6 +301,10 @@ class Benchmark:
         if self.map_name == 'LaneMap':
             self.map_name = 'N/A'
         self.num_nodes = len(self.traces.nodes)
+        self.leaves = self.traces.leaves()
+        if self.config.config.parallel:
+            import ray
+            self.parallelness = sum(ev["dur"] for ev in ray.timeline() if ev["cname"] == "generic_work") / 1_000_000 / self.run_time
         return self.traces
 
     def compare_run(self, *a, **kw):
@@ -323,30 +332,18 @@ class Benchmark:
         self.scenario.update_config(self.config.config)        
 
     def report(self):
-        print_dict={"#A": self.num_agent,
-                    "A": self.agent_type,
-                    "Map": self.map_name,
-                    "postCont": self.cont_engine,
-                    "Noisy S": self.noisy_s,
-                    "# Tr": self.num_nodes,
-                    "Run Time": self.run_time
-                    }
-        if not self.config.config.incremental:
-            print(print_dict)
-            print("report:")
-            print("#agents:", self.num_agent)
-            print("map name:", self.map_name)
-            print("#nodes:", self.num_nodes)
-            print(f"run time: {self.run_time:.2f}s")
-        else:
-            print_dict['cache_size'] = self.cache_size
-            print_dict['cache_hit'] = (self.cache_hits[0], self.cache_hits[1])
-            print(print_dict)
-            print("report:")
-            print("#agents:", self.num_agent)
-            print("map name:", self.map_name)
-            print("#nodes:", self.num_nodes)
-            print(f"run time: {self.run_time:.2f}s")            
+        print("report:")
+        print("#agents:", self.num_agent)
+        print("agent type:", self.agent_type)
+        print("map name:", self.map_name)
+        print("postCont:", self.cont_engine)
+        print("noisy:", self.noisy_s)
+        print("#nodes:", self.num_nodes)
+        print("#leaves:", self.leaves)
+        print(f"run time: {self.run_time:.2f}s")
+        if self.config.config.parallel:
+            print(f"parallelness: {self.parallelness:.2f}")
+        if self.config.config.incremental:
             print(f"cache size: {self.cache_size:.2f}MB")
             print(f"cache hit: {(self.cache_hits[0], self.cache_hits[1])}")
             print(f"cache hit rate: {self.cache_hits[0] / (self.cache_hits[0] + self.cache_hits[1]) * 100:.2f}%")
