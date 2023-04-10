@@ -7,6 +7,9 @@ import numpy.typing as nptyp, numpy as np, portion
 
 from verse.analysis.dryvr import _EPSILON
 
+import networkx as nx
+import matplotlib.pyplot as plt
+
 TraceType = nptyp.NDArray[np.float_]
 
 T = TypeVar("T")
@@ -248,3 +251,14 @@ class AnalysisTree:
             if len(node.child) == 0:
                 count += 1
         return count
+
+    def visualize(self):
+        G = nx.Graph()
+        for node in self.nodes:
+            G.add_node(node.id,time=(node.id,node.start_time))
+            for child in node.child:
+                G.add_node(child.id,time=(child.id,child.start_time))
+                G.add_edge(node.id, child.id)
+        labels = nx.get_node_attributes(G, 'time') 
+        nx.draw_planar(G,labels=labels)
+        plt.show()
