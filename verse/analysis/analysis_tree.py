@@ -241,3 +241,10 @@ class AnalysisTree:
 
     def is_equal(self, other:"AnalysisTree"):
         return self.contains(other) and other.contains(self)
+
+    def leaves(self) -> int:
+        count = 0
+        for node in self.nodes:
+            if len(node.child) == 0:
+                count += 1
+        return count

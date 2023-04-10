@@ -269,6 +269,7 @@ class Benchmark:
     run_time: float
     cache_size: float
     cache_hits: Tuple[int, int]
+    leaves: int
     _start_time: float
 
     def __init__(self, argv: List[str], **kw):
@@ -296,6 +297,7 @@ class Benchmark:
         if self.map_name == 'LaneMap':
             self.map_name = 'N/A'
         self.num_nodes = len(self.traces.nodes)
+        self.leaves = self.traces.leaves()
         return self.traces
 
     def compare_run(self, *a, **kw):
@@ -330,6 +332,7 @@ class Benchmark:
         print("postCont:", self.cont_engine)
         print("noisy:", self.noisy_s)
         print("#nodes:", self.num_nodes)
+        print("#leaves:", self.leaves)
         print(f"run time: {self.run_time:.2f}s")
         if self.config.config.incremental:
             print(f"cache size: {self.cache_size:.2f}MB")
