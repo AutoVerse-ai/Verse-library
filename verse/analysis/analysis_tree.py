@@ -7,6 +7,9 @@ import numpy.typing as nptyp, numpy as np, portion
 
 from verse.analysis.dryvr import _EPSILON
 
+import networkx as nx
+import matplotlib.pyplot as plt
+
 TraceType = nptyp.NDArray[np.float_]
 
 class AnalysisTreeNode:
@@ -226,3 +229,14 @@ class AnalysisTree:
             total_len = len(other_tree[min_agents[0]])
             # bloat and containment
             return all(other_tree[aid][i][j] in this_tree[aid][i][j].apply(lambda x: x.replace(lower=lambda v: v - tol, upper=lambda v: v + tol)) for aid in other_agents for i in range(total_len) for j in range(cont_num))
+
+    def visualize(self):
+        G = nx.Graph()
+        for node in self.nodes:
+            G.add_node(node.id,time=(node.id,node.start_time))
+            for child in node.child:
+                G.add_node(child.id,time=(child.id,child.start_time))
+                G.add_edge(node.id, child.id)
+        labels = nx.get_node_attributes(G, 'time') 
+        nx.draw_planar(G,labels=labels)
+        plt.show()
