@@ -1,3 +1,7 @@
+'''
+Author : Sarthak Das
+'''
+
 from verse.plotter.plotter2D import *
 from verse.agents.example_agent.robot_agent import RobotAgent
 from verse import Scenario
