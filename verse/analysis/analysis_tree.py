@@ -232,11 +232,14 @@ class AnalysisTree:
 
     def visualize(self):
         G = nx.Graph()
+        f = open("traces_output.txt", "w")
         for node in self.nodes:
             G.add_node(node.id,time=(node.id,node.start_time))
             for child in node.child:
                 G.add_node(child.id,time=(child.id,child.start_time))
                 G.add_edge(node.id, child.id)
+            f.write("Node id: "+str(node.id)+", Start time: "+str(node.start_time)+"\n")
+            f.write("Mode: "+str(node.mode)+", Init: "+str(node.init)+"\n")
         labels = nx.get_node_attributes(G, 'time') 
         nx.draw_planar(G,labels=labels)
         plt.show()
