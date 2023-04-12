@@ -271,11 +271,15 @@ class Benchmark:
     cache_hits: Tuple[int, int]
     leaves: int
     _start_time: float
+    parallelness: float
 
     def __init__(self, argv: List[str], **kw):
         self.config = ExprConfig.from_arg(argv, **kw)
         # self.config.disp()
         self.scenario = Scenario(self.config.config)
+        self.agent_type = "N/A"
+        self.noisy_s = "no"
+        self.parallelness = 0
 
     def run(self, *a, **kw)->AnalysisTree:
         f = self.scenario.simulate if self.config.sim else self.scenario.verify
@@ -298,6 +302,9 @@ class Benchmark:
             self.map_name = 'N/A'
         self.num_nodes = len(self.traces.nodes)
         self.leaves = self.traces.leaves()
+        if self.config.config.parallel:
+            import ray
+            self.parallelness = sum(ev["dur"] for ev in ray.timeline() if ev["cname"] == "generic_work") / 1_000_000 / self.run_time
         return self.traces
 
     def compare_run(self, *a, **kw):
@@ -334,6 +341,8 @@ class Benchmark:
         print("#nodes:", self.num_nodes)
         print("#leaves:", self.leaves)
         print(f"run time: {self.run_time:.2f}s")
+        if self.config.config.parallel:
+            print(f"parallelness: {self.parallelness:.2f}")
         if self.config.config.incremental:
             print(f"cache size: {self.cache_size:.2f}MB")
             print(f"cache hit: {(self.cache_hits[0], self.cache_hits[1])}")
