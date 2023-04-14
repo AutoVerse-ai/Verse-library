@@ -34,15 +34,11 @@ class State:
 
 
 def safe_seperation(ego, other):
-    res = ego.x-other.x < 1 and ego.x-other.x >-1 and \
-        ego.y-other.y < 1 and ego.y-other.y > -1 and \
-        ego.z-other.z < 1 and ego.z-other.z > -1
-    return res
+    return -1 < ego.x - other.x < 1 and -1 < ego.y - other.y < 1 and -1 < ego.z - other.z < 1
 
 def is_close(ego, other):
-    res = (((ego.vx <= 0) and (ego.x-other.x > 2 and ego.x-other.x < 5)) or ((ego.vx > 0) and (ego.x-other.x <= -2 and ego.x-other.x > - 5))) \
-        and (((ego.vy <= 0) and (ego.y-other.y > 2 and ego.y-other.y < 5)) or ((ego.vy > 0) and (ego.y-other.y <= -2 and ego.y-other.y > - 5)))
-    return res
+    return (((ego.vx <= 0) and (5 > ego.x-other.x > 2)) or ((ego.vx > 0) and (- 5 < ego.x-other.x <= -2))) \
+        and (((ego.vy <= 0) and (5 > ego.y-other.y > 2)) or ((ego.vy > 0) and (- 5 < ego.y-other.y <= -2)))
 
 
 def decisionLogic(ego: State, others: List[State], track_map):
@@ -60,14 +56,14 @@ def decisionLogic(ego: State, others: List[State], track_map):
                     ego.track_mode, ego.tactical_mode, TacticalMode.MoveDown)
 
     if ego.tactical_mode == TacticalMode.MoveUp:
-        if track_map.altitude(ego.track_mode)-ego.z > -1 and track_map.altitude(ego.track_mode)-ego.z < 1:
+        if 1 > track_map.altitude(ego.track_mode)-ego.z > -1:
             next.tactical_mode = TacticalMode.Normal
             if track_map.h_exist(ego.track_mode, ego.tactical_mode, TacticalMode.Normal):
                 next.track_mode = track_map.h(
                     ego.track_mode, ego.tactical_mode, TacticalMode.Normal)
 
     if ego.tactical_mode == TacticalMode.MoveDown:
-        if track_map.altitude(ego.track_mode)-ego.z > -1 and track_map.altitude(ego.track_mode)-ego.z < 1:
+        if 1 > track_map.altitude(ego.track_mode)-ego.z > -1:
             next.tactical_mode = TacticalMode.Normal
             if track_map.h_exist(ego.track_mode, ego.tactical_mode, TacticalMode.Normal):
                 next.track_mode = track_map.h(

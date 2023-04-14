@@ -34,8 +34,8 @@ import copy
 
 def is_close(ego, other):
     res = ((other.x - ego.x < 10 and other.x-ego.x > 8) or\
-        (other.y-ego.y < 10 and other.y-ego.y > 8) or\
-        (other.z-ego.z < 10 and other.z-ego.z > 8))
+        (8 < other.y-ego.y < 10) or\
+        (8 < other.z-ego.z < 10))
     return res
 
 def decisionLogic(ego: State, others: List[State], track_map):
@@ -53,14 +53,14 @@ def decisionLogic(ego: State, others: List[State], track_map):
                     ego.track_mode, ego.craft_mode, CraftMode.MoveDown)
 
     if ego.craft_mode == CraftMode.MoveUp:
-        if track_map.altitude(ego.track_mode)-ego.z > -1 and track_map.altitude(ego.track_mode)-ego.z < 1:
+        if 1 > track_map.altitude(ego.track_mode)-ego.z > -1:
             next.craft_mode = CraftMode.Normal
             if track_map.h_exist(ego.track_mode, ego.craft_mode, CraftMode.Normal):
                 next.track_mode = track_map.h(
                     ego.track_mode, ego.craft_mode, CraftMode.Normal)
 
     if ego.craft_mode == CraftMode.MoveDown:
-        if track_map.altitude(ego.track_mode)-ego.z > -1 and track_map.altitude(ego.track_mode)-ego.z < 1:
+        if 1 > track_map.altitude(ego.track_mode)-ego.z > -1:
             next.craft_mode = CraftMode.Normal
             if track_map.h_exist(ego.track_mode, ego.craft_mode, CraftMode.Normal):
                 next.track_mode = track_map.h(

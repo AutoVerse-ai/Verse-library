@@ -6,6 +6,10 @@ import pyvista as pv
 
 from verse.analysis.analysis_tree import AnalysisTree, AnalysisTreeNode
 
+import vtk
+
+vtk.vtkLogger.SetStderrVerbosity(vtk.vtkLogger.VERBOSITY_OFF)
+
 def plot3dReachtubeSingle(tube, x_dim, y_dim, z_dim, ax, color, edge=True):
     for lb, ub in tube:
 

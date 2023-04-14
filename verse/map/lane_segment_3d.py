@@ -595,7 +595,7 @@ def func_b(n):
 
 def get_center_radius(start, end, n, phase, right_rotate=True):
     n, end, start = np.array(n), np.array(end), np.array(start)
-    assert (phase > 0 and phase < 2*pi and np.any(start != end))
+    assert (2*pi > phase > 0 and np.any(start != end))
     if right_rotate:
         l_n = np.cross(n, start-end)
     else:
