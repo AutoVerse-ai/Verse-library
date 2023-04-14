@@ -26,12 +26,14 @@ expr_list = [
     "laub_loomis_demo.py",
     "volterra_demo.py",
     "spacecraft_demo.py",
-
+    "TRAFF22"
 ]
 with open('results.csv', 'w', newline='') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',',
                             quotechar='|', quoting=csv.QUOTE_MINIMAL)
     for expr in expr_list:
+        if expr == "TRAFF22":
+            spamwriter.writerow(["TRAFF22", "", 0, "", ""])
         cmd = Popen(f"python demo/dryvr_demo/{expr}", stdout=PIPE, stderr=PIPE, shell=True)
         print(f"run '{expr}', pid={cmd.pid}")
         ret = cmd.wait()
@@ -49,7 +51,10 @@ with open('results.csv', 'w', newline='') as csvfile:
             info = eval(inf)
             #rslt = ExperimentResult(info["tool"], info["benchmark"], info['setup'], info['result'], info['time'], info['metric2'], info['metric3'])
 
-            spamwriter.writerow([info["tool"], info["benchmark"], info['setup'], info['result'], str(info['time']), info['metric2'], info['metric3']])
+            spamwriter.writerow([info["benchmark"], info['setup'], info['result'], str(info['time']), info['metric2']])
+            if info['metric3'] != "n/a":
+                spamwriter.writerow([info["benchmark"], info['setup'], info['result'], str(info['time']), info['metric3']])
+                
 
 #for i in range(0, len(rslts)):
     #res = rslts[i]
