@@ -21,7 +21,7 @@ class ExperimentResult:
 #     # "v" + 
 #     "".join(l) for l in product("brn8", ("", "i"))]
 expr_list = [
-    "TRAFF22"
+    "TRAFF22",
     "robertson_demo.py",
     "coupled_vanderpol_demo.py",
     "laub_loomis_demo.py",
