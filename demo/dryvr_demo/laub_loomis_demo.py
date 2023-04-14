@@ -42,7 +42,7 @@ if __name__ == "__main__":
         "result": "1",
         "time": run_time,
         "metric2": str(traces.nodes[0].trace['car1'][-1][4] - traces.nodes[0].trace['car1'][-2][4]  ),
-        "metric3": "n/a",
+        "metric3": "",
     })
 
 
@@ -76,7 +76,7 @@ if __name__ == "__main__":
         "result": "1",
         "time": run_time,
         "metric2": str(traces.nodes[0].trace['car1'][-1][4] - traces.nodes[0].trace['car1'][-2][4]),
-        "metric3": "n/a",
+        "metric3": "",
     })
 
 
@@ -113,7 +113,7 @@ if __name__ == "__main__":
         "result": "1",
         "time": run_time,
         "metric2": str(traces.nodes[0].trace['car1'][-1][4] - traces.nodes[0].trace['car1'][-2][4]),
-        "metric3": "n/a",
+        "metric3": "",
     })
     # fig = reachtube_tree(traces, None, fig, 0, 4, [1, 2], 'lines', 'trace', combine_rect=3)
     # fig.update_layout(

@@ -21,16 +21,17 @@ class ExperimentResult:
 #     # "v" + 
 #     "".join(l) for l in product("brn8", ("", "i"))]
 expr_list = [
+    "TRAFF22"
     "robertson_demo.py",
     "coupled_vanderpol_demo.py",
     "laub_loomis_demo.py",
     "volterra_demo.py",
     "spacecraft_demo.py",
-    "TRAFF22"
 ]
 with open('results.csv', 'w', newline='') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',',
                             quotechar='|', quoting=csv.QUOTE_MINIMAL)
+    spamwriter.writerow(["benchmark", "instance", "result", "time", "accuracy"])
     for expr in expr_list:
         if expr == "TRAFF22":
             spamwriter.writerow(["TRAFF22", "", 0, "", ""])

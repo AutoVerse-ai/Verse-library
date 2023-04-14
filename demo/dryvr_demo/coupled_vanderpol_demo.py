@@ -53,9 +53,9 @@ if __name__ == "__main__":
     print({
         "tool": "verse",
         "benchmark": "CVDP22",
-        "setup": "n/a",
+        "setup": "",
         "result": "1",
         "time": run_time,
-        "metric2": "n/a",
-        "metric3": "n/a",
+        "metric2": "",
+        "metric3": "",
     })
