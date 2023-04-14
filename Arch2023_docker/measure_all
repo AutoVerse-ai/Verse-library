@@ -5,4 +5,4 @@ mkdir result
 docker build -t verse .
 docker run -d --name=verse -it verse
 docker exec verse python ./demo/dryvr_demo/run_all.py 
-docker cp verse:/Verse-Library/results.csv  ./results.csv
+docker cp verse:/Verse-Library/results.csv  ./result/results.csv
