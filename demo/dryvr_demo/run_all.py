@@ -69,7 +69,7 @@ with open('results.csv', 'w', newline='') as csvfile:
 
             spamwriter.writerow([info["benchmark"], " "+info['setup'], " "+info['result'], " "+str(info['time']), info['metric2']])
             if info['metric3'] != "":
-                spamwriter.writerow([" "+info["benchmark"], " "+info['setup'], " "+info['result'], " "+str(info['time']), info['metric3']])
+                spamwriter.writerow([info["benchmark"], " "+info['setup'], " "+info['result'], " "+str(info['time']), info['metric3']])
                 
 
 #for i in range(0, len(rslts)):
