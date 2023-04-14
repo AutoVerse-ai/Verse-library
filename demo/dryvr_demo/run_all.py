@@ -34,6 +34,7 @@ with open('results.csv', 'w', newline='') as csvfile:
     for expr in expr_list:
         if expr == "TRAFF22":
             spamwriter.writerow(["TRAFF22", "", 0, "", ""])
+            continue
         cmd = Popen(f"python demo/dryvr_demo/{expr}", stdout=PIPE, stderr=PIPE, shell=True)
         print(f"run '{expr}', pid={cmd.pid}")
         ret = cmd.wait()
