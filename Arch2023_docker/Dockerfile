@@ -1,4 +1,4 @@
-FROM python:3.10
+FROM python:3.8
 MAINTAINER Daniel Zhuang EMAIL dzhuang6@illinois.edu
 RUN git clone https://github.com/AutoVerse-ai/Verse-library.git Verse-Library
 RUN cd Verse-Library && git checkout arch2023_merged

@@ -39,7 +39,6 @@ setup(
         "plotly~=5.8.2",
         "polytope~=0.2.3",
         "Pympler~=1.0.1",
-        "pyvista~=0.32.1",
         "scipy~=1.8.1",
         "six~=1.14.0",
         "sympy~=1.6.2",
@@ -48,6 +47,7 @@ setup(
         "z3-solver~=4.8.17.0",
         "treelib~=1.6.1",
         "portion~=2.3.1",
+        "pyvista",
     ],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
