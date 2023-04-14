@@ -31,7 +31,7 @@ expr_list = [
 with open('results.csv', 'w', newline='') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',',
                             quotechar='|', quoting=csv.QUOTE_MINIMAL)
-    # spamwriter.writerow(["benchmark","instance","result","time","accuracy"])
+    spamwriter.writerow(["benchmark","instance","result","time","accuracy"])
     # spamwriter.writerow(["TRAF22"," "," 0"," ",""])
     # spamwriter.writerow(["ROBE21",   " 1"," 0",       " ",""])
     # spamwriter.writerow(["ROBE21",   " 1"," 0",       " ",""])
@@ -67,9 +67,9 @@ with open('results.csv', 'w', newline='') as csvfile:
             info = eval(inf)
             #rslt = ExperimentResult(info["tool"], info["benchmark"], info['setup'], info['result'], info['time'], info['metric2'], info['metric3'])
 
-            spamwriter.writerow([info["benchmark"], info['setup'], info['result'], str(info['time']), info['metric2']])
-            if info['metric3'] != "n/a":
-                spamwriter.writerow([info["benchmark"], info['setup'], info['result'], str(info['time']), info['metric3']])
+            spamwriter.writerow([info["benchmark"], " "+info['setup'], " "+info['result'], " "+str(info['time']), info['metric2']])
+            if info['metric3'] != "":
+                spamwriter.writerow([" "+info["benchmark"], " "+info['setup'], " "+info['result'], " "+str(info['time']), info['metric3']])
                 
 
 #for i in range(0, len(rslts)):
