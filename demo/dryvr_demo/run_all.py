@@ -5,7 +5,7 @@ import re
 from subprocess import PIPE, Popen
 from typing import Tuple, Union
 import csv
-import os
+# import os
 @dataclass
 class ExperimentResult:
     tool: str
