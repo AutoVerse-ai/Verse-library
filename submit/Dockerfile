@@ -1,7 +1,7 @@
 FROM python:3.8
 MAINTAINER Daniel Zhuang EMAIL dzhuang6@illinois.edu
 RUN git clone https://github.com/AutoVerse-ai/Verse-library.git Verse-Library
-RUN cd Verse-Library && git checkout arch2023_merged
+RUN cd Verse-Library && git checkout arch2023
 RUN cd Verse-Library
 WORKDIR "/Verse-Library"
 RUN pip install -r requirements.txt
