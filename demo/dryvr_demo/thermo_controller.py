@@ -20,11 +20,11 @@ class State:
 def decisionLogic(ego: State):
     output = copy.deepcopy(ego)
     if ego.thermo_mode == ThermoMode.ON:
-        if ego.cycle_time >= 1.0 and ego.cycle_time < 1.1:
+        if 1.1 >= ego.cycle_time >= 1.0:
             output.thermo_mode = ThermoMode.OFF
             output.cycle_time = 0.0
     if ego.thermo_mode == ThermoMode.OFF:
-        if ego.cycle_time >= 1.0 and ego.cycle_time < 1.1:
+        if 1.1 >= ego.cycle_time >= 1.0:
             output.thermo_mode = ThermoMode.ON
             output.cycle_time = 0.0
     return output

@@ -367,7 +367,7 @@ def get_end(start, n, lens):
 
 def get_center_radius(start, end, n, phase):
     n, end, start = np.array(n), np.array(end), np.array(start)
-    assert (phase > 0 and phase < 2*pi and np.all(start != end))
+    assert (0 < phase < 2*pi and np.all(start != end))
     l_n = np.cross(n, end-start)
     l_n = l_n/np.linalg.norm(l_n)
     mid = (end+start)/2

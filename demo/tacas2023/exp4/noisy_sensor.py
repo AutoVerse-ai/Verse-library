@@ -7,8 +7,8 @@ class NoisyVehicleSensor(BaseSensor):
         self.noise_x = noise_x
         self.noise_y = noise_y
 
-    def sense(self, scenario, agent, state_dict, track_map):
-        cont, disc, len_dict = super().sense(scenario, agent, state_dict, track_map)
+    def sense(self, agent, state_dict, track_map):
+        cont, disc, len_dict = super().sense(agent, state_dict, track_map)
         tmp = np.array(list(state_dict.values())[0][0])
         if tmp.ndim<2:
             return cont, disc, len_dict

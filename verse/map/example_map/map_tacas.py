@@ -254,9 +254,21 @@ class M5(LaneMap_3d):
         }
 
     def h(self, lane_idx: str, agent_mode_src: str, agent_mode_dest: str) -> str:
+        if not isinstance(lane_idx,str):
+            lane_idx = lane_idx.name
+        if not isinstance(agent_mode_src,str):
+            agent_mode_src = agent_mode_src.name
+        if not isinstance(agent_mode_dest,str):
+            agent_mode_dest = agent_mode_dest.name
         return self.h_dict[(lane_idx, agent_mode_src, agent_mode_dest)]
 
     def h_exist(self, lane_idx: str, agent_mode_src: str, agent_mode_dest: str) -> bool:
+        if not isinstance(lane_idx,str):
+            lane_idx = lane_idx.name
+        if not isinstance(agent_mode_src,str):
+            agent_mode_src = agent_mode_src.name
+        if not isinstance(agent_mode_dest,str):
+            agent_mode_dest = agent_mode_dest.name
         if (lane_idx, agent_mode_src, agent_mode_dest) in self.h_dict:
             return True
         else:

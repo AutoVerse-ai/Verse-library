@@ -36,14 +36,11 @@ class State:
         pass
 
 def vehicle_front(ego, others, track_map):
-    res = any((track_map.get_longitudinal_position(other.track_mode, [other.x,other.y]) - track_map.get_longitudinal_position(ego.track_mode, [ego.x,ego.y]) > 3 \
-            and track_map.get_longitudinal_position(other.track_mode, [other.x,other.y]) - track_map.get_longitudinal_position(ego.track_mode, [ego.x,ego.y]) < 5 \
+    return any((5 > track_map.get_longitudinal_position(other.track_mode, [other.x,other.y]) - track_map.get_longitudinal_position(ego.track_mode, [ego.x,ego.y]) > 3 \
             and ego.track_mode == other.track_mode) for other in others)
-    return res
 
 def vehicle_close(ego, others):
-    res = any(ego.x-other.x<1.0 and ego.x-other.x>-1.0 and ego.y-other.y<1.0 and ego.y-other.y>-1.0 for other in others)
-    return res
+    return any(-1 < ego.x-other.x < 1 and -1 < ego.y-other.y < 1 for other in others)
 
 def decisionLogic(ego:State, others:List[State], track_map):
     output = copy.deepcopy(ego)

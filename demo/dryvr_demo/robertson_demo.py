@@ -58,11 +58,11 @@ if __name__ == "__main__":
         "setup": "B3G7",
         "result": "1",
         "time": run_time,
-        "metric2": traces1.nodes[0].trace['car1'][-1][1] + traces1.nodes[0].trace['car1'][-1][2] +
+        "metric2": 400,
+        "metric3": traces1.nodes[0].trace['car1'][-1][1] + traces1.nodes[0].trace['car1'][-1][2] +
                    traces1.nodes[0].trace['car1'][-1][3] - (
                            traces1.nodes[0].trace['car1'][-2][1] + traces1.nodes[0].trace['car1'][-2][2] +
                            traces1.nodes[0].trace['car1'][-2][3]),
-        "metric3": "n/a",
     })
     fig = reachtube_tree(traces1, None, fig, 0, 4, [0, 1], 'lines', 'trace', combine_rect=3)
     scenario = Scenario()
@@ -89,11 +89,11 @@ if __name__ == "__main__":
         "setup": "B2G3",
         "result": "1",
         "time": run_time,
-        "metric2": traces.nodes[0].trace['car1'][-1][1] + traces.nodes[0].trace['car1'][-1][2] +
+        "metric2": 400,
+        "metric3": traces.nodes[0].trace['car1'][-1][1] + traces.nodes[0].trace['car1'][-1][2] +
                    traces.nodes[0].trace['car1'][-1][3] - (
                                traces.nodes[0].trace['car1'][-2][1] + traces.nodes[0].trace['car1'][-2][2] +
                                traces.nodes[0].trace['car1'][-2][3]),
-        "metric3": "n/a",
     })
     fig = reachtube_tree(traces, None, fig, 0, 4, [0, 1], 'lines', 'trace', combine_rect=3)
 
@@ -122,8 +122,8 @@ if __name__ == "__main__":
         "setup": "B3G5",
         "result": "1",
         "time": run_time,
-        "metric2": traces2.nodes[0].trace['car1'][-1][1] + traces2.nodes[0].trace['car1'][-1][2] + traces2.nodes[0].trace['car1'][-1][3]  - (traces2.nodes[0].trace['car1'][-2][1] + traces2.nodes[0].trace['car1'][-2][2] + traces2.nodes[0].trace['car1'][-2][3]) ,
-        "metric3": "n/a",
+        "metric2": 400,
+        "metric3": traces2.nodes[0].trace['car1'][-1][1] + traces2.nodes[0].trace['car1'][-1][2] + traces2.nodes[0].trace['car1'][-1][3]  - (traces2.nodes[0].trace['car1'][-2][1] + traces2.nodes[0].trace['car1'][-2][2] + traces2.nodes[0].trace['car1'][-2][3]) ,
     })
     fig = reachtube_tree(traces2, None, fig, 0, 4, [0, 1], 'lines', 'trace', combine_rect=3)
     fig.update_layout(

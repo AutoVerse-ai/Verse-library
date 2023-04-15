@@ -5,7 +5,7 @@ import re
 from subprocess import PIPE, Popen
 from typing import Tuple, Union
 import csv
-import os
+# import os
 @dataclass
 class ExperimentResult:
     tool: str
@@ -21,17 +21,35 @@ class ExperimentResult:
 #     # "v" + 
 #     "".join(l) for l in product("brn8", ("", "i"))]
 expr_list = [
-    "robertson_demo.py"
+    "TRAFF22",
+    "robertson_demo.py",
     "coupled_vanderpol_demo.py",
     "laub_loomis_demo.py",
     "volterra_demo.py",
     "spacecraft_demo.py",
-
 ]
 with open('results.csv', 'w', newline='') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',',
                             quotechar='|', quoting=csv.QUOTE_MINIMAL)
+    spamwriter.writerow(["benchmark","instance","result","time","accuracy"])
+    # spamwriter.writerow(["TRAF22"," "," 0"," ",""])
+    # spamwriter.writerow(["ROBE21",   " 1"," 0",       " ",""])
+    # spamwriter.writerow(["ROBE21",   " 1"," 0",       " ",""])
+    # spamwriter.writerow(["ROBE21",   " 2"," 0",       " ",""])
+    # spamwriter.writerow(["ROBE21",   " 2"," 0",       " ",""])
+    # spamwriter.writerow(["ROBE21",   " 3"," 0",       " ",""])
+    # spamwriter.writerow(["ROBE21",   " 3"," 0",       " ",""])
+    # spamwriter.writerow(["CVDP23",    " "," 0",       " ",""])
+    # spamwriter.writerow(["LALO20"," W001"," 0",       " ",""])
+    # spamwriter.writerow(["LALO20"," W005"," 0",       " ",""])
+    # spamwriter.writerow(["LALO20", " W01"," 0",       " ",""])
+    # spamwriter.writerow(["LOVO21",    " "," 0",       " ",""])
+    # spamwriter.writerow(["SPRE22",    " "," 0",       " ",""])
+
     for expr in expr_list:
+        if expr == "TRAFF22":
+            spamwriter.writerow(["TRAFF22", " ", " 0", " ", " "])
+            continue
         cmd = Popen(f"python demo/dryvr_demo/{expr}", stdout=PIPE, stderr=PIPE, shell=True)
         print(f"run '{expr}', pid={cmd.pid}")
         ret = cmd.wait()
@@ -49,7 +67,10 @@ with open('results.csv', 'w', newline='') as csvfile:
             info = eval(inf)
             #rslt = ExperimentResult(info["tool"], info["benchmark"], info['setup'], info['result'], info['time'], info['metric2'], info['metric3'])
 
-            spamwriter.writerow([info["tool"], info["benchmark"], info['setup'], info['result'], str(info['time']), info['metric2'], info['metric3']])
+            spamwriter.writerow([info["benchmark"], " "+info['setup'], " "+info['result'], " "+str(info['time']), info['metric2']])
+            if info['metric3'] != "":
+                spamwriter.writerow([info["benchmark"], " "+info['setup'], " "+info['result'], " "+str(info['time']), info['metric3']])
+                
 
 #for i in range(0, len(rslts)):
     #res = rslts[i]

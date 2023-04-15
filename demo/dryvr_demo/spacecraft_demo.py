@@ -45,11 +45,11 @@ if __name__ == "__main__":
     print({
         "tool": "verse",
         "benchmark": "SPRE2022",
-        "setup": "n/a",
+        "setup": "",
         "result": "1",
         "time": run_time,
-        "metric2": "n/a",
-        "metric3": "n/a",
+        "metric2": "",
+        "metric3": "",
     })
     traces.dump('output.json')
     fig = go.Figure()

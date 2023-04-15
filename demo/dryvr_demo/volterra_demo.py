@@ -47,11 +47,11 @@ if __name__ == "__main__":
     print({
         "tool": "verse",
         "benchmark": "LOVO21",
-        "setup": "n/a",
+        "setup": "",
         "result": "1",
         "time": run_time,
         "metric2": str( abs((traces.nodes[0].trace['test'][-1][1] - traces.nodes[0].trace['test'][-2][1] )*(traces.nodes[0].trace['test'][-1][2] - traces.nodes[0].trace['test'][-2][2] ) ) ),
-        "metric3": "n/a",
+        "metric3": "",
     })
     fig = go.Figure()
     fig = reachtube_tree(traces, None, fig, 1, 2, [1, 2],
