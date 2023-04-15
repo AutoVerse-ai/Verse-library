@@ -44,7 +44,7 @@ if __name__ == "__main__":
 
     print({
         "tool": "verse",
-        "benchmark": "SPRE2022",
+        "benchmark": "SPRE22",
         "setup": "",
         "result": "1",
         "time": run_time,

@@ -52,7 +52,7 @@ if __name__ == "__main__":
     run_time = time.time() - start_time
     print({
         "tool": "verse",
-        "benchmark": "CVDP22",
+        "benchmark": "CVDP23",
         "setup": "",
         "result": "1",
         "time": run_time,
