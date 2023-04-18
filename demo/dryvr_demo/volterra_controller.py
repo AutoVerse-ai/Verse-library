@@ -25,9 +25,9 @@ def decisionLogic(ego: State):
         # if(ego.x >= .839 and ego.x <= 1.161 and ego.y >= .839 and ego.y<= 1.161 ):
         #     output.craft_mode = CraftMode.inside
         # if ego.x < 1+0.161 and ego.x>1-0.161 and ego.y<1+0.161 and ego.y>1-0.161 and ego.t_loc > 1.0:
-        if ego.x<1+0.157 and ego.x>1-0.157 and ego.y<1+0.157 and ego.y>1-0.157\
-            and ego.y<-ego.x+2+0.190 and ego.y>ego.x-0.190\
-            and ego.y<ego.x+0.19 and ego.y>-ego.x+1.81 and ego.t_loc>0.1:
+        if ego.x<1+0.161 and ego.x>1-0.161 and ego.y<1+0.161 and ego.y>1-0.161\
+            and ego.y<-ego.x+ 2.23  and ego.y>ego.x- 0.2276899  \
+            and ego.y<ego.x+0.227669 and ego.y>-ego.x +1.77 and ego.t_loc>0.1:
             output.craft_mode = CraftMode.inside
             # if ego.x <1+0.161 and ego.y > 1:
             #     output.x = 1+0.161
@@ -38,9 +38,9 @@ def decisionLogic(ego: State):
         #     output.craft_mode = CraftMode.outside
         # if (ego.x < .839 or ego.x > 1.161 or ego.y < .839 or ego.y > 1.161):
         #     output.craft_mode = CraftMode.outside
-        if not (ego.x<1+0.157 and ego.x>1-0.157 and ego.y<1+0.157 and ego.y>1-0.157\
-            and ego.y<-ego.x+2+0.190 and ego.y>ego.x-0.190\
-            and ego.y<ego.x+2+0.190 and ego.y>-ego.x-0.190) and ego.t_loc>0.1:
+        if not (ego.x<1+0.161 and ego.x>1-0.161 and ego.y<1+0.161 and ego.y>1-0.161\
+            and ego.y<-ego.x+ 2.23  and ego.y>ego.x- 0.2276899  \
+            and ego.y<ego.x+0.227669 and ego.y>-ego.x +1.77) and ego.t_loc>0.1:
             output.craft_mode = CraftMode.outside
             output.t_loc = 0
             # output.x = 1.05

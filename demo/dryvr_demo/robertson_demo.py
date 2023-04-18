@@ -65,6 +65,8 @@ if __name__ == "__main__":
                            traces1.nodes[0].trace['car1'][-2][3]),
     })
     fig = reachtube_tree(traces1, None, fig, 0, 4, [0, 1], 'lines', 'trace', combine_rect=3)
+
+
     scenario = Scenario()
     car = robertson_agent('car1', file_name=input_code_name, beta = 1e2, gamma=1e3)
     scenario.add_agent(car)
