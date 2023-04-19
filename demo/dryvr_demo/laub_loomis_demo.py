@@ -1,5 +1,5 @@
 from origin_agent import laub_loomis_agent
-from verse import Scenario
+from verse.scenario import Scenario,ScenarioConfig
 from verse.plotter.plotter2D import *
 import time
 import plotly.graph_objects as go
@@ -11,7 +11,7 @@ class AgentMode(Enum):
 #traces.nodes[0].trace['car1'][-2:]
 if __name__ == "__main__":
     input_code_name = './demo/dryvr_demo/laub_loomis_controller.py'
-    scenario = Scenario()
+    scenario = Scenario(ScenarioConfig(parallel=False))
 
     car = laub_loomis_agent('car1', file_name=input_code_name)
     scenario.add_agent(car)
@@ -46,7 +46,7 @@ if __name__ == "__main__":
     })
 
 
-    scenario1 = Scenario()
+    scenario1 = Scenario(ScenarioConfig(parallel=False))
 
     car1 = laub_loomis_agent('car1', file_name=input_code_name)
     scenario1.add_agent(car1)
@@ -82,7 +82,7 @@ if __name__ == "__main__":
 
     # fig = reachtube_tree(traces, None, fig, 0, 4, [1, 2], 'lines', 'trace', combine_rect=3)
     #
-    scenario2 = Scenario()
+    scenario2 = Scenario(ScenarioConfig(parallel=False))
 
     car2 = laub_loomis_agent('car1', file_name=input_code_name)
     scenario2.add_agent(car2)

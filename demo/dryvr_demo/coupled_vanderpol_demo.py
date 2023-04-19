@@ -1,5 +1,5 @@
 from origin_agent import coupled_vanderpol_agent
-from verse import Scenario
+from verse.scenario import Scenario, ScenarioConfig
 #from verse.plotter.plotter2D import *
 import time
 
@@ -13,7 +13,7 @@ class AgentMode(Enum):
 
 if __name__ == "__main__":
     input_code_name = './demo/dryvr_demo/coupled_vanderpol_controller.py'
-    scenario = Scenario()
+    scenario = Scenario(ScenarioConfig(parallel=False))
 
     car = coupled_vanderpol_agent('car1', file_name=input_code_name)
     scenario.add_agent(car)

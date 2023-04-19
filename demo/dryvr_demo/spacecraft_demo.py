@@ -15,7 +15,7 @@ class CraftMode(Enum):
 
 if __name__ == "__main__":
     input_code_name = './demo/dryvr_demo/spacecraft_controller.py'
-    scenario = Scenario(ScenarioConfig(init_seg_length=5))
+    scenario = Scenario(ScenarioConfig(init_seg_length=10, parallel=False))
 
     car = spacecraft_agent('test', file_name=input_code_name)
     scenario.add_agent(car)
@@ -51,9 +51,9 @@ if __name__ == "__main__":
         "metric2": "",
         "metric3": "",
     })
-    traces.dump('output.json')
-    fig = go.Figure()
-    fig = reachtube_tree(traces, None, fig, 1, 2, [1, 2],
-                         'lines', 'trace','true')
+    # traces.dump('output.json')
+    # fig = go.Figure()
+    # fig = reachtube_tree(traces, None, fig, 1, 2, [1, 2],
+    #                      'lines', 'trace','true')
 
-    fig.show()
+    # fig.show()

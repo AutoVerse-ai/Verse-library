@@ -179,6 +179,10 @@ class Verifier:
                 uncertain_param = node.uncertain_param[agent_id]
                 if reachability_method == "DRYVR":
                     # pp(('tube', agent_id, mode, inits))
+                    if "sim_trace_num" in params:
+                        num = params['sim_trace_num']
+                    else:
+                        num = SIMTRACENUM
                     cur_bloated_tube = self.calculate_full_bloated_tube(agent_id,
                                         mode,
                                         inits,
@@ -187,7 +191,7 @@ class Verifier:
                                         node.agent[agent_id].TC_simulate,
                                         params,
                                         100,
-                                        SIMTRACENUM,
+                                        num,
                                         combine_seg_length=init_seg_length,
                                         lane_map = lane_map
                                         )
@@ -502,6 +506,10 @@ class Verifier:
                     # node.trace[agent_id] = trace.tolist()
                     if reachability_method == "DRYVR":
                         # pp(('tube', agent_id, mode, inits))
+                        if "sim_trace_num" in params:
+                            num = params['sim_trace_num']
+                        else:
+                            num = SIMTRACENUM
                         cur_bloated_tube = self.calculate_full_bloated_tube(agent_id,
                                             mode,
                                             inits,
@@ -510,7 +518,7 @@ class Verifier:
                                             node.agent[agent_id].TC_simulate,
                                             params,
                                             100,
-                                            SIMTRACENUM,
+                                            num,
                                             combine_seg_length=init_seg_length,
                                             lane_map = lane_map
                                             )

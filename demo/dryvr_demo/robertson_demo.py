@@ -1,5 +1,5 @@
 from origin_agent import robertson_agent
-from verse import Scenario
+from verse.scenario import Scenario, ScenarioConfig
 from verse.plotter.plotter2D import *
 
 import plotly.graph_objects as go
@@ -34,7 +34,7 @@ if __name__ == "__main__":
     input_code_name = './demo/dryvr_demo/robertson_controller.py'
     fig = go.Figure()
 
-    scenario1 = Scenario()
+    scenario1 = Scenario(ScenarioConfig(parallel=False))
     car1 = robertson_agent('car1', file_name=input_code_name, beta = 1e3, gamma=1e7)
     scenario1.add_agent(car1)
     scenario1.set_init(
@@ -64,10 +64,10 @@ if __name__ == "__main__":
                            traces1.nodes[0].trace['car1'][-2][1] + traces1.nodes[0].trace['car1'][-2][2] +
                            traces1.nodes[0].trace['car1'][-2][3]),
     })
-    fig = reachtube_tree(traces1, None, fig, 0, 4, [0, 1], 'lines', 'trace', combine_rect=3)
+    # fig = reachtube_tree(traces1, None, fig, 0, 4, [0, 1], 'lines', 'trace', combine_rect=3)
 
 
-    scenario = Scenario()
+    scenario = Scenario(ScenarioConfig(parallel=False))
     car = robertson_agent('car1', file_name=input_code_name, beta = 1e2, gamma=1e3)
     scenario.add_agent(car)
     scenario.set_init(
@@ -97,9 +97,9 @@ if __name__ == "__main__":
                                traces.nodes[0].trace['car1'][-2][1] + traces.nodes[0].trace['car1'][-2][2] +
                                traces.nodes[0].trace['car1'][-2][3]),
     })
-    fig = reachtube_tree(traces, None, fig, 0, 4, [0, 1], 'lines', 'trace', combine_rect=3)
+    # fig = reachtube_tree(traces, None, fig, 0, 4, [0, 1], 'lines', 'trace', combine_rect=3)
 
-    scenario2 = Scenario()
+    scenario2 = Scenario(ScenarioConfig(parallel=False))
     car2 = robertson_agent('car1', file_name=input_code_name, beta = 1e3, gamma=1e5)
     scenario2.add_agent(car2)
     scenario2.set_init(
@@ -127,11 +127,11 @@ if __name__ == "__main__":
         "metric2": 400,
         "metric3": traces2.nodes[0].trace['car1'][-1][1] + traces2.nodes[0].trace['car1'][-1][2] + traces2.nodes[0].trace['car1'][-1][3]  - (traces2.nodes[0].trace['car1'][-2][1] + traces2.nodes[0].trace['car1'][-2][2] + traces2.nodes[0].trace['car1'][-2][3]) ,
     })
-    fig = reachtube_tree(traces2, None, fig, 0, 4, [0, 1], 'lines', 'trace', combine_rect=3)
-    fig.update_layout(
-        xaxis_title="t", yaxis_title="s"
-    )
+    # fig = reachtube_tree(traces2, None, fig, 0, 4, [0, 1], 'lines', 'trace', combine_rect=3)
+    # fig.update_layout(
+    #     xaxis_title="t", yaxis_title="s"
+    # )
 
 
 
-    fig.show()
+    # fig.show()
