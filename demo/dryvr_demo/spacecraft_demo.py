@@ -39,7 +39,7 @@ if __name__ == "__main__":
 
     start_time = time.time()
 
-    traces = scenario.verify(200, 0.05)
+    traces = scenario.verify(200, 0.05, params = {"sim_trace_num":100})
     run_time = time.time() - start_time
 
     print({

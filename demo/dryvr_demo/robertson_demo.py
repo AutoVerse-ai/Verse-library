@@ -48,7 +48,7 @@ if __name__ == "__main__":
     )
     start_time = time.time()
 
-    traces1 = scenario1.verify(40, .1)
+    traces1 = scenario1.verify(40, .1, params = {"sim_trace_num":100})
     traces1 = compute_xyz(traces1)
     run_time = time.time() - start_time
 
@@ -81,7 +81,7 @@ if __name__ == "__main__":
     )
     start_time = time.time()
 
-    traces = scenario.verify(40, .1)
+    traces = scenario.verify(40, .1, params = {"sim_trace_num":100})
     traces = compute_xyz(traces)
     run_time = time.time() - start_time
 
@@ -113,7 +113,7 @@ if __name__ == "__main__":
     )
     start_time = time.time()
 
-    traces2 = scenario2.verify(40, .1)
+    traces2 = scenario2.verify(40, .1, params = {"sim_trace_num":100})
 
     traces2 = compute_xyz(traces2)
     run_time = time.time() - start_time
