@@ -31,9 +31,9 @@ if __name__ == "__main__":
     )
     start_time = time.time()
 
-    traces = scenario.verify(20, 0.02,params={"bloating_method":"GLOBAL", "sim_trace_num":100})
-    fig = go.Figure()
-    fig = reachtube_tree(traces, None, fig, 0, 4, [1, 2], 'lines', 'trace', combine_rect=3)
+    traces = scenario.verify(20, 0.02,params={"bloating_method":"GLOBAL"})
+    # fig = go.Figure()
+    # fig = reachtube_tree(traces, None, fig, 0, 4, [1, 2], 'lines', 'trace', combine_rect=3)
     run_time = time.time() - start_time
     print({
         "tool": "verse",
@@ -67,7 +67,7 @@ if __name__ == "__main__":
     )
     start_time = time.time()
 
-    traces = scenario1.verify(20, 0.02, params={"bloating_method": "GLOBAL", "sim_trace_num":100})
+    traces = scenario1.verify(20, 0.02, params={"bloating_method": "GLOBAL"})
     run_time = time.time() - start_time
     print({
         "tool": "verse",
@@ -80,8 +80,8 @@ if __name__ == "__main__":
     })
 
 
-    fig = reachtube_tree(traces, None, fig, 0, 4, [1, 2], 'lines', 'trace', combine_rect=3)
-    
+    # fig = reachtube_tree(traces, None, fig, 0, 4, [1, 2], 'lines', 'trace', combine_rect=3)
+    #
     scenario2 = Scenario(ScenarioConfig(parallel=False))
 
     car2 = laub_loomis_agent('car1', file_name=input_code_name)
@@ -103,7 +103,7 @@ if __name__ == "__main__":
     )
     start_time = time.time()
 
-    traces = scenario2.verify(20, 0.02, params={"bloating_method": "GLOBAL", "sim_trace_num":100})
+    traces = scenario2.verify(20, 0.02, params={"bloating_method": "GLOBAL"})
     run_time = time.time() - start_time
 
     print({
@@ -115,11 +115,11 @@ if __name__ == "__main__":
         "metric2": str(traces.nodes[0].trace['car1'][-1][4] - traces.nodes[0].trace['car1'][-2][4]),
         "metric3": "",
     })
-    fig = reachtube_tree(traces, None, fig, 0, 4, [1, 2], 'lines', 'trace', combine_rect=3)
-    fig.update_layout(
-        xaxis_title="t", yaxis_title="x4"
-    )
-    fig.show()
+    # fig = reachtube_tree(traces, None, fig, 0, 4, [1, 2], 'lines', 'trace', combine_rect=3)
+    # fig.update_layout(
+    #     xaxis_title="t", yaxis_title="x4"
+    # )
+    # fig.show()
 
     # scenario3 = Scenario()
     #

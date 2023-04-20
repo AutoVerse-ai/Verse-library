@@ -34,7 +34,7 @@ if __name__ == "__main__":
     start_time = time.time()
 
     traces = scenario.verify(
-        7, 0.01, params = {"sim_trace_num":100}
+        7, 0.01
     )
     # fig = go.Figure()
     # fig = reachtube_tree(traces, None, fig, 1, 2, [1, 2],
