@@ -50,7 +50,7 @@ if __name__ == "__main__":
         "setup": "",
         "result": "1",
         "time": run_time,
-        "metric2": str( abs((traces.nodes[0].trace['test'][-1][1] - traces.nodes[0].trace['test'][-2][1] )*(traces.nodes[0].trace['test'][-1][2] - traces.nodes[0].trace['test'][-2][2] ) ) ),
+        "metric2": str( abs((traces.nodes[-1].trace['test'][-1][1] - traces.nodes[-1].trace['test'][-2][1] )*(traces.nodes[-1].trace['test'][-1][2] - traces.nodes[-1].trace['test'][-2][2] ) ) ),
         "metric3": "",
     })
     # fig = go.Figure()
