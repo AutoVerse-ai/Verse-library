@@ -24,19 +24,18 @@ class State:
 def decisionLogic(ego: State):
     output = copy.deepcopy(ego)
     if ego.craft_mode == CraftMode.Approaching:
-        if( ego.x >= 100):
+        if( ego.y > -100 and ego.y +ego.x >-141.1 and ego.x>-100 and ego.y -ego.x <141.1 and ego.y <100 and ego.y +ego.x < 141.1 and ego.x<100 and ego.y -ego.x >-141.1):
             output.craft_mode = CraftMode.Rendezvous
-            output.x = 100
-    if ego.craft_mode == CraftMode.Rendezvous:
-        if (120<= ego.total_time ):
-            output.craft_mode = CraftMode.Aborting
-    
+            output.x = -100
+
     assert (ego.craft_mode!=CraftMode.Rendezvous or\
          ego.x>=-100 and ego.y>=0.57735026919*ego.x and -ego.y>=0.57735026919*ego.x), "Line-of-sight"
     #len = 0.04209517756
     #dist is 0.05081337428
     assert (ego.craft_mode != CraftMode.Rendezvous or \
-            ego.vx <= 0.05081337428 and ego.vx >= -0.05081337428 and ego.vy <= 0.05081337428 and ego.vy >= 0.05081337428 and ego.vy <= (-ego.vx + 0.07186096307968522) and ego.vy <= (ego.vx + 0.07186096307968522) and ego.vy >= (-ego.vx - 0.07186096307968522) and ego.vy >= (ego.vx - 0.07186096307968522)) , "velocity constraint"
+            ego.vx <= 3.049 and ego.vx >= -3.049 and ego.vy <= 3.049 and ego.vy >= -3.049 and ego.vy <= (
+                        -ego.vx + 4.31) and ego.vy <= (ego.vx + 4.31) and ego.vy >= (-ego.vx - 4.31) and ego.vy >= (
+                        ego.vx - 4.31)), "velocity constraint"
     assert (ego.craft_mode!=CraftMode.Aborting or\
-         (ego.x<=-2 or ego.x>=2 or ego.y<=-2 or ego.y>=2)), "Collision avoidance"
+         (ego.x<=-.2 or ego.x>=.2 or ego.y<=-.2 or ego.y>=.2)), "Collision avoidance"
     return output

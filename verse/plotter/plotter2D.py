@@ -506,7 +506,7 @@ def reachtube_tree(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go
     if scale_type == 'trace':
         fig.update_xaxes(
             range=[x_min-scale_factor*(x_max-x_min), x_max+scale_factor*(x_max-x_min)])
-            #range = [0,20])
+            #range = [0,40])
         fig.update_yaxes(
             range=[y_min-scale_factor*(y_max-y_min), y_max+scale_factor*(y_max-y_min)])
 

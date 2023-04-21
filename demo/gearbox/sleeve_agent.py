@@ -32,23 +32,23 @@ class sleeve_agent(BaseAgent):
 
     @staticmethod
     def dynamic_free(t, state):
-        px,py,vx,vy,i=state
+        px,py,vx,vy,i, trans, one=state
         vx_dot=Fs/ms
         vy_dot=-Rs*Tf/Jg2
         px_dot=vx
         py_dot=vy
         i_dot=0
-        return [px_dot, py_dot, vx_dot, vy_dot, i_dot]
+        return [px_dot, py_dot, vx_dot, vy_dot, i_dot,0,0]
 
     @staticmethod
     def dynamic_meshed(t, state):
-        px,py,vx,vy,i=state
+        px,py,vx,vy,trans,one,i=state
         vx_dot=0
         vy_dot=0
         px_dot=vx
         py_dot=vy
         i_dot=0
-        return [px_dot, py_dot, vx_dot, vy_dot, i_dot]
+        return [px_dot, py_dot, vx_dot, vy_dot, i_dot,0,0]
 
     def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step, track_map: LaneMap = None) -> np.ndarray:
         time_bound = float(time_bound)

@@ -38,7 +38,7 @@ if __name__ == "__main__":
 
     print({
         "tool": "verse",
-        "benchmark": "HEAT",
+        "benchmark": "Heat3D",
         "setup": "HEAT03",
         "result": "1",
         "time": run_time,

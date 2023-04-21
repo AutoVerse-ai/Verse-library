@@ -1,6 +1,7 @@
 from sleeve_agent import sleeve_agent
 from verse import Scenario
 from verse.plotter.plotter2D import *
+from verse.scenario import ScenarioConfig
 
 import plotly.graph_objects as go
 from enum import Enum, auto
@@ -13,14 +14,14 @@ class AgentMode(Enum):
 
 if __name__ == "__main__":
     input_code_name = './demo/gearbox/sleeve_controller.py'
-    scenario = Scenario()
-
+    config=ScenarioConfig(parallel=False)
+    scenario = Scenario(config=config)
     car = sleeve_agent('sleeve', file_name=input_code_name)
     scenario.add_agent(car)
 
     scenario.set_init(
         [
-            [[-0.0168, 0.0029, 0, 0, 0], [-0.0166, 0.0031, 0, 0, 0]],
+            [[-0.0168, 0.0029, 0, 0, 0,0,1], [-0.0166, 0.0031, 0, 0, 0,0,1]],
         ],
         [
             tuple([AgentMode.Free]),

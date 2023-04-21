@@ -49,5 +49,5 @@ def decisionLogic(ego: State):
     assert (ego.craft_mode != CraftMode.Rendezvous or \
             (ego.vx ** 2 + ego.vy ** 2) <= 10.89), "velocity constraint"
     assert (ego.craft_mode != CraftMode.Aborting or \
-            (ego.x <= -2 or ego.x >= 2 or ego.y <= -2 or ego.y >= 2)), "Collision avoidance"
+            (ego.x <= -1 or ego.x >= 1 or ego.y <= -1 or ego.y >= 1)), "Collision avoidance"
     return output

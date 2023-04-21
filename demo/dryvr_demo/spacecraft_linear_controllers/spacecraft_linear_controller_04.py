@@ -29,7 +29,7 @@ def decisionLogic(ego: State):
             output.x = -100
 
     if ego.craft_mode == CraftMode.Rendezvous:
-        if (120<= ego.t ):
+        if (240<= ego.t ):
             output.craft_mode = CraftMode.Aborting
     assert (ego.craft_mode!=CraftMode.Rendezvous or\
          ego.x>=-100 and ego.y>=0.57735026919*ego.x and -ego.y>=0.57735026919*ego.x), "Line-of-sight"
@@ -40,5 +40,5 @@ def decisionLogic(ego: State):
 
 
     assert (ego.craft_mode!=CraftMode.Aborting or\
-         (ego.x<=-.2 or ego.x>=.2 or ego.y<=-.2 or ego.y>=.2)), "Collision avoidance"
+         (ego.x<=-.1 or ego.x>=.1 or ego.y<=-.1 or ego.y>=.1)), "Collision avoidance"
     return output
