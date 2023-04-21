@@ -1,5 +1,5 @@
 import functools, pprint, random, math
-from verse.agents.example_agent import CarAgentSwitch2
+from verse.agents.example_agent import CarAgentDebounced
 from verse.analysis.utils import wrap_to_pi
 from verse.map.example_map.intersection import Intersection
 from verse.scenario.scenario import Benchmark
@@ -7,7 +7,8 @@ pp = functools.partial(pprint.pprint, compact=True, width=130)
 
 from controller.intersection_car import AgentMode
 
-CAR_NUM = 5
+CAR_NUM = 9
+LANES = 3
 CAR_ACCEL_RANGE = (0.7, 3)
 CAR_SPEED_RANGE = (1, 3)
 CAR_THETA_RANGE = (-0.1, 0.1)
@@ -16,7 +17,7 @@ def rand(start: float, end: float) -> float:
     return random.random() * (end - start) + start
 
 def run(meas=False):
-    traces = bench.run(60, 0.1)
+    traces = bench.run(60, 0.05)
 
     if bench.config.dump:
         traces.dump_tree()
@@ -25,14 +26,13 @@ def run(meas=False):
 
     if bench.config.plot and meas:
         import plotly.graph_objects as go
-        from verse.plotter.plotter2D import reachtube_tree, simulation_tree, simulation_anime, reachtube_anime
+        from verse.plotter.plotter2D import reachtube_tree, simulation_tree
 
         fig = go.Figure()
         if bench.config.sim:
-            # fig = simulation_anime(traces, bench.scenario.map, fig, 1, 2, [1, 2], label_mode='None', full_trace=True)
-            fig = simulation_tree(traces, bench.scenario.map, fig, 1, 2, [0, 1, 2], label_mode='None')
+            fig = simulation_tree(traces, bench.scenario.map, fig, 1, 2, print_dim_list=[1, 2])
         else:
-            fig = reachtube_tree(traces, bench.scenario.map, fig, 1, 2, [0, 1, 2], 'lines',combine_rect=5)
+            fig = reachtube_tree(traces, bench.scenario.map, fig, 1, 2, [1, 2], 'lines',combine_rect=5)
         fig.show()
 
     if meas:
@@ -40,22 +40,21 @@ def run(meas=False):
 
 if __name__ == "__main__":
     import sys
-    bench = Benchmark(sys.argv, init_seg_length = 1)
-    bench.agent_type = "C"
-    bench.noisy_s = "No"
+    bench = Benchmark(sys.argv)
     ctlr_src = "demo/vehicle/controller/intersection_car.py"
     import time
     if len(sys.argv) == 3:
         seed = int(sys.argv[2])
     else:
         seed = int(time.time())
+    print("seed:", seed)
     random.seed(seed)
 
     dirs = "WSEN"
-    map = Intersection(lanes=3)
+    map = Intersection(lanes=LANES)
     bench.scenario.set_map(map)
     for i in range(CAR_NUM):
-        car = CarAgentSwitch2(f"car{i}", file_name=ctlr_src, speed=rand(*CAR_SPEED_RANGE), accel=rand(*CAR_ACCEL_RANGE))
+        car = CarAgentDebounced(f"car{i}", file_name=ctlr_src, speed=rand(*CAR_SPEED_RANGE), accel=rand(*CAR_ACCEL_RANGE))
         # if i == 0:
         #     for p in car.decision_logic.paths:
         #         print(ast_dump(p.val_veri), "<=", ast_dump(p.cond_veri))

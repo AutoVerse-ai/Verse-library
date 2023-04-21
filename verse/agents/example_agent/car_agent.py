@@ -149,6 +149,17 @@ class WeirdCarAgent(CarAgent):
         else:
             return 0, 0
 
+class CarAgentDebounced(CarAgent):
+    def __init__(self, id, code = None, file_name = None, initial_state = None, initial_mode = None, speed: float = 2, accel: float = 1):
+        super().__init__(id, code, file_name, initial_state=initial_state, initial_mode=initial_mode, speed=speed, accel=accel)
+
+    @staticmethod
+    def dynamic(t, state, u):
+        return super(CarAgentDebounced, CarAgentDebounced).dynamic(t, state[:4], u) + [1]
+
+    def action_handler(self, mode: List[str], state, lane_map:LaneMap)->Tuple[float, float]:
+        return super(CarAgentDebounced, CarAgentDebounced).action_handler(self, mode, state[:4], lane_map)
+
 class CarAgentSwitch2(CarAgent):
     def __init__(self, id, code = None, file_name = None, initial_state = None, initial_mode = None, speed: float = 2, accel: float = 1):
         super().__init__(id, code, file_name, initial_state=initial_state, initial_mode=initial_mode, speed=speed, accel=accel)
