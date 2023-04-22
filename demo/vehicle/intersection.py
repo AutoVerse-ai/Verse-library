@@ -7,7 +7,7 @@ pp = functools.partial(pprint.pprint, compact=True, width=130)
 
 from controller.intersection_car import AgentMode
 
-CAR_NUM = 9
+CAR_NUM = 7
 LANES = 3
 CAR_ACCEL_RANGE = (0.7, 3)
 CAR_SPEED_RANGE = (1, 3)
@@ -43,11 +43,19 @@ if __name__ == "__main__":
     bench = Benchmark(sys.argv)
     ctlr_src = "demo/vehicle/controller/intersection_car.py"
     import time
-    if len(sys.argv) == 3:
+    if len(sys.argv) >= 3:
         seed = int(sys.argv[2])
     else:
         seed = int(time.time())
-    print("seed:", seed)
+
+    if len(sys.argv) == 5:
+        CAR_NUM = int(sys.argv[3])
+        LANES = int(sys.argv[4])
+
+    print()
+    print("------------------------  ", sys.argv[1], "   ==============")
+    print("seed: %d, CAR_NUM %d, LANES: %d" %(seed, CAR_NUM, LANES))
+    #print("seed:", seed)
     random.seed(seed)
 
     dirs = "WSEN"
