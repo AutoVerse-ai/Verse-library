@@ -460,24 +460,36 @@ class gearbox_agent(BaseAgent):
 
     def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step,
                     track_map: LaneMap = None) -> np.ndarray:
-        time_bound = float(time_bound)
-        number_points = int(np.ceil(time_bound / time_step))
-        t = [round(i * time_step, 10) for i in range(0, number_points)]
+        # time_bound = float(time_bound)
+        # number_points = int(np.ceil(time_bound / time_step))
+        # t = [round(i * time_step, 10) for i in range(0, number_points)]
 
-        init = initialCondition
-        trace = [[0] + init]
-        for i in range(len(t)):
-            if mode[0] == 'Free':
-                r = ode(self.dynamic_free)
-            elif mode[0] == 'Meshed':
-                r = ode(self.dynamic_meshed)
-            else:
-                raise ValueError
-            r.set_initial_value(init)
-            res: np.ndarray = r.integrate(r.t + time_step)
-            init = res.flatten().tolist()
-            trace.append([t[i] + time_step] + init)
-        return np.array(trace)
+        # init = initialCondition
+        # trace = [[0] + init]
+        # for i in range(len(t)):
+        #     if mode[0] == 'Free':
+        #         r = ode(self.dynamic_free)
+        #     elif mode[0] == 'Meshed':
+        #         r = ode(self.dynamic_meshed)
+        #     else:
+        #         raise ValueError
+        #     r.set_initial_value(init)
+        #     res: np.ndarray = r.integrate(r.t + time_step)
+        #     init = res.flatten().tolist()
+        #     trace.append([t[i] + time_step] + init)
+        time_bound = float(time_bound)
+        number_points = int(np.ceil(time_bound/time_step))
+        t = [round(i*time_step, 10) for i in range(0, number_points)]
+        t_span = [0, time_bound]
+        if  mode[0] == 'Free':
+            res = solve_ivp(self.dynamic_free, t_span = t_span, y0 = initialCondition, method='RK45', t_eval=t)
+        elif mode[0] == 'Meshed':
+            res = solve_ivp(self.dynamic_meshed, t_span = t_span, y0 = initialCondition, method='RK45', t_eval=t)
+        else:
+            raise ValueError
+        trace = np.vstack((res.t, res.y)).T
+        return trace
+
 class powertrain_agent(BaseAgent):
     def __init__(self, id, code=None, file_name=None):
         # Calling the constructor of tha base class
