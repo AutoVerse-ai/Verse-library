@@ -1,5 +1,5 @@
 from quadrotor_agent import QuadrotorAgent
-from verse import Scenario
+from verse.scenario import Scenario, ScenarioConfig
 from verse.plotter.plotter2D import reachtube_tree
 from verse.plotter.plotter3D_new import *
 from verse.plotter.plotter3D import *
@@ -28,10 +28,10 @@ class TrackMode(Enum):
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/tacas2023/exp9/quadrotor_controller3.py'
-    input_code_name2 = './demo/tacas2023/exp9/quadrotor_controller4.py'
+    input_code_name = './demo/cav2023/exp9/quadrotor_controller3.py'
+    input_code_name2 = './demo/cav2023/exp9/quadrotor_controller4.py'
 
-    scenario = Scenario()
+    scenario = Scenario(ScenarioConfig(reachability_method="NeuReach", parallel=False))
     time_step = 0.2
     quadrotor1 = QuadrotorAgent(
         'test1', file_name=input_code_name, t_v_pair=(1, 1), box_side=[0.4]*3)
@@ -55,7 +55,7 @@ if __name__ == "__main__":
 
     tmp_map = M5()
     scenario.set_map(tmp_map)
-    scenario.config.reachability_method = 'NeuReach'
+    # scenario.config.reachability_method = 'NeuReach'
     # scenario.set_sensor(QuadrotorSensor())
 
     # traces = scenario.simulate(40, time_step, seed=4)
@@ -64,7 +64,7 @@ if __name__ == "__main__":
     # fig.show()
 
     # traces = scenario.verify(60, time_step)
-    # traces.dump('./demo/tacas2023/exp9/output9_DryVR.json')
+    # traces.dump('./demo/cav2023/exp9/output9_DryVR.json')
     start_time = time.time()
     traces = scenario.verify(60, time_step,
                              params={
@@ -78,7 +78,7 @@ if __name__ == "__main__":
                              }
                             )
     run_time = time.time() - start_time
-    traces.dump('./demo/tacas2023/exp9/output9_neureach.json')
+    # traces.dump('./demo/cav2023/exp9/output9_neureach.json')
 
     print({
         "#A": len(scenario.agent_dict),
@@ -99,7 +99,7 @@ if __name__ == "__main__":
     # fig = go.Figure()
     # fig = reachtube_tree(traces, None, fig, 0, 3, [0,1])
     # fig.show()
-    # traces = AnalysisTree.load('./demo/tacas2023/exp9/output9.json')
+    # traces = AnalysisTree.load('./demo/cav2023/exp9/output9.json')
     if len(sys.argv)>1 and sys.argv[1]=='p':
         fig = pv.Plotter()
         fig = plot3dMap(tmp_map, ax=fig)

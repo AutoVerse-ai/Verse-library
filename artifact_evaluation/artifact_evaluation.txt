@@ -63,81 +63,81 @@ The results for all experiments in Table 1 will be generated as below at the end
 
 3. To reproduce Fig. 1,
     Center: Run command 
-        python3 demo/tacas2023/exp1/exp1_sim.py p 
+        python3 demo/cav2023/exp1/exp1_sim.py p 
     Verse will automatically open a browser window to show the resulting plot. 
 
     Right: Run command 
-        python3 demo/tacas2023/exp1/exp1.py p
+        python3 demo/cav2023/exp1/exp1.py p
 
 4. To reproduce Fig. 4, from left to right 
     (1) Run command 
-        python3 demo/tacas2023/exp9/exp9_dryvr.py pl
+        python3 demo/cav2023/exp9/exp9_dryvr.py pl
 
     (2)-(3) Run command 
-        python3 demo/tacas2023/exp9/exp9_dryvr.py pc
+        python3 demo/cav2023/exp9/exp9_dryvr.py pc
     Verse will automatically open two browser windows to show the two resulting plots.
 
     (4) Run command 
-        python3 demo/tacas2023/exp10/exp10_dryvr.py p 
+        python3 demo/cav2023/exp10/exp10_dryvr.py p 
     
 5. To reproduce Fig. 6, 
     Left: Run command 
-        python3 demo/tacas2023/exp2/exp2_straight.py p 
+        python3 demo/cav2023/exp2/exp2_straight.py p 
     Verse will automatically open a browser window to show the resulting plot. 
     
     Center: Run command 
-        python3 demo/tacas2023/exp2/exp2_curve.py p 
+        python3 demo/cav2023/exp2/exp2_curve.py p 
     Verse will automatically open a browser window to show the resulting plot. 
     
     Right: Run command 
-        python3 demo/tacas2023/exp4/exp4.py p
+        python3 demo/cav2023/exp4/exp4.py p
     Verse will automatically open a browser window to show the resulting plot. 
 
 6. To reproduce Fig. 8 in Appendix, run command 
-    python3 demo/tacas2023/exp5/exp5.py p
+    python3 demo/cav2023/exp5/exp5.py p
 Verse will automatically open a browser window to show the resulting plot. The right figure is a zoom in of the left figure
 
 
 7. To reproduce Fig. 9 in Appendix, 
     Left: Run command  
-        python3 demo/tacas2023/exp6/exp6_neureach.py p
+        python3 demo/cav2023/exp6/exp6_neureach.py p
     Verse will automatically open a browser window to show the resulting plot. Note that due to the randomization in NeuReach's algorithm, the generated figure can be slightly different from the one included in the paper.
 
     Right: Run command 
-        python3 demo/tacas2023/exp6/exp6_dryvr.py p 
+        python3 demo/cav2023/exp6/exp6_dryvr.py p 
     Verse will automatically open a browser window to show the resulting plot. 
 
 8. To reproduce Fig. 10 in Appendix, run command  
-    python3 demo/tacas2023/exp7/exp7.py p
+    python3 demo/cav2023/exp7/exp7.py p
 Verse will automatically open two browser windows to show the plots.
 
 9. To reproduce Fig. 11 in Appendix, run command 
-    python3 demo/tacas2023/exp3/exp3.py p
+    python3 demo/cav2023/exp3/exp3.py p
 Verse will automatically open a browser window to show the resulting plot. 
 
 10. To reproduce Fig. 12 in Appendix 
     Left: Run command 
-        python3 demo/tacas2023/exp11/inc-expr.py sbp
+        python3 demo/cav2023/exp11/inc-expr.py sbp
     Verse will automatically open a browser window to show the resulting plot. 
 
     Right: Run command 
-        python3 demo/tacas2023/exp11/inc-expr.py vbp
+        python3 demo/cav2023/exp11/inc-expr.py vbp
     Verse will automatically open a browser window to show the resulting plot. 
 
 11. To reproduce Fig. 15 in Appendix 
     Left: Run command 
-        python3 demo/tacas2023/exp11/inc-expr.py snp
+        python3 demo/cav2023/exp11/inc-expr.py snp
     Verse will automatically open a browser window to show the resulting plot. 
 
     Right: Run command 
-        python3 demo/tacas2023/exp11/inc-expr.py vnp
+        python3 demo/cav2023/exp11/inc-expr.py vnp
     Verse will automatically open a browser window to show the resulting plot. 
 
 12. To reproduce Fig. 16 in Appendix 
     Left: Run command 
-        python3 demo/tacas2023/exp11/inc-expr.py s8p
+        python3 demo/cav2023/exp11/inc-expr.py s8p
     Verse will automatically open a browser window to show the resulting plot. 
 
     Right: Run command 
-        python3 demo/tacas2023/exp11/inc-expr.py v8p
+        python3 demo/cav2023/exp11/inc-expr.py v8p
     Verse will automatically open a browser window to show the resulting plot. 

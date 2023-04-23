@@ -56,8 +56,8 @@ class TestSimulatorMethods(unittest.TestCase):
     def setUp(self):
         self.scenario = Scenario()
         # Relative path to ../tests/example_controller1.py does not work. 
-        self.car = CarAgent('ego', file_name='../demo/tacas2023/exp2/example_controller5.py')
-        self.car2 = CarAgent('other', file_name='../demo/tacas2023/exp2/example_controller5.py')
+        self.car = CarAgent('ego', file_name='../demo/cav2023/exp2/example_controller5.py')
+        self.car2 = CarAgent('other', file_name='../demo/cav2023/exp2/example_controller5.py')
         self.scenario.add_agent(self.car)
         self.scenario.add_agent(self.car2)
         tmp_map = SimpleMap2()

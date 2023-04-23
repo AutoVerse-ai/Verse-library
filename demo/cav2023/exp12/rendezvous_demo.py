@@ -1,5 +1,5 @@
 from origin_agent import craft_agent
-from verse import Scenario
+from verse.scenario import Scenario, ScenarioConfig
 from verse.plotter.plotter2D import *
 from verse.sensor.example_sensor.craft_sensor import CraftSensor
 import time 
@@ -16,7 +16,7 @@ class CraftMode(Enum):
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/tacas2023/exp12/rendezvous_controller.py'
+    input_code_name = './demo/cav2023/exp12/rendezvous_controller.py'
     scenario = Scenario()
 
     car = craft_agent('test', file_name=input_code_name)

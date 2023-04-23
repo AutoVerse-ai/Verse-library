@@ -20,3 +20,4 @@ docs/source/_autosummary/
 **/.ipynb_checkpoints/
 **.whl
 **.tar.gz
+**.json

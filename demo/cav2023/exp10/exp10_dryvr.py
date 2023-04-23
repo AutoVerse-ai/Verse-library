@@ -1,5 +1,5 @@
 from quadrotor_agent import QuadrotorAgent
-from verse import Scenario
+from verse.scenario import Scenario, ScenarioConfig
 from verse.plotter.plotter2D import reachtube_tree
 from verse.plotter.plotter3D_new import *
 from verse.plotter.plotter3D import *
@@ -29,8 +29,8 @@ class TrackMode(Enum):
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/tacas2023/exp10/quadrotor_controller3.py'
-    input_code_name2 = './demo/tacas2023/exp10/quadrotor_controller4.py'
+    input_code_name = './demo/cav2023/exp10/quadrotor_controller3.py'
+    input_code_name2 = './demo/cav2023/exp10/quadrotor_controller4.py'
 
     scenario = Scenario()
     time_step = 0.2
@@ -77,7 +77,7 @@ if __name__ == "__main__":
     start_time = time.time()
     traces = scenario.verify(90, time_step)
     run_time = time.time() - start_time
-    traces.dump('./demo/tacas2023/exp10/output10_dryvr.json')
+    traces.dump('./demo/cav2023/exp10/output10_dryvr.json')
 
     print({
         "#A": len(scenario.agent_dict),
@@ -101,7 +101,7 @@ if __name__ == "__main__":
     #                              'r': 0,
     #                          }
     #                         )
-    # traces.dump('./demo/tacas2023/exp10/output10_NeuReach.json')
+    # traces.dump('./demo/cav2023/exp10/output10_NeuReach.json')
     # fig = go.Figure()
     # fig = reachtube_tree(traces, None, fig, 0, 1, [0,1])
     # fig.show()
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     # fig = reachtube_tree(traces, None, fig, 0, 3, [0,1])
     # fig.show()
 
-    # traces = AnalysisTree.load('demo/tacas2023/exp10/output10.json')
+    # traces = AnalysisTree.load('demo/cav2023/exp10/output10.json')
     if len(sys.argv)>1 and sys.argv[1]=='p':
         fig = pv.Plotter()
         fig = plot3dMap(tmp_map, ax=fig)

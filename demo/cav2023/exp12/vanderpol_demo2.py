@@ -1,5 +1,5 @@
 from origin_agent import vanderpol_agent
-from verse import Scenario
+from verse.scenario import Scenario, ScenarioConfig
 from verse.plotter.plotter2D import *
 import time 
 import  sys 
@@ -13,7 +13,7 @@ class AgentMode(Enum):
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/tacas2023/exp12/vanderpol_controller.py'
+    input_code_name = './demo/cav2023/exp12/vanderpol_controller.py'
     scenario = Scenario()
 
     car = vanderpol_agent('car1', file_name=input_code_name)

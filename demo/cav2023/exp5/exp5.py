@@ -1,6 +1,6 @@
 from verse.agents.example_agent import CarAgent, NPCAgent
 from verse.map import opendrive_map
-from verse import Scenario
+from verse.scenario import Scenario, ScenarioConfig
 from verse.scenario import ScenarioConfig
 from verse.plotter.plotter2D import *
 
@@ -36,13 +36,13 @@ class TrackMode(Enum):
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/tacas2023/exp5/example_controller5.py'    
+    input_code_name = './demo/cav2023/exp5/example_controller5.py'    
     # config = 
     scenario = Scenario(ScenarioConfig(init_seg_length=1))
     scenario.add_agent(CarAgent('car1', file_name=input_code_name))
     scenario.add_agent(NPCAgent('car2'))
     scenario.add_agent(NPCAgent('car3'))
-    tmp_map = opendrive_map('./demo/tacas2023/exp5/t1_triple.xodr')
+    tmp_map = opendrive_map('./demo/cav2023/exp5/t1_triple.xodr')
 
     scenario.set_map(tmp_map)
     scenario.set_init(
@@ -65,7 +65,7 @@ if __name__ == "__main__":
     start_time = time.time()
     traces = scenario.verify(60, 0.1)  # traces.dump('./output1.json')
     run_time = time.time()-start_time
-    traces.dump("./demo/tacas2023/exp5/output5.json")
+    traces.dump("./demo/cav2023/exp5/output5.json")
     print({
         "#A": len(scenario.agent_dict),
         "A": "C",

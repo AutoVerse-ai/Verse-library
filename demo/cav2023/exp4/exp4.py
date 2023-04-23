@@ -1,6 +1,6 @@
 from verse.agents.example_agent import CarAgent, NPCAgent
 from verse.map.example_map.map_tacas import M1
-from verse import Scenario
+from verse.scenario import Scenario, ScenarioConfig
 from noisy_sensor import NoisyVehicleSensor
 from verse.plotter.plotter2D import *
 from verse.plotter.plotter2D_old import plot_reachtube_tree, plot_map
@@ -32,7 +32,7 @@ class TrackMode(Enum):
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/tacas2023/exp4/example_controller5.py'
+    input_code_name = './demo/cav2023/exp4/example_controller5.py'
 
     config = ScenarioConfig(init_seg_length=5)
     scenario = Scenario()
@@ -63,7 +63,7 @@ if __name__ == "__main__":
     start_time = time.time()
     traces = scenario.verify(40, 0.1, params={"bloating_method": 'GLOBAL'})
     run_time = time.time()-start_time
-    traces.dump("./demo/tacas2023/exp4/output4_noisy.json")
+    traces.dump("./demo/cav2023/exp4/output4_noisy.json")
 
     print({
         "#A": len(scenario.agent_dict),
@@ -102,7 +102,7 @@ if __name__ == "__main__":
     # scenario1.config.init_seg_length = 5
 
     traces = scenario1.verify(40, 0.1, params={"bloating_method": 'GLOBAL'})
-    traces.dump("./demo/tacas2023/exp4/output4_nonoise.json")
+    traces.dump("./demo/cav2023/exp4/output4_nonoise.json")
     if len(sys.argv)>1 and sys.argv[1]=='p':
         fig = reachtube_tree(
             traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace',

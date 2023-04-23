@@ -96,8 +96,8 @@ def run(sim, meas=False):
         })
 
 if __name__ == "__main__":
-    input_code_name = './demo/tacas2023/exp11/decision_logic/inc-expr6.py' if "6" in arg else './demo/tacas2023/exp11/decision_logic/inc-expr.py'
-    scenario = Scenario(ScenarioConfig(incremental='i' in arg, parallel='l' in arg))
+    input_code_name = './demo/cav2023/exp11/decision_logic/inc-expr6.py' if "6" in arg else './demo/cav2023/exp11/decision_logic/inc-expr.py'
+    scenario = Scenario(ScenarioConfig(incremental='i' in arg, parallel=False))
 
     scenario.add_agent(CarAgent('car1', file_name=input_code_name))
     scenario.add_agent(NPCAgent('car2'))

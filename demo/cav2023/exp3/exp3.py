@@ -1,6 +1,6 @@
 from verse.agents.example_agent import CarAgent, NPCAgent
 from verse.map.example_map.map_tacas import M2
-from verse import Scenario
+from verse.scenario import Scenario, ScenarioConfig
 from verse.plotter.plotter2D import *
 
 from enum import Enum, auto
@@ -33,7 +33,7 @@ class TrackMode(Enum):
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/tacas2023/exp3/example_controller7.py'
+    input_code_name = './demo/cav2023/exp3/example_controller7.py'
     scenario = Scenario()
 
     car = CarAgent('car1', file_name=input_code_name)
@@ -73,28 +73,28 @@ if __name__ == "__main__":
         ]
     )
 
-    traces = scenario.verify(80, 0.05)
-    fig = go.Figure()
-    fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [
-                           1, 2], 'lines', 'trace', sample_rate=1)
-    fig.show()
-
-    # start_time = time.time()
     # traces = scenario.verify(80, 0.05)
-    # run_time = time.time() - start_time
-    # traces.dump("./demo/tacas2023/exp3/output3.json")
+    # fig = go.Figure()
+    # fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [
+    #                        1, 2], 'lines', 'trace', sample_rate=1)
+    # fig.show()
 
-    # print({
-    #     "#A": len(scenario.agent_dict),
-    #     "A": "C",
-    #     "Map": "M2",
-    #     "postCont": "DryVR",
-    #     "Noisy S": "No",
-    #     "# Tr": len(traces.nodes),
-    #     "Run Time": run_time,
-    # })
+    start_time = time.time()
+    traces = scenario.verify(80, 0.05)
+    run_time = time.time() - start_time
+    # traces.dump("./demo/cav2023/exp3/output3.json")
 
-    # if len(sys.argv)>1 and sys.argv[1]=='p':
-    #     fig = go.Figure()
-    #     fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace', combine_rect=3)
-    #     fig.show()
+    print({
+        "#A": len(scenario.agent_dict),
+        "A": "C",
+        "Map": "M2",
+        "postCont": "DryVR",
+        "Noisy S": "No",
+        "# Tr": len(traces.nodes),
+        "Run Time": run_time,
+    })
+
+    if len(sys.argv)>1 and sys.argv[1]=='p':
+        fig = go.Figure()
+        fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace', combine_rect=3)
+        fig.show()

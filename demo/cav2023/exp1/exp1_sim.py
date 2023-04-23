@@ -27,7 +27,7 @@ class TrackMode(Enum):
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/tacas2023/exp1/quadrotor_controller3.py'
+    input_code_name = './demo/cav2023/exp1/quadrotor_controller3.py'
 
     scenario = Scenario()
     time_step = 0.1
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     start_time = time.time()
     traces = scenario.simulate_simple(40, time_step, seed=4)
     run_time = time.time() - start_time
-    traces.dump('demo/tacas2023/exp1/output1_sim.json')
+    # traces.dump('demo/cav2023/exp1/output1_sim.json')
     # print({
     #     "#A": len(scenario.agent_dict),
     #     "A": "Q",

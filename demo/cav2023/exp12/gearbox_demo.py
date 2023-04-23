@@ -1,5 +1,5 @@
 from sleeve_agent import sleeve_agent
-from verse import Scenario
+from verse.scenario import Scenario, ScenarioConfig
 from verse.plotter.plotter2D import *
 from verse.scenario import ScenarioConfig
 import plotly.graph_objects as go
@@ -13,7 +13,7 @@ class AgentMode(Enum):
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/tacas2023/exp12/sleeve_controller.py'
+    input_code_name = './demo/cav2023/exp12/sleeve_controller.py'
     config=ScenarioConfig(init_seg_length=1)
     scenario = Scenario(config=config)
 

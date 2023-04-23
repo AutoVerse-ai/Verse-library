@@ -44,7 +44,7 @@ if __name__ == "__main__":
     # fig = plt.figure(4)
     # fig = plot_reachtube_tree(traces.root, 'car1', 1, [2],fig=fig)
     # plt.show()
-    traces.dump("./demo/tacas2023/exp7/output7.json")
+    traces.dump("./demo/cav2023/exp7/output7.json")
     # traces = AnalysisTree.load('./output7.json')
     if len(sys.argv)>1 and sys.argv[1]=='p':
         fig = go.Figure()
