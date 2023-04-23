@@ -1,4 +1,5 @@
 import functools, pprint, random, math
+from typing import Optional, Tuple
 from verse.agents.example_agent import CarAgentDebounced
 from verse.analysis.utils import wrap_to_pi
 from verse.map.example_map.intersection import Intersection
@@ -7,7 +8,7 @@ pp = functools.partial(pprint.pprint, compact=True, width=130)
 
 from controller.intersection_car import AgentMode
 
-CAR_NUM = 9
+CAR_NUM = 5
 LANES = 3
 CAR_ACCEL_RANGE = (0.7, 3)
 CAR_SPEED_RANGE = (1, 3)
@@ -53,14 +54,14 @@ if __name__ == "__main__":
     dirs = "WSEN"
     map = Intersection(lanes=LANES)
     bench.scenario.set_map(map)
-    def set_init(id: str):
+    def set_init(id: str, alt_pos: Optional[Tuple[float, float]] = None):
         dir = random.randint(0, 3)
         src = dirs[dir]
         dst_dirs = list(dirs)
         dst_dirs.remove(src)
         dst = dst_dirs[random.randint(0, 2)]
         lane = random.randint(0, map.lanes - 1)
-        start, off = map.size + rand(0, map.length * 0.3), rand(0, map.width) + map.width * lane
+        start, off = (map.size + rand(0, map.length * 0.3), rand(0, map.width) + map.width * lane) if alt_pos == None else alt_pos
         pos = { "N": (-off, start), "S": (off, -start), "W": (-start, -off), "E": (start, off) }[src]
         init = [*pos, wrap_to_pi(dir * math.pi / 2 + rand(*CAR_THETA_RANGE)), rand(*CAR_SPEED_RANGE), 0]
         modes = (AgentMode.Accel, f"{src}{dst}_{lane}")
@@ -79,7 +80,7 @@ if __name__ == "__main__":
         run(True)
     elif 'n' in bench.config.args:
         run()
-        set_init(car_id(3))
+        set_init(car_id(3), (100, -0.8))
         run(True)
     elif '3' in bench.config.args:
         run()
