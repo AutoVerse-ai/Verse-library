@@ -53,12 +53,7 @@ if __name__ == "__main__":
     dirs = "WSEN"
     map = Intersection(lanes=LANES)
     bench.scenario.set_map(map)
-    for i in range(CAR_NUM):
-        car = CarAgentDebounced(f"car{i}", file_name=ctlr_src, speed=rand(*CAR_SPEED_RANGE), accel=rand(*CAR_ACCEL_RANGE))
-        # if i == 0:
-        #     for p in car.decision_logic.paths:
-        #         print(ast_dump(p.val_veri), "<=", ast_dump(p.cond_veri))
-        bench.scenario.add_agent(car)
+    def set_init(id: str):
         dir = random.randint(0, 3)
         src = dirs[dir]
         dst_dirs = list(dirs)
@@ -69,11 +64,25 @@ if __name__ == "__main__":
         pos = { "N": (-off, start), "S": (off, -start), "W": (-start, -off), "E": (start, off) }[src]
         init = [*pos, wrap_to_pi(dir * math.pi / 2 + rand(*CAR_THETA_RANGE)), rand(*CAR_SPEED_RANGE), 0]
         modes = (AgentMode.Accel, f"{src}{dst}_{lane}")
-        bench.scenario.set_init_single(car.id, (init,), modes)
+        bench.scenario.set_init_single(id, (init,), modes)
+    car_id = lambda i: f"car{i}"
+
+    for i in range(CAR_NUM):
+        car = CarAgentDebounced(car_id(i), file_name=ctlr_src, speed=rand(*CAR_SPEED_RANGE), accel=rand(*CAR_ACCEL_RANGE))
+        bench.scenario.add_agent(car)
+        set_init(car.id)
 
     if 'b' in bench.config.args:
         run(True)
     elif 'r' in bench.config.args:
         run()
+        run(True)
+    elif 'n' in bench.config.args:
+        run()
+        set_init(car_id(3))
+        run(True)
+    elif '3' in bench.config.args:
+        run()
+        bench.scenario.agent_dict["car3"] = CarAgentDebounced('car3', file_name=ctlr_src.replace(".py", "_sw5.py"))
         run(True)
     print("seed:", seed)
