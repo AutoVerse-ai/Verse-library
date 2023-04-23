@@ -20,12 +20,12 @@ def all_sensitivities_calc(training_traces: np.ndarray, initial_radii: np.ndarra
         (normalizing_initial_set_radii.shape[0], trace_len - 1))
     normalizing_initial_set_radii[np.where(
         normalizing_initial_set_radii == 0)] = 1.0
+    normalized_initial_points: np.array = training_traces[:,
+                                                            0, 1:] / normalizing_initial_set_radii
+    initial_distances = spatial.distance.pdist(
+        normalized_initial_points, 'chebyshev') + _SMALL_EPSILON
     for cur_dim_ind in range(1, ndims):
         # keyi: move out of loop
-        normalized_initial_points: np.array = training_traces[:,
-                                                              0, 1:] / normalizing_initial_set_radii
-        initial_distances = spatial.distance.pdist(
-            normalized_initial_points, 'chebyshev') + _SMALL_EPSILON
         for cur_time_ind in range(1, trace_len):
             y_points[cur_dim_ind - 1, cur_time_ind - 1] = np.max((spatial.distance.pdist(
                 np.reshape(training_traces[:, cur_time_ind, cur_dim_ind],
