@@ -9,10 +9,19 @@ The <code>artifact_evaluation.txt</code> file contains instruction to reproduce 
 
 # Artifact Link
 
+The DOI of the artifact is 
+
+10.6084/m9.figshare.22679485
+
+
 The link to the artifact on Figshare is:
+
+https://figshare.com/articles/software/Verse_A_Python_library_for_reasoning_about_multi-agent_hybrid_system_scenarios/22679485
 
 
 The link to the artifact on Google drive is: 
+
+https://drive.google.com/file/d/1SfABQ1bkFXijCpANfODQAMdvFnBXpw0a/view?usp=sharing
 
 
 A detailed interactive tutorial for verse can be found at:
