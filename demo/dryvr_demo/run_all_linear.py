@@ -27,7 +27,7 @@ expr_list = [
     "BRK",
     "spacecraft_linear_demo.py",
     "iss_demo.py",
-    "gearbox_demo.py",
+    #"gearbox_demo.py",
     "heat3d21_demo.py",
     "heat3d22_demo.py",
 
