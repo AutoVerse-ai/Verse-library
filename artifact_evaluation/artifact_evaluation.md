@@ -1,69 +1,73 @@
-This is the repeatability evaluation package for the tool paper "Verse: A Python library for reasoning about multi-agent hybrid system scenarios". <code>README.txt</code> contains the instruction to reproduce all experiments in the paper. A PDF version of the file can be found at <code>README.pdf</code>. 
+This is the repeatability evaluation package for the tool paper "Verse: A Python library for reasoning about multi-agent hybrid system scenarios". 
+
+The artifact is a virtual machine that contains instruction and software to reproduce all experiment results in the paper.
+
+The admin password of the artifact is <code>cav2023-re</code>
+
+The <code>artifact_evaluation.txt</code> file contains instruction to reproduce all experiments in the paper. A PDF version of the file can be found in <code>artifact_evaluation.pdf</code>.
+
 
 # Artifact Link
 
 The link to the artifact on Figshare is:
 
-https://figshare.com/articles/software/Verse_A_Python_library_for_reasoning_about_multi-agent_hybrid_system_scenarios/21433125
 
 The link to the artifact on Google drive is: 
 
-https://drive.google.com/file/d/1MXVTnsqtt1YVOaWZDcgy_gvuC7d_hH7F/view?usp=sharing
 
 A detailed interactive tutorial for verse can be found at:
 
-https://github.com/AutoVerse-ai/Verse-library/blob/tutorial/tutorial/Verse_Tutorial_Drone.ipynb
+https://github.com/AutoVerse-ai/Verse-library/blob/main/tutorial/tutorial.ipynb
 
 and a PDF version of the tutorial is included in the artifact as "tutorial.pdf".
 
-The tool will be made available publicly if the paper gets accepted.
+The tool is publicly available at
+
+https://github.com/AutoVerse-ai/Verse-library
+
 # Estimated Runtime
 
-The run-time for regenerating data in Table 1 in the paper is approximately 2650s (~44min).
+The run-time for regenerating data in Table 1 in the paper is approximately 1187.6s (~20min).
 
 The run-time for regenerating data in Simulation section of Table 2 in the paper is approximately 174s (~3min).
 
-The run-time for regenerating data in Reach section of Table 2 in the paper is approximately 4682s (~78min).
-
-# Installation Instructions
-
-The first step for replicating the experiments in the paper is to install Verse and its dependencies. 
-
-The dependencies for Verse can be installed using following command in the root directory of artifact
-```
-    python3 -m pip install -r requirements_local.txt
-```
-Verse can be installed using following command in the root directory of artifact
-```
-    python3 -m pip install -e .
-```
+The run-time for regenerating data in Reach section of Table 2 in the paper is approximately 1573s (~26min).
 
 # Experiment Replication Instructions
+To replicate the experiments in the paper, fist move to the root directory of the tool using command 
+```
+    cd /home/cav23/Desktop/Verse-library
+```
+
 To replicate our experiments from the paper, please run following commands from the root directory of the artifact. 
 1. For results in Table 1 Run command 
     ```
-        python3 exprs.py 
+        python3 artifact_evaluation/exprs.py 
     ```
     The results for all experiments in Table 1 will be generated as below at the end of execution. 
     ```
-        2 & Q & M6 & DryVR & No & 8 & 53.82\\
-        2 & Q & M5 & DryVR & No & 5 & 17.76\\
-        2 & Q & M5 & NeuReach & No & 5 & 475.47\\
-        3 & Q & M5 & DryVR & No & 7 & 38.26\\
-        7 & C & M2 & DryVR & No & 37 & 343.26\\
-        3 & C & M1 & DryVR & No & 5 & 22.51\\
-        3 & C & M3 & DryVR & No & 4 & 34.12\\
-        3 & C & M4 & DryVR & No & 7 & 116.65\\
-        3 & C & M1 & DryVR & Yes & 5 & 29.84\\
-        2 & C & M1 & DryVR & No & 5 & 14.66\\
-        2 & C & M1 & NeuReach & No & 5 & 585.19\\
+        2 & Q & M6 & DryVR & No & 8 & 34.54\\
+        2 & Q & M5 & DryVR & No & 5 & 31.67\\
+        2 & Q & M5 & NeuReach & No & 4 & 261.41\\
+        3 & Q & M5 & DryVR & No & 7 & 42.67\\
+        7 & C & M2 & DryVR & No & 37 & 59.95\\
+        3 & C & M1 & DryVR & No & 5 & 26.36\\
+        3 & C & M3 & DryVR & No & 4 & 34.23\\
+        3 & C & M4 & DryVR & No & 7 & 74.02\\
+        3 & C & M1 & DryVR & Yes & 5 & 26.85\\
+        2 & C & M1 & DryVR & No & 5 & 23.0\\
+        2 & C & M1 & NeuReach & No & 5 & 319.34\\
+        1 & V & N/A & DryVR & N/A & 1 & 13.85\\
+        1 & S & N/A & DryVR & N/A & 3 & 14.7\\
+        1 & G & N/A & DryVR & N/A & 3 & 22.99\\
     ```
+    Where each row corresponds to entry in the table from left to right, top to bottom. 
 
 2. For results in Table 2,
    
     <strong>Simulation</strong>: Run command 
     ```
-        python3 inc-expr.py s
+        python3 artifact_evaluation/inc-expr.py s
     ```
 
     The results for the experiments in Table 2 section Simulation will be generated as below at the end of execution
@@ -76,7 +80,7 @@ To replicate our experiments from the paper, please run following commands from 
 
     <strong>Reach</strong>: Run command 
     ```
-        python3 inc-expr.py v 
+        python3 artifact_evaluation/inc-expr.py v  
     ```
     The results for the experiments in Table 2 section Verification will be generated as below at the end of execution
     ```
@@ -150,14 +154,23 @@ To replicate our experiments from the paper, please run following commands from 
     Verse will automatically open a browser window to show the resulting plot as below. 
     ![Fig. 6 Right](exp4-lab.png)
 
-6. To reproduce Fig. 8 in Appendix, run command 
+6. To reproduce Fig. 8 in Appendix, run command  
+    ```
+        python3 demo/cav2023/exp7/exp7.py p
+    ```
+    Verse will automatically open two browser windows to show the plots as shown below.
+    ![Fig. 10 Left](exp7_x1.PNG)    
+
+    ![Fig. 10 Right](exp7_x2.PNG)   
+
+7. To reproduce Fig. 7 in Appendix, run command 
     ```
         python3 demo/cav2023/exp5/exp5.py p
     ```
     Verse will automatically open a browser window to show the resulting plot. The right figure is a zoom in of the left figure as shown below. 
     ![Fig. 8](exp5_2.PNG)
 
-7. To reproduce Fig. 9 in Appendix, 
+8. To reproduce Fig. 10 in Appendix, 
     
     <strong>Left</strong>: Run command  
     ```
@@ -173,15 +186,6 @@ To replicate our experiments from the paper, please run following commands from 
     Verse will automatically open a browser window to show the resulting plot as shown below. 
     ![Fig. 9 Right](exp6_2.PNG)    
 
-8. To reproduce Fig. 10 in Appendix, run command  
-    ```
-        python3 demo/cav2023/exp7/exp7.py p
-    ```
-    Verse will automatically open two browser windows to show the plots as shown below.
-    ![Fig. 10 Left](exp7_x1.PNG)    
-
-    ![Fig. 10 Right](exp7_x2.PNG)    
-
 9. To reproduce Fig. 11 in Appendix, run command 
     ```
         python3 demo/cav2023/exp3/exp3.py p
@@ -189,12 +193,35 @@ To replicate our experiments from the paper, please run following commands from 
     Verse will automatically open a browser window to show the resulting plot as shown below. 
     ![Fig. 11](exp3.PNG)    
 
-10. To reproduce Fig. 12 in Appendix 
+10. To reproduce Fig. 12 in Appendix, run command 
+    <strong>Left</strong>: Run command 
+    ```
+        pyhton3 demo/cav2023/exp12/vanderpol_demo2.py p 
+    ```
+    Verse will automatically open a browser window to show the resulting plot as shown below
+    ![Fig. 12 Left](exp12_v.png)
+
+    <strong>Center</strong>: Run command 
+    ```
+        pyhton3 demo/cav2023/exp12/vanderpol_demo2.py p 
+    ```
+    Verse will automatically open a browser window to show the resulting plot as shown below
+    ![Fig. 12 Center](exp12_r.png)
+
+    <strong>Right</strong>: Run command 
+    ```
+        pyhton3 demo/cav2023/exp12/vanderpol_demo2.py p 
+    ```
+    Verse will automatically open a browser window to show the resulting plot as shown below
+    ![Fig. 12 Right](exp12_g.png)
+
+
+11. To reproduce Fig. 13 in Appendix 
     <strong>Left</strong>: Run command 
     ```
         python3 demo/cav2023/exp11/inc-expr.py sbp
     ```
-    Verse will automatically open a browser window to show the resulting plot. as shown below 
+    Verse will automatically open a browser window to show the resulting plot as shown below 
     ![Fig. 12 Left](expinc_simu.PNG)    
 
     <strong>Right</strong>: Run command 
@@ -204,7 +231,7 @@ To replicate our experiments from the paper, please run following commands from 
     Verse will automatically open a browser window to show the resulting plot as below. 
     ![Fig. 12 Right](expinc_veri.PNG)    
 
-11. To reproduce Fig. 15 in Appendix 
+12. To reproduce Fig. 16 in Appendix 
     <strong>Left</strong>: Run command 
     ```
         python3 demo/cav2023/exp11/inc-expr.py snp
@@ -219,7 +246,7 @@ To replicate our experiments from the paper, please run following commands from 
     Verse will automatically open a browser window to show the resulting plot as below. Note that the red box in the figure is added seperately.
     ![Fig. 15 Right](inc_init_veri.PNG)    
 
-12. To reproduce Fig. 16 in Appendix 
+13. To reproduce Fig. 17 in Appendix 
     <strong>Left</strong>: Run command 
     ```
         python3 demo/cav2023/exp11/inc-expr.py s8p

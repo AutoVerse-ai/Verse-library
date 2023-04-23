@@ -15,7 +15,7 @@ class AgentMode(Enum):
 
 
 if __name__ == "__main__":
-    scenario = Scenario(ScenarioConfig(reachability_method='MIXMONO_CONT'))
+    scenario = Scenario(ScenarioConfig(reachability_method='MIXMONO_CONT',parallel=False))
 
     car = Agent6('car1')
     scenario.add_agent(car)

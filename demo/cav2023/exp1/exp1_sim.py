@@ -8,6 +8,8 @@ from enum import Enum, auto
 import warnings
 import time
 import sys
+
+from verse.scenario.scenario import ScenarioConfig
 warnings.filterwarnings("ignore")
 
 class TacticalMode(Enum):
@@ -29,7 +31,7 @@ class TrackMode(Enum):
 if __name__ == "__main__":
     input_code_name = './demo/cav2023/exp1/quadrotor_controller3.py'
 
-    scenario = Scenario()
+    scenario = Scenario(ScenarioConfig(parallel=False))
     time_step = 0.1
     quadrotor1 = QuadrotorAgent(
         'test1', file_name=input_code_name, t_v_pair=(1, 1), box_side=[0.4]*3)
@@ -59,7 +61,7 @@ if __name__ == "__main__":
     # traces.dump("./output1.json")
     # traces = AnalysisTree.load('./output1.json')
     start_time = time.time()
-    traces = scenario.simulate_simple(40, time_step, seed=4)
+    traces = scenario.simulate(40, time_step, seed=4)
     run_time = time.time() - start_time
     # traces.dump('demo/cav2023/exp1/output1_sim.json')
     # print({
