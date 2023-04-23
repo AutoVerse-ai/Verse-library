@@ -171,7 +171,7 @@ class Simulator:
     @staticmethod
     def simulate_one(config: "ScenarioConfig", cached_segments: Dict[str, CachedSegment], node: AnalysisTreeNode, old_node_id: Optional[Tuple[int, int]], later: int, remain_time: float, consts: SimConsts) -> Tuple[int, int, List[AnalysisTreeNode], Dict[str, TraceType], list]:
         t = timeit.default_timer()
-        print(f"node {node.id} start: {t}")
+        # print(f"node {node.id} start: {t}")
         # print(f"node id: {node.id}")
         cache_updates = []
         for agent_id in node.agent:
@@ -279,13 +279,13 @@ class Simulator:
                     type='simtrace'
                 )
                 next_nodes.append(tmp)
-            print(len(next_nodes))
-            print(f"node {node.id} dur {timeit.default_timer() - t}")
+            # print(len(next_nodes))
+            # print(f"node {node.id} dur {timeit.default_timer() - t}")
             return (node.id, later, next_nodes, node.trace, cache_updates)
 
     def proc_result(self, id, later, next_nodes, traces, cache_updates):
         t = timeit.default_timer()
-        print("got id:", id)
+        # print("got id:", id)
         done_node = self.nodes[id]
         done_node.child = next_nodes
         done_node.trace = traces
@@ -309,7 +309,7 @@ class Simulator:
                 cached.node_ids.add((run_num, done_node.id))
             # pre_len = len(cached_segments[aid].transitions)
             # pp(("dedup!", pre_len, len(cached_segments[aid].transitions)))
-        print(f"proc dur {timeit.default_timer() - t}")
+        # print(f"proc dur {timeit.default_timer() - t}")
 
     def simulate(self, init_list, init_mode_list, static_list, uncertain_param_list, agent_dict,
                  sensor, time_horizon, time_step, max_height, lane_map, run_num, past_runs):
@@ -363,10 +363,10 @@ class Simulator:
                     if self.config.incremental:
                         # pp(("check hit", agent_id, mode, init))
                         cached = self.cache.check_hit(agent_id, mode, init, node.init)
-                        # if cached != None:
-                        #     self.cache_hits = self.cache_hits[0] + 1, self.cache_hits[1]
-                        # else:
-                        #     self.cache_hits = self.cache_hits[0], self.cache_hits[1] + 1
+                        if cached != None:
+                            self.cache_hits = self.cache_hits[0] + 1, self.cache_hits[1]
+                        else:
+                            self.cache_hits = self.cache_hits[0], self.cache_hits[1] + 1
                         # pp(("check hit res", agent_id, len(cached.transitions) if cached != None else None))
                         if cached != None:
                             cached_segments[agent_id] = cached
@@ -377,12 +377,13 @@ class Simulator:
                     if len(node_ids) > 0:
                         old_node_id = node_ids[0]
                     else:
-                        print(f"not full {node.id}: {node_ids}, {len(cached_segments) == len(node.agent)} | {all_node_ids}")
+                        pass
+                        # print(f"not full {node.id}: {node_ids}, {len(cached_segments) == len(node.agent)} | {all_node_ids}")
                 if not self.config.parallel or old_node_id != None:
-                    print(f"local {node.id}")
+                    # print(f"local {node.id}")
                     t = timeit.default_timer()
                     self.proc_result(*self.simulate_one(self.config, cached_segments, node, old_node_id, later, remain_time, consts))
-                    print(f"node {node.id} dur {timeit.default_timer() - t}")
+                    # print(f"node {node.id} dur {timeit.default_timer() - t}")
                 else:
                     self.result_refs.append(self.simulate_one_remote.remote(self.config, cached_segments, node, old_node_id, later, remain_time, consts_ref))
                 if len(self.result_refs) >= self.config.parallel_sim_ahead:
@@ -396,8 +397,8 @@ class Simulator:
                 id, later, next_nodes, traces, cache_updates = ray.get(res)
                 self.proc_result(id, later, next_nodes, traces, cache_updates)
                 self.result_refs = remaining
-        print("cached", self.num_cached)
-        pp(self.cache.get_cached_inits(3))
+        # print("cached", self.num_cached)
+        # pp(self.cache.get_cached_inits(3))
         self.simulation_tree = AnalysisTree(root)
         return self.simulation_tree
 

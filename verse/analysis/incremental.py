@@ -244,7 +244,7 @@ class ReachTubeCache:
         for i, (low, high) in enumerate(init):
             if i == len(init) - 1:
                 transitions = convert_reach_trans(agent_id, transit_agents, node.init, transition, trans_ind)
-                entry = CachedRTTrans(assert_hits.get(agent_id), transitions, node.agent[agent_id].decision_logic, run_num, node.id)
+                entry = CachedRTTrans(assert_hits.get(agent_id), transitions, run_num, node.id)
                 tree[low:high + _EPSILON] = entry
                 return entry
             else:
