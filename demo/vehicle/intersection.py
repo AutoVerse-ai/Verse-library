@@ -1,4 +1,5 @@
 import functools, pprint, random, math
+from typing import Optional, Tuple
 from verse.agents.example_agent import CarAgentDebounced
 from verse.analysis.utils import wrap_to_pi
 from verse.map.example_map.intersection import Intersection
@@ -7,7 +8,7 @@ pp = functools.partial(pprint.pprint, compact=True, width=130)
 
 from controller.intersection_car import AgentMode
 
-CAR_NUM = 7
+CAR_NUM = 5
 LANES = 3
 CAR_ACCEL_RANGE = (0.7, 3)
 CAR_SPEED_RANGE = (1, 3)
@@ -17,6 +18,11 @@ def rand(start: float, end: float) -> float:
     return random.random() * (end - start) + start
 
 def run(meas=False):
+    if bench.config.sim:
+        bench.scenario.simulator.cache_hits = (0, 0)
+    else:
+        bench.scenario.verifier.tube_cache_hits = (0, 0)
+        bench.scenario.verifier.trans_cache_hits = (0, 0)
     traces = bench.run(60, 0.05)
 
     if bench.config.dump:
@@ -61,27 +67,36 @@ if __name__ == "__main__":
     dirs = "WSEN"
     map = Intersection(lanes=LANES)
     bench.scenario.set_map(map)
-    for i in range(CAR_NUM):
-        car = CarAgentDebounced(f"car{i}", file_name=ctlr_src, speed=rand(*CAR_SPEED_RANGE), accel=rand(*CAR_ACCEL_RANGE))
-        # if i == 0:
-        #     for p in car.decision_logic.paths:
-        #         print(ast_dump(p.val_veri), "<=", ast_dump(p.cond_veri))
-        bench.scenario.add_agent(car)
+    def set_init(id: str, alt_pos: Optional[Tuple[float, float]] = None):
         dir = random.randint(0, 3)
         src = dirs[dir]
         dst_dirs = list(dirs)
         dst_dirs.remove(src)
         dst = dst_dirs[random.randint(0, 2)]
         lane = random.randint(0, map.lanes - 1)
-        start, off = map.size + rand(0, map.length * 0.3), rand(0, map.width) + map.width * lane
+        start, off = (map.size + rand(0, map.length * 0.3), rand(0, map.width) + map.width * lane) if alt_pos == None else alt_pos
         pos = { "N": (-off, start), "S": (off, -start), "W": (-start, -off), "E": (start, off) }[src]
-        init = [*pos, wrap_to_pi(dir * math.pi / 2 + rand(*CAR_THETA_RANGE)), rand(*CAR_SPEED_RANGE), 0]
+        init = [*pos, *((wrap_to_pi(dir * math.pi / 2 + rand(*CAR_THETA_RANGE)), rand(*CAR_SPEED_RANGE)) if alt_pos == None else bench.scenario.init_dict[id][2:4]), 0]
         modes = (AgentMode.Accel, f"{src}{dst}_{lane}")
-        bench.scenario.set_init_single(car.id, (init,), modes)
+        bench.scenario.set_init_single(id, (init,), modes)
+    car_id = lambda i: f"car{i}"
+
+    for i in range(CAR_NUM):
+        car = CarAgentDebounced(car_id(i), file_name=ctlr_src, speed=rand(*CAR_SPEED_RANGE), accel=rand(*CAR_ACCEL_RANGE))
+        bench.scenario.add_agent(car)
+        set_init(car.id)
 
     if 'b' in bench.config.args:
         run(True)
     elif 'r' in bench.config.args:
         run()
+        run(True)
+    elif 'n' in bench.config.args:
+        run()
+        set_init(car_id(3), (100, -0.8))
+        run(True)
+    elif '3' in bench.config.args:
+        run()
+        bench.scenario.agent_dict["car3"] = CarAgentDebounced('car3', file_name=ctlr_src.replace(".py", "_sw5.py"))
         run(True)
     print("seed:", seed)

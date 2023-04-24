@@ -49,11 +49,11 @@ def dupi(l: List[List[float]]):
     return [[i, i] for i in l]
 
 def run(meas=False):
-    # if bench.config.sim:
-    #     bench.scenario.simulator.cache_hits = (0, 0)
-    # else:
-    #     bench.scenario.verifier.tube_cache_hits = (0,0)
-    #     bench.scenario.verifier.trans_cache_hits = (0,0)
+    if bench.config.sim:
+        bench.scenario.simulator.cache_hits = (0, 0)
+    else:
+        bench.scenario.verifier.tube_cache_hits = (0, 0)
+        bench.scenario.verifier.trans_cache_hits = (0, 0)
     traces = bench.run(60, 0.1)
 
     if bench.config.dump and meas:
@@ -62,6 +62,8 @@ def run(meas=False):
         traces.dump("tree2.json" if meas else "tree1.json") 
 
     if bench.config.plot and meas:
+        traces.visualize_dot("/home/haoqing/inc-2-twopi", font="Iosevka Term")
+        traces.visualize_dot("/home/haoqing/inc-2-dot", engine="dot", font="Iosevka Term")
         fig = go.Figure()
         if bench.config.sim:
             fig = simulation_tree(traces, bench.scenario.map, fig, 1, 2, print_dim_list=[1, 2])
