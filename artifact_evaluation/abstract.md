@@ -1,6 +1,8 @@
-This is the repeatability evaluation package for the tool paper "Verse: A Python library for reasoning about multi-agent hybrid system scenarios". 
+# Overview 
 
-The artifact is a virtual machine that contains instruction and software to reproduce all experiment results in the paper.
+This is the repeatability evaluation package for the tool paper entitled "Verse: A Python library for reasoning about multi-agent hybrid system scenarios", by Yangge Li, Haoqing Zhu, Katherine Braught, Keyi Shen, Sayan Mitra, which is going to appear in the proceedings of the <i>35th International Conference on Computer Aided Verification, 2023</i>.
+
+The artifact is a virtual machine that contains the instructions and the Verse software to reproduce all experimental results reported in the paper.
 
 The admin password of the virtual machine is 
 ```
