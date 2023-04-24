@@ -38,6 +38,8 @@ class BallAgent(BaseAgent):
         number_points = int(np.ceil(time_bound/time_step))
         t = [round(i*time_step, 10) for i in range(0, number_points)]
 
+        if isinstance(initialCondition, np.ndarray):
+            initialCondition = initialCondition.tolist()
         init = initialCondition
         trace = [[0]+init]
         for i in range(len(t)):
