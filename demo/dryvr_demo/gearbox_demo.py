@@ -12,7 +12,7 @@ class AgentMode(Enum):
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/gearbox/sleeve_controller.py'
+    input_code_name = './demo/dryvr_demo/sleeve_controller.py'
     config=ScenarioConfig(init_seg_length=1, parallel=False)
     scenario = Scenario(config=config)
 
@@ -28,7 +28,7 @@ if __name__ == "__main__":
         ]
     )
     start_time = time.time()
-    traces = scenario.verify(.15, 1e-4)
+    traces = scenario.verify(.13, 1e-4)
     run_time = time.time() - start_time
 
     print({

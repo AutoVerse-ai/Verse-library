@@ -25,11 +25,12 @@ expr_list = [
     "DTN",
     "PLA",
     "BRK",
+    "Gear",
     "spacecraft_linear_demo.py",
     "iss_demo.py",
     #"gearbox_demo.py",
-    "heat3d21_demo.py",
-    "heat3d22_demo.py",
+    "heat3d1_demo.py",
+    "heat3d2_demo.py",
 
 ]
 with open('results.csv', 'w', newline='') as csvfile:
@@ -52,16 +53,19 @@ with open('results.csv', 'w', newline='') as csvfile:
 
     for expr in expr_list:
         if expr == "CB" :
-            spamwriter.writerow(["CB", " ", " 0", " ", " "])
+            spamwriter.writerow(["Beam", " ", " 0", " ", " "])
             continue
         if expr == "DTN":
-            spamwriter.writerow(["DTN", " ", " 0", " ", " "])
+            spamwriter.writerow(["Powertrain", " ", " 0", " ", " "])
             continue
         if expr == "PLA":
-            spamwriter.writerow(["PLA", " ", " 0", " ", " "])
+            spamwriter.writerow(["Platoon", " ", " 0", " ", " "])
             continue
         if expr == "BRK":
-            spamwriter.writerow(["BRK", " ", " 0", " ", " "])
+            spamwriter.writerow(["Brake", " ", " 0", " ", " "])
+            continue
+        if expr == "Gear":
+            spamwriter.writerow(["Gear", " ", " 0", " ", " "])
             continue
         cmd = Popen(f"python demo/dryvr_demo/{expr}", stdout=PIPE, stderr=PIPE, shell=True)
         print(f"run '{expr}', pid={cmd.pid}")
