@@ -14,7 +14,7 @@ python3 -m pip install -e .
 To update the dependencies in case anything is missing, requirements.txt can be used.
 
 ```
-pip install -r requirements.txt
+python3 -m pip install -r requirements.txt
 ```
 
 ## Tutorial
