@@ -18,6 +18,11 @@ def rand(start: float, end: float) -> float:
     return random.random() * (end - start) + start
 
 def run(meas=False):
+    if bench.config.sim:
+        bench.scenario.simulator.cache_hits = (0, 0)
+    else:
+        bench.scenario.verifier.tube_cache_hits = (0, 0)
+        bench.scenario.verifier.trans_cache_hits = (0, 0)
     traces = bench.run(60, 0.05)
 
     if bench.config.dump:
@@ -63,7 +68,7 @@ if __name__ == "__main__":
         lane = random.randint(0, map.lanes - 1)
         start, off = (map.size + rand(0, map.length * 0.3), rand(0, map.width) + map.width * lane) if alt_pos == None else alt_pos
         pos = { "N": (-off, start), "S": (off, -start), "W": (-start, -off), "E": (start, off) }[src]
-        init = [*pos, wrap_to_pi(dir * math.pi / 2 + rand(*CAR_THETA_RANGE)), rand(*CAR_SPEED_RANGE), 0]
+        init = [*pos, *((wrap_to_pi(dir * math.pi / 2 + rand(*CAR_THETA_RANGE)), rand(*CAR_SPEED_RANGE)) if alt_pos == None else bench.scenario.init_dict[id][2:4]), 0]
         modes = (AgentMode.Accel, f"{src}{dst}_{lane}")
         bench.scenario.set_init_single(id, (init,), modes)
     car_id = lambda i: f"car{i}"
