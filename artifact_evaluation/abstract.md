@@ -16,17 +16,22 @@ The DOI of the artifact is
 ```
 
 The link to the artifact on Figshare is:
-    https://figshare.com/articles/software/Verse_A_Python_library_for_reasoning_about_multi-agent_hybrid_system_scenarios/22679485
+
+https://figshare.com/articles/software/Verse_A_Python_library_for_reasoning_about_multi-agent_hybrid_system_scenarios/22679485
 
 The link to the artifact on Google drive is: 
-    https://drive.google.com/file/d/1SfABQ1bkFXijCpANfODQAMdvFnBXpw0a/view?usp=sharing
+
+https://drive.google.com/file/d/1SfABQ1bkFXijCpANfODQAMdvFnBXpw0a/view?usp=sharing
 
 A detailed interactive tutorial for verse can be found at:
-    https://github.com/AutoVerse-ai/Verse-library/blob/tutorial/tutorial/Verse_Tutorial_Drone.ipynb
+
+https://github.com/AutoVerse-ai/Verse-library/blob/tutorial/tutorial/Verse_Tutorial_Drone.ipynb
+
 and a PDF version of the tutorial is included in the artifact as "tutorial.pdf".
 
 The tool is publicly available at
-    https://github.com/AutoVerse-ai/Verse-library
+
+https://github.com/AutoVerse-ai/Verse-library
 
 # Artifact SHA
 
