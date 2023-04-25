@@ -28,14 +28,14 @@ if __name__ == "__main__":
         ]
     )
     start_time = time.time()
-    traces = scenario.verify(.13, 1e-4)
+    traces = scenario.verify(.11, 1e-4)
     run_time = time.time() - start_time
 
     print({
         "tool": "verse",
         "benchmark": "Gear",
         "setup": "GRBX01",
-        "result": "1",
+        "result": "0",
         "time": run_time,
         "metric2": 'n/a',
         "metric3": "n/a",
