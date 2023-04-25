@@ -53,7 +53,9 @@ if __name__ == "__main__":
     fig = go.Figure()
     fig = reachtube_tree(traces, None, fig, 0, 3, [0, 3],
                          'lines', 'trace')
-
+    fig.update_layout(
+        xaxis_title="t", yaxis_title="y3"
+    )
     fig.show()
 
     scenario = Scenario()
@@ -159,6 +161,8 @@ if __name__ == "__main__":
     fig = go.Figure()
     fig = reachtube_tree(traces, None, fig, 0, 3, [0, 3],
                          'lines', 'trace')
-
+    fig.update_layout(
+        xaxis_title="t", yaxis_title="y3"
+    )
     fig.show()
 

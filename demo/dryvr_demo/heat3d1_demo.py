@@ -14,7 +14,7 @@ class CraftMode(Enum):
 if __name__ == "__main__":
     input_code_name = './demo/dryvr_demo/heat3d1_controller.py'
     #scenario = Scenario()
-    scenario = Scenario(ScenarioConfig(init_seg_length=1))
+    scenario = Scenario()
 
 
     car = heat3d1_agent('test', file_name=input_code_name)
@@ -33,7 +33,7 @@ if __name__ == "__main__":
 
     start_time = time.time()
 
-    traces = scenario.verify(40, 0.02)
+    traces = scenario.verify(40, 0.02, params = {"sim_trace_num":100})
     run_time = time.time() - start_time
 
     print({
@@ -48,11 +48,14 @@ if __name__ == "__main__":
     fig = go.Figure()
     fig = reachtube_tree(traces, None, fig, 0, 63, [0, 63],
                          'lines', 'trace')
-    fig.add_trace(go.Scatter(x=[
-            1+0.157,1+0.033,1+-0.033,1+-0.157,1+-0.157,1+-0.033,1+0.033,1+0.157,1+0.157
-        ],
-        y=[
-            1+0.033,1+0.157,1+0.157,1+0.033,1+-0.033,1+-0.157,1+-0.157,1+-0.033,1+0.033
-        ]
-    ))
+    # fig.add_trace(go.Scatter(x=[
+    #         1+0.157,1+0.033,1+-0.033,1+-0.157,1+-0.157,1+-0.033,1+0.033,1+0.157,1+0.157
+    #     ],
+    #     y=[
+    #         1+0.033,1+0.157,1+0.157,1+0.033,1+-0.033,1+-0.157,1+-0.157,1+-0.033,1+0.033
+    #     ]
+    # ))
+    fig.update_layout(
+        xaxis_title="t", yaxis_title="x62"
+    )
     fig.show()

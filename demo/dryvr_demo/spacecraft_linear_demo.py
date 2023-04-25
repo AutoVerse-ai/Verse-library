@@ -55,6 +55,9 @@ if __name__ == "__main__":
     fig = go.Figure()
     fig = reachtube_tree(traces, None, fig, 1, 2, [1, 2],
                          'lines', 'trace')
+    fig.update_layout(
+        xaxis_title="x", yaxis_title="y"
+    )
 
     fig.show()
 
@@ -93,7 +96,9 @@ if __name__ == "__main__":
     fig = go.Figure()
     fig = reachtube_tree(traces, None, fig, 1, 2, [1, 2],
                          'lines', 'trace')
-
+    fig.update_layout(
+        xaxis_title="x", yaxis_title="y"
+    )
     fig.show()
 
 

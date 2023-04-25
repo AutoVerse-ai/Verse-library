@@ -14,7 +14,7 @@ class CraftMode(Enum):
 if __name__ == "__main__":
     input_code_name = './demo/dryvr_demo/heat3d2_controller.py'
     scenario = Scenario()
-    #scenario = Scenario(ScenarioConfig(init_seg_length=1))
+    scenario = Scenario(ScenarioConfig(parallel=False))
 
 
     car = heat3d2_agent('test', file_name=input_code_name)
@@ -33,7 +33,7 @@ if __name__ == "__main__":
 
     start_time = time.time()
 
-    traces = scenario.verify(40, 0.02)
+    traces = scenario.verify(40, 0.02, params = {"sim_trace_num":100})
     run_time = time.time() - start_time
 
     print({
