@@ -25,7 +25,6 @@ expr_list = [
     "DTN",
     "PLA",
     "BRK",
-    "Gear",
     "spacecraft_linear_demo.py",
     "iss_demo.py",
     "gearbox_demo.py",
