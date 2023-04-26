@@ -8029,7 +8029,9 @@ class heat3d3_agent(BaseAgent):
         #     trace.append([t[i] + time_step] + init)
         # return np.array(trace)
         t_span = [0, time_bound]
-        res = solve_ivp(self.dynamic, t_span = t_span, y0 = initialCondition, method='Radau', t_eval=t, rtol=4e-14, atol=1e-12)
+        #res = solve_ivp(self.dynamic, t_span = t_span, y0 = initialCondition, method='Radau', t_eval=t, rtol=4e-14, atol=1e-12)
+        res = solve_ivp(self.dynamic_free, t_span=t_span, y0=initialCondition, method='RK45', t_eval=t)
+
         trace = np.vstack((res.t, res.y)).T
         return trace
 
