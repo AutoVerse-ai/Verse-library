@@ -56,6 +56,8 @@ if __name__ == "__main__":
     fig.update_layout(
         xaxis_title="t", yaxis_title="y3"
     )
+    fig.update_xaxes(
+        range=[0,20])
     fig.show()
 
     scenario = Scenario()
@@ -164,5 +166,6 @@ if __name__ == "__main__":
     fig.update_layout(
         xaxis_title="t", yaxis_title="y3"
     )
+
     fig.show()
 

@@ -58,4 +58,6 @@ if __name__ == "__main__":
     fig.update_layout(
         xaxis_title="t", yaxis_title="x62"
     )
+    fig.update_xaxes(
+        range=[0,40])
     fig.show()
