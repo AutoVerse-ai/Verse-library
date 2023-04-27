@@ -1,4 +1,5 @@
-This is the repeatability evaluation package for the tool paper entitled "Verse: A Python library for reasoning about multi-agent hybrid system scenarios", by Yangge Li, Haoqing Zhu, Katherine Braught, Keyi Shen, Sayan Mitra, which is going to appear in the proceedings of the 35th International Conference on Computer Aided Verification, 2023.
+This is the repeatability evaluation package for the tool paper entitled "Verse: A Python library for reasoning about multi-agent hybrid system scenarios", 
+by Yangge Li, Haoqing Zhu, Katherine Braught, Keyi Shen, Sayan Mitra, which is going to appear in the proceedings of the 35th International Conference on Computer Aided Verification, 2023.
 
 The artifact is a virtual machine that contains instruction and software to reproduce all experiment results in the paper.
 
@@ -24,11 +25,8 @@ Public url:https://github.com/AutoVerse-ai/Verse-library
 
 ###########################
 
-The run-time for regenerating data in Table 1 in the paper is approximately 1187.6s (~20min).
-
-The run-time for regenerating data in Simulation section of Table 2 in the paper is approximately 120.5 (~2min).
-
-The run-time for regenerating data in Reach section of Table 2 in the paper is approximately 1573s (~26min).
+The running time for the experiments may differ based on the configuration state of the host machine. 
+In our experiments, the time required to generate Table 1, Table 2 (Simulations) and Table 2 (Verification) were approximately 20 mins, 3 mins, and 26 mins.
 
 ###########################
 
@@ -38,8 +36,7 @@ To replicate the experiments in the paper, fist move to the root directory of th
 To replicate our experiments from the paper, please run following commands from the root directory of the artifact. 
 1. For results in Table 1 Run command 
     python3 artifact_evaluation/exprs.py 
-The results for all experiments in Table 1 will be generated as below at the end of execution. 
-    2 & Q & M6 & DryVR & No & 8 & 53.82\\
+The script generates the raw data from all the experiments about running time, memory usage, cache hits, etc., and then produces the output LaTeX table code for Table 1, as below:     2 & Q & M6 & DryVR & No & 8 & 53.82\\
     2 & Q & M5 & DryVR & No & 5 & 17.76\\
     2 & Q & M5 & NeuReach & No & 5 & 475.47\\
     3 & Q & M5 & DryVR & No & 7 & 38.26\\
@@ -59,7 +56,7 @@ The results for all experiments in Table 1 will be generated as below at the end
         & change init & 24 & 14.93 & 431 & 12.98 & 436 & 4.07 & 75.91 \\
         & change ctlr & 45 & 16.1 & 431 & 8.49 & 438 & 4.38 & 78.19 \\
 
-    Reach: Run command 
+    Verification: Run command 
         python3 artifact_evaluation/inc-expr.py v 
     The results for the experiments in Table 2 section Verification will be generated as below at the end of execution
         & repeat & 105 & 464.77 & 498 & 58.99 & 482 & 3.23 & 76.79 \\
