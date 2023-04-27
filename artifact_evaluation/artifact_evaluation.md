@@ -1,38 +1,23 @@
-This is the repeatability evaluation package for the tool paper "Verse: A Python library for reasoning about multi-agent hybrid system scenarios". 
+This is the repeatability evaluation package for the tool paper entitled "Verse: A Python library for reasoning about multi-agent hybrid system scenarios", by Yangge Li, Haoqing Zhu, Katherine Braught, Keyi Shen, Sayan Mitra, which is going to appear in the proceedings of the 35th International Conference on Computer Aided Verification, 2023.
 
 The artifact is a virtual machine that contains instruction and software to reproduce all experiment results in the paper.
 
-The admin password of the artifact is <code>cav2023-re</code>
+Password forartifact VM:<code>cav2023-re</code>
+DOI: 10.6084/m9.figshare.22679485
 
-The <code>artifact_evaluation.txt</code> file contains instruction to reproduce all experiments in the paper. A PDF version of the file can be found in <code>artifact_evaluation.pdf</code>.
+Instructions for reproducing experiments in the paper:
+<code>artifact_evaluation.txt</code>
+<code>artifact_evaluation.md</code>
+<code>artifact_evaluation.pdf</code>
 
-
-# Artifact Link
-
-The DOI of the artifact is 
-
-10.6084/m9.figshare.22679485
-
-
-The link to the artifact on Figshare is:
-
+Alternative urls for download: 
 https://figshare.com/articles/software/Verse_A_Python_library_for_reasoning_about_multi-agent_hybrid_system_scenarios/22679485
-
-
-The link to the artifact on Google drive is: 
-
 https://drive.google.com/file/d/1SfABQ1bkFXijCpANfODQAMdvFnBXpw0a/view?usp=sharing
 
+Interactive tutorial (Jupytr notebook): https://github.com/AutoVerse-ai/Verse-library/blob/main/tutorial/tutorial.ipynb
+Tutorial (pdf):https://github.com/AutoVerse-ai/Verse-library/blob/main/tutorial/tutorial.pdf
 
-A detailed interactive tutorial for verse can be found at:
-
-https://github.com/AutoVerse-ai/Verse-library/blob/main/tutorial/tutorial.ipynb
-
-and a PDF version of the tutorial is included in the artifact as "tutorial.pdf".
-
-The tool is publicly available at
-
-https://github.com/AutoVerse-ai/Verse-library
+Public url:https://github.com/AutoVerse-ai/Verse-library
 
 # Estimated Runtime
 
