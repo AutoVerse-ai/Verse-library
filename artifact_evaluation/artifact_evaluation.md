@@ -1,3 +1,5 @@
+# Overview 
+
 This is the repeatability evaluation package for the tool paper entitled "Verse: A Python library for reasoning about multi-agent hybrid system scenarios", by Yangge Li, Haoqing Zhu, Katherine Braught, Keyi Shen, Sayan Mitra, which is going to appear in the proceedings of the 35th International Conference on Computer Aided Verification, 2023.
 
 The artifact is a virtual machine that contains instruction and software to reproduce all experiment results in the paper.
@@ -19,26 +21,25 @@ Tutorial (pdf):https://github.com/AutoVerse-ai/Verse-library/blob/main/tutorial/
 
 Public url:https://github.com/AutoVerse-ai/Verse-library
 
-# Estimated Runtime
+# Approximate Running Time for Experiments
 
-The run-time for regenerating data in Table 1 in the paper is approximately 1187.6s (~20min).
+Regenerating the data in Table 1 of the paper takes about 1187.6 seconds (~20 mins).
 
-The run-time for regenerating data in Simulation section of Table 2 in the paper is approximately 174s (~3min).
+Regenerating Table 2 (Simulation part) takes about 174 seconds (~3 mins).
 
-The run-time for regenerating data in Reach section of Table 2 in the paper is approximately 1573s (~26min).
+Regenerating Table 2 (Reachability part) takes about 1573 seconds (~26 mins).
 
-# Experiment Replication Instructions
-To replicate the experiments in the paper, fist move to the root directory of the tool using command 
+# Instructions for Replication Test
+
+0. Move to the root directory of the tool:
 ```
     cd /home/cav23/Desktop/Verse-library
 ```
-
-To replicate our experiments from the paper, please run following commands from the root directory of the artifact. 
-1. For results in Table 1 Run command 
-    ```
-        python3 artifact_evaluation/exprs.py 
-    ```
-    The results for all experiments in Table 1 will be generated as below at the end of execution. 
+1. For results in Table 1 run 
+```
+    python3 artifact_evaluation/exprs.py 
+```
+    The results for all experiments in Table 1 will be generated as below. 
     ```
         2 & Q & M6 & DryVR & No & 8 & 34.54\\
         2 & Q & M5 & DryVR & No & 5 & 31.67\\
@@ -55,7 +56,7 @@ To replicate our experiments from the paper, please run following commands from 
         1 & S & N/A & DryVR & N/A & 3 & 14.7\\
         1 & G & N/A & DryVR & N/A & 3 & 22.99\\
     ```
-    Where each row corresponds to entry in the table from left to right, top to bottom. 
+Each row corresponds to entry in the table from left to right, top to bottom. 
 
 2. For results in Table 2,
    
