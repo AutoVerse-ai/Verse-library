@@ -5,6 +5,8 @@ import re
 from subprocess import PIPE, Popen
 from typing import Tuple, Union
 import csv
+import sys
+
 # import os
 @dataclass
 class ExperimentResult:
@@ -84,6 +86,7 @@ with open('results.csv', 'w', newline='') as csvfile:
             #rslt = ExperimentResult(info["tool"], info["benchmark"], info['setup'], info['result'], info['time'], info['metric2'], info['metric3'])
 
             spamwriter.writerow([info["benchmark"], " "+info['setup'], " "+info['result'], " "+str(info['time'])])
+        print("opps")
 
 
 #for i in range(0, len(rslts)):
