@@ -60,4 +60,4 @@ if __name__ == "__main__":
     )
     fig.update_xaxes(
         range=[0,40])
-    fig.show()
+    #fig.show()

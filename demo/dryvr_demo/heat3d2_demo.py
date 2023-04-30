@@ -48,4 +48,4 @@ if __name__ == "__main__":
     fig = go.Figure()
     fig = reachtube_tree(traces, None, fig, 0, 63, [0, 63],
                          'lines', 'trace')
-    fig.show()
+    #fig.show()

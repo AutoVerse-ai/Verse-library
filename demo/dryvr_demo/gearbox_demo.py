@@ -43,7 +43,7 @@ if __name__ == "__main__":
     traces.dump('./demo/gearbox/output.json')
     fig = go.Figure()
     fig = reachtube_tree(traces, None, fig, 1, 2, [1, 2, 3, 4, 5], 'lines', 'trace', sample_rate=1)
-    fig.show()
+    #fig.show()
 
 
 
@@ -78,4 +78,4 @@ if __name__ == "__main__":
     traces.dump('./demo/gearbox/output.json')
     fig = go.Figure()
     fig = reachtube_tree(traces, None, fig, 1, 2, [1, 2, 3, 4, 5], 'lines', 'trace', sample_rate=1)
-    fig.show()
+    #fig.show()

@@ -28,6 +28,7 @@ expr_list = [
     "PLA",
     "BRK",
     "spacecraft_linear_demo.py",
+    "spacecraft_linear_demo2.py",
     "iss_demo.py",
     "gearbox_demo.py",
     "heat3d1_demo.py",
