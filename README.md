@@ -18,16 +18,19 @@ pip install -r requirements.txt
 ```
 
 ## Tutorial
-A detailed interactive tutorial can be found in ```tutorial/tutorial.ipynb```. The tutorial requires Jupyter notebook to run. A PDF version of the tutorial can be found in ```tutorial.pdf```.
+
+Interactive Jupyter tutorial: ```tutorial/tutorial.ipynb```.  
+PDF tutorial: ```tutorial.pdf```.
 
 ## Demos
-The package comes with several examples in the  ```demo/``` folder. Run these as:
+
+See the examples in the  ```demo/``` folder. Run these as:
 
 ```
 python3 demo/ball/ball_bounces.py 
 ```
 
-Read the comments in ```demo/ball/ball_bounces.py``` to learn how to create new agents and scenarios. More detailed tutorials will be provided later.
+Read the comments in ```demo/ball/ball_bounces.py``` to learn how to create new agents and scenarios. 
 
 ## Using NueReach with Verse
 Verse allows users to plug-in different reachability tools for computing reachable sets. By default, Verse uses DryVR to compute reachable sets. Verse also implement post computation using NeuReach. To use NeuReach, additional dependencies can be downloaded using following commands
@@ -55,3 +58,20 @@ The source code of the package is contained in the verse folder, which contains 
 
 
 - **plotter** contains code for visualizing the computed results
+
+# Contributors
+
+- Katherine Braught
+- Yangge Li
+- Sayan Mitra
+- Keyi Shen
+- Haoqing Zhu
+- Daniel Zhuang
+
+# Publications
+
+<b> [Verse: A Python library for reasoning about multi-agent hybrid system scenarios](https://arxiv.org/abs/2301.08714)</b> 
+Yangge Li, Haoqing Zhu, Katherine Braught, Keyi Shen, Sayan Mitra
+To appear in the proceedings of Computer Aided Verification (CAV),  2023. 
+
+
