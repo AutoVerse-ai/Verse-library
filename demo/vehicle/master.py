@@ -17,11 +17,11 @@ if __name__ == "__main__":
     # output = sys.stdout
     LANES_LIST = [4]
     CAR_NUM_LIST = [9, 10, 12,15]
-    RUN_TIME_LIST = [15, 30, 40, 50]
-    RUN_MODE_LIST = ['blv']
+    RUN_TIME_LIST =[15, 30, 40, 50]
+    RUN_MODE_LIST = ['blv'] #['blv'] #collect setup: b, 3+[i]+[l]
     RANDOM_SEED = 1118    #460, 1118, 1682538796
     alt_car_list = []
-    OUTPUT_FILENAME = "output-v-8cores(1118)(0502)"
+    OUTPUT_FILENAME = "output-blv-clct-(1118)(0504-10:45)"
     
     #First check how many CPU is online
     with open(OUTPUT_FILENAME + ".txt", "a") as f:
@@ -32,7 +32,7 @@ if __name__ == "__main__":
     subprocess.call(["grep", "processor", "/proc/cpuinfo"], stdout=output, stderr=output)
 
     my_env = os.environ.copy()
-    my_env["RAY_PROFILING"] = "1"
+    # my_env["RAY_PROFILING"] = "1"
     for LANE in LANES_LIST:
         for CAR_NUM in CAR_NUM_LIST:
             for RUN_TIME in RUN_TIME_LIST:

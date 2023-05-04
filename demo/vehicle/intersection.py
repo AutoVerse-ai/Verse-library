@@ -1,14 +1,16 @@
 import functools, pprint, random, math
-from typing import Optional, Tuple
+from typing import Dict, Optional, Tuple
 from verse.agents.example_agent import CarAgentDebounced
+from verse.analysis.analysis_tree import AnalysisTree
 from verse.analysis.utils import wrap_to_pi
 from verse.map.example_map.intersection import Intersection
-from verse.scenario.scenario import Benchmark
+from verse.scenario.scenario import Benchmark, Scenario
 pp = functools.partial(pprint.pprint, compact=True, width=130)
 
 from controller.intersection_car import AgentMode
 
-CAR_NUM = 5
+JERK = 0 #0.05
+CAR_NUM = 6
 LANES = 3
 CAR_ACCEL_RANGE = (0.7, 3)
 CAR_SPEED_RANGE = (1, 3)
@@ -21,7 +23,16 @@ class ArgumentDict:
     def add(self, key, value):
         self.dict_internal[key] = value
     def get(self, key, default_value:any=None):
-        return self.dict_internal[key] if key in self.dict_internal.keys() else eval(default_value)
+        return self.dict_internal[key] if key in self.dict_internal.keys() else (eval(default_value) if default_value is not None else None)
+
+def first_transitions(tree: AnalysisTree) -> Dict[str, float]:     # id, start time
+    d = {}
+    for node in tree.nodes:
+        for child in node.child:
+            for aid in node.agent:
+                if aid not in d and node.mode[aid] != child.mode[aid]:
+                    d[aid] = child.start_time
+    return d
 
 def rand(start: float, end: float) -> float:
     return random.random() * (end - start) + start
@@ -50,11 +61,16 @@ def run(meas=False):
 
     if meas:
         bench.report()
+    print(f"agent transition times: {first_transitions(traces)}")
 
 if __name__ == "__main__":
     import sys
     bench = Benchmark(sys.argv)
     ctlr_src = "demo/vehicle/controller/intersection_car.py"
+    alt_ctlr_src = ctlr_src.replace(".py", "_sw5.py") 
+    def swap_dl(scenario: Scenario, id: str):
+        old_agent = scenario.agent_dict[id]
+        scenario.agent_dict[id] = CarAgentDebounced(id, file_name=alt_ctlr_src, speed=old_agent.speed, accel=old_agent.accel)
     import time
     
     arg_dict = ArgumentDict()
@@ -68,7 +84,7 @@ if __name__ == "__main__":
     LANES = int(arg_dict.get("LANES", '4'))
     seed = int(arg_dict.get("SEED", "time.time()"))
     RUN_TIME = int(arg_dict.get("RUN_TIME", "40"))
-    OUTPUT_FILENAME = arg_dict.get("OUTPUT")
+    #OUTPUT_FILENAME = arg_dict.get("OUTPUT")
     
     # if len(sys.argv) >= 3:
     #     seed = int(sys.argv[2])
@@ -100,7 +116,12 @@ if __name__ == "__main__":
         init = [*pos, *((wrap_to_pi(dir * math.pi / 2 + rand(*CAR_THETA_RANGE)), rand(*CAR_SPEED_RANGE)) if alt_pos == None else bench.scenario.init_dict[id][0][2:4]), 0]
         assert len(init) == 5, bench.scenario.init_dict
         modes = (AgentMode.Accel, f"{src}{dst}_{lane}") if alt_pos == None else bench.scenario.init_mode_dict[id]
-        bench.scenario.set_init_single(id, (init,), modes)
+        if not bench.config.sim:
+            def j(st, s):
+                return [st[0] + s * JERK, st[1] + s * JERK, *st[2:]]
+            bench.scenario.set_init_single(id, (j(init, -1), j(init, 1)), modes)
+        else:
+            bench.scenario.set_init_single(id, (init,), modes)
     car_id = lambda i: f"car{i}"
 
     for i in range(CAR_NUM):
