@@ -67,7 +67,7 @@ The source code of the package is contained in the verse folder, which contains 
 - Haoqing Zhu
 - Daniel Zhuang
 
-# Publications related to Verse
+# Related Publications
 
 <b> [Verse: A Python library for reasoning about multi-agent hybrid system scenarios](https://arxiv.org/abs/2301.08714)</b> 
 Yangge Li, Haoqing Zhu, Katherine Braught, Keyi Shen, Sayan Mitra
