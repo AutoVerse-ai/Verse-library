@@ -299,7 +299,7 @@ class Verifier:
         transit_agents = transit_map.keys()
         # pp(("transit agents", transit_agents))
         if config.incremental:
-            transit_ind = max(l[-2][-1] for l in all_possible_transitions) if len(all_possible_transitions) > 0 else len(list(node.trace.values())[0])
+            transit_ind = min(l[-2][-1] for l in all_possible_transitions) if len(all_possible_transitions) > 0 else len(list(node.trace.values())[0])
             for agent_id in node.agent:
                 transition = transit_map[agent_id] if agent_id in transit_agents else []
                 cache_trans_tube_updates.append((agent_id not in cached_trans_tubes, agent_id, transit_agents, transition, transit_ind, consts.run_num))
@@ -525,7 +525,7 @@ class Verifier:
         agent_guard_dict = defaultdict(list)
         cached_guards = defaultdict(list)
         min_trans_ind = None
-        cached_trans = defaultdict(list)
+        cached_trans = []
         agent_dict = node.agent
 
         if not cache:
@@ -603,16 +603,22 @@ class Verifier:
         reduction_rate = 10
         reduction_queue = [(0, trace_length, trace_length)]
         # for idx, end_idx,combine_len in reduction_queue:
+        hits = []
         while reduction_queue:
             idx, end_idx,combine_len = reduction_queue.pop()
             reduction_needed = False
             # print((idx, combine_len))
-            if min_trans_ind != None and idx >= min_trans_ind:
-                return None, cached_trans
             any_contained = False
-            hits = []
             # end_idx = min(idx+combine_len, trace_length)
             state_dict = {aid: (combine_rect(node.trace[aid][idx*2:end_idx*2]), node.mode[aid], node.static[aid]) for aid in node.agent}
+            if min_trans_ind != None and idx > min_trans_ind:
+                if hits:
+                    guard_hits.append((hits, state_dict, idx))
+                    guard_hit = True
+                    break
+                else:
+                    return None, cached_trans
+            hits = []
             
             asserts = defaultdict(list)
             for agent_id in agent_dict.keys():
@@ -754,7 +760,7 @@ class Verifier:
                         possible_transitions.append(transition)
                         # print(transition[4])
         # Return result
-        return None, possible_transitions
+        return None, possible_transitions + cached_trans
 
     @staticmethod
     def apply_cont_var_updater(cont_var_dict, updater):
