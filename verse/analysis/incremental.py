@@ -46,9 +46,13 @@ def to_simulate(old_agents: Dict[str, BaseAgent], new_agents: Dict[str, BaseAgen
     assert set(old_agents.keys()) == set(new_agents.keys())
     new_cache = {}
     total_added_paths = []
-    for agent_id, old_agent in old_agents.items():
+    for agent_id, segment in cached.items():
+        if not segment.transitions:
+            new_cache[agent_id] = segment
+            continue
+        segment = copy.deepcopy(segment)
         removed_paths, added_paths, reset_changed_paths = [], [], []
-        new_agent = new_agents[agent_id]
+        old_agent, new_agent = old_agents[agent_id], new_agents[agent_id]
         old_ctlr, new_ctlr = old_agent.decision_logic, new_agent.decision_logic
         assert old_ctlr.args == new_ctlr.args
         def group_by_var(ctlr: ControllerIR) -> Dict[str, List[ModePath]]:
@@ -69,13 +73,10 @@ def to_simulate(old_agents: Dict[str, BaseAgent], new_agents: Dict[str, BaseAgen
                     added_paths.append(new)
                 elif not ControllerIR.ir_eq(old.val_veri, new.val_veri):
                     reset_changed_paths.append(new)
-        segment = copy.deepcopy(cached[agent_id])
         removed = False
         for trans in segment.transitions:
             for path in trans.paths:
-                for rp in removed_paths:
-                    if rp == path:
-                        removed = True
+                removed = removed or (path in removed_paths)
                 for rcp in reset_changed_paths:
                     if path.cond == rcp.cond:
                         path.val = rcp.val
