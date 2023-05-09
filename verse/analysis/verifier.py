@@ -494,7 +494,7 @@ class Verifier:
                         old_node_id = node_ids[0]
                     # else:
                     #     print(f"not full {node.id}: {node_ids}, {len(cached_trans_tubes) == len(node.agent)} | {all_node_ids}")
-                if not self.config.parallel or old_node_id != None:
+                if not self.config.parallel or (old_node_id != None and self.config.try_local):
                     self.proc_result(*self.compute_full_reachtube_step(self.config, cached_trans_tubes, cached_tubes, node, old_node_id, later, remain_time, consts, max_height, params), max_height)
                 else:
                     self.result_refs.append(self.compute_full_reachtube_step_remote.remote

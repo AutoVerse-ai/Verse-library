@@ -31,6 +31,7 @@ class ScenarioConfig:
     parallel_sim_ahead: int = 8
     parallel_ver_ahead: int = 8
     parallel: bool = True
+    try_local: bool = False
 
 class Scenario:
     def __init__(self, config=ScenarioConfig()):
@@ -242,7 +243,7 @@ class ExprConfig:
     @staticmethod
     def from_arg(a: List[str], **kw) -> "ExprConfig":
         arg = "" if len(a) < 2 else a[1]
-        sconfig = ScenarioConfig(incremental='i' in arg, parallel='l' in arg, **kw)
+        sconfig = ScenarioConfig(incremental='i' in arg, parallel='l' in arg, try_local='t' in arg, **kw)
         cpds = "c" in arg, "p" in arg, "d" in arg, "v" not in arg
         for o in "cilpdv":
             arg = arg.replace(o, "")
