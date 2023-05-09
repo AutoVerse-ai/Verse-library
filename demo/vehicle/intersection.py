@@ -84,6 +84,7 @@ if __name__ == "__main__":
     LANES = int(arg_dict.get("LANES", '4'))
     seed = int(arg_dict.get("SEED", "time.time()"))
     RUN_TIME = int(arg_dict.get("RUN_TIME", "40"))
+    CAR_ID = int(arg_dict.get("CAR_ID", "-1"))
     #OUTPUT_FILENAME = arg_dict.get("OUTPUT")
     
     # if len(sys.argv) >= 3:
@@ -97,7 +98,7 @@ if __name__ == "__main__":
 
     print()
     print("---------------  ", sys.argv[1], "  ---------------")
-    print("seed: %d, CAR_NUM %d, LANES: %d, runtime: %d" %(seed, CAR_NUM, LANES, RUN_TIME))
+    print(f"seed: {seed}, CAR_NUM: {CAR_NUM}, LANES: {LANES}, runtime: {RUN_TIME}, CAR_ID: {CAR_ID}")
     random.seed(seed)
 
     dirs = "WSEN"
@@ -138,14 +139,25 @@ if __name__ == "__main__":
         run()
         set_init(car_id(3), (100, -0.8))
         run(True)
-    elif '3' in bench.config.args:
-        run()
-        old_agent = bench.scenario.agent_dict["car3"]
-        bench.scenario.agent_dict["car3"] = CarAgentDebounced('car3', file_name=ctlr_src.replace(".py", "_sw5.py"),
+    #elif '3' in bench.config.args:
+        # run()
+        # old_agent = bench.scenario.agent_dict["car3"]
+        # bench.scenario.agent_dict["car3"] = CarAgentDebounced('car3', file_name=ctlr_src.replace(".py", "_sw5.py"),
+        #                                                       speed=old_agent.speed, accel=old_agent.accel)
+        # run(True)
+
+    elif CAR_ID >= 0:
+        if 'i' in bench.config.args:    # only run for incremental
+            run()
+        car = f"car{CAR_ID}"
+        old_agent = bench.scenario.agent_dict[car]
+        bench.scenario.agent_dict[car] = CarAgentDebounced(car, file_name=ctlr_src.replace(".py", "_sw5.py"),
                                                               speed=old_agent.speed, accel=old_agent.accel)
         run(True)
     
-    print("seed:", seed)
+    
+    print(f"seed: {seed} \tcar_id: {CAR_ID}")
+    
     # if 'l' in sys.argv[1] and 'v' in sys.argv[1]:
     #     import ray
     #     import datetime
