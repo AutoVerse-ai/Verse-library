@@ -34,7 +34,7 @@ To replicate the experiments in the paper, fist move to the root directory of th
     cd /home/cav23/Desktop/Verse-library
 
 To replicate our experiments from the paper, please run following commands from the root directory of the artifact. 
-1. For results in Table 1 Run command 
+1. For results in Table 1 Run command below. Note that this command only works on Linux machine as it uses linux specific command for automatically collecting data. 
     python3 artifact_evaluation/exprs.py 
 The script generates the raw data from all the experiments about running time, memory usage, cache hits, etc., and then produces the output LaTeX table code for Table 1, as below:     2 & Q & M6 & DryVR & No & 8 & 53.82\\
     2 & Q & M5 & DryVR & No & 5 & 17.76\\
@@ -49,14 +49,14 @@ The script generates the raw data from all the experiments about running time, m
     2 & C & M1 & NeuReach & No & 5 & 585.19\\
 
 2. For results in Table 2,
-    Simulation: Run command 
+    Simulation: Run command below. Note that this command only works on Linux machine as it uses linux specific command for automatically collecting data.
         python3 artifact_evaluation/inc-expr.py s
     The results for the experiments in Table 2 section Simulation will be generated as below at the end of execution
         & repeat & 45 & 16.92 & 430 & 1.05 & 438 & 3.83 & 83.33 \\
         & change init & 24 & 14.93 & 431 & 12.98 & 436 & 4.07 & 75.91 \\
         & change ctlr & 45 & 16.1 & 431 & 8.49 & 438 & 4.38 & 78.19 \\
 
-    Verification: Run command 
+    Verification: Run command below. Note that this command only works on Linux machine as it uses linux specific command for automatically collecting data.
         python3 artifact_evaluation/inc-expr.py v 
     The results for the experiments in Table 2 section Verification will be generated as below at the end of execution
         & repeat & 105 & 464.77 & 498 & 58.99 & 482 & 3.23 & 76.79 \\

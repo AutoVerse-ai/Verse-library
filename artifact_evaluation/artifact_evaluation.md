@@ -30,31 +30,31 @@ The running time for the experiments may differ based on the configuration state
 # Instructions for Replication Test
 
 0. Move to the root directory of the tool:
-```
-    cd /home/cav23/Desktop/Verse-library
-```
+    ```
+        cd /home/cav23/Desktop/Verse-library
+    ```
 1. For results in Table 1 run 
-```
-    python3 artifact_evaluation/exprs.py 
-```
-    The script generates the raw data from all the experiments about running time, memory usage, cache hits, etc., and then produces the output LaTeX table code for Table 1, as below: 
-```
-        2 & Q & M6 & DryVR & No & 8 & 34.54\\
-        2 & Q & M5 & DryVR & No & 5 & 31.67\\
-        2 & Q & M5 & NeuReach & No & 4 & 261.41\\
-        3 & Q & M5 & DryVR & No & 7 & 42.67\\
-        7 & C & M2 & DryVR & No & 37 & 59.95\\
-        3 & C & M1 & DryVR & No & 5 & 26.36\\
-        3 & C & M3 & DryVR & No & 4 & 34.23\\
-        3 & C & M4 & DryVR & No & 7 & 74.02\\
-        3 & C & M1 & DryVR & Yes & 5 & 26.85\\
-        2 & C & M1 & DryVR & No & 5 & 23.0\\
-        2 & C & M1 & NeuReach & No & 5 & 319.34\\
-        1 & V & N/A & DryVR & N/A & 1 & 13.85\\
-        1 & S & N/A & DryVR & N/A & 3 & 14.7\\
-        1 & G & N/A & DryVR & N/A & 3 & 22.99\\
-```
-Each row corresponds to one entry in the table from left to right, top to bottom. 
+    ```
+        python3 artifact_evaluation/exprs.py 
+    ```
+        The script generates the raw data from all the experiments about running time, memory usage, cache hits, etc., and then produces the output LaTeX table code for Table 1, as below: 
+    ```
+            2 & Q & M6 & DryVR & No & 8 & 34.54\\
+            2 & Q & M5 & DryVR & No & 5 & 31.67\\
+            2 & Q & M5 & NeuReach & No & 4 & 261.41\\
+            3 & Q & M5 & DryVR & No & 7 & 42.67\\
+            7 & C & M2 & DryVR & No & 37 & 59.95\\
+            3 & C & M1 & DryVR & No & 5 & 26.36\\
+            3 & C & M3 & DryVR & No & 4 & 34.23\\
+            3 & C & M4 & DryVR & No & 7 & 74.02\\
+            3 & C & M1 & DryVR & Yes & 5 & 26.85\\
+            2 & C & M1 & DryVR & No & 5 & 23.0\\
+            2 & C & M1 & NeuReach & No & 5 & 319.34\\
+            1 & V & N/A & DryVR & N/A & 1 & 13.85\\
+            1 & S & N/A & DryVR & N/A & 3 & 14.7\\
+            1 & G & N/A & DryVR & N/A & 3 & 22.99\\
+    ```
+    Each row corresponds to one entry in the table from left to right, top to bottom. Note that this command only works on Linux machine as it uses linux specific command for automatically collecting data.  
 
 2. For Simulation results in Table 2 run: 
     ```
@@ -68,7 +68,9 @@ Each row corresponds to one entry in the table from left to right, top to bottom
         & change init & 24 & 14.93 & 431 & 12.98 & 436 & 4.07 & 75.91 \\
         & change ctlr & 45 & 16.1 & 431 & 8.49 & 438 & 4.38 & 78.19 \\
     ```
-2b. For Reachability results in Table 2 run: 
+    Note that this command only works on Linux machine as it uses linux specific command for automatically collecting data. 
+
+    For Reachability results in Table 2 run: 
    
     ```
         python3 artifact_evaluation/inc-expr.py v  
@@ -79,7 +81,8 @@ Each row corresponds to one entry in the table from left to right, top to bottom
         & change init & 49 & 384.84 & 486 & 362.25 & 500 & 3.7 & 73.21 \\
         & change ctlr & 93 & 428.83 & 498 & 227.49 & 491 & 4.0 & 73.44 \\
     ```
-
+    Note that this command only works on Linux machine as it uses linux specific command for automatically collecting data. 
+    
 3. To reproduce Fig. 1 <strong>Center</strong> run: 
 
     ```
@@ -110,9 +113,9 @@ Each row corresponds to one entry in the table from left to right, top to bottom
         python3 demo/cav2023/exp9/exp9_dryvr.py pc
     ```
     Verse will automatically open two browser windows to show the two resulting plots as below. Note that the yellow boxes in the figures are drawn separately. 
-    ![Fig. 4 (2)](fig/exp9_2.PNG)
+    ![Fig. 4 (2)](fig/exp9_2.png)
 
-    ![Fig. 4 (3)](fig/exp9_3.PNG)
+    ![Fig. 4 (3)](fig/exp9_3.png)
 
     <strong>(4)</strong> Run command 
     ```
@@ -149,16 +152,16 @@ Each row corresponds to one entry in the table from left to right, top to bottom
         python3 demo/cav2023/exp7/exp7.py p
     ```
     Verse will automatically open two browser windows to show the plots as shown below.
-    ![Fig. 10 Left](fig/exp7_x1.PNG)    
+    ![Fig. 10 Left](fig/exp7_x1.png)    
 
-    ![Fig. 10 Right](fig/exp7_x2.PNG)   
+    ![Fig. 10 Right](fig/exp7_x2.png)   
 
 7. To reproduce Fig. 7 in Appendix, run command 
     ```
         python3 demo/cav2023/exp5/exp5.py p
     ```
     Verse will automatically open a browser window to show the resulting plot. The right figure is a zoom in of the left figure as shown below. 
-    ![Fig. 8](fig/exp5_2.PNG)
+    ![Fig. 8](fig/exp5_2.png)
 
 8. To reproduce Fig. 10 in Appendix, 
     
@@ -167,21 +170,21 @@ Each row corresponds to one entry in the table from left to right, top to bottom
         python3 demo/cav2023/exp6/exp6_neureach.py p
     ```
     Verse will automatically open a browser window to show the resulting plot as shown below. Note that due to the randomization in NeuReach's algorithm, the generated figure can be slightly different from the one included in the paper.
-    ![Fig. 9 Left](fig/exp6_1.PNG)    
+    ![Fig. 9 Left](fig/exp6_1.png)    
 
     <strong>Right</strong>: Run command 
     ```
         python3 demo/cav2023/exp6/exp6_dryvr.py p 
     ```
     Verse will automatically open a browser window to show the resulting plot as shown below. 
-    ![Fig. 9 Right](fig/exp6_2.PNG)    
+    ![Fig. 9 Right](fig/exp6_2.png)    
 
 9. To reproduce Fig. 11 in Appendix, run command 
     ```
         python3 demo/cav2023/exp3/exp3.py p
     ```
     Verse will automatically open a browser window to show the resulting plot as shown below. 
-    ![Fig. 11](fig/exp3.PNG)    
+    ![Fig. 11](fig/exp3.png)    
 
 10. To reproduce Fig. 12 in Appendix, run command 
     <strong>Left</strong>: Run command 
@@ -212,14 +215,14 @@ Each row corresponds to one entry in the table from left to right, top to bottom
         python3 demo/cav2023/exp11/inc-expr.py sbp
     ```
     Verse will automatically open a browser window to show the resulting plot as shown below 
-    ![Fig. 12 Left](fig/expinc_simu.PNG)    
+    ![Fig. 12 Left](fig/expinc_simu.png)    
 
     <strong>Right</strong>: Run command 
     ```
         python3 demo/cav2023/exp11/inc-expr.py vbp
     ```
     Verse will automatically open a browser window to show the resulting plot as below. 
-    ![Fig. 12 Right](fig/expinc_veri.PNG)    
+    ![Fig. 12 Right](fig/expinc_veri.png)    
 
 12. To reproduce Fig. 16 in Appendix 
     <strong>Left</strong>: Run command 
@@ -227,14 +230,14 @@ Each row corresponds to one entry in the table from left to right, top to bottom
         python3 demo/cav2023/exp11/inc-expr.py snp
     ```
     Verse will automatically open a browser window to show the resulting plot as below. Note that the red box in the figure is added seperately.
-    ![Fig. 15 Left](fig/inc_init_simu.PNG)    
+    ![Fig. 15 Left](fig/inc_init_simu.png)    
 
     <strong>Right</strong>: Run command 
     ```
         python3 demo/cav2023/exp11/inc-expr.py vnp
     ```
     Verse will automatically open a browser window to show the resulting plot as below. Note that the red box in the figure is added seperately.
-    ![Fig. 15 Right](fig/inc_init_veri.PNG)    
+    ![Fig. 15 Right](fig/inc_init_veri.png)    
 
 13. To reproduce Fig. 17 in Appendix 
     <strong>Left</strong>: Run command 
@@ -242,11 +245,11 @@ Each row corresponds to one entry in the table from left to right, top to bottom
         python3 demo/cav2023/exp11/inc-expr.py s8p
     ```
     Verse will automatically open a browser window to show the resulting plot as below. Note that the red box in the figure is added seperately.
-    ![Fig. 15 Left](fig/inc_ctrl_simu.PNG)    
+    ![Fig. 15 Left](fig/inc_ctrl_simu.png)    
 
     <strong>Right</strong>: Run command 
     ```
         python3 demo/cav2023/exp11/inc-expr.py v8p
     ```
     Verse will automatically open a browser window to show the resulting plot as below. Note that the red box in the figure is added seperately.
-    ![Fig. 15 Right](fig/inc_ctrl_veri.PNG)    
+    ![Fig. 15 Right](fig/inc_ctrl_veri.png)    
