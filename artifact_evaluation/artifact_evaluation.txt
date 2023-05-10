@@ -118,15 +118,15 @@ Verse will automatically open a browser windows to show the plots.
 
 10. To reproduce Fig. 12 in Appendix, run command 
     Left: Run command 
-        pyhton3 demo/cav2023/exp12/vanderpol_demo2.py p 
+        python3 demo/cav2023/exp12/vanderpol_demo2.py p 
     Verse will automatically open a browser window to show the resulting plot. 
 
     Center: Run command 
-        pyhton3 demo/cav2023/exp12/rendezvous_demo.py p 
+        python3 demo/cav2023/exp12/rendezvous_demo.py p 
     Verse will automatically open a browser window to show the resulting plot. 
 
     Right: Run command 
-        pyhton3 demo/cav2023/exp12/gearbox_demo.py p 
+        python3 demo/cav2023/exp12/gearbox_demo.py p 
     Verse will automatically open a browser window to show the resulting plot. 
 
 

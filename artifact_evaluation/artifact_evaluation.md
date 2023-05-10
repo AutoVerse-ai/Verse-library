@@ -186,21 +186,21 @@ Each row corresponds to one entry in the table from left to right, top to bottom
 10. To reproduce Fig. 12 in Appendix, run command 
     <strong>Left</strong>: Run command 
     ```
-        pyhton3 demo/cav2023/exp12/vanderpol_demo2.py p 
+        python33 demo/cav2023/exp12/vanderpol_demo2.py p 
     ```
     Verse will automatically open a browser window to show the resulting plot as shown below
     ![Fig. 12 Left](fig/exp12_v.png)
 
     <strong>Center</strong>: Run command 
     ```
-        pyhton3 demo/cav2023/exp12/vanderpol_demo2.py p 
+        python33 demo/cav2023/exp12/vanderpol_demo2.py p 
     ```
     Verse will automatically open a browser window to show the resulting plot as shown below
     ![Fig. 12 Center](fig/exp12_r.png)
 
     <strong>Right</strong>: Run command 
     ```
-        pyhton3 demo/cav2023/exp12/vanderpol_demo2.py p 
+        python33 demo/cav2023/exp12/vanderpol_demo2.py p 
     ```
     Verse will automatically open a browser window to show the resulting plot as shown below
     ![Fig. 12 Right](fig/exp12_g.png)
