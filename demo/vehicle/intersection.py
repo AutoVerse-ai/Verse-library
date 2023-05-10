@@ -98,7 +98,7 @@ if __name__ == "__main__":
 
     print()
     print("---------------  ", sys.argv[1], "  ---------------")
-    print(f"seed: {seed}, CAR_NUM: {CAR_NUM}, LANES: {LANES}, runtime: {RUN_TIME}, CAR_ID: {CAR_ID}")
+    print(f"seed: {seed}, LANES: {LANES}, CAR_NUM: {CAR_NUM}, runtime: {RUN_TIME}, CAR_ID: {CAR_ID}")
     random.seed(seed)
 
     dirs = "WSEN"
@@ -147,7 +147,7 @@ if __name__ == "__main__":
         # run(True)
 
     elif CAR_ID >= 0:
-        if 'i' in bench.config.args:    # only run for incremental
+        if bench.scenario.config.incremental:    # only run for incremental
             run()
         car = f"car{CAR_ID}"
         old_agent = bench.scenario.agent_dict[car]
@@ -157,7 +157,7 @@ if __name__ == "__main__":
     
     
     print(f"seed: {seed} \tcar_id: {CAR_ID}")
-    
+    print(bench.scenario.verifier.tube_cache_hits, bench.scenario.verifier.trans_cache_hits)
     # if 'l' in sys.argv[1] and 'v' in sys.argv[1]:
     #     import ray
     #     import datetime

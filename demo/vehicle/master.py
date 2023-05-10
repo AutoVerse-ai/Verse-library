@@ -16,17 +16,22 @@ if __name__ == "__main__":
 
     # output = sys.stdout
     RANDOM_SEED = 1118    #460, 1118, 1682538796
-    LANES_LIST = [2]
-    CAR_NUM_LIST = [25]
-    RUN_TIME_LIST =[13, 20]
-    RUN_MODE_LIST = ['vl','vil'] #['vi', 'vl', 'vil', 'v'] #['bv','blv'] #collect setup: b, 3+[i]+[l]
-    CAR_ID_LIST = [5, 24] # -1 as the 1st element in the list means for exploring transition times
-    #'car5': 1.0, 'car8': 14.6, 'car9': 46.6, 'car6': 48.6
-    #{'car3': 1.0, 'car5': 1.0, 'car24': 12.6, 'car8': 14.6, 'car21': 16.1, 'car19': 39.35}
-    OUTPUT_FILENAME = "output-blv-test-(0509a)" + ".txt"
+    LANES_LIST = [3]
+    CAR_LIST = [20]
+    RUN_TIME_LIST =[20, 30, 40]
+    RUN_MODE_LIST = ['vl', 'vli', 'vi', 'v'] 
+    # ['bv','blv'] for multiple cores + incemental exploring #???collect setup: b, 3+[i]+[l]
+    # ['vi', 'vl', 'vil', 'v'] for incremental
+    # ['vrli'] for repeat
+    CAR_ID_LIST = [8]#[6, 5, 8] # used for changing decision logic
+    # -1 as the 1st element in the list means no need to change decision logic. can be used to explore transition times
+    # some useful transition times
+    # {'car5': 1.0, 'car8': 14.6, 'car9': 46.6, 'car6': 48.6}
+    # {'car3': 1.0, 'car5': 1.0, 'car24': 12.6, 'car8': 14.6, 'car21': 16.1, 'car19': 39.35}
+    OUTPUT_FILENAME = "output-incremental-(0509f)" + ".txt"
     alt_car_list = []
     
-    #First check how many CPU is online
+    # First check how many CPU is online
     with open(OUTPUT_FILENAME, "a") as f:
         print(file=f)
         print("============================", file=f)
@@ -38,24 +43,27 @@ if __name__ == "__main__":
     # my_env["RAY_PROFILING"] = "1"
 
     for LANE in LANES_LIST:
-        for CAR_NUM in CAR_NUM_LIST:
-            for RUN_TIME in RUN_TIME_LIST:
-                for run_mode in RUN_MODE_LIST:
-                    for car_id in CAR_ID_LIST:
+        # if LANE == 4:
+        #     CAR_LIST = [15]
+        #     RUN_TIME_LIST =[18, 20]
+        #     CAR_ID_LIST = [8]
+        # else:
+        #     CAR_LIST = [25]
+        #     RUN_TIME_LIST =[10, 13, 20]
+        #     CAR_ID_LIST = [24]
+        for car in CAR_LIST:
+            for run_time in RUN_TIME_LIST:
+                for car_id in CAR_ID_LIST:
+                    for run_mode in RUN_MODE_LIST:
                         print(datetime.datetime.now(), file=open(OUTPUT_FILENAME, "a"))
-                        subprocess.call(["/usr/bin/time", "-v", "python", "demo/vehicle/intersection.py", run_mode, f"SEED={RANDOM_SEED}", f"CAR_NUM={CAR_NUM}", f"LANES={LANE}", 
-                                    f"RUN_TIME={RUN_TIME}", f"CAR_ID={car_id}", f"OUTPUT={OUTPUT_FILENAME}"], 
+                        # print(LANE, car, run_time, car_id, run_mode)
+                        subprocess.call(["/usr/bin/time", "-v", "python", "demo/vehicle/intersection.py", run_mode, f"SEED={RANDOM_SEED}", f"LANES={LANE}", f"CAR_NUM={car}",  
+                                    f"RUN_TIME={run_time}", f"CAR_ID={car_id}", f"OUTPUT={OUTPUT_FILENAME}"], 
                                     stdout=output, stderr=output, env=my_env)
                         if car_id == -1:
                             break
-    # for LANE in LANES_LIST:
-    #     for CAR_NUM in CAR_NUM_LIST:
-    #         for RUN_TIME in RUN_TIME_LIST:
-    #             for run_mode in RUN_MODE_LIST:
-    #                 print(datetime.datetime.now(), file=open(OUTPUT_FILENAME, "a"))
-    #                 subprocess.call(["/usr/bin/time", "-v", "python", "demo/vehicle/intersection.py", run_mode, f"SEED={RANDOM_SEED}", f"CAR_NUM={CAR_NUM}", f"LANES={LANE}", 
-    #                                 f"RUN_TIME={RUN_TIME}", f"OUTPUT={OUTPUT_FILENAME}"], 
-    #                                 stdout=output, stderr=output, env=my_env)
+                    if car_id == -1:
+                       break
 
     print(datetime.datetime.now(), file=open(OUTPUT_FILENAME, "a"))
     
