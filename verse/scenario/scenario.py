@@ -273,6 +273,7 @@ class Benchmark:
     leaves: int
     _start_time: float
     parallelness: float
+    timesteps: int
 
     def __init__(self, argv: List[str], **kw):
         self.config = ExprConfig.from_arg(argv, **kw)
@@ -281,10 +282,14 @@ class Benchmark:
         self.agent_type = "N/A"
         self.noisy_s = "no"
         self.parallelness = 0
+        self.timesteps = 0
 
     def run(self, *a, **kw)->AnalysisTree:
         f = self.scenario.simulate if self.config.sim else self.scenario.verify
         self.cont_engine = self.scenario.config.reachability_method
+        if len(a) != 2:
+            print(f"\x1b[1;31mWARNING: timesteps field may not work ({a})")
+        self.timesteps = int(a[0] / a[1])
         self._start_time = timeit.default_timer()
         if self.config.sim:
             self.traces = f(*a)
@@ -342,6 +347,7 @@ class Benchmark:
         print("#nodes:", self.num_nodes)
         print("#leaves:", self.leaves)
         print(f"run time: {self.run_time:.2f}s")
+        print(f"timesteps: {self.timesteps}s")
         if self.config.config.parallel:
             print(f"parallelness: {self.parallelness:.2f}")
         if self.config.config.incremental:
