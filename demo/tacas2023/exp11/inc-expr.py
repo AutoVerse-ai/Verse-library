@@ -169,13 +169,13 @@ if __name__ == "__main__":
                 cont_inits = jerks(cont_inits, _jerks)
             bench.scenario.set_init(cont_inits, *mode_inits)
             return run(True)
-        elif '3' in args:
+        elif '1' in args:
             run()
-            bench.scenario.agent_dict["car3"] = CarAgent('car3', file_name=input_code_name.replace(".py", "-fsw7.py"))
+            bench.swap_dl("car3", input_code_name.replace(".py", "-fsw7.py"))
             return run(True)
-        elif '8' in args:
+        elif '2' in args:
             run()
-            bench.scenario.agent_dict["car8"] = CarAgent('car8', file_name=input_code_name.replace(".py", "-fsw4.py"))
+            bench.swap_dl("car8", input_code_name.replace(".py", "-fsw4.py"))
             return run(True)
 
     if not bench.config.compare: 

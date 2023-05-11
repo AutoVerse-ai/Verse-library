@@ -1,7 +1,7 @@
 import functools, pprint, random, math
 from typing import Dict, Optional, Tuple
 from verse.agents.example_agent import CarAgentDebounced
-from verse.analysis.analysis_tree import AnalysisTree
+from verse.analysis.analysis_tree import AnalysisTree, first_transitions
 from verse.analysis.utils import wrap_to_pi
 from verse.map.example_map.intersection import Intersection
 from verse.scenario.scenario import Benchmark, Scenario
@@ -9,7 +9,7 @@ pp = functools.partial(pprint.pprint, compact=True, width=130)
 
 from controller.intersection_car import AgentMode
 
-JERK = 0 #0.05
+JERK = 0
 CAR_NUM = 6
 LANES = 3
 CAR_ACCEL_RANGE = (0.7, 3)
@@ -43,6 +43,8 @@ def run(meas=False):
     else:
         bench.scenario.verifier.tube_cache_hits = (0, 0)
         bench.scenario.verifier.trans_cache_hits = (0, 0)
+    if not meas and not bench.scenario.config.incremental:
+        return
     traces = bench.run(RUN_TIME, 0.05)
 
     if bench.config.dump:
@@ -68,9 +70,6 @@ if __name__ == "__main__":
     bench = Benchmark(sys.argv)
     ctlr_src = "demo/vehicle/controller/intersection_car.py"
     alt_ctlr_src = ctlr_src.replace(".py", "_sw5.py") 
-    def swap_dl(scenario: Scenario, id: str):
-        old_agent = scenario.agent_dict[id]
-        scenario.agent_dict[id] = CarAgentDebounced(id, file_name=alt_ctlr_src, speed=old_agent.speed, accel=old_agent.accel)
     import time
     
     arg_dict = ArgumentDict()
@@ -102,6 +101,8 @@ if __name__ == "__main__":
     random.seed(seed)
 
     dirs = "WSEN"
+    LANES = int(sys.argv[3])
+    CAR_NUM = int(sys.argv[4])
     map = Intersection(lanes=LANES, length=400)
     bench.scenario.set_map(map)
     def set_init(id: str, alt_pos: Optional[Tuple[float, float]] = None):
