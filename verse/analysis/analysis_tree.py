@@ -263,3 +263,12 @@ class AnalysisTree:
             if len(node.child) == 0:
                 count += 1
         return count
+
+def first_transitions(tree: AnalysisTree) -> Dict[str, float]:     # id, start time
+    d = {}
+    for node in tree.nodes:
+        for child in node.child:
+            for aid in node.agent:
+                if aid not in d and node.mode[aid] != child.mode[aid]:
+                    d[aid] = child.start_time
+    return d

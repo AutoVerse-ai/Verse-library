@@ -1,14 +1,15 @@
 import functools, pprint, random, math
-from typing import Optional, Tuple
+from typing import Dict, Optional, Tuple
 from verse.agents.example_agent import CarAgentDebounced
+from verse.analysis.analysis_tree import AnalysisTree, first_transitions
 from verse.analysis.utils import wrap_to_pi
 from verse.map.example_map.intersection import Intersection
-from verse.scenario.scenario import Benchmark
+from verse.scenario.scenario import Benchmark, Scenario
 pp = functools.partial(pprint.pprint, compact=True, width=130)
 
 from controller.intersection_car import AgentMode
 
-JERK = 0.05
+JERK = 0
 CAR_NUM = 6
 LANES = 3
 CAR_ACCEL_RANGE = (0.7, 3)
@@ -24,6 +25,8 @@ def run(meas=False):
     else:
         bench.scenario.verifier.tube_cache_hits = (0, 0)
         bench.scenario.verifier.trans_cache_hits = (0, 0)
+    if not meas and not bench.scenario.config.incremental:
+        return
     traces = bench.run(30, 0.05)
 
     if bench.config.dump:
@@ -42,11 +45,13 @@ def run(meas=False):
 
     if meas:
         bench.report()
+    print(f"agent transition times: {first_transitions(traces)}")
 
 if __name__ == "__main__":
     import sys
     bench = Benchmark(sys.argv)
     ctlr_src = "demo/vehicle/controller/intersection_car.py"
+    alt_ctlr_src = ctlr_src.replace(".py", "_sw5.py") 
     import time
     if len(sys.argv) > 2:
         seed = int(sys.argv[2])
@@ -56,6 +61,8 @@ if __name__ == "__main__":
     random.seed(seed)
 
     dirs = "WSEN"
+    LANES = int(sys.argv[3])
+    CAR_NUM = int(sys.argv[4])
     map = Intersection(lanes=LANES, length=400)
     bench.scenario.set_map(map)
     def set_init(id: str, alt_pos: Optional[Tuple[float, float]] = None):
@@ -79,8 +86,6 @@ if __name__ == "__main__":
             bench.scenario.set_init_single(id, (init,), modes)
     car_id = lambda i: f"car{i}"
 
-    LANES = int(sys.argv[3])
-    CAR_NUM = int(sys.argv[4])
     for i in range(CAR_NUM):
         car = CarAgentDebounced(car_id(i), file_name=ctlr_src, speed=rand(*CAR_SPEED_RANGE), accel=rand(*CAR_ACCEL_RANGE))
         bench.scenario.add_agent(car)
@@ -95,10 +100,12 @@ if __name__ == "__main__":
         run()
         set_init(car_id(3), (100, -0.8))
         run(True)
-    elif '3' in bench.config.args:
+    elif '1' in bench.config.args:
         run()
-        old_agent = bench.scenario.agent_dict["car3"]
-        bench.scenario.agent_dict["car3"] = CarAgentDebounced('car3', file_name=ctlr_src.replace(".py", "_sw5.py"),
-                                                              speed=old_agent.speed, accel=old_agent.accel)
+        bench.swap_dl("car8", alt_ctlr_src)
+        run(True)
+    elif '2' in bench.config.args:
+        run()
+        bench.swap_dl("car6", alt_ctlr_src)
         run(True)
     print("seed:", seed)
