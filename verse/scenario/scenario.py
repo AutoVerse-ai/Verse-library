@@ -7,6 +7,7 @@ from pprint import pp
 from verse.agents.base_agent import BaseAgent
 from verse.analysis import Simulator, Verifier, AnalysisTreeNode, AnalysisTree
 from verse.analysis.utils import dedup, sample_rect
+from verse.parser.parser import ControllerIR
 from verse.sensor.base_sensor import BaseSensor
 from verse.map.lane_map import LaneMap
 
@@ -347,3 +348,6 @@ class Benchmark:
             print(f"cache size: {self.cache_size:.2f}MB")
             print(f"cache hit: {(self.cache_hits[0], self.cache_hits[1])}")
             print(f"cache hit rate: {self.cache_hits[0] / (self.cache_hits[0] + self.cache_hits[1]) * 100:.2f}%")
+
+    def swap_dl(self, id: str, alt_ctlr: str):
+        self.scenario.agent_dict[id].decision_logic = ControllerIR.parse(alt_ctlr)
