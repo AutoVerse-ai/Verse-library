@@ -27,7 +27,7 @@ def run(meas=False):
         bench.scenario.verifier.trans_cache_hits = (0, 0)
     if not meas and not bench.scenario.config.incremental:
         return
-    traces = bench.run(30, 0.05)
+    traces = bench.run(RUN_TIME, TIME_STEP)
 
     if bench.config.dump:
         traces.dump("tree2.json" if meas else "tree1.json") 
@@ -43,8 +43,8 @@ def run(meas=False):
             fig = reachtube_tree(traces, bench.scenario.map, fig, 1, 2, [1, 2], 'lines',combine_rect=5)
         fig.show()
 
-    if meas:
-        bench.report()
+    # if meas:
+    bench.report()
     print(f"agent transition times: {first_transitions(traces)}")
 
 if __name__ == "__main__":
@@ -53,27 +53,27 @@ if __name__ == "__main__":
     ctlr_src = "demo/vehicle/controller/intersection_car.py"
     alt_ctlr_src = ctlr_src.replace(".py", "_sw5.py") 
     import time
-    if len(sys.argv) > 2:
-        seed = int(sys.argv[2])
-    else:
-        seed = int(time.time())
-    print("seed:", seed)
-    random.seed(seed)
+    args = {k: v for k, v in (p.split(":") for p in bench.config.rest[0].split(","))} if len(bench.config.rest) > 0 else {}
 
     dirs = "WSEN"
-    LANES = int(sys.argv[3])
-    CAR_NUM = int(sys.argv[4])
+    LANES = int(args.get("lanes", 3))
+    CAR_NUM = int(args.get("cars", 9))
+    SEED = int(args.get("seed", time.time()))
+    RUN_TIME = float(args.get("time", 60))
+    TIME_STEP = float(args.get("step", 0.05))
+    print(LANES, CAR_NUM, SEED, RUN_TIME, TIME_STEP)
+    random.seed(SEED)
     map = Intersection(lanes=LANES, length=400)
     bench.scenario.set_map(map)
     def set_init(id: str, alt_pos: Optional[Tuple[float, float]] = None):
-        dir = random.randint(0, 2)
+        dir = random.randint(0, 3)
         src = dirs[dir]
         dst_dirs = list(dirs)
         dst_dirs.remove(src)
         dst = dst_dirs[random.randint(0, 2)]
         mid_lane_ind = int(map.lanes / 2 - 1)
         lane = random.randint(mid_lane_ind, mid_lane_ind + 1)
-        start, off = (map.size + rand(0, map.length * 0.1), rand(0, map.width) + map.width * lane)
+        start, off = (map.size + rand(0, map.length * 0.3), rand(0, map.width) + map.width * lane)
         pos = { "N": (-off, start), "S": (off, -start), "W": (-start, -off), "E": (start, off) }[src] if alt_pos == None else alt_pos
         init = [*pos, *((wrap_to_pi(dir * math.pi / 2 + rand(*CAR_THETA_RANGE)), rand(*CAR_SPEED_RANGE)) if alt_pos == None else bench.scenario.init_dict[id][0][2:4]), 0]
         assert len(init) == 5, bench.scenario.init_dict
@@ -108,4 +108,4 @@ if __name__ == "__main__":
         run()
         bench.swap_dl("car6", alt_ctlr_src)
         run(True)
-    print("seed:", seed)
+    print("seed:", SEED)
