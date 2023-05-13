@@ -43,17 +43,18 @@ def run(meas=False):
             fig = reachtube_tree(traces, bench.scenario.map, fig, 1, 2, [1, 2], 'lines',combine_rect=5)
         fig.show()
 
-    # if meas:
+    if meas and bench.scenario.config.parallel:
+        import ray
+        ray.timeline(f"isect-{SEED}-c{bench.scenario.config.parallel_ver_ahead}-a{CAR_NUM}-l{LANES}-t{RUN_TIME}-s{TIME_STEP}-{int(time.time())}.json")
     bench.report()
     print(f"agent transition times: {first_transitions(traces)}")
 
 if __name__ == "__main__":
     import sys
-    bench = Benchmark(sys.argv)
     ctlr_src = "demo/vehicle/controller/intersection_car.py"
     alt_ctlr_src = ctlr_src.replace(".py", "_sw5.py") 
     import time
-    args = {k: v for k, v in (p.split(":") for p in bench.config.rest[0].split(","))} if len(bench.config.rest) > 0 else {}
+    args = {k: v for k, v in (p.split(":") for p in sys.argv[2].split(","))} if len(sys.argv) > 1 else {}
 
     dirs = "WSEN"
     LANES = int(args.get("lanes", 3))
@@ -61,7 +62,10 @@ if __name__ == "__main__":
     SEED = int(args.get("seed", time.time()))
     RUN_TIME = float(args.get("time", 60))
     TIME_STEP = float(args.get("step", 0.05))
-    print(LANES, CAR_NUM, SEED, RUN_TIME, TIME_STEP)
+    par = int(args.get("par", 8))
+    
+    bench = Benchmark(sys.argv, parallel_sim_ahead=par, parallel_ver_ahead=par)
+    print(LANES, CAR_NUM, SEED, RUN_TIME, TIME_STEP, par)
     random.seed(SEED)
     map = Intersection(lanes=LANES, length=400)
     bench.scenario.set_map(map)
