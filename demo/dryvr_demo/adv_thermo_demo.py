@@ -7,7 +7,7 @@ from verse.scenario.scenario import Benchmark, ScenarioConfig
 from verse.sensor.example_sensor.thermo_sensor import ThermoSensor
 import plotly.graph_objects as go
 from enum import Enum, auto
-import sys
+import sys, time
 
 class ThermoMode(Enum):
     WARM = auto()
@@ -23,7 +23,7 @@ def run(meas=False):
         bench.scenario.verifier.trans_cache_hits = (0, 0)
     if not meas and not bench.scenario.config.incremental:
         return
-    traces = bench.run(3.5, 0.05)
+    traces = bench.run(RUN_TIME, TIME_STEP)
 
     if bench.config.dump:
         traces.dump("tree2.json" if meas else "tree1.json") 
@@ -40,6 +40,15 @@ def run(meas=False):
 
 if __name__ == "__main__":
     input_code_name = './demo/dryvr_demo/adv_thermo_controller.py'
+    args = {k: v for k, v in (p.split(":") for p in sys.argv[2].split(","))} if len(sys.argv) > 1 else {}
+
+    dirs = "WSEN"
+    RUN_TIME = float(args.get("time", 3.5))
+    TIME_STEP = float(args.get("step", 0.05))
+    par = int(args.get("par", 8))
+    
+    bench = Benchmark(sys.argv, parallel_sim_ahead=par, parallel_ver_ahead=par)
+    print(RUN_TIME, TIME_STEP, par)
     bench = Benchmark(sys.argv)
 
     bench.scenario.add_agent(adv_thermo_agent('test', file_name=input_code_name))
@@ -73,4 +82,6 @@ if __name__ == "__main__":
         run()
         bench.swap_dl("test2", input_code_name.replace(".py", "2.py"))
         run(True)
-
+    if bench.scenario.config.parallel:
+        import ray, time
+        ray.timeline(f"adv_thermo_{int(time.time())}.json")
