@@ -498,7 +498,7 @@ class Verifier:
                     self.proc_result(*self.compute_full_reachtube_step(self.config, cached_trans_tubes, cached_tubes, node, old_node_id, later, remain_time, consts, max_height, params), max_height)
                 else:
                     self.result_refs.append(self.compute_full_reachtube_step_remote.remote
-                                (self.config, cached_trans_tubes, cached_tubes, node, old_node_id, later, remain_time, consts, max_height, params))
+                                (self.config, cached_trans_tubes, cached_tubes, node, old_node_id, later, remain_time, consts_ref, max_height, params))
                 if len(self.result_refs) >= self.config.parallel_ver_ahead:
                     wait = True
             elif len(self.result_refs) > 0:
