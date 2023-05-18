@@ -1,7 +1,7 @@
 from verse.plotter.plotter2D import *
 from verse.agents.example_agent.ball_agent import BallAgent
 from verse.map.example_map.simple_map2 import SimpleMap3
-from verse import Scenario
+from verse import Scenario, ScenarioConfig
 from enum import Enum, auto
 import copy
 
@@ -38,7 +38,7 @@ class State:
 def decisionLogic(ego: State):
     '''Computes the possible mode transitions'''
     output = copy.deepcopy(ego)
-    '''TODO: Ego and output variable names should be flexible but 
+    '''TODO: The `ego` variable name should be flexible but 
     currently these are somehow harcoded with the sensor'''
     # Stores the prestate first
     if ego.x < 0:
@@ -72,7 +72,7 @@ if __name__ == "__main__":
             Note that agents are only initialized *in* a scenario, not individually outside a scenario
         5. genetating the simulation traces or computing the reachable states    
     '''
-    bouncingBall = Scenario()
+    bouncingBall = Scenario(ScenarioConfig(parallel=False))     # scenario too small, parallel too slow
     ball_controller = './demo/ball/ball_bounces.py'
     myball1 = BallAgent('red-ball', file_name=ball_controller)
     myball2 = BallAgent('green-ball', file_name=ball_controller)
