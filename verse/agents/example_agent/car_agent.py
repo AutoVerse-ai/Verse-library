@@ -44,21 +44,23 @@ class NPCAgent(BaseAgent):
         a = 0
         return steering, a  
 
-    def TC_simulate(self, mode: Tuple[str], initialCondition, time_bound, time_step, lane_map:LaneMap=None)->TraceType:
+    def TC_simulate(self, mode: Tuple[str], init, time_bound, time_step, lane_map:LaneMap=None)->TraceType:
         time_bound = float(time_bound)
-        number_points = int(np.ceil(time_bound/time_step))
-
-        init = initialCondition
-        trace = np.array([0, *init])
-        for i in range(number_points):
+        num_points = int(np.ceil(time_bound / time_step))
+        trace = np.zeros((num_points + 1, 1 + len(init)))
+        trace[1:, 0] = [round(i*time_step, 10) for i in range(num_points)]
+        trace[0, 1:] = init
+        for i in range(num_points):
             steering, a = self.action_handler(mode, init, lane_map)
             r = ode(self.dynamic)    
             r.set_initial_value(init).set_f_params([steering, a])      
             res:np.ndarray = r.integrate(r.t + time_step)
             init = res.flatten()
-            trace = np.vstack((trace, np.insert(init, 0, time_step * (i + 1))))
-
-        return np.array(trace)
+            if init[3] < 0:
+                init[3] = 0
+            trace[i + 1, 0] = time_step * (i + 1)
+            trace[i + 1, 1:] = init
+        return trace
 
 class CarAgent(BaseAgent):
     def __init__(self, id, code = None, file_name = None, initial_state = None, initial_mode = None, speed: float = 2, accel: float = 1):
@@ -102,13 +104,13 @@ class CarAgent(BaseAgent):
         steering = np.clip(steering, -0.61, 0.61)
         return steering, a  
 
-    def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step, lane_map:LaneMap=None)->TraceType:
+    def TC_simulate(self, mode: List[str], init, time_bound, time_step, lane_map:LaneMap=None)->TraceType:
         time_bound = float(time_bound)
-        number_points = int(np.ceil(time_bound/time_step))
-
-        init = initialCondition
-        trace = np.array([0, *init])
-        for i in range(number_points):
+        num_points = int(np.ceil(time_bound / time_step))
+        trace = np.zeros((num_points + 1, 1 + len(init)))
+        trace[1:, 0] = [round(i*time_step, 10) for i in range(num_points)]
+        trace[0, 1:] = init
+        for i in range(num_points):
             steering, a = self.action_handler(mode, init, lane_map)
             r = ode(self.dynamic)    
             r.set_initial_value(init).set_f_params([steering, a])      
@@ -116,7 +118,8 @@ class CarAgent(BaseAgent):
             init = res.flatten()
             if init[3] < 0:
                 init[3] = 0
-            trace = np.vstack((trace, np.insert(init, 0, time_step * (i + 1))))
+            trace[i + 1, 0] = time_step * (i + 1)
+            trace[i + 1, 1:] = init
         return trace
 
 class WeirdCarAgent(CarAgent):

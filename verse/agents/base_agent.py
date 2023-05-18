@@ -49,7 +49,13 @@ class BaseAgent:
     def set_uncertain_parameter(self, uncertain_param):
         self.uncertain_parameters = copy.deepcopy(uncertain_param)
 
+    @staticmethod
+    def dynamic(t, state, u):
+        raise NotImplementedError()
+
     def TC_simulate(self, mode, initialSet, time_horizon, time_step, map=None):
+        # TODO: P1. Should TC_simulate really be part of the agent definition or should it be something more generic?
+        # TODO: P2. Looks like this should be a global parameter; some config file should be setting this.
         """
         Abstract simulation function
 
@@ -66,16 +72,15 @@ class BaseAgent:
             map: LaneMap, optional
                 Provided if the map is used 
         """
-        time_bound = float(time_horizon)
-        number_points = int(np.ceil(time_bound/time_step))
-        t = [round(i*time_step, 10) for i in range(0, number_points)]
-        # note: digit of time
-        init = initialSet
-        trace = [[0]+init]
-        for i in range(len(t)):
-            r = ode(self.dynamics)
-            r.set_initial_value(init)
+        num_points = int(np.ceil(time_horizon / time_step))
+        trace = np.zeros((num_points + 1, 1 + len(initialSet)))
+        trace[1:, 0] = [round(i*time_step, 10) for i in range(num_points)]
+        trace[0, 1:] = initialSet
+        for i in range(num_points):
+            r = ode(self.dynamic)
+            r.set_initial_value(initialSet)
             res: np.ndarray = r.integrate(r.t + time_step)
-            init = res.flatten().tolist()
-            trace.append([t[i] + time_step] + init)
-        return np.array(trace)
+            initialSet = res.flatten()
+            trace[i + 1, 0] = time_step * (i + 1)
+            trace[i + 1, 1:] = initialSet
+        return trace
