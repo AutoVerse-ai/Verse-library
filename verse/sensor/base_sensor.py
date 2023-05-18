@@ -103,6 +103,7 @@ class BaseSensor():
                             arg_type = arg.typ
                             break 
                     if arg_type is None:
+                        continue
                         raise ValueError(f"Invalid arg for ego")
                     cont_var = agent.decision_logic.state_defs[arg_type].cont
                     disc_var = agent.decision_logic.state_defs[arg_type].disc
@@ -119,6 +120,7 @@ class BaseSensor():
                             arg_type = arg.typ
                             break 
                     if arg_type is None:
+                        continue
                         raise ValueError(f"Invalid arg for others")
                     cont_var = agent.decision_logic.state_defs[arg_type].cont
                     disc_var = agent.decision_logic.state_defs[arg_type].disc
