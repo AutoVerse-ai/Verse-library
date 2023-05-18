@@ -157,6 +157,7 @@ class SimConsts:
     past_runs: List[AnalysisTree]
     sensor: "BaseSensor"
     agent_dict: Dict
+    max_height: float
 
 class Simulator:
     def __init__(self, config):
@@ -267,18 +268,22 @@ class Simulator:
                         next_node_init[agent_idx] = truncated_trace[agent_idx][0][1:].tolist()
 
                 all_transition_paths.append(transition_paths)
-                tmp = AnalysisTreeNode(
-                    trace=next_node_trace,
-                    init=next_node_init,
-                    mode=next_node_mode,
-                    static=next_node_static,
-                    uncertain_param=next_node_uncertain_param,
-                    agent=next_node_agent,
-                    child=[],
-                    start_time=next_node_start_time,
-                    type='simtrace'
-                )
-                next_nodes.append(tmp)
+                if node.height + 1 >= consts.max_height:
+                    print("max depth reached")
+                else:
+                    tmp = AnalysisTreeNode(
+                        height=node.height + 1,
+                        trace=next_node_trace,
+                        init=next_node_init,
+                        mode=next_node_mode,
+                        static=next_node_static,
+                        uncertain_param=next_node_uncertain_param,
+                        agent=next_node_agent,
+                        child=[],
+                        start_time=next_node_start_time,
+                        type='simtrace'
+                    )
+                    next_nodes.append(tmp)
             print(len(next_nodes))
             print(f"node {node.id} dur {timeit.default_timer() - t}")
             return (node.id, later, next_nodes, node.trace, cache_updates)
@@ -342,7 +347,7 @@ class Simulator:
         self.nodes = [root]
         self.num_cached = 0
         # Perform BFS through the simulation tree to loop through all possible transitions
-        consts = SimConsts(time_step, lane_map, run_num, past_runs, sensor, agent_dict)
+        consts = SimConsts(time_step, lane_map, run_num, past_runs, sensor, agent_dict, max_height)
         if self.config.parallel:
             import ray
             consts_ref = ray.put(consts)
@@ -432,9 +437,6 @@ class Simulator:
         # Perform BFS through the simulation tree to loop through all possible transitions
         while simulation_queue != []:
             node: AnalysisTreeNode = simulation_queue.pop(0)
-            if (node.height >= max_height):
-                print("max depth reached")
-                continue
             #continue if we are at the depth limit
 
             pp(("start sim", node.start_time, {a: (*node.mode[a], *node.init[a]) for a in node.mode}))
@@ -514,21 +516,23 @@ class Simulator:
 
                     all_transition_paths.append(transition_paths)
 
-
-                    tmp = AnalysisTreeNode(
-                        trace=next_node_trace,
-                        init=next_node_init,
-                        mode=next_node_mode,
-                        static=next_node_static,
-                        uncertain_param=next_node_uncertain_param,
-                        agent=next_node_agent,
-                        height=node.height + 1,
-                        child=[],
-                        start_time=next_node_start_time,
-                        type='simtrace'
-                    )
-                    node.child.append(tmp)
-                    simulation_queue.append(tmp)
+                    if (node.height + 1 >= max_height):
+                        print("max depth reached")
+                    else:
+                        tmp = AnalysisTreeNode(
+                            trace=next_node_trace,
+                            init=next_node_init,
+                            mode=next_node_mode,
+                            static=next_node_static,
+                            uncertain_param=next_node_uncertain_param,
+                            agent=next_node_agent,
+                            height=node.height + 1,
+                            child=[],
+                            start_time=next_node_start_time,
+                            type='simtrace'
+                        )
+                        node.child.append(tmp)
+                        simulation_queue.append(tmp)
                 # print(red("end sim"))
                 # Put the node in the child of current node. Put the new node in the queue
             #     node.child.append(AnalysisTreeNode(
