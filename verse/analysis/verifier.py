@@ -14,7 +14,7 @@ from verse.analysis.incremental import ReachTubeCache, TubeCache, convert_reach_
 from verse.analysis.incremental import CachedRTTrans, combine_all, reach_trans_suit
 from verse.analysis.utils import dedup
 from verse.map.lane_map import LaneMap
-from verse.parser.parser import find, ModePath
+from verse.parser.parser import find, ModePath, unparse
 from verse.agents.base_agent import BaseAgent
 from verse.automaton import GuardExpressionAst, ResetExpression
 
@@ -202,8 +202,9 @@ class Verifier:
         params = {},
     )-> Tuple[int, int, List[AnalysisTreeNode], Dict[str, TraceType], list]:
         # t = timeit.default_timer()
-        # print(f"node {node.id} start: {t}")
+        print(f"node {node.id} start: {node.start_time}")
         # print(f"node id: {node.id}")
+        print(node.mode)
         cache_trans_tube_updates = []
         cache_tube_updates = []
         if (max_height == None):
@@ -362,6 +363,7 @@ class Verifier:
 
     def proc_result(self, id, later, next_nodes, traces, assert_hits, cache_tube_updates, cache_trans_tube_updates, max_height):
         # t = timeit.default_timer()
+        # print('get id: ', id, self.nodes[id].start_time)
         done_node:AnalysisTreeNode = self.nodes[id]
         done_node.child = next_nodes
         done_node.trace = traces
@@ -741,6 +743,8 @@ class Verifier:
                     dest_mode = node.get_mode(agent, dest)
                     dest_track = node.get_track(agent, dest)
                     if dest_track == track_map.h(src_track, src_mode, dest_mode):
+                        print(agent, src_track, src_mode, dest_mode, '->', dest_track)
+                        # print(unparse(paths[0].cond_veri))
                         possible_transitions.append(transition)
                         # print(transition[4])
         # Return result

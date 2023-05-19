@@ -24,6 +24,15 @@ class State:
     track_mode: TrackMode = TrackMode.none
 
 lane_width = 3
+
+def car_left(ego, others, track_map):
+    return any((-7 < track_map.get_longitudinal_position(other.track_mode, [other.x,other.y]) - track_map.get_longitudinal_position(ego.track_mode, [ego.x,ego.y]) < 7 and \
+                 other.track_mode==track_map.left_lane(ego.track_mode)) for other in others)
+
+def car_right(ego, others, track_map):
+    return any((-7 < track_map.get_longitudinal_position(other.track_mode, [other.x,other.y]) - track_map.get_longitudinal_position(ego.track_mode, [ego.x,ego.y]) < 7 and \
+                 other.track_mode==track_map.right_lane(ego.track_mode)) for other in others)
+
 def cars_ahead(track, ego, others, track_map):
     def car_front(car):
         ego_long = track_map.get_longitudinal_position(track, [ego.x, ego.y])
@@ -41,10 +50,10 @@ def decisionLogic(ego: State, others: List[State], track_map):
     if ego.agent_mode == AgentMode.Accel and cars_front(ego, others, track_map):
         alledged_left_lane = track_map.h(ego.track_mode, ego.agent_mode, AgentMode.SwitchLeft)
         alledged_right_lane = track_map.h(ego.track_mode, ego.agent_mode, AgentMode.SwitchRight)
-        if alledged_left_lane != None:
+        if alledged_left_lane != 'none' and not car_left(ego, others, track_map):
             output.agent_mode = AgentMode.SwitchLeft
             output.track_mode = alledged_left_lane
-        if alledged_right_lane != None:
+        if alledged_right_lane != 'none' and not car_right(ego, others, track_map):
             output.agent_mode = AgentMode.SwitchRight
             output.track_mode = alledged_right_lane
         # else:
@@ -59,6 +68,7 @@ def decisionLogic(ego: State, others: List[State], track_map):
     if ego.agent_mode == AgentMode.SwitchRight and lat_dist <= -lat:
         output.agent_mode = AgentMode.Accel
         output.track_mode = track_map.h(ego.track_mode, ego.agent_mode, AgentMode.Accel)
+
     # if ego.agent_mode == AgentMode.SwitchLeft:
     #     if lat_dist >= lat:
     #         output.agent_mode = AgentMode.Accel
