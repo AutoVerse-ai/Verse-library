@@ -42,7 +42,7 @@ expr_list = [
 rslts = []
 for expr in expr_list:
     # macos cmd
-    cmd = Popen(f"gtime --verbose python3 demo/tacas2023/{expr} cv l", stdout=PIPE, stderr=PIPE, shell=True)
+    cmd = Popen(f"gtime --verbose python3 demo/tacas2023/{expr} l", stdout=PIPE, stderr=PIPE, shell=True)
     # linux cmd
     # cmd = Popen(f"/usr/bin/time -v -- python3 demo/tacas2023/{expr} v", stdout=PIPE, stderr=PIPE, shell=True)
     print(f"run '{expr}', pid={cmd.pid}")
@@ -57,6 +57,7 @@ for expr in expr_list:
         exit(2)
     elif len(filtered_info) == 1:    
         info = eval(filtered_info[0])
+        print(info)
         rslt = ExperimentResult(expr, max_mem, ret, info["#A"], info["A"], info['Map'], info['postCont'], info['Noisy S'], info['# Tr'], info['Run Time'], None, None)
         rslts.append(rslt)
     elif len(filtered_info) == 2:    
@@ -76,7 +77,7 @@ for expr in expr_list:
         print(f"uh oh, var={expr} ret={ret}")
     
 
-pp(rslts)
+# pp(rslts)
 
 for res in rslts:
     if res.duration2 is None:

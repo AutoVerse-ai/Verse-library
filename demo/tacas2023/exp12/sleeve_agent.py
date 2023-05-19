@@ -55,7 +55,7 @@ class sleeve_agent(BaseAgent):
         number_points = int(np.ceil(time_bound/time_step))
         t = [round(i*time_step, 10) for i in range(0, number_points)]
 
-        init = initialCondition
+        init = list(initialCondition)
         trace = [[0]+init]
         for i in range(len(t)):
             if mode[0] == 'Free':

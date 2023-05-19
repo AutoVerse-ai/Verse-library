@@ -16,7 +16,7 @@ if __name__ == "__main__":
     input_code_name = './demo/tacas2023/exp12/vanderpol_controller.py'
     bench = Benchmark(sys.argv)
     bench.agent_type = "V"
-    bench.noisy_s = "No"
+    bench.noisy_s = "N/A"
     car = vanderpol_agent('car1', file_name=input_code_name)
     bench.scenario.add_agent(car)
     # modify mode list input

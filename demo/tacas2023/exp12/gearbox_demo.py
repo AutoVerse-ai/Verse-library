@@ -15,7 +15,7 @@ if __name__ == "__main__":
     input_code_name = './demo/tacas2023/exp12/sleeve_controller.py'
     bench = Benchmark(sys.argv, init_seg_length=1)
     bench.agent_type = "G"
-    bench.noisy_s = "No"
+    bench.noisy_s = "N/A"
 
     car = sleeve_agent('sleeve', file_name=input_code_name)
     bench.scenario.add_agent(car)
