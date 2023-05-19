@@ -405,7 +405,7 @@ class Verifier:
                 last_id = nodes[-1].id
                 for i, node in enumerate(next_nodes):
                     node.id = i + 1 + last_id
-                if node.height <= max_height:
+                if node.height < max_height:
                     verification_queue.extend(next_nodes)
                     nodes.extend(next_nodes)
         self.reachtube_tree = AnalysisTree(root)
