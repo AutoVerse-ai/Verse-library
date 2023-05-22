@@ -70,11 +70,13 @@ if __name__ == "__main__":
     map = Intersection(lanes=LANES, length=400)
     bench.scenario.set_map(map)
     def set_init(id: str, alt_pos: Optional[Tuple[float, float]] = None):
+        # dir = random.randint(0, 2)
         dir = random.randint(0, 3)
         src = dirs[dir]
         dst_dirs = list(dirs)
         dst_dirs.remove(src)
         dst = dst_dirs[random.randint(0, 2)]
+        # dst = dst_dirs[random.randint(0, 1)]
         mid_lane_ind = int(map.lanes / 2 - 1)
         lane = random.randint(mid_lane_ind, mid_lane_ind + 1)
         start, off = (map.size + rand(0, map.length * 0.3), rand(0, map.width) + map.width * lane)

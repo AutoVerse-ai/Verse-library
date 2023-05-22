@@ -1,0 +1,86 @@
+################### python demo/vehicle/intersection.py vlbp lanes:4,cars:20,seed:1118,time:53 <- Use this one
+report:
+#agents: 20
+agent type: N/A
+map name: Intersection
+postCont: DRYVR
+noisy: no
+#nodes: 399
+#leaves: 140
+run time: 2084.80s
+timesteps: 1060s
+parallelness: 7.50
+agent transition times: {'car3': 1.0, 'car5': 1.0, 'car8': 16.45, 'car19': 39.35, 'car6': 51.15, 'car9': 46.6}
+seed: 1118
+
+report:
+#agents: 20
+agent type: N/A
+map name: Intersection
+postCont: DRYVR
+noisy: no
+#nodes: 399
+#leaves: 140
+run time: 13099.84s
+timesteps: 1060s
+agent transition times: {'car3': 1.0, 'car5': 1.0, 'car8': 16.45, 'car19': 39.35, 'car6': 51.15, 'car9': 46.6}
+seed: 1118
+
+################### python demo/vehicle/intersection.py vbp lanes:4,cars:12,seed:1120,time:30 
+report:
+#agents: 12
+agent type: N/A
+map name: Intersection
+postCont: DRYVR
+noisy: no
+#nodes: 67
+#leaves: 18
+run time: 125.03s
+timesteps: 600s
+parallelness: 5.98
+agent transition times: {'car5': 0.95, 'car11': 1.0, 'car9': 21.5}
+seed: 1120
+
+################### python demo/vehicle/intersection.py vbp lanes:4,cars:12,seed:1120,time:35 
+report:
+#agents: 12
+agent type: N/A
+map name: Intersection
+postCont: DRYVR
+noisy: no
+#nodes: 139
+#leaves: 36
+run time: 300.11s
+timesteps: 700s
+parallelness: 6.85
+agent transition times: {'car5': 0.95, 'car11': 1.0, 'car9': 21.5, 'car1': 32.15}
+seed: 1120
+
+################### python demo/vehicle/intersection.py vbp lanes:4,cars:12,seed:1120,time:40 <- use this one, with reduced choice in intersection.py
+report:
+#agents: 12
+agent type: N/A
+map name: Intersection
+postCont: DRYVR
+noisy: no
+#nodes: 589
+#leaves: 225
+run time: 1466.57s
+timesteps: 800s
+parallelness: 7.69
+agent transition times: {'car5': 0.95, 'car11': 1.0, 'car9': 21.5, 'car1': 32.15, 'car10': 36.6}
+seed: 1120
+
+################### python demo/vehicle/intersection.py vbp lanes:4,cars:12,seed:1120,time:40
+report:
+#agents: 12
+agent type: N/A
+map name: Intersection
+postCont: DRYVR
+noisy: no
+#nodes: 589
+#leaves: 225
+run time: 7135.50s
+timesteps: 800s
+agent transition times: {'car5': 0.95, 'car11': 1.0, 'car9': 21.5, 'car1': 32.15, 'car10': 36.6}
+seed: 1120
