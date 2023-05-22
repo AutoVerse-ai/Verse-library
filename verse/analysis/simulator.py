@@ -301,8 +301,6 @@ class Simulator:
             for transition_combination in all_transition_combinations:
                 transition_paths = []
                 next_node_mode = copy.deepcopy(node.mode)
-                next_node_static = copy.deepcopy(node.static)
-                next_node_uncertain_param = copy.deepcopy(node.uncertain_param)
                 next_node_agent = node.agent
                 next_node_start_time = list(truncated_trace.values())[0][0][0]
                 next_node_init = {}
@@ -312,7 +310,6 @@ class Simulator:
                     if dest_mode is None:
                         continue
                     transition_paths.extend(paths)
-                    # next_node = AnalysisTreeNode(trace = {},init={},mode={},agent={}, child = [], start_time = 0)
                     next_node_mode[transit_agent_idx] = dest_mode
                     next_node_init[transit_agent_idx] = next_init
                 for agent_idx in next_node_agent:
@@ -321,16 +318,12 @@ class Simulator:
                         next_node_init[agent_idx] = truncated_trace[agent_idx][0][1:].tolist()
 
                 all_transition_paths.append(transition_paths)
-                tmp = AnalysisTreeNode(
+                tmp = node.new_child(
                     trace=next_node_trace,
                     init=next_node_init,
                     mode=next_node_mode,
-                    static=next_node_static,
-                    uncertain_param=next_node_uncertain_param,
-                    agent=next_node_agent,
-                    child=[],
                     start_time=next_node_start_time,
-                    type="simtrace",
+                    id=-1,
                 )
                 next_nodes.append(tmp)
             # print(len(next_nodes))
@@ -383,11 +376,7 @@ class Simulator:
 
     def simulate(
         self,
-        init_list,
-        init_mode_list,
-        static_list,
-        uncertain_param_list,
-        agent_dict,
+        root: AnalysisTreeNode,
         sensor,
         time_horizon,
         time_step,
@@ -399,35 +388,13 @@ class Simulator:
         # Setup the root of the simulation tree
         if max_height == None:
             max_height = float("inf")
-        root = AnalysisTreeNode(
-            trace={},
-            init={},
-            mode={},
-            static={},
-            uncertain_param={},
-            height=0,
-            agent={},
-            child=[],
-            start_time=0,
-        )
-        for i, agent in enumerate(agent_dict.values()):
-            root.init[agent.id] = init_list[i]
-            root.mode[agent.id] = tuple(
-                elem if isinstance(elem, str) else elem.name for elem in init_mode_list[i]
-            )
-            init_static = [elem.name for elem in static_list[i]]
-            root.static[agent.id] = init_static
-            root.uncertain_param[agent.id] = uncertain_param_list[i]
-            root.agent[agent.id] = agent
-            root.type = "simtrace"
 
-        root.id = 0  # FIXME
         self.simulation_queue: List[Tuple[AnalysisTreeNode, int]] = [(root, 0)]
         self.result_refs = []
         self.nodes = [root]
         self.num_cached = 0
         # Perform BFS through the simulation tree to loop through all possible transitions
-        consts = SimConsts(time_step, lane_map, run_num, past_runs, sensor, agent_dict)
+        consts = SimConsts(time_step, lane_map, run_num, past_runs, sensor, root.agent)
         if self.config.parallel:
             import ray
 
@@ -509,11 +476,7 @@ class Simulator:
 
     def simulate_simple(
         self,
-        init_list,
-        init_mode_list,
-        static_list,
-        uncertain_param_list,
-        agent_list,
+        root: AnalysisTreeNode,
         time_horizon,
         time_step,
         max_height,
@@ -525,26 +488,6 @@ class Simulator:
         # Setup the root of the simulation tree
         if max_height == None:
             max_height = float("inf")
-        root = AnalysisTreeNode(
-            trace={},
-            init={},
-            mode={},
-            static={},
-            uncertain_param={},
-            agent={},
-            height=0,
-            child=[],
-            start_time=0,
-        )
-        for i, agent in enumerate(agent_list):
-            root.init[agent.id] = init_list[i]
-            init_mode = [elem.name for elem in init_mode_list[i]]
-            root.mode[agent.id] = init_mode
-            init_static = [elem.name for elem in static_list[i]]
-            root.static[agent.id] = init_static
-            root.uncertain_param[agent.id] = uncertain_param_list[i]
-            root.agent[agent.id] = agent
-            root.type = "simtrace"
 
         simulation_queue = []
         simulation_queue.append(root)
@@ -618,8 +561,6 @@ class Simulator:
                 for transition_combination in all_transition_combinations:
                     transition_paths = []
                     next_node_mode = copy.deepcopy(node.mode)
-                    next_node_static = copy.deepcopy(node.static)
-                    next_node_uncertain_param = copy.deepcopy(node.uncertain_param)
                     next_node_agent = node.agent
                     next_node_start_time = list(truncated_trace.values())[0][0][0]
                     next_node_init = {}
@@ -629,7 +570,6 @@ class Simulator:
                         if dest_mode is None:
                             continue
                         transition_paths.extend(paths)
-                        # next_node = AnalysisTreeNode(trace = {},init={},mode={},agent={}, child = [], start_time = 0)
                         next_node_mode[transit_agent_idx] = dest_mode
                         next_node_init[transit_agent_idx] = next_init
                     for agent_idx in next_node_agent:
@@ -639,31 +579,17 @@ class Simulator:
 
                     all_transition_paths.append(transition_paths)
 
-                    tmp = AnalysisTreeNode(
+                    tmp = node.new_child(
                         trace=next_node_trace,
                         init=next_node_init,
                         mode=next_node_mode,
-                        static=next_node_static,
-                        uncertain_param=next_node_uncertain_param,
-                        agent=next_node_agent,
-                        height=node.height + 1,
-                        child=[],
                         start_time=next_node_start_time,
-                        type="simtrace",
+                        id=-1,
                     )
                     node.child.append(tmp)
                     simulation_queue.append(tmp)
                 # print(red("end sim"))
                 # Put the node in the child of current node. Put the new node in the queue
-            #     node.child.append(AnalysisTreeNode(
-            #         trace = next_node_trace,
-            #         init = next_node_init,
-            #         mode = next_node_mode,
-            #         agent = next_node_agent,
-            #         child = [],
-            #         start_time = next_node_start_time
-            #     ))
-            # simulation_queue += node.child
         # checkHeight(root, max_height)
 
         self.simulation_tree = AnalysisTree(root)

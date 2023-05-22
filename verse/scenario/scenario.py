@@ -6,6 +6,7 @@ from pprint import pp
 
 from verse.agents.base_agent import BaseAgent
 from verse.analysis import Simulator, Verifier, AnalysisTreeNode, AnalysisTree
+from verse.analysis.analysis_tree import AnalysisTreeNodeType
 from verse.analysis.utils import dedup, sample_rect
 from verse.parser.parser import ControllerIR
 from verse.sensor.base_sensor import BaseSensor
@@ -186,24 +187,20 @@ class Scenario:
     def simulate(self, time_horizon, time_step, max_height=None, seed=None) -> AnalysisTree:
         check_ray_init(self.config.parallel)
         self.check_init()
-        init_list = []
-        init_mode_list = []
-        static_list = []
-        # agent_list = []
-        uncertain_param_list = []
-        for agent_id in self.agent_dict:
-            init_list.append(sample_rect(self.init_dict[agent_id], seed))
-            init_mode_list.append(self.init_mode_dict[agent_id])
-            static_list.append(self.static_dict[agent_id])
-            uncertain_param_list.append(self.uncertain_param_dict[agent_id])
-            # agent_list.append(self.agent_dict[agent_id])
-        # print(init_list)
+        root = AnalysisTreeNode.root_from_inits(
+            init={aid: sample_rect(init, seed) for aid, init in self.init_dict},
+            mode={
+                aid: tuple(elem if isinstance(elem, str) else elem.name for elem in modes)
+                for aid, modes in self.init_mode_dict.items()
+            },
+            static={aid: [elem.name for elem in modes] for aid, modes in self.static_dict.items()},
+            uncertain_param=self.uncertain_param_dict,
+            agent=self.agent_dict,
+            type=AnalysisTreeNodeType.SimTrace,
+            ndigits=10,
+        )
         tree = self.simulator.simulate(
-            init_list,
-            init_mode_list,
-            static_list,
-            uncertain_param_list,
-            self.agent_dict,
+            root,
             self.sensor,
             time_horizon,
             time_step,
@@ -217,24 +214,20 @@ class Scenario:
 
     def simulate_simple(self, time_horizon, time_step, max_height=None, seed=None) -> AnalysisTree:
         self.check_init()
-        init_list = []
-        init_mode_list = []
-        static_list = []
-        agent_list = []
-        uncertain_param_list = []
-        for agent_id in self.agent_dict:
-            init_list.append(sample_rect(self.init_dict[agent_id], seed))
-            init_mode_list.append(self.init_mode_dict[agent_id])
-            static_list.append(self.static_dict[agent_id])
-            uncertain_param_list.append(self.uncertain_param_dict[agent_id])
-            agent_list.append(self.agent_dict[agent_id])
-        print(init_list)
+        root = AnalysisTreeNode.root_from_inits(
+            init={aid: sample_rect(init, seed) for aid, init in self.init_dict},
+            mode={
+                aid: tuple(elem if isinstance(elem, str) else elem.name for elem in modes)
+                for aid, modes in self.init_mode_dict.items()
+            },
+            static={aid: [elem.name for elem in modes] for aid, modes in self.static_dict.items()},
+            uncertain_param=self.uncertain_param_dict,
+            agent=self.agent_dict,
+            type=AnalysisTreeNodeType.SimTrace,
+            ndigits=10,
+        )
         tree = self.simulator.simulate_simple(
-            init_list,
-            init_mode_list,
-            static_list,
-            uncertain_param_list,
-            agent_list,
+            root,
             time_horizon,
             time_step,
             max_height,
@@ -249,28 +242,24 @@ class Scenario:
     def verify(self, time_horizon, time_step, max_height=None, params={}) -> AnalysisTree:
         check_ray_init(self.config.parallel)
         self.check_init()
-        init_list = []
-        init_mode_list = []
-        static_list = []
-        agent_list = []
-        uncertain_param_list = []
-        for agent_id in self.agent_dict:
-            init = self.init_dict[agent_id]
-            tmp = np.array(init)
-            if tmp.ndim < 2:
-                init = [init, init]
-            init_list.append(init)
-            init_mode_list.append(self.init_mode_dict[agent_id])
-            static_list.append(self.static_dict[agent_id])
-            uncertain_param_list.append(self.uncertain_param_dict[agent_id])
-            agent_list.append(self.agent_dict[agent_id])
+        root = AnalysisTreeNode.root_from_inits(
+            init={
+                aid: [init, init] if np.array(init).ndim < 2 else init
+                for aid, init in self.init_dict
+            },
+            mode={
+                aid: tuple(elem if isinstance(elem, str) else elem.name for elem in modes)
+                for aid, modes in self.init_mode_dict.items()
+            },
+            static={aid: [elem.name for elem in modes] for aid, modes in self.static_dict.items()},
+            uncertain_param=self.uncertain_param_dict,
+            agent=self.agent_dict,
+            type=AnalysisTreeNodeType.ReachTube,
+            ndigits=10,
+        )
 
         tree = self.verifier.compute_full_reachtube(
-            init_list,
-            init_mode_list,
-            static_list,
-            uncertain_param_list,
-            self.agent_dict,
+            root,
             self.sensor,
             time_horizon,
             time_step,

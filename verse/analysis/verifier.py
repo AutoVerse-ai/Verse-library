@@ -305,7 +305,7 @@ class Verifier:
         )
         node.assert_hits = asserts
 
-        if asserts != None:
+        if not config.unsafe_continue and asserts != None:
             asserts, idx = asserts
             for agent in node.agent:
                 node.trace[agent] = node.trace[agent][: (idx + 1) * 2]
@@ -390,18 +390,12 @@ class Verifier:
                     # pp(("infer init", agent_idx, next_node_init[agent_idx]))
                     next_node_trace[agent_idx] = truncated_trace[agent_idx]
 
-            tmp = AnalysisTreeNode(
+            tmp = node.new_child(
                 trace=next_node_trace,
                 init=next_node_init,
                 mode=next_node_mode,
-                height=node.height + 1,
-                static=next_node_static,
-                uncertain_param=next_node_uncertain_param,
-                agent=next_node_agent,
-                assert_hits={},
-                child=[],
                 start_time=round(next_node_start_time, 10),
-                type="reachtube",
+                id=-1,
             )
             next_nodes.append(tmp)
 
@@ -485,11 +479,7 @@ class Verifier:
 
     def compute_full_reachtube(
         self,
-        init_list: List[float],
-        init_mode_list: List[str],
-        static_list: List[str],
-        uncertain_param_list: List[float],
-        agent_dict,
+        root: AnalysisTreeNode,
         sensor,
         time_horizon,
         time_step,
@@ -503,29 +493,6 @@ class Verifier:
     ):
         if max_height == None:
             max_height = float("inf")
-        root = AnalysisTreeNode(
-            trace={},
-            init={},
-            mode={},
-            static={},
-            uncertain_param={},
-            agent={},
-            height=0,
-            assert_hits={},
-            child=[],
-            start_time=0,
-            ndigits=10,
-            type="reachtube",
-            id=0,
-        )
-        for i, agent in enumerate(agent_dict.values()):
-            root.init[agent.id] = [init_list[i]]
-            root.mode[agent.id] = [
-                elem if isinstance(elem, str) else elem.name for elem in init_mode_list[i]
-            ]
-            root.static[agent.id] = [elem.name for elem in static_list[i]]
-            root.uncertain_param[agent.id] = uncertain_param_list[i]
-            root.agent[agent.id] = agent
 
         self.verification_queue: List[Tuple[AnalysisTreeNode, int]] = [(root, 0)]
         self.result_refs = []
@@ -541,7 +508,7 @@ class Verifier:
             run_num,
             past_runs,
             sensor,
-            agent_dict,
+            root.agent,
         )
         if self.config.parallel:
             # import ray
