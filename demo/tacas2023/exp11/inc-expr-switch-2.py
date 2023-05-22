@@ -49,7 +49,6 @@ def run(meas=False):
     traces = bench.run(60, 0.1)
 
     if bench.config.dump:
-        traces.dump_tree()
         traces.dump("main.json") 
         traces.dump("tree2.json" if meas else "tree1.json") 
 
