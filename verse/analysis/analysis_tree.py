@@ -1,6 +1,6 @@
 from functools import reduce
 import pickle
-from typing import Iterable, List, Dict, Any, Optional, Tuple, TypeVar
+from typing import Iterable, List, Dict, Any, Optional, Tuple, TypeVar, Literal
 import json
 from treelib import Tree
 import numpy.typing as nptyp, numpy as np, portion
@@ -8,7 +8,8 @@ import numpy.typing as nptyp, numpy as np, portion
 from verse.analysis.dryvr import _EPSILON
 
 import networkx as nx
-import matplotlib.pyplot as plt
+import matplotlib as mpl, matplotlib.pyplot as plt
+import graphviz
 
 TraceType = nptyp.NDArray[np.float_]
 
@@ -113,6 +114,9 @@ class AnalysisTreeNode:
             type = data['type'],
         )
 
+def color_interp(c1: str, c2: str, mix: float) -> str:
+    return mpl.colors.to_hex((1 - mix) * np.array(mpl.colors.to_rgb(c1)) + mix * np.array(mpl.colors.to_rgb(c2)))
+
 class AnalysisTree:
     def __init__(self, root):
         self.root:AnalysisTreeNode = root
@@ -181,6 +185,7 @@ class AnalysisTree:
             nid = AnalysisTree._dump_tree(child, tree, id, nid)
         return nid + 1
 
+    # TODO Generalize to different timesteps
     def contains(self, other: "AnalysisTree", strict: bool = True, tol: Optional[float] = None) -> bool:
         """
         Returns, for reachability, whether the current tree fully contains the other tree or not;
@@ -243,7 +248,16 @@ class AnalysisTree:
             # bloat and containment
             return all(other_tree[aid][i][j] in this_tree[aid][i][j].apply(lambda x: x.replace(lower=lambda v: v - tol, upper=lambda v: v + tol)) for aid in other_agents for i in range(total_len) for j in range(cont_num))
 
+    @staticmethod
+    def _get_len(node: AnalysisTreeNode, lens: Dict[int, int]) -> int:
+        res = len(next(iter(node.trace.values()))) + (0 if len(node.child) == 0 else max(AnalysisTree._get_len(c, lens) for c in node.child))
+        lens[node.id] = res
+        return res
+
     def visualize(self):
+        lens = {}
+        total_len = AnalysisTree._get_len(self.root, lens)
+        gradient = lambda id: color_interp("red", "blue", lens[id] / total_len)
         G = nx.Graph()
         for node in self.nodes:
             G.add_node(node.id,time=(node.id,node.start_time))
@@ -251,8 +265,32 @@ class AnalysisTree:
                 G.add_node(child.id,time=(child.id,child.start_time))
                 G.add_edge(node.id, child.id)
         labels = nx.get_node_attributes(G, 'time') 
-        nx.draw_planar(G,labels=labels)
+        colors = [gradient(id) for id in G]
+        nx.draw_planar(G, node_color=colors, labels=labels)
         plt.show()
+
+    def visualize_dot(self, filename: str, otype: Literal["png", "svg", "pdf", "jpg"] = "png", font: Optional[str] = None):
+        """
+        `filename` is the prefix, i.e. doesn't include extensions. `filename.dot` will be saved as well as `filename.png`
+        """
+        def diff(a: AnalysisTreeNode, b: AnalysisTreeNode) -> List[str]:
+            return [aid for aid in a.agent if a.mode[aid] != b.mode[aid]]
+        lens = {}
+        total_len = AnalysisTree._get_len(self.root, lens)
+        gradient = lambda id: color_interp("red", "blue", lens[id] / total_len)
+        graph = graphviz.Digraph()
+        for node in self.nodes:
+            tooltip = "\n".join(f"{aid}: {[*node.mode[aid], *node.init[aid]]}" for aid in node.agent)
+            graph.node(str(node.id), label=str(node.id), color=gradient(node.id), tooltip=tooltip)
+            for c in node.child:
+                d = diff(node, c)
+                tooltip = "\n".join(f"{aid}: {node.mode[aid]} -> {c.mode[aid]}" for aid in d)
+                graph.edge(str(node.id), str(c.id), label=", ".join(d), tooltip=tooltip)
+        if font != None:
+            graph.node_attr.update(fontname=font)
+            graph.edge_attr.update(fontname=font)
+            graph.graph_attr.update(fontname=font)
+        graph.render(filename + ".dot", format=otype, outfile=filename + "." + otype, engine="twopi")
 
     def is_equal(self, other:"AnalysisTree"):
         return self.contains(other) and other.contains(self)

@@ -48,6 +48,7 @@ setup(
         "z3-solver~=4.8.17.0",
         "treelib~=1.6.1",
         "portion~=2.3.1",
+        "graphviz~=0.20",
     ],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
