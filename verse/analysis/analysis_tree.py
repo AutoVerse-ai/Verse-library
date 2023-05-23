@@ -1,6 +1,6 @@
 from functools import reduce
 import pickle
-from typing import List, Dict, Any, Optional, Tuple
+from typing import Iterable, List, Dict, Any, Optional, Tuple, TypeVar
 import json
 from treelib import Tree
 import numpy.typing as nptyp, numpy as np, portion
@@ -11,6 +11,14 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 TraceType = nptyp.NDArray[np.float_]
+
+T = TypeVar("T")
+
+def index_of(l: Iterable[T], item: T) -> Optional[int]:
+    for i, v in enumerate(l):
+        if v == item:
+            return i
+    return None
 
 class AnalysisTreeNode:
     """AnalysisTreeNode class
@@ -72,26 +80,22 @@ class AnalysisTreeNode:
         return rst_dict
 
     def get_track(self, agent_id, D):
-        if 'TrackMode' not in self.agent[agent_id].decision_logic.mode_defs:
-            return ""
-        for d in D:
-            if d in self.agent[agent_id].decision_logic.mode_defs['TrackMode'].modes:
-                return d
-        return ""
+        mode_def_names = list(self.agent[agent_id].decision_logic.state_defs.values())[0].disc_type
+        track_mode_ind = index_of(mode_def_names, "TrackMode")
+        if track_mode_ind == None:
+            return None
+        return D[track_mode_ind]
 
     def get_mode(self, agent_id, D):
-        res = []
-        if 'TrackMode' not in self.agent[agent_id].decision_logic.mode_defs:
+        mode_def_names = list(self.agent[agent_id].decision_logic.state_defs.values())[0].disc_type
+        track_mode_ind = index_of(mode_def_names, "TrackMode")
+        if track_mode_ind == None:
             if len(D)==1:
                 return D[0]
             return D
-        for d in D:
-            if d not in self.agent[agent_id].decision_logic.mode_defs['TrackMode'].modes:
-                res.append(d)
-        if len(res) == 1:
-            return res[0]
-        else:
-            return tuple(res)
+        if len(mode_def_names) == 2:
+            return D[1 - track_mode_ind]
+        return tuple(v for i, v in enumerate(D) if i != track_mode_ind)
             
     @staticmethod
     def from_dict(data) -> "AnalysisTreeNode":
@@ -213,20 +217,29 @@ class AnalysisTree:
                 return True
             return sim_node_contains(self.root, other.root)
         else:                                       # Reachability
-            cont_num = len(other.nodes[0].trace[min_agents[0]][0]) - 1
+            cont_num = len(other.nodes[0].trace[min_agents[0]][0]) 
             def collect_ranges(n: AnalysisTreeNode) -> Dict[str, List[List[portion.Interval]]]:
                 trace_len = len(n.trace[min_agents[0]])
-                cur = {aid: [[portion.closed(n.trace[aid][i][j + 1], n.trace[aid][i + 1][j + 1]) for j in range(cont_num)] for i in range(trace_len)] for aid in min_agents}
+                cur = {aid: [[portion.closed(n.trace[aid][i][j], n.trace[aid][i + 1][j]) for j in range(cont_num)] for i in range(0, trace_len, 2)] for aid in min_agents}
                 if len(n.child) == 0:
-                    return cur
+                    return {aid: cur[aid] for aid in other_agents}
                 else:
                     children = [collect_ranges(c) for c in n.child]
                     child_num = len(children)
-                    trace_len = len(children[min_agents[0]][0])
-                    combined = {aid: [[reduce(portion.Interval.union, (children[i][aid][j][k] for k in range(child_num))) for j in range(cont_num)] for i in range(trace_len)] for aid in other_agents}
-                    return {aid: cur[aid] + combined[aid] for aid in other_agents}
+                    time_step = round(n.trace[min_agents[0]][-1][0] - n.trace[min_agents[0]][-2][0], 10)
+                    start_time_list = [c.start_time for c in n.child]
+                    min_start_time = min(start_time_list)
+                    bias_list = [round((c.start_time-min_start_time) / time_step) for c in n.child]
+                    trace_len_list = [len(children[i][min_agents[0]]) for i in range(child_num)]
+                    trace_len = max(trace_len_list)
+                    combined = {aid: [[reduce(portion.Interval.union, (children[k][aid][i - bias_list[k]][j] if i - bias_list[k] >= 0 and i - bias_list[k] < trace_len_list[k] else portion.empty() for k in range(child_num))) for j in range(cont_num)] for i in range(trace_len)] for aid in other_agents}
+                    # combined = {aid: [[reduce(portion.Interval.union, (children[k][aid][i][j] if i < trace_len_list[k] else portion.empty() for k in range(child_num))) for j in range(cont_num)] for i in range(trace_len)] for aid in other_agents}
+                    overlap_len = round((n.trace[min_agents[0]][-1][0] - min_start_time) / time_step)
+                    overlap = {aid:[[portion.Interval.union(cur[aid][i][j], combined[aid][overlap_len+i][j]) for j in range(cont_num)]for i in range(-overlap_len, 0)] for aid in other_agents}
+                    return {aid: cur[aid][:-overlap_len] + overlap[aid]+ combined[aid][overlap_len:] for aid in other_agents}
             this_tree, other_tree = collect_ranges(self.root), collect_ranges(other.root)
             total_len = len(other_tree[min_agents[0]])
+            assert total_len <= len(this_tree[min_agents[0]])
             # bloat and containment
             return all(other_tree[aid][i][j] in this_tree[aid][i][j].apply(lambda x: x.replace(lower=lambda v: v - tol, upper=lambda v: v + tol)) for aid in other_agents for i in range(total_len) for j in range(cont_num))
 
@@ -240,3 +253,22 @@ class AnalysisTree:
         labels = nx.get_node_attributes(G, 'time') 
         nx.draw_planar(G,labels=labels)
         plt.show()
+
+    def is_equal(self, other:"AnalysisTree"):
+        return self.contains(other) and other.contains(self)
+
+    def leaves(self) -> int:
+        count = 0
+        for node in self.nodes:
+            if len(node.child) == 0:
+                count += 1
+        return count
+
+def first_transitions(tree: AnalysisTree) -> Dict[str, float]:     # id, start time
+    d = {}
+    for node in tree.nodes:
+        for child in node.child:
+            for aid in node.agent:
+                if aid not in d and node.mode[aid] != child.mode[aid]:
+                    d[aid] = child.start_time
+    return d

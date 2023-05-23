@@ -66,16 +66,18 @@ class Intersection(LaneMap):
             ("WE", "WR", "WER", "EL"),
             ("EW", "ER", "WEL", "WL"),
         ]
-        self.add_lanes([Lane(f"{straight[0]}.{i}", [segs[seg + str(i)] for seg in straight[1:]]) for straight in straights for i in range(lanes)])
+        self.add_lanes([Lane(f"{straight[0]}_{i}", [segs[seg + str(i)] for seg in straight[1:]]) for straight in straights for i in range(lanes)])
         # curve
         curves = ["NWI", "NEO", "WNO", "ENI", "SWO", "SEI", "WSI", "ESO"]
-        self.add_lanes([Lane(f"{s}{e}.{i}", [segs[s + "R" + str(i)], segs.get(s + e + d + str(i), None) or segs[e + s + d + str(i)], segs[e + "L" + str(i)]])
+        self.add_lanes([Lane(f"{s}{e}_{i}", [segs[s + "R" + str(i)], segs.get(s + e + d + str(i), None) or segs[e + s + d + str(i)], segs[e + "L" + str(i)]])
                         for s, e, d in curves for i in range(lanes)])
-
+        return
+    
     def h(self, lane_idx: str, mode_src: str, mode_dest: str) -> Optional[str]:
-        # ret = self._h(lane_idx, mode_src, mode_dest)
-        # print("H", lane_idx, mode_src, mode_dest, "->", ret)
-        # return ret
+    #     ret = self._h(lane_idx, mode_src, mode_dest)
+    #     if ret != None and ret != lane_idx:
+    #         print("H", lane_idx, mode_src, mode_dest, "->", ret)
+    #     return ret
 
     # def _h(self, lane_idx: str, mode_src: str, mode_dest: str) -> Optional[str]:
         src_sw, dst_sw = mode_src.startswith("Switch"), mode_dest.startswith("Switch")
@@ -83,19 +85,19 @@ class Intersection(LaneMap):
             if dst_sw:
                 return None
             else:
-                lanes, ind = lane_idx.split(".")
+                lanes, _, ind = lane_idx.split("_", 2)
                 ind = int(ind)
-                if "Left" in mode_src and ind > 0:
-                    return f"{lanes}.{ind - 1}"
-                if "Right" in mode_src and ind < self.lanes - 1:
-                    return f"{lanes}.{ind + 1}"
-                return None
+                return f"{lanes}_{ind}"
         else:
             if dst_sw:
-                lanes, ind = lane_idx.split(".")
+                lanes, ind = lane_idx.split("_")
                 ind = int(ind)
-                if "Left" in mode_dest and ind > 0 or "Right" in mode_dest and ind < self.lanes - 1:
-                    return lane_idx
-                return None
+                if "Left" in mode_dest and ind > 0:
+                    new_ind = ind - 1
+                elif "Right" in mode_dest and ind < self.lanes - 1:
+                    new_ind = ind + 1
+                else:
+                    return None
+                return f"{lanes}_{ind}_{new_ind}"
             else:
                 return lane_idx

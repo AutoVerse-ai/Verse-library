@@ -38,7 +38,7 @@ def car_ahead(ego, others, track, track_map, thresh_far, thresh_close):
 def decisionLogic(ego: State, others: List[State], track_map):
     output = copy.deepcopy(ego)
     if ego.sw_time >= 1:
-        car_front = car_ahead(ego, others, ego.track_mode, track_map, 7, 0)
+        car_front = car_ahead(ego, others, ego.track_mode, track_map, 5, 0)
         if ego.agent_mode == AgentMode.Accel and car_front:
             left_lane = track_map.h(ego.track_mode, ego.agent_mode, AgentMode.SwitchLeft)
             right_lane = track_map.h(ego.track_mode, ego.agent_mode, AgentMode.SwitchRight)

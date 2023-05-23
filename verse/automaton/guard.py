@@ -240,7 +240,7 @@ class GuardExpressionAst:
             if isinstance(node.op, ast.USub):
                 return -value
             elif isinstance(node.op, ast.Not):
-                z3_str = 'Not('+value+')'
+                z3_str = f'Not({value})'
                 return z3_str
             else:
                 raise NotImplementedError(f"UnaryOp {node.op} is not supported")
@@ -305,7 +305,10 @@ class GuardExpressionAst:
                             arg0_var = arg0_node.id
                         else:
                             raise ValueError(f"Node type {type(arg0_node)} is not supported")
-                        vehicle_lane = disc_var_dict[arg0_var]
+                        if arg0_var in disc_var_dict:
+                            vehicle_lane = disc_var_dict[arg0_var]
+                        else: 
+                            vehicle_lane = track_map.get_phys_lane(arg0_var)
                         assert isinstance(arg1_node, ast.List)
                         arg1_lower = []
                         arg1_upper = []
@@ -349,7 +352,11 @@ class GuardExpressionAst:
                             arg0_var = arg0_node.id
                         else:
                             raise ValueError(f"Node type {type(arg0_node)} is not supported")
-                        vehicle_lane = disc_var_dict[arg0_var]
+                        if arg0_var in disc_var_dict:
+                            vehicle_lane = disc_var_dict[arg0_var]
+                        else: 
+                            vehicle_lane = track_map.get_phys_lane(arg0_var)
+
                         assert isinstance(arg1_node, ast.List)
                         arg1_lower = []
                         arg1_upper = []
@@ -557,6 +564,27 @@ class GuardExpressionAst:
             right, root.right = self._evaluate_guard_disc(root.right, agent, disc_var_dict, cont_var_dict, track_map)
             return True, root
         elif isinstance(root, ast.Call):
+            new_args_list = []
+            for arg in root.args:
+                res, new_arg = self._evaluate_guard_disc(arg, agent, disc_var_dict, cont_var_dict, track_map) 
+                # If the parsed result is an boolean
+                if isinstance(res, bool):
+                    # If the parsed value is not a constant, then it have to be a variable
+                    # Append the original variable
+                    if not isinstance(new_arg, ast.Constant):
+                        new_args_list.append(arg)
+                    # The parsed result is a constant but not the correct boolean
+                    elif not isinstance(new_arg.value, bool) or new_arg.value!=res:
+                        new_args_list.append(arg)
+                    # The parsed result is indeed a boolean
+                    else:
+                        new_args_list.append(new_arg)
+                # If the parsed result is a value
+                # Then it have to be something related to discrete variable
+                # Substitute the exact discrete variable
+                else:
+                    new_args_list.append(new_arg)
+            root.args = new_args_list
             expr = unparse(root)
             # Check if the root is a function
             if any([var in expr for var in disc_var_dict]) and all([var not in expr for var in cont_var_dict]):
@@ -629,6 +657,8 @@ class GuardExpressionAst:
                 return val, root
             else:
                 return True, root 
+        elif isinstance(root, ast.List):
+            return True, root
         else:
             raise ValueError(f'Node type {root} from {unparse(root)} is not supported')
 

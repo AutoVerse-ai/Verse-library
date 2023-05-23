@@ -1,5 +1,5 @@
 from origin_agent import craft_agent
-from verse import Scenario
+from verse.scenario.scenario import Benchmark
 from verse.plotter.plotter2D import *
 from verse.sensor.example_sensor.craft_sensor import CraftSensor
 import time 
@@ -17,13 +17,14 @@ class CraftMode(Enum):
 
 if __name__ == "__main__":
     input_code_name = './demo/tacas2023/exp12/rendezvous_controller.py'
-    scenario = Scenario()
-
+    bench = Benchmark(sys.argv)
+    bench.agent_type = "S"
+    bench.noisy_s = "N/A"
     car = craft_agent('test', file_name=input_code_name)
-    scenario.add_agent(car)
-    scenario.set_sensor(CraftSensor())
+    bench.scenario.add_agent(car)
+    bench.scenario.set_sensor(CraftSensor())
     # modify mode list input
-    scenario.set_init(
+    bench.scenario.set_init(
         [
             [[-925, -425, 0, 0, 0, 0], [-875, -375, 0, 0, 0, 0]],
         ],
@@ -31,21 +32,15 @@ if __name__ == "__main__":
             tuple([CraftMode.ProxA]),
         ]
     )
-    start_time = time.time()
-    traces = scenario.verify(200, 1)
-    run_time = time.time() - start_time 
-    print({
-        "#A": len(scenario.agent_dict),
-        "A": "S",
-        "Map": "N/A",
-        "postCont": "DryVR",
-        "Noisy S": "N/A",
-        "# Tr": len(traces.nodes),
-        "Run Time": run_time,
-    })
+    time_step = 1
+    if bench.config.compare:
+        traces1, traces2 = bench.compare_run(200, time_step)
+        exit(0)
+    traces = bench.run(200, time_step)
 
-    if len(sys.argv) > 1 and sys.argv[1]=='p':        
+    if bench.config.plot:       
         fig = go.Figure()
         fig = reachtube_tree(traces, None, fig, 1, 2, [1, 2],
                                 'lines', 'trace')
         fig.show()
+    bench.report()

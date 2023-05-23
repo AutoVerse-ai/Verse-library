@@ -881,7 +881,7 @@ def simulation_tree_single(root: Union[AnalysisTree, AnalysisTreeNode], agent_id
     return fig
 
 
-def draw_map(map: LaneMap, color='rgba(0,0,0,1)', fig: go.Figure() = go.Figure(), fill_type='lines'):
+def draw_map(map: LaneMap, color='rgba(0,0,0,0.5)', fig: go.Figure() = go.Figure(), fill_type='lines'):
     """It draws the the map"""
     x_min, x_max = float('inf'), -float('inf')
     y_min, y_max = float('inf'), -float('inf')
@@ -896,6 +896,7 @@ def draw_map(map: LaneMap, color='rgba(0,0,0,1)', fig: go.Figure() = go.Figure()
         end_color = [0, 0, 0, 0.2]
         curr_color = [0, 0, 0, 0]
     speed_limit = None
+    line_style={'width':0.5}
     for lane_idx in map.lane_dict:
         lane = map.lane_dict[lane_idx]
         curr_color = [0, 0, 0, 0]
@@ -924,12 +925,15 @@ def draw_map(map: LaneMap, color='rgba(0,0,0,1)', fig: go.Figure() = go.Figure()
                     fig.add_trace(go.Scatter(x=trace_x, y=trace_y,
                                              mode='lines',
                                              line_color=color,
+                                             line=line_style,
                                              showlegend=False,
+                                             hoverinfo=None,
                                              name='lines'))
                 elif fill_type == 'detailed' and speed_limit is not None:
                     fig.add_trace(go.Scatter(x=trace_x, y=trace_y,
                                              mode='lines',
                                              line_color=color,
+                                             line=line_style,
                                              fill='toself',
                                              fillcolor='rgba' +
                                              str(tuple(curr_color)),
@@ -939,6 +943,7 @@ def draw_map(map: LaneMap, color='rgba(0,0,0,1)', fig: go.Figure() = go.Figure()
                     fig.add_trace(go.Scatter(x=trace_x, y=trace_y,
                                              mode='lines',
                                              line_color=color,
+                                             line=line_style,
                                              fill='toself',
                                              fillcolor='rgba(0,0,0,0.1)',
                                              showlegend=False,
@@ -965,12 +970,14 @@ def draw_map(map: LaneMap, color='rgba(0,0,0,1)', fig: go.Figure() = go.Figure()
                     fig.add_trace(go.Scatter(x=trace_x, y=trace_y,
                                              mode='lines',
                                              line_color=color,
+                                             line=line_style,
                                              showlegend=False,
                                              name='lines'))
                 elif fill_type == 'detailed' and speed_limit != None:
                     fig.add_trace(go.Scatter(x=trace_x, y=trace_y,
                                              mode='lines',
                                              line_color=color,
+                                             line=line_style,
                                              fill='toself',
                                              fillcolor='rgba' +
                                              str(tuple(curr_color)),
@@ -980,6 +987,7 @@ def draw_map(map: LaneMap, color='rgba(0,0,0,1)', fig: go.Figure() = go.Figure()
                     fig.add_trace(go.Scatter(x=trace_x, y=trace_y,
                                              mode='lines',
                                              line_color=color,
+                                             line=line_style,
                                              fill='toself',
                                              showlegend=False,
                                              name='lines'))
@@ -1112,7 +1120,7 @@ def sample_trace(root, sample_rate: int = 1):
         sample_rate = sample_rate*2
         while queue != []:
             node = queue.pop()
-            for agent_id in node.agent:
+            for agent_id in node.trace:
                 trace_length = len(node.trace[agent_id])
                 tmp = []
                 for i in range(0, trace_length, sample_rate):
@@ -1123,8 +1131,8 @@ def sample_trace(root, sample_rate: int = 1):
             queue += node.child
     else:
         while queue != []:
-            node = queue.pop()
-            for agent_id in node.agent:
+            node:AnalysisTreeNode = queue.pop()
+            for agent_id in node.trace:
                 node.trace[agent_id] = [node.trace[agent_id][i]
                                         for i in range(0, len(node.trace[agent_id]), sample_rate)]
             queue += node.child
@@ -1145,7 +1153,7 @@ def num_digits(val: float):
 
 
 def update_style(fig: go.Figure() = go.Figure()):
-    fig.update_traces(line={'width': 3})
+    # fig.update_traces(line={'width': 3})
     fig.update_layout(
         # paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)"
@@ -1154,7 +1162,7 @@ def update_style(fig: go.Figure() = go.Figure()):
     linewidth = 4
     gridwidth = 2
     fig.update_yaxes(showline=True, linewidth=linewidth, linecolor='Gray',
-                     showgrid=True, gridwidth=gridwidth, gridcolor='LightGrey')
+                     showgrid=False, gridwidth=gridwidth, gridcolor='LightGrey')
     fig.update_xaxes(showline=True, linewidth=linewidth, linecolor='Gray',
-                     showgrid=True, gridwidth=gridwidth, gridcolor='LightGrey')
+                     showgrid=False, gridwidth=gridwidth, gridcolor='LightGrey')
     return fig

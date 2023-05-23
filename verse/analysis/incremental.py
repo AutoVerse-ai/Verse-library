@@ -40,14 +40,19 @@ class CachedReachTrans:
 class CachedRTTrans:
     asserts: List[str]
     transitions: List[CachedReachTrans]
-    run_num: int
-    node_id: int
+    node_ids: Set[Tuple[int, int]] # run_num, node_id
 
 def to_simulate(old_agents: Dict[str, BaseAgent], new_agents: Dict[str, BaseAgent], cached: Dict[str, CachedSegment]) -> Tuple[Dict[str, CachedSegment], Any]: #s/Any/PathDiffs/
     assert set(old_agents.keys()) == set(new_agents.keys())
-    removed_paths, added_paths, reset_changed_paths = [], [], []
-    for agent_id, old_agent in old_agents.items():
-        new_agent = new_agents[agent_id]
+    new_cache = {}
+    total_added_paths = []
+    for agent_id, segment in cached.items():
+        if not segment.transitions:
+            new_cache[agent_id] = segment
+            continue
+        segment = copy.deepcopy(segment)
+        removed_paths, added_paths, reset_changed_paths = [], [], []
+        old_agent, new_agent = old_agents[agent_id], new_agents[agent_id]
         old_ctlr, new_ctlr = old_agent.decision_logic, new_agent.decision_logic
         assert old_ctlr.args == new_ctlr.args
         def group_by_var(ctlr: ControllerIR) -> Dict[str, List[ModePath]]:
@@ -62,37 +67,23 @@ def to_simulate(old_agents: Dict[str, BaseAgent], new_agents: Dict[str, BaseAgen
             new_paths = new_grouped[var]
             for i, (old, new) in enumerate(itertools.zip_longest(old_paths, new_paths)):
                 if new == None:
-                    removed_paths.append((agent_id, old))
+                    removed_paths.append(old)
                 elif not ControllerIR.ir_eq(old.cond_veri, new.cond_veri):
-                    # pp(("diff", old, new))
-                    # pp(("diff", ControllerIR.dump(old.cond_veri), ControllerIR.dump(old.val_veri), ControllerIR.dump(new.cond_veri), ControllerIR.dump(new.val_veri)))
-                    removed_paths.append((agent_id, old))
-                    added_paths.append((new_agent, new))
+                    removed_paths.append(old)
+                    added_paths.append(new)
                 elif not ControllerIR.ir_eq(old.val_veri, new.val_veri):
                     reset_changed_paths.append(new)
-    new_cache = {}
-    # pp(("removed_paths", removed_paths))
-    for agent_id in cached:
-        segment = copy.deepcopy(cached[agent_id])
-        new_transitions = []
+        removed = False
         for trans in segment.transitions:
-            removed = False
             for path in trans.paths:
-                for aid, rp in removed_paths:
-                    if aid == agent_id and rp == path:
-                        # pp(("remove", path, rp))
-                        # pp(("remove", ControllerIR.dump(path.cond_veri), ControllerIR.dump(path.val_veri), ControllerIR.dump(rp.cond_veri), ControllerIR.dump(rp.val_veri)))
-                        removed = True
+                removed = removed or (path in removed_paths)
                 for rcp in reset_changed_paths:
                     if path.cond == rcp.cond:
                         path.val = rcp.val
-            # pp(("filter", agent_id, trans.paths, removed))
-            if not removed:
-                new_transitions.append(trans)
-        segment.transitions = new_transitions
-        new_cache[agent_id] = segment
-        # pp(("filtered", agent_id, len(cached[agent_id].transitions), len(new_cache[agent_id].transitions), len([p for a, p in added_paths if a.id == agent_id])))
-    return new_cache, added_paths
+        if not removed:
+            new_cache[agent_id] = segment
+        total_added_paths.extend((new_agent, p) for p in added_paths)
+    return new_cache, total_added_paths
 
 def convert_sim_trans(agent_id, transit_agents, inits, transition, trans_ind):
     if agent_id in transit_agents:
@@ -244,7 +235,7 @@ class ReachTubeCache:
         for i, (low, high) in enumerate(init):
             if i == len(init) - 1:
                 transitions = convert_reach_trans(agent_id, transit_agents, node.init, transition, trans_ind)
-                entry = CachedRTTrans(assert_hits.get(agent_id), transitions, node.agent[agent_id].decision_logic, run_num, node.id)
+                entry = CachedRTTrans(assert_hits.get(agent_id), transitions, set([(run_num, node.id)]))
                 tree[low:high + _EPSILON] = entry
                 return entry
             else:
@@ -277,7 +268,7 @@ class ReachTubeCache:
             return sum(1 if reach_trans_suit(t.inits, inits) else 0 for t in e.transitions)
         entries = list(sorted([(e, -num_trans_suit(e)) for e in entries], key=lambda p: p[1]))
         # pp(("check hit entries", len(entries), entries[0][1]))
-        assert isinstance(entries[0][0], (type(None), CachedRTTrans))
+        assert isinstance(entries[0][0], CachedRTTrans)
         return entries[0][0]
 
     @staticmethod
