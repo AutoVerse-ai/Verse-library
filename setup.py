@@ -39,7 +39,7 @@ setup(
         "plotly~=5.8.2",
         "polytope~=0.2.3",
         "Pympler~=1.0.1",
-        "pyvista~=0.32.1",
+        "pyvista~=0.38.3",
         "scipy~=1.8.1",
         "six~=1.14.0",
         "sympy~=1.6.2",
