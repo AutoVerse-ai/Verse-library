@@ -12,10 +12,10 @@ class ThermoMode(Enum):
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/dryvr_demo/thermo_controller.py'
+    input_code_name = "./demo/dryvr_demo/thermo_controller.py"
     scenario = Scenario()
 
-    car = thermo_agent('test', file_name=input_code_name)
+    car = thermo_agent("test", file_name=input_code_name)
     scenario.add_agent(car)
     # scenario.set_sensor(ThermoSensor())
     # modify mode list input
@@ -25,10 +25,9 @@ if __name__ == "__main__":
         ],
         [
             tuple([ThermoMode.ON]),
-        ]
+        ],
     )
     traces = scenario.simulate(3.5, 0.05)
     fig = go.Figure()
-    fig = simulation_tree(traces, None, fig, 2, 1, [2, 1],
-                         'lines', 'trace')
+    fig = simulation_tree(traces, None, fig, 2, 1, [2, 1], "lines", "trace")
     fig.show()

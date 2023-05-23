@@ -11,10 +11,10 @@ import plotly.graph_objects as go
 
 class LaneObjectMode(Enum):
     Vehicle = auto()
-    Ped = auto()        # Pedestrians
-    Sign = auto()       # Signs, stop signs, merge, yield etc.
-    Signal = auto()     # Traffic lights
-    Obstacle = auto()   # Static (to road/lane) obstacles
+    Ped = auto()  # Pedestrians
+    Sign = auto()  # Signs, stop signs, merge, yield etc.
+    Signal = auto()  # Traffic lights
+    Obstacle = auto()  # Static (to road/lane) obstacles
 
 
 class AgentMode(Enum):
@@ -35,32 +35,40 @@ class TrackMode(Enum):
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/tacas2023/exp5/example_controller5.py'    
+    input_code_name = "./demo/tacas2023/exp5/example_controller5.py"
 
     bench = Benchmark(sys.argv, init_seg_length=1)
     bench.agent_type = "C"
     bench.noisy_s = "No"
-    bench.scenario.add_agent(CarAgent('car1', file_name=input_code_name))
-    bench.scenario.add_agent(NPCAgent('car2'))
-    bench.scenario.add_agent(NPCAgent('car3'))
-    tmp_map = opendrive_map('./demo/tacas2023/exp5/t1_triple.xodr')
+    bench.scenario.add_agent(CarAgent("car1", file_name=input_code_name))
+    bench.scenario.add_agent(NPCAgent("car2"))
+    bench.scenario.add_agent(NPCAgent("car3"))
+    tmp_map = opendrive_map("./demo/tacas2023/exp5/t1_triple.xodr")
 
     bench.scenario.set_map(tmp_map)
     bench.scenario.set_init(
         [
             [[134, 11.5, 0, 5.0], [136, 14.5, 0, 5.0]],
-            [[179.5, 59.5, np.pi/2, 2.5], [180.5, 62.5, np.pi/2, 2.5]],
+            [[179.5, 59.5, np.pi / 2, 2.5], [180.5, 62.5, np.pi / 2, 2.5]],
             [[124.5, 87.5, np.pi, 2.0], [125.5, 90.5, np.pi, 2.0]],
-
             # [[-65, -57.5, 0, 5.0], [-65, -57.5, 0, 5.0]],
             # [[15, -67.0, 0, 2.5], [15, -67.0, 0, 2.5]],
             # [[106, 18.0, 0, 2.0], [106, 18.0, 0, 2.0]],
         ],
         [
-            (AgentMode.Normal, TrackMode.T1, ),
-            (AgentMode.Normal, TrackMode.T1, ),
-            (AgentMode.Normal, TrackMode.T2, ),
-        ]
+            (
+                AgentMode.Normal,
+                TrackMode.T1,
+            ),
+            (
+                AgentMode.Normal,
+                TrackMode.T1,
+            ),
+            (
+                AgentMode.Normal,
+                TrackMode.T2,
+            ),
+        ],
     )
     time_step = 0.1
     if bench.config.compare:
@@ -72,6 +80,6 @@ if __name__ == "__main__":
     # traces = AnalysisTree.load('./output5.json')
     if bench.config.plot:
         fig = go.Figure()
-        fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace')
+        fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], "lines", "trace")
         fig.show()
     bench.report()

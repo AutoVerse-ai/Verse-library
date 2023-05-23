@@ -1,28 +1,39 @@
 from verse.parser.parser import ControllerIR
-import numpy as np 
+import numpy as np
 from scipy.integrate import ode
 import copy
 
+
 class BaseAgent:
     """
-        Agent Base class
+    Agent Base class
 
-        Methods
-        -------
-        TC_simulate
+    Methods
+    -------
+    TC_simulate
     """
-    def __init__(self, id, code = None, file_name = None, initial_state = None, initial_mode = None, static_param = None, uncertain_param = None): 
-        """
-            Constructor of agent base class.
 
-            Parameters
-            ----------
-            id : str
-                id of the agent.
-            code: str
-                actual code of python controller
-            file_name: str 
-                file name to the python controller
+    def __init__(
+        self,
+        id,
+        code=None,
+        file_name=None,
+        initial_state=None,
+        initial_mode=None,
+        static_param=None,
+        uncertain_param=None,
+    ):
+        """
+        Constructor of agent base class.
+
+        Parameters
+        ----------
+        id : str
+            id of the agent.
+        code: str
+            actual code of python controller
+        file_name: str
+            file name to the python controller
         """
         self.decision_logic: ControllerIR = ControllerIR.parse(code, file_name)
         self.id = id
@@ -31,15 +42,15 @@ class BaseAgent:
         self.static_parameters = copy.deepcopy(static_param)
         self.uncertain_parameters = copy.deepcopy(uncertain_param)
 
-    def set_initial(self, initial_state, initial_mode, static_param = None, uncertain_param = None):
+    def set_initial(self, initial_state, initial_mode, static_param=None, uncertain_param=None):
         self.set_initial_state(initial_state)
         self.set_initial_mode(initial_mode)
         self.set_static_parameter(static_param)
         self.set_uncertain_parameter(uncertain_param)
 
     def set_initial_state(self, initial_state):
-        self.init_cont = copy.deepcopy(initial_state) 
-    
+        self.init_cont = copy.deepcopy(initial_state)
+
     def set_initial_mode(self, initial_mode):
         self.init_disc = copy.deepcopy(initial_mode)
 
@@ -70,11 +81,11 @@ class BaseAgent:
             time_step: float
                 time_step for performing simulation
             map: LaneMap, optional
-                Provided if the map is used 
+                Provided if the map is used
         """
         num_points = int(np.ceil(time_horizon / time_step))
         trace = np.zeros((num_points + 1, 1 + len(initialSet)))
-        trace[1:, 0] = [round(i*time_step, 10) for i in range(num_points)]
+        trace[1:, 0] = [round(i * time_step, 10) for i in range(num_points)]
         trace[0, 1:] = initialSet
         for i in range(num_points):
             r = ode(self.dynamic)

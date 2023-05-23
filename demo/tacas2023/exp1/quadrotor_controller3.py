@@ -36,9 +36,15 @@ class State:
 def safe_seperation(ego, other):
     return -1 < ego.x - other.x < 1 and -1 < ego.y - other.y < 1 and -1 < ego.z - other.z < 1
 
+
 def is_close(ego, other):
-    return (((ego.vx <= 0) and (5 > ego.x-other.x > 2)) or ((ego.vx > 0) and (- 5 < ego.x-other.x <= -2))) \
-        and (((ego.vy <= 0) and (5 > ego.y-other.y > 2)) or ((ego.vy > 0) and (- 5 < ego.y-other.y <= -2)))
+    return (
+        ((ego.vx <= 0) and (5 > ego.x - other.x > 2))
+        or ((ego.vx > 0) and (-5 < ego.x - other.x <= -2))
+    ) and (
+        ((ego.vy <= 0) and (5 > ego.y - other.y > 2))
+        or ((ego.vy > 0) and (-5 < ego.y - other.y <= -2))
+    )
 
 
 def decisionLogic(ego: State, others: List[State], track_map):
@@ -49,26 +55,30 @@ def decisionLogic(ego: State, others: List[State], track_map):
             if track_map.h_exist(ego.track_mode, ego.tactical_mode, TacticalMode.MoveUp):
                 next.tactical_mode = TacticalMode.MoveUp
                 next.track_mode = track_map.h(
-                    ego.track_mode, ego.tactical_mode, TacticalMode.MoveUp)
+                    ego.track_mode, ego.tactical_mode, TacticalMode.MoveUp
+                )
             if track_map.h_exist(ego.track_mode, ego.tactical_mode, TacticalMode.MoveDown):
                 next.tactical_mode = TacticalMode.MoveDown
                 next.track_mode = track_map.h(
-                    ego.track_mode, ego.tactical_mode, TacticalMode.MoveDown)
+                    ego.track_mode, ego.tactical_mode, TacticalMode.MoveDown
+                )
 
     if ego.tactical_mode == TacticalMode.MoveUp:
-        if 1 > track_map.altitude(ego.track_mode)-ego.z > -1:
+        if 1 > track_map.altitude(ego.track_mode) - ego.z > -1:
             next.tactical_mode = TacticalMode.Normal
             if track_map.h_exist(ego.track_mode, ego.tactical_mode, TacticalMode.Normal):
                 next.track_mode = track_map.h(
-                    ego.track_mode, ego.tactical_mode, TacticalMode.Normal)
+                    ego.track_mode, ego.tactical_mode, TacticalMode.Normal
+                )
 
     if ego.tactical_mode == TacticalMode.MoveDown:
-        if 1 > track_map.altitude(ego.track_mode)-ego.z > -1:
+        if 1 > track_map.altitude(ego.track_mode) - ego.z > -1:
             next.tactical_mode = TacticalMode.Normal
             if track_map.h_exist(ego.track_mode, ego.tactical_mode, TacticalMode.Normal):
                 next.track_mode = track_map.h(
-                    ego.track_mode, ego.tactical_mode, TacticalMode.Normal)
-   
+                    ego.track_mode, ego.tactical_mode, TacticalMode.Normal
+                )
+
     assert not any(safe_seperation(ego, other) for other in others), "Safe Seperation"
 
     return next

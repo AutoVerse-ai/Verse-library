@@ -2,18 +2,22 @@ from enum import Enum, auto
 import copy
 from typing import List
 
+
 class AgentMode(Enum):
     Accel = auto()
     Brake = auto()
     SwitchLeft = auto()
     SwitchRight = auto()
 
+
 class TrackMode(Enum):
     none = auto()
+
 
 # class LaneObjectMode(Enum):
 #     Vehicle = auto()
 #     Ped = auto()        # Pedestrians
+
 
 class State:
     x = 0.0
@@ -24,7 +28,9 @@ class State:
     agent_mode: AgentMode = AgentMode.Accel
     track_mode: TrackMode = TrackMode.none
 
+
 lane_width = 3
+
 
 def car_ahead(ego, others, track, track_map, thresh_far, thresh_close):
     def car_front(car):
@@ -32,8 +38,13 @@ def car_ahead(ego, others, track, track_map, thresh_far, thresh_close):
         ego_lat = track_map.get_lateral_distance(track, [ego.x, ego.y])
         car_long = track_map.get_longitudinal_position(track, [car.x, car.y])
         car_lat = track_map.get_lateral_distance(track, [car.x, car.y])
-        return thresh_close < car_long - ego_long < thresh_far and -lane_width / 2 < car_lat - ego_lat < lane_width / 2
+        return (
+            thresh_close < car_long - ego_long < thresh_far
+            and -lane_width / 2 < car_lat - ego_lat < lane_width / 2
+        )
+
     return any(car_front(other) and other.track_mode == track for other in others)
+
 
 def decisionLogic(ego: State, others: List[State], track_map):
     output = copy.deepcopy(ego)

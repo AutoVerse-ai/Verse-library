@@ -14,10 +14,10 @@ class CraftMode(Enum):
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/dryvr_demo/rendezvous_controller.py'
+    input_code_name = "./demo/dryvr_demo/rendezvous_controller.py"
     scenario = Scenario()
 
-    car = craft_agent('test', file_name=input_code_name)
+    car = craft_agent("test", file_name=input_code_name)
     scenario.add_agent(car)
     scenario.set_sensor(CraftSensor())
     # modify mode list input
@@ -27,10 +27,9 @@ if __name__ == "__main__":
         ],
         [
             tuple([CraftMode.ProxA]),
-        ]
+        ],
     )
     traces = scenario.verify(200, 1)
     fig = go.Figure()
-    fig = reachtube_tree(traces, None, fig, 1, 2, [1, 2],
-                         'lines', 'trace')
+    fig = reachtube_tree(traces, None, fig, 1, 2, [1, 2], "lines", "trace")
     fig.show()

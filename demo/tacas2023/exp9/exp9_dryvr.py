@@ -8,7 +8,9 @@ import pyvista as pv
 from enum import Enum, auto
 import warnings
 import sys
+
 warnings.filterwarnings("ignore")
+
 
 class CraftMode(Enum):
     Normal = auto()
@@ -27,31 +29,27 @@ class TrackMode(Enum):
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/tacas2023/exp9/quadrotor_controller3.py'
-    input_code_name2 = './demo/tacas2023/exp9/quadrotor_controller4.py'
+    input_code_name = "./demo/tacas2023/exp9/quadrotor_controller3.py"
+    input_code_name2 = "./demo/tacas2023/exp9/quadrotor_controller4.py"
 
     bench = Benchmark(sys.argv)
     bench.agent_type = "D"
     bench.noisy_s = "No"
     time_step = 0.2
     quadrotor1 = QuadrotorAgent(
-        'test1', file_name=input_code_name, t_v_pair=(1, 1), box_side=[0.4]*3)
+        "test1", file_name=input_code_name, t_v_pair=(1, 1), box_side=[0.4] * 3
+    )
     init_l_1 = [1.5, -0.5, -0.5, 0, 0, 0]
     init_u_1 = [2.5, 0.5, 0.5, 0, 0, 0]
-    quadrotor1.set_initial(
-        [init_l_1, init_u_1],
-        (CraftMode.Normal, TrackMode.T1)
-    )
+    quadrotor1.set_initial([init_l_1, init_u_1], (CraftMode.Normal, TrackMode.T1))
     bench.scenario.add_agent(quadrotor1)
 
     quadrotor2 = QuadrotorAgent(
-        'test2', file_name=input_code_name2, t_v_pair=(1, 0.5), box_side=[0.4]*3)
+        "test2", file_name=input_code_name2, t_v_pair=(1, 0.5), box_side=[0.4] * 3
+    )
     init_l_2 = [19.5, -0.5, -0.5, 0, 0, 0]
     init_u_2 = [20.5, 0.5, 0.5, 0, 0, 0]
-    quadrotor2.set_initial(
-        [init_l_2, init_u_2],
-        (CraftMode.Normal, TrackMode.T1)
-    )
+    quadrotor2.set_initial([init_l_2, init_u_2], (CraftMode.Normal, TrackMode.T1))
     bench.scenario.add_agent(quadrotor2)
 
     tmp_map = M5()
@@ -68,7 +66,7 @@ if __name__ == "__main__":
         exit(0)
     traces = bench.run(60, time_step)
     if bench.config.dump:
-        traces.dump('./demo/tacas2023/exp9/output9_dryvr.json')
+        traces.dump("./demo/tacas2023/exp9/output9_dryvr.json")
 
     # traces = scenario.verify(60, time_step,
     #                          reachability_method='NeuReach',
@@ -97,12 +95,12 @@ if __name__ == "__main__":
     if bench.config.plot:
         fig = pv.Plotter()
         fig = plot3dMap(tmp_map, ax=fig)
-        fig = plot3dReachtube(traces, 'test1', 1, 2, 3, color = 'r', ax=fig)
-        fig = plot3dReachtube(traces, 'test2', 1, 2, 3, color = 'b', ax=fig)
-        fig = plot_line_3d([0,0,0],[10,0,0],fig,'r',line_width = 5)
-        fig = plot_line_3d([0,0,0],[0,10,0],fig,'g',line_width = 5)
-        fig = plot_line_3d([0,0,0],[0,0,10],fig,'b',line_width = 5)
-        fig.set_background('#e0e0e0')
+        fig = plot3dReachtube(traces, "test1", 1, 2, 3, color="r", ax=fig)
+        fig = plot3dReachtube(traces, "test2", 1, 2, 3, color="b", ax=fig)
+        fig = plot_line_3d([0, 0, 0], [10, 0, 0], fig, "r", line_width=5)
+        fig = plot_line_3d([0, 0, 0], [0, 10, 0], fig, "g", line_width=5)
+        fig = plot_line_3d([0, 0, 0], [0, 0, 10], fig, "b", line_width=5)
+        fig.set_background("#e0e0e0")
         fig.show()
     # elif len(sys.argv)>1 and sys.argv[1]=='pc':
     #     fig = go.Figure()
@@ -114,10 +112,10 @@ if __name__ == "__main__":
     bench.report()
     # fig = go.Figure()
     # fig = reachtube_tree_3d(
-    #     traces, 
-    #     tmp_map, 
-    #     fig, 1, 2, 3, 
-    #     [1, 2, 3], 
+    #     traces,
+    #     tmp_map,
+    #     fig, 1, 2, 3,
+    #     [1, 2, 3],
     #     map_type='center',
     # )
     # fig.show()

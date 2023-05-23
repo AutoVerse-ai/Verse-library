@@ -26,9 +26,9 @@ class FFNNC(torch.nn.Module):
 
 
 class QuadrotorAgent(BaseAgent):
-    def __init__(self, id, code=None, file_name=None, t_v_pair = [], box_side = []):
+    def __init__(self, id, code=None, file_name=None, t_v_pair=[], box_side=[]):
         super().__init__(id, code, file_name)
-        self.t_v_pair = t_v_pair 
+        self.t_v_pair = t_v_pair
         self.box_side = box_side
 
     @staticmethod
@@ -61,18 +61,20 @@ class QuadrotorAgent(BaseAgent):
         #     raise ValueError
         return df
 
-    def runModel(self, mode,  initalCondition, time_bound, time_step, ref_input, lane_map: LaneMap_3d):
+    def runModel(
+        self, mode, initalCondition, time_bound, time_step, ref_input, lane_map: LaneMap_3d
+    ):
         path = os.path.abspath(__file__)
-        path = path.replace('quadrotor_agent.py', 'prarm.json')
+        path = path.replace("quadrotor_agent.py", "prarm.json")
         # print(path)
-        with open(path, 'r') as f:
+        with open(path, "r") as f:
             prarms = json.load(f)
-        bias1 = prarms['bias1']
-        bias2 = prarms['bias2']
-        bias3 = prarms['bias3']
-        weight1 = prarms['weight1']
-        weight2 = prarms['weight2']
-        weight3 = prarms['weight3']
+        bias1 = prarms["bias1"]
+        bias2 = prarms["bias2"]
+        bias3 = prarms["bias3"]
+        weight1 = prarms["weight1"]
+        weight2 = prarms["weight2"]
+        weight3 = prarms["weight3"]
 
         bias1 = torch.FloatTensor(bias1)
         bias2 = torch.FloatTensor(bias2)
@@ -87,14 +89,16 @@ class QuadrotorAgent(BaseAgent):
         controller.layer1.bias = torch.nn.Parameter(bias1)
         controller.layer2.bias = torch.nn.Parameter(bias2)
         controller.layer3.bias = torch.nn.Parameter(bias3)
-        control_input_list = [[-0.1, -0.1, 7.81],
-                              [-0.1, -0.1, 11.81],
-                              [-0.1, 0.1, 7.81],
-                              [-0.1, 0.1, 11.81],
-                              [0.1, -0.1, 7.81],
-                              [0.1, -0.1, 11.81],
-                              [0.1, 0.1, 7.81],
-                              [0.1, 0.1, 11.81]]
+        control_input_list = [
+            [-0.1, -0.1, 7.81],
+            [-0.1, -0.1, 11.81],
+            [-0.1, 0.1, 7.81],
+            [-0.1, 0.1, 11.81],
+            [0.1, -0.1, 7.81],
+            [0.1, -0.1, 11.81],
+            [0.1, 0.1, 7.81],
+            [0.1, 0.1, 11.81],
+        ]
         init = initalCondition
         trajectory = [init]
         r = ode(self.dynamic)
@@ -132,7 +136,8 @@ class QuadrotorAgent(BaseAgent):
             evy = tmp2
 
             data = torch.FloatTensor(
-                [0.2 * ex, 0.2 * ey, 0.2 * ez, 0.1 * evx, 0.1 * evy, 0.1 * evz])
+                [0.2 * ex, 0.2 * ey, 0.2 * ez, 0.1 * evx, 0.1 * evy, 0.1 * evz]
+            )
             res = controller(data)
             res = res.detach().numpy()
             idx = np.argmax(res)
@@ -140,15 +145,15 @@ class QuadrotorAgent(BaseAgent):
 
             df = self.action_handler(mode, init, lane_map)
 
-            u = u+[df]
+            u = u + [df]
             init = trajectory[i]  # len 9
             r = ode(self.dynamic)
             r.set_initial_value(init)
             r.set_f_params(u)
             val = r.integrate(r.t + time_step)
 
-            t = t+time_step
-            if round(t-time_bound-time_step, 4) >= 0:
+            t = t + time_step
+            if round(t - time_bound - time_step, 4) >= 0:
                 break
             i += 1
             #  print(i,idx,u,res)
@@ -167,7 +172,9 @@ class QuadrotorAgent(BaseAgent):
         # print(trajectory)
         return trace
 
-    def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step, lane_map: LaneMap_3d = None) -> np.ndarray:
+    def TC_simulate(
+        self, mode: List[str], initialCondition, time_bound, time_step, lane_map: LaneMap_3d = None
+    ) -> np.ndarray:
         # print("TC", initialCondition)
         # total time_bound remained
         time_bound = float(time_bound)
@@ -175,7 +182,12 @@ class QuadrotorAgent(BaseAgent):
         end_time = 0
         time_limit = self.t_v_pair[0]
         mode_parameters = lane_map.get_next_point(
-            lane_map.trans_func(mode[1]), self.id, np.array(initialCondition[:3]), np.array(initialCondition[3:6]), self.t_v_pair)
+            lane_map.trans_func(mode[1]),
+            self.id,
+            np.array(initialCondition[:3]),
+            np.array(initialCondition[3:6]),
+            self.t_v_pair,
+        )
         while time_bound > end_time:
             ref_vx = (mode_parameters[3] - mode_parameters[0]) / time_limit
             ref_vy = (mode_parameters[4] - mode_parameters[1]) / time_limit
@@ -184,8 +196,14 @@ class QuadrotorAgent(BaseAgent):
             # if self.id == 'test1':
             #     print('test', np.linalg.norm(
             #         np.array([ref_vx, ref_vy, ref_vz])))
-            trace = self.runModel(mode, mode_parameters[0:3] + list(initialCondition), min(time_limit, time_bound-end_time), time_step, [ref_vx, ref_vy, ref_vz,
-                                                                                                                                         sym_rot_angle], lane_map)
+            trace = self.runModel(
+                mode,
+                mode_parameters[0:3] + list(initialCondition),
+                min(time_limit, time_bound - end_time),
+                time_step,
+                [ref_vx, ref_vy, ref_vz, sym_rot_angle],
+                lane_map,
+            )
             # if lane_map.check_guard_box(self.id, np.array(trace[-1][1:])):
             #     mode_parameters = lane_map.get_next_point(
             #         mode[1], self.id, np.array(trace[-1][1:4]), np.array(trace[-1][4:7]))
@@ -203,16 +221,22 @@ class QuadrotorAgent(BaseAgent):
             #     print(index)
             # trace = trace[:index]
             for p in trace:
-                p[0] = round(p[0]+end_time, 4)
+                p[0] = round(p[0] + end_time, 4)
             end_time = trace[-1][0]
             initialCondition = trace[-1][1:]
             mode_parameters = lane_map.get_next_point(
-                lane_map.trans_func(mode[1]), self.id,  None, np.array(initialCondition[3:6]), self.t_v_pair)
-            if round(trace[0][0]-0, 4) != 0:
+                lane_map.trans_func(mode[1]),
+                self.id,
+                None,
+                np.array(initialCondition[3:6]),
+                self.t_v_pair,
+            )
+            if round(trace[0][0] - 0, 4) != 0:
                 trace = trace[1:]
             traces.extend(trace)
         # print([ref_vx, ref_vy, ref_vz, sym_rot_angle])
         return np.array(traces)
+
 
 # import json
 # import os

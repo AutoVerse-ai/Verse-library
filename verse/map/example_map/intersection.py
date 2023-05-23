@@ -15,6 +15,7 @@ class Intersection(LaneMap):
     length: length of straight road outside of intersection
     lanes: number of lanes per direction (e.g. north and into the intersection)
     """
+
     def __init__(self, width: float = 3, size: float = 20, length: float = 300, lanes: int = 2):
         assert width > 0 and lanes > 0 and length > 0
         assert size >= (1 + lanes) * width, "Intersection too small for the number of lanes"
@@ -23,7 +24,7 @@ class Intersection(LaneMap):
         outer_edge = size + length
         segs: Dict[str, AbstractLane] = {}
         for i in range(lanes):
-            off = width * (i + 1/2)
+            off = width * (i + 1 / 2)
             # Outer straights
             segs[f"NR{i}"] = StraightLane(f"NR{i}", (-off, outer_edge), (-off, size), width)
             segs[f"SR{i}"] = StraightLane(f"SR{i}", (off, -outer_edge), (off, -size), width)
@@ -49,14 +50,19 @@ class Intersection(LaneMap):
                 (n := k + "IO"[io] + str(lane)): CircularLane(
                     n,
                     center,
-                    size + width * (lane + 1/2) * [-1, 1][io],
-                    (start + (int(io == 0))) * math.pi / 2,     # XXX inner circulars are clockwise, thus start larger then end
-                    (start + (int(io == 1))) * math.pi / 2,     # also python bool converts to int like C would
+                    size + width * (lane + 1 / 2) * [-1, 1][io],
+                    (start + (int(io == 0)))
+                    * math.pi
+                    / 2,  # XXX inner circulars are clockwise, thus start larger then end
+                    (start + (int(io == 1)))
+                    * math.pi
+                    / 2,  # also python bool converts to int like C would
                     clockwise=io == 0,
                     width=width,
                 )
                 for k, (center, start) in curve_params.items()
-                for io in range(2) for lane in range(lanes)
+                for io in range(2)
+                for lane in range(lanes)
             }
         )
         # straight
@@ -66,20 +72,38 @@ class Intersection(LaneMap):
             ("WE", "WR", "WER", "EL"),
             ("EW", "ER", "WEL", "WL"),
         ]
-        self.add_lanes([Lane(f"{straight[0]}_{i}", [segs[seg + str(i)] for seg in straight[1:]]) for straight in straights for i in range(lanes)])
+        self.add_lanes(
+            [
+                Lane(f"{straight[0]}_{i}", [segs[seg + str(i)] for seg in straight[1:]])
+                for straight in straights
+                for i in range(lanes)
+            ]
+        )
         # curve
         curves = ["NWI", "NEO", "WNO", "ENI", "SWO", "SEI", "WSI", "ESO"]
-        self.add_lanes([Lane(f"{s}{e}_{i}", [segs[s + "R" + str(i)], segs.get(s + e + d + str(i), None) or segs[e + s + d + str(i)], segs[e + "L" + str(i)]])
-                        for s, e, d in curves for i in range(lanes)])
+        self.add_lanes(
+            [
+                Lane(
+                    f"{s}{e}_{i}",
+                    [
+                        segs[s + "R" + str(i)],
+                        segs.get(s + e + d + str(i), None) or segs[e + s + d + str(i)],
+                        segs[e + "L" + str(i)],
+                    ],
+                )
+                for s, e, d in curves
+                for i in range(lanes)
+            ]
+        )
         return
-    
-    def h(self, lane_idx: str, mode_src: str, mode_dest: str) -> Optional[str]:
-    #     ret = self._h(lane_idx, mode_src, mode_dest)
-    #     if ret != None and ret != lane_idx:
-    #         print("H", lane_idx, mode_src, mode_dest, "->", ret)
-    #     return ret
 
-    # def _h(self, lane_idx: str, mode_src: str, mode_dest: str) -> Optional[str]:
+    def h(self, lane_idx: str, mode_src: str, mode_dest: str) -> Optional[str]:
+        #     ret = self._h(lane_idx, mode_src, mode_dest)
+        #     if ret != None and ret != lane_idx:
+        #         print("H", lane_idx, mode_src, mode_dest, "->", ret)
+        #     return ret
+
+        # def _h(self, lane_idx: str, mode_src: str, mode_dest: str) -> Optional[str]:
         src_sw, dst_sw = mode_src.startswith("Switch"), mode_dest.startswith("Switch")
         if src_sw:
             if dst_sw:

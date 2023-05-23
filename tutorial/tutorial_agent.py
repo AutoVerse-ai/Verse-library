@@ -1,7 +1,7 @@
 # Example agent.
 from typing import Tuple, List
 
-import numpy as np 
+import numpy as np
 from scipy.integrate import ode
 import torch
 
@@ -10,68 +10,78 @@ from verse import BaseAgent
 from verse import LaneMap
 from verse.map.lane_map_3d import LaneMap_3d
 
+
 class CarAgent(BaseAgent):
-    def __init__(self, id, code = None, file_name = None, initial_state = None, initial_mode = None):
-        super().__init__(id, code, file_name, initial_state=initial_state, initial_mode=initial_mode)
+    def __init__(self, id, code=None, file_name=None, initial_state=None, initial_mode=None):
+        super().__init__(
+            id, code, file_name, initial_state=initial_state, initial_mode=initial_mode
+        )
         self.switch_duration = 0
 
     @staticmethod
     def dynamic(t, state, u):
         x, y, theta, v = state
-        delta, a = u  
-        x_dot = v*np.cos(theta+delta)
-        y_dot = v*np.sin(theta+delta)
-        theta_dot = v/1.75*np.tan(delta)
-        v_dot = a 
+        delta, a = u
+        x_dot = v * np.cos(theta + delta)
+        y_dot = v * np.sin(theta + delta)
+        theta_dot = v / 1.75 * np.tan(delta)
+        v_dot = a
         return [x_dot, y_dot, theta_dot, v_dot]
 
-    def action_handler(self, mode: List[str], state, lane_map)->Tuple[float, float]:
-        x,y,theta,v = state
+    def action_handler(self, mode: List[str], state, lane_map) -> Tuple[float, float]:
+        x, y, theta, v = state
         vehicle_mode = mode[0]
         vehicle_lane = mode[1]
-        vehicle_pos = np.array([x,y])
+        vehicle_pos = np.array([x, y])
         a = 0
         if vehicle_mode == "Normal":
             d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
         elif vehicle_mode == "SwitchLeft":
-            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos) + lane_map.get_lane_width(vehicle_lane) 
+            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos) + lane_map.get_lane_width(
+                vehicle_lane
+            )
         elif vehicle_mode == "SwitchRight":
-            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos) - lane_map.get_lane_width(vehicle_lane)
+            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos) - lane_map.get_lane_width(
+                vehicle_lane
+            )
         elif vehicle_mode == "Brake":
             d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
-            a = -1    
+            a = -1
         elif vehicle_mode == "Accel":
             d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
             a = 1
-        elif vehicle_mode == 'Stop':
+        elif vehicle_mode == "Stop":
             d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
             a = 0
         else:
-            raise ValueError(f'Invalid mode: {vehicle_mode}')
+            raise ValueError(f"Invalid mode: {vehicle_mode}")
 
-        psi = lane_map.get_lane_heading(vehicle_lane, vehicle_pos)-theta
-        steering = psi + np.arctan2(0.45*d, v)
+        psi = lane_map.get_lane_heading(vehicle_lane, vehicle_pos) - theta
+        steering = psi + np.arctan2(0.45 * d, v)
         steering = np.clip(steering, -0.61, 0.61)
-        return steering, a   
+        return steering, a
 
-    def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step, track_map:LaneMap=None)->np.ndarray:
+    def TC_simulate(
+        self, mode: List[str], initialCondition, time_bound, time_step, track_map: LaneMap = None
+    ) -> np.ndarray:
         time_bound = float(time_bound)
-        number_points = int(np.ceil(time_bound/time_step))
-        t = [round(i*time_step,10) for i in range(0,number_points)]
+        number_points = int(np.ceil(time_bound / time_step))
+        t = [round(i * time_step, 10) for i in range(0, number_points)]
 
         init = initialCondition
-        trace = [[0]+init]
+        trace = [[0] + init]
         for i in range(len(t)):
             steering, a = self.action_handler(mode, init, track_map)
-            r = ode(self.dynamic)    
-            r.set_initial_value(init).set_f_params([steering, a])      
-            res:np.ndarray = r.integrate(r.t + time_step)
+            r = ode(self.dynamic)
+            r.set_initial_value(init).set_f_params([steering, a])
+            res: np.ndarray = r.integrate(r.t + time_step)
             init = res.flatten().tolist()
             if init[3] < 0:
                 init[3] = 0
-            trace.append([t[i] + time_step] + init) 
+            trace.append([t[i] + time_step] + init)
 
         return np.array(trace)
+
 
 class FFNNC(torch.nn.Module):
     def __init__(self, D_in=6, D_out=8):
@@ -88,9 +98,9 @@ class FFNNC(torch.nn.Module):
 
 
 class DroneAgent(BaseAgent):
-    def __init__(self, id, code=None, file_name=None, t_v_pair = [], box_side = []):
+    def __init__(self, id, code=None, file_name=None, t_v_pair=[], box_side=[]):
         super().__init__(id, code, file_name)
-        self.t_v_pair = t_v_pair 
+        self.t_v_pair = t_v_pair
         self.box_side = box_side
 
     @staticmethod
@@ -123,19 +133,21 @@ class DroneAgent(BaseAgent):
         #     raise ValueError
         return df
 
-    def runModel(self, mode,  initalCondition, time_bound, time_step, ref_input, track_map: LaneMap_3d):
+    def runModel(
+        self, mode, initalCondition, time_bound, time_step, ref_input, track_map: LaneMap_3d
+    ):
         # path = os.path.abspath(__file__)
         # path = path.replace('quadrotor_agent.py', 'prarm.json')
         # # print(path)
         # with open(path, 'r') as f:
         #     prarms = json.load(f)
         params = drone_params
-        bias1 = params['bias1']
-        bias2 = params['bias2']
-        bias3 = params['bias3']
-        weight1 = params['weight1']
-        weight2 = params['weight2']
-        weight3 = params['weight3']
+        bias1 = params["bias1"]
+        bias2 = params["bias2"]
+        bias3 = params["bias3"]
+        weight1 = params["weight1"]
+        weight2 = params["weight2"]
+        weight3 = params["weight3"]
 
         bias1 = torch.FloatTensor(bias1)
         bias2 = torch.FloatTensor(bias2)
@@ -150,14 +162,16 @@ class DroneAgent(BaseAgent):
         controller.layer1.bias = torch.nn.Parameter(bias1)
         controller.layer2.bias = torch.nn.Parameter(bias2)
         controller.layer3.bias = torch.nn.Parameter(bias3)
-        control_input_list = [[-0.1, -0.1, 7.81],
-                              [-0.1, -0.1, 11.81],
-                              [-0.1, 0.1, 7.81],
-                              [-0.1, 0.1, 11.81],
-                              [0.1, -0.1, 7.81],
-                              [0.1, -0.1, 11.81],
-                              [0.1, 0.1, 7.81],
-                              [0.1, 0.1, 11.81]]
+        control_input_list = [
+            [-0.1, -0.1, 7.81],
+            [-0.1, -0.1, 11.81],
+            [-0.1, 0.1, 7.81],
+            [-0.1, 0.1, 11.81],
+            [0.1, -0.1, 7.81],
+            [0.1, -0.1, 11.81],
+            [0.1, 0.1, 7.81],
+            [0.1, 0.1, 11.81],
+        ]
         init = initalCondition
         trajectory = [init]
         r = ode(self.dynamic)
@@ -195,7 +209,8 @@ class DroneAgent(BaseAgent):
             evy = tmp2
 
             data = torch.FloatTensor(
-                [0.2 * ex, 0.2 * ey, 0.2 * ez, 0.1 * evx, 0.1 * evy, 0.1 * evz])
+                [0.2 * ex, 0.2 * ey, 0.2 * ez, 0.1 * evx, 0.1 * evy, 0.1 * evz]
+            )
             res = controller(data)
             res = res.detach().numpy()
             idx = np.argmax(res)
@@ -203,15 +218,15 @@ class DroneAgent(BaseAgent):
 
             df = self.action_handler(mode, init, track_map)
 
-            u = u+[df]
+            u = u + [df]
             init = trajectory[i]  # len 9
             r = ode(self.dynamic)
             r.set_initial_value(init)
             r.set_f_params(u)
             val = r.integrate(r.t + time_step)
 
-            t = t+time_step
-            if round(t-time_bound-time_step, 4) >= 0:
+            t = t + time_step
+            if round(t - time_bound - time_step, 4) >= 0:
                 break
             i += 1
             #  print(i,idx,u,res)
@@ -226,27 +241,45 @@ class DroneAgent(BaseAgent):
             trace[i].extend(val[3:])
         return trace
 
-    def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step, track_map: LaneMap_3d = None) -> np.ndarray:
+    def TC_simulate(
+        self, mode: List[str], initialCondition, time_bound, time_step, track_map: LaneMap_3d = None
+    ) -> np.ndarray:
         time_bound = float(time_bound)
         traces = []
         end_time = 0
         time_limit = self.t_v_pair[0]
         mode_parameters = track_map.get_next_point(
-                track_map.trans_func(mode[1]), self.id, np.array(initialCondition[:3]), np.array(initialCondition[3:6]), self.t_v_pair)
+            track_map.trans_func(mode[1]),
+            self.id,
+            np.array(initialCondition[:3]),
+            np.array(initialCondition[3:6]),
+            self.t_v_pair,
+        )
         while time_bound > end_time:
             ref_vx = (mode_parameters[3] - mode_parameters[0]) / time_limit
             ref_vy = (mode_parameters[4] - mode_parameters[1]) / time_limit
             ref_vz = (mode_parameters[5] - mode_parameters[2]) / time_limit
             sym_rot_angle = 0
-            trace = self.runModel(mode, mode_parameters[0:3] + list(initialCondition), min(time_limit, time_bound-end_time), time_step, [ref_vx, ref_vy, ref_vz,
-                                                                                                                                         sym_rot_angle], track_map)
+            trace = self.runModel(
+                mode,
+                mode_parameters[0:3] + list(initialCondition),
+                min(time_limit, time_bound - end_time),
+                time_step,
+                [ref_vx, ref_vy, ref_vz, sym_rot_angle],
+                track_map,
+            )
             for p in trace:
-                p[0] = round(p[0]+end_time, 4)
+                p[0] = round(p[0] + end_time, 4)
             end_time = trace[-1][0]
             initialCondition = trace[-1][1:]
             mode_parameters = track_map.get_next_point(
-                track_map.trans_func(mode[1]), self.id,  None, np.array(initialCondition[3:6]), self.t_v_pair)
-            if round(trace[0][0]-0, 4) != 0:
+                track_map.trans_func(mode[1]),
+                self.id,
+                None,
+                np.array(initialCondition[3:6]),
+                self.t_v_pair,
+            )
+            if round(trace[0][0] - 0, 4) != 0:
                 trace = trace[1:]
             traces.extend(trace)
         return np.array(traces)

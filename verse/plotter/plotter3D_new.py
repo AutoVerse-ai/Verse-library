@@ -4,28 +4,52 @@ from typing import List, Tuple, Union
 from math import pi, cos, sin, acos, asin
 from plotly.subplots import make_subplots
 from enum import Enum, auto
+
 # import time
 from verse.analysis.analysis_tree import AnalysisTree, AnalysisTreeNode
 from verse.map.lane_map_3d import LaneMap_3d
 from verse.map.lane_segment_3d import StraightLane_3d, CircularLane_3d_v1
 
-colors = [['#CC0000', '#FF0000', '#FF3333', '#FF6666', '#FF9999', '#FFCCCC'],
-          ['#CCCC00', '#FFFF00', '#FFFF33', '#FFFF66', '#FFFF99', '#FFE5CC'],
-          ['#66CC00', '#80FF00', '#99FF33', '#B2FF66', '#CCFF99', '#FFFFCC'],
-          ['#00CC00', '#00FF00', '#33FF33', '#66FF66', '#99FF99', '#E5FFCC'],
-          ['#00CC66', '#00FF80', '#33FF99', '#66FFB2', '#99FFCC', '#CCFFCC'],
-          ['#00CCCC', '#00FFFF', '#33FFFF', '#66FFFF', '#99FFFF', '#CCFFE5'],
-          ['#0066CC', '#0080FF', '#3399FF', '#66B2FF', '#99CCFF', '#CCE5FF'],
-          ['#0000CC', '#0000FF', '#3333FF', '#6666FF', '#9999FF', '#CCCCFF'],
-          ['#6600CC', '#7F00FF', '#9933FF', '#B266FF', '#CC99FF', '#E5CCFF'],
-          ['#CC00CC', '#FF00FF', '#FF33FF', '#FF66FF', '#FF99FF', '#FFCCFF'],
-          ['#CC0066', '#FF007F', '#FF3399', '#FF66B2', '#FF99CC', '#FFCCE5']
-          ]
-scheme_dict = {'red': 0, 'springgreen': 5, 'blue': 8, 'orange': 1, 'yellow': 2, 'yellowgreen': 3, 'lime': 4,
-               'cyan': 6, 'cyanblue': 7, 'purple': 9, 'magenta': 10, 'pink': 11}
+colors = [
+    ["#CC0000", "#FF0000", "#FF3333", "#FF6666", "#FF9999", "#FFCCCC"],
+    ["#CCCC00", "#FFFF00", "#FFFF33", "#FFFF66", "#FFFF99", "#FFE5CC"],
+    ["#66CC00", "#80FF00", "#99FF33", "#B2FF66", "#CCFF99", "#FFFFCC"],
+    ["#00CC00", "#00FF00", "#33FF33", "#66FF66", "#99FF99", "#E5FFCC"],
+    ["#00CC66", "#00FF80", "#33FF99", "#66FFB2", "#99FFCC", "#CCFFCC"],
+    ["#00CCCC", "#00FFFF", "#33FFFF", "#66FFFF", "#99FFFF", "#CCFFE5"],
+    ["#0066CC", "#0080FF", "#3399FF", "#66B2FF", "#99CCFF", "#CCE5FF"],
+    ["#0000CC", "#0000FF", "#3333FF", "#6666FF", "#9999FF", "#CCCCFF"],
+    ["#6600CC", "#7F00FF", "#9933FF", "#B266FF", "#CC99FF", "#E5CCFF"],
+    ["#CC00CC", "#FF00FF", "#FF33FF", "#FF66FF", "#FF99FF", "#FFCCFF"],
+    ["#CC0066", "#FF007F", "#FF3399", "#FF66B2", "#FF99CC", "#FFCCE5"],
+]
+scheme_dict = {
+    "red": 0,
+    "springgreen": 5,
+    "blue": 8,
+    "orange": 1,
+    "yellow": 2,
+    "yellowgreen": 3,
+    "lime": 4,
+    "cyan": 6,
+    "cyanblue": 7,
+    "purple": 9,
+    "magenta": 10,
+    "pink": 11,
+}
 
 
-def simulation_tree_3d(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, z_dim: int = 3, print_dim_list=None, map_type='outline', sample_rate=1):
+def simulation_tree_3d(
+    root: Union[AnalysisTree, AnalysisTreeNode],
+    map=None,
+    fig=go.Figure(),
+    x_dim: int = 1,
+    y_dim: int = 2,
+    z_dim: int = 3,
+    print_dim_list=None,
+    map_type="outline",
+    sample_rate=1,
+):
     """It statically shows all the traces of the simulation."""
     if isinstance(root, AnalysisTree):
         root = root.root
@@ -42,8 +66,9 @@ def simulation_tree_3d(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fi
     i = 0
     for agent_id in agent_list:
         fig = simulation_tree_single_3d(
-            root, agent_id, fig, x_dim, y_dim, z_dim, scheme_list[i], print_dim_list)
-        i = (i+1) % 12
+            root, agent_id, fig, x_dim, y_dim, z_dim, scheme_list[i], print_dim_list
+        )
+        i = (i + 1) % 12
 
     # fig.update_xaxes(title='x')
     # fig.update_yaxes(title='y')
@@ -52,14 +77,31 @@ def simulation_tree_3d(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fi
         scene=dict(
             # xaxis = dict(nticks=4, range=[-100,100],),
             # yaxis = dict(nticks=4, range=[-50,100],),
-            zaxis=dict(nticks=4, range=[-15, 15],)
+            zaxis=dict(
+                nticks=4,
+                range=[-15, 15],
+            )
         )
     )
     fig = update_style(fig)
     return fig
 
 
-def reachtube_tree_3d(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, z_dim: int = 3, print_dim_list=None, map_type='outline', sample_rate=1, combine_rect=None, xrange=[], yrange=[], zrange=[]):
+def reachtube_tree_3d(
+    root: Union[AnalysisTree, AnalysisTreeNode],
+    map=None,
+    fig=go.Figure(),
+    x_dim: int = 1,
+    y_dim: int = 2,
+    z_dim: int = 3,
+    print_dim_list=None,
+    map_type="outline",
+    sample_rate=1,
+    combine_rect=None,
+    xrange=[],
+    yrange=[],
+    zrange=[],
+):
     """It statically shows all the traces of the verfication."""
     if isinstance(root, AnalysisTree):
         root = root.root
@@ -76,56 +118,76 @@ def reachtube_tree_3d(root: Union[AnalysisTree, AnalysisTreeNode], map=None, fig
     i = 0
     for agent_id in agent_list:
         fig = reachtube_tree_single_3d(
-            root, agent_id, fig, x_dim, y_dim, z_dim, scheme_list[i], print_dim_list, combine_rect)
-        i = (i+1) % 12
+            root, agent_id, fig, x_dim, y_dim, z_dim, scheme_list[i], print_dim_list, combine_rect
+        )
+        i = (i + 1) % 12
 
     fig.update_layout(
         scene=dict(
-            xaxis = dict(nticks=4, range=xrange,),
-            yaxis = dict(nticks=4, range=yrange,),
-            zaxis = dict(nticks=4, range=zrange,)
+            xaxis=dict(
+                nticks=4,
+                range=xrange,
+            ),
+            yaxis=dict(
+                nticks=4,
+                range=yrange,
+            ),
+            zaxis=dict(
+                nticks=4,
+                range=zrange,
+            ),
         )
     )
     fig = update_style(fig)
     return fig
 
 
-def draw_map_3d(map: LaneMap_3d, fig=go.Figure(), fill_type='outline', color='rgba(0,0,0,1)'):
+def draw_map_3d(map: LaneMap_3d, fig=go.Figure(), fill_type="outline", color="rgba(0,0,0,1)"):
     if map is None:
         return fig
     num = 100
     for lane_idx in map.lane_dict:
         lane = map.lane_dict[lane_idx]
         opacity = 0.2
-        start_color = end_color = 'grey'
+        start_color = end_color = "grey"
         for lane_seg in lane.segment_list:
-            if lane_seg.type == 'Straight':
+            if lane_seg.type == "Straight":
                 lane_seg: StraightLane_3d = lane_seg
                 oc, oc_x, oc_y, oc_z = lane_seg.get_lane_center(num)
-                fig.add_trace(go.Scatter3d(
-                    x=oc_x, y=oc_y, z=oc_z,
-                    # opacity=opacity,
-                    showlegend=False,
-                    mode='lines',
-                    marker=dict(color='rgb(255,255,255)',
-                                ),
-                    line=dict(color='rgb(0,0,0)', width=10
-                                )))
+                fig.add_trace(
+                    go.Scatter3d(
+                        x=oc_x,
+                        y=oc_y,
+                        z=oc_z,
+                        # opacity=opacity,
+                        showlegend=False,
+                        mode="lines",
+                        marker=dict(
+                            color="rgb(255,255,255)",
+                        ),
+                        line=dict(color="rgb(0,0,0)", width=10),
+                    )
+                )
 
             elif lane_seg.type == "Circular":
                 lane_seg = lane_seg
                 oc, oc_x, oc_y, oc_z = lane_seg.get_lane_center(num)
-                fig.add_trace(go.Scatter3d(
-                    x=oc_x, y=oc_y, z=oc_z,
-                    # opacity=opacity,
-                    showlegend=False,
-                    mode='lines',
-                    marker=dict(color='rgb(255,255,255)',
-                                ),
-                    line=dict(color='rgb(0,0,0)', width=10
-                                )))
+                fig.add_trace(
+                    go.Scatter3d(
+                        x=oc_x,
+                        y=oc_y,
+                        z=oc_z,
+                        # opacity=opacity,
+                        showlegend=False,
+                        mode="lines",
+                        marker=dict(
+                            color="rgb(255,255,255)",
+                        ),
+                        line=dict(color="rgb(0,0,0)", width=10),
+                    )
+                )
             else:
-                raise ValueError(f'Unknown lane segment type {lane_seg.type}')
+                raise ValueError(f"Unknown lane segment type {lane_seg.type}")
     # for agent_id, wps in map.wps.items():
     #     if agent_id != 'test3':
     #         continue
@@ -144,7 +206,16 @@ def draw_map_3d(map: LaneMap_3d, fig=go.Figure(), fill_type='outline', color='rg
     return fig
 
 
-def simulation_tree_single_3d(root: Union[AnalysisTree, AnalysisTreeNode], agent_id, fig: go.Figure() = go.Figure(), x_dim: int = 1, y_dim: int = 2, z_dim: int = 3, color=None, print_dim_list=None):
+def simulation_tree_single_3d(
+    root: Union[AnalysisTree, AnalysisTreeNode],
+    agent_id,
+    fig: go.Figure() = go.Figure(),
+    x_dim: int = 1,
+    y_dim: int = 2,
+    z_dim: int = 3,
+    color=None,
+    print_dim_list=None,
+):
     """It statically shows the simulation traces of one given agent."""
     if isinstance(root, AnalysisTree):
         root = root.root
@@ -153,7 +224,7 @@ def simulation_tree_single_3d(root: Union[AnalysisTree, AnalysisTreeNode], agent
     color_id = 0
     if color == None:
         color = list(scheme_dict.keys())[color_cnt]
-        color_cnt = (color_cnt+1) % 12
+        color_cnt = (color_cnt + 1) % 12
     start_list = []
     end_list = []
     count_dict = {}
@@ -175,21 +246,30 @@ def simulation_tree_single_3d(root: Union[AnalysisTree, AnalysisTreeNode], agent
         start_list.append(start)
         end_list.append(end)
 
-        fig.add_trace(go.Scatter3d(x=trace[:, x_dim], y=trace[:, y_dim], z=trace[:, z_dim],
-                                   mode='lines',
-                                   marker=dict(
-            color=colors[scheme_dict[color]][color_id]),
-            line=dict(
-            color=colors[scheme_dict[color]][color_id], width=18),
-            text=[
-            ['{:.2f}'.format(trace[i, j])for j in print_dim_list] for i in range(trace.shape[0])],
-            legendgroup=agent_id,
-            legendgrouptitle_text=agent_id,
-            name=str(round(start[0], 2))+'-'+str(round(end[0], 2)) +
-            '-'+str(count_dict[time]),
-            showlegend=True))
+        fig.add_trace(
+            go.Scatter3d(
+                x=trace[:, x_dim],
+                y=trace[:, y_dim],
+                z=trace[:, z_dim],
+                mode="lines",
+                marker=dict(color=colors[scheme_dict[color]][color_id]),
+                line=dict(color=colors[scheme_dict[color]][color_id], width=18),
+                text=[
+                    ["{:.2f}".format(trace[i, j]) for j in print_dim_list]
+                    for i in range(trace.shape[0])
+                ],
+                legendgroup=agent_id,
+                legendgrouptitle_text=agent_id,
+                name=str(round(start[0], 2))
+                + "-"
+                + str(round(end[0], 2))
+                + "-"
+                + str(count_dict[time]),
+                showlegend=True,
+            )
+        )
 
-        color_id = (color_id+4) % 5
+        color_id = (color_id + 4) % 5
         queue += node.child
     # fig.update_layout(legend=dict(
     #     groupclick="toggleitem",
@@ -199,14 +279,24 @@ def simulation_tree_single_3d(root: Union[AnalysisTree, AnalysisTreeNode], agent
     return fig
 
 
-def reachtube_tree_single_3d(root: Union[AnalysisTree, AnalysisTreeNode], agent_id, fig=go.Figure(), x_dim: int = 1, y_dim: int = 2, z_dim: int = 3, color=None, print_dim_list=None, combine_rect=None):
+def reachtube_tree_single_3d(
+    root: Union[AnalysisTree, AnalysisTreeNode],
+    agent_id,
+    fig=go.Figure(),
+    x_dim: int = 1,
+    y_dim: int = 2,
+    z_dim: int = 3,
+    color=None,
+    print_dim_list=None,
+    combine_rect=None,
+):
     """It statically shows the verfication traces of one given agent."""
     if isinstance(root, AnalysisTree):
         root = root.root
     global color_cnt
     if color == None:
         color = list(scheme_dict.keys())[color_cnt]
-        color_cnt = (color_cnt+1) % 12
+        color_cnt = (color_cnt + 1) % 12
     queue = [root]
     show_legend = True
     fillcolor = colors[scheme_dict[color]][5]
@@ -216,9 +306,9 @@ def reachtube_tree_single_3d(root: Union[AnalysisTree, AnalysisTreeNode], agent_
         traces = node.trace
         trace = np.array(traces[agent_id])
         # print(trace)
-        max_id = len(trace)-1
+        max_id = len(trace) - 1
         if combine_rect == None:
-            max_id = len(trace)-1
+            max_id = len(trace) - 1
             num_cube = 0
             i = [0, 3, 4, 7, 0, 6, 1, 7, 0, 5, 2, 7]
             j = [1, 2, 5, 6, 2, 4, 3, 5, 4, 1, 6, 3]
@@ -230,9 +320,9 @@ def reachtube_tree_single_3d(root: Union[AnalysisTree, AnalysisTreeNode], agent_
             j_total = []
             k_total = []
             for n in range(0, max_id, 2):
-                px = [trace[n][x_dim], trace[n+1][x_dim]]
-                py = [trace[n][y_dim], trace[n+1][y_dim]]
-                pz = [trace[n][z_dim], trace[n+1][z_dim]]
+                px = [trace[n][x_dim], trace[n + 1][x_dim]]
+                py = [trace[n][y_dim], trace[n + 1][y_dim]]
+                pz = [trace[n][z_dim], trace[n + 1][z_dim]]
                 n = 0
                 for z in pz:
                     for y in py:
@@ -241,24 +331,26 @@ def reachtube_tree_single_3d(root: Union[AnalysisTree, AnalysisTreeNode], agent_
                             y_total.append(y)
                             z_total.append(z)
                 for n in range(12):
-                    i_total.append(i[n]+num_cube*8)
-                    j_total.append(j[n]+num_cube*8)
-                    k_total.append(k[n]+num_cube*8)
+                    i_total.append(i[n] + num_cube * 8)
+                    j_total.append(j[n] + num_cube * 8)
+                    k_total.append(k[n] + num_cube * 8)
                 num_cube += 1
-            fig.add_trace(go.Mesh3d(
-                # vertices of cubes
-                x=x_total,
-                y=y_total,
-                z=z_total,
-                # i, j and k give the vertices of triangles
-                i=i_total,
-                j=j_total,
-                k=k_total,
-                name='y',
-                opacity=0.20,
-                color=colors[scheme_dict[color]][1],
-                flatshading=True
-            ))
+            fig.add_trace(
+                go.Mesh3d(
+                    # vertices of cubes
+                    x=x_total,
+                    y=y_total,
+                    z=z_total,
+                    # i, j and k give the vertices of triangles
+                    i=i_total,
+                    j=j_total,
+                    k=k_total,
+                    name="y",
+                    opacity=0.20,
+                    color=colors[scheme_dict[color]][1],
+                    flatshading=True,
+                )
+            )
 
             # trace_x_odd = np.array([trace[i][x_dim]
             #                         for i in range(0, max_id, 2)])
@@ -298,41 +390,43 @@ def reachtube_tree_single_3d(root: Union[AnalysisTree, AnalysisTreeNode], agent_
 
 def check_dim(num_dim: int, x_dim: int = 1, y_dim: int = 2, z_dim: int = 3, print_dim_list=None):
     if x_dim < 0 or x_dim >= num_dim:
-        raise ValueError(f'wrong x dimension value {x_dim}')
+        raise ValueError(f"wrong x dimension value {x_dim}")
     if y_dim < 0 or y_dim >= num_dim:
-        raise ValueError(f'wrong y dimension value {y_dim}')
+        raise ValueError(f"wrong y dimension value {y_dim}")
     if z_dim < 0 or z_dim >= num_dim:
-        raise ValueError(f'wrong z dimension value {z_dim}')
+        raise ValueError(f"wrong z dimension value {z_dim}")
     if print_dim_list is None:
         return True
     for i in print_dim_list:
         if y_dim < 0 or y_dim >= num_dim:
-            raise ValueError(f'wrong printed dimension value {i}')
+            raise ValueError(f"wrong printed dimension value {i}")
     return True
 
 
 def sample_trace(root, sample_rate: int = 1):
     queue = [root]
     # print(root.trace)
-    if root.type == 'reachtube':
-        sample_rate = sample_rate*2
+    if root.type == "reachtube":
+        sample_rate = sample_rate * 2
         while queue != []:
             node = queue.pop()
             for agent_id in node.trace:
                 trace_length = len(node.trace[agent_id])
                 tmp = []
                 for i in range(0, trace_length, sample_rate):
-                    if i+sample_rate-1 < trace_length:
+                    if i + sample_rate - 1 < trace_length:
                         tmp.append(node.trace[agent_id][i])
-                        tmp.append(node.trace[agent_id][i+sample_rate-1])
+                        tmp.append(node.trace[agent_id][i + sample_rate - 1])
                 node.trace[agent_id] = tmp
             queue += node.child
     else:
         while queue != []:
             node = queue.pop()
             for agent_id in node.trace:
-                node.trace[agent_id] = [node.trace[agent_id][i]
-                                        for i in range(0, len(node.trace[agent_id]), sample_rate)]
+                node.trace[agent_id] = [
+                    node.trace[agent_id][i]
+                    for i in range(0, len(node.trace[agent_id]), sample_rate)
+                ]
             queue += node.child
     return root
 
@@ -343,11 +437,23 @@ def update_style(fig: go.Figure() = go.Figure()):
         # paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)"
     )
-    fig.update_layout(font={'size': 18})
+    fig.update_layout(font={"size": 18})
     linewidth = 4
     gridwidth = 2
-    fig.update_yaxes(showline=True, linewidth=linewidth, linecolor='Gray',
-                     showgrid=True, gridwidth=gridwidth, gridcolor='LightGrey')
-    fig.update_xaxes(showline=True, linewidth=linewidth, linecolor='Gray',
-                     showgrid=True, gridwidth=gridwidth, gridcolor='LightGrey')
+    fig.update_yaxes(
+        showline=True,
+        linewidth=linewidth,
+        linecolor="Gray",
+        showgrid=True,
+        gridwidth=gridwidth,
+        gridcolor="LightGrey",
+    )
+    fig.update_xaxes(
+        showline=True,
+        linewidth=linewidth,
+        linecolor="Gray",
+        showgrid=True,
+        gridwidth=gridwidth,
+        gridcolor="LightGrey",
+    )
     return fig

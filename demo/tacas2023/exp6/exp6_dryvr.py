@@ -26,14 +26,25 @@ class TrackMode(Enum):
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/tacas2023/exp6/example_controller4.py'
+    input_code_name = "./demo/tacas2023/exp6/example_controller4.py"
     bench = Benchmark(sys.argv)
     bench.agent_type = "C"
     bench.noisy_s = "No"
-    bench.scenario.add_agent(CarAgent('car1', file_name=input_code_name, initial_state=[
-                       [0, -0.5, 0, 1.0], [0.01, 0.5, 0, 1.0]], initial_mode=(AgentMode.Normal, TrackMode.T1)))
-    bench.scenario.add_agent(NPCAgent('car2', initial_state=[
-                       [15, -0.3, 0, 0.5], [15, 0.3, 0, 0.5]], initial_mode=(AgentMode.Normal, TrackMode.T1)))
+    bench.scenario.add_agent(
+        CarAgent(
+            "car1",
+            file_name=input_code_name,
+            initial_state=[[0, -0.5, 0, 1.0], [0.01, 0.5, 0, 1.0]],
+            initial_mode=(AgentMode.Normal, TrackMode.T1),
+        )
+    )
+    bench.scenario.add_agent(
+        NPCAgent(
+            "car2",
+            initial_state=[[15, -0.3, 0, 0.5], [15, 0.3, 0, 0.5]],
+            initial_mode=(AgentMode.Normal, TrackMode.T1),
+        )
+    )
     # scenario.add_agent(NPCAgent('car3', initial_state=[[35, -3.3, 0, 0.5], [35, -2.7, 0, 0.5]], initial_mode=(AgentMode.Normal, TrackMode.T2)))
     # scenario.add_agent(NPCAgent('car4', initial_state=[[30, -0.5, 0, 0.5], [30, 0.5, 0, 0.5]], initial_mode=(AgentMode.Normal, TrackMode.T1)))
     tmp_map = M1()
@@ -67,7 +78,6 @@ if __name__ == "__main__":
         traces.dump("./demo/tacas2023/exp6/output6_dryvr.json")
     if bench.config.plot:
         fig = go.Figure()
-        fig = reachtube_tree(traces, tmp_map, fig, 1,
-                            2, [1, 2], 'lines', 'trace')
+        fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], "lines", "trace")
         fig.show()
     bench.report()

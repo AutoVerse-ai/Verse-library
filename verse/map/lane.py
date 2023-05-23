@@ -5,7 +5,7 @@ import numpy as np
 from verse.map.lane_segment import AbstractLane
 
 
-class Lane():
+class Lane:
     COMPENSATE = 3
 
     def __init__(self, id, seg_list: List[AbstractLane], speed_limit=None):
@@ -22,12 +22,12 @@ class Lane():
             longitudinal_start += lane_seg.length
 
     def get_lane_segment(self, position: np.ndarray) -> AbstractLane:
-        min_lateral = float('inf')
+        min_lateral = float("inf")
         idx = -1
         seg = None
         for seg_idx, segment in enumerate(self.segment_list):
             logitudinal, lateral = segment.local_coordinates(position)
-            is_on = 0-Lane.COMPENSATE <= logitudinal < segment.length
+            is_on = 0 - Lane.COMPENSATE <= logitudinal < segment.length
             if is_on:
                 if lateral < min_lateral:
                     idx = seg_idx

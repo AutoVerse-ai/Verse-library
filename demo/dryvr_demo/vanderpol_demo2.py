@@ -11,10 +11,10 @@ class AgentMode(Enum):
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/dryvr_demo/vanderpol_controller.py'
+    input_code_name = "./demo/dryvr_demo/vanderpol_controller.py"
     scenario = Scenario()
 
-    car = vanderpol_agent('car1', file_name=input_code_name)
+    car = vanderpol_agent("car1", file_name=input_code_name)
     scenario.add_agent(car)
     # modify mode list input
     scenario.set_init(
@@ -23,21 +23,21 @@ if __name__ == "__main__":
         ],
         [
             tuple([AgentMode.Default]),
-        ]
+        ],
     )
-    scenario.config.reachability_method = 'NeuReach' 
+    scenario.config.reachability_method = "NeuReach"
     traces = scenario.verify(
-        7, 0.05,
+        7,
+        0.05,
         params={
-            "N_X0":1,
-            "N_x0":500,
-            "N_t":100,
-            "epochs":50,
-            "_lambda":0.05,
-            "use_cuda":True,
-        }
+            "N_X0": 1,
+            "N_x0": 500,
+            "N_t": 100,
+            "epochs": 50,
+            "_lambda": 0.05,
+            "use_cuda": True,
+        },
     )
     fig = go.Figure()
-    fig = reachtube_tree(traces, None, fig, 1, 2, [1, 2],
-                         'lines', 'trace')
+    fig = reachtube_tree(traces, None, fig, 1, 2, [1, 2], "lines", "trace")
     fig.show()

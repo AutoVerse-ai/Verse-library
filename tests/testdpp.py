@@ -2,8 +2,9 @@
 # Read more from https://docs.python.org/3/library/unittest.html
 
 # A scenario is created for testing
-from enum import Enum,auto
+from enum import Enum, auto
 import unittest
+
 
 # Defines the set of possible driving modes of a vehicle
 class VehicleMode(Enum):
@@ -12,8 +13,10 @@ class VehicleMode(Enum):
     SwitchRight = auto()
     Brake = auto()
 
+
 class TrackMode(Enum):
     Lane0 = auto()
+
 
 # Defines continuous states
 class State:
@@ -27,7 +30,8 @@ class State:
     def __init__(self, x, y, theta, v, vehicle_mode: VehicleMode, lane_mode: TrackMode):
         self.data = []
 
-def controller(ego:State):
+
+def controller(ego: State):
     output_vehicle_mode = ego.vehicle_mode
     output_lane_mode = ego.lane_mode
     if ego.vehicle_mode == VehicleMode.Normal:
@@ -47,6 +51,7 @@ def controller(ego:State):
 
     return output_vehicle_mode, output_lane_mode
 
+
 from verse.agents.example_agent.car_agent import CarAgent
 from verse.scenario.scenario import Scenario
 from verse.map.example_map.simple_map import SimpleMap2
@@ -55,9 +60,9 @@ from verse.map.example_map.simple_map import SimpleMap2
 class TestSimulatorMethods(unittest.TestCase):
     def setUp(self):
         self.scenario = Scenario()
-        # Relative path to ../tests/example_controller1.py does not work. 
-        self.car = CarAgent('ego', file_name='../demo/tacas2023/exp2/example_controller5.py')
-        self.car2 = CarAgent('other', file_name='../demo/tacas2023/exp2/example_controller5.py')
+        # Relative path to ../tests/example_controller1.py does not work.
+        self.car = CarAgent("ego", file_name="../demo/tacas2023/exp2/example_controller5.py")
+        self.car2 = CarAgent("other", file_name="../demo/tacas2023/exp2/example_controller5.py")
         self.scenario.add_agent(self.car)
         self.scenario.add_agent(self.car2)
         tmp_map = SimpleMap2()
@@ -77,16 +82,20 @@ class TestSimulatorMethods(unittest.TestCase):
         self.assertEqual(5, 5)
 
     def test_carid(self):
-        self.assertEqual(self.car.id, 'ego', msg='Checking agent creation')
+        self.assertEqual(self.car.id, "ego", msg="Checking agent creation")
 
     def test_carinscene(self):
         # Ego agent was added
-        self.assertEqual(self.scenario.agent_dict['ego'], self.car, msg='Checking adding agent to scenario dict')
+        self.assertEqual(
+            self.scenario.agent_dict["ego"], self.car, msg="Checking adding agent to scenario dict"
+        )
 
     def test_scenedictsize(self):
-        # Check size of scene agent dictionary 
-        self.assertEqual(len(self.scenario.agent_dict), 2, msg='Checking adding agent to scenario dict')
+        # Check size of scene agent dictionary
+        self.assertEqual(
+            len(self.scenario.agent_dict), 2, msg="Checking adding agent to scenario dict"
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -16,15 +16,17 @@ class BallMode(Enum):
     # Ultimately for simple models we would like to write
     # E.g., Mode = makeMode(Normal, bounce,...)
 
+
 # class TrackMode(Enum):
 #     Lane0 = auto()
 #     #For now this is a dummy notion of Lane
 
 
 class State:
-    '''Defines the state variables of the model
-        Both discrete and continuous variables
-    '''
+    """Defines the state variables of the model
+    Both discrete and continuous variables
+    """
+
     x: float
     y = 0.0
     vx = 0.0
@@ -36,10 +38,10 @@ class State:
 
 
 def decisionLogic(ego: State):
-    '''Computes the possible mode transitions'''
+    """Computes the possible mode transitions"""
     output = copy.deepcopy(ego)
-    '''TODO: The `ego` variable name should be flexible but 
-    currently these are somehow harcoded with the sensor'''
+    """TODO: The `ego` variable name should be flexible but 
+    currently these are somehow harcoded with the sensor"""
     # Stores the prestate first
     if ego.x < 0:
         output.vx = -ego.vx
@@ -56,45 +58,38 @@ def decisionLogic(ego: State):
     if ego.y > 20:
         output.vy = -ego.vy
         output.y = 20
-    '''  if ego.x - others[1].x < 1 and ego.y - others[1].y < 1:
+    """  if ego.x - others[1].x < 1 and ego.y - others[1].y < 1:
         output.vy = -ego.vy
-        output.vx = -ego.vx'''
+        output.vx = -ego.vx"""
     # TODO: We would like to be able to write something like this, but currently not allowed.
     return output
 
 
 if __name__ == "__main__":
-    ''' Defining and using a  scenario involves the following 5 easy steps:
-        1. creating a basic scenario object with Scenario()
-        2. defining the agents that will populate the object, here we have two ball agents
-        3. adding the agents to the scenario using .add_agent()
-        4. initializing the agents for this scenario. 
-            Note that agents are only initialized *in* a scenario, not individually outside a scenario
-        5. genetating the simulation traces or computing the reachable states    
-    '''
-    bouncingBall = Scenario(ScenarioConfig(parallel=False))     # scenario too small, parallel too slow
-    ball_controller = './demo/ball/ball_bounces.py'
-    myball1 = BallAgent('red-ball', file_name=ball_controller)
-    myball2 = BallAgent('green-ball', file_name=ball_controller)
+    """Defining and using a scenario involves the following 5 easy steps:
+    1. creating a basic scenario object with Scenario()
+    2. defining the agents that will populate the object, here we have two ball agents
+    3. adding the agents to the scenario using .add_agent()
+    4. initializing the agents for this scenario.
+       Note that agents are only initialized *in* a scenario, not individually outside a scenario
+    5. genetating the simulation traces or computing the reachable states
+    """
+    bouncingBall = Scenario(ScenarioConfig(parallel=False))  # scenario too small, parallel too slow
+    ball_controller = "./demo/ball/ball_bounces.py"
+    myball1 = BallAgent("red-ball", file_name=ball_controller)
+    myball2 = BallAgent("green-ball", file_name=ball_controller)
     bouncingBall.add_agent(myball1)
     bouncingBall.add_agent(myball2)
     bouncingBall.set_init(
-        [
-            [[5, 10, 2, 2], [5, 10, 2, 2]],
-            [[15, 1, 1, -2], [15, 1, 1, -2]]
-        ],
-        [
-            (BallMode.Normal,),
-            (BallMode.Normal,)
-        ]
+        [[[5, 10, 2, 2], [5, 10, 2, 2]], [[15, 1, 1, -2], [15, 1, 1, -2]]],
+        [(BallMode.Normal,), (BallMode.Normal,)],
     )
     # TODO: WE should be able to initialize each of the balls separately
     # this may be the cause for the VisibleDeprecationWarning
     # TODO: Longer term: We should initialize by writing expressions like "-2 \leq myball1.x \leq 5"
     # "-2 \leq myball1.x + myball2.x \leq 5"
-    traces = bouncingBall.simulate_simple(40, 0.01,6 )
+    traces = bouncingBall.simulate_simple(40, 0.01, 6)
     # TODO: There should be a print({traces}) function
     fig = go.Figure()
-    fig = simulation_tree(
-        traces, None, fig, 1, 2, [1, 2], 'fill', 'trace')
+    fig = simulation_tree(traces, None, fig, 1, 2, [1, 2], "fill", "trace")
     fig.show()

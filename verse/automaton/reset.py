@@ -3,19 +3,21 @@ import numpy as np
 
 from verse.parser import unparse
 
-class ResetExpression():
+
+class ResetExpression:
     def __init__(self, reset):
-        reset_var, reset_val_ast = reset 
+        reset_var, reset_val_ast = reset
         self.var = reset_var
         self.val_ast = reset_val_ast
         self.expr = unparse(reset_val_ast)
 
     def __eq__(self, o) -> bool:
         if o is None:
-            return False 
+            return False
         if not isinstance(o, ResetExpression):
-            return False 
+            return False
         return self.var == o.var and self.expr == o.expr
+
 
 # class ResetExpression:
 #     def __init__(self, reset_list):
@@ -95,7 +97,7 @@ class ResetExpression():
 #                     res = eval(tmp)
 #                     if not isinstance(res, list):
 #                         res = [res]
-#                     possible_dest[i] = res 
+#                     possible_dest[i] = res
 #                 else:
 #                     tmp = tmp[1].split('.')
 #                     # TODO-PARSER: Handle This

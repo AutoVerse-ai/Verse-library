@@ -12,6 +12,7 @@ PHYS_LANE = re.compile(r"T\d")
 INTERSECT_PHYS_LANE = re.compile(r"[A-Z]+_\d+")
 INTERSECT_VIRT_LANE = re.compile(r"[A-Z]+_\d+_\d+")
 
+
 class LaneMap:
     def __init__(self, lane_seg_list: List[Lane] = []):
         self.lane_dict: Dict[str, Lane] = {}
@@ -35,8 +36,8 @@ class LaneMap:
         # print(f"phys({lane}) -> {res}")
         # return res
 
-    # @staticmethod
-    # def _get_phys_lane(lane):
+        # @staticmethod
+        # def _get_phys_lane(lane):
         if isinstance(lane, Enum):
             lane = lane.name
         if VIRT_LANE.match(lane):
@@ -44,7 +45,7 @@ class LaneMap:
         if INTERSECT_VIRT_LANE.match(lane):
             return lane.rsplit("_", 1)[0]
         # if PHYS_LANE.match(lane) or INTERSECT_PHYS_LANE.match(lane):
-        #     return lane 
+        #     return lane
         return lane
 
     def lane_geometry(self, lane_idx):
@@ -114,7 +115,6 @@ class LaneMap:
         if isinstance(agent_mode_dest, Enum):
             agent_mode_dest = agent_mode_dest.name
         if (lane_idx, agent_mode_src, agent_mode_dest) in self.h_dict:
-            return True 
+            return True
         else:
             return False
-

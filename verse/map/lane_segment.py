@@ -4,6 +4,7 @@ from typing import Tuple, List, Optional
 
 from verse.analysis.utils import wrap_to_pi, Vector, get_class_path, to_serializable
 
+
 class LineType:
 
     """A lane side line type."""
@@ -12,6 +13,7 @@ class LineType:
     STRIPED = 1
     CONTINUOUS = 2
     CONTINUOUS_LINE = 3
+
 
 class AbstractLane(object):
 
@@ -24,7 +26,7 @@ class AbstractLane(object):
     longitudinal_start: float = 0
     line_types: List["LineType"]
 
-    def __init__(self, id:str):
+    def __init__(self, id: str):
         self.id = id
         self.type = None
 
@@ -87,8 +89,13 @@ class AbstractLane(object):
         """
         raise NotImplementedError()
 
-    def on_lane(self, position: np.ndarray, longitudinal: float = None, lateral: float = None, margin: float = 0) \
-            -> bool:
+    def on_lane(
+        self,
+        position: np.ndarray,
+        longitudinal: float = None,
+        lateral: float = None,
+        margin: float = 0,
+    ) -> bool:
         """
         Whether a given world position is on the lane.
 
@@ -100,8 +107,10 @@ class AbstractLane(object):
         """
         if longitudinal is None or lateral is None:
             longitudinal, lateral = self.local_coordinates(position)
-        is_on = np.abs(lateral) <= self.width_at(longitudinal) / 2 + margin and \
-            -self.VEHICLE_LENGTH <= longitudinal < self.length + self.VEHICLE_LENGTH
+        is_on = (
+            np.abs(lateral) <= self.width_at(longitudinal) / 2 + margin
+            and -self.VEHICLE_LENGTH <= longitudinal < self.length + self.VEHICLE_LENGTH
+        )
         return is_on
 
     def is_reachable_from(self, position: np.ndarray) -> bool:
@@ -114,11 +123,15 @@ class AbstractLane(object):
         if self.forbidden:
             return False
         longitudinal, lateral = self.local_coordinates(position)
-        is_close = np.abs(lateral) <= 2 * self.width_at(longitudinal) and \
-            0 <= longitudinal < self.length + self.VEHICLE_LENGTH
+        is_close = (
+            np.abs(lateral) <= 2 * self.width_at(longitudinal)
+            and 0 <= longitudinal < self.length + self.VEHICLE_LENGTH
+        )
         return is_close
 
-    def after_end(self, position: np.ndarray, longitudinal: float = None, lateral: float = None) -> bool:
+    def after_end(
+        self, position: np.ndarray, longitudinal: float = None, lateral: float = None
+    ) -> bool:
         if not longitudinal:
             longitudinal, _ = self.local_coordinates(position)
         return longitudinal > self.length - self.VEHICLE_LENGTH / 2
@@ -128,27 +141,32 @@ class AbstractLane(object):
         s, r = self.local_coordinates(position)
         return abs(r) + max(s - self.length, 0) + max(0 - s, 0)
 
-    def distance_with_heading(self, position: np.ndarray, heading: Optional[float], heading_weight: float = 1.0):
+    def distance_with_heading(
+        self, position: np.ndarray, heading: Optional[float], heading_weight: float = 1.0
+    ):
         """Compute a weighted distance in position and heading to the lane."""
         if heading is None:
             return self.distance(position)
         s, r = self.local_coordinates(position)
         angle = np.abs(wrap_to_pi(heading - self.heading_at(s)))
-        return abs(r) + max(s - self.length, 0) + max(0 - s, 0) + heading_weight*angle
+        return abs(r) + max(s - self.length, 0) + max(0 - s, 0) + heading_weight * angle
+
 
 class StraightLane(AbstractLane):
 
     """A lane going in straight line."""
 
-    def __init__(self,
-                 id: str, 
-                 start: Vector,
-                 end: Vector,
-                 width: float = AbstractLane.DEFAULT_WIDTH,
-                 line_types: Tuple[LineType, LineType] = None,
-                 forbidden: bool = False,
-                 speed_limit: float = 20,
-                 priority: int = 0) -> None:
+    def __init__(
+        self,
+        id: str,
+        start: Vector,
+        end: Vector,
+        width: float = AbstractLane.DEFAULT_WIDTH,
+        line_types: Tuple[LineType, LineType] = None,
+        forbidden: bool = False,
+        speed_limit: float = 20,
+        priority: int = 0,
+    ) -> None:
         """
         New straight lane.
 
@@ -171,7 +189,7 @@ class StraightLane(AbstractLane):
         self.forbidden = forbidden
         self.priority = priority
         self.speed_limit = speed_limit
-        self.type = 'Straight'
+        self.type = "Straight"
         self.longitudinal_start = 0
 
     def position(self, longitudinal: float, lateral: float) -> np.ndarray:
@@ -205,8 +223,8 @@ class StraightLane(AbstractLane):
                 "line_types": self.line_types,
                 "forbidden": self.forbidden,
                 "speed_limit": self.speed_limit,
-                "priority": self.priority
-            }
+                "priority": self.priority,
+            },
         }
 
 
@@ -214,18 +232,20 @@ class CircularLane(AbstractLane):
 
     """A lane going in circle arc."""
 
-    def __init__(self,
-                 id, 
-                 center: Vector,
-                 radius: float,
-                 start_phase: float,
-                 end_phase: float,
-                 clockwise: bool = True,
-                 width: float = AbstractLane.DEFAULT_WIDTH,
-                 line_types: List[LineType] = None,
-                 forbidden: bool = False,
-                 speed_limit: float = 20,
-                 priority: int = 0) -> None:
+    def __init__(
+        self,
+        id,
+        center: Vector,
+        radius: float,
+        start_phase: float,
+        end_phase: float,
+        clockwise: bool = True,
+        width: float = AbstractLane.DEFAULT_WIDTH,
+        line_types: List[LineType] = None,
+        forbidden: bool = False,
+        speed_limit: float = 20,
+        priority: int = 0,
+    ) -> None:
         super().__init__(id)
         self.center = np.array(center)
         self.radius = radius
@@ -236,19 +256,21 @@ class CircularLane(AbstractLane):
         self.width = width
         self.line_types = line_types or [LineType.STRIPED, LineType.STRIPED]
         self.forbidden = forbidden
-        self.length = radius*(end_phase - start_phase) * self.direction
+        self.length = radius * (end_phase - start_phase) * self.direction
         self.priority = priority
         self.speed_limit = speed_limit
-        self.type = 'Circular'
+        self.type = "Circular"
         self.longitudinal_start = 0
 
     def position(self, longitudinal: float, lateral: float) -> np.ndarray:
         phi = self.direction * longitudinal / self.radius + self.start_phase
-        return self.center + (self.radius - lateral * self.direction)*np.array([np.cos(phi), np.sin(phi)])
+        return self.center + (self.radius - lateral * self.direction) * np.array(
+            [np.cos(phi), np.sin(phi)]
+        )
 
     def heading_at(self, longitudinal: float) -> float:
         phi = self.direction * longitudinal / self.radius + self.start_phase
-        psi = wrap_to_pi(phi + np.pi/2 * self.direction)
+        psi = wrap_to_pi(phi + np.pi / 2 * self.direction)
         return psi
 
     def width_at(self, longitudinal: float) -> float:
@@ -259,8 +281,8 @@ class CircularLane(AbstractLane):
         phi = np.arctan2(delta[1], delta[0])
         phi = self.start_phase + wrap_to_pi(phi - self.start_phase)
         r = np.linalg.norm(delta)
-        longitudinal = self.direction*(phi - self.start_phase)*self.radius
-        lateral = self.direction*(self.radius - r)
+        longitudinal = self.direction * (phi - self.start_phase) * self.radius
+        lateral = self.direction * (self.radius - r)
         return longitudinal, lateral
 
     @classmethod
@@ -281,19 +303,19 @@ class CircularLane(AbstractLane):
                 "line_types": self.line_types,
                 "forbidden": self.forbidden,
                 "speed_limit": self.speed_limit,
-                "priority": self.priority
-            }
+                "priority": self.priority,
+            },
         }
 
 
 class LaneSegment:
-    def __init__(self, id, lane_parameter = None):
+    def __init__(self, id, lane_parameter=None):
         self.id = id
         # self.left_lane:List[str] = left_lane
-        # self.right_lane:List[str] = right_lane 
+        # self.right_lane:List[str] = right_lane
         # self.next_segment:int = next_segment
 
-        self.lane_parameter = None 
+        self.lane_parameter = None
         if lane_parameter is not None:
             self.lane_parameter = lane_parameter
 

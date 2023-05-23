@@ -32,23 +32,23 @@ class TrackMode(Enum):
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/tacas2023/exp3/example_controller7.py'
+    input_code_name = "./demo/tacas2023/exp3/example_controller7.py"
     bench = Benchmark(sys.argv)
     bench.agent_type = "C"
     bench.noisy_s = "No"
-    car = CarAgent('car1', file_name=input_code_name)
+    car = CarAgent("car1", file_name=input_code_name)
     bench.scenario.add_agent(car)
-    car = NPCAgent('car2')
+    car = NPCAgent("car2")
     bench.scenario.add_agent(car)
-    car = CarAgent('car3', file_name=input_code_name)
+    car = CarAgent("car3", file_name=input_code_name)
     bench.scenario.add_agent(car)
-    car = NPCAgent('car4')
+    car = NPCAgent("car4")
     bench.scenario.add_agent(car)
-    car = NPCAgent('car5')
+    car = NPCAgent("car5")
     bench.scenario.add_agent(car)
-    car = NPCAgent('car6')
+    car = NPCAgent("car6")
     bench.scenario.add_agent(car)
-    car = NPCAgent('car7')
+    car = NPCAgent("car7")
     bench.scenario.add_agent(car)
     tmp_map = M2()
     bench.scenario.set_map(tmp_map)
@@ -70,7 +70,7 @@ if __name__ == "__main__":
             (AgentMode.Normal, TrackMode.T1),
             (AgentMode.Normal, TrackMode.T2),
             (AgentMode.Normal, TrackMode.T3),
-        ]
+        ],
     )
     time_step = 0.05
     if bench.config.compare:
@@ -79,8 +79,7 @@ if __name__ == "__main__":
     traces = bench.run(80, time_step)
     if bench.config.plot:
         fig = go.Figure()
-        fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [
-                            1, 2], 'lines', 'trace', sample_rate=1)
+        fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], "lines", "trace", sample_rate=1)
         fig.show()
     if bench.config.dump:
         traces.dump("./demo/tacas2023/exp3/output3.json")

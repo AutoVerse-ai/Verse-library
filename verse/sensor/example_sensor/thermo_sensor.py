@@ -7,10 +7,10 @@ def sets(d, thing, attrs, vals):
 
 def adds(d, thing, attrs, vals):
     for k, v in zip(attrs, vals):
-        if thing + '.' + k not in d:
-            d[thing + '.' + k] = [v]
+        if thing + "." + k not in d:
+            d[thing + "." + k] = [v]
         else:
-            d[thing + '.' + k].append(v)
+            d[thing + "." + k].append(v)
 
 
 def set_states_2d_ball(cnts, disc, thing, val):
@@ -41,24 +41,22 @@ def add_states_3d_ball(cont, disc, thing, val):
     adds(disc, thing, ["thermo_mode"], mode)
 
 
-class ThermoSensor():
+class ThermoSensor:
     def sense(self, agent, state_dict, lane_map):
         cont = {}
         disc = {}
-        len_dict = {'others': len(state_dict)-1}
+        len_dict = {"others": len(state_dict) - 1}
         tmp = np.array(list(state_dict.values())[0][0])
         if tmp.ndim < 2:
             for agent_id in state_dict:
                 if agent_id == agent.id:
-                    set_states_2d_ball(cont, disc, 'ego', state_dict[agent_id])
+                    set_states_2d_ball(cont, disc, "ego", state_dict[agent_id])
                 else:
-                    add_states_2d_ball(cont, disc, 'others',
-                                       state_dict[agent_id])
+                    add_states_2d_ball(cont, disc, "others", state_dict[agent_id])
         else:
             for agent_id in state_dict:
                 if agent_id == agent.id:
                     set_states_3d_ball(cont, disc, "ego", state_dict[agent_id])
                 else:
-                    add_states_3d_ball(cont, disc, 'others',
-                                       state_dict[agent_id])
+                    add_states_3d_ball(cont, disc, "others", state_dict[agent_id])
         return cont, disc, len_dict

@@ -31,16 +31,16 @@ class TrackMode(Enum):
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/tacas2023/exp4/example_controller5.py'
+    input_code_name = "./demo/tacas2023/exp4/example_controller5.py"
 
     bench = Benchmark(sys.argv, init_seg_length=5)
     bench.agent_type = "C"
     bench.noisy_s = "Yes"
-    car = CarAgent('car1', file_name=input_code_name)
+    car = CarAgent("car1", file_name=input_code_name)
     bench.scenario.add_agent(car)
-    car = NPCAgent('car2')
+    car = NPCAgent("car2")
     bench.scenario.add_agent(car)
-    car = NPCAgent('car3')
+    car = NPCAgent("car3")
     bench.scenario.add_agent(car)
     tmp_map = M1()
     bench.scenario.set_map(tmp_map)
@@ -48,23 +48,23 @@ if __name__ == "__main__":
         [
             [[5, -0.5, 0, 1.0], [5.5, 0.5, 0, 1.0]],
             [[20, -0.2, 0, 0.5], [20, 0.2, 0, 0.5]],
-            [[4-2.5, 2.8, 0, 1.0], [4.5-2.5, 3.2, 0, 1.0]],
+            [[4 - 2.5, 2.8, 0, 1.0], [4.5 - 2.5, 3.2, 0, 1.0]],
         ],
         [
             (AgentMode.Normal, TrackMode.T1),
             (AgentMode.Normal, TrackMode.T1),
             (AgentMode.Normal, TrackMode.T0),
-        ]
+        ],
     )
     bench.scenario.set_sensor(NoisyVehicleSensor((0.5, 0.5), (0.0, 0.0)))
     time_step = 0.1
     if bench.config.compare:
-        traces1, traces2 = bench.compare_run(40, time_step, params={"bloating_method": 'GLOBAL'})
+        traces1, traces2 = bench.compare_run(40, time_step, params={"bloating_method": "GLOBAL"})
         exit(0)
-    traces = bench.run(40, time_step, params={"bloating_method": 'GLOBAL'})
+    traces = bench.run(40, time_step, params={"bloating_method": "GLOBAL"})
     if bench.config.dump:
         traces.dump("./demo/tacas2023/exp4/output4_noisy.json")
     if bench.config.plot:
         fig = go.Figure()
-        fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], 'lines', 'trace')
+        fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], "lines", "trace")
     bench.report()

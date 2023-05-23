@@ -11,10 +11,10 @@ class AgentMode(Enum):
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/dryvr_demo/vanderpol_controller.py'
+    input_code_name = "./demo/dryvr_demo/vanderpol_controller.py"
     scenario = Scenario()
 
-    car = vanderpol_agent('car1', file_name=input_code_name)
+    car = vanderpol_agent("car1", file_name=input_code_name)
     scenario.add_agent(car)
     # car = vanderpol_agent('car2', file_name=input_code_name)
     # scenario.add_agent(car)
@@ -28,10 +28,9 @@ if __name__ == "__main__":
         [
             tuple([AgentMode.Default]),
             # tuple([AgentMode.Default]),
-        ]
+        ],
     )
     traces = scenario.simulate(7, 0.05)
     fig = go.Figure()
-    fig = simulation_tree(traces, None, fig, 1, 2, [1, 2],
-                          'lines', 'trace')
+    fig = simulation_tree(traces, None, fig, 1, 2, [1, 2], "lines", "trace")
     fig.show()

@@ -1,4 +1,3 @@
-
 from uncertain_agents import Agent6
 from verse.scenario.scenario import Benchmark
 from verse.plotter.plotter2D import *
@@ -14,10 +13,10 @@ class AgentMode(Enum):
 
 
 if __name__ == "__main__":
-    bench = Benchmark(sys.argv, reachability_method='MIXMONO_CONT')
+    bench = Benchmark(sys.argv, reachability_method="MIXMONO_CONT")
     bench.agent_type = "C"
     bench.noisy_s = "No"
-    car = Agent6('car1')
+    car = Agent6("car1")
     bench.scenario.add_agent(car)
     # car = vanderpol_agent('car2', file_name=input_code_name)
     # scenario.add_agent(car)
@@ -32,7 +31,7 @@ if __name__ == "__main__":
         ],
         uncertain_param_list=[
             [[-0.1, -0.1], [0.1, 0.1]],
-        ]
+        ],
     )
     time_step = 0.01
     if bench.config.compare:
@@ -51,11 +50,9 @@ if __name__ == "__main__":
     # traces = AnalysisTree.load('./output7.json')
     if bench.config.plot:
         fig = go.Figure()
-        fig = reachtube_tree(traces, None, fig, 0, 1, [0, 1],
-                            'lines', 'trace')
+        fig = reachtube_tree(traces, None, fig, 0, 1, [0, 1], "lines", "trace")
         fig.show()
         fig = go.Figure()
-        fig = reachtube_tree(traces, None, fig, 0, 2, [0, 2],
-                            'lines', 'trace')
+        fig = reachtube_tree(traces, None, fig, 0, 2, [0, 2], "lines", "trace")
         fig.show()
     bench.report()

@@ -36,10 +36,9 @@ class State:
 def safe_seperation(ego, other):
     return -1 < ego.x - other.x < 1 and -1 < ego.y - other.y < 1 and -1 < ego.z - other.z < 1
 
+
 def is_close(ego, other):
-    return (8 < other.x - ego.x < 10
-        or 8 < other.y-ego.y < 10
-        or 8 < other.z-ego.z < 10)
+    return 8 < other.x - ego.x < 10 or 8 < other.y - ego.y < 10 or 8 < other.z - ego.z < 10
 
 
 def decisionLogic(ego: State, others: List[State], track_map):
@@ -49,31 +48,26 @@ def decisionLogic(ego: State, others: List[State], track_map):
         if any((is_close(ego, other) and ego.track_mode == other.track_mode) for other in others):
             if track_map.h_exist(ego.track_mode, ego.craft_mode, CraftMode.MoveUp):
                 next.craft_mode = CraftMode.MoveUp
-                next.track_mode = track_map.h(
-                    ego.track_mode, ego.craft_mode, CraftMode.MoveUp)
+                next.track_mode = track_map.h(ego.track_mode, ego.craft_mode, CraftMode.MoveUp)
             if track_map.h_exist(ego.track_mode, ego.craft_mode, CraftMode.MoveDown):
                 next.craft_mode = CraftMode.MoveDown
-                next.track_mode = track_map.h(
-                    ego.track_mode, ego.craft_mode, CraftMode.MoveDown)
+                next.track_mode = track_map.h(ego.track_mode, ego.craft_mode, CraftMode.MoveDown)
 
     if ego.craft_mode == CraftMode.MoveUp:
-        if 1 > track_map.altitude(ego.track_mode)-ego.z > -1:
+        if 1 > track_map.altitude(ego.track_mode) - ego.z > -1:
             next.craft_mode = CraftMode.Normal
             if track_map.h_exist(ego.track_mode, ego.craft_mode, CraftMode.Normal):
-                next.track_mode = track_map.h(
-                    ego.track_mode, ego.craft_mode, CraftMode.Normal)
+                next.track_mode = track_map.h(ego.track_mode, ego.craft_mode, CraftMode.Normal)
 
     if ego.craft_mode == CraftMode.MoveDown:
-        if 1 > track_map.altitude(ego.track_mode)-ego.z > -1:
+        if 1 > track_map.altitude(ego.track_mode) - ego.z > -1:
             next.craft_mode = CraftMode.Normal
             if track_map.h_exist(ego.track_mode, ego.craft_mode, CraftMode.Normal):
-                next.track_mode = track_map.h(
-                    ego.track_mode, ego.craft_mode, CraftMode.Normal)
+                next.track_mode = track_map.h(ego.track_mode, ego.craft_mode, CraftMode.Normal)
 
-    assert not any(-1 < ego.x-other.x < 1
-        and -1 < ego.y-other.y < 1
-        and -1 < ego.z-other.z < 1
-        for other in others),\
-        "Safe Seperation"
+    assert not any(
+        -1 < ego.x - other.x < 1 and -1 < ego.y - other.y < 1 and -1 < ego.z - other.z < 1
+        for other in others
+    ), "Safe Seperation"
 
     return next

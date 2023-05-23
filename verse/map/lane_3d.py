@@ -5,10 +5,10 @@ import numpy as np
 from verse.map.lane_segment_3d import AbstractLane_3d
 
 
-class Lane_3d():
+class Lane_3d:
     COMPENSATE = 1
 
-    def __init__(self, id, seg_list: List[AbstractLane_3d], plotted = True):
+    def __init__(self, id, seg_list: List[AbstractLane_3d], plotted=True):
         self.id = id
         self.segment_list: List[AbstractLane_3d] = seg_list
         self._set_longitudinal_start()
@@ -22,14 +22,13 @@ class Lane_3d():
             longitudinal_start += lane_seg.length
 
     def get_lane_segment(self, position: np.ndarray) -> Tuple[int, AbstractLane_3d]:
-        min_lateral = float('inf')
+        min_lateral = float("inf")
         idx = -1
         seg = None
         possible = []
         for seg_idx, segment in enumerate(self.segment_list):
             longitudinal, lateral, theta = segment.local_coordinates(position)
-            is_on = (0-Lane_3d.COMPENSATE <= longitudinal <
-                     segment.length)
+            is_on = 0 - Lane_3d.COMPENSATE <= longitudinal < segment.length
             if is_on:
                 possible.append(segment)
                 if lateral < min_lateral:
@@ -49,7 +48,7 @@ class Lane_3d():
         sum_a = 0
         for seg in self.segment_list:
             sum_a += seg.altitude()
-        return sum_a/num
+        return sum_a / num
 
     def get_longitudinal_position(self, position: np.ndarray) -> float:
         seg_idx, segment, poss = self.get_lane_segment(position)

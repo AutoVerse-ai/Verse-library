@@ -12,10 +12,10 @@ class AgentMode(Enum):
 
 
 if __name__ == "__main__":
-    input_code_name = './demo/gearbox/sleeve_controller.py'
+    input_code_name = "./demo/gearbox/sleeve_controller.py"
     scenario = Scenario()
 
-    car = sleeve_agent('sleeve', file_name=input_code_name)
+    car = sleeve_agent("sleeve", file_name=input_code_name)
     scenario.add_agent(car)
 
     scenario.set_init(
@@ -24,10 +24,10 @@ if __name__ == "__main__":
         ],
         [
             tuple([AgentMode.Free]),
-        ]
+        ],
     )
     traces = scenario.simulate(0.2, 0.0001)
     # traces.dump('./demo/gearbox/output.json')
     fig = go.Figure()
-    fig = simulation_tree(traces, None, fig, 1, 2, [1, 2, 3, 4, 5], 'lines', 'trace')
+    fig = simulation_tree(traces, None, fig, 1, 2, [1, 2, 3, 4, 5], "lines", "trace")
     fig.show()

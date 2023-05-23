@@ -1,8 +1,10 @@
 from enum import Enum, auto
 import copy
 
+
 class AgentMode(Enum):
     Default = auto()
+
 
 class State:
     x = 0.0
@@ -11,6 +13,7 @@ class State:
 
     def __init__(self, x, y, agent_mode: AgentMode):
         pass
+
 
 def decisionLogic(ego: State):
     output = copy.deepcopy(ego)

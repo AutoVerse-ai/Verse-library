@@ -10,7 +10,6 @@ from verse.map.lane_3d import Lane_3d
 
 
 class LaneMap_3d:
-
     def __init__(self, lane_seg_list: List[Lane_3d] = []):
         self.lane_dict: Dict[str, Lane_3d] = {}
         self.left_lane_dict: Dict[str, List[str]] = {}
@@ -31,7 +30,7 @@ class LaneMap_3d:
         self.wps = {}
 
     def trans_func(self, lane_idx: str) -> str:
-        lane = 'T'+lane_idx[-1]
+        lane = "T" + lane_idx[-1]
         return lane
 
     def add_lanes(self, lane_seg_list: List[AbstractLane_3d]):
@@ -74,16 +73,16 @@ class LaneMap_3d:
             lane_idx_src = lane_idx_src.name
         if isinstance(lane_idx_dest, Enum):
             lane_idx_dest = lane_idx_dest.name
-        if relation == 'left':
+        if relation == "left":
             self.left_lane_dict[lane_idx_src].append(lane_idx_dest)
             self.right_lane_dict[lane_idx_dest].append(lane_idx_src)
-        elif relation == 'right':
+        elif relation == "right":
             self.right_lane_dict[lane_idx_src].append(lane_idx_dest)
             self.left_lane_dict[lane_idx_dest].append(lane_idx_src)
-        elif relation == 'up':
+        elif relation == "up":
             self.up_lane_dict[lane_idx_src].append(lane_idx_dest)
             self.down_lane_dict[lane_idx_dest].append(lane_idx_src)
-        elif relation == 'down':
+        elif relation == "down":
             self.down_lane_dict[lane_idx_src].append(lane_idx_dest)
             self.up_lane_dict[lane_idx_dest].append(lane_idx_src)
         else:
@@ -93,7 +92,7 @@ class LaneMap_3d:
         if isinstance(lane_idx, Enum):
             lane_idx = lane_idx.name
         if lane_idx not in self.lane_dict:
-            Warning(f'lane {lane_idx} not available')
+            Warning(f"lane {lane_idx} not available")
             return False
         left_lane_list = self.left_lane_dict[lane_idx]
         return len(left_lane_list) > 0
@@ -111,7 +110,7 @@ class LaneMap_3d:
         if isinstance(lane_idx, Enum):
             lane_idx = lane_idx.name
         if lane_idx not in self.lane_dict:
-            Warning(f'lane {lane_idx} not available')
+            Warning(f"lane {lane_idx} not available")
             return False
         right_lane_list = self.right_lane_dict[lane_idx]
         return len(right_lane_list) > 0
@@ -129,7 +128,7 @@ class LaneMap_3d:
         if isinstance(lane_idx, Enum):
             lane_idx = lane_idx.name
         if lane_idx not in self.lane_dict:
-            Warning(f'lane {lane_idx} not available')
+            Warning(f"lane {lane_idx} not available")
             return False
         up_lane_list = self.up_lane_dict[lane_idx]
         return len(up_lane_list) > 0
@@ -147,7 +146,7 @@ class LaneMap_3d:
         if isinstance(lane_idx, Enum):
             lane_idx = lane_idx.name
         if lane_idx not in self.lane_dict:
-            Warning(f'lane {lane_idx} not available')
+            Warning(f"lane {lane_idx} not available")
             return False
         down_lane_list = self.down_lane_dict[lane_idx]
         return len(down_lane_list) > 0
@@ -227,7 +226,7 @@ class LaneMap_3d:
         lane: Lane_3d = self.lane_dict[lane_idx]
         return lane.get_lane_width()
 
-# waypoints related
+    # waypoints related
 
     def get_curr_waypoint(self, agent_id):
         return self.waypoints[agent_id]
@@ -235,12 +234,12 @@ class LaneMap_3d:
     def check_guard_box(self, agent_id, state, box_side):
         dest = self.curr_wp[agent_id][3:]
         for i in range(len(dest)):
-            if state[i] < dest[i]-box_side[i]/2 or state[i] > dest[i]+box_side[i]/2:
+            if state[i] < dest[i] - box_side[i] / 2 or state[i] > dest[i] + box_side[i] / 2:
                 return False
         return True
 
     def get_next_point(self, lane, agent_id, pos, velocity, t_v_pair):
-        est_len = t_v_pair[0]*t_v_pair[1]
+        est_len = t_v_pair[0] * t_v_pair[1]
         if isinstance(pos, np.ndarray):
             curr_point = pos[:3]
         elif agent_id in self.curr_wp:
@@ -256,24 +255,21 @@ class LaneMap_3d:
         longitudinal, lateral, theta = seg.local_coordinates(curr_point)
 
         rate = 0.7
-        if est_len >= lateral/rate:
-            next_longitudinal = longitudinal+(est_len**2-lateral**2)**0.5
+        if est_len >= lateral / rate:
+            next_longitudinal = longitudinal + (est_len**2 - lateral**2) ** 0.5
             next_lateral = 0
             next_theta = theta
         else:
-            next_longitudinal = longitudinal+est_len*(1-rate**2)**0.5
-            next_lateral = lateral-rate*est_len
+            next_longitudinal = longitudinal + est_len * (1 - rate**2) ** 0.5
+            next_lateral = lateral - rate * est_len
             next_theta = theta
-        next_point = seg.position(
-            next_longitudinal, next_lateral, next_theta)
+        next_point = seg.position(next_longitudinal, next_lateral, next_theta)
         if next_longitudinal > seg.length:
-            next_seg, possible_next_seg = self.get_lane_segment(
-                lane, next_point)
-            max_in = -float('inf')
+            next_seg, possible_next_seg = self.get_lane_segment(lane, next_point)
+            max_in = -float("inf")
             for n_seg in possible_next_seg:
                 next_point = n_seg.position(0, lateral, theta)
-                delta = (next_point-curr_point) / \
-                    np.linalg.norm(next_point-curr_point)
+                delta = (next_point - curr_point) / np.linalg.norm(next_point - curr_point)
                 d = np.inner(delta, velocity)
                 if d > max_in:
                     max_in = d
