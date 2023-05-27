@@ -13,6 +13,9 @@ class AgentMode(Enum):
 
 
 if __name__ == "__main__":
+    import os 
+    script_dir = os.path.realpath(os.path.dirname(__file__))
+
     bench = Benchmark(sys.argv, reachability_method="MIXMONO_CONT")
     bench.agent_type = "C"
     bench.noisy_s = "No"
@@ -46,7 +49,7 @@ if __name__ == "__main__":
     # fig = plot_reachtube_tree(traces.root, 'car1', 1, [2],fig=fig)
     # plt.show()
     if bench.config.dump:
-        traces.dump("./demo/tacas2023/exp7/output7.json")
+        traces.dump(os.path.join(script_dir, "output7.json"))
     # traces = AnalysisTree.load('./output7.json')
     if bench.config.plot:
         fig = go.Figure()
