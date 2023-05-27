@@ -1,0 +1,6 @@
+verse.parser.parser.find
+========================
+
+.. currentmodule:: verse.parser.parser
+
+.. autofunction:: find

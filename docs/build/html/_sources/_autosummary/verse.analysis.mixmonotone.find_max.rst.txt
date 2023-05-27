@@ -1,0 +1,6 @@
+verse.analysis.mixmonotone.find\_max
+====================================
+
+.. currentmodule:: verse.analysis.mixmonotone
+
+.. autofunction:: find_max

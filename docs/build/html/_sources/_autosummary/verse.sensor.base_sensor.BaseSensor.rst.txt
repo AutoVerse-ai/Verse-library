@@ -1,0 +1,9 @@
+verse.sensor.base\_sensor.BaseSensor
+====================================
+
+.. currentmodule:: verse.sensor.base_sensor
+
+.. autoclass:: BaseSensor
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

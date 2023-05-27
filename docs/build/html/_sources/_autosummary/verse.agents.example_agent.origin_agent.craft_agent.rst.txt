@@ -1,0 +1,9 @@
+verse.agents.example\_agent.origin\_agent.craft\_agent
+======================================================
+
+.. currentmodule:: verse.agents.example_agent.origin_agent
+
+.. autoclass:: craft_agent
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

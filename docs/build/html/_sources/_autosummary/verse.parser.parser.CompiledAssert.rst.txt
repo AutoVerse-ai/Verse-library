@@ -1,0 +1,9 @@
+verse.parser.parser.CompiledAssert
+==================================
+
+.. currentmodule:: verse.parser.parser
+
+.. autoclass:: CompiledAssert
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

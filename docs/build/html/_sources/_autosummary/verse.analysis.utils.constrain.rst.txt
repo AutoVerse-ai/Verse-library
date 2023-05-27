@@ -1,0 +1,6 @@
+verse.analysis.utils.constrain
+==============================
+
+.. currentmodule:: verse.analysis.utils
+
+.. autofunction:: constrain

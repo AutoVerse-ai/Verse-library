@@ -1,0 +1,6 @@
+verse.parser.parser.is\_main\_check
+===================================
+
+.. currentmodule:: verse.parser.parser
+
+.. autofunction:: is_main_check

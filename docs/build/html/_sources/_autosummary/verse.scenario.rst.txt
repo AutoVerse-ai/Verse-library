@@ -1,0 +1,32 @@
+verse.scenario
+==============
+
+.. automodule:: verse.scenario
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   verse.scenario.scenario
+

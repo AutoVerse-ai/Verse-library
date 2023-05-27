@@ -1,0 +1,6 @@
+verse.analysis.dryvr.calcCenterPoint
+====================================
+
+.. currentmodule:: verse.analysis.dryvr
+
+.. autofunction:: calcCenterPoint

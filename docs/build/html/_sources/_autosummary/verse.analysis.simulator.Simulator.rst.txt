@@ -1,0 +1,9 @@
+verse.analysis.simulator.Simulator
+==================================
+
+.. currentmodule:: verse.analysis.simulator
+
+.. autoclass:: Simulator
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

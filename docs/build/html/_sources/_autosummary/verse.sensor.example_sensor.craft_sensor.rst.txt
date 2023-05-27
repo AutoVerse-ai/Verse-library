@@ -1,0 +1,43 @@
+verse.sensor.example\_sensor.craft\_sensor
+==========================================
+
+.. automodule:: verse.sensor.example_sensor.craft_sensor
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      add_states_2d_ball
+      add_states_3d_ball
+      adds
+      set_states_2d_ball
+      set_states_3d_ball
+      sets
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                         
+      :template: custom-class-template.rst 
+   
+      CraftSensor
+   
+   
+
+   
+   
+   
+
+
+

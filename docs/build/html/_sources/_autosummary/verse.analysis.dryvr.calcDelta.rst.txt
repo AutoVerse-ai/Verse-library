@@ -1,0 +1,6 @@
+verse.analysis.dryvr.calcDelta
+==============================
+
+.. currentmodule:: verse.analysis.dryvr
+
+.. autofunction:: calcDelta

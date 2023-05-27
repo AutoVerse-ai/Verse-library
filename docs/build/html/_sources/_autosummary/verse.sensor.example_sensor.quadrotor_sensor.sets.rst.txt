@@ -1,0 +1,6 @@
+verse.sensor.example\_sensor.quadrotor\_sensor.sets
+===================================================
+
+.. currentmodule:: verse.sensor.example_sensor.quadrotor_sensor
+
+.. autofunction:: sets

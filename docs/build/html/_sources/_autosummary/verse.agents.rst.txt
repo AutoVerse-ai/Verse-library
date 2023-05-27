@@ -1,0 +1,33 @@
+verse.agents
+============
+
+.. automodule:: verse.agents
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   verse.agents.base_agent
+   verse.agents.example_agent
+

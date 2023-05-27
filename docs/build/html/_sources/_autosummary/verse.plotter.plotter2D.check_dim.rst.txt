@@ -1,0 +1,6 @@
+verse.plotter.plotter2D.check\_dim
+==================================
+
+.. currentmodule:: verse.plotter.plotter2D
+
+.. autofunction:: check_dim

@@ -1,0 +1,6 @@
+verse.analysis.utils.dedup
+==========================
+
+.. currentmodule:: verse.analysis.utils
+
+.. autofunction:: dedup

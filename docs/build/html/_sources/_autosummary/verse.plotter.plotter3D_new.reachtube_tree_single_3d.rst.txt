@@ -1,0 +1,6 @@
+verse.plotter.plotter3D\_new.reachtube\_tree\_single\_3d
+========================================================
+
+.. currentmodule:: verse.plotter.plotter3D_new
+
+.. autofunction:: reachtube_tree_single_3d

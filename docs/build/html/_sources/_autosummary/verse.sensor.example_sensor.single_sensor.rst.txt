@@ -1,0 +1,49 @@
+verse.sensor.example\_sensor.single\_sensor
+===========================================
+
+.. automodule:: verse.sensor.example_sensor.single_sensor
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      add_states_2d
+      add_states_2d_ball
+      add_states_3d
+      add_states_3d_ball
+      adds
+      set_states_2d
+      set_states_2d_ball
+      set_states_3d
+      set_states_3d_ball
+      sets
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                         
+      :template: custom-class-template.rst 
+   
+      FakeSensor3
+      FakeSensor4
+      SingleSensor
+   
+   
+
+   
+   
+   
+
+
+

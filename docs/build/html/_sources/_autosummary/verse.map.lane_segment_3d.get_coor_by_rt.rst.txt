@@ -1,0 +1,6 @@
+verse.map.lane\_segment\_3d.get\_coor\_by\_rt
+=============================================
+
+.. currentmodule:: verse.map.lane_segment_3d
+
+.. autofunction:: get_coor_by_rt

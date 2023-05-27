@@ -1,0 +1,9 @@
+verse.parser.parser.LambdaArg
+=============================
+
+.. currentmodule:: verse.parser.parser
+
+.. autoclass:: LambdaArg
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

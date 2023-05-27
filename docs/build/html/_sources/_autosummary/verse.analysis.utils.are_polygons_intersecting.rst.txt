@@ -1,0 +1,6 @@
+verse.analysis.utils.are\_polygons\_intersecting
+================================================
+
+.. currentmodule:: verse.analysis.utils
+
+.. autofunction:: are_polygons_intersecting

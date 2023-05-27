@@ -1,0 +1,6 @@
+verse.analysis.utils.lmap
+=========================
+
+.. currentmodule:: verse.analysis.utils
+
+.. autofunction:: lmap

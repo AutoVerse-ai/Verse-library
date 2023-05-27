@@ -1,0 +1,9 @@
+verse.agents.example\_agent.robot\_agent.RobotAgent
+===================================================
+
+.. currentmodule:: verse.agents.example_agent.robot_agent
+
+.. autoclass:: RobotAgent
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

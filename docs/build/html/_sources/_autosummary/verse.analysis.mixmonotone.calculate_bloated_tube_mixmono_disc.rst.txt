@@ -1,0 +1,6 @@
+verse.analysis.mixmonotone.calculate\_bloated\_tube\_mixmono\_disc
+==================================================================
+
+.. currentmodule:: verse.analysis.mixmonotone
+
+.. autofunction:: calculate_bloated_tube_mixmono_disc

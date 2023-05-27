@@ -1,0 +1,6 @@
+verse.plotter.plotter2D\_old.generate\_simulation\_anime
+========================================================
+
+.. currentmodule:: verse.plotter.plotter2D_old
+
+.. autofunction:: generate_simulation_anime

@@ -1,0 +1,6 @@
+verse.plotter.plotter2D.sample\_trace
+=====================================
+
+.. currentmodule:: verse.plotter.plotter2D
+
+.. autofunction:: sample_trace

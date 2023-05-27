@@ -1,0 +1,6 @@
+verse.analysis.utils.sample\_rect
+=================================
+
+.. currentmodule:: verse.analysis.utils
+
+.. autofunction:: sample_rect

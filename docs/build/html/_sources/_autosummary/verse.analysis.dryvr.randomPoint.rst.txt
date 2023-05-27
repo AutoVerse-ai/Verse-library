@@ -1,0 +1,6 @@
+verse.analysis.dryvr.randomPoint
+================================
+
+.. currentmodule:: verse.analysis.dryvr
+
+.. autofunction:: randomPoint

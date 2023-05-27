@@ -1,0 +1,9 @@
+verse.automaton.guard.GuardExpressionAst
+========================================
+
+.. currentmodule:: verse.automaton.guard
+
+.. autoclass:: GuardExpressionAst
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

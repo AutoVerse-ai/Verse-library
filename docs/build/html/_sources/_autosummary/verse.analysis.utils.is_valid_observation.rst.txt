@@ -1,0 +1,6 @@
+verse.analysis.utils.is\_valid\_observation
+===========================================
+
+.. currentmodule:: verse.analysis.utils
+
+.. autofunction:: is_valid_observation

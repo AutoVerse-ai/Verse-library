@@ -1,0 +1,6 @@
+verse.parser.parser.unparse
+===========================
+
+.. currentmodule:: verse.parser.parser
+
+.. autofunction:: unparse

@@ -1,0 +1,6 @@
+verse.map.example\_map.simple\_map\_3d.get\_center\_radius
+==========================================================
+
+.. currentmodule:: verse.map.example_map.simple_map_3d
+
+.. autofunction:: get_center_radius

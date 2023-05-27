@@ -1,0 +1,33 @@
+verse.agents.example\_agent.origin\_agent
+=========================================
+
+.. automodule:: verse.agents.example_agent.origin_agent
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                         
+      :template: custom-class-template.rst 
+   
+      craft_agent
+      thermo_agent
+      vanderpol_agent
+   
+   
+
+   
+   
+   
+
+
+

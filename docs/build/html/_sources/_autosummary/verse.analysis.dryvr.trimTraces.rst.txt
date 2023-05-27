@@ -1,0 +1,6 @@
+verse.analysis.dryvr.trimTraces
+===============================
+
+.. currentmodule:: verse.analysis.dryvr
+
+.. autofunction:: trimTraces

@@ -1,0 +1,6 @@
+verse.plotter.plotter2D.num\_digits
+===================================
+
+.. currentmodule:: verse.plotter.plotter2D
+
+.. autofunction:: num_digits

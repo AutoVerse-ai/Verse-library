@@ -1,0 +1,6 @@
+verse.analysis.utils.do\_every
+==============================
+
+.. currentmodule:: verse.analysis.utils
+
+.. autofunction:: do_every

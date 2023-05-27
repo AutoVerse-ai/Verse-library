@@ -1,0 +1,6 @@
+verse.plotter.plotter2D.update\_style
+=====================================
+
+.. currentmodule:: verse.plotter.plotter2D
+
+.. autofunction:: update_style

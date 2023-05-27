@@ -1,0 +1,6 @@
+verse.parser.parser.merge\_assert
+=================================
+
+.. currentmodule:: verse.parser.parser
+
+.. autofunction:: merge_assert

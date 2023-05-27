@@ -1,0 +1,9 @@
+verse.map.example\_map.simple\_map2.SimpleMap4Switch2
+=====================================================
+
+.. currentmodule:: verse.map.example_map.simple_map2
+
+.. autoclass:: SimpleMap4Switch2
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

@@ -1,0 +1,6 @@
+verse.plotter.plotter2D.create\_anime\_dict
+===========================================
+
+.. currentmodule:: verse.plotter.plotter2D
+
+.. autofunction:: create_anime_dict

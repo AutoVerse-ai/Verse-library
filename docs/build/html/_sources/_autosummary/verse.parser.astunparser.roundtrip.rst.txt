@@ -1,0 +1,6 @@
+verse.parser.astunparser.roundtrip
+==================================
+
+.. currentmodule:: verse.parser.astunparser
+
+.. autofunction:: roundtrip

@@ -1,0 +1,6 @@
+verse.analysis.utils.interval\_distance
+=======================================
+
+.. currentmodule:: verse.analysis.utils
+
+.. autofunction:: interval_distance

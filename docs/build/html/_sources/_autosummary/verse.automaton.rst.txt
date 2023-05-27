@@ -1,0 +1,35 @@
+verse.automaton
+===============
+
+.. automodule:: verse.automaton
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   verse.automaton.guard
+   verse.automaton.hybrid_automaton
+   verse.automaton.hybrid_io_automaton
+   verse.automaton.reset
+

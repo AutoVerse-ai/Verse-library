@@ -1,0 +1,6 @@
+verse.analysis.utils.not\_zero
+==============================
+
+.. currentmodule:: verse.analysis.utils
+
+.. autofunction:: not_zero

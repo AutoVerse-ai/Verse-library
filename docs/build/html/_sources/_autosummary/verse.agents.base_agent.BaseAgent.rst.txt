@@ -1,0 +1,9 @@
+verse.agents.base\_agent.BaseAgent
+==================================
+
+.. currentmodule:: verse.agents.base_agent
+
+.. autoclass:: BaseAgent
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

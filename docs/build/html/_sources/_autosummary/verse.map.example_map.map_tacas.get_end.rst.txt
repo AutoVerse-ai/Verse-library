@@ -1,0 +1,6 @@
+verse.map.example\_map.map\_tacas.get\_end
+==========================================
+
+.. currentmodule:: verse.map.example_map.map_tacas
+
+.. autofunction:: get_end

@@ -1,0 +1,9 @@
+verse.automaton.guard.LogicTreeNode
+===================================
+
+.. currentmodule:: verse.automaton.guard
+
+.. autoclass:: LogicTreeNode
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

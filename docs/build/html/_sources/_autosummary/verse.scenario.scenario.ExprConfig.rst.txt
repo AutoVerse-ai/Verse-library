@@ -1,0 +1,9 @@
+verse.scenario.scenario.ExprConfig
+==================================
+
+.. currentmodule:: verse.scenario.scenario
+
+.. autoclass:: ExprConfig
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

@@ -1,0 +1,9 @@
+verse.analysis.incremental.CachedTube
+=====================================
+
+.. currentmodule:: verse.analysis.incremental
+
+.. autoclass:: CachedTube
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

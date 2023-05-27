@@ -1,0 +1,6 @@
+verse.parser.parser.ast\_dump
+=============================
+
+.. currentmodule:: verse.parser.parser
+
+.. autofunction:: ast_dump

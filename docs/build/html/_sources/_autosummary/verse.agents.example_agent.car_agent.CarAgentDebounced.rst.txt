@@ -1,0 +1,9 @@
+verse.agents.example\_agent.car\_agent.CarAgentDebounced
+========================================================
+
+.. currentmodule:: verse.agents.example_agent.car_agent
+
+.. autoclass:: CarAgentDebounced
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

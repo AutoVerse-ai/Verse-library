@@ -1,0 +1,6 @@
+verse.parser.astunparser.main
+=============================
+
+.. currentmodule:: verse.parser.astunparser
+
+.. autofunction:: main

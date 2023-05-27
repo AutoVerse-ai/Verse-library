@@ -1,0 +1,9 @@
+verse.analysis.incremental.SimTraceCache
+========================================
+
+.. currentmodule:: verse.analysis.incremental
+
+.. autoclass:: SimTraceCache
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

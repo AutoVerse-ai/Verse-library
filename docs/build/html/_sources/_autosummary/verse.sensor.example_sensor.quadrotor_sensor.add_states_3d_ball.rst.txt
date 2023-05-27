@@ -1,0 +1,6 @@
+verse.sensor.example\_sensor.quadrotor\_sensor.add\_states\_3d\_ball
+====================================================================
+
+.. currentmodule:: verse.sensor.example_sensor.quadrotor_sensor
+
+.. autofunction:: add_states_3d_ball

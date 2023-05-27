@@ -1,0 +1,9 @@
+verse.parser.parser.ModeDef
+===========================
+
+.. currentmodule:: verse.parser.parser
+
+.. autoclass:: ModeDef
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

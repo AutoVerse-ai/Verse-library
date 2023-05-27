@@ -1,0 +1,9 @@
+verse.analysis.incremental.CachedReachTrans
+===========================================
+
+.. currentmodule:: verse.analysis.incremental
+
+.. autoclass:: CachedReachTrans
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 
