@@ -1,0 +1,6 @@
+verse.analysis.utils.rect\_corners
+==================================
+
+.. currentmodule:: verse.analysis.utils
+
+.. autofunction:: rect_corners

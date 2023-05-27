@@ -1,0 +1,404 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>verse.map.lane_segment_3d.StraightLane_3d &#8212; verse 0.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="verse.map.opendrive_parser" href="verse.map.opendrive_parser.html" />
+    <link rel="prev" title="verse.map.lane_segment_3d.LineType_3d" href="verse.map.lane_segment_3d.LineType_3d.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="verse-map-lane-segment-3d-straightlane-3d">
+<h1>verse.map.lane_segment_3d.StraightLane_3d<a class="headerlink" href="#verse-map-lane-segment-3d-straightlane-3d" title="Permalink to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="verse.map.lane_segment_3d.StraightLane_3d">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">verse.map.lane_segment_3d.</span></span><span class="sig-name descname"><span class="pre">StraightLane_3d</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_types</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="verse.map.lane_segment_3d.LineType_3d.html#verse.map.lane_segment_3d.LineType_3d" title="verse.map.lane_segment_3d.LineType_3d"><span class="pre">LineType_3d</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="verse.map.lane_segment_3d.LineType_3d.html#verse.map.lane_segment_3d.LineType_3d" title="verse.map.lane_segment_3d.LineType_3d"><span class="pre">LineType_3d</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forbidden</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">speed_limit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">priority</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#verse.map.lane_segment_3d.StraightLane_3d" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="verse.map.lane_segment_3d.AbstractLane_3d.html#verse.map.lane_segment_3d.AbstractLane_3d" title="verse.map.lane_segment_3d.AbstractLane_3d"><code class="xref py py-class docutils literal notranslate"><span class="pre">AbstractLane_3d</span></code></a></p>
+<p>A lane going in straight line.</p>
+<p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#verse.map.lane_segment_3d.StraightLane_3d.altitude" title="verse.map.lane_segment_3d.StraightLane_3d.altitude"><code class="xref py py-obj docutils literal notranslate"><span class="pre">altitude</span></code></a>()</p></td>
+<td><p>Get the lane altitude (avg z of the start and end point)</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#verse.map.lane_segment_3d.StraightLane_3d.distance" title="verse.map.lane_segment_3d.StraightLane_3d.distance"><code class="xref py py-obj docutils literal notranslate"><span class="pre">distance</span></code></a>(position)</p></td>
+<td><p>Compute the L1 distance [m] from a position to the lane.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#verse.map.lane_segment_3d.StraightLane_3d.distance_with_heading" title="verse.map.lane_segment_3d.StraightLane_3d.distance_with_heading"><code class="xref py py-obj docutils literal notranslate"><span class="pre">distance_with_heading</span></code></a>(position, heading[, ...])</p></td>
+<td><p>Compute a weighted distance in position and heading to the lane.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#verse.map.lane_segment_3d.StraightLane_3d.from_config" title="verse.map.lane_segment_3d.StraightLane_3d.from_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_config</span></code></a>(config)</p></td>
+<td><p>Create lane instance from config</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#verse.map.lane_segment_3d.StraightLane_3d.heading_at" title="verse.map.lane_segment_3d.StraightLane_3d.heading_at"><code class="xref py py-obj docutils literal notranslate"><span class="pre">heading_at</span></code></a>(longitudinal)</p></td>
+<td><p>Get the lane heading at a given longitudinal lane coordinate.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#verse.map.lane_segment_3d.StraightLane_3d.is_reachable_from" title="verse.map.lane_segment_3d.StraightLane_3d.is_reachable_from"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_reachable_from</span></code></a>(position)</p></td>
+<td><p>Whether the lane is reachable from a given world position</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#verse.map.lane_segment_3d.StraightLane_3d.local_coordinates" title="verse.map.lane_segment_3d.StraightLane_3d.local_coordinates"><code class="xref py py-obj docutils literal notranslate"><span class="pre">local_coordinates</span></code></a>(position)</p></td>
+<td><p>Convert a world position to local lane coordinates.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#verse.map.lane_segment_3d.StraightLane_3d.metaclass__" title="verse.map.lane_segment_3d.StraightLane_3d.metaclass__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">metaclass__</span></code></a></p></td>
+<td><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">ABCMeta</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#verse.map.lane_segment_3d.StraightLane_3d.on_lane" title="verse.map.lane_segment_3d.StraightLane_3d.on_lane"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_lane</span></code></a>(position[, longitudinal, lateral, ...])</p></td>
+<td><p>Whether a given world position is on the lane.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#verse.map.lane_segment_3d.StraightLane_3d.position" title="verse.map.lane_segment_3d.StraightLane_3d.position"><code class="xref py py-obj docutils literal notranslate"><span class="pre">position</span></code></a>(longitudinal, lateral, theta)</p></td>
+<td><p>Convert local lane coordinates to a world position.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#verse.map.lane_segment_3d.StraightLane_3d.to_config" title="verse.map.lane_segment_3d.StraightLane_3d.to_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_config</span></code></a>()</p></td>
+<td><p>Write lane parameters to dict which can be serialized to json</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#verse.map.lane_segment_3d.StraightLane_3d.width_at" title="verse.map.lane_segment_3d.StraightLane_3d.width_at"><code class="xref py py-obj docutils literal notranslate"><span class="pre">width_at</span></code></a>(longitudinal)</p></td>
+<td><p>Get the lane width at a given longitudinal lane coordinate.</p></td>
+</tr>
+</tbody>
+</table>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><strong>after_end</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>get_lane_center</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p><strong>get_sample_points</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>get_tang</strong></p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt class="sig sig-object py" id="verse.map.lane_segment_3d.StraightLane_3d.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_types</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="verse.map.lane_segment_3d.LineType_3d.html#verse.map.lane_segment_3d.LineType_3d" title="verse.map.lane_segment_3d.LineType_3d"><span class="pre">LineType_3d</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="verse.map.lane_segment_3d.LineType_3d.html#verse.map.lane_segment_3d.LineType_3d" title="verse.map.lane_segment_3d.LineType_3d"><span class="pre">LineType_3d</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forbidden</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">speed_limit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">priority</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#verse.map.lane_segment_3d.StraightLane_3d.__init__" title="Permalink to this definition"></a></dt>
+<dd><p>New straight lane.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>start</strong> – the lane starting position [m]</p></li>
+<li><p><strong>end</strong> – the lane ending position [m]</p></li>
+<li><p><strong>width</strong> – the lane width [m]</p></li>
+<li><p><strong>line_types</strong> – the type of lines on both sides of the lane</p></li>
+<li><p><strong>forbidden</strong> – is changing to this lane forbidden</p></li>
+<li><p><strong>priority</strong> – priority level of the lane, for determining who has right of way</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="verse.map.lane_segment_3d.StraightLane_3d.altitude">
+<span class="sig-name descname"><span class="pre">altitude</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#verse.map.lane_segment_3d.StraightLane_3d.altitude" title="Permalink to this definition"></a></dt>
+<dd><p>Get the lane altitude (avg z of the start and end point)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>the lane altitude [m]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="verse.map.lane_segment_3d.StraightLane_3d.distance">
+<span class="sig-name descname"><span class="pre">distance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">position</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#verse.map.lane_segment_3d.StraightLane_3d.distance" title="Permalink to this definition"></a></dt>
+<dd><p>Compute the L1 distance [m] from a position to the lane.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="verse.map.lane_segment_3d.StraightLane_3d.distance_with_heading">
+<span class="sig-name descname"><span class="pre">distance_with_heading</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">position</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">heading</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">heading_weight</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#verse.map.lane_segment_3d.StraightLane_3d.distance_with_heading" title="Permalink to this definition"></a></dt>
+<dd><p>Compute a weighted distance in position and heading to the lane.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="verse.map.lane_segment_3d.StraightLane_3d.from_config">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#verse.map.lane_segment_3d.StraightLane_3d.from_config" title="Permalink to this definition"></a></dt>
+<dd><p>Create lane instance from config</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config</strong> – json dict with lane parameters</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="verse.map.lane_segment_3d.StraightLane_3d.heading_at">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">heading_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">longitudinal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#verse.map.lane_segment_3d.StraightLane_3d.heading_at" title="Permalink to this definition"></a></dt>
+<dd><p>Get the lane heading at a given longitudinal lane coordinate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>longitudinal</strong> – longitudinal lane coordinate [m]</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the lane heading [rad]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="verse.map.lane_segment_3d.StraightLane_3d.is_reachable_from">
+<span class="sig-name descname"><span class="pre">is_reachable_from</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">position</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#verse.map.lane_segment_3d.StraightLane_3d.is_reachable_from" title="Permalink to this definition"></a></dt>
+<dd><p>Whether the lane is reachable from a given world position</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>position</strong> – the world position [m]</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>is the lane reachable?</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="verse.map.lane_segment_3d.StraightLane_3d.local_coordinates">
+<span class="sig-name descname"><span class="pre">local_coordinates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">position</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#verse.map.lane_segment_3d.StraightLane_3d.local_coordinates" title="Permalink to this definition"></a></dt>
+<dd><p>Convert a world position to local lane coordinates.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>position</strong> – a world position [m]</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the (longitudinal, lateral) lane coordinates [m]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="verse.map.lane_segment_3d.StraightLane_3d.metaclass__">
+<span class="sig-name descname"><span class="pre">metaclass__</span></span><a class="headerlink" href="#verse.map.lane_segment_3d.StraightLane_3d.metaclass__" title="Permalink to this definition"></a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">ABCMeta</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="verse.map.lane_segment_3d.StraightLane_3d.on_lane">
+<span class="sig-name descname"><span class="pre">on_lane</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">position</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">longitudinal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lateral</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">margin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#verse.map.lane_segment_3d.StraightLane_3d.on_lane" title="Permalink to this definition"></a></dt>
+<dd><p>Whether a given world position is on the lane.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>position</strong> – a world position [m]</p></li>
+<li><p><strong>longitudinal</strong> – (optional) the corresponding longitudinal lane coordinate, if known [m]</p></li>
+<li><p><strong>lateral</strong> – (optional) the corresponding lateral lane coordinate, if known [m]</p></li>
+<li><p><strong>margin</strong> – (optional) a supplementary margin around the lane width</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>is the position on the lane?</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="verse.map.lane_segment_3d.StraightLane_3d.position">
+<span class="sig-name descname"><span class="pre">position</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">longitudinal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lateral</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#verse.map.lane_segment_3d.StraightLane_3d.position" title="Permalink to this definition"></a></dt>
+<dd><p>Convert local lane coordinates to a world position.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>longitudinal</strong> – longitudinal lane coordinate [m]</p></li>
+<li><p><strong>lateral</strong> – lateral lane coordinate [m]</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the corresponding world position [m]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="verse.map.lane_segment_3d.StraightLane_3d.to_config">
+<span class="sig-name descname"><span class="pre">to_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#verse.map.lane_segment_3d.StraightLane_3d.to_config" title="Permalink to this definition"></a></dt>
+<dd><p>Write lane parameters to dict which can be serialized to json</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict of lane parameters</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="verse.map.lane_segment_3d.StraightLane_3d.width_at">
+<span class="sig-name descname"><span class="pre">width_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">longitudinal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#verse.map.lane_segment_3d.StraightLane_3d.width_at" title="Permalink to this definition"></a></dt>
+<dd><p>Get the lane width at a given longitudinal lane coordinate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>longitudinal</strong> – longitudinal lane coordinate [m]</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the lane width [m]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">verse</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../agent.html">Agent</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../map.html">Map</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sensor.html">Sensor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scenario.html">Scenario</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parser.html">Parser</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../outputs.html">Simulations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../outputs.html#reachtubes">Reachtubes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../plotting.html">Visualization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributors.html">Contributors</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="verse.html">verse</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="verse.agents.html">verse.agents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verse.analysis.html">verse.analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verse.automaton.html">verse.automaton</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="verse.map.html">verse.map</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="verse.map.example_map.html">verse.map.example_map</a></li>
+<li class="toctree-l3"><a class="reference internal" href="verse.map.lane.html">verse.map.lane</a></li>
+<li class="toctree-l3"><a class="reference internal" href="verse.map.lane_3d.html">verse.map.lane_3d</a></li>
+<li class="toctree-l3"><a class="reference internal" href="verse.map.lane_map.html">verse.map.lane_map</a></li>
+<li class="toctree-l3"><a class="reference internal" href="verse.map.lane_map_3d.html">verse.map.lane_map_3d</a></li>
+<li class="toctree-l3"><a class="reference internal" href="verse.map.lane_segment.html">verse.map.lane_segment</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="verse.map.lane_segment_3d.html">verse.map.lane_segment_3d</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="verse.map.lane_segment_3d.func_a.html">verse.map.lane_segment_3d.func_a</a></li>
+<li class="toctree-l4"><a class="reference internal" href="verse.map.lane_segment_3d.func_b.html">verse.map.lane_segment_3d.func_b</a></li>
+<li class="toctree-l4"><a class="reference internal" href="verse.map.lane_segment_3d.get_center_radius.html">verse.map.lane_segment_3d.get_center_radius</a></li>
+<li class="toctree-l4"><a class="reference internal" href="verse.map.lane_segment_3d.get_coor_by_rt.html">verse.map.lane_segment_3d.get_coor_by_rt</a></li>
+<li class="toctree-l4"><a class="reference internal" href="verse.map.lane_segment_3d.get_rtp_by_coor.html">verse.map.lane_segment_3d.get_rtp_by_coor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="verse.map.lane_segment_3d.get_theta_by_coor.html">verse.map.lane_segment_3d.get_theta_by_coor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="verse.map.lane_segment_3d.AbstractLane_3d.html">verse.map.lane_segment_3d.AbstractLane_3d</a></li>
+<li class="toctree-l4"><a class="reference internal" href="verse.map.lane_segment_3d.CircularLane_3d_v1.html">verse.map.lane_segment_3d.CircularLane_3d_v1</a></li>
+<li class="toctree-l4"><a class="reference internal" href="verse.map.lane_segment_3d.CircularLane_3d_v2.html">verse.map.lane_segment_3d.CircularLane_3d_v2</a></li>
+<li class="toctree-l4"><a class="reference internal" href="verse.map.lane_segment_3d.LineType_3d.html">verse.map.lane_segment_3d.LineType_3d</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">verse.map.lane_segment_3d.StraightLane_3d</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#verse.map.lane_segment_3d.StraightLane_3d"><code class="docutils literal notranslate"><span class="pre">StraightLane_3d</span></code></a><ul>
+<li class="toctree-l6"><a class="reference internal" href="#verse.map.lane_segment_3d.StraightLane_3d.__init__"><code class="docutils literal notranslate"><span class="pre">StraightLane_3d.__init__()</span></code></a></li>
+<li class="toctree-l6"><a class="reference internal" href="#verse.map.lane_segment_3d.StraightLane_3d.altitude"><code class="docutils literal notranslate"><span class="pre">StraightLane_3d.altitude()</span></code></a></li>
+<li class="toctree-l6"><a class="reference internal" href="#verse.map.lane_segment_3d.StraightLane_3d.distance"><code class="docutils literal notranslate"><span class="pre">StraightLane_3d.distance()</span></code></a></li>
+<li class="toctree-l6"><a class="reference internal" href="#verse.map.lane_segment_3d.StraightLane_3d.distance_with_heading"><code class="docutils literal notranslate"><span class="pre">StraightLane_3d.distance_with_heading()</span></code></a></li>
+<li class="toctree-l6"><a class="reference internal" href="#verse.map.lane_segment_3d.StraightLane_3d.from_config"><code class="docutils literal notranslate"><span class="pre">StraightLane_3d.from_config()</span></code></a></li>
+<li class="toctree-l6"><a class="reference internal" href="#verse.map.lane_segment_3d.StraightLane_3d.heading_at"><code class="docutils literal notranslate"><span class="pre">StraightLane_3d.heading_at()</span></code></a></li>
+<li class="toctree-l6"><a class="reference internal" href="#verse.map.lane_segment_3d.StraightLane_3d.is_reachable_from"><code class="docutils literal notranslate"><span class="pre">StraightLane_3d.is_reachable_from()</span></code></a></li>
+<li class="toctree-l6"><a class="reference internal" href="#verse.map.lane_segment_3d.StraightLane_3d.local_coordinates"><code class="docutils literal notranslate"><span class="pre">StraightLane_3d.local_coordinates()</span></code></a></li>
+<li class="toctree-l6"><a class="reference internal" href="#verse.map.lane_segment_3d.StraightLane_3d.metaclass__"><code class="docutils literal notranslate"><span class="pre">StraightLane_3d.metaclass__</span></code></a></li>
+<li class="toctree-l6"><a class="reference internal" href="#verse.map.lane_segment_3d.StraightLane_3d.on_lane"><code class="docutils literal notranslate"><span class="pre">StraightLane_3d.on_lane()</span></code></a></li>
+<li class="toctree-l6"><a class="reference internal" href="#verse.map.lane_segment_3d.StraightLane_3d.position"><code class="docutils literal notranslate"><span class="pre">StraightLane_3d.position()</span></code></a></li>
+<li class="toctree-l6"><a class="reference internal" href="#verse.map.lane_segment_3d.StraightLane_3d.to_config"><code class="docutils literal notranslate"><span class="pre">StraightLane_3d.to_config()</span></code></a></li>
+<li class="toctree-l6"><a class="reference internal" href="#verse.map.lane_segment_3d.StraightLane_3d.width_at"><code class="docutils literal notranslate"><span class="pre">StraightLane_3d.width_at()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="verse.map.opendrive_parser.html">verse.map.opendrive_parser</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="verse.parser.html">verse.parser</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verse.plotter.html">verse.plotter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verse.scenario.html">verse.scenario</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verse.sensor.html">verse.sensor</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="verse.html">verse</a><ul>
+  <li><a href="verse.map.html">verse.map</a><ul>
+  <li><a href="verse.map.lane_segment_3d.html">verse.map.lane_segment_3d</a><ul>
+      <li>Previous: <a href="verse.map.lane_segment_3d.LineType_3d.html" title="previous chapter">verse.map.lane_segment_3d.LineType_3d</a></li>
+      <li>Next: <a href="verse.map.opendrive_parser.html" title="next chapter">verse.map.opendrive_parser</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, Yangge Li, Haoqing Zhu.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 6.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
+      
+      |
+      <a href="../_sources/_autosummary/verse.map.lane_segment_3d.StraightLane_3d.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

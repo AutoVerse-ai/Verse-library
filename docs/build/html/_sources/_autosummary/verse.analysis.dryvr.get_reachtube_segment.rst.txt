@@ -1,0 +1,6 @@
+verse.analysis.dryvr.get\_reachtube\_segment
+============================================
+
+.. currentmodule:: verse.analysis.dryvr
+
+.. autofunction:: get_reachtube_segment

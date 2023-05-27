@@ -1,0 +1,49 @@
+verse.plotter.plotter2D
+=======================
+
+.. automodule:: verse.plotter.plotter2D
+
+   
+   
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+      :toctree:
+   
+      duration
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      check_dim
+      create_anime_dict
+      draw_map
+      get_text_pos
+      num_digits
+      reachtube_anime
+      reachtube_tree
+      reachtube_tree_single
+      sample_trace
+      simulation_anime
+      simulation_tree
+      simulation_tree_single
+      update_style
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

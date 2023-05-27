@@ -1,0 +1,9 @@
+verse.map.lane.Lane
+===================
+
+.. currentmodule:: verse.map.lane
+
+.. autoclass:: Lane
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

@@ -1,0 +1,6 @@
+verse.analysis.analysis\_tree.first\_transitions
+================================================
+
+.. currentmodule:: verse.analysis.analysis_tree
+
+.. autofunction:: first_transitions

@@ -1,0 +1,9 @@
+verse.sensor.example\_sensor.single\_sensor.FakeSensor3
+=======================================================
+
+.. currentmodule:: verse.sensor.example_sensor.single_sensor
+
+.. autoclass:: FakeSensor3
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

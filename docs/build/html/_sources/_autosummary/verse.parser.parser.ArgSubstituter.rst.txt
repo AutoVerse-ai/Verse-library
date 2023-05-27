@@ -1,0 +1,9 @@
+verse.parser.parser.ArgSubstituter
+==================================
+
+.. currentmodule:: verse.parser.parser
+
+.. autoclass:: ArgSubstituter
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

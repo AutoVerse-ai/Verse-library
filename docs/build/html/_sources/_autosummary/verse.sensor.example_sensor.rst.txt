@@ -1,0 +1,35 @@
+verse.sensor.example\_sensor
+============================
+
+.. automodule:: verse.sensor.example_sensor
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   verse.sensor.example_sensor.craft_sensor
+   verse.sensor.example_sensor.quadrotor_sensor
+   verse.sensor.example_sensor.single_sensor
+   verse.sensor.example_sensor.thermo_sensor
+

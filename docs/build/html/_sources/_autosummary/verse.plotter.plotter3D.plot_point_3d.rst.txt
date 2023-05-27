@@ -1,0 +1,6 @@
+verse.plotter.plotter3D.plot\_point\_3d
+=======================================
+
+.. currentmodule:: verse.plotter.plotter3D
+
+.. autofunction:: plot_point_3d

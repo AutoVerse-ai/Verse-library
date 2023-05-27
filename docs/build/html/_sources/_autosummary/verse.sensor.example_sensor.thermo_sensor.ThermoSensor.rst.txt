@@ -1,0 +1,9 @@
+verse.sensor.example\_sensor.thermo\_sensor.ThermoSensor
+========================================================
+
+.. currentmodule:: verse.sensor.example_sensor.thermo_sensor
+
+.. autoclass:: ThermoSensor
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

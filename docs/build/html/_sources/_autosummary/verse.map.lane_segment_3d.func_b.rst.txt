@@ -1,0 +1,6 @@
+verse.map.lane\_segment\_3d.func\_b
+===================================
+
+.. currentmodule:: verse.map.lane_segment_3d
+
+.. autofunction:: func_b

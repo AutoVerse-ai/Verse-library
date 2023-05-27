@@ -1,0 +1,9 @@
+verse.agents.example\_agent.car\_agent.CarAgentSwitch2
+======================================================
+
+.. currentmodule:: verse.agents.example_agent.car_agent
+
+.. autoclass:: CarAgentSwitch2
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

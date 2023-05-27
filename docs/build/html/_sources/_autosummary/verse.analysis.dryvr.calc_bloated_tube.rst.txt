@@ -1,0 +1,6 @@
+verse.analysis.dryvr.calc\_bloated\_tube
+========================================
+
+.. currentmodule:: verse.analysis.dryvr
+
+.. autofunction:: calc_bloated_tube

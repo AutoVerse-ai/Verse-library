@@ -1,0 +1,6 @@
+verse.plotter.plotter2D.simulation\_tree
+========================================
+
+.. currentmodule:: verse.plotter.plotter2D
+
+.. autofunction:: simulation_tree

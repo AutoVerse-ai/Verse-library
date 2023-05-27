@@ -1,0 +1,31 @@
+verse.agents.example\_agent.ball\_agent
+=======================================
+
+.. automodule:: verse.agents.example_agent.ball_agent
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                         
+      :template: custom-class-template.rst 
+   
+      BallAgent
+   
+   
+
+   
+   
+   
+
+
+

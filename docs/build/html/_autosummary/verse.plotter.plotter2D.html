@@ -1,0 +1,211 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>verse.plotter.plotter2D &#8212; verse 0.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="verse.plotter.plotter2D.duration" href="verse.plotter.plotter2D.duration.html" />
+    <link rel="prev" title="verse.plotter" href="verse.plotter.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-verse.plotter.plotter2D">
+<span id="verse-plotter-plotter2d"></span><h1>verse.plotter.plotter2D<a class="headerlink" href="#module-verse.plotter.plotter2D" title="Permalink to this heading"></a></h1>
+<p>This file consist main plotter code for DryVR reachtube output</p>
+<p class="rubric">Module Attributes</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="verse.plotter.plotter2D.duration.html#verse.plotter.plotter2D.duration" title="verse.plotter.plotter2D.duration"><code class="xref py py-obj docutils literal notranslate"><span class="pre">duration</span></code></a></p></td>
+<td><p>These 4 Functions below are high-level functions and are recommended to use.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Functions</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="verse.plotter.plotter2D.check_dim.html#verse.plotter.plotter2D.check_dim" title="verse.plotter.plotter2D.check_dim"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_dim</span></code></a>(num_dim[, x_dim, y_dim, ...])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="verse.plotter.plotter2D.create_anime_dict.html#verse.plotter.plotter2D.create_anime_dict" title="verse.plotter.plotter2D.create_anime_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_anime_dict</span></code></a>([duration])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="verse.plotter.plotter2D.draw_map.html#verse.plotter.plotter2D.draw_map" title="verse.plotter.plotter2D.draw_map"><code class="xref py py-obj docutils literal notranslate"><span class="pre">draw_map</span></code></a>(map[, color, fig, fill_type])</p></td>
+<td><p>It draws the the map</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="verse.plotter.plotter2D.get_text_pos.html#verse.plotter.plotter2D.get_text_pos" title="verse.plotter.plotter2D.get_text_pos"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_text_pos</span></code></a>(veh_mode)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="verse.plotter.plotter2D.num_digits.html#verse.plotter.plotter2D.num_digits" title="verse.plotter.plotter2D.num_digits"><code class="xref py py-obj docutils literal notranslate"><span class="pre">num_digits</span></code></a>(val)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="verse.plotter.plotter2D.reachtube_anime.html#verse.plotter.plotter2D.reachtube_anime" title="verse.plotter.plotter2D.reachtube_anime"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reachtube_anime</span></code></a>(root[, map, fig, x_dim, ...])</p></td>
+<td><p>It gives the animation of the verfication.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="verse.plotter.plotter2D.reachtube_tree.html#verse.plotter.plotter2D.reachtube_tree" title="verse.plotter.plotter2D.reachtube_tree"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reachtube_tree</span></code></a>(root[, map, fig, x_dim, ...])</p></td>
+<td><p>It statically shows all the traces of the verfication.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="verse.plotter.plotter2D.reachtube_tree_single.html#verse.plotter.plotter2D.reachtube_tree_single" title="verse.plotter.plotter2D.reachtube_tree_single"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reachtube_tree_single</span></code></a>(root, agent_id[, fig, ...])</p></td>
+<td><p>It statically shows the verfication traces of one given agent.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="verse.plotter.plotter2D.sample_trace.html#verse.plotter.plotter2D.sample_trace" title="verse.plotter.plotter2D.sample_trace"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sample_trace</span></code></a>(root[, sample_rate])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="verse.plotter.plotter2D.simulation_anime.html#verse.plotter.plotter2D.simulation_anime" title="verse.plotter.plotter2D.simulation_anime"><code class="xref py py-obj docutils literal notranslate"><span class="pre">simulation_anime</span></code></a>(root[, map, fig, x_dim, ...])</p></td>
+<td><p>Normal: It gives the animation of the simulation without trail but is faster.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="verse.plotter.plotter2D.simulation_tree.html#verse.plotter.plotter2D.simulation_tree" title="verse.plotter.plotter2D.simulation_tree"><code class="xref py py-obj docutils literal notranslate"><span class="pre">simulation_tree</span></code></a>(root[, map, fig, x_dim, ...])</p></td>
+<td><p>It statically shows all the traces of the simulation.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="verse.plotter.plotter2D.simulation_tree_single.html#verse.plotter.plotter2D.simulation_tree_single" title="verse.plotter.plotter2D.simulation_tree_single"><code class="xref py py-obj docutils literal notranslate"><span class="pre">simulation_tree_single</span></code></a>(root, agent_id[, ...])</p></td>
+<td><p>It statically shows the simulation traces of one given agent.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="verse.plotter.plotter2D.update_style.html#verse.plotter.plotter2D.update_style" title="verse.plotter.plotter2D.update_style"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_style</span></code></a>([fig])</p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">verse</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../agent.html">Agent</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../map.html">Map</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sensor.html">Sensor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scenario.html">Scenario</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parser.html">Parser</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../outputs.html">Simulations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../outputs.html#reachtubes">Reachtubes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../plotting.html">Visualization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributors.html">Contributors</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="verse.html">verse</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="verse.agents.html">verse.agents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verse.analysis.html">verse.analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verse.automaton.html">verse.automaton</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verse.map.html">verse.map</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verse.parser.html">verse.parser</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="verse.plotter.html">verse.plotter</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">verse.plotter.plotter2D</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="verse.plotter.plotter2D.duration.html">verse.plotter.plotter2D.duration</a></li>
+<li class="toctree-l4"><a class="reference internal" href="verse.plotter.plotter2D.check_dim.html">verse.plotter.plotter2D.check_dim</a></li>
+<li class="toctree-l4"><a class="reference internal" href="verse.plotter.plotter2D.create_anime_dict.html">verse.plotter.plotter2D.create_anime_dict</a></li>
+<li class="toctree-l4"><a class="reference internal" href="verse.plotter.plotter2D.draw_map.html">verse.plotter.plotter2D.draw_map</a></li>
+<li class="toctree-l4"><a class="reference internal" href="verse.plotter.plotter2D.get_text_pos.html">verse.plotter.plotter2D.get_text_pos</a></li>
+<li class="toctree-l4"><a class="reference internal" href="verse.plotter.plotter2D.num_digits.html">verse.plotter.plotter2D.num_digits</a></li>
+<li class="toctree-l4"><a class="reference internal" href="verse.plotter.plotter2D.reachtube_anime.html">verse.plotter.plotter2D.reachtube_anime</a></li>
+<li class="toctree-l4"><a class="reference internal" href="verse.plotter.plotter2D.reachtube_tree.html">verse.plotter.plotter2D.reachtube_tree</a></li>
+<li class="toctree-l4"><a class="reference internal" href="verse.plotter.plotter2D.reachtube_tree_single.html">verse.plotter.plotter2D.reachtube_tree_single</a></li>
+<li class="toctree-l4"><a class="reference internal" href="verse.plotter.plotter2D.sample_trace.html">verse.plotter.plotter2D.sample_trace</a></li>
+<li class="toctree-l4"><a class="reference internal" href="verse.plotter.plotter2D.simulation_anime.html">verse.plotter.plotter2D.simulation_anime</a></li>
+<li class="toctree-l4"><a class="reference internal" href="verse.plotter.plotter2D.simulation_tree.html">verse.plotter.plotter2D.simulation_tree</a></li>
+<li class="toctree-l4"><a class="reference internal" href="verse.plotter.plotter2D.simulation_tree_single.html">verse.plotter.plotter2D.simulation_tree_single</a></li>
+<li class="toctree-l4"><a class="reference internal" href="verse.plotter.plotter2D.update_style.html">verse.plotter.plotter2D.update_style</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="verse.plotter.plotter2D_old.html">verse.plotter.plotter2D_old</a></li>
+<li class="toctree-l3"><a class="reference internal" href="verse.plotter.plotter3D.html">verse.plotter.plotter3D</a></li>
+<li class="toctree-l3"><a class="reference internal" href="verse.plotter.plotter3D_new.html">verse.plotter.plotter3D_new</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="verse.scenario.html">verse.scenario</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verse.sensor.html">verse.sensor</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="verse.html">verse</a><ul>
+  <li><a href="verse.plotter.html">verse.plotter</a><ul>
+      <li>Previous: <a href="verse.plotter.html" title="previous chapter">verse.plotter</a></li>
+      <li>Next: <a href="verse.plotter.plotter2D.duration.html" title="next chapter">verse.plotter.plotter2D.duration</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, Yangge Li, Haoqing Zhu.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 6.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
+      
+      |
+      <a href="../_sources/_autosummary/verse.plotter.plotter2D.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

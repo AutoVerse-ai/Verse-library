@@ -1,0 +1,6 @@
+verse.analysis.incremental.reach\_trans\_suit
+=============================================
+
+.. currentmodule:: verse.analysis.incremental
+
+.. autofunction:: reach_trans_suit

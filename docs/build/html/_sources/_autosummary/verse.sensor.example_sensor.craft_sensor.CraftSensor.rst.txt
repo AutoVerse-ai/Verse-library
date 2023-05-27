@@ -1,0 +1,9 @@
+verse.sensor.example\_sensor.craft\_sensor.CraftSensor
+======================================================
+
+.. currentmodule:: verse.sensor.example_sensor.craft_sensor
+
+.. autoclass:: CraftSensor
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

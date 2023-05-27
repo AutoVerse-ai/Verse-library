@@ -1,0 +1,9 @@
+verse.analysis.verifier.Verifier
+================================
+
+.. currentmodule:: verse.analysis.verifier
+
+.. autoclass:: Verifier
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

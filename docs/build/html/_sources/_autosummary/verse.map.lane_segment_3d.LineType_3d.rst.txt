@@ -1,0 +1,9 @@
+verse.map.lane\_segment\_3d.LineType\_3d
+========================================
+
+.. currentmodule:: verse.map.lane_segment_3d
+
+.. autoclass:: LineType_3d
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

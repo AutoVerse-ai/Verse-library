@@ -1,0 +1,9 @@
+verse.map.example\_map.map\_tacas.M3
+====================================
+
+.. currentmodule:: verse.map.example_map.map_tacas
+
+.. autoclass:: M3
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

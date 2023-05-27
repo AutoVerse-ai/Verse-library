@@ -1,0 +1,9 @@
+verse.scenario.scenario.Benchmark
+=================================
+
+.. currentmodule:: verse.scenario.scenario
+
+.. autoclass:: Benchmark
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

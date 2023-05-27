@@ -1,0 +1,9 @@
+verse.agents.example\_agent.sign\_agent.SignAgent
+=================================================
+
+.. currentmodule:: verse.agents.example_agent.sign_agent
+
+.. autoclass:: SignAgent
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

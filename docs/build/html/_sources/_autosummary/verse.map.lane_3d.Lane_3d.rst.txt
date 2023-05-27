@@ -1,0 +1,9 @@
+verse.map.lane\_3d.Lane\_3d
+===========================
+
+.. currentmodule:: verse.map.lane_3d
+
+.. autoclass:: Lane_3d
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

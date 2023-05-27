@@ -1,0 +1,9 @@
+verse.agents.example\_agent.ball\_agent.BallAgent
+=================================================
+
+.. currentmodule:: verse.agents.example_agent.ball_agent
+
+.. autoclass:: BallAgent
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

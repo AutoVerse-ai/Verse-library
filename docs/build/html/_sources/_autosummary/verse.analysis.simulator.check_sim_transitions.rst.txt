@@ -1,0 +1,6 @@
+verse.analysis.simulator.check\_sim\_transitions
+================================================
+
+.. currentmodule:: verse.analysis.simulator
+
+.. autofunction:: check_sim_transitions

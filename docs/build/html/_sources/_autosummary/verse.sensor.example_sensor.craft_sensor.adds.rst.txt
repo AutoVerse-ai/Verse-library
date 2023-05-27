@@ -1,0 +1,6 @@
+verse.sensor.example\_sensor.craft\_sensor.adds
+===============================================
+
+.. currentmodule:: verse.sensor.example_sensor.craft_sensor
+
+.. autofunction:: adds

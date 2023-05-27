@@ -1,0 +1,9 @@
+verse.automaton.hybrid\_io\_automaton.HybridIoAutomaton
+=======================================================
+
+.. currentmodule:: verse.automaton.hybrid_io_automaton
+
+.. autoclass:: HybridIoAutomaton
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

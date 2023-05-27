@@ -1,0 +1,34 @@
+verse.automaton.guard
+=====================
+
+.. automodule:: verse.automaton.guard
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                         
+      :template: custom-class-template.rst 
+   
+      GuardExpressionAst
+      LogicTreeNode
+      NodeSubstituter
+      ValueSubstituter
+   
+   
+
+   
+   
+   
+
+
+

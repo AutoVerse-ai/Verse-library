@@ -1,0 +1,6 @@
+verse.analysis.simulator.checkHeight
+====================================
+
+.. currentmodule:: verse.analysis.simulator
+
+.. autofunction:: checkHeight

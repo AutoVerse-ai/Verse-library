@@ -1,0 +1,9 @@
+verse.sensor.example\_sensor.quadrotor\_sensor.QuadrotorSensor
+==============================================================
+
+.. currentmodule:: verse.sensor.example_sensor.quadrotor_sensor
+
+.. autoclass:: QuadrotorSensor
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

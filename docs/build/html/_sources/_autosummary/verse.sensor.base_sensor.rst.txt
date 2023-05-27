@@ -1,0 +1,43 @@
+verse.sensor.base\_sensor
+=========================
+
+.. automodule:: verse.sensor.base_sensor
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      add_states_2d
+      add_states_3d
+      adds
+      set_states_2d
+      set_states_3d
+      sets
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                         
+      :template: custom-class-template.rst 
+   
+      BaseSensor
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,9 @@
+verse.map.lane\_segment.StraightLane
+====================================
+
+.. currentmodule:: verse.map.lane_segment
+
+.. autoclass:: StraightLane
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

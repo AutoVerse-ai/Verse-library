@@ -1,0 +1,9 @@
+verse.map.lane\_segment.CircularLane
+====================================
+
+.. currentmodule:: verse.map.lane_segment
+
+.. autoclass:: CircularLane
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

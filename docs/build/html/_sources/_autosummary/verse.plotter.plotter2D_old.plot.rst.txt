@@ -1,0 +1,6 @@
+verse.plotter.plotter2D\_old.plot
+=================================
+
+.. currentmodule:: verse.plotter.plotter2D_old
+
+.. autofunction:: plot

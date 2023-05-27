@@ -1,0 +1,56 @@
+verse.analysis.utils
+====================
+
+.. automodule:: verse.analysis.utils
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      are_polygons_intersecting
+      class_from_path
+      confidence_ellipsoid
+      confidence_polytope
+      constrain
+      dedup
+      distance_to_circle
+      distance_to_rect
+      do_every
+      get_class_path
+      has_corner_inside
+      interval_distance
+      is_consistent_dataset
+      is_valid_observation
+      lmap
+      near_split
+      not_zero
+      point_in_ellipse
+      point_in_rectangle
+      point_in_rotated_rectangle
+      project_polygon
+      rect_corners
+      rotated_rectangles_intersect
+      sample_rect
+      solve_trinom
+      to_serializable
+      wrap_to_pi
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

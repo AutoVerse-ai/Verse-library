@@ -1,0 +1,6 @@
+verse.plotter.plotter2D.get\_text\_pos
+======================================
+
+.. currentmodule:: verse.plotter.plotter2D
+
+.. autofunction:: get_text_pos

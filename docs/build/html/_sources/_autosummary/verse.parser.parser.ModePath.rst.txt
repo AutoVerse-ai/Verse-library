@@ -1,0 +1,9 @@
+verse.parser.parser.ModePath
+============================
+
+.. currentmodule:: verse.parser.parser
+
+.. autoclass:: ModePath
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

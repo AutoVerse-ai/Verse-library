@@ -1,0 +1,33 @@
+verse.parser
+============
+
+.. automodule:: verse.parser
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   verse.parser.astunparser
+   verse.parser.parser
+

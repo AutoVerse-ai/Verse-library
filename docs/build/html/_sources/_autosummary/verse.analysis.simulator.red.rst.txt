@@ -1,0 +1,6 @@
+verse.analysis.simulator.red
+============================
+
+.. currentmodule:: verse.analysis.simulator
+
+.. autofunction:: red

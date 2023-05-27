@@ -1,0 +1,9 @@
+verse.automaton.guard.NodeSubstituter
+=====================================
+
+.. currentmodule:: verse.automaton.guard
+
+.. autoclass:: NodeSubstituter
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

@@ -1,0 +1,9 @@
+verse.scenario.scenario.Scenario
+================================
+
+.. currentmodule:: verse.scenario.scenario
+
+.. autoclass:: Scenario
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

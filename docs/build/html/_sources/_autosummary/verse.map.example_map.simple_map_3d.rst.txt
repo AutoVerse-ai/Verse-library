@@ -1,0 +1,45 @@
+verse.map.example\_map.simple\_map\_3d
+======================================
+
+.. automodule:: verse.map.example_map.simple_map_3d
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      get_center_radius
+      get_end
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                         
+      :template: custom-class-template.rst 
+   
+      SimpleMap1
+      SimpleMap2
+      SimpleMap3
+      SimpleMap4
+      SimpleMap5
+      SimpleMap6
+      SimpleMap7
+   
+   
+
+   
+   
+   
+
+
+

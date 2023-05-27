@@ -1,0 +1,6 @@
+verse.analysis.utils.get\_class\_path
+=====================================
+
+.. currentmodule:: verse.analysis.utils
+
+.. autofunction:: get_class_path

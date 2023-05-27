@@ -1,0 +1,6 @@
+verse.map.opendrive\_parser.road\_traverser
+===========================================
+
+.. currentmodule:: verse.map.opendrive_parser
+
+.. autofunction:: road_traverser

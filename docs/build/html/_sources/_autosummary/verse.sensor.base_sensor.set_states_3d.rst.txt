@@ -1,0 +1,6 @@
+verse.sensor.base\_sensor.set\_states\_3d
+=========================================
+
+.. currentmodule:: verse.sensor.base_sensor
+
+.. autofunction:: set_states_3d

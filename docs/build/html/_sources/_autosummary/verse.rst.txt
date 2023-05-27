@@ -1,0 +1,39 @@
+﻿verse
+=====
+
+.. automodule:: verse
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   verse.agents
+   verse.analysis
+   verse.automaton
+   verse.map
+   verse.parser
+   verse.plotter
+   verse.scenario
+   verse.sensor
+

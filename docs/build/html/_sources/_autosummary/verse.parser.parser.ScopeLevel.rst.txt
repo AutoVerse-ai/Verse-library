@@ -1,0 +1,9 @@
+verse.parser.parser.ScopeLevel
+==============================
+
+.. currentmodule:: verse.parser.parser
+
+.. autoclass:: ScopeLevel
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

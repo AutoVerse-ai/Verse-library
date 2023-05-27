@@ -1,0 +1,9 @@
+verse.parser.parser.Reduction
+=============================
+
+.. currentmodule:: verse.parser.parser
+
+.. autoclass:: Reduction
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

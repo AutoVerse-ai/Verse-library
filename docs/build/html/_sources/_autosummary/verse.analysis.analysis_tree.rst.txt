@@ -1,0 +1,41 @@
+verse.analysis.analysis\_tree
+=============================
+
+.. automodule:: verse.analysis.analysis_tree
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      color_interp
+      first_transitions
+      index_of
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                         
+      :template: custom-class-template.rst 
+   
+      AnalysisTree
+      AnalysisTreeNode
+   
+   
+
+   
+   
+   
+
+
+

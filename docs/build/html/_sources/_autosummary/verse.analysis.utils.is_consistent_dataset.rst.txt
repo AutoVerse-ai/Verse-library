@@ -1,0 +1,6 @@
+verse.analysis.utils.is\_consistent\_dataset
+============================================
+
+.. currentmodule:: verse.analysis.utils
+
+.. autofunction:: is_consistent_dataset

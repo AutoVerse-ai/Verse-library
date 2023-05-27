@@ -1,0 +1,9 @@
+verse.automaton.reset.ResetExpression
+=====================================
+
+.. currentmodule:: verse.automaton.reset
+
+.. autoclass:: ResetExpression
+   :members:                                   
+   :show-inheritance:                          
+   :inherited-members: 

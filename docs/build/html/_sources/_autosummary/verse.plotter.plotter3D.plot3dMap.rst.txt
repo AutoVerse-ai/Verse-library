@@ -1,0 +1,6 @@
+verse.plotter.plotter3D.plot3dMap
+=================================
+
+.. currentmodule:: verse.plotter.plotter3D
+
+.. autofunction:: plot3dMap

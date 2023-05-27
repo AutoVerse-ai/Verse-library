@@ -1,0 +1,6 @@
+verse.parser.parser.not\_ir\_ast
+================================
+
+.. currentmodule:: verse.parser.parser
+
+.. autofunction:: not_ir_ast

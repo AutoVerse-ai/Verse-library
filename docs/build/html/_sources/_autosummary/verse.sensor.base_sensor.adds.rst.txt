@@ -1,0 +1,6 @@
+verse.sensor.base\_sensor.adds
+==============================
+
+.. currentmodule:: verse.sensor.base_sensor
+
+.. autofunction:: adds
