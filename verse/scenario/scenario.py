@@ -196,7 +196,7 @@ class Scenario:
             static={aid: [elem.name for elem in modes] for aid, modes in self.static_dict.items()},
             uncertain_param=self.uncertain_param_dict,
             agent=self.agent_dict,
-            type=AnalysisTreeNodeType.SimTrace,
+            type=AnalysisTreeNodeType.SIM_TRACE,
             ndigits=10,
         )
         tree = self.simulator.simulate(
@@ -223,7 +223,7 @@ class Scenario:
             static={aid: [elem.name for elem in modes] for aid, modes in self.static_dict.items()},
             uncertain_param=self.uncertain_param_dict,
             agent=self.agent_dict,
-            type=AnalysisTreeNodeType.SimTrace,
+            type=AnalysisTreeNodeType.SIM_TRACE,
             ndigits=10,
         )
         tree = self.simulator.simulate_simple(
@@ -254,7 +254,7 @@ class Scenario:
             static={aid: [elem.name for elem in modes] for aid, modes in self.static_dict.items()},
             uncertain_param=self.uncertain_param_dict,
             agent=self.agent_dict,
-            type=AnalysisTreeNodeType.ReachTube,
+            type=AnalysisTreeNodeType.REACH_TUBE,
             ndigits=10,
         )
 

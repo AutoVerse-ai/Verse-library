@@ -3,12 +3,12 @@ from functools import reduce
 from typing import Any, Iterable, List, Dict, Optional, Sequence, TypeVar, Literal
 import json
 import numpy.typing as nptyp, numpy as np, portion
+import networkx as nx
+from matplotlib import colors
+import matplotlib.pyplot as plt
+import graphviz
 
 from verse.analysis.dryvr import _EPSILON
-
-import networkx as nx
-import matplotlib.colors as colors, matplotlib.pyplot as plt
-import graphviz
 from verse.agents.base_agent import BaseAgent
 
 TraceType = nptyp.NDArray[np.float_]
@@ -25,42 +25,50 @@ def index_of(l: Iterable[_T], item: _T) -> Optional[int]:
 
 
 class AnalysisTreeNodeType(Enum):
-    """Denotes different types of AnalysisTreeNode's. Can either be simulation traces or reach tubes."""
-    SimTrace = auto()
-    ReachTube = auto()
+    """Denotes different types of AnalysisTreeNode's. Can either be simulation traces or reach
+    tubes."""
+
+    SIM_TRACE = auto()
+    REACH_TUBE = auto()
 
     def __str__(self) -> str:
-        return "simtrace" if self == AnalysisTreeNodeType.SimTrace else "reachtube"
+        return "simtrace" if self == AnalysisTreeNodeType.SIM_TRACE else "reachtube"
 
     @staticmethod
     def _from_str(s: str) -> "AnalysisTreeNodeType":
         if s == "simtrace":
-            return AnalysisTreeNodeType.SimTrace
+            return AnalysisTreeNodeType.SIM_TRACE
         if s == "reachtube":
-            return AnalysisTreeNodeType.ReachTube
+            return AnalysisTreeNodeType.REACH_TUBE
         raise ValueError(f"Invalid string to AnalysisTreeNodeType: {s}")
 
 
 class AnalysisTreeNode:
-    """A AnalysisTreeNode stores the continous execution of the system without transition happening"""
+    """A AnalysisTreeNode stores the continous execution of the system without transition
+    happening"""
 
     trace: Dict[str, TraceType]
     """The trace for each agent. 
-    The key of the dict is the agent id and the value of the dict is the simulated traces for each agent"""
+    The key of the dict is the agent id and the value of the dict is the simulated traces for each
+    agent"""
     init: Dict[str, Sequence[float]]
     """Initial conditions per agent for this node.
-    The key of the dict is the agent id and the value of the dict is the range/set of initial conditions for that agent"""
+    The key of the dict is the agent id and the value of the dict is the range/set of initial
+    conditions for that agent"""
     mode: Dict[str, Sequence[str]]
     """Discrete mode per agent for this node.
-    The key of the dict is the agent id and the value of the dict is the discrete mode for that agent"""
+    The key of the dict is the agent id and the value of the dict is the discrete mode for that
+    agent"""
     agent: Dict[str, BaseAgent]
     """Discrete mode per agent for this node.
-    The key of the dict is the agent id and the value of the dict is the object instance for that agent"""
+    The key of the dict is the agent id and the value of the dict is the object instance for that
+    agent"""
     height: int
     """The height/depth of the current node in the AnalysisTree"""
     assert_hits: Dict[str, Sequence[str]]  # TODO type
     """Assert hits per agent for this node.
-    The key of the dict is the agent id and the value of the dict is the list of labels hit in the node for that agent"""
+    The key of the dict is the agent id and the value of the dict is the list of labels hit in the
+    node for that agent"""
     child: List["AnalysisTreeNode"]
     """A list of children nodes for the current node. Can be empty."""
     start_time: float
@@ -71,10 +79,12 @@ class AnalysisTreeNode:
     """Number of digits to round `start_time` to."""
     static: Dict[str, Sequence[str]]
     """Static data per agent for this node.
-    The key of the dict is the agent id and the value of the dict is the static data for that agent"""
+    The key of the dict is the agent id and the value of the dict is the static data for that
+    agent"""
     uncertain_param: Dict[str, Sequence[str]]
     """Parameters for uncertainty per agent for this node.
-    The key of the dict is the agent id and the value of the dict is the uncertainty data for that agent"""
+    The key of the dict is the agent id and the value of the dict is the uncertainty data for that
+    agent"""
     id: int
     """Integer ID for the current node. Unique amongst all nodes in the AnalysisTree"""
 
@@ -172,7 +182,7 @@ class AnalysisTreeNode:
             "start_time": self.start_time,
             "trace": (
                 {aid: t.tolist() for aid, t in self.trace.items()}
-                if self.type == AnalysisTreeNodeType.SimTrace
+                if self.type == AnalysisTreeNodeType.SIM_TRACE
                 else self.trace
             ),
             "type": self.type,
@@ -192,7 +202,7 @@ class AnalysisTreeNode:
         state_defs = self.agent[agent_id].decision_logic.state_defs
         mode_def_names = next(iter(state_defs.values())).disc_type
         track_mode_ind = index_of(mode_def_names, "TrackMode")
-        if track_mode_ind == None:
+        if track_mode_ind is None:
             return None
         return mode[track_mode_ind]
 
@@ -201,7 +211,7 @@ class AnalysisTreeNode:
         state_defs = self.agent[agent_id].decision_logic.state_defs
         mode_def_names = next(iter(state_defs.values())).disc_type
         track_mode_ind = index_of(mode_def_names, "TrackMode")
-        if track_mode_ind == None:
+        if track_mode_ind is None:
             if len(mode) == 1:
                 return mode[0]
             return mode
@@ -240,6 +250,7 @@ def _color_interp(c1: str, c2: str, mix: float) -> str:
 
 class AnalysisTree:
     """A tree containing the reachable states the scenario produced."""
+
     root: AnalysisTreeNode
     """Root node for the tree"""
     nodes: List[AnalysisTreeNode]
@@ -283,9 +294,8 @@ class AnalysisTree:
     @staticmethod
     def load(fn: str) -> "AnalysisTree":
         """Loads the AnalysisTree from the file "fn" as JSON data."""
-        f = open(fn, "r")
-        data = json.load(f)
-        f.close()
+        with open(fn, "r") as f:
+            data = json.load(f)
         root_node_dict = data[str(0)]
         root = AnalysisTreeNode._from_dict(root_node_dict)
         queue = [(root_node_dict, root)]
@@ -302,16 +312,16 @@ class AnalysisTree:
     def contains(
         self, other: "AnalysisTree", strict: bool = True, tol: Optional[float] = None
     ) -> bool:
-        """Checks whether this AnalysisTree constains the `other` AnalysisTree.
-        Returns, for reachability, whether the current tree (bloated by a small value) fully contains the other tree or not;
-        for simulation, whether the other tree is close enough to the current tree.
+        """Checks whether this AnalysisTree constains the `other` AnalysisTree. Returns, for
+        reachability, whether the current tree (bloated by a small value) fully contains the other
+        tree or not; for simulation, whether the other tree is close enough to the current tree.
         strict: requires set of agents to be the same
         """
-        tol = _EPSILON if tol == None else tol
+        tol = _EPSILON if tol is None else tol
         cur_agents = set(self.nodes[0].agent.keys())
         other_agents = set(other.nodes[0].agent.keys())
         min_agents = list(other_agents)
-        types = list(set([n.type for n in self.nodes + other.nodes]))
+        types = list(set(n.type for n in self.nodes + other.nodes))
         assert len(types) == 1, f"Different types of nodes: {types}"
         if not (
             (strict and cur_agents == other_agents)
@@ -398,7 +408,6 @@ class AnalysisTree:
                         ]
                         for aid in other_agents
                     }
-                    # combined = {aid: [[reduce(portion.Interval.union, (children[k][aid][i][j] if i < trace_len_list[k] else portion.empty() for k in range(child_num))) for j in range(cont_num)] for i in range(trace_len)] for aid in other_agents}
                     overlap_len = round(
                         (n.trace[min_agents[0]][-1][0] - min_start_time) / time_step
                     )
@@ -443,13 +452,13 @@ class AnalysisTree:
 
     def visualize(self) -> None:
         """Visualizes the AnalysisTree as a tree graph using `networkx`.
-        Each node in the graph will correspond to one AnalysisTreeNode, and the edges denote parent/child relationship.
-        Each node will be colored according to a gradient from red to blue using the start_time of each node, where red
-        signifies newer nodes and blue signifies older nodes.
+        Each node in the graph will correspond to one AnalysisTreeNode, and the edges denote
+        parent/child relationship. Each node will be colored according to a gradient from red to
+        blue using the start_time of each node, where red signifies newer nodes and blue signifies
+        older nodes.
         """
         lens = {}
         total_len = AnalysisTree._get_len(self.root, lens)
-        gradient = lambda id: _color_interp("red", "blue", lens[id] / total_len)
         G = nx.Graph()
         for node in self.nodes:
             G.add_node(node.id, time=(node.id, node.start_time))
@@ -457,8 +466,11 @@ class AnalysisTree:
                 G.add_node(child.id, time=(child.id, child.start_time))
                 G.add_edge(node.id, child.id)
         labels = nx.get_node_attributes(G, "time")
-        colors = [gradient(id) for id in G]
-        nx.draw_planar(G, node_color=colors, labels=labels)
+        nx.draw_planar(
+            G,
+            node_color=[_color_interp("red", "blue", lens[id] / total_len) for id in G],
+            labels=labels,
+        )
         plt.show()
 
     def visualize_dot(
@@ -468,7 +480,8 @@ class AnalysisTree:
         font: Optional[str] = None,
     ) -> None:
         """Same as `visualize`, but rather use `graphviz` to for visualizing the tree.
-        `filename` is the prefix, i.e. doesn't include extensions. `filename.dot` will be saved as well as `filename.png`
+        `filename` is the prefix, i.e. doesn't include extensions. `filename.dot` will be saved as
+        well as `filename.png`
         """
 
         def diff(a: AnalysisTreeNode, b: AnalysisTreeNode) -> List[str]:
@@ -476,7 +489,6 @@ class AnalysisTree:
 
         lens = {}
         total_len = AnalysisTree._get_len(self.root, lens)
-        gradient = lambda id: _color_interp("red", "blue", lens[id] / total_len)
         graph = graphviz.Digraph()
         for node in self.nodes:
             tooltip = "\n".join(
@@ -485,14 +497,14 @@ class AnalysisTree:
             graph.node(
                 str(node.id),
                 label=str(node.id),
-                color=gradient(node.id),
+                color=_color_interp("red", "blue", lens[node.id] / total_len),
                 tooltip=tooltip,
             )
             for c in node.child:
                 d = diff(node, c)
                 tooltip = "\n".join(f"{aid}: {node.mode[aid]} -> {c.mode[aid]}" for aid in d)
                 graph.edge(str(node.id), str(c.id), label=", ".join(d), tooltip=tooltip)
-        if font != None:
+        if font is not None:
             graph.node_attr.update(fontname=font)
             graph.edge_attr.update(fontname=font)
             graph.graph_attr.update(fontname=font)
@@ -504,9 +516,10 @@ class AnalysisTree:
         )
 
     def is_equal(self, other: "AnalysisTree") -> bool:
-        """Compares if 2 AnalysisTree's traces are close enough. For simulation, this simply compares if the point data
-        are within a small range. For reachability, this checks if the start and end points respectively for each
-        dimension are within a small range of the other tree"""
+        """Compares if 2 AnalysisTree's traces are close enough. For simulation, this simply
+        compares if the point data are within a small range. For reachability, this checks if the
+        start and end points respectively for each dimension are within a small range of the other
+        tree"""
         return self.contains(other) and other.contains(self)
 
     def leaves(self) -> int:
@@ -519,7 +532,8 @@ class AnalysisTree:
 
 
 def first_transitions(tree: AnalysisTree) -> Dict[str, float]:  # id, start time
-    """Collects the time when each agent first transitions for a AnalysisTree. Returns a dict mapping from agent IDs to the simulation time when it first transitions"""
+    """Collects the time when each agent first transitions for a AnalysisTree. Returns a dict
+    mapping from agent IDs to the simulation time when it first transitions"""
     d = {}
     for node in tree.nodes:
         for child in node.child:
