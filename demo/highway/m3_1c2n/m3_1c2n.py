@@ -51,7 +51,7 @@ class State:
 
 
 if __name__ == "__main__":
-    import os 
+    import os
 
     script_dir = os.path.realpath(os.path.dirname(__file__))
     input_code_name = os.path.join(script_dir, "example_controller5.py")

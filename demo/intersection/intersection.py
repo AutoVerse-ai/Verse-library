@@ -60,7 +60,7 @@ def run(meas=False):
 
 if __name__ == "__main__":
     import sys
-    import os 
+    import os
 
     script_dir = os.path.realpath(os.path.dirname(__file__))
     # ctlr_src = "demo/vehicle/controller/intersection_car.py"

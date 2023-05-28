@@ -13,7 +13,8 @@ class AgentMode(Enum):
 
 
 if __name__ == "__main__":
-    import os 
+    import os
+
     script_dir = os.path.realpath(os.path.dirname(__file__))
 
     bench = Benchmark(sys.argv, reachability_method="MIXMONO_CONT")

@@ -87,7 +87,7 @@ def run(meas=False):
 
 if __name__ == "__main__":
     import sys
-    import os 
+    import os
 
     bench = Benchmark(sys.argv)
     # input_code_name = os.path.join(script_dir, 'decision_logic/inc-expr6.py') if "6" in bench.config.args else os.path.join(script_dir, 'decision_logic/inc-expr.py')

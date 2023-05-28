@@ -76,7 +76,7 @@ def run(meas=False):
 
 if __name__ == "__main__":
     import sys
-    import os 
+    import os
 
     bench = Benchmark(sys.argv)
     script_dir = os.path.realpath(os.path.dirname(__file__))

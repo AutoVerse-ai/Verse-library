@@ -33,9 +33,10 @@ class TrackMode(Enum):
 
 if __name__ == "__main__":
     import os
+
     script_dir = os.path.realpath(os.path.dirname(__file__))
     input_code_name = os.path.join(script_dir, "example_controller7.py")
-    
+
     # input_code_name = "./demo/tacas2023/exp3/example_controller7.py"
     bench = Benchmark(sys.argv)
     bench.agent_type = "C"
@@ -86,7 +87,7 @@ if __name__ == "__main__":
         fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], "lines", "trace", sample_rate=1)
         fig.show()
     if bench.config.dump:
-        traces.dump(os.path.join(script_dir,"output3.json"))
+        traces.dump(os.path.join(script_dir, "output3.json"))
     bench.report()
     # start_time = time.time()
     # traces = scenario.verify(80, 0.05)

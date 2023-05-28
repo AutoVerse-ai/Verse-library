@@ -30,7 +30,8 @@ class TrackMode(Enum):
 
 
 if __name__ == "__main__":
-    import os 
+    import os
+
     script_dir = os.path.realpath(os.path.dirname(__file__))
     input_code_name = os.path.join(script_dir, "./demo/tacas2023/exp10/quadrotor_controller3.py")
     input_code_name2 = os.path.join(script_dir, "./demo/tacas2023/exp10/quadrotor_controller4.py")
