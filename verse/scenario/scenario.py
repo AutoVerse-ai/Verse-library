@@ -244,7 +244,7 @@ class Scenario:
         self.check_init()
         root = AnalysisTreeNode.root_from_inits(
             init={
-                aid: [init, init] if np.array(init).ndim < 2 else init
+                aid: [[init, init] if np.array(init).ndim < 2 else init]
                 for aid, init in self.init_dict.items()
             },
             mode={
