@@ -116,6 +116,7 @@ class AnalysisTreeNode:
         self.static = static
         self.uncertain_param = uncertain_param
         self.id = id
+        self.ndigits = ndigits
 
     @staticmethod
     def root_from_inits(
