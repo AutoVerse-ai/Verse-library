@@ -188,7 +188,7 @@ class Scenario:
         check_ray_init(self.config.parallel)
         self.check_init()
         root = AnalysisTreeNode.root_from_inits(
-            init={aid: sample_rect(init, seed) for aid, init in self.init_dict},
+            init={aid: sample_rect(init, seed) for aid, init in self.init_dict.items()},
             mode={
                 aid: tuple(elem if isinstance(elem, str) else elem.name for elem in modes)
                 for aid, modes in self.init_mode_dict.items()
@@ -215,7 +215,7 @@ class Scenario:
     def simulate_simple(self, time_horizon, time_step, max_height=None, seed=None) -> AnalysisTree:
         self.check_init()
         root = AnalysisTreeNode.root_from_inits(
-            init={aid: sample_rect(init, seed) for aid, init in self.init_dict},
+            init={aid: sample_rect(init, seed) for aid, init in self.init_dict.items()},
             mode={
                 aid: tuple(elem if isinstance(elem, str) else elem.name for elem in modes)
                 for aid, modes in self.init_mode_dict.items()
@@ -245,7 +245,7 @@ class Scenario:
         root = AnalysisTreeNode.root_from_inits(
             init={
                 aid: [init, init] if np.array(init).ndim < 2 else init
-                for aid, init in self.init_dict
+                for aid, init in self.init_dict.items()
             },
             mode={
                 aid: tuple(elem if isinstance(elem, str) else elem.name for elem in modes)
