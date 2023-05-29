@@ -58,8 +58,12 @@ class State:
 
 
 if __name__ == "__main__":
-    input_code_name = "./demo/tacas2023/exp2/example_controller5.py"
-    scenario = Scenario(ScenarioConfig(init_seg_length=5))
+    import os
+
+    script_dir = os.path.realpath(os.path.dirname(__file__))
+    input_code_name = os.path.join(script_dir, "example_controller5.py")
+ 
+    scenario = Scenario(ScenarioConfig(init_seg_length=5, parallel=False))
 
     car = CarAgent("car1", file_name=input_code_name)
     scenario.add_agent(car)
@@ -85,7 +89,7 @@ if __name__ == "__main__":
     start_time = time.time()
     traces = scenario.verify(40, 0.1, params={"bloating_method": "GLOBAL"})
     run_time = time.time() - start_time
-    traces.dump("./demo/tacas2023/exp2/output2_curve.json")
+    traces.dump(os.path.join(script_dir, "output2_curve.json"))  
     print(
         {
             "#A": len(scenario.agent_dict),
