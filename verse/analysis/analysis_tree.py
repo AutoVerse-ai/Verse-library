@@ -186,7 +186,7 @@ class AnalysisTreeNode:
                 if self.type == AnalysisTreeNodeType.SIM_TRACE
                 else self.trace
             ),
-            "type": self.type,
+            "type": str(self.type),
             "assert_hits": self.assert_hits,
             "uncertain_param": self.uncertain_param,
             "ndigits": self.ndigits,
