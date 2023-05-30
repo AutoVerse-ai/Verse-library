@@ -1,4 +1,4 @@
-verse.analysis.analysis\_tree
+﻿verse.analysis.analysis\_tree
 =============================
 
 .. automodule:: verse.analysis.analysis_tree
@@ -14,7 +14,7 @@ verse.analysis.analysis\_tree
    .. autosummary::
       :toctree:
    
-      color_interp
+      _color_interp
       first_transitions
       index_of
    
@@ -30,6 +30,7 @@ verse.analysis.analysis\_tree
    
       AnalysisTree
       AnalysisTreeNode
+      AnalysisTreeNodeType
    
    
 

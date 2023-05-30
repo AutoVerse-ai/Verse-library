@@ -13,7 +13,8 @@ Verse is a Python library for creating, simulating, and verifying scenarios with
    :caption: Contents:
 
    getting_started.rst
-   agent.rst
+   creating_scenario_in_verse.md
+   agent.md
    map.rst
    sensor.rst
    scenario.rst

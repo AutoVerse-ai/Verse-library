@@ -16,7 +16,7 @@
     <script src="../_static/sphinx_highlight.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="verse.analysis.analysis_tree.color_interp" href="verse.analysis.analysis_tree.color_interp.html" />
+    <link rel="next" title="verse.analysis.analysis_tree._color_interp" href="verse.analysis.analysis_tree._color_interp.html" />
     <link rel="prev" title="verse.analysis" href="verse.analysis.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
@@ -39,14 +39,14 @@
 <p class="rubric">Functions</p>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="verse.analysis.analysis_tree.color_interp.html#verse.analysis.analysis_tree.color_interp" title="verse.analysis.analysis_tree.color_interp"><code class="xref py py-obj docutils literal notranslate"><span class="pre">color_interp</span></code></a>(c1, c2, mix)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="verse.analysis.analysis_tree._color_interp.html#verse.analysis.analysis_tree._color_interp" title="verse.analysis.analysis_tree._color_interp"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_color_interp</span></code></a>(c1, c2, mix)</p></td>
 <td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="verse.analysis.analysis_tree.first_transitions.html#verse.analysis.analysis_tree.first_transitions" title="verse.analysis.analysis_tree.first_transitions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">first_transitions</span></code></a>(tree)</p></td>
-<td><p></p></td>
+<td><p>Collects the time when each agent first transitions for a AnalysisTree.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="verse.analysis.analysis_tree.index_of.html#verse.analysis.analysis_tree.index_of" title="verse.analysis.analysis_tree.index_of"><code class="xref py py-obj docutils literal notranslate"><span class="pre">index_of</span></code></a>(l, item)</p></td>
-<td><p></p></td>
+<td><p>Get the index of a item in an iterable.</p></td>
 </tr>
 </tbody>
 </table>
@@ -54,11 +54,13 @@
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="verse.analysis.analysis_tree.AnalysisTree.html#verse.analysis.analysis_tree.AnalysisTree" title="verse.analysis.analysis_tree.AnalysisTree"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AnalysisTree</span></code></a>(root)</p></td>
-<td><p><p class="rubric">Methods</p>
-</p></td>
+<td><p>A tree containing the reachable states the scenario produced.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="verse.analysis.analysis_tree.AnalysisTreeNode.html#verse.analysis.analysis_tree.AnalysisTreeNode" title="verse.analysis.analysis_tree.AnalysisTreeNode"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AnalysisTreeNode</span></code></a>([trace, init, mode, ...])</p></td>
-<td><p>AnalysisTreeNode class A AnalysisTreeNode stores the continous execution of the system without transition happening</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="verse.analysis.analysis_tree.AnalysisTreeNode.html#verse.analysis.analysis_tree.AnalysisTreeNode" title="verse.analysis.analysis_tree.AnalysisTreeNode"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AnalysisTreeNode</span></code></a>(trace, init, mode, static, ...)</p></td>
+<td><p>A AnalysisTreeNode stores the continous execution of the system without transition happening</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="verse.analysis.analysis_tree.AnalysisTreeNodeType.html#verse.analysis.analysis_tree.AnalysisTreeNodeType" title="verse.analysis.analysis_tree.AnalysisTreeNodeType"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AnalysisTreeNodeType</span></code></a>(value)</p></td>
+<td><p>Denotes different types of AnalysisTreeNode's.</p></td>
 </tr>
 </tbody>
 </table>
@@ -84,6 +86,7 @@
 <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../creating_scenario_in_verse.html">Creating Scenario in Verse</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../agent.html">Agent</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../map.html">Map</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../sensor.html">Sensor</a></li>
@@ -99,11 +102,12 @@
 <li class="toctree-l2"><a class="reference internal" href="verse.agents.html">verse.agents</a></li>
 <li class="toctree-l2 current"><a class="reference internal" href="verse.analysis.html">verse.analysis</a><ul class="current">
 <li class="toctree-l3 current"><a class="current reference internal" href="#">verse.analysis.analysis_tree</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="verse.analysis.analysis_tree.color_interp.html">verse.analysis.analysis_tree.color_interp</a></li>
+<li class="toctree-l4"><a class="reference internal" href="verse.analysis.analysis_tree._color_interp.html">verse.analysis.analysis_tree._color_interp</a></li>
 <li class="toctree-l4"><a class="reference internal" href="verse.analysis.analysis_tree.first_transitions.html">verse.analysis.analysis_tree.first_transitions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="verse.analysis.analysis_tree.index_of.html">verse.analysis.analysis_tree.index_of</a></li>
 <li class="toctree-l4"><a class="reference internal" href="verse.analysis.analysis_tree.AnalysisTree.html">verse.analysis.analysis_tree.AnalysisTree</a></li>
 <li class="toctree-l4"><a class="reference internal" href="verse.analysis.analysis_tree.AnalysisTreeNode.html">verse.analysis.analysis_tree.AnalysisTreeNode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="verse.analysis.analysis_tree.AnalysisTreeNodeType.html">verse.analysis.analysis_tree.AnalysisTreeNodeType</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="verse.analysis.dryvr.html">verse.analysis.dryvr</a></li>
@@ -131,7 +135,7 @@
   <li><a href="verse.html">verse</a><ul>
   <li><a href="verse.analysis.html">verse.analysis</a><ul>
       <li>Previous: <a href="verse.analysis.html" title="previous chapter">verse.analysis</a></li>
-      <li>Next: <a href="verse.analysis.analysis_tree.color_interp.html" title="next chapter">verse.analysis.analysis_tree.color_interp</a></li>
+      <li>Next: <a href="verse.analysis.analysis_tree._color_interp.html" title="next chapter">verse.analysis.analysis_tree._color_interp</a></li>
   </ul></li>
   </ul></li>
   </ul></li>
