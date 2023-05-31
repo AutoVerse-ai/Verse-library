@@ -24,5 +24,17 @@ The agent in Verse is represented by the agent class. In the example above it's 
 Currently, all example agent classes in Verse is derived from the [BaseAgent](https://github.com/AutoVerse-ai/Verse-library/blob/main/verse/agents/base_agent.py) class. Detailed explaination for `BaseAgent` and how to create custom agent will be discussed in {doc}`creating custom agent<create_custom_agent>`
 
 ## Simulator
+The simulator is an essential part of the agent which describe the how the continuous state evolve for the agent. The simulator is used in both hybrid simulation and verification in Verse. The simulator for the agent have to be implemented in the `TC_simulate` function in the agent class. The `TC_simulate` function takes the following inputs
+- `mode`:`str`, which is the current mode of the agent 
+- `initialState`:`List[float]`, which is the initial continuous states to perform the simulation
+- `time_horizon`: `float`, the time horizon for simulation
+- `time_step`: `float`, the time step for where the simulation is evaluated
+- `map`: `LaneMap`, optional, provided if the map is used 
+
+and it will return an `numpy.ndarray`, which contains the simulation trajectory of the system starting from `initialState` untinal `time_horizon` and evaluated every `time_step`. The dimension of the result will be Tx(N+1) where T is the number time points that the simulator evaluates and N+1 is time and the number of dimensions of the agent. 
 
 ## DecisionLogic
+The decision logic describes how the discrete mode of the agent can change. 
+It's a piece of executable Python code. The decision logic can be provided to the agent by either specifying the path to the `.py` file that contains the decision logic or by providing the code string containing the decision logic directly. The decision logic used in this example can be found [here](https://github.com/AutoVerse-ai/Verse-library/blob/main/demo/highway/m1_1c1n/example_controller4.py). The main function in the decision logic is the `decisionLogic` function (have to with this name).
+It takes as input the current state of the agent, the state of all other agents and the map, and output the updated mode of the current agent and potentially perform some modification to the continuous mode of the current agent. 
+More details about how to create a decision logic can be found in {doc}`creating decision logic<create_decision_logic>`

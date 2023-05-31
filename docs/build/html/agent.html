@@ -62,9 +62,22 @@
 </section>
 <section id="simulator">
 <h2>Simulator<a class="headerlink" href="#simulator" title="Permalink to this heading"></a></h2>
+<p>The simulator is an essential part of the agent which describe the how the continuous state evolve for the agent. The simulator is used in both hybrid simulation and verification in Verse. The simulator for the agent have to be implemented in the <code class="docutils literal notranslate"><span class="pre">TC_simulate</span></code> function in the agent class. The <code class="docutils literal notranslate"><span class="pre">TC_simulate</span></code> function takes the following inputs</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">mode</span></code>:<code class="docutils literal notranslate"><span class="pre">str</span></code>, which is the current mode of the agent</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">initialState</span></code>:<code class="docutils literal notranslate"><span class="pre">List[float]</span></code>, which is the initial continuous states to perform the simulation</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">time_horizon</span></code>: <code class="docutils literal notranslate"><span class="pre">float</span></code>, the time horizon for simulation</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">time_step</span></code>: <code class="docutils literal notranslate"><span class="pre">float</span></code>, the time step for where the simulation is evaluated</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">map</span></code>: <code class="docutils literal notranslate"><span class="pre">LaneMap</span></code>, optional, provided if the map is used</p></li>
+</ul>
+<p>and it will return an <code class="docutils literal notranslate"><span class="pre">numpy.ndarray</span></code>, which contains the simulation trajectory of the system starting from <code class="docutils literal notranslate"><span class="pre">initialState</span></code> untinal <code class="docutils literal notranslate"><span class="pre">time_horizon</span></code> and evaluated every <code class="docutils literal notranslate"><span class="pre">time_step</span></code>. The dimension of the result will be Tx(N+1) where T is the number time points that the simulator evaluates and N+1 is time and the number of dimensions of the agent.</p>
 </section>
 <section id="decisionlogic">
 <h2>DecisionLogic<a class="headerlink" href="#decisionlogic" title="Permalink to this heading"></a></h2>
+<p>The decision logic describes how the discrete mode of the agent can change.
+It’s a piece of executable Python code. The decision logic can be provided to the agent by either specifying the path to the <code class="docutils literal notranslate"><span class="pre">.py</span></code> file that contains the decision logic or by providing the code string containing the decision logic directly. The decision logic used in this example can be found <a class="reference external" href="https://github.com/AutoVerse-ai/Verse-library/blob/main/demo/highway/m1_1c1n/example_controller4.py">here</a>. The main function in the decision logic is the <code class="docutils literal notranslate"><span class="pre">decisionLogic</span></code> function (have to with this name).
+It takes as input the current state of the agent, the state of all other agents and the map, and output the updated mode of the current agent and potentially perform some modification to the continuous mode of the current agent.
+More details about how to create a decision logic can be found in <a class="reference internal" href="create_decision_logic.html"><span class="doc">creating decision logic</span></a></p>
 </section>
 </section>
 
