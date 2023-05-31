@@ -36,7 +36,36 @@
             
   <section id="agent">
 <h1>Agent<a class="headerlink" href="#agent" title="Permalink to this heading"></a></h1>
-<p>As mentioned in</p>
+<p>As mentioned in <a class="reference internal" href="creating_scenario_in_verse.html"><span class="doc">creating scenario in Verse</span></a>, a scenario in Verse is composed by multiple agents. Agents in Verse can be instantiated by a <code class="docutils literal notranslate"><span class="pre">simulator</span></code> and a <code class="docutils literal notranslate"><span class="pre">decisionLogic</span></code>. An example for instantiating a car agent for Verse is shown below.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">agent</span> <span class="o">=</span> <span class="n">CarAgent</span><span class="p">(</span>
+    <span class="s2">&quot;car1&quot;</span><span class="p">,</span>
+    <span class="n">file_name</span><span class="o">=</span><span class="n">input_code_name</span><span class="p">,</span>
+    <span class="n">initial_state</span><span class="o">=</span><span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]],</span>
+    <span class="n">initial_mode</span><span class="o">=</span><span class="p">(</span><span class="n">AgentMode</span><span class="o">.</span><span class="n">Normal</span><span class="p">,</span> <span class="n">TrackMode</span><span class="o">.</span><span class="n">T1</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>The agent can then be added to the scenario using the <code class="docutils literal notranslate"><span class="pre">scenario.add_agent</span></code> function as</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">scenario</span><span class="o">.</span><span class="n">add_agent</span><span class="p">(</span><span class="n">agent</span><span class="p">)</span>
+</pre></div>
+</div>
+<section id="agent-class">
+<h2>Agent Class<a class="headerlink" href="#agent-class" title="Permalink to this heading"></a></h2>
+<p>The agent in Verse is represented by the agent class. In the example above it’s the <code class="docutils literal notranslate"><span class="pre">CarAgent</span></code> class. To instantiate an agent in Verse, the user need to provide</p>
+<ol class="arabic simple">
+<li><p>A unique identifier for the agent in <code class="docutils literal notranslate"><span class="pre">str</span></code>, in this example it’s <code class="docutils literal notranslate"><span class="pre">&quot;car1&quot;</span></code>. Different agents in the same scenario should have different identifier.</p></li>
+<li><p>The decision logic of the agent. In this example, the decision logic is provided by <code class="docutils literal notranslate"><span class="pre">input_code_name</span></code>, which contains the path to the python file that contains the decision logic. Details about the decision logic will be described in following sections</p></li>
+<li><p>The set of initial continuous states for the agent. Currently, Verse only accepts initial states given in boxes. In this example the inital_state is given as <code class="docutils literal notranslate"><span class="pre">[[0,</span> <span class="pre">-0.5,</span> <span class="pre">0,</span> <span class="pre">1.0],</span> <span class="pre">[0.01,</span> <span class="pre">0.5,</span> <span class="pre">0,</span> <span class="pre">1.0]]</span></code> with the first list providing the lower bound for the four continuous states of the car and the second list providing the upper bound.</p></li>
+<li><p>The initial mode of the agent. The set of possible mode is described in the decision logic. In this example, the initial mode is given by <code class="docutils literal notranslate"><span class="pre">(AgentMode.Normal,</span> <span class="pre">TrackMode.T1)</span></code>.</p></li>
+</ol>
+<p>Currently, all example agent classes in Verse is derived from the <a class="reference external" href="https://github.com/AutoVerse-ai/Verse-library/blob/main/verse/agents/base_agent.py">BaseAgent</a> class. Detailed explaination for <code class="docutils literal notranslate"><span class="pre">BaseAgent</span></code> and how to create custom agent will be discussed in <a class="reference internal" href="create_custom_agent.html"><span class="doc">creating custom agent</span></a></p>
+</section>
+<section id="simulator">
+<h2>Simulator<a class="headerlink" href="#simulator" title="Permalink to this heading"></a></h2>
+</section>
+<section id="decisionlogic">
+<h2>DecisionLogic<a class="headerlink" href="#decisionlogic" title="Permalink to this heading"></a></h2>
+</section>
 </section>
 
 
@@ -60,7 +89,12 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="creating_scenario_in_verse.html">Creating Scenario in Verse</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Agent</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Agent</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#agent-class">Agent Class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#simulator">Simulator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#decisionlogic">DecisionLogic</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="map.html">Map</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sensor.html">Sensor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="scenario.html">Scenario</a></li>
