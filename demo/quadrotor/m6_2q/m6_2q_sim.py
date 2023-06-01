@@ -28,8 +28,10 @@ class TrackMode(Enum):
 
 
 if __name__ == "__main__":
-    input_code_name = "./demo/tacas2023/exp1/quadrotor_controller3.py"
+    import os
 
+    script_dir = os.path.realpath(os.path.dirname(__file__))
+    input_code_name = os.path.join(script_dir, "quadrotor_controller3.py")
     bench = Benchmark(sys.argv)
     bench.agent_type = "D"
     bench.noisy_s = "No"
@@ -62,7 +64,7 @@ if __name__ == "__main__":
         exit(0)
     traces = bench.run(40, time_step, seed=4)
     if bench.config.dump:
-        traces.dump("demo/tacas2023/exp1/output1_sim.json")
+        traces.dump(os.path.join(script_dir, "output1_sim.json"))
     if bench.config.plot:
         fig = go.Figure()
         fig = draw_map_3d(tmp_map, fig, fill_type="center")

@@ -27,8 +27,11 @@ class TrackMode(Enum):
 
 
 if __name__ == "__main__":
-    input_code_name = "./demo/tacas2023/exp1/quadrotor_controller3.py"
+    import os
 
+    script_dir = os.path.realpath(os.path.dirname(__file__))
+    input_code_name = os.path.join(script_dir, "quadrotor_controller3.py")
+    
     bench = Benchmark(sys.argv)
     bench.agent_type = "D"
     bench.noisy_s = "No"
@@ -66,5 +69,5 @@ if __name__ == "__main__":
         fig.set_background("#e0e0e0")
         fig.show()
     if bench.config.dump:
-        traces.dump("demo/tacas2023/exp1/output1.json")
+        traces.dump(os.path.join(script_dir, "output1.json"))
     bench.report()
