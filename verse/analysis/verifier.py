@@ -1,3 +1,4 @@
+from enum import Enum, auto
 from dataclasses import dataclass
 from collections import defaultdict
 import copy, itertools, functools, pprint
@@ -26,12 +27,18 @@ from verse.map.lane_map import LaneMap
 from verse.parser.parser import find, ModePath, unparse
 from verse.agents.base_agent import BaseAgent
 from verse.automaton import GuardExpressionAst, ResetExpression
-from verse.scenario.scenario import ReachabilityMethod
 
 pp = functools.partial(pprint.pprint, compact=True, width=130)
 
 PathDiffs = List[Tuple[BaseAgent, ModePath]]
 EGO, OTHERS = "ego", "others"
+
+
+class ReachabilityMethod(Enum):
+    DRYVR = auto()
+    NEU_REACH = auto()
+    MIXMONO_CONT = auto()
+    MIXMONO_DISC = auto()
 
 
 @dataclass

@@ -1,11 +1,10 @@
-from enum import Enum, auto
 from typing import Tuple, List, Dict
 import copy
 from dataclasses import dataclass
 import numpy as np
 
 from verse.agents.base_agent import BaseAgent
-from verse.analysis import Simulator, Verifier, AnalysisTreeNode, AnalysisTree
+from verse.analysis import Simulator, Verifier, AnalysisTreeNode, AnalysisTree, ReachabilityMethod
 from verse.analysis.analysis_tree import AnalysisTreeNodeType
 from verse.analysis.utils import sample_rect
 from verse.parser.parser import ControllerIR
@@ -21,13 +20,6 @@ def _check_ray_init(parallel: bool) -> None:
 
         if not ray.is_initialized():
             ray.init()
-
-
-class ReachabilityMethod(Enum):
-    DRYVR = auto()
-    NEU_REACH = auto()
-    MIXMONO_CONT = auto()
-    MIXMONO_DISC = auto()
 
 
 @dataclass(frozen=True)
