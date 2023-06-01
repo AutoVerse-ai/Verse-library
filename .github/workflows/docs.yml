@@ -49,6 +49,8 @@ jobs:
       - name: Install Verse
         run: |
           pip install .
+          python -c 'import numpy'
+          python -c 'import verse'
       - name: Generate Docs
         run: |
           python -m sphinx -M html docs/source docs/build
