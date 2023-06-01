@@ -9,16 +9,17 @@ When no sensor is explicitly supplied, the default sensor will be used, which si
 
 In addition to these components, a scenario can be configured using a `ScenarioConfig` object, which controls the simulation and verification behaviors.
 
-```{currentmodule} verse
-```
+```{eval-rst}
+.. currentmodule:: verse
+.. autosummary::
+    :toctree: _autosummary
 
-```{autosummary}
-ScenarioConfig
-Scenario.add_agent
-Scenario.set_init_single
-Scenario.set_init
-Scenario.set_sensor
-Scenario.set_map
+    ScenarioConfig
+    Scenario.add_agent
+    Scenario.set_init_single
+    Scenario.set_init
+    Scenario.set_sensor
+    Scenario.set_map
 ```
 
 ## Simulation & Reachability Analysis
@@ -29,20 +30,22 @@ Once a scenario is created, the user can perform simulation and verification in 
 - `time_step`: The length of time between discrete transitions are checked, in seconds. This is also the time resolution at which trajectories are recorded. As the `time_step` gets smaller, the analysis will get more accurate, but also take more time to finish.
 - `max_height`: The height at which the analysis will stop for a particular branch/path.
 
-```{currentmodule} verse
-```
+```{eval-rst}
+.. currentmodule:: verse
+.. autosummary::
+    :toctree: _autosummary
 
-```{autosummary}
-Scenario.simulate
-Scenario.verify
+    Scenario.simulate
+    Scenario.verify
 ```
 
 Both methods produce traces of type `AnalysisTree`. An `AnalysisTree` represents the segments of trajectories a scenario produced, represented by an `AnalysisTreeNode`. A new node or trajectory segment is generated as the discrete mode of the system changes. Note that as a system may have undeterministic transitions, hence why the resulting reachset is a tree.
 
-```{currentmodule} verse
-```
+```{eval-rst}
+.. currentmodule:: verse.analysis
+.. autosummary::
+    :toctree: _autosummary
 
-```{autosummary}
-AnalysisTree
-AnalysisTreeNode
+    AnalysisTree
+    AnalysisTreeNode
 ```
