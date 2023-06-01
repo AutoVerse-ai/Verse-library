@@ -51,7 +51,7 @@ jobs:
           pip install -r docs/requirements.txt
       - name: Generate Docs
         run: |
-          python -m sphinx -M source build
+          python -m sphinx -M html docs/source docs/build
       - name: Setup Pages
         uses: actions/configure-pages@v3
       - name: Upload artifact
