@@ -1,6 +1,0 @@
-verse.analysis.utils.class\_from\_path
-======================================
-
-.. currentmodule:: verse.analysis.utils
-
-.. autofunction:: class_from_path

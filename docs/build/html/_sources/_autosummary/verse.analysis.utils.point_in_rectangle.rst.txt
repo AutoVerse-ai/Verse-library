@@ -1,6 +1,0 @@
-verse.analysis.utils.point\_in\_rectangle
-=========================================
-
-.. currentmodule:: verse.analysis.utils
-
-.. autofunction:: point_in_rectangle

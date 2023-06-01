@@ -1,6 +1,0 @@
-verse.analysis.verifier.combine\_rect
-=====================================
-
-.. currentmodule:: verse.analysis.verifier
-
-.. autofunction:: combine_rect

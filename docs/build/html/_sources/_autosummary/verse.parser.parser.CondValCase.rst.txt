@@ -1,9 +1,0 @@
-verse.parser.parser.CondValCase
-===============================
-
-.. currentmodule:: verse.parser.parser
-
-.. autoclass:: CondValCase
-   :members:                                   
-   :show-inheritance:                          
-   :inherited-members: 

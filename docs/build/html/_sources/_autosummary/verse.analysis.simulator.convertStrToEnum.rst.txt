@@ -1,6 +1,0 @@
-verse.analysis.simulator.convertStrToEnum
-=========================================
-
-.. currentmodule:: verse.analysis.simulator
-
-.. autofunction:: convertStrToEnum

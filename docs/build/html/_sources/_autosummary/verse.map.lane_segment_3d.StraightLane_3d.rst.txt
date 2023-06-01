@@ -1,9 +1,0 @@
-verse.map.lane\_segment\_3d.StraightLane\_3d
-============================================
-
-.. currentmodule:: verse.map.lane_segment_3d
-
-.. autoclass:: StraightLane_3d
-   :members:                                   
-   :show-inheritance:                          
-   :inherited-members: 

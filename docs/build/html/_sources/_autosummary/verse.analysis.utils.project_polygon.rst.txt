@@ -1,6 +1,0 @@
-verse.analysis.utils.project\_polygon
-=====================================
-
-.. currentmodule:: verse.analysis.utils
-
-.. autofunction:: project_polygon

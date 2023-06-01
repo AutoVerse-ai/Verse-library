@@ -1,9 +1,0 @@
-verse.analysis.incremental.CachedSegment
-========================================
-
-.. currentmodule:: verse.analysis.incremental
-
-.. autoclass:: CachedSegment
-   :members:                                   
-   :show-inheritance:                          
-   :inherited-members: 

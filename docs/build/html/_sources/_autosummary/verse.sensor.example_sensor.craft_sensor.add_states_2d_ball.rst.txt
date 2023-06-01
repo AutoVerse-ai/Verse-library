@@ -1,6 +1,0 @@
-verse.sensor.example\_sensor.craft\_sensor.add\_states\_2d\_ball
-================================================================
-
-.. currentmodule:: verse.sensor.example_sensor.craft_sensor
-
-.. autofunction:: add_states_2d_ball

@@ -1,6 +1,0 @@
-verse.analysis.utils.confidence\_ellipsoid
-==========================================
-
-.. currentmodule:: verse.analysis.utils
-
-.. autofunction:: confidence_ellipsoid

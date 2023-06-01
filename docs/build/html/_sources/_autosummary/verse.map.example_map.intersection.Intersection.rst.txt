@@ -1,9 +1,0 @@
-verse.map.example\_map.intersection.Intersection
-================================================
-
-.. currentmodule:: verse.map.example_map.intersection
-
-.. autoclass:: Intersection
-   :members:                                   
-   :show-inheritance:                          
-   :inherited-members: 

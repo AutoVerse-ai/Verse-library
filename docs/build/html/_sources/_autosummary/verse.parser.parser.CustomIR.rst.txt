@@ -1,9 +1,0 @@
-verse.parser.parser.CustomIR
-============================
-
-.. currentmodule:: verse.parser.parser
-
-.. autoclass:: CustomIR
-   :members:                                   
-   :show-inheritance:                          
-   :inherited-members: 

@@ -1,6 +1,0 @@
-verse.sensor.example\_sensor.craft\_sensor.sets
-===============================================
-
-.. currentmodule:: verse.sensor.example_sensor.craft_sensor
-
-.. autofunction:: sets

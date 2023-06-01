@@ -1,6 +1,0 @@
-verse.analysis.incremental.combine\_all
-=======================================
-
-.. currentmodule:: verse.analysis.incremental
-
-.. autofunction:: combine_all

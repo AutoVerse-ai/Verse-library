@@ -1,9 +1,0 @@
-verse.agents.example\_agent.car\_agent.NPCAgent
-===============================================
-
-.. currentmodule:: verse.agents.example_agent.car_agent
-
-.. autoclass:: NPCAgent
-   :members:                                   
-   :show-inheritance:                          
-   :inherited-members: 

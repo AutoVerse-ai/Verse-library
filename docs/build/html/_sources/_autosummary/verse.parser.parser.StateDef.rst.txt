@@ -1,9 +1,0 @@
-verse.parser.parser.StateDef
-============================
-
-.. currentmodule:: verse.parser.parser
-
-.. autoclass:: StateDef
-   :members:                                   
-   :show-inheritance:                          
-   :inherited-members: 

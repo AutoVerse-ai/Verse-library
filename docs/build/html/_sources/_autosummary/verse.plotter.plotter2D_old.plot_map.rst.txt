@@ -1,6 +1,0 @@
-verse.plotter.plotter2D\_old.plot\_map
-======================================
-
-.. currentmodule:: verse.plotter.plotter2D_old
-
-.. autofunction:: plot_map

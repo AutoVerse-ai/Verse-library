@@ -1,6 +1,0 @@
-verse.analysis.utils.wrap\_to\_pi
-=================================
-
-.. currentmodule:: verse.analysis.utils
-
-.. autofunction:: wrap_to_pi

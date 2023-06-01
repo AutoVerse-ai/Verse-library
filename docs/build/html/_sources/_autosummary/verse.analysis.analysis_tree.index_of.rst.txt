@@ -1,6 +1,0 @@
-verse.analysis.analysis\_tree.index\_of
-=======================================
-
-.. currentmodule:: verse.analysis.analysis_tree
-
-.. autofunction:: index_of

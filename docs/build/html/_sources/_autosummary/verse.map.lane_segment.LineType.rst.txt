@@ -1,9 +1,0 @@
-verse.map.lane\_segment.LineType
-================================
-
-.. currentmodule:: verse.map.lane_segment
-
-.. autoclass:: LineType
-   :members:                                   
-   :show-inheritance:                          
-   :inherited-members: 

@@ -1,9 +1,0 @@
-verse.sensor.example\_sensor.single\_sensor.SingleSensor
-========================================================
-
-.. currentmodule:: verse.sensor.example_sensor.single_sensor
-
-.. autoclass:: SingleSensor
-   :members:                                   
-   :show-inheritance:                          
-   :inherited-members: 

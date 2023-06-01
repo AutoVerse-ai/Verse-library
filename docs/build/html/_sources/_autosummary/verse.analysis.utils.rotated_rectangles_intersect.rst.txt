@@ -1,6 +1,0 @@
-verse.analysis.utils.rotated\_rectangles\_intersect
-===================================================
-
-.. currentmodule:: verse.analysis.utils
-
-.. autofunction:: rotated_rectangles_intersect

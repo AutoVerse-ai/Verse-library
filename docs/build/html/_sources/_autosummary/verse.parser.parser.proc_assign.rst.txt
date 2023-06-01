@@ -1,6 +1,0 @@
-verse.parser.parser.proc\_assign
-================================
-
-.. currentmodule:: verse.parser.parser
-
-.. autofunction:: proc_assign

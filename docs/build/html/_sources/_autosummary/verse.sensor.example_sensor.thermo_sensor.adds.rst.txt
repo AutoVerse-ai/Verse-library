@@ -1,6 +1,0 @@
-verse.sensor.example\_sensor.thermo\_sensor.adds
-================================================
-
-.. currentmodule:: verse.sensor.example_sensor.thermo_sensor
-
-.. autofunction:: adds

@@ -1,9 +1,0 @@
-verse.analysis.incremental.CachedTransition
-===========================================
-
-.. currentmodule:: verse.analysis.incremental
-
-.. autoclass:: CachedTransition
-   :members:                                   
-   :show-inheritance:                          
-   :inherited-members: 

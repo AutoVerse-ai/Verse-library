@@ -1,9 +1,0 @@
-verse.agents.example\_agent.origin\_agent.vanderpol\_agent
-==========================================================
-
-.. currentmodule:: verse.agents.example_agent.origin_agent
-
-.. autoclass:: vanderpol_agent
-   :members:                                   
-   :show-inheritance:                          
-   :inherited-members: 

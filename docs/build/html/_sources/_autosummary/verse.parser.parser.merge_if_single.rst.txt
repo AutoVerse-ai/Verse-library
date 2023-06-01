@@ -1,6 +1,0 @@
-verse.parser.parser.merge\_if\_single
-=====================================
-
-.. currentmodule:: verse.parser.parser
-
-.. autofunction:: merge_if_single

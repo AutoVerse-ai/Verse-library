@@ -1,6 +1,0 @@
-verse.analysis.incremental.convert\_reach\_trans
-================================================
-
-.. currentmodule:: verse.analysis.incremental
-
-.. autofunction:: convert_reach_trans

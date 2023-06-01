@@ -1,6 +1,0 @@
-verse.map.lane\_segment\_3d.get\_theta\_by\_coor
-================================================
-
-.. currentmodule:: verse.map.lane_segment_3d
-
-.. autofunction:: get_theta_by_coor

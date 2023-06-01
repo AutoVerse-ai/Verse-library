@@ -1,6 +1,0 @@
-verse.analysis.incremental.sim\_trans\_suit
-===========================================
-
-.. currentmodule:: verse.analysis.incremental
-
-.. autofunction:: sim_trans_suit

@@ -1,6 +1,0 @@
-verse.scenario.scenario.red
-===========================
-
-.. currentmodule:: verse.scenario.scenario
-
-.. autofunction:: red

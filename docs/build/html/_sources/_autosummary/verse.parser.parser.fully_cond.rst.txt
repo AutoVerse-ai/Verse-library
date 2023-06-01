@@ -1,6 +1,0 @@
-verse.parser.parser.fully\_cond
-===============================
-
-.. currentmodule:: verse.parser.parser
-
-.. autofunction:: fully_cond

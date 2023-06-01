@@ -1,6 +1,0 @@
-verse.sensor.base\_sensor.sets
-==============================
-
-.. currentmodule:: verse.sensor.base_sensor
-
-.. autofunction:: sets

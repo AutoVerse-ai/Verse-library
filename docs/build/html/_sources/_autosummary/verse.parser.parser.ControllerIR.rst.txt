@@ -1,9 +1,0 @@
-verse.parser.parser.ControllerIR
-================================
-
-.. currentmodule:: verse.parser.parser
-
-.. autoclass:: ControllerIR
-   :members:                                   
-   :show-inheritance:                          
-   :inherited-members: 

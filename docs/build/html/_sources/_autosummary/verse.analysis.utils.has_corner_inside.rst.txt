@@ -1,6 +1,0 @@
-verse.analysis.utils.has\_corner\_inside
-========================================
-
-.. currentmodule:: verse.analysis.utils
-
-.. autofunction:: has_corner_inside

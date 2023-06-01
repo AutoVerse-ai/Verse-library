@@ -1,9 +1,0 @@
-verse.automaton.guard.ValueSubstituter
-======================================
-
-.. currentmodule:: verse.automaton.guard
-
-.. autoclass:: ValueSubstituter
-   :members:                                   
-   :show-inheritance:                          
-   :inherited-members: 

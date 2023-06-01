@@ -1,9 +1,0 @@
-verse.map.lane\_segment.LaneSegment
-===================================
-
-.. currentmodule:: verse.map.lane_segment
-
-.. autoclass:: LaneSegment
-   :members:                                   
-   :show-inheritance:                          
-   :inherited-members: 

@@ -1,6 +1,0 @@
-verse.analysis.analysis\_tree.\_color\_interp
-=============================================
-
-.. currentmodule:: verse.analysis.analysis_tree
-
-.. autofunction:: _color_interp

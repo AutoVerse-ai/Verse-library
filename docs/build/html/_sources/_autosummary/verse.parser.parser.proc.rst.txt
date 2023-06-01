@@ -1,6 +1,0 @@
-verse.parser.parser.proc
-========================
-
-.. currentmodule:: verse.parser.parser
-
-.. autofunction:: proc

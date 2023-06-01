@@ -1,9 +1,0 @@
-verse.agents.example\_agent.car\_agent.WeirdCarAgent
-====================================================
-
-.. currentmodule:: verse.agents.example_agent.car_agent
-
-.. autoclass:: WeirdCarAgent
-   :members:                                   
-   :show-inheritance:                          
-   :inherited-members: 

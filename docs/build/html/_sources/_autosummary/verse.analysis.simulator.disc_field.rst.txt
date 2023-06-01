@@ -1,6 +1,0 @@
-verse.analysis.simulator.disc\_field
-====================================
-
-.. currentmodule:: verse.analysis.simulator
-
-.. autofunction:: disc_field

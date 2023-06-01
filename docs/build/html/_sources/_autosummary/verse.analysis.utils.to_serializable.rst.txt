@@ -1,6 +1,0 @@
-verse.analysis.utils.to\_serializable
-=====================================
-
-.. currentmodule:: verse.analysis.utils
-
-.. autofunction:: to_serializable

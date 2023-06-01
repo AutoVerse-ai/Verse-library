@@ -1,9 +1,0 @@
-verse.agents.example\_agent.quadrotor\_agent.FFNNC
-==================================================
-
-.. currentmodule:: verse.agents.example_agent.quadrotor_agent
-
-.. autoclass:: FFNNC
-   :members:                                   
-   :show-inheritance:                          
-   :inherited-members: 

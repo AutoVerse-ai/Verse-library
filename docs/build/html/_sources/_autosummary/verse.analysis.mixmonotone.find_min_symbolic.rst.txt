@@ -1,6 +1,0 @@
-verse.analysis.mixmonotone.find\_min\_symbolic
-==============================================
-
-.. currentmodule:: verse.analysis.mixmonotone
-
-.. autofunction:: find_min_symbolic

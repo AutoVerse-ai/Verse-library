@@ -1,6 +1,0 @@
-verse.analysis.mixmonotone.find\_max\_symbolic
-==============================================
-
-.. currentmodule:: verse.analysis.mixmonotone
-
-.. autofunction:: find_max_symbolic

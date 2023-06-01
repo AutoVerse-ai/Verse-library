@@ -1,6 +1,0 @@
-verse.plotter.plotter2D.duration
-================================
-
-.. currentmodule:: verse.plotter.plotter2D
-
-.. autodata:: duration

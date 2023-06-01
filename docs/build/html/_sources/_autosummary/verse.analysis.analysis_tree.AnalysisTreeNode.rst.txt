@@ -1,9 +1,0 @@
-verse.analysis.analysis\_tree.AnalysisTreeNode
-==============================================
-
-.. currentmodule:: verse.analysis.analysis_tree
-
-.. autoclass:: AnalysisTreeNode
-   :members:                                   
-   :show-inheritance:                          
-   :inherited-members: 

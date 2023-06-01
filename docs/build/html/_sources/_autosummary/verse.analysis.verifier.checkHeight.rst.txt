@@ -1,6 +1,0 @@
-verse.analysis.verifier.checkHeight
-===================================
-
-.. currentmodule:: verse.analysis.verifier
-
-.. autofunction:: checkHeight

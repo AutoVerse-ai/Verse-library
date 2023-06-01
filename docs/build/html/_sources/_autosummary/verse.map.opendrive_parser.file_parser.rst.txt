@@ -1,6 +1,0 @@
-verse.map.opendrive\_parser.file\_parser
-========================================
-
-.. currentmodule:: verse.map.opendrive_parser
-
-.. autofunction:: file_parser

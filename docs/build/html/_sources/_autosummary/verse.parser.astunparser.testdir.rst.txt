@@ -1,6 +1,0 @@
-verse.parser.astunparser.testdir
-================================
-
-.. currentmodule:: verse.parser.astunparser
-
-.. autofunction:: testdir

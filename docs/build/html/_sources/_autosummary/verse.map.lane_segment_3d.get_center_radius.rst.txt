@@ -1,6 +1,0 @@
-verse.map.lane\_segment\_3d.get\_center\_radius
-===============================================
-
-.. currentmodule:: verse.map.lane_segment_3d
-
-.. autofunction:: get_center_radius

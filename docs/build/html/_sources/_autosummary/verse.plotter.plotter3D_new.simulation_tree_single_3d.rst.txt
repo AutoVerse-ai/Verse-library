@@ -1,6 +1,0 @@
-verse.plotter.plotter3D\_new.simulation\_tree\_single\_3d
-=========================================================
-
-.. currentmodule:: verse.plotter.plotter3D_new
-
-.. autofunction:: simulation_tree_single_3d

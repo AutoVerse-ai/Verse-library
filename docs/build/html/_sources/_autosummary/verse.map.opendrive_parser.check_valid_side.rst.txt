@@ -1,6 +1,0 @@
-verse.map.opendrive\_parser.check\_valid\_side
-==============================================
-
-.. currentmodule:: verse.map.opendrive_parser
-
-.. autofunction:: check_valid_side

@@ -1,6 +1,0 @@
-verse.scenario.scenario.check\_ray\_init
-========================================
-
-.. currentmodule:: verse.scenario.scenario
-
-.. autofunction:: check_ray_init

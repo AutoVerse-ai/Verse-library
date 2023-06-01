@@ -1,9 +1,0 @@
-verse.map.example\_map.simple\_map.SimpleMap
-============================================
-
-.. currentmodule:: verse.map.example_map.simple_map
-
-.. autoclass:: SimpleMap
-   :members:                                   
-   :show-inheritance:                          
-   :inherited-members: 

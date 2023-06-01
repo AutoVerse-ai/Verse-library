@@ -1,9 +1,0 @@
-verse.agents.example\_agent.quadrotor\_agent.QuadrotorAgent
-===========================================================
-
-.. currentmodule:: verse.agents.example_agent.quadrotor_agent
-
-.. autoclass:: QuadrotorAgent
-   :members:                                   
-   :show-inheritance:                          
-   :inherited-members: 

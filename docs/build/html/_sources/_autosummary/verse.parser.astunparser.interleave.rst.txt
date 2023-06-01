@@ -1,6 +1,0 @@
-verse.parser.astunparser.interleave
-===================================
-
-.. currentmodule:: verse.parser.astunparser
-
-.. autofunction:: interleave

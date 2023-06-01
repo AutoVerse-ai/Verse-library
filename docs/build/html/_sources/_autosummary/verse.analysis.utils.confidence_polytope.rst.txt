@@ -1,6 +1,0 @@
-verse.analysis.utils.confidence\_polytope
-=========================================
-
-.. currentmodule:: verse.analysis.utils
-
-.. autofunction:: confidence_polytope

@@ -1,6 +1,0 @@
-verse.analysis.mixmonotone.find\_min
-====================================
-
-.. currentmodule:: verse.analysis.mixmonotone
-
-.. autofunction:: find_min

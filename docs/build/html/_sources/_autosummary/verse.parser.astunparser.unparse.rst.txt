@@ -1,6 +1,0 @@
-verse.parser.astunparser.unparse
-================================
-
-.. currentmodule:: verse.parser.astunparser
-
-.. autofunction:: unparse

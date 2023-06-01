@@ -1,6 +1,0 @@
-verse.analysis.utils.point\_in\_ellipse
-=======================================
-
-.. currentmodule:: verse.analysis.utils
-
-.. autofunction:: point_in_ellipse

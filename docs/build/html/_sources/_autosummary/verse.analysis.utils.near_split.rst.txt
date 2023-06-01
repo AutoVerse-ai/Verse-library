@@ -1,6 +1,0 @@
-verse.analysis.utils.near\_split
-================================
-
-.. currentmodule:: verse.analysis.utils
-
-.. autofunction:: near_split

@@ -1,6 +1,0 @@
-verse.parser.parser.compile\_expr
-=================================
-
-.. currentmodule:: verse.parser.parser
-
-.. autofunction:: compile_expr

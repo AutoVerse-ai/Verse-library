@@ -1,6 +1,0 @@
-verse.analysis.simulator.pack\_env
-==================================
-
-.. currentmodule:: verse.analysis.simulator
-
-.. autofunction:: pack_env

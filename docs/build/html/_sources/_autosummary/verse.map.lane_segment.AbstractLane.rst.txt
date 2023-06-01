@@ -1,9 +1,0 @@
-verse.map.lane\_segment.AbstractLane
-====================================
-
-.. currentmodule:: verse.map.lane_segment
-
-.. autoclass:: AbstractLane
-   :members:                                   
-   :show-inheritance:                          
-   :inherited-members: 

@@ -1,6 +1,0 @@
-verse.plotter.plotter3D\_new.draw\_map\_3d
-==========================================
-
-.. currentmodule:: verse.plotter.plotter3D_new
-
-.. autofunction:: draw_map_3d

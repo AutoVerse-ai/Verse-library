@@ -1,6 +1,0 @@
-verse.analysis.mixmonotone.compute\_reachtube\_mixmono\_cont
-============================================================
-
-.. currentmodule:: verse.analysis.mixmonotone
-
-.. autofunction:: compute_reachtube_mixmono_cont

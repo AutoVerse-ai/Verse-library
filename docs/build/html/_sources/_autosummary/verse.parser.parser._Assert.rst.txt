@@ -1,9 +1,0 @@
-verse.parser.parser.\_Assert
-============================
-
-.. currentmodule:: verse.parser.parser
-
-.. autoclass:: _Assert
-   :members:                                   
-   :show-inheritance:                          
-   :inherited-members: 

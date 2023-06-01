@@ -1,6 +1,0 @@
-verse.analysis.utils.solve\_trinom
-==================================
-
-.. currentmodule:: verse.analysis.utils
-
-.. autofunction:: solve_trinom

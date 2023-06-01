@@ -1,6 +1,0 @@
-verse.plotter.plotter2D.reachtube\_anime
-========================================
-
-.. currentmodule:: verse.plotter.plotter2D
-
-.. autofunction:: reachtube_anime

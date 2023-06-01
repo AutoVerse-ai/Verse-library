@@ -1,6 +1,0 @@
-verse.analysis.utils.distance\_to\_circle
-=========================================
-
-.. currentmodule:: verse.analysis.utils
-
-.. autofunction:: distance_to_circle

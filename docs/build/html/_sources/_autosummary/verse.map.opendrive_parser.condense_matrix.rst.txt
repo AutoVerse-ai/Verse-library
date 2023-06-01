@@ -1,6 +1,0 @@
-verse.map.opendrive\_parser.condense\_matrix
-============================================
-
-.. currentmodule:: verse.map.opendrive_parser
-
-.. autofunction:: condense_matrix

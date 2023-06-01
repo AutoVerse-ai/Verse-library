@@ -1,9 +1,0 @@
-verse.map.example\_map.map\_tacas.M5
-====================================
-
-.. currentmodule:: verse.map.example_map.map_tacas
-
-.. autoclass:: M5
-   :members:                                   
-   :show-inheritance:                          
-   :inherited-members: 
