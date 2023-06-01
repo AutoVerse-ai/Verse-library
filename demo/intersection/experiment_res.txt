@@ -26,7 +26,7 @@ timesteps: 1060s
 agent transition times: {'car3': 1.0, 'car5': 1.0, 'car8': 16.45, 'car19': 39.35, 'car6': 51.15, 'car9': 46.6}
 seed: 1118
 
-################### python demo/vehicle/intersection.py vbp lanes:4,cars:12,seed:1120,time:30 
+################### python demo/vehicle/intersection.py vbp lanes:4,cars:12,seed:1120,time:30
 report:
 #agents: 12
 agent type: N/A
@@ -41,7 +41,7 @@ parallelness: 5.98
 agent transition times: {'car5': 0.95, 'car11': 1.0, 'car9': 21.5}
 seed: 1120
 
-################### python demo/vehicle/intersection.py vbp lanes:4,cars:12,seed:1120,time:35 
+################### python demo/vehicle/intersection.py vbp lanes:4,cars:12,seed:1120,time:35
 report:
 #agents: 12
 agent type: N/A

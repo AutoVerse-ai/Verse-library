@@ -48,7 +48,7 @@ class AnalysisTreeNode:
     happening"""
 
     trace: Dict[str, TraceType]
-    """The trace for each agent. 
+    """The trace for each agent.
     The key of the dict is the agent id and the value of the dict is the simulated traces for each
     agent"""
     init: Dict[str, Sequence[float]]

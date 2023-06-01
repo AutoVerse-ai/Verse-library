@@ -40,7 +40,7 @@ class State:
 def decisionLogic(ego: State):
     """Computes the possible mode transitions"""
     output = copy.deepcopy(ego)
-    """TODO: The `ego` variable name should be flexible but 
+    """TODO: The `ego` variable name should be flexible but
     currently these are somehow harcoded with the sensor"""
     # Stores the prestate first
     if ego.x < 0:
