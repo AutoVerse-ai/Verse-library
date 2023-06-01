@@ -1,13 +1,13 @@
-from typing import DefaultDict, Optional, Tuple, List, Dict, Any
+from enum import Enum, auto
+from typing import Tuple, List, Dict
 import copy
 from dataclasses import dataclass
 import numpy as np
-from pprint import pp
 
 from verse.agents.base_agent import BaseAgent
 from verse.analysis import Simulator, Verifier, AnalysisTreeNode, AnalysisTree
 from verse.analysis.analysis_tree import AnalysisTreeNodeType
-from verse.analysis.utils import dedup, sample_rect
+from verse.analysis.utils import sample_rect
 from verse.parser.parser import ControllerIR
 from verse.sensor.base_sensor import BaseSensor
 from verse.map.lane_map import LaneMap
@@ -15,7 +15,7 @@ from verse.map.lane_map import LaneMap
 EGO, OTHERS = "ego", "others"
 
 
-def check_ray_init(parallel: bool) -> None:
+def _check_ray_init(parallel: bool) -> None:
     if parallel:
         import ray
 
@@ -23,23 +23,39 @@ def check_ray_init(parallel: bool) -> None:
             ray.init()
 
 
-def red(s):
-    return "\x1b[31m" + s + "\x1b[0m"
+class ReachabilityMethod(Enum):
+    DRYVR = auto()
+    NEU_REACH = auto()
+    MIXMONO_CONT = auto()
+    MIXMONO_DISC = auto()
 
 
 @dataclass(frozen=True)
 class ScenarioConfig:
+    """Configuration for how simulation/verification is performed for a scenario. Properties are
+    immutable so that incremental verification works correctly."""
+
     incremental: bool = False
+    """Enable incremental simulation/verification. Results from previous runs will be used to try to
+    speed up experiments. Result is undefined when the map, agent dynamics and sensor are changed."""
     unsafe_continue: bool = False
+    """Continue exploring the branch when an unsafe condition occurs."""
     init_seg_length: int = 1000
-    reachability_method: str = "DRYVR"
+    reachability_method: ReachabilityMethod = ReachabilityMethod.DRYVR
+    """Method of performing reachability. Can be DryVR, NeuReach, MixMonoCont and MixMonoDisc."""
     parallel_sim_ahead: int = 8
+    """The number of simulation tasks to dispatch before waiting."""
     parallel_ver_ahead: int = 8
+    """The number of verification tasks to dispatch before waiting."""
     parallel: bool = True
+    """Enable parallelization. Uses the Ray library. Could be slower for small scenarios."""
     try_local: bool = False
+    """Heuristic. When enabled, try to use the local thread when some results are cached."""
 
 
 class Scenario:
+    """A simulation/verification scenario."""
+
     def __init__(self, config=ScenarioConfig()):
         self.agent_dict: Dict[str, BaseAgent] = {}
         self.simulator = Simulator(config)
@@ -66,19 +82,22 @@ class Scenario:
         self.simulator.config = config
 
     def set_sensor(self, sensor):
+        """Sets the sensor for the scenario. Will use the default sensor when not called."""
         self.sensor = sensor
 
     def set_map(self, track_map: LaneMap):
+        """Sets the map for the scenario."""
         self.map = track_map
         # Update the lane mode field in the agent
         for agent_id in self.agent_dict:
             agent = self.agent_dict[agent_id]
-            self.update_agent_lane_mode(agent, track_map)
+            self._update_agent_lane_mode(agent, track_map)
 
     def add_agent(self, agent: BaseAgent):
+        """Adds an agent to the scenario."""
         if self.map is not None:
             # Update the lane mode field in the agent
-            self.update_agent_lane_mode(agent, self.map)
+            self._update_agent_lane_mode(agent, self.map)
         self.agent_dict[agent.id] = agent
         if hasattr(agent, "init_cont") and agent.init_cont is not None:
             self.init_dict[agent.id] = copy.deepcopy(agent.init_cont)
@@ -95,7 +114,7 @@ class Scenario:
             self.uncertain_param_dict[agent.id] = []
 
     # TODO-PARSER: update this function
-    def update_agent_lane_mode(self, agent: BaseAgent, track_map: LaneMap):
+    def _update_agent_lane_mode(self, agent: BaseAgent, track_map: LaneMap):
         for lane_id in track_map.lane_dict:
             if (
                 "TrackMode" in agent.decision_logic.mode_defs
@@ -109,6 +128,7 @@ class Scenario:
     def set_init_single(
         self, agent_id, init: list, init_mode: tuple, static=[], uncertain_param=[]
     ):
+        """Sets the initial conditions for a single agent."""
         assert agent_id in self.agent_dict, "agent_id not found"
         agent = self.agent_dict[agent_id]
         assert len(init) == 1 or len(init) == 2, "the length of init should be 1 or 2"
@@ -140,6 +160,8 @@ class Scenario:
         return
 
     def set_init(self, init_list, init_mode_list, static_list=[], uncertain_param_list=[]):
+        """Sets the initial conditions for all agents. The order will be the same as the order in
+        which the agents are added."""
         assert len(init_list) == len(
             self.agent_dict
         ), "the length of init_list not fit the number of agents"
@@ -165,7 +187,7 @@ class Scenario:
                 agent_id, init_list[i], init_mode_list[i], static_list[i], uncertain_param_list[i]
             )
 
-    def check_init(self):
+    def _check_init(self):
         for agent_id in self.agent_dict.keys():
             assert agent_id in self.init_dict, "init of {} not initialized".format(agent_id)
             assert agent_id in self.init_mode_dict, "init_mode of {} not initialized".format(
@@ -185,8 +207,11 @@ class Scenario:
         return res_list
 
     def simulate(self, time_horizon, time_step, max_height=None, seed=None) -> AnalysisTree:
-        check_ray_init(self.config.parallel)
-        self.check_init()
+        """Compute the set of reachable states, starting from a single point.
+        `seed`: the random seed for sampling a point in the region specified by the initial
+        conditions"""
+        _check_ray_init(self.config.parallel)
+        self._check_init()
         root = AnalysisTreeNode.root_from_inits(
             init={aid: sample_rect(init, seed) for aid, init in self.init_dict.items()},
             mode={
@@ -213,7 +238,12 @@ class Scenario:
         return tree
 
     def simulate_simple(self, time_horizon, time_step, max_height=None, seed=None) -> AnalysisTree:
-        self.check_init()
+        """Compute the set of reachable states, starting from a single point. Evaluates the decision
+        logic code directly, and does not use the internal Python parser and generate
+        nondeterministic transitions.
+        `seed`: the random seed for sampling a point in the region specified by the initial
+        conditions"""
+        self._check_init()
         root = AnalysisTreeNode.root_from_inits(
             init={aid: sample_rect(init, seed) for aid, init in self.init_dict.items()},
             mode={
@@ -240,8 +270,9 @@ class Scenario:
         return tree
 
     def verify(self, time_horizon, time_step, max_height=None, params={}) -> AnalysisTree:
-        check_ray_init(self.config.parallel)
-        self.check_init()
+        """Compute the set of reachable states, starting from a set of states."""
+        _check_ray_init(self.config.parallel)
+        self._check_init()
         root = AnalysisTreeNode.root_from_inits(
             init={
                 aid: [[init, init] if np.array(init).ndim < 2 else init]
@@ -339,7 +370,7 @@ class Benchmark:
 
     def run(self, *a, **kw) -> AnalysisTree:
         f = self.scenario.simulate if self.config.sim else self.scenario.verify
-        self.cont_engine = self.scenario.config.reachability_method
+        self.cont_engine = str(self.scenario.config.reachability_method)
         if len(a) != 2:
             print(f"\x1b[1;31mWARNING: timesteps field may not work ({a})")
         self.timesteps = int(a[0] / a[1])

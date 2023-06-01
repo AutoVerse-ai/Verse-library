@@ -26,6 +26,7 @@ from verse.map.lane_map import LaneMap
 from verse.parser.parser import find, ModePath, unparse
 from verse.agents.base_agent import BaseAgent
 from verse.automaton import GuardExpressionAst, ResetExpression
+from verse.scenario.scenario import ReachabilityMethod
 
 pp = functools.partial(pprint.pprint, compact=True, width=130)
 
@@ -38,7 +39,7 @@ class ReachConsts:
     time_step: float
     lane_map: LaneMap
     init_seg_length: int
-    reachability_method: str
+    reachability_method: ReachabilityMethod
     run_num: int
     past_runs: List[AnalysisTree]
     sensor: "BaseSensor"
@@ -224,7 +225,7 @@ class Verifier:
             if agent_id not in node.trace:
                 # Compute the trace starting from initial condition
                 uncertain_param = node.uncertain_param[agent_id]
-                if consts.reachability_method == "DRYVR":
+                if consts.reachability_method == ReachabilityMethod.DRYVR:
                     # pp(('tube', agent_id, mode, inits))
                     (
                         cur_bloated_tube,
@@ -246,7 +247,7 @@ class Verifier:
                     )
                     if config.incremental:
                         cache_tube_updates.extend(cache_tube_update)
-                elif consts.reachability_method == "NeuReach":
+                elif consts.reachability_method == ReachabilityMethod.NEU_REACH:
                     from verse.analysis.NeuReach.NeuReach_onestep_rect import postCont
 
                     cur_bloated_tube = postCont(
@@ -258,7 +259,7 @@ class Verifier:
                         consts.lane_map,
                         params,
                     )
-                elif consts.reachability_method == "MIXMONO_CONT":
+                elif consts.reachability_method == ReachabilityMethod.MIXMONO_CONT:
                     cur_bloated_tube = calculate_bloated_tube_mixmono_cont(
                         mode,
                         inits,
@@ -268,7 +269,7 @@ class Verifier:
                         node.agent[agent_id],
                         consts.lane_map,
                     )
-                elif consts.reachability_method == "MIXMONO_DISC":
+                elif consts.reachability_method == ReachabilityMethod.MIXMONO_DISC:
                     cur_bloated_tube = calculate_bloated_tube_mixmono_disc(
                         mode,
                         inits,
@@ -277,10 +278,6 @@ class Verifier:
                         consts.time_step,
                         node.agent[agent_id],
                         consts.lane_map,
-                    )
-                else:
-                    raise ValueError(
-                        f"Reachability computation method {consts.reachability_method} not available."
                     )
                 # num_calls += 1
                 trace = np.array(cur_bloated_tube)
