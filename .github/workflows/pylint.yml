@@ -1,6 +1,8 @@
 name: Pylint
 
-on: [push]
+on:
+  push:
+    paths: '**.py'
 
 jobs:
   build:
