@@ -45,7 +45,6 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
           python -m pip install --upgrade pip
-          pip install .
           pip install -r docs/requirements.txt
       - name: Install Verse
         run: |
