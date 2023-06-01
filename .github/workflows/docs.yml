@@ -37,7 +37,7 @@ jobs:
       - uses: actions/cache@v3
         id: cache
         with:
-          path: ${{ env.pythonLocation }}/lib/python${{ matrix.python-version }}/site-packages/
+          path: ${{ env.pythonLocation }}/lib/python3.11/site-packages/
           key: ${{ runner.os }}-build-doc-pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-build-doc-pip-
@@ -47,11 +47,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r docs/requirements.txt
           pip install -r requirements.txt
-      - name: Install Verse
-        run: |
-          # pip install .
-          python -c 'import numpy'
-          # python -c 'import verse'
       - name: Generate Docs
         run: |
           python -m sphinx -M html docs/source docs/build
