@@ -199,7 +199,7 @@ class Scenario:
         return res_list
 
     def simulate(self, time_horizon, time_step, max_height=None, seed=None) -> AnalysisTree:
-        """Compute the set of reachable states, starting from a single point.
+        """Compute a single simulation trajectory of the scenario, starting from a single initial state.
         `seed`: the random seed for sampling a point in the region specified by the initial
         conditions"""
         _check_ray_init(self.config.parallel)
@@ -262,7 +262,7 @@ class Scenario:
         return tree
 
     def verify(self, time_horizon, time_step, max_height=None, params={}) -> AnalysisTree:
-        """Compute the set of reachable states, starting from a set of states."""
+        """Compute the set of reachable states, starting from a set of initial states states."""
         _check_ray_init(self.config.parallel)
         self._check_init()
         root = AnalysisTreeNode.root_from_inits(

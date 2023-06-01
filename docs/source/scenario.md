@@ -39,7 +39,7 @@ Once a scenario is created, the user can perform simulation and verification in 
     Scenario.verify
 ```
 
-Both methods produce traces of type `AnalysisTree`. An `AnalysisTree` represents the segments of trajectories a scenario produced, represented by an `AnalysisTreeNode`. A new node or trajectory segment is generated as the discrete mode of the system changes. Note that as a system may have undeterministic transitions, hence why the resulting reachset is a tree.
+Both methods produce traces of type `AnalysisTree`. An `AnalysisTree` stores the segments of trajectories a scenario produced, represented by an `AnalysisTreeNode`. A new node or trajectory segment is generated as the mode of the system changes. Note that as a system may have non-deterministic transitions, hence why the resulting reachset is a tree.
 
 ```{eval-rst}
 .. currentmodule:: verse.analysis
