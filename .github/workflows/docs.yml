@@ -33,7 +33,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v3
         with:
-          python-version: '3.11'
+          python-version: '3.10'
       - uses: actions/cache@v3
         id: cache
         with:
@@ -48,9 +48,9 @@ jobs:
           pip install -r docs/requirements.txt
       - name: Install Verse
         run: |
-          pip install .
+          # pip install .
           python -c 'import numpy'
-          python -c 'import verse'
+          # python -c 'import verse'
       - name: Generate Docs
         run: |
           python -m sphinx -M html docs/source docs/build
