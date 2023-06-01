@@ -23,9 +23,6 @@ concurrency:
 jobs:
   # Single deploy job since we're just deploying
   deploy:
-    strategy:
-      matrix:
-        python-version: ["3.11"]
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -36,11 +33,11 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v3
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: '3.11'
       - uses: actions/cache@v3
         id: cache
         with:
-          path: ${{ env.pythonLocation }}/lib/python${{ matrix.python-version }}/site-packages/
+          path: ${{ env.pythonLocation }}/lib/python3.11/site-packages/
           key: ${{ runner.os }}-build-doc-pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-build-doc-pip-
