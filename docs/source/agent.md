@@ -24,7 +24,7 @@ The agent in Verse is represented by the agent class. In the example above it's 
 Currently, all example agent classes in Verse is derived from the [BaseAgent](https://github.com/AutoVerse-ai/Verse-library/blob/main/verse/agents/base_agent.py) class. Detailed explaination for `BaseAgent` and how to create custom agent will be discussed in {doc}`creating custom agent<create_custom_agent>`
 
 ## Simulator
-The simulator is an essential part of the agent which describe the how the continuous state evolve for the agent. The simulator is used in both hybrid simulation and verification in Verse. The simulator for the agent have to be implemented in the `TC_simulate` function in the agent class. The `TC_simulate` function takes the following inputs
+The simulator is an essential part of the agent which describe how the continuous state evolve for the agent. The simulator is used in both hybrid simulation and verification in Verse. The simulator for the agent have to be implemented in the `TC_simulate` function in the agent class. The `TC_simulate` function takes the following inputs
 - `mode`:`str`, which is the current mode of the agent 
 - `initialState`:`List[float]`, which is the initial continuous states to perform the simulation
 - `time_horizon`: `float`, the time horizon for simulation
