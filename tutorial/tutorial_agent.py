@@ -9,14 +9,26 @@ from tutorial_utils import drone_params
 from verse import BaseAgent
 from verse import LaneMap
 from verse.map.lane_map_3d import LaneMap_3d
+from verse.analysis.utils import wrap_to_pi
+from verse.analysis.analysis_tree import TraceType
 
 
 class CarAgent(BaseAgent):
-    def __init__(self, id, code=None, file_name=None, initial_state=None, initial_mode=None):
+    def __init__(
+        self,
+        id,
+        code=None,
+        file_name=None,
+        initial_state=None,
+        initial_mode=None,
+        speed: float = 2,
+        accel: float = 1,
+    ):
         super().__init__(
             id, code, file_name, initial_state=initial_state, initial_mode=initial_mode
         )
-        self.switch_duration = 0
+        self.speed = speed
+        self.accel = accel
 
     @staticmethod
     def dynamic(t, state, u):
@@ -24,64 +36,55 @@ class CarAgent(BaseAgent):
         delta, a = u
         x_dot = v * np.cos(theta + delta)
         y_dot = v * np.sin(theta + delta)
-        theta_dot = v / 1.75 * np.tan(delta)
+        theta_dot = v / 1.75 * np.sin(delta)
         v_dot = a
         return [x_dot, y_dot, theta_dot, v_dot]
 
-    def action_handler(self, mode: List[str], state, lane_map) -> Tuple[float, float]:
+    def action_handler(self, mode: List[str], state, lane_map: LaneMap) -> Tuple[float, float]:
         x, y, theta, v = state
-        vehicle_mode = mode[0]
-        vehicle_lane = mode[1]
+        vehicle_mode, vehicle_lane = mode
         vehicle_pos = np.array([x, y])
         a = 0
-        if vehicle_mode == "Normal":
-            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
+        lane_width = lane_map.get_lane_width(vehicle_lane)
+        d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
+        if vehicle_mode == "Normal" or vehicle_mode == "Stop":
+            pass
         elif vehicle_mode == "SwitchLeft":
-            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos) + lane_map.get_lane_width(
-                vehicle_lane
-            )
+            d += lane_width
         elif vehicle_mode == "SwitchRight":
-            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos) - lane_map.get_lane_width(
-                vehicle_lane
-            )
+            d -= lane_width
         elif vehicle_mode == "Brake":
-            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
-            a = -1
+            a = max(-self.accel, -v)
         elif vehicle_mode == "Accel":
-            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
-            a = 1
-        elif vehicle_mode == "Stop":
-            d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
-            a = 0
+            a = min(self.accel, self.speed - v)
         else:
             raise ValueError(f"Invalid mode: {vehicle_mode}")
 
-        psi = lane_map.get_lane_heading(vehicle_lane, vehicle_pos) - theta
+        heading = lane_map.get_lane_heading(vehicle_lane, vehicle_pos)
+        psi = wrap_to_pi(heading - theta)
         steering = psi + np.arctan2(0.45 * d, v)
         steering = np.clip(steering, -0.61, 0.61)
         return steering, a
 
     def TC_simulate(
-        self, mode: List[str], initialCondition, time_bound, time_step, track_map: LaneMap = None
-    ) -> np.ndarray:
+        self, mode: List[str], init, time_bound, time_step, lane_map: LaneMap = None
+    ) -> TraceType:
         time_bound = float(time_bound)
-        number_points = int(np.ceil(time_bound / time_step))
-        t = [round(i * time_step, 10) for i in range(0, number_points)]
-
-        init = initialCondition
-        trace = [[0] + init]
-        for i in range(len(t)):
-            steering, a = self.action_handler(mode, init, track_map)
+        num_points = int(np.ceil(time_bound / time_step))
+        trace = np.zeros((num_points + 1, 1 + len(init)))
+        trace[1:, 0] = [round(i * time_step, 10) for i in range(num_points)]
+        trace[0, 1:] = init
+        for i in range(num_points):
+            steering, a = self.action_handler(mode, init, lane_map)
             r = ode(self.dynamic)
             r.set_initial_value(init).set_f_params([steering, a])
             res: np.ndarray = r.integrate(r.t + time_step)
-            init = res.flatten().tolist()
+            init = res.flatten()
             if init[3] < 0:
                 init[3] = 0
-            trace.append([t[i] + time_step] + init)
-
-        return np.array(trace)
-
+            trace[i + 1, 0] = time_step * (i + 1)
+            trace[i + 1, 1:] = init
+        return trace
 
 class FFNNC(torch.nn.Module):
     def __init__(self, D_in=6, D_out=8):

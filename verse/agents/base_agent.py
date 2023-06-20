@@ -94,4 +94,4 @@ class BaseAgent:
             initialSet = res.flatten()
             trace[i + 1, 0] = time_step * (i + 1)
             trace[i + 1, 1:] = initialSet
-        return trace
+        return np.array(trace)
