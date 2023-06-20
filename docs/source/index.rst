@@ -3,10 +3,10 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to verse's documentation!
-=================================
+Welcome to Verse documentation!
+===============================
 
-Verse is a Python library for creating, simulating, and verifying scenarios with interacting,  agents developed at the `Reliable Autonomy Research Group <https://mitras.ece.illinois.edu/group.html>`_ of University of Illinois, Urbana-Champaign. The decision logic of an agent can be written in an expressive subset of Python. The continuous evolution can be described as a black-box simulation function. The agent can be ported across different maps, which can be defined from scratch or imported from opendrive files. Verse scenarios can be simulated and verified using hybrid reachability analysis.
+Verse is a Python library for creating, simulating, and verifying scenarios with interacting,  agents developed at the `Reliable Autonomy Research Group <https://mitras.ece.illinois.edu/group.html>`_ of University of Illinois, Urbana-Champaign. The decision logic of an agent can be written in an expressive subset of Python. The continuous evolution can be described as a black-box simulation function. The agent can be ported across *maps*, which can be defined from scratch or imported from opendrive. Verse scenarios can be simulated and verified using hybrid reachability analysis. For a technical overview see the  `Verse paper from CAV23 <https://arxiv.org/abs/2301.08714>`_.
 
 .. toctree::
    :maxdepth: 2

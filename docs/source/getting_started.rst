@@ -15,5 +15,5 @@ The package comes with several examples in the ``demo/`` folder. Run these as::
 
 	python3 demo/ball/ball_bounces.py 
 
-Read the comments in demo/ball/ball_bounces.py to learn how to create new agents and scenarios. More detailed tutorials will be provided later.
+Read the comments in demo/ball/ball_bounces.py to learn how to create new agents and scenarios. More detailed documentation will be here.
 

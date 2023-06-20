@@ -22,6 +22,8 @@ Interactive Jupyter tutorial: [`tutorial/tutorial.ipynb`](tutorial/tutorial.ipyn
 
 PDF tutorial: [`tutorial.pdf`](tutorial/tutorial.pdf).
 
+Documentation (in progress): ['Online'](https://autoverse-ai.github.io/Verse-library/). 
+
 ## Demos
 
 See the examples in the `demo/` folder. Run these as:

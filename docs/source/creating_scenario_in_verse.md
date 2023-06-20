@@ -1,12 +1,10 @@
-# Creating Scenario in Verse
-The page provides an intuition about how to create scenarios in Verse. An interactive tutorial with more detailed instructions are provided in [this Jupyter notebook](https://github.com/AutoVerse-ai/Verse-library/blob/main/tutorial/tutorial.ipynb).
+# Creating Scenario
+This is an informal introduction to creating scenarios in Verse. An interactive tutorial with more detailed instructions are provided in [this Jupyter notebook](https://github.com/AutoVerse-ai/Verse-library/blob/main/tutorial/tutorial.ipynb).
 
-A Verse scenario is defined by a map, a set of agents and , if there exist multiple agents, a sensor.
-
-In this section, we are going to look at how to create a simple scenario in Verse. In this scenario we will have a drone following a straight track and will avoid by moving upwards to avoid a static obstacle at known position in the track.
+A Verse scenario is defined by a map, a set of agents, and optionally  a sensor. Here we are going to create a simple scenario with a drone following a straight path and it  will avoid an obstacle by moving up or down.
 
 ## Instantiate Map
-The map of a scenario specifies the tracks that the agents can follow. In this example, we will only look at a simple map with two types of tracks: 1) type <code>T0</code>, which describe straight track that align with x-axis and 2) type <code>TAvoidUp</code>, which describes set of tracks with upward direction that the agent can follow while avoiding the obstacle. The types of tracks will also be referred as track modes in later sections. We will discuss in detail how to create maps in {doc}`Map<map>`. In this part of the document, we will import a pre-defined map.
+The map of a scenario specifies the *tracks* that the agents can follow. In this example, we will only look at a simple map with two types of tracks: 1) type <code>T0</code>, which describe straight track that align with x-axis and 2) type <code>TAvoidUp</code>, which describes set of tracks with upward direction that the agent can follow while avoiding the obstacle. The types of tracks will also be referred as track modes in later sections. We will discuss in detail how to create maps in {doc}`Map<map>`. In this part of the document, we will import a pre-defined map.
 
 ```python
 from tutorial_map import M3
