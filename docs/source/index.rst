@@ -6,7 +6,7 @@
 Welcome to verse's documentation!
 =================================
 
-Verse is a Python library for creating, simulating, and verifying scenarios with interacting, decision making agents. The decision logic can be written in an expressive subset of Python. The continuous evolution can be described as a black-box simulation function. The agent can be ported across different maps, which can be defined from scratch or imported from opendrive files. Verse scenarios can be simulated and verified using hybrid reachability analysis.
+Verse is a Python library for creating, simulating, and verifying scenarios with interacting,  agents developed at the `Reliable Autonomy Research Group <https://mitras.ece.illinois.edu/group.html>`_ of University of Illinois, Urbana-Champaign. The decision logic of an agent can be written in an expressive subset of Python. The continuous evolution can be described as a black-box simulation function. The agent can be ported across different maps, which can be defined from scratch or imported from opendrive files. Verse scenarios can be simulated and verified using hybrid reachability analysis.
 
 .. toctree::
    :maxdepth: 2
@@ -22,6 +22,7 @@ Verse is a Python library for creating, simulating, and verifying scenarios with
    outputs.rst
    plotting.rst
    contributors.rst
+   publications.rst
 
 
 API Documentation
