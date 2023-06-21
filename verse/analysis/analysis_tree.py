@@ -256,10 +256,13 @@ class AnalysisTree:
     """Root node for the tree"""
     nodes: List[AnalysisTreeNode]
     """All nodes in the tree. Order is not guaranteed"""
+    type: AnalysisTreeNodeType
+    """Type of the analysis tree"""
 
     def __init__(self, root: AnalysisTreeNode) -> None:
         self.root = root
         self.nodes = self._get_all_nodes(root)
+        self.type = root.type
 
     @staticmethod
     def _get_all_nodes(root: AnalysisTreeNode) -> List[AnalysisTreeNode]:
