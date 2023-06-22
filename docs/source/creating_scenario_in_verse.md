@@ -1,14 +1,15 @@
 # Creating a Scenario
-This is an informal introduction to creating scenarios in Verse. An interactive tutorial with more detailed instructions are provided in [this Jupyter notebook](https://github.com/AutoVerse-ai/Verse-library/blob/main/tutorial/tutorial.ipynb).
+This is an introduction to creating scenarios in Verse. An interactive tutorial with more details are in [this Jupyter notebook](https://github.com/AutoVerse-ai/Verse-library/blob/main/tutorial/tutorial.ipynb).
 
-A Verse scenario is defined by a *map*, a set of *agents*, and optionally  a *sensor*. We will create a  scenario with a drone following a straight path and dodging obstacles by moving up or down.
+A Verse *scenario* is defined by a *map*, a set of *agents*, and optionally  a *sensor*. We will create a  scenario with a drone following a straight path that dodges obstacles by moving up or down.
 
-## Instantiate Map
-A *map* specifies the *tracks* or paths that the agents *is allowed to follow*. In this example, our map will have two kinds of tracks: 
-    1. <code>T0</code> is a straight x-axis aligned track 
+## Import a map
+A *map* specifies the *tracks* or paths that the agents *is allowed to follow*. Our map will have two kinds of tracks: 
+
+    1. <code>T0</code> is an x-axis aligned track 
     2. <code>TAvoidUp</code> is a upward track for avoiding obstacles on the x-axis. 
 
-<code>T0</code> and <code>TAvoidUp</code> are called the *track modes* in  Verse. Creating new maps is discussed in more detail in {doc}`Map<map>`. For now, import a pre-defined map with:
+<code>T0</code> and <code>TAvoidUp</code> are called the *track modes* in  Verse. To create new maps of your own, see {doc}`Map<map>`. For now, import a pre-defined map with:
 
 ```python
 from tutorial_map import M3
@@ -16,29 +17,29 @@ from tutorial_map import M3
 map1 = M3()
 ```
 
-**Important.** You should have <code>PYTHONPATH</code> set to include the Verse installation directory. For example:
-```
-export PYTHONPATH=../../Verse-library
-```
+> ####  **Notice**
+> Set <code>PYTHONPATH</code> if necessary to include the Verse directory. For example:
+> ```shell
+> export PYTHONPATH=../../Verse-library
+>```
 
-## Creating Agent
+## Create an agent
 An *agent* is defined by:
 
-1. Set of *tactical modes* that define the kinds of behavior the agent *wants to* perform. Tactical and track modes together define the *mode* of the agent. 
-3. *Decision logic* that defines mode changes. 
-4. *Flow function* that defines continuous evolution. 
-5. Set of *state variables* that define the continuous state of the agent in the map or the physical world as well as the mode.
+1. Set of *tactical modes* which define the kinds of behavior the agent *wants to* perform. Tactical and track modes together define the discrete *modes* of the agent. 
+2. Set of *state variables* that define the continuous state of the agent in the map or the physical world, as well as the discrete modes.
+3. *Decision logic* which define mode changes. 
+4. *Flow function* which defines continuous variable changes. 
 
-
-The tactical mode of the agents corresponds to an agent's decision. For example, in this drone avoidance example, the tactical mode for the agent can be <code>Normal</code> and <code>AvoidUp</code>. The decision logic also need to know the available track modes from the map. The tactical modes and track modes are provided as <code>Enums</code> to Verse.
+In our scenario, the tactical modes will be <code>Cruise</code> and <code>Up</code>. The decision logic also need to know the available track modes from the map. The tactical modes and track modes are provided as <code>Enums</code> to Verse.
 
 ```python
 from enum import Enum, auto
 
 
 class CraftMode(Enum):
-    Normal = auto()
-    AvoidUp = auto()
+    Cruise = auto()
+    Up = auto()
 
 
 class TrackMode(Enum):
@@ -46,7 +47,7 @@ class TrackMode(Enum):
     TAvoidUp = auto()
 ```
 
-We also require the user to provide the continuous and discrete variables of the agents together with the decision logic. The variables are provided inside class with name <code>State</code>. Variables end with <code>_mode</code> will be identify by verse as discrete variables. In the example below, <code>craft_mode</code> and <code>track_mode</code> are the discrete variables and <code>x</code>, <code>y</code>, <code>z</code>, <code>vx</code>, <code>vy</code>, <code>vz</code> are the continuous variables. The type hints for the discrete variables are necessary to associate discrete variables with the tactical modes and lane modes defined above
+Define the state variables in the <code>State</code> class. You can name your variables however you like. Variables names ending with <code>_mode</code> will be identified as  discrete variables. Here <code>craft_mode</code> and <code>track_mode</code> are the discrete variables and the types are necessary to associate them with the  tactical and track modes.
 
 ```python
 class State:
@@ -60,7 +61,7 @@ class State:
     track_mode: TrackMode
 ```
 
-The decision logic describe for an agent takes as input its current state and the (observable) states of the other agents if there's any, and updates the tactical mode of the ego agent. In this example, the decision logic is straight forward: When the x position of the drone is close to the obstacle (20m), the drone will start moving upward. There's no other agents in this scenario. The decision logic of the agent can be written in an expressive subset of Python inside function <code>decisionLogic</code>.
+The *decision logic* is a function that takes as input the agent's current state (and optionally the observable states of the other agents) and returns the new state after a transition. That is, it  updates the tactical mode of the agent. The drone starts in <code>Cruise</code> mode and the obstacle is at 20 meters. When the x position of the drone is close 20, the decision logic switches to <code>Up</code>. 
 
 ```python
 import copy
@@ -69,10 +70,12 @@ def decisionLogic(ego: State, track_map):
     next = copy.deepcopy(ego)
     if ego.craft_mode == CraftMode.Normal:
         if ego.x > 20:
-            next.craft_mode = CraftMode.AvoidUp
-            next.track_mode = track_map.h(ego.track_mode, ego.craft_mode, CraftMode.AvoidUp)
+            next.craft_mode = CraftMode.Up
+            next.track_mode = track_map.map2track(ego.track_mode, ego.craft_mode, CraftMode.Up)
     return next
 ```
+
+What is <code>track_map.map2track</code>, you might wonder. Recall, tracks are defined by the map, and when the agent decides to change its behavior, say to move up, then the actual path it can follow is given by the map and this is computed using the <code>track_map.map2track</code> function. 
 
 We incorporate the above definition of tactical modes and decision logic into code strings and combine it with an imported agent flow, we can then obtain the agent for this scenario.
 
