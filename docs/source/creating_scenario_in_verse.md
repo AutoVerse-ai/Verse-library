@@ -4,10 +4,11 @@ This is an informal introduction to creating scenarios in Verse. An interactive 
 A Verse scenario is defined by a *map*, a set of *agents*, and optionally  a *sensor*. We will create a  scenario with a drone following a straight path and dodging obstacles by moving up or down.
 
 ## Instantiate Map
-A *map* specifies the *tracks* or paths that the agents can follow. In this example, our map will have two types of tracks: 
-    1. type <code>T0</code> is a straight x-axis aligned track 
-    2. type <code>TAvoidUp</code> is a upward track for avoiding obstacles on the x-axis. 
-Tracks types <code>T0</code> and <code>TAvoidUp</code> are called the *track modes* in a Verse model. Creating new maps is discussed in more detail in {doc}`Map<map>`. For now, import a pre-defined map with:
+A *map* specifies the *tracks* or paths that the agents *is allowed to follow*. In this example, our map will have two kinds of tracks: 
+    1. <code>T0</code> is a straight x-axis aligned track 
+    2. <code>TAvoidUp</code> is a upward track for avoiding obstacles on the x-axis. 
+
+<code>T0</code> and <code>TAvoidUp</code> are called the *track modes* in  Verse. Creating new maps is discussed in more detail in {doc}`Map<map>`. For now, import a pre-defined map with:
 
 ```python
 from tutorial_map import M3
@@ -15,8 +16,18 @@ from tutorial_map import M3
 map1 = M3()
 ```
 
+**Important.** You should have <code>PYTHONPATH</code> set to include the Verse installation directory. For example:
+```
+export PYTHONPATH=../../Verse-library
+```
+
 ## Creating Agent
-To create such a scenario in Verse, we first need to create an agent for Verse. An agent in Verse is defined by a set of tactical modes, a decision logic to determine the transition between tactical modes, and a flow function that defines continuous evolution. The agent's tactical mode and decision logic are provided as python code strings and the flow function is provided as a python function.
+An *agent* is defined by a the following components:
+1. Set of *tactical modes* that define the kinds of behavior the agent *wants to* perform. Tactical and track modes together define the *mode* of the agent. 
+3. *Decision logic* that defines mode changes. 
+4. *Flow function* that defines continuous evolution. 
+5. Set of *state variables* that define the continuous state of the agent in the map or the physical world as well as the mode.
+
 
 The tactical mode of the agents corresponds to an agent's decision. For example, in this drone avoidance example, the tactical mode for the agent can be <code>Normal</code> and <code>AvoidUp</code>. The decision logic also need to know the available track modes from the map. The tactical modes and track modes are provided as <code>Enums</code> to Verse.
 
