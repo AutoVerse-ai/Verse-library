@@ -22,7 +22,8 @@ export PYTHONPATH=../../Verse-library
 ```
 
 ## Creating Agent
-An *agent* is defined by a the following components:
+An *agent* is defined by:
+
 1. Set of *tactical modes* that define the kinds of behavior the agent *wants to* perform. Tactical and track modes together define the *mode* of the agent. 
 3. *Decision logic* that defines mode changes. 
 4. *Flow function* that defines continuous evolution. 
