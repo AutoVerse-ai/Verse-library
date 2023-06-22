@@ -1,10 +1,13 @@
-# Creating Scenario
+# Creating a Scenario
 This is an informal introduction to creating scenarios in Verse. An interactive tutorial with more detailed instructions are provided in [this Jupyter notebook](https://github.com/AutoVerse-ai/Verse-library/blob/main/tutorial/tutorial.ipynb).
 
-A Verse scenario is defined by a map, a set of agents, and optionally  a sensor. Here we are going to create a simple scenario with a drone following a straight path and it  will avoid an obstacle by moving up or down.
+A Verse scenario is defined by a *map*, a set of *agents*, and optionally  a *sensor*. We will create a  scenario with a drone following a straight path and dodging obstacles by moving up or down.
 
 ## Instantiate Map
-The map of a scenario specifies the *tracks* that the agents can follow. In this example, we will only look at a simple map with two types of tracks: 1) type <code>T0</code>, which describe straight track that align with x-axis and 2) type <code>TAvoidUp</code>, which describes set of tracks with upward direction that the agent can follow while avoiding the obstacle. The types of tracks will also be referred as track modes in later sections. We will discuss in detail how to create maps in {doc}`Map<map>`. In this part of the document, we will import a pre-defined map.
+A *map* specifies the *tracks* or paths that the agents can follow. In this example, our map will have two types of tracks: 
+    1. type <code>T0</code> is a straight x-axis aligned track 
+    2. type <code>TAvoidUp</code> is a upward track for avoiding obstacles on the x-axis. 
+Tracks types <code>T0</code> and <code>TAvoidUp</code> are called the *track modes* in a Verse model. Creating new maps is discussed in more detail in {doc}`Map<map>`. For now, import a pre-defined map with:
 
 ```python
 from tutorial_map import M3
