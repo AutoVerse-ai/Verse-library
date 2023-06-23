@@ -75,11 +75,10 @@ def decisionLogic(ego: State, track_map):
     return next
 ```
 
-What is <code>track_map.map2track</code>, you might wonder. Recall, tracks are defined by the map, and when the agent decides to change its behavior, say to move up, then the actual path it can follow is given by the map and this is computed using the <code>track_map.map2track</code> function. 
+What's <code>track_map.map2track</code>, you might wonder. Recall, tracks are defined by the map, and when the agent decides to change its behavior, say to move up, then the actual path it can follow is given by the map and this is computed using the <code>track_map.map2track</code>. 
 
 > ####  **Note**
-> See Verse {doc}`parser<parser>` documentation for allowed syntax in DL.
-
+> See Verse {doc}`parser<parser>` documentation for allowed syntax in DL. Verse interprets <code>if-then-else</code> conditions nondeterministically. That is, if multiple <code>if</code> conditions are satisfied then *all* the corresponding transitions are simulated.
 Save DL code in a file, say <code>dl_sec1.py</code>. 
 
 ## Create a scenario
@@ -90,18 +89,20 @@ In a separate scenario file, write the the following to instantiate a drone agen
 from verse.scenario import Scenario
 from tutorial_agent import DroneAgent
 
-drone1 = DroneAgent("drone1", file_name="dl_sec1.py", \
+drone1 = DroneAgent("drone1", file_name="dl_sec1.py",
     t_v_pair=(1, 1), box_side=[0.4] * 3)
-drone1.set_initial([[0, -0.5, -0.5, 0, 0, 0], [1, 0.5, 0.5, 0, 0, 0]], \
-    (CraftMode.Normal, TrackMode.T0))
+drone1.set_initial([[0, -0.5, -0.5, 0, 0, 0], [1, 0.5, 0.5, 0, 0, 0]],
+    (CraftMode.Cruise, TrackMode.T0))
 scenario = Scenario()
 scenario.add_agent(drone1)
 scenario.set_map(map1)
 ```
 
-This sets the initial continuous state of the agent in a rectangle defined by lower-left and the upper-right corners of a 6-dimensional cube, and the discrete state (mode) to be constants. It create an black scenario and then adds the <code>drone1</code> agent to it and the sets the map. Since we only have one agent in the scenario, we don't need to specify a sensor.
+This sets the initial continuous state of the agent in a rectangle defined by lower-left and the upper-right corners of a 6-dimensional cube, and the discrete state (mode) to be constants. It create an black scenario and then adds the <code>drone1</code> agent to it and the sets the map. Since we only have one agent in the scenario, we don't need to specify a sensor. This completes the definition of the scenario. When executed, Verse will internally construct a hybrid automaton with the state space defined by <code>States</code>, transitions defined by DL and trajectories defined by the <code>DroneAgent</code>.
 
-We can then compute simulation traces or reachable states for the scenario
+## Run scenario
+
+Compute simulation traces or reachable states for the scenario
 ```python
 traces_simu = scenario.simulate(60, 0.2)
 traces_veri = scenario.verify(60, 0.2)
