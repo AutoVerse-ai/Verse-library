@@ -34,7 +34,7 @@ if __name__ == "__main__":
 
     script_dir = os.path.realpath(os.path.dirname(__file__))
 
-    input_code_name = os.path.join(script_dir, "quadrotor_controller3.py")
+    input_code_name = os.path.join(script_dir, "quadrotor_controller3_unsafe.py")
     input_code_name2 = os.path.join(script_dir, "quadrotor_controller4.py")
 
     bench = Benchmark(sys.argv)
