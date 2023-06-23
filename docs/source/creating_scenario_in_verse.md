@@ -80,38 +80,26 @@ What is <code>track_map.map2track</code>, you might wonder. Recall, tracks are d
 > ####  **Note**
 > See Verse {doc}`parser<parser>` documentation for allowed syntax in DL.
 
-Save DL code in a file, say <code>dl_sec1.py</code>. In a separate scenario file, write the the following to instantiate a drone agent. <code>DroneAgent</code> is a Verse class derived from <code>BasicAgent</code>. It defines the continuous dynamics of a quadrotor in 3D-space controller by a neural network (NN). The parameters of this NN are passed to the model using the last two arguments.
-
-```python
-from tutorial_agent import DroneAgent
-
-drone1 = DroneAgent("drone1", file_name="dl_sec1.py", t_v_pair=(1, 1), box_side=[0.4] * 3)
-```
+Save DL code in a file, say <code>dl_sec1.py</code>. 
 
 ## Create a scenario
-With the agent and map defined, we can now define the scenario.
+
+In a separate scenario file, write the the following to instantiate a drone agent. <code>DroneAgent</code> is a Verse class derived from <code>BasicAgent</code>. It defines the continuous dynamics of a quadrotor in 3D-space controller by a neural network (NN). The parameters of this NN are passed to the model using the last two arguments.
 
 ```python
 from verse.scenario import Scenario
+from tutorial_agent import DroneAgent
 
+drone1 = DroneAgent("drone1", file_name="dl_sec1.py", \
+    t_v_pair=(1, 1), box_side=[0.4] * 3)
+drone1.set_initial([[0, -0.5, -0.5, 0, 0, 0], [1, 0.5, 0.5, 0, 0, 0]], \
+    (CraftMode.Normal, TrackMode.T0))
 scenario = Scenario()
-```
-
-We can set the initial condition of the agent and add the agent
-
-```python
-drone1.set_initial(
-    [[0, -0.5, -0.5, 0, 0, 0], [1, 0.5, 0.5, 0, 0, 0]], (CraftMode.Normal, TrackMode.T0)
-)
 scenario.add_agent(drone1)
-```
-
-and set the map for the scenario
-```python
 scenario.set_map(map1)
 ```
 
-Since we only have one agent in the scenario, we don't need to specify a sensor.
+This sets the initial continuous state of the agent in a rectangle defined by lower-left and the upper-right corners of a 6-dimensional cube, and the discrete state (mode) to be constants. It create an black scenario and then adds the <code>drone1</code> agent to it and the sets the map. Since we only have one agent in the scenario, we don't need to specify a sensor.
 
 We can then compute simulation traces or reachable states for the scenario
 ```python
