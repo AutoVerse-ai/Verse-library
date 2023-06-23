@@ -1,4 +1,4 @@
-# Creating a Scenario
+# Creating Scenario
 This is an introduction to creating scenarios in Verse. An interactive tutorial with more details are in [this Jupyter notebook](https://github.com/AutoVerse-ai/Verse-library/blob/main/tutorial/tutorial.ipynb).
 
 A Verse *scenario* is defined by a *map*, a set of *agents*, and optionally  a *sensor*. We will create a  scenario with a drone following a straight path that dodges obstacles by moving up or down.
@@ -17,7 +17,7 @@ from tutorial_map import M3
 map1 = M3()
 ```
 
-> ####  **Notice**
+> ####  **Note**
 > Set <code>PYTHONPATH</code> if necessary to include the Verse directory. For example:
 > ```shell
 > export PYTHONPATH=../../Verse-library
@@ -61,7 +61,7 @@ class State:
     track_mode: TrackMode
 ```
 
-The *decision logic* is a function that takes as input the agent's current state (and optionally the observable states of the other agents) and returns the new state after a transition. That is, it  updates the tactical mode of the agent. The drone starts in <code>Cruise</code> mode and the obstacle is at 20 meters. When the x position of the drone is close 20, the decision logic switches to <code>Up</code>. 
+The *decision logic (DL)* is a function that takes as input the agent's current state (and optionally the observable states of the other agents) and returns the new state after a transition. That is, it  updates the tactical mode of the agent. The drone starts in <code>Cruise</code> mode and the obstacle is at 20 meters. When the x position of the drone is close 20, the decision logic switches to <code>Up</code>. 
 
 ```python
 import copy
@@ -77,7 +77,10 @@ def decisionLogic(ego: State, track_map):
 
 What is <code>track_map.map2track</code>, you might wonder. Recall, tracks are defined by the map, and when the agent decides to change its behavior, say to move up, then the actual path it can follow is given by the map and this is computed using the <code>track_map.map2track</code> function. 
 
-We incorporate the above definition of tactical modes and decision logic into code strings and combine it with an imported agent flow, we can then obtain the agent for this scenario.
+> ####  **Note**
+> See Verse {doc}`parser<parser>` documentation for allowed syntax in DL.
+
+Save DL code in a file, say <code>dl_sec1.py</code>. In a separate scenario file, write the the following to instantiate a drone agent. <code>DroneAgent</code> is a Verse class derived from <code>BasicAgent</code>. It defines the continuous dynamics of a quadrotor in 3D-space controller by a neural network (NN). The parameters of this NN are passed to the model using the last two arguments.
 
 ```python
 from tutorial_agent import DroneAgent
@@ -85,9 +88,7 @@ from tutorial_agent import DroneAgent
 drone1 = DroneAgent("drone1", file_name="dl_sec1.py", t_v_pair=(1, 1), box_side=[0.4] * 3)
 ```
 
-More details about how agents works in Verse are described in {doc}`Agents<agent>`
-
-## Creating Scenario
+## Create a scenario
 With the agent and map defined, we can now define the scenario.
 
 ```python

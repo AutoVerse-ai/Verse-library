@@ -42,7 +42,7 @@ class M3(LaneMap_3d):
         segment0 = StraightLane_3d("seg0", [0, 0, 0], [100, 0 + y_offset, 0 + z_offset], width)
         lane0 = Lane_3d("T0", [segment0])
 
-        segment1 = StraightLane_3d("seg0", [0, 0, 0], [100, 0 + y_offset, 50 + z_offset], width)
+        segment1 = StraightLane_3d("seg1", [0, 0, 0], [100, 0 + y_offset, 50 + z_offset], width)
         lane1 = Lane_3d("TAvoidUp", [segment1], plotted=False)
 
         self.add_lanes([lane0, lane1])
