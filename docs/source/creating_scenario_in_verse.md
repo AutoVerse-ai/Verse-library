@@ -108,7 +108,10 @@ traces_simu = scenario.simulate(60, 0.2)
 traces_veri = scenario.verify(60, 0.2)
 ```
 
-We can visualize the results using functions provided with Verse
+The <code>scenario.simulate(T,d)</code> function computes the simulation tree, with all possible nondeterministic transitions, of maximum duration T with a sampling period of d. The <code>scenario.verify(T,d)</code> function computes the  reachability tree up to time T with a sampling period of d. 
+
+
+The computed results can be visualized in a number of different ways using Verse's plotting function. 
 
 ```python
 from verse.plotter.plotter3D import *
@@ -123,7 +126,6 @@ fig = go.Figure()
 fig = reachtube_tree(traces_veri, None, fig, 1, 3)
 fig.show()
 
-pv.set_jupyter_backend(None)
 fig = pv.Plotter()
 fig = plot3dMap(map1, ax=fig)
 fig = plot3dReachtube(traces_veri, "drone1", 1, 2, 3, color="r", ax=fig)
