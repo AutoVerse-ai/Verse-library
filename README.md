@@ -15,6 +15,11 @@ To update the dependencies in case anything is missing, requirements.txt can be 
 ```sh
 pip install -r requirements.txt
 ```
+Try
+```sh
+python3 demo/ball/ball_bounces.py
+```
+Try other examples in the `demo/` folder. 
 
 ## Tutorial
 
@@ -22,20 +27,14 @@ Interactive Jupyter tutorial: [`tutorial/tutorial.ipynb`](tutorial/tutorial.ipyn
 
 PDF tutorial: [`tutorial.pdf`](tutorial/tutorial.pdf).
 
-Documentation (in progress): ['Online'](https://autoverse-ai.github.io/Verse-library/). 
+Documentation (in progress): [Online](https://autoverse-ai.github.io/Verse-library/). 
 
-## Demos
+Read comments in `demo/ball/ball_bounces.py` and other examples in the demo folder to learn how to create new agents and scenarios.
 
-See the examples in the `demo/` folder. Run these as:
 
-```sh
-python3 demo/ball/ball_bounces.py
-```
-
-Read the comments in `demo/ball/ball_bounces.py` to learn how to create new agents and scenarios.
 
 ## Using NeuReach with Verse
-Verse allows users to plug-in different reachability tools for computing reachable sets. By default, Verse uses DryVR to compute reachable sets. Verse also implement post computation using NeuReach. To use NeuReach, additional dependencies can be downloaded using following commands
+Verse allows users to plug-in different backend tools for computing reachable sets, specifically, the continuous-post operator. By default, Verse supports [DryVR](https://mitras.ece.illinois.edu/research/2017/DryVRpaper.pdf) and [NeuReach](https://mitras.ece.illinois.edu/research/2022/nureac22TACAS.pdf). For NeuReach, additional dependencies can be downloaded:
 ```sh
 git submodule init
 git submodule update
@@ -45,14 +44,14 @@ git submodule update
 
 The source code of the package is contained in the verse folder, which contains the following sub-directories.
 
-- **verse**, which contains building blocks for creating and analyzing scenarios.
+- **verse** Building blocks for creating and analyzing scenarios.
 
-  - **verse/scenario** contains code for the scenario base class. A scenario is constructed by several **agents** with continuous dynamics and controller, a **map** and a **sensor** defining how different agents interact with each other.
-  - **verse/agents** contains code for the agent base class in the scenario.
-  - **verse/map** contains code for the lane map base class and corresponding utilities in the scenario.
-  - **verse/code_parser** contains code for converting the controller code to ASTs.
-  - **verse/automaton** contains code implementing components in hybrid-automaton
-  - **verse/analysis** contains the **Simulator** and **Verifier** and related utilities for doing analysis of the scenario
+  - **verse/scenario** Scenario base class. A scenario is constructed by several **agents** with continuous dynamics and controller, a **map** and a **sensor** defining how different agents interact with each other.
+  - **verse/agents** Agent base class in the scenario.
+  - **verse/map** Map base class and corresponding utilities in the scenario.
+  - **verse/code_parser** Verse parser for converting the agent's decision logic (transitions)  to ASTs.
+  - **verse/automaton** Implements construction of hybrid automaton
+  - **verse/analysis** **Simulator** and **Verifier** and related utilities for  analysis of the scenario
   - **verse/dryvr** dryvr for computing reachable sets
 
 
@@ -70,6 +69,12 @@ The source code of the package is contained in the verse folder, which contains 
 - Haoqing Zhu
 - Daniel Zhuang
 
+In order to contribute to this repository, you should run the following commands:
+```sh
+pip install -r requirements-dev.txt
+pre-commit install
+```
+
 # Related Publications
 
 <b> [Verse: A Python library for reasoning about multi-agent hybrid system scenarios](https://arxiv.org/abs/2301.08714)</b>
@@ -80,10 +85,3 @@ To appear in the proceedings of Computer Aided Verification (CAV),  2023.
 Lin Song, Yangge Li, Sheng Cheng, Pan Zhao, Sayan Mitra, Naira Hovakimyan
 To appear in the Work in Progress Session of International Conference on Cyber-Physical Systems (WiP-ICCPS), 2023.
 
-# Contributing
-
-In order to contribute to this repository, you should run the following commands:
-```sh
-pip install -r requirements-dev.txt
-pre-commit install
-```
