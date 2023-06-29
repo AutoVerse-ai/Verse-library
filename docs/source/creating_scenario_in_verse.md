@@ -6,8 +6,8 @@ A Verse *scenario* is defined by a *map*, a set of *agents*, and optionally  a *
 ## Import a map
 A *map* specifies the *tracks* or paths that the agents *is allowed to follow*. Our map will have two kinds of tracks: 
 
-    1. <code>T0</code> is an x-axis aligned track 
-    2. <code>TAvoidUp</code> is a upward track for avoiding obstacles on the x-axis. 
+    1. T0 is an x-axis aligned track 
+    2. TAvoidUp is a upward track for avoiding obstacles on the x-axis. 
 
 <code>T0</code> and <code>TAvoidUp</code> are called the *track modes* in  Verse. To create new maps of your own, see {doc}`Map<map>`. For now, import a pre-defined map with:
 

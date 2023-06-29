@@ -13,10 +13,10 @@ class BallAgent(BaseAgent):
     on a 2D-plane"""
 
     def __init__(self, id, code=None, file_name=None):
-        """Contructor for tha agent
+        """Contructor for the agent
         EXACTLY one of the following should be given
-        file_name: name of the controller
-        code: pyhton string ddefning the controller
+        file_name: name of the decision logic (DL)
+        code: pyhton string defning the decision logic (DL)
         """
         # Calling the constructor of tha base class
         super().__init__(id, code, file_name)
