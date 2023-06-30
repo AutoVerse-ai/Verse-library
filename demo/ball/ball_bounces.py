@@ -5,27 +5,17 @@ from verse import Scenario, ScenarioConfig
 from enum import Enum, auto
 import copy
 
-
 # from verse.map import Lane
 
-
 class BallMode(Enum):
-    # NOTE: Any model should have at least one mode
-    Normal = auto()
-    # TODO: The one mode of this automation is called "Normal" and auto assigns it an integer value.
-    # Ultimately for simple models we would like to write
-    # E.g., Mode = makeMode(Normal, bounce,...)
-
-
-# class TrackMode(Enum):
-#     Lane0 = auto()
-#     #For now this is a dummy notion of Lane
-
+    '''NOTE: Any model should have at least one mode
+    The one mode of this automation is called "Normal" and auto assigns it an integer value.'''
+    NORMAL = auto()
 
 class State:
-    """Defines the state variables of the model
+    '''Defines the state variables of the model
     Both discrete and continuous variables
-    """
+    '''
 
     x: float
     y = 0.0
@@ -36,13 +26,10 @@ class State:
     def __init__(self, x, y, vx, vy, ball_mode: BallMode):
         pass
 
-
 def decisionLogic(ego: State):
-    """Computes the possible mode transitions"""
-    output = copy.deepcopy(ego)
-    """TODO: The `ego` variable name should be flexible but
-    currently these are somehow harcoded with the sensor"""
+    '''Computes the possible mode transitions'''
     # Stores the prestate first
+    output = copy.deepcopy(ego)
     if ego.x < 0:
         output.vx = -ego.vx
         output.x = 0
@@ -58,33 +45,28 @@ def decisionLogic(ego: State):
     if ego.y > 20:
         output.vy = -ego.vy
         output.y = 20
-    """  if ego.x - others[1].x < 1 and ego.y - others[1].y < 1:
-        output.vy = -ego.vy
-        output.vx = -ego.vx"""
-    # TODO: We would like to be able to write something like this, but currently not allowed.
     return output
 
 
 if __name__ == "__main__":
-    """Defining and using a scenario involves the following 5 easy steps:
-    1. creating a basic scenario object with Scenario()
-    2. defining the agents that will populate the object, here we have two ball agents
-    3. adding the agents to the scenario using .add_agent()
-    4. initializing the agents for this scenario.
-       Note that agents are only initialized *in* a scenario, not individually outside a scenario
-    5. genetating the simulation traces or computing the reachable states
-    """
+    #Defining and using a scenario involves the following 5 easy steps:
+    #1. creating a basic scenario object with Scenario()
+    #2. defining the agents that will populate the object, here we have two ball agents
+    #3. adding the agents to the scenario using .add_agent()
+    #4. initializing the agents for this scenario.
+    #   Note that agents are only initialized *in* a scenario, not individually outside a scenario
+    #5. genetating the simulation traces or computing the reachable states
     bouncingBall = Scenario(ScenarioConfig(parallel=False))  # scenario too small, parallel too slow
-    ball_controller = "./demo/ball/ball_bounces.py"
-    myball1 = BallAgent("red-ball", file_name=ball_controller)
-    myball2 = BallAgent("green-ball", file_name=ball_controller)
+    BALL_CONTROLLER = "./demo/ball/ball_bounces.py"
+    myball1 = BallAgent("red-ball", file_name=BALL_CONTROLLER)
+    myball2 = BallAgent("green-ball", file_name=BALL_CONTROLLER)
     bouncingBall.add_agent(myball1)
     bouncingBall.add_agent(myball2)
     bouncingBall.set_init(
         [[[5, 10, 2, 2], [5, 10, 2, 2]], [[15, 1, 1, -2], [15, 1, 1, -2]]],
-        [(BallMode.Normal,), (BallMode.Normal,)],
+        [(BallMode.NORMAL,), (BallMode.NORMAL,)],
     )
-    # TODO: WE should be able to initialize each of the balls separately
+    # TODO: We should be able to initialize each of the balls separately
     # this may be the cause for the VisibleDeprecationWarning
     # TODO: Longer term: We should initialize by writing expressions like "-2 \leq myball1.x \leq 5"
     # "-2 \leq myball1.x + myball2.x \leq 5"

@@ -43,6 +43,8 @@ class BaseAgent:
         self.uncertain_parameters = copy.deepcopy(uncertain_param)
 
     def set_initial(self, initial_state, initial_mode, static_param=None, uncertain_param=None):
+        '''Initialize the states
+        '''
         self.set_initial_state(initial_state)
         self.set_initial_mode(initial_mode)
         self.set_static_parameter(static_param)
@@ -65,8 +67,10 @@ class BaseAgent:
         raise NotImplementedError()
 
     def TC_simulate(self, mode, initialSet, time_horizon, time_step, map=None):
-        # TODO: P1. Should TC_simulate really be part of the agent definition or should it be something more generic?
-        # TODO: P2. Looks like this should be a global parameter; some config file should be setting this.
+        # TODO: P1. Should TC_simulate really be part of the agent definition or
+        # should it be something more generic?
+        # TODO: P2. Looks like this should be a global parameter;
+        # some config file should be setting this.
         """
         Abstract simulation function
 
@@ -88,9 +92,9 @@ class BaseAgent:
         trace[1:, 0] = [round(i * time_step, 10) for i in range(num_points)]
         trace[0, 1:] = initialSet
         for i in range(num_points):
-            r = ode(self.dynamic)
-            r.set_initial_value(initialSet)
-            res: np.ndarray = r.integrate(r.t + time_step)
+            result = ode(self.dynamic)
+            result.set_initial_value(initialSet)
+            res: np.ndarray = result.integrate(result.t + time_step)
             initialSet = res.flatten()
             trace[i + 1, 0] = time_step * (i + 1)
             trace[i + 1, 1:] = initialSet
