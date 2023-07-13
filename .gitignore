@@ -21,3 +21,5 @@ docs/source/_autosummary/
 **.whl
 **.tar.gz
 **.json
+gif/
+debug/

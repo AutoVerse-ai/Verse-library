@@ -18,10 +18,6 @@ class BaseAgent:
         id,
         code=None,
         file_name=None,
-        initial_state=None,
-        initial_mode=None,
-        static_param=None,
-        uncertain_param=None,
     ):
         """
         Constructor of agent base class.
@@ -37,10 +33,10 @@ class BaseAgent:
         """
         self.decision_logic: ControllerIR = ControllerIR.parse(code, file_name)
         self.id = id
-        self.init_cont = copy.deepcopy(initial_state)
-        self.init_disc = copy.deepcopy(initial_mode)
-        self.static_parameters = copy.deepcopy(static_param)
-        self.uncertain_parameters = copy.deepcopy(uncertain_param)
+        self.init_cont = None
+        self.init_disc = None
+        self.static_parameters = None 
+        self.uncertain_parameters = None
 
     def set_initial(self, initial_state, initial_mode, static_param=None, uncertain_param=None):
         '''Initialize the states

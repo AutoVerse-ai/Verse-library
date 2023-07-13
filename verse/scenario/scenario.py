@@ -191,6 +191,22 @@ class Scenario:
             ), "uncertain_param of {} not initialized".format(agent_id)
         return
 
+    def _get_init_from_agent(self):
+        for agent_id in self.agent_dict.keys():
+            if agent_id not in self.init_dict:
+                agent = self.agent_dict[agent_id]
+                if hasattr(agent, "init_cont") and agent.init_cont is not None and \
+                  hasattr(agent, "init_disc") and agent.init_disc is not None:
+                    init_cont = agent.init_cont 
+                    init_disc = agent.init_disc
+                    static_parameters = []
+                    if hasattr(agent, "static_parameters") and agent.static_parameters is not None:
+                        static_parameters = agent.static_parameters
+                    uncertain_parameters = []
+                    if hasattr(agent, "uncertain_parameters") and agent.uncertain_parameters is not None:
+                        uncertain_parameters = agent.uncertain_parameters
+                    self.set_init_single(agent_id, init_cont, init_disc, static_parameters, uncertain_parameters)  
+
     def simulate_multi(self, time_horizon, num_sim):
         res_list = []
         for i in range(num_sim):
@@ -203,6 +219,7 @@ class Scenario:
         `seed`: the random seed for sampling a point in the region specified by the initial
         conditions"""
         _check_ray_init(self.config.parallel)
+        self._get_init_from_agent()
         self._check_init()
         root = AnalysisTreeNode.root_from_inits(
             init={aid: sample_rect(init, seed) for aid, init in self.init_dict.items()},
@@ -230,11 +247,12 @@ class Scenario:
         return tree
 
     def simulate_simple(self, time_horizon, time_step, max_height=None, seed=None) -> AnalysisTree:
-        """Compute the set of reachable states, starting from a single point. Evaluates the decision
+        """Compute a simulation of the system, starting from a single point. Evaluates the decision
         logic code directly, and does not use the internal Python parser and generate
         nondeterministic transitions.
         `seed`: the random seed for sampling a point in the region specified by the initial
         conditions"""
+        self._get_init_from_agent()
         self._check_init()
         root = AnalysisTreeNode.root_from_inits(
             init={aid: sample_rect(init, seed) for aid, init in self.init_dict.items()},
