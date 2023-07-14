@@ -1,6 +1,6 @@
-"""
-This file consist main plotter code for DryVR reachtube output
-"""
+'''
+This file contains plotter code for DryVR reachtube output
+'''
 
 from __future__ import annotations
 import copy
@@ -51,7 +51,7 @@ mode_text_color = "black"
 duration = 1
 
 
-"""These 4 Functions below are high-level functions and are recommended to use."""
+'''The next 4 functions are the main functions to be used by users'''
 
 
 def simulation_tree(
@@ -66,7 +66,12 @@ def simulation_tree(
     label_mode="None",
     sample_rate=1,
 ):
-    """It statically shows all the traces of the simulation."""
+    '''This function creates adds all the traces of a simulation to a plotly graph object.
+        Parameters:
+            root (Union[AnalysisTree, AnalysisTreeNode])
+        Returns:
+            fig (plotly.graph_objects): 
+    '''
     if isinstance(root, AnalysisTree):
         root = root.root
     root = sample_trace(root, sample_rate)

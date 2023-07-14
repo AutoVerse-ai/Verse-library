@@ -6,6 +6,8 @@ from scipy.integrate import ode
 
 from verse import BaseAgent
 from verse import LaneMap
+from verse.plotter.plotter2D import *
+import plotly.graph_objects as go
 
 
 class BallAgent(BaseAgent):
@@ -37,4 +39,6 @@ if __name__ == "__main__":
         "red_ball", file_name="/Users/mitras/Dpp/GraphGeneration/demo/ball_bounces.py"
     )
     trace = aball.TC_simulate({"none"}, [5, 10, 2, 2], 10, 0.05)
+    fig = simulation_tree(trace, map=None, fig=go.Figure(), x_dim = 1, y_dim = 2, print_dim_list=None, map_type='lines', scale_type='trace', label_mode='None', sample_rate=1)
+    fig.show()
     print(trace)
