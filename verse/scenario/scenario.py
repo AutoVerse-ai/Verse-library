@@ -215,9 +215,10 @@ class Scenario:
         return res_list
 
     def simulate(self, time_horizon, time_step, max_height=None, seed=None) -> AnalysisTree:
-        '''Compute a single simulation trajectory of the scenario, starting from a single initial state.
-        `seed`: the random seed for sampling a point in the region specified by the initial
-        conditions'''
+        '''Computes a single simulation trace of a scenario, starting from a single initial state.
+            `seed`: the random seed for sampling a point in the region specified by the initial
+            conditions
+        '''
         _check_ray_init(self.config.parallel)
         self._get_init_from_agent()
         self._check_init()
@@ -247,11 +248,12 @@ class Scenario:
         return tree
 
     def simulate_simple(self, time_horizon, time_step, max_height=None, seed=None) -> AnalysisTree:
-        '''Compute a simulation of the system, starting from a single point. Evaluates the decision
-        logic code directly, and does not use the internal Python parser and generate
-        nondeterministic transitions.
-        `seed`: the random seed for sampling a point in the region specified by the initial
-        conditions'''
+        '''Computes a simulation trace of the scenario, starting from a single initial state. Evaluates the decision
+            logic code directly using Python interpreter (does not use the internal Verse parser and generate
+            nondeterministic transitions). Use the simulate() function for using the Verse interpreted decision logic.
+            `seed`: the random seed for sampling a point in the region specified by the initial
+            conditions
+        '''
         self._get_init_from_agent()
         self._check_init()
         root = AnalysisTreeNode.root_from_inits(
@@ -280,7 +282,7 @@ class Scenario:
         return tree
 
     def verify(self, time_horizon, time_step, max_height=None, params={}) -> AnalysisTree:
-        """Compute the set of reachable states, starting from a set of initial states states."""
+        '''Compute the set of reachable states, starting from a set of initial states states.'''
         _check_ray_init(self.config.parallel)
         self._check_init()
         root = AnalysisTreeNode.root_from_inits(
