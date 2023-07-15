@@ -66,11 +66,17 @@ def simulation_tree(
     label_mode="None",
     sample_rate=1,
 ):
-    '''This function creates adds all the traces of a simulation to a plotly graph object.
+    '''This function adds the traces of a simulation as a 2D plot to a plotly graph object.
         Parameters:
-            root (Union[AnalysisTree, AnalysisTreeNode])
+            root (Union[AnalysisTree, AnalysisTreeNode]): Root of the simulation tree to be plotted
+            map (Map): Map to be plotted in the background
+            fig (plotly.graph_objects): Input figure object in which the plot is added
+            x_dim (int): The state dimension to be plotted along x-axis
+            y_dim (int): The state dimension to be plotted in y-axis
+            scale_type (string): Only allowed value is "trace"
+            label_mode (string): Only allowed value is "None"
         Returns:
-            fig (plotly.graph_objects): 
+            fig (plotly.graph_objects): Figure which includes the plots
     '''
     if isinstance(root, AnalysisTree):
         root = root.root
