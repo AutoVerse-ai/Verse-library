@@ -28,21 +28,22 @@ class State:
 def decisionLogic(ego: State):
     '''Computes the possible mode transitions'''
     # Stores the prestate first
+    cr = 0.85
     output = copy.deepcopy(ego)
     if ego.x < 0:
-        output.vx = -ego.vx
+        output.vx = -ego.vx*cr
         output.x = 0
     if ego.y < 0:
-        output.vy = -ego.vy
+        output.vy = -ego.vy*cr
         output.y = 0
     if ego.x > 20:
         # TODO: Q. If I change this to ego.x >= 20 then the model does not work.
         # I suspect this is because the same transition can be take many, many times.
         # We need to figure out a clean solution
-        output.vx = -ego.vx
+        output.vx = -ego.vx*cr
         output.x = 20
     if ego.y > 20:
-        output.vy = -ego.vy
+        output.vy = -ego.vy*cr
         output.y = 20
     return output
 

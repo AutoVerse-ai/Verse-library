@@ -1,7 +1,10 @@
-Simulations
-~~~~~~~~~~~
+Analysis
+~~~~~~~~
 
-The ``simulate`` function generates simulation traces of scenarios which can be stored as a json file using ``dump()`` in the following format::
+Verse provides several functions for analyzing hybrid systems defined by scenarios. 
+
+The ``simulate()`` function generates simulation traces of scenarios. The results of simulation can be visualized 
+using :ref:`Visualization` functions or stored as a json file using the ``dump()`` function in the following format::
 
 	"ID": {
 		"agent": {<list of agents>},

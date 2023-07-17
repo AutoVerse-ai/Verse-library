@@ -1,5 +1,5 @@
 '''
-This file contains plotter code for DryVR reachtube output
+    This file contains plotter code simulations and reachtubes
 '''
 
 from __future__ import annotations
