@@ -255,8 +255,9 @@ class Verifier:
                     if config.incremental:
                         cache_tube_updates.extend(cache_tube_update)
                 elif consts.reachability_method == ReachabilityMethod.NEU_REACH:
+                    # pylint: disable=E0401
                     from verse.analysis.NeuReach.NeuReach_onestep_rect import postCont
-
+                    # pylint: enable=E0401
                     cur_bloated_tube = postCont(
                         mode,
                         inits[0],
