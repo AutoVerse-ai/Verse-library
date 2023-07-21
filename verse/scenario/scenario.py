@@ -207,13 +207,6 @@ class Scenario:
                         uncertain_parameters = agent.uncertain_parameters
                     self.set_init_single(agent_id, init_cont, init_disc, static_parameters, uncertain_parameters)  
 
-    def simulate_multi(self, time_horizon, num_sim):
-        res_list = []
-        for i in range(num_sim):
-            trace = self.simulate(time_horizon)
-            res_list.append(trace)
-        return res_list
-
     def simulate(self, time_horizon, time_step, max_height=None, seed=None) -> AnalysisTree:
         '''Computes a single simulation trace of a scenario, starting from a single initial state.
             `seed`: the random seed for sampling a point in the region specified by the initial
@@ -432,7 +425,7 @@ class Benchmark:
             # arg = self.config.rest[0]
             # self.config.config = ScenarioConfig(incremental='i' in arg, parallel='l' in arg, **self.config.kw)
             # self.scenario.update_config(self.config.config)
-            self.replace_scenario()
+            self.replace_scenario(self.config.rest[1]) # TODO: Check if this is correct
             traces2 = self.run(*a, **kw)
         self.report()
         print("trace1 contains trace2?", traces1.contains(traces2))

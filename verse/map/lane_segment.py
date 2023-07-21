@@ -29,6 +29,7 @@ class AbstractLane(object):
     def __init__(self, id: str):
         self.id = id
         self.type = None
+        self.forbidden = False
 
     @abstractmethod
     def position(self, longitudinal: float, lateral: float) -> np.ndarray:

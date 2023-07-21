@@ -131,33 +131,10 @@ class SingleSensor:
 
         return cont, disc, len_dict
 
-
-class FakeSensor3:
-    def sense(self, agent, state_dict, lane_map):
-        cont = {}
-        disc = {}
-        len_dict = {"others": len(state_dict) - 1}
-        tmp = np.array(state_dict["car1"][0])
-        if tmp.ndim < 2:
-            for agent_id in state_dict:
-                if agent_id == agent.id:
-                    set_states_2d(cont, disc, "ego", state_dict[agent_id])
-                else:
-                    add_states_2d(cont, disc, "others", state_dict[agent_id])
-        else:
-            for agent_id in state_dict:
-                if agent_id == agent.id:
-                    set_states_3d(cont, disc, "ego", state_dict[agent_id])
-                else:
-                    add_states_3d(cont, disc, "others", state_dict[agent_id])
-        return cont, disc, len_dict
-
-
 def set_states_2d_ball(cnts, disc, thing, val):
     state, mode = val
     sets(cnts, thing, ["x", "y", "vx", "vy"], state[1:5])
     sets(disc, thing, ["ball_mode", "lane_mode"], mode)
-
 
 def set_states_3d_ball(cnts, disc, thing, val):
     state, mode = val
