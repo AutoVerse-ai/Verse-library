@@ -13,13 +13,16 @@ class VehicleAgent(BaseAgent):
         self, 
         id, 
         code = None,
-        file_name = None 
+        file_name = None, 
+        accel = 5,
+        speed = 10
     ):
         super().__init__(
             id, code, file_name
         )
-        self.accel=5
-
+        self.accel = accel
+        self.speed = speed
+         
     @staticmethod
     def dynamic(t, state, u):
         x, y, theta, v, _ = state

@@ -27,12 +27,15 @@ if __name__ == "__main__":
         'car', [[0,0,0,10,0],[2,0,0,10,0]],(VehicleMode.Normal,)
     )
     scenario.set_init_single(
-        'pedestrain', [[30,-30,0,10,0],[30,-30,0,10,0]], (PedestrainMode.Normal,)
+        'pedestrain', [[80,-30,0,3,0],[80,-30,0,3,0]], (PedestrainMode.Normal,)
     )
 
     scenario.set_sensor(VehiclePedestrainSensor())
 
-    traces = scenario.verify(10, 0.05)
+    traces = scenario.verify(30, 0.05)
     fig = go.Figure()
     fig = reachtube_tree(traces, None, fig, 0,1,[0,1],'lines', 'trace')
+    fig.show()
+    fig = go.Figure()
+    fig = reachtube_tree(traces, None, fig, 0,2,[0,1],'lines', 'trace')
     fig.show()

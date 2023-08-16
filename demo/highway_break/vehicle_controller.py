@@ -5,6 +5,7 @@ from typing import List
 class VehicleMode(Enum):
     Normal = auto()
     Brake = auto()
+    Accel = auto()
 
 class State:
     x: float 
@@ -19,7 +20,10 @@ class State:
 
 def decisionLogic(ego: State):
     output = copy.deepcopy(ego)
-    if ego.agent_mode == VehicleMode.Normal and ego.dist < 10:
+    if ego.agent_mode == VehicleMode.Normal and ego.dist < 20:
         output.agent_mode = VehicleMode.Brake 
+
+    if ego.agent_mode == VehicleMode.Brake and ego.dist> 25:
+        output.agent_mode = VehicleMode.Accel
 
     return output 

@@ -31,26 +31,31 @@ def get_extreme(rect1, rect2):
         dist_min = dist((ub11, ub12),(lb21, lb22))
         dist_max = dist((lb11, lb12),(ub21, ub22))
     elif top and right:
-        dist_min = dist((lb11, lb12), ub21, ub22)
-        dist_max = dist((ub11, ub12), lb21, lb22)
+        dist_min = dist((lb11, lb12), (ub21, ub22))
+        dist_max = dist((ub11, ub12), (lb21, lb22))
     elif bottom and right:
         dist_min = dist((lb11, ub12),(ub21, lb22))
         dist_max = dist((ub11, lb12),(lb21, ub22))
     elif left:
         dist_min = lb21 - ub11 
-        dist_max = ub21 - lb11 
+        dist_max = np.sqrt((lb21 - ub11)**2 + max((ub22-lb12)**2, (ub12-lb22)**2))
     elif right: 
         dist_min = ub21 - lb11 
-        dist_max = lb21 - ub11 
+        dist_max = np.sqrt((lb21 - ub11)**2 + max((ub22-lb12)**2, (ub12-lb22)**2))
     elif top: 
         dist_min = lb12 - ub22
-        dist_max = ub12 - lb22
+        dist_max = np.sqrt((ub12 - lb22)**2 + max((ub21-lb11)**2, (ub11-lb21)**2))
     elif bottom: 
         dist_min = lb22 - ub12 
-        dist_max = ub22 - lb12 
+        dist_max = np.sqrt((ub22 - lb12)**2 + max((ub21-lb11)**2, (ub11-lb21)**2)) 
     else: 
         dist_min = 0 
-        dist_max = 0
+        dist_max = max(
+            dist((lb11, lb12), (ub21, ub22)),
+            dist((lb11, ub12), (ub21, lb22)),
+            dist((ub11, lb12), (lb21, ub12)),
+            dist((ub11, ub12), (lb21, lb22))
+        )
     return dist_min, dist_max
 
 class VehiclePedestrainSensor:
