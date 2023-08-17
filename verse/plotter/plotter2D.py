@@ -45,6 +45,7 @@ scheme_list = list(scheme_dict.keys())
 num_theme = len(colors)
 color_cnt = 0
 text_size = 8
+marker_size = 4
 scale_factor = 0.25
 mode_point_color = "rgba(0,0,0,0.5)"
 mode_text_color = "black"
@@ -129,7 +130,7 @@ def simulation_tree(
                             text=str(agent_id) + ": " + text,
                             opacity=0.5,
                             textposition=text_pos,
-                            textfont=dict(size=text_size, color=mode_text_color),
+                            marker={"size": marker_size, "color": mode_text_color},
                             showlegend=False,
                         )
                     )
@@ -141,8 +142,8 @@ def simulation_tree(
                         y=[trace[-1, y_dim]],
                         mode="markers+text",
                         text=["HIT:\n" + a for a in node.assert_hits[agent_id]],
-                        textfont={"color": "grey"},
-                        marker={"size": 4, "color": "black"},
+                        # textfont={"color": "grey"},
+                        marker={"size": marker_size, "color": "black"},
                         #  legendgroup=agent_id,
                         #  legendgrouptitle_text=agent_id,
                         #  name=str(round(start[0], 2))+'-'+str(round(end[0], 2)) +
@@ -150,34 +151,34 @@ def simulation_tree(
                         showlegend=False,
                     )
                 )
-            if label_mode != "None":
-                if previous_mode[agent_id] != node.mode[agent_id]:
-                    text_pos, text = get_text_pos(node.mode[agent_id][0])
-                    texts = [f"{agent_id}: {text}" for _ in trace]
-                    mark_colors = [mode_point_color for _ in trace]
-                    mark_sizes = [0 for _ in trace]
-                    if node.assert_hits != None and agent_id in node.assert_hits:
-                        mark_colors[-1] = "black"
-                        mark_sizes[-1] = 10
-                        texts[-1] = "BOOM!!!\nAssertions hit:\n" + "\n".join(
-                            "  " + a for a in node.assert_hits[agent_id]
-                        )
-                    marker = Marker(color=mark_colors, size=mark_sizes)
-                    fig.add_trace(
-                        go.Scatter(
-                            x=[trace[0, x_dim]],
-                            y=[trace[0, y_dim]],
-                            mode="markers+lines",
-                            line_color=mode_point_color,
-                            opacity=0.5,
-                            text=texts,
-                            marker=marker,
-                            textposition=text_pos,
-                            textfont=dict(size=text_size, color=mode_text_color),
-                            showlegend=False,
-                        )
-                    )
-                    previous_mode[agent_id] = node.mode[agent_id]
+            # if label_mode != "None":
+            #     if previous_mode[agent_id] != node.mode[agent_id]:
+            #         text_pos, text = get_text_pos(node.mode[agent_id][0])
+            #         texts = [f"{agent_id}: {text}" for _ in trace]
+            #         mark_colors = [mode_point_color for _ in trace]
+            #         mark_sizes = [0 for _ in trace]
+            #         if node.assert_hits != None and agent_id in node.assert_hits:
+            #             mark_colors[-1] = "black"
+            #             mark_sizes[-1] = 10
+            #             texts[-1] = "BOOM!!!\nAssertions hit:\n" + "\n".join(
+            #                 "  " + a for a in node.assert_hits[agent_id]
+            #             )
+            #         marker = Marker(color=mark_colors, size=mark_sizes)
+            #         fig.add_trace(
+            #             go.Scatter(
+            #                 x=[trace[0, x_dim]],
+            #                 y=[trace[0, y_dim]],
+            #                 mode="markers+lines",
+            #                 line_color=mode_point_color,
+            #                 opacity=0.5,
+            #                 text=texts,
+            #                 marker=marker,
+            #                 textposition=text_pos,
+            #                 textfont=dict(size=text_size, color=mode_text_color),
+            #                 showlegend=False,
+            #             )
+            #         )
+            #         previous_mode[agent_id] = node.mode[agent_id]
         queue += node.child
     if scale_type == "trace":
         fig.update_xaxes(
@@ -458,7 +459,7 @@ def simulation_anime(
                             text=str(agent_id) + ": " + text,
                             opacity=0.5,
                             textposition=text_pos,
-                            textfont=dict(size=text_size, color=mode_text_color),
+                            marker={"size": marker_size, "color": mode_text_color},
                             showlegend=False,
                         )
                     )
@@ -470,8 +471,8 @@ def simulation_anime(
                         y=[trace[-1, y_dim]],
                         mode="markers+text",
                         text=["HIT:\n" + a for a in node.assert_hits[agent_id]],
-                        textfont={"color": "grey"},
-                        marker={"size": 4, "color": "black"},
+                        # textfont={"color": "grey"},
+                        marker={"size": marker_size, "color": "black"},
                         #  legendgroup=agent_id,
                         #  legendgrouptitle_text=agent_id,
                         #  name=str(round(start[0], 2))+'-'+str(round(end[0], 2)) +
@@ -584,20 +585,20 @@ def reachtube_tree(
                             opacity=0.5,
                             text=str(agent_id) + ": " + text,
                             textposition=text_pos,
-                            textfont=dict(size=text_size, color=mode_text_color),
+                            marker={"size": marker_size, "color": mode_text_color},
                             showlegend=False,
                         )
                     )
                     previous_mode[agent_id] = node.mode[agent_id]
-                if node.assert_hits != None and agent_id in node.assert_hits[0]:
+                if node.assert_hits != None and agent_id in node.assert_hits:
                     fig.add_trace(
                         go.Scatter(
                             x=[trace[-1, x_dim]],
                             y=[trace[-1, y_dim]],
                             mode="markers+text",
-                            text=["HIT:\n" + a for a in node.assert_hits[0][agent_id]],
-                            textfont={"color": "black"},
-                            marker={"size": 4, "color": "black"},
+                            text=["HIT:\n" + a for a in node.assert_hits[agent_id]],
+                            # textfont={"color": "grey"},
+                            marker={"size": marker_size, "color": "black"},
                             showlegend=False,
                         )
                     )
@@ -760,7 +761,7 @@ def reachtube_anime(
                             text=str(agent_id) + ": " + text,
                             textposition=text_pos,
                             opacity=0.5,
-                            textfont=dict(size=text_size, color=mode_text_color),
+                            marker={"size": marker_size, "color": mode_text_color},
                             showlegend=False,
                         )
                     )
@@ -772,8 +773,8 @@ def reachtube_anime(
                             y=[trace[-1, y_dim]],
                             mode="markers+text",
                             text=["HIT:\n" + a for a in node.assert_hits[agent_id]],
-                            textfont={"color": "black"},
-                            marker={"size": 4, "color": "black"},
+                            # textfont={"color": "grey"},
+                            marker={"size": marker_size, "color": "black"},
                             showlegend=False,
                         )
                     )
