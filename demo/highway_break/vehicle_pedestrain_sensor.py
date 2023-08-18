@@ -111,6 +111,6 @@ class VehiclePedestrainSensor:
                 cont['ego.dist'] = [
                     dist_min, dist_max
                 ]
-                print(dist_min)
+                # print(dist_min)
                 disc['ego.agent_mode'] = state_dict['car'][1][0]
         return cont, disc, len_dict
