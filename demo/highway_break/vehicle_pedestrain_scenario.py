@@ -7,6 +7,7 @@ from vehicle_controller import VehicleMode
 from pedestrain_controller import PedestrainMode 
 from vehicle_controller import State
 from verse.plotter.plotter2D import *
+from verse.plotter.plotter3D_new import *
 
 import plotly.graph_objects as go
 
@@ -24,7 +25,7 @@ if __name__ == "__main__":
     scenario.add_agent(pedestrain)
 
     scenario.set_init_single(
-        'car', [[0,0,0,10,0],[2,0,0,10,0]],(VehicleMode.Normal,)
+        'car', [[0,0,0,10,0],[2,5,0,10,0]],(VehicleMode.Normal,)
     )
     scenario.set_init_single(
         'pedestrain', [[80,-30,0,3,0],[80,-30,0,3,0]], (PedestrainMode.Normal,)
@@ -32,10 +33,14 @@ if __name__ == "__main__":
 
     scenario.set_sensor(VehiclePedestrainSensor())
 
-    traces = scenario.verify(30, 0.05)
+    traces = scenario.verify(30, 0.1)
+    # fig = go.Figure()
+    # fig = reachtube_tree(traces, None, fig, 0,1,[0,1],'lines', 'trace')
+    # fig.show()
+    # fig = go.Figure()
+    # fig = reachtube_tree(traces, None, fig, 0,2,[0,1],'lines', 'trace')
+    # fig.show()
+
     fig = go.Figure()
-    fig = reachtube_tree(traces, None, fig, 0,1,[0,1],'lines', 'trace')
-    fig.show()
-    fig = go.Figure()
-    fig = reachtube_tree(traces, None, fig, 0,2,[0,1],'lines', 'trace')
+    fig = reachtube_tree_3d(traces, None, fig, 0,1,2,[0,1,2])
     fig.show()
