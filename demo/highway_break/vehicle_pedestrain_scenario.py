@@ -78,8 +78,7 @@ if __name__ == "__main__":
     # )
 
 
-    # traces = scenario.verify(30, 0.1)
-    # # helper.combine_tree([traces, traces])
+    # traces = scenario.verify(30, 1)
     # # fig = go.Figure()
     # # fig = reachtube_tree(traces, None, fig, 0,1,[0,1],'lines', 'trace')
     # # fig.show()
@@ -88,7 +87,7 @@ if __name__ == "__main__":
     # # fig.show()
 
     # fig = go.Figure()
-    # fig = reachtube_tree_3d(traces, None, fig, 0,1,2,[0,1,2])
+    # fig = reachtube_tree_3d(traces, None, fig, 0,'time', 1,'x',2,'y',[0,1,2])
     # fig.show()
 
     # init_dict_list= helper.sample(scenario.init_dict)
@@ -100,14 +99,20 @@ if __name__ == "__main__":
     #     fig = simulation_tree_3d(trace, None, fig, 0,'time', 1,'x',2,'y',[0,1,2])
     # fig.show()
 
-    # traces = scenario.verify(30, 0.05)
+    # # traces = scenario.verify(30, 0.05)
     trace_list = verify_refine([[0,0,0,5,0],[2,0,0,10.0,0]], [[80,-30,0,3,0],[80,-30,0,3,0]], scenario)
     # fig = go.Figure()
     # fig = reachtube_anime(traces, None, fig, 1, 2)
     # fig.show()
     fig = go.Figure()
     for traces in trace_list:
-        fig = reachtube_tree(traces, None, fig, 0,1,[0,1],'lines', 'trace')
+        # fig = reachtube_tree(traces, None, fig, 0,1,[0,1],'lines', 'trace')
+        fig = reachtube_tree_3d(traces, None, fig, 0,'time', 1,'x',2,'y',[0,1,2])
+    fig.show()
+
+    com_traces = helper.combine_tree(trace_list)
+    fig = go.Figure()
+    fig = reachtube_tree_3d(com_traces, None, fig, 0,'time', 1,'x',2,'y',[0,1,2])
     fig.show()
     # fig = go.Figure()
     # fig = reachtube_tree(traces, None, fig, 0,2,[0,1],'lines', 'trace')

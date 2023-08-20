@@ -3,7 +3,7 @@
 import numpy as np
 import portion
 from typing import Any, Tuple, Dict, Callable, List
-from verse.analysis import AnalysisTreeNode, AnalysisTree
+from verse.analysis import AnalysisTreeNode, AnalysisTree, AnalysisTreeNodeType
 
 def sample(init_dict):
     """
@@ -49,4 +49,5 @@ def combine_tree(tree_list: List[AnalysisTree]):
                         combined_trace[agent_id][step]=[lower, upper]
 
     final_trace = {agent_id:np.array(list(combined_trace[agent_id].values())).flatten().reshape((-1, trace[i].size)).tolist() for agent_id in combined_trace}
-    print(final_trace)
+    root = AnalysisTreeNode(final_trace,None,None,None,None, node.agent, None,None,[],0,10,AnalysisTreeNodeType.REACH_TUBE,0)
+    return AnalysisTree(root)

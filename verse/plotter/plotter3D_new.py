@@ -95,8 +95,11 @@ def reachtube_tree_3d(
     map=None,
     fig=go.Figure(),
     x_dim: int = 1,
+    x_title: str = None, 
     y_dim: int = 2,
+    y_title: str = None, 
     z_dim: int = 3,
+    z_title: str = None, 
     print_dim_list=None,
     color_array=None,
     map_type="outline",
@@ -151,7 +154,7 @@ def reachtube_tree_3d(
     #         ),
     #     )
     # )
-    fig = update_style(fig)
+    fig = update_style(fig, x_title, y_title, z_title)
     return fig
 
 
