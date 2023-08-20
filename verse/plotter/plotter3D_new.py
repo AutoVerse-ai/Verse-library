@@ -30,8 +30,11 @@ def simulation_tree_3d(
     map=None,
     fig=go.Figure(),
     x_dim: int = 1,
+    x_title: str = None, 
     y_dim: int = 2,
+    y_title: str = None, 
     z_dim: int = 3,
+    z_title: str = None, 
     print_dim_list=None,
     color_array=None,
     map_type="outline",
@@ -83,7 +86,7 @@ def simulation_tree_3d(
     if zrange:
         fig.update_scenes(zaxis_range=zrange) 
 
-    fig = update_style(fig)
+    fig = update_style(fig, x_title, y_title, z_title)
     return fig
 
 
@@ -267,7 +270,9 @@ def simulation_tree_single_3d(
                 z=trace[:, z_dim],
                 mode="lines",
                 marker=dict(color=color_array[theme_id][color_id]),
-                line=dict(color=color_array[theme_id][color_id], width=18),
+                line=dict(color=color_array[theme_id][color_id], 
+                        #   width=18
+                          ),
                 text=[
                     ["{:.2f}".format(trace[i, j]) for j in print_dim_list]
                     for i in range(trace.shape[0])
@@ -279,10 +284,27 @@ def simulation_tree_single_3d(
                 + str(round(end[0], 2))
                 + "-"
                 + str(count_dict[time]),
-                showlegend=True,
+                # showlegend=True,
+                showlegend=False,
             )
         )
-
+        if node.assert_hits != None and agent_id in node.assert_hits:
+            fig.add_trace(
+                go.Scatter3d(
+                    x=[trace[-1, x_dim]],
+                    y=[trace[-1, y_dim]],
+                    z=[trace[-1, y_dim]],
+                    mode="markers+text",
+                    text=["HIT:\n" + a for a in node.assert_hits[agent_id]],
+                    # textfont={"color": "grey"},
+                    marker={"size": 4, "color": "black"},
+                    #  legendgroup=agent_id,
+                    #  legendgrouptitle_text=agent_id,
+                    #  name=str(round(start[0], 2))+'-'+str(round(end[0], 2)) +
+                    #  '-'+str(count_dict[time])+'hit',
+                    showlegend=False,
+                )
+            )
         color_id = (color_id + 4) % 5
         queue += node.child
     # fig.update_layout(legend=dict(
@@ -376,7 +398,19 @@ def reachtube_tree_single_3d(
                     flatshading=True,
                 )
             )
-
+            if node.assert_hits != None and agent_id in node.assert_hits:
+                fig.add_trace(
+                    go.Scatter3d(
+                        x=[trace[-1, x_dim]],
+                        y=[trace[-1, y_dim]],
+                        z=[trace[-1, z_dim]],
+                        mode="markers+text",
+                        text=["HIT:\n" + a for a in node.assert_hits[agent_id]],
+                        # textfont={"color": "grey"},
+                        marker={"size": 4, "color": "black"},
+                        showlegend=False,
+                    )
+                )
             # trace_x_odd = np.array([trace[i][x_dim]
             #                         for i in range(0, max_id, 2)])
             # trace_x_even = np.array([trace[i][x_dim]
@@ -456,7 +490,7 @@ def sample_trace(root, sample_rate: int = 1):
     return root
 
 
-def update_style(fig: go.Figure() = go.Figure()):
+def update_style(fig: go.Figure() = go.Figure(), x_title=None, y_title=None, z_title=None):
     # fig.update_traces(line={'width': 3})
     fig.update_layout(
         # paper_bgcolor="rgba(0,0,0,0)",
@@ -467,19 +501,19 @@ def update_style(fig: go.Figure() = go.Figure()):
     gridwidth = 2
     fig.update_layout(scene = dict(
                         xaxis = dict(
-                        title='time',
+                        title=x_title if x_title is not None else None,
                         gridcolor="white",
                         showgrid=True,
                         showbackground=True,
                         zerolinecolor="white",),
                         yaxis = dict(
-                        title='x',
+                        title=y_title if y_title is not None else None,
                         gridcolor="white",
                         showgrid=True,
                         showbackground=True,
                         zerolinecolor="white",),
                         zaxis = dict(
-                        title='y',
+                        title=z_title if z_title is not None else None,
                         gridcolor="white",
                         showgrid=True,
                         showbackground=True,

@@ -240,6 +240,46 @@ class Scenario:
         self.past_runs.append(tree)
         return tree
 
+    def simulate_multi(self, time_horizon, time_step, max_height=None, seed=None, init_dict_list=None):
+        '''Computes multiple simulation traces of a scenario, starting from multiple initial states.
+            `seed`: the random seed for sampling a point in the region specified by the initial
+            conditions
+        '''
+        _check_ray_init(self.config.parallel)
+        self._get_init_from_agent()
+        self._check_init()
+        tree_list = []
+        if init_dict_list is None:
+            for i in range(10):
+                tree_list.append(self.simulate(time_horizon, time_step, max_height, seed))
+        else:
+            for init_dict in init_dict_list:
+                root = AnalysisTreeNode.root_from_inits(
+                    init=init_dict,
+                    mode={
+                        aid: tuple(elem if isinstance(elem, str) else elem.name for elem in modes)
+                        for aid, modes in self.init_mode_dict.items()
+                    },
+                    static={aid: [elem.name for elem in modes] for aid, modes in self.static_dict.items()},
+                    uncertain_param=self.uncertain_param_dict,
+                    agent=self.agent_dict,
+                    type=AnalysisTreeNodeType.SIM_TRACE,
+                    ndigits=10,
+                )
+                tree = self.simulator.simulate(
+                    root,
+                    self.sensor,
+                    time_horizon,
+                    time_step,
+                    max_height,
+                    self.map,
+                    len(self.past_runs),
+                    self.past_runs,
+                )
+                self.past_runs.append(tree)
+                tree_list.append(tree)            
+        return tree_list
+
     def simulate_simple(self, time_horizon, time_step, max_height=None, seed=None) -> AnalysisTree:
         '''Computes a simulation trace of the scenario, starting from a single initial state. Evaluates the decision
             logic code directly using Python interpreter (does not use the internal Verse parser and generate
