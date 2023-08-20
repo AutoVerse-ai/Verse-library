@@ -30,6 +30,28 @@ def sample(init_dict):
 
     return sample_dict_list
 
+def eval_velocity(tree_list: List[AnalysisTree], agent_id):
+    velo_list = []
+    for tree in tree_list:
+        assert agent_id in tree.root.init
+        leaves = list(filter(lambda node: node.child == [], tree.nodes))
+        unsafe = list(filter(lambda node: node.assert_hits != None, leaves))
+        if len(unsafe) != 0:
+            print(f"unsafety detected in tree with init {tree.root.init}")
+        else:
+            safe = np.array(list(filter(lambda node: node.assert_hits == None, leaves)))
+            init_x = tree.root.init[agent_id][0]
+            last_xs = np.array([node.trace[agent_id][-1][1] for node in safe])
+            time = round(safe[0].trace[agent_id][-1][0], 3)
+            velos = (last_xs-init_x)/time
+            max_velo = np.max(velos)
+            velo_list.append(max_velo)
+            print(f"max avg velocoty {max_velo} in tree with init {tree.root.init}")
+    if len(tree_list) == len(velo_list):
+        print(f"No unsafety detected! Overall average velocity is {sum(velo_list)/len(velo_list)}.")
+    else:
+        print(f"Unsafety detected! Please update your DL.")
+
 def combine_tree(tree_list: List[AnalysisTree]):
     combined_trace={}
     for tree in tree_list:
