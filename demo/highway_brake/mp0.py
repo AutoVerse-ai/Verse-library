@@ -18,7 +18,7 @@ def tree_safe(tree: AnalysisTree):
             return False 
     return True
 
-def verify_refine(init_car, init_ped, scenario: Scenario):
+def verify_refine(init_car, init_ped, scenario: Scenario, time_horizon, time_step):
     partition_depth = 0
     init_queue = [(init_car, init_ped, partition_depth)]
     res_list = []
@@ -27,7 +27,7 @@ def verify_refine(init_car, init_ped, scenario: Scenario):
         print(f"######## {partition_depth}, {car_init[0][3]}, {car_init[1][3]}")
         scenario.set_init_single('car', car_init, (VehicleMode.Normal,))
         scenario.set_init_single('pedestrain', ped_init, (PedestrainMode.Normal,))
-        traces = scenario.verify(30, 0.05)
+        traces = scenario.verify(time_horizon, time_step)
         if not tree_safe(traces):
             # Partition car and pedestrain initial state
             # if partition_depth%3==0:

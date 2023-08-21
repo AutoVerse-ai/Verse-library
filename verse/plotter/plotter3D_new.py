@@ -296,7 +296,7 @@ def simulation_tree_single_3d(
                 go.Scatter3d(
                     x=[trace[-1, x_dim]],
                     y=[trace[-1, y_dim]],
-                    z=[trace[-1, y_dim]],
+                    z=[trace[-1, z_dim]],
                     mode="markers+text",
                     text=["HIT:\n" + a for a in node.assert_hits[agent_id]],
                     # textfont={"color": "grey"},

@@ -13,7 +13,6 @@ if __name__ == "__main__":
     script_dir = os.path.realpath(os.path.dirname(__file__))
     input_code_name = os.path.join(script_dir, "vehicle_controller.py")
     vehicle = VehicleAgent('car', file_name=input_code_name)
-    input_code_name = os.path.join(script_dir, "pedestrain_controller.py")
     pedestrain = PedestrainAgent('pedestrain')
 
     scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False))
@@ -23,20 +22,20 @@ if __name__ == "__main__":
     scenario.set_sensor(VehiclePedestrainSensor())
 
     scenario.set_init_single(
-        'car', [[0,0,0,9.0,0],[2,0,0,10.0,0]],(VehicleMode.Normal,)
+        'car', [[-5,0,0,5,0],[5,0,0,10.0,0]],(VehicleMode.Normal,)
     )
     scenario.set_init_single(
-        'pedestrain', [[80,-30,0,3,0],[80,-30,0,3,0]], (PedestrainMode.Normal,)
+        'pedestrain', [[140,-40,0,3,0],[160,-30,0,5,0]], (PedestrainMode.Normal,)
     )
 
     # # ----------- Simulate multi -------------
-    init_dict_list= sample_init(scenario.init_dict)
-    trace_list = scenario.simulate_multi(30, 0.5, init_dict_list=init_dict_list)
-    fig = go.Figure()
-    for trace in trace_list:
-        fig = simulation_tree_3d(trace, None, fig, 0,'time', 1,'x',2,'y',[0,1,2])
-    fig.show()
-    eval_velocity(trace_list, 'car')
+    # init_dict_list= sample_init(scenario.init_dict)
+    # trace_list = scenario.simulate_multi(50, 0.5, init_dict_list=init_dict_list)
+    # fig = go.Figure()
+    # for trace in trace_list:
+    #     fig = simulation_tree_3d(trace, None, fig, 0,'time', 1,'x',2,'y',[0,1,2])
+    # fig.show()
+    # eval_velocity(trace_list, 'car')
     # # -----------------------------------------
 
     # ----------- verify old version ----------
@@ -54,8 +53,8 @@ if __name__ == "__main__":
 
     # -----------------------------------------
 
-    # ------------- Verify refine -------------
-    com_traces = verify_refine([[0,0,0,5,0],[2,0,0,10.0,0]], [[80,-30,0,3,0],[80,-30,0,3,0]], scenario)
+    # # ------------- Verify refine -------------
+    com_traces = verify_refine([[-5,0,0,5,0],[5,0,0,10.0,0]], [[140,-40,0,3,0],[160,-30,0,5,0]], scenario, 50, 0.5)
     # fig = go.Figure()
     # fig = reachtube_anime(traces, None, fig, 1, 2)
     # fig.show()
@@ -70,4 +69,4 @@ if __name__ == "__main__":
     fig = go.Figure()
     fig = reachtube_tree_3d(com_traces, None, fig, 0,'time', 1,'x',2,'y',[0,1,2])
     fig.show()
-    # -----------------------------------------
+    # # -----------------------------------------
