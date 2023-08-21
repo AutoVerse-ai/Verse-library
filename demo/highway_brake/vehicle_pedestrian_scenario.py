@@ -21,8 +21,8 @@ if __name__ == "__main__":
     scenario.add_agent(pedestrian)
     scenario.set_sensor(VehiclePedestrianSensor())
 
-    init_car = [[-5,0,0,5,0],[5,0,0,10.0,0]]
-    init_pedestrian = [[140,-40,0,3,0],[160,-30,0,5,0]]
+    init_car = [[-5,-5,0,5,0],[5,5,0,10.0,0]]
+    init_pedestrian = [[140,-40,0,3,0],[150,-35,0,5,0]]
 
     scenario.set_init_single(
         'car', init_car,(VehicleMode.Normal,)

@@ -22,7 +22,7 @@ class State:
     def __init__(self, x, y, theta, v, dist, agent_mode: VehicleMode):
         pass 
 
-def decisionLogic(ego: State):
+def decisionLogic(ego: State, other: State):
     output = copy.deepcopy(ego)
     if ego.agent_mode == VehicleMode.Normal and ego.dist < 50:
         output.agent_mode = VehicleMode.Brake 

@@ -56,14 +56,15 @@ def pack_env(
             other = arg.name
             if other in packed:
                 other_keys, other_vals = tuple(map(list, zip(*packed[other].items())))
-                env[other] = list(
-                    map(
-                        lambda v: SimpleNamespace(**{k: v for k, v in zip(other_keys, v)}),
-                        zip(*other_vals),
-                    )
-                )
                 if not arg.is_list:
-                    env[other] = packed[other][0]
+                    env[other] = SimpleNamespace(**packed[other])
+                else:
+                    env[other] = list(
+                        map(
+                            lambda v: SimpleNamespace(**{k: v for k, v in zip(other_keys, v)}),
+                            zip(*other_vals),
+                        )
+                    )
             else:
                 if arg.is_list:
                     env[other] = []

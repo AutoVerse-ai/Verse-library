@@ -285,7 +285,7 @@ def calc_bloated_tube(
     traces = [sim_func(mode_label, cur_center, time_horizon, time_step, lane_map)]
     # Simulate SIMTRACENUM times to learn the sensitivity
     for i in range(sim_trace_num):
-        new_init_point = randomPoint(initial_set[0], initial_set[1])
+        new_init_point = randomPoint(initial_set[0], initial_set[1], i)
         traces.append(sim_func(mode_label, new_init_point, time_horizon, time_step, lane_map))
 
     # Trim the trace to the same length

@@ -24,7 +24,7 @@ def verify_refine(scenario: Scenario, time_horizon, time_step):
     partition_depth = 0
     init_queue = [(init_car, init_ped, partition_depth)]
     res_list = []
-    while init_queue!=[] and partition_depth < 10:
+    while init_queue!=[] and partition_depth < 20:
         car_init, ped_init, partition_depth = init_queue.pop(0)
         print(f"######## {partition_depth}, {car_init[0][3]}, {car_init[1][3]}")
         scenario.set_init_single('car', car_init, (VehicleMode.Normal,))
@@ -32,26 +32,30 @@ def verify_refine(scenario: Scenario, time_horizon, time_step):
         traces = scenario.verify(time_horizon, time_step)
         if not tree_safe(traces):
             # Partition car and pedestrian initial state
-            # if partition_depth%3==0:
-            #     car_x_init = (car_init[0][0] + car_init[1][0])/2
-            #     car_init1 = copy.deepcopy(car_init)
-            #     car_init1[1][0] = car_x_init 
-            #     init_queue.append((car_init1, ped_init, partition_depth+1))
-            #     car_init2 = copy.deepcopy(car_init)
-            #     car_init2[0][0] = car_x_init 
-            #     init_queue.append((car_init2, ped_init, partition_depth+1))
-            # else:
-            if car_init[1][3] - car_init[0][3] < 0.01 or partition_depth >= 10:
-                print('Threshold Reached. Scenario is UNSAFE.')
-                res_list.append(traces)
-                break
-            car_v_init = (car_init[0][3] + car_init[1][3])/2
-            car_init1 = copy.deepcopy(car_init)
-            car_init1[1][3] = car_v_init 
-            init_queue.append((car_init1, ped_init, partition_depth+1))
-            car_init2 = copy.deepcopy(car_init)
-            car_init2[0][3] = car_v_init 
-            init_queue.append((car_init2, ped_init, partition_depth+1))
+            if partition_depth%2!=0:
+                if car_init[1][0] - car_init[0][0] < 0.01 or partition_depth >= 20:
+                    print('Threshold Reached. Scenario is UNSAFE.')
+                    res_list.append(traces)
+                    break
+                car_x_init = (car_init[0][0] + car_init[1][0])/2
+                car_init1 = copy.deepcopy(car_init)
+                car_init1[1][0] = car_x_init 
+                init_queue.append((car_init1, ped_init, partition_depth+1))
+                car_init2 = copy.deepcopy(car_init)
+                car_init2[0][0] = car_x_init 
+                init_queue.append((car_init2, ped_init, partition_depth+1))
+            else:
+                if car_init[1][3] - car_init[0][3] < 0.01 or partition_depth >= 20:
+                    print('Threshold Reached. Scenario is UNSAFE.')
+                    res_list.append(traces)
+                    break
+                car_v_init = (car_init[0][3] + car_init[1][3])/2
+                car_init1 = copy.deepcopy(car_init)
+                car_init1[1][3] = car_v_init 
+                init_queue.append((car_init1, ped_init, partition_depth+1))
+                car_init2 = copy.deepcopy(car_init)
+                car_init2[0][3] = car_v_init 
+                init_queue.append((car_init2, ped_init, partition_depth+1))
         else:
             res_list.append(traces)
     com_traces = combine_tree(res_list)
@@ -249,6 +253,12 @@ class VehiclePedestrianSensor:
                     (state_dict['car'][0][2]-state_dict['pedestrian'][0][2])**2
                 )
                 disc['ego.agent_mode'] = state_dict['car'][1][0]
+                cont['other.x'] = state_dict['pedestrian'][0][1]
+                cont['other.y'] = state_dict['pedestrian'][0][2]
+                cont['other.theta'] = state_dict['pedestrian'][0][3]
+                cont['other.v'] = state_dict['pedestrian'][0][4]
+                cont['other.dist'] = cont['ego.dist']
+                disc['other.agent_mode'] = state_dict['pedestrian'][1][0]
         else:
             if agent.id == 'car':
                 len_dict['others'] = 1 
@@ -268,22 +278,27 @@ class VehiclePedestrianSensor:
                     (state_dict['car'][0][0][1],state_dict['car'][0][0][2],state_dict['car'][0][1][1],state_dict['car'][0][1][2]),
                     (state_dict['pedestrian'][0][0][1],state_dict['pedestrian'][0][0][2],state_dict['pedestrian'][0][1][1],state_dict['pedestrian'][0][1][2]),
                 )
-                # dist_list = []
-                # if state_dict['car'][0][0][0] < state_dict['pedestrian'][0][0][0]
-                # for a in range(2):
-                #     for b in range(2):
-                #         for c in range(2):
-                #             for d in range(2):
-                #                 dist = np.sqrt(
-                #                     (state_dict['car'][0][a][0] - state_dict['pedestrian'][0][b][0])**2+\
-                #                     (state_dict['car'][0][c][1] - state_dict['pedestrian'][0][d][1])**2
-                #                 )
-                #                 dist_list.append(dist)
                 cont['ego.dist'] = [
                     dist_min, dist_max
                 ]
-                # print(dist_min)
                 disc['ego.agent_mode'] = state_dict['car'][1][0]
+
+                cont['other.x'] = [
+                    state_dict['pedestrian'][0][0][1], state_dict['pedestrian'][0][1][1]
+                ]
+                cont['other.y'] = [
+                    state_dict['pedestrian'][0][0][2], state_dict['pedestrian'][0][1][2]
+                ]
+                cont['other.theta'] = [
+                    state_dict['pedestrian'][0][0][3], state_dict['pedestrian'][0][1][3]
+                ]
+                cont['other.v'] = [
+                    state_dict['pedestrian'][0][0][4], state_dict['pedestrian'][0][1][4]
+                ]
+                cont['other.dist'] = cont['ego.dist']
+                disc['other.agent_mode'] = state_dict['pedestrian'][1][0]
+
+
         return cont, disc, len_dict
 
 
