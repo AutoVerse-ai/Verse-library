@@ -7,7 +7,7 @@ from verse import BaseAgent, Scenario
 from verse.analysis.utils import wrap_to_pi 
 from verse.analysis.analysis_tree import TraceType, AnalysisTree 
 from verse.parser import ControllerIR
-from vehicle_controller import VehicleMode, PedestrainMode
+from vehicle_controller import VehicleMode, PedestrianMode
 from verse.analysis import AnalysisTreeNode, AnalysisTree, AnalysisTreeNodeType
 
 import copy 
@@ -18,7 +18,9 @@ def tree_safe(tree: AnalysisTree):
             return False 
     return True
 
-def verify_refine(init_car, init_ped, scenario: Scenario, time_horizon, time_step):
+def verify_refine(scenario: Scenario, time_horizon, time_step):
+    init_car = scenario.init_dict['car']
+    init_ped = scenario.init_dict['pedestrian']
     partition_depth = 0
     init_queue = [(init_car, init_ped, partition_depth)]
     res_list = []
@@ -26,10 +28,10 @@ def verify_refine(init_car, init_ped, scenario: Scenario, time_horizon, time_ste
         car_init, ped_init, partition_depth = init_queue.pop(0)
         print(f"######## {partition_depth}, {car_init[0][3]}, {car_init[1][3]}")
         scenario.set_init_single('car', car_init, (VehicleMode.Normal,))
-        scenario.set_init_single('pedestrain', ped_init, (PedestrainMode.Normal,))
+        scenario.set_init_single('pedestrian', ped_init, (PedestrianMode.Normal,))
         traces = scenario.verify(time_horizon, time_step)
         if not tree_safe(traces):
-            # Partition car and pedestrain initial state
+            # Partition car and pedestrian initial state
             # if partition_depth%3==0:
             #     car_x_init = (car_init[0][0] + car_init[1][0])/2
             #     car_init1 = copy.deepcopy(car_init)
@@ -40,9 +42,9 @@ def verify_refine(init_car, init_ped, scenario: Scenario, time_horizon, time_ste
             #     init_queue.append((car_init2, ped_init, partition_depth+1))
             # else:
             if car_init[1][3] - car_init[0][3] < 0.01 or partition_depth >= 10:
-                print('Threshold Reached. Stop Refining')
+                print('Threshold Reached. Scenario is UNSAFE.')
                 res_list.append(traces)
-                continue
+                break
             car_v_init = (car_init[0][3] + car_init[1][3])/2
             car_init1 = copy.deepcopy(car_init)
             car_init1[1][3] = car_v_init 
@@ -56,7 +58,7 @@ def verify_refine(init_car, init_ped, scenario: Scenario, time_horizon, time_ste
     
     return com_traces
 
-class PedestrainAgent(BaseAgent):
+class PedestrianAgent(BaseAgent):
     def __init__(
         self, 
         id, 
@@ -227,7 +229,7 @@ def get_extreme(rect1, rect2):
         )
     return dist_min, dist_max
 
-class VehiclePedestrainSensor:
+class VehiclePedestrianSensor:
     # The baseline sensor is omniscient. Each agent can get the state of all other agents
     def sense(self, agent: BaseAgent, state_dict, lane_map):
         len_dict = {}
@@ -243,8 +245,8 @@ class VehiclePedestrainSensor:
                 cont['ego.theta'] = state_dict['car'][0][3]
                 cont['ego.v'] = state_dict['car'][0][4]
                 cont['ego.dist'] = np.sqrt(
-                    (state_dict['car'][0][1]-state_dict['pedestrain'][0][1])**2+\
-                    (state_dict['car'][0][2]-state_dict['pedestrain'][0][2])**2
+                    (state_dict['car'][0][1]-state_dict['pedestrian'][0][1])**2+\
+                    (state_dict['car'][0][2]-state_dict['pedestrian'][0][2])**2
                 )
                 disc['ego.agent_mode'] = state_dict['car'][1][0]
         else:
@@ -264,17 +266,17 @@ class VehiclePedestrainSensor:
                 ]
                 dist_min, dist_max = get_extreme(
                     (state_dict['car'][0][0][1],state_dict['car'][0][0][2],state_dict['car'][0][1][1],state_dict['car'][0][1][2]),
-                    (state_dict['pedestrain'][0][0][1],state_dict['pedestrain'][0][0][2],state_dict['pedestrain'][0][1][1],state_dict['pedestrain'][0][1][2]),
+                    (state_dict['pedestrian'][0][0][1],state_dict['pedestrian'][0][0][2],state_dict['pedestrian'][0][1][1],state_dict['pedestrian'][0][1][2]),
                 )
                 # dist_list = []
-                # if state_dict['car'][0][0][0] < state_dict['pedestrain'][0][0][0]
+                # if state_dict['car'][0][0][0] < state_dict['pedestrian'][0][0][0]
                 # for a in range(2):
                 #     for b in range(2):
                 #         for c in range(2):
                 #             for d in range(2):
                 #                 dist = np.sqrt(
-                #                     (state_dict['car'][0][a][0] - state_dict['pedestrain'][0][b][0])**2+\
-                #                     (state_dict['car'][0][c][1] - state_dict['pedestrain'][0][d][1])**2
+                #                     (state_dict['car'][0][a][0] - state_dict['pedestrian'][0][b][0])**2+\
+                #                     (state_dict['car'][0][c][1] - state_dict['pedestrian'][0][d][1])**2
                 #                 )
                 #                 dist_list.append(dist)
                 cont['ego.dist'] = [
@@ -285,7 +287,7 @@ class VehiclePedestrainSensor:
         return cont, disc, len_dict
 
 
-def sample_init(init_dict):
+def sample_init(init_dict, num_sample=50):
     """
     TODO:   given the initial set,
             generate multiple initial points located in the initial set
@@ -296,7 +298,6 @@ def sample_init(init_dict):
     print(init_dict)
     ############## Your Code Start Here ##############
     sample_dict_list = []
-    num_sample = 50
 
     np.random.seed(2023)
     for i in range(num_sample):

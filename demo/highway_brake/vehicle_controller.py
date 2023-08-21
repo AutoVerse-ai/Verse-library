@@ -2,7 +2,7 @@ from enum import Enum, auto
 import copy
 from typing import List
 
-class PedestrainMode(Enum):
+class PedestrianMode(Enum):
     Normal=auto()
 
 class VehicleMode(Enum):

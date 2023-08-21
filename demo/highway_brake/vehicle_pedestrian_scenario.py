@@ -1,7 +1,7 @@
 from wsgiref.validate import PartialIteratorWrapper
-from mp0 import VehicleAgent, PedestrainAgent, VehiclePedestrainSensor, verify_refine, eval_velocity, sample_init
+from mp0 import VehicleAgent, PedestrianAgent, VehiclePedestrianSensor, verify_refine, eval_velocity, sample_init
 from verse import Scenario, ScenarioConfig
-from vehicle_controller import VehicleMode, PedestrainMode
+from vehicle_controller import VehicleMode, PedestrianMode
 
 from verse.plotter.plotter2D import *
 from verse.plotter.plotter3D_new import *
@@ -13,29 +13,32 @@ if __name__ == "__main__":
     script_dir = os.path.realpath(os.path.dirname(__file__))
     input_code_name = os.path.join(script_dir, "vehicle_controller.py")
     vehicle = VehicleAgent('car', file_name=input_code_name)
-    pedestrain = PedestrainAgent('pedestrain')
+    pedestrian = PedestrianAgent('pedestrian')
 
     scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False))
 
     scenario.add_agent(vehicle) 
-    scenario.add_agent(pedestrain)
-    scenario.set_sensor(VehiclePedestrainSensor())
+    scenario.add_agent(pedestrian)
+    scenario.set_sensor(VehiclePedestrianSensor())
+
+    init_car = [[-5,0,0,5,0],[5,0,0,10.0,0]]
+    init_pedestrian = [[140,-40,0,3,0],[160,-30,0,5,0]]
 
     scenario.set_init_single(
-        'car', [[-5,0,0,5,0],[5,0,0,10.0,0]],(VehicleMode.Normal,)
+        'car', init_car,(VehicleMode.Normal,)
     )
     scenario.set_init_single(
-        'pedestrain', [[140,-40,0,3,0],[160,-30,0,5,0]], (PedestrainMode.Normal,)
+        'pedestrian', init_pedestrian, (PedestrianMode.Normal,)
     )
 
     # # ----------- Simulate multi -------------
-    # init_dict_list= sample_init(scenario.init_dict)
-    # trace_list = scenario.simulate_multi(50, 0.5, init_dict_list=init_dict_list)
-    # fig = go.Figure()
-    # for trace in trace_list:
-    #     fig = simulation_tree_3d(trace, None, fig, 0,'time', 1,'x',2,'y',[0,1,2])
-    # fig.show()
-    # eval_velocity(trace_list, 'car')
+    init_dict_list= sample_init(scenario.init_dict, num_sample=50)
+    trace_list = scenario.simulate_multi(50, 0.5, init_dict_list=init_dict_list)
+    fig = go.Figure()
+    for trace in trace_list:
+        fig = simulation_tree_3d(trace, None, fig, 0,'time', 1,'x',2,'y',[0,1,2])
+    fig.show()
+    eval_velocity(trace_list, 'car')
     # # -----------------------------------------
 
     # ----------- verify old version ----------
@@ -54,7 +57,7 @@ if __name__ == "__main__":
     # -----------------------------------------
 
     # # ------------- Verify refine -------------
-    com_traces = verify_refine([[-5,0,0,5,0],[5,0,0,10.0,0]], [[140,-40,0,3,0],[160,-30,0,5,0]], scenario, 50, 0.5)
+    com_traces = verify_refine(scenario, 50, 0.5)
     # fig = go.Figure()
     # fig = reachtube_anime(traces, None, fig, 1, 2)
     # fig.show()
