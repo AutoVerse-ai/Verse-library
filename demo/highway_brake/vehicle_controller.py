@@ -2,10 +2,14 @@ from enum import Enum, auto
 import copy
 from typing import List
 
+class PedestrainMode(Enum):
+    Normal=auto()
+
 class VehicleMode(Enum):
     Normal = auto()
     Brake = auto()
     Accel = auto()
+    HardBrake = auto()
 
 class State:
     x: float 
@@ -20,10 +24,13 @@ class State:
 
 def decisionLogic(ego: State):
     output = copy.deepcopy(ego)
-    if ego.agent_mode == VehicleMode.Normal and ego.dist < 30:
+    if ego.agent_mode == VehicleMode.Normal and ego.dist < 35:
         output.agent_mode = VehicleMode.Brake 
 
-    if ego.agent_mode == VehicleMode.Brake and ego.dist> 35:
+    if (ego.agent_mode == VehicleMode.Normal or ego.agent_mode == VehicleMode.Brake) and ego.dist<15:
+        output.agent_mode = VehicleMode.HardBrake
+
+    if (ego.agent_mode == VehicleMode.Brake or ego.agent_mode == VehicleMode.HardBrake) and ego.dist> 50:
         output.agent_mode = VehicleMode.Accel
 
     assert ego.dist > 2.0
