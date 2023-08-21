@@ -10,7 +10,7 @@ from verse.analysis.analysis_tree import AnalysisTree, AnalysisTreeNode
 from verse.map.lane_map_3d import LaneMap_3d
 from verse.map.lane_segment_3d import StraightLane_3d, CircularLane_3d_v1
 
-colors = [
+color_array_def = [
     ["#CC0000", "#FF0000", "#FF3333", "#FF6666", "#FF9999", "#FFCCCC"],
     ["#CCCC00", "#FFFF00", "#FFFF33", "#FFFF66", "#FFFF99", "#FFE5CC"],
     ["#66CC00", "#80FF00", "#99FF33", "#B2FF66", "#CCFF99", "#FFFFCC"],
@@ -23,20 +23,6 @@ colors = [
     ["#CC00CC", "#FF00FF", "#FF33FF", "#FF66FF", "#FF99FF", "#FFCCFF"],
     ["#CC0066", "#FF007F", "#FF3399", "#FF66B2", "#FF99CC", "#FFCCE5"],
 ]
-scheme_dict = {
-    "red": 0,
-    "springgreen": 5,
-    "blue": 8,
-    "orange": 1,
-    "yellow": 2,
-    "yellowgreen": 3,
-    "lime": 4,
-    "cyan": 6,
-    "cyanblue": 7,
-    "purple": 9,
-    "magenta": 10,
-    "pink": 11,
-}
 
 
 def simulation_tree_3d(
@@ -44,16 +30,26 @@ def simulation_tree_3d(
     map=None,
     fig=go.Figure(),
     x_dim: int = 1,
+    x_title: str = None, 
     y_dim: int = 2,
+    y_title: str = None, 
     z_dim: int = 3,
+    z_title: str = None, 
     print_dim_list=None,
+    color_array=None,
     map_type="outline",
     sample_rate=1,
+    xrange=[],
+    yrange=[],
+    zrange=[],
 ):
     """It statically shows all the traces of the simulation."""
     if isinstance(root, AnalysisTree):
         root = root.root
     root = sample_trace(root, sample_rate)
+    if color_array is None:
+        color_array = color_array_def
+    num_theme = len(color_array)
     fig = draw_map_3d(map=map, fig=fig, fill_type=map_type)
     agent_list = list(root.agent.keys())
     # input check
@@ -62,28 +58,35 @@ def simulation_tree_3d(
     if print_dim_list is None:
         print_dim_list = range(0, num_dim)
 
-    scheme_list = list(scheme_dict.keys())
     i = 0
     for agent_id in agent_list:
         fig = simulation_tree_single_3d(
-            root, agent_id, fig, x_dim, y_dim, z_dim, scheme_list[i], print_dim_list
+            root, agent_id, fig, x_dim, y_dim, z_dim, color_array, i, print_dim_list
         )
-        i = (i + 1) % 12
+        i = (i + 1) % num_theme
 
     # fig.update_xaxes(title='x')
     # fig.update_yaxes(title='y')
     # fig.update_layout(legend_title_text='Agent list')
-    fig.update_layout(
-        scene=dict(
-            # xaxis = dict(nticks=4, range=[-100,100],),
-            # yaxis = dict(nticks=4, range=[-50,100],),
-            zaxis=dict(
-                nticks=4,
-                range=[-15, 15],
-            )
-        )
-    )
-    fig = update_style(fig)
+    # fig.update_layout(
+    #     scene=dict(
+    #         # xaxis = dict(nticks=4, range=[-100,100],),
+    #         # yaxis = dict(nticks=4, range=[-50,100],),
+    #         zaxis=dict(
+    #             nticks=4,
+    #             range=[-15, 15],
+    #         )
+    #     )
+    # )
+
+    if xrange:
+        fig.update_scenes(xaxis_range=xrange) 
+    if yrange:
+        fig.update_scenes(yaxis_range=yrange) 
+    if zrange:
+        fig.update_scenes(zaxis_range=zrange) 
+
+    fig = update_style(fig, x_title, y_title, z_title)
     return fig
 
 
@@ -92,20 +95,27 @@ def reachtube_tree_3d(
     map=None,
     fig=go.Figure(),
     x_dim: int = 1,
+    x_title: str = None, 
     y_dim: int = 2,
+    y_title: str = None, 
     z_dim: int = 3,
+    z_title: str = None, 
     print_dim_list=None,
+    color_array=None,
     map_type="outline",
     sample_rate=1,
-    combine_rect=None,
     xrange=[],
     yrange=[],
     zrange=[],
+    combine_rect=None,
 ):
     """It statically shows all the traces of the verfication."""
     if isinstance(root, AnalysisTree):
         root = root.root
     root = sample_trace(root, sample_rate)
+    if color_array is None:
+        color_array = color_array_def
+    num_theme = len(color_array)
     fig = draw_map_3d(map=map, fig=fig, fill_type=map_type)
     agent_list = list(root.agent.keys())
     # input check
@@ -114,31 +124,37 @@ def reachtube_tree_3d(
     if print_dim_list is None:
         print_dim_list = range(0, num_dim)
 
-    scheme_list = list(scheme_dict.keys())
     i = 0
     for agent_id in agent_list:
         fig = reachtube_tree_single_3d(
-            root, agent_id, fig, x_dim, y_dim, z_dim, scheme_list[i], print_dim_list, combine_rect
+            root, agent_id, fig, x_dim, y_dim, z_dim, color_array, i, print_dim_list, combine_rect
         )
-        i = (i + 1) % 12
+        i = (i + 1) % num_theme
 
-    fig.update_layout(
-        scene=dict(
-            xaxis=dict(
-                nticks=4,
-                range=xrange,
-            ),
-            yaxis=dict(
-                nticks=4,
-                range=yrange,
-            ),
-            zaxis=dict(
-                nticks=4,
-                range=zrange,
-            ),
-        )
-    )
-    fig = update_style(fig)
+    if xrange:
+        fig.update_scenes(xaxis_range=xrange) 
+    if yrange:
+        fig.update_scenes(yaxis_range=yrange) 
+    if zrange:
+        fig.update_scenes(zaxis_range=zrange) 
+
+    # fig.update_layout(
+    #     scene=dict(
+    #         xaxis=dict(
+    #             nticks=4,
+    #             range=xrange,
+    #         ),
+    #         yaxis=dict(
+    #             nticks=4,
+    #             range=yrange,
+    #         ),
+    #         zaxis=dict(
+    #             nticks=4,
+    #             range=zrange,
+    #         ),
+    #     )
+    # )
+    fig = update_style(fig, x_title, y_title, z_title)
     return fig
 
 
@@ -213,18 +229,22 @@ def simulation_tree_single_3d(
     x_dim: int = 1,
     y_dim: int = 2,
     z_dim: int = 3,
-    color=None,
+    color_array=None,
+    theme_id=None,
     print_dim_list=None,
 ):
     """It statically shows the simulation traces of one given agent."""
     if isinstance(root, AnalysisTree):
         root = root.root
+    if color_array is None:
+        color_array = color_array_def
+    num_theme = len(color_array)
     global color_cnt
     queue = [root]
     color_id = 0
-    if color == None:
-        color = list(scheme_dict.keys())[color_cnt]
-        color_cnt = (color_cnt + 1) % 12
+    if theme_id == None:
+        theme_id = color_cnt % num_theme
+        color_cnt = (color_cnt + 1) % num_theme
     start_list = []
     end_list = []
     count_dict = {}
@@ -252,8 +272,10 @@ def simulation_tree_single_3d(
                 y=trace[:, y_dim],
                 z=trace[:, z_dim],
                 mode="lines",
-                marker=dict(color=colors[scheme_dict[color]][color_id]),
-                line=dict(color=colors[scheme_dict[color]][color_id], width=18),
+                marker=dict(color=color_array[theme_id][color_id]),
+                line=dict(color=color_array[theme_id][color_id], 
+                        #   width=18
+                          ),
                 text=[
                     ["{:.2f}".format(trace[i, j]) for j in print_dim_list]
                     for i in range(trace.shape[0])
@@ -265,10 +287,27 @@ def simulation_tree_single_3d(
                 + str(round(end[0], 2))
                 + "-"
                 + str(count_dict[time]),
-                showlegend=True,
+                # showlegend=True,
+                showlegend=False,
             )
         )
-
+        if node.assert_hits != None and agent_id in node.assert_hits:
+            fig.add_trace(
+                go.Scatter3d(
+                    x=[trace[-1, x_dim]],
+                    y=[trace[-1, y_dim]],
+                    z=[trace[-1, y_dim]],
+                    mode="markers+text",
+                    text=["HIT:\n" + a for a in node.assert_hits[agent_id]],
+                    # textfont={"color": "grey"},
+                    marker={"size": 4, "color": "black"},
+                    #  legendgroup=agent_id,
+                    #  legendgrouptitle_text=agent_id,
+                    #  name=str(round(start[0], 2))+'-'+str(round(end[0], 2)) +
+                    #  '-'+str(count_dict[time])+'hit',
+                    showlegend=False,
+                )
+            )
         color_id = (color_id + 4) % 5
         queue += node.child
     # fig.update_layout(legend=dict(
@@ -286,33 +325,36 @@ def reachtube_tree_single_3d(
     x_dim: int = 1,
     y_dim: int = 2,
     z_dim: int = 3,
-    color=None,
+    color_array=None,
+    theme_id=None,
     print_dim_list=None,
     combine_rect=None,
 ):
     """It statically shows the verfication traces of one given agent."""
     if isinstance(root, AnalysisTree):
         root = root.root
+    if color_array is None:
+        color_array = color_array_def
+    num_theme = len(color_array)    
     global color_cnt
-    if color == None:
-        color = list(scheme_dict.keys())[color_cnt]
-        color_cnt = (color_cnt + 1) % 12
+    if theme_id == None:
+        theme_id = color_cnt % num_theme
+        color_cnt = (color_cnt + 1) % num_theme
     queue = [root]
     show_legend = True
-    fillcolor = colors[scheme_dict[color]][5]
-    linecolor = colors[scheme_dict[color]][4]
+    fillcolor = color_array[theme_id][5]
+    linecolor = color_array[theme_id][4]
+    i = [0, 3, 4, 7, 0, 6, 1, 7, 0, 5, 2, 7]
+    j = [1, 2, 5, 6, 2, 4, 3, 5, 4, 1, 6, 3]
+    k = [3, 0, 7, 4, 6, 0, 7, 1, 5, 0, 7, 2]
     while queue != []:
         node = queue.pop(0)
         traces = node.trace
         trace = np.array(traces[agent_id])
-        # print(trace)
         max_id = len(trace) - 1
         if combine_rect == None:
-            max_id = len(trace) - 1
             num_cube = 0
-            i = [0, 3, 4, 7, 0, 6, 1, 7, 0, 5, 2, 7]
-            j = [1, 2, 5, 6, 2, 4, 3, 5, 4, 1, 6, 3]
-            k = [3, 0, 7, 4, 6, 0, 7, 1, 5, 0, 7, 2]
+
             x_total = []
             y_total = []
             z_total = []
@@ -335,6 +377,14 @@ def reachtube_tree_single_3d(
                     j_total.append(j[n] + num_cube * 8)
                     k_total.append(k[n] + num_cube * 8)
                 num_cube += 1
+                fig.add_trace(go.Scatter3d(                    
+                    x=[px[0],px[1],px[1],px[0],px[0],px[0],px[1],px[1],px[1],px[1],px[1],px[1],px[0],px[0],px[0],px[0]],
+                    y=[py[0],py[0],py[1],py[1],py[0],py[0],py[0],py[0],py[0],py[1],py[1],py[1],py[1],py[1],py[1],py[0]],
+                    z=[pz[0],pz[0],pz[0],pz[0],pz[0],pz[1],pz[1],pz[0],pz[1],pz[1],pz[0],pz[1],pz[1],pz[0],pz[1],pz[1]],
+                    mode='lines',
+                    # name='',
+                    showlegend=False,
+                    line=dict(color= 'rgb(70,70,70)', width=0.1))  )
             fig.add_trace(
                 go.Mesh3d(
                     # vertices of cubes
@@ -347,11 +397,23 @@ def reachtube_tree_single_3d(
                     k=k_total,
                     name="y",
                     opacity=0.20,
-                    color=colors[scheme_dict[color]][1],
+                    color=color_array[theme_id][1],
                     flatshading=True,
                 )
             )
-
+            if node.assert_hits != None and agent_id in node.assert_hits:
+                fig.add_trace(
+                    go.Scatter3d(
+                        x=[trace[-1, x_dim]],
+                        y=[trace[-1, y_dim]],
+                        z=[trace[-1, z_dim]],
+                        mode="markers+text",
+                        text=["HIT:\n" + a for a in node.assert_hits[agent_id]],
+                        # textfont={"color": "grey"},
+                        marker={"size": 4, "color": "black"},
+                        showlegend=False,
+                    )
+                )
             # trace_x_odd = np.array([trace[i][x_dim]
             #                         for i in range(0, max_id, 2)])
             # trace_x_even = np.array([trace[i][x_dim]
@@ -370,9 +432,9 @@ def reachtube_tree_single_3d(
             #                            mode='lines',
             #                            #  opacity=0.5,
             #                            marker={
-            #                                'size': 1, 'color': colors[scheme_dict[color]][0]},
+            #                                'size': 1, 'color': color_array[theme_id][0]},
             #                            line={
-            #                                'width': 10, 'color': colors[scheme_dict[color]][0]},
+            #                                'width': 10, 'color': color_array[theme_id][0]},
             #                            showlegend=show_legend
             #                            ))
             # fig.add_trace(go.Scatter3d(x=trace_x_even,
@@ -431,7 +493,7 @@ def sample_trace(root, sample_rate: int = 1):
     return root
 
 
-def update_style(fig: go.Figure() = go.Figure()):
+def update_style(fig: go.Figure() = go.Figure(), x_title=None, y_title=None, z_title=None):
     # fig.update_traces(line={'width': 3})
     fig.update_layout(
         # paper_bgcolor="rgba(0,0,0,0)",
@@ -440,20 +502,40 @@ def update_style(fig: go.Figure() = go.Figure()):
     fig.update_layout(font={"size": 18})
     linewidth = 4
     gridwidth = 2
-    fig.update_yaxes(
-        showline=True,
-        linewidth=linewidth,
-        linecolor="Gray",
-        showgrid=True,
-        gridwidth=gridwidth,
-        gridcolor="LightGrey",
-    )
-    fig.update_xaxes(
-        showline=True,
-        linewidth=linewidth,
-        linecolor="Gray",
-        showgrid=True,
-        gridwidth=gridwidth,
-        gridcolor="LightGrey",
-    )
+    fig.update_layout(scene = dict(
+                        xaxis = dict(
+                        title=x_title if x_title is not None else None,
+                        gridcolor="white",
+                        showgrid=True,
+                        showbackground=True,
+                        zerolinecolor="white",),
+                        yaxis = dict(
+                        title=y_title if y_title is not None else None,
+                        gridcolor="white",
+                        showgrid=True,
+                        showbackground=True,
+                        zerolinecolor="white",),
+                        zaxis = dict(
+                        title=z_title if z_title is not None else None,
+                        gridcolor="white",
+                        showgrid=True,
+                        showbackground=True,
+                        zerolinecolor="white",),
+                        ))
+    # fig.update_yaxes(
+    #     showline=True,
+    #     linewidth=linewidth,
+    #     linecolor="Gray",
+    #     showgrid=True,
+    #     gridwidth=gridwidth,
+    #     gridcolor="LightGrey",
+    # )
+    # fig.update_xaxes(
+    #     showline=True,
+    #     linewidth=linewidth,
+    #     linecolor="Gray",
+    #     showgrid=True,
+    #     gridwidth=gridwidth,
+    #     gridcolor="LightGrey",
+    # )
     return fig
