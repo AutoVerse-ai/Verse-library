@@ -22,7 +22,7 @@ if __name__ == "__main__":
     scenario.set_sensor(VehiclePedestrianSensor())
 
     init_car = [[-5,-5,0,5,0],[5,5,0,10.0,0]]
-    init_pedestrian = [[140,-40,0,3,0],[150,-35,0,5,0]]
+    init_pedestrian = [[140,-55,0,3,0],[150,-50,0,5,0]]
 
     scenario.set_init_single(
         'car', init_car,(VehicleMode.Normal,)
@@ -33,7 +33,7 @@ if __name__ == "__main__":
 
     # # ----------- Simulate multi -------------
     init_dict_list= sample_init(scenario.init_dict, num_sample=50)
-    trace_list = scenario.simulate_multi(50, 0.5, init_dict_list=init_dict_list)
+    trace_list = scenario.simulate_multi(50, 0.1, init_dict_list=init_dict_list)
     fig = go.Figure()
     for trace in trace_list:
         fig = simulation_tree_3d(trace, None, fig, 0,'time', 1,'x',2,'y',[0,1,2])
@@ -57,7 +57,7 @@ if __name__ == "__main__":
     # -----------------------------------------
 
     # # ------------- Verify refine -------------
-    com_traces = verify_refine(scenario, 50, 0.5)
+    com_traces = verify_refine(scenario, 50, 0.1)
     # fig = go.Figure()
     # fig = reachtube_anime(traces, None, fig, 1, 2)
     # fig.show()
