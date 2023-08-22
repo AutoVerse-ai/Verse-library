@@ -19,33 +19,25 @@ def tree_safe(tree: AnalysisTree):
     return True
 
 def verify_refine(scenario: Scenario, time_horizon, time_step):
+    refine_depth = 10
     init_car = scenario.init_dict['car']
     init_ped = scenario.init_dict['pedestrian']
     partition_depth = 0
     init_queue = [(init_car, init_ped, partition_depth)]
     res_list = []
-    while init_queue!=[] and partition_depth < 20:
+    while init_queue!=[] and partition_depth < refine_depth:
         car_init, ped_init, partition_depth = init_queue.pop(0)
-        print(f"######## {partition_depth}, {car_init[0][3]}, {car_init[1][3]}")
+        print(f"######## {partition_depth}, car x, {car_init[0][0]}, {car_init[1][0]}, car v, {car_init[0][3]}, {car_init[1][3]}, ped x, {ped_init[0][0]}, {ped_init[1][0]}, ped y, {ped_init[0][1]}, {ped_init[1][1]}")
         scenario.set_init_single('car', car_init, (VehicleMode.Normal,))
         scenario.set_init_single('pedestrian', ped_init, (PedestrianMode.Normal,))
         traces = scenario.verify(time_horizon, time_step)
         if not tree_safe(traces):
             # Partition car and pedestrian initial state
-            if partition_depth%2!=0:
-                if car_init[1][0] - car_init[0][0] < 0.01 or partition_depth >= 20:
-                    print('Threshold Reached. Scenario is UNSAFE.')
-                    res_list.append(traces)
-                    break
-                car_x_init = (car_init[0][0] + car_init[1][0])/2
-                car_init1 = copy.deepcopy(car_init)
-                car_init1[1][0] = car_x_init 
-                init_queue.append((car_init1, ped_init, partition_depth+1))
-                car_init2 = copy.deepcopy(car_init)
-                car_init2[0][0] = car_x_init 
-                init_queue.append((car_init2, ped_init, partition_depth+1))
-            else:
-                if car_init[1][3] - car_init[0][3] < 0.01 or partition_depth >= 20:
+            if partition_depth%4!=3:
+                if car_init[1][3] - car_init[0][3] < 0.01:
+                    print("Stop refine car v")
+                    init_queue.append((car_init, ped_init, partition_depth+1))
+                elif partition_depth >= refine_depth:
                     print('Threshold Reached. Scenario is UNSAFE.')
                     res_list.append(traces)
                     break
@@ -56,6 +48,51 @@ def verify_refine(scenario: Scenario, time_horizon, time_step):
                 car_init2 = copy.deepcopy(car_init)
                 car_init2[0][3] = car_v_init 
                 init_queue.append((car_init2, ped_init, partition_depth+1))
+            elif partition_depth%4==3:
+                if car_init[1][0] - car_init[0][0] < 0.1:
+                    print("Stop refine car x")
+                    init_queue.append((car_init, ped_init, partition_depth+1)) 
+                elif partition_depth >= refine_depth:
+                    print('Threshold Reached. Scenario is UNSAFE.')
+                    res_list.append(traces)
+                    break
+                car_x_init = (car_init[0][0] + car_init[1][0])/2
+                car_init1 = copy.deepcopy(car_init)
+                car_init1[1][0] = car_x_init 
+                init_queue.append((car_init1, ped_init, partition_depth+1))
+                car_init2 = copy.deepcopy(car_init)
+                car_init2[0][0] = car_x_init 
+                init_queue.append((car_init2, ped_init, partition_depth+1))
+            elif False:
+                if ped_init[1][0] - ped_init[0][0] < 0.5:
+                    print("Stop refine pedestrian x")
+                    init_queue.append((ped_init, ped_init, partition_depth+1)) 
+                elif partition_depth >= refine_depth:
+                    print('Threshold Reached. Scenario is UNSAFE.')
+                    res_list.append(traces)
+                    break
+                ped_x_init = (ped_init[0][0] + ped_init[1][0])/2
+                ped_init1 = copy.deepcopy(ped_init)
+                ped_init1[1][0] = ped_x_init 
+                init_queue.append((car_init, ped_init1, partition_depth+1))
+                ped_init2 = copy.deepcopy(ped_init)
+                ped_init2[0][0] = ped_x_init 
+                init_queue.append((car_init, ped_init2, partition_depth+1))
+            elif False:
+                if ped_init[1][1] - ped_init[0][1] < 0.5:
+                    print("Stop refine pedestrian y")
+                    init_queue.append((ped_init, ped_init, partition_depth+1)) 
+                elif partition_depth >= refine_depth:
+                    print('Threshold Reached. Scenario is UNSAFE.')
+                    res_list.append(traces)
+                    break
+                ped_y_init = (ped_init[0][1] + ped_init[1][1])/2
+                ped_init1 = copy.deepcopy(ped_init)
+                ped_init1[1][1] = ped_y_init 
+                init_queue.append((car_init, ped_init1, partition_depth+1))
+                ped_init2 = copy.deepcopy(ped_init)
+                ped_init2[0][1] = ped_y_init 
+                init_queue.append((car_init, ped_init2, partition_depth+1))
         else:
             res_list.append(traces)
     com_traces = combine_tree(res_list)
