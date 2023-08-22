@@ -11,7 +11,7 @@ import copy
 if __name__ == "__main__":
     import os 
     script_dir = os.path.realpath(os.path.dirname(__file__))
-    input_code_name = os.path.join(script_dir, "vehicle_controller_base.py")
+    input_code_name = os.path.join(script_dir, "vehicle_controller.py")
     vehicle = VehicleAgent('car', file_name=input_code_name)
     pedestrian = PedestrianAgent('pedestrian')
 
@@ -39,15 +39,15 @@ if __name__ == "__main__":
     # fig.show()
 
     # # ----------- Simulate multi -------------
-    # init_dict_list= sample_init(scenario.init_dict, num_sample=50)
-    # trace_list = scenario.simulate_multi(50, 0.1,\
-    #      init_dict_list=init_dict_list)
-    # fig = go.Figure()
-    # for trace in trace_list:
-    #     fig = simulation_tree_3d(trace, None, fig,\
-    #                               0,'time', 1,'x',2,'y',[0,1,2])
-    # fig.show()
-    # eval_velocity(trace_list, 'car')
+    init_dict_list= sample_init(scenario.init_dict, num_sample=50)
+    trace_list = scenario.simulate_multi(50, 0.1,\
+         init_dict_list=init_dict_list)
+    fig = go.Figure()
+    for trace in trace_list:
+        fig = simulation_tree_3d(trace, None, fig,\
+                                  0,'time', 1,'x',2,'y',[0,1,2])
+    fig.show()
+    eval_velocity(trace_list, 'car')
     # # -----------------------------------------
 
     # ----------- verify old version ----------
@@ -66,9 +66,9 @@ if __name__ == "__main__":
     # -----------------------------------------
 
     # # ------------- Verify refine -------------
-    com_traces = verify_refine(scenario, 50, 0.1, 'R3')
-    fig = go.Figure()
-    fig = reachtube_tree_3d(com_traces, None, fig,\
-                             0,'time', 1,'x',2,'y',[0,1,2])
-    fig.show()
+    # com_traces = verify_refine(scenario, 50, 0.1, 'R3')
+    # fig = go.Figure()
+    # fig = reachtube_tree_3d(com_traces, None, fig,\
+    #                          0,'time', 1,'x',2,'y',[0,1,2])
+    # fig.show()
     # # -----------------------------------------
