@@ -114,6 +114,7 @@ class VehicleAgent(BaseAgent):
         self.accel_notbrake = accel_notbrake
         self.accel_hardbrake = accel_hardbrake
         self.speed = speed
+        self.vmax = 20
          
     @staticmethod
     def dynamic(t, state, u):
@@ -145,7 +146,7 @@ class VehicleAgent(BaseAgent):
             a = max(-self.accel_hardbrake, -v)
             # a = -50
         elif vehicle_mode == "Accel":
-            a = min(self.accel_notbrake, self.speed - v)
+            a = min(self.accel_notbrake, self.speed-v)
         else:
             raise ValueError(f"Invalid mode: {vehicle_mode}")
 
@@ -213,7 +214,7 @@ def get_extreme(rect1, rect2):
         dist_min = lb21 - ub11 
         dist_max = np.sqrt((lb21 - ub11)**2 + max((ub22-lb12)**2, (ub12-lb22)**2))
     elif right: 
-        dist_min = ub21 - lb11 
+        dist_min = lb11 - ub21 
         dist_max = np.sqrt((lb21 - ub11)**2 + max((ub22-lb12)**2, (ub12-lb22)**2))
     elif top: 
         dist_min = lb12 - ub22
