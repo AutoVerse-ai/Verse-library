@@ -11,7 +11,7 @@ import copy
 if __name__ == "__main__":
     import os 
     script_dir = os.path.realpath(os.path.dirname(__file__))
-    input_code_name = os.path.join(script_dir, "vehicle_controller.py")
+    input_code_name = os.path.join(script_dir, "vehicle_controller_base.py")
     vehicle = VehicleAgent('car', file_name=input_code_name)
     pedestrian = PedestrianAgent('pedestrian')
 
@@ -21,7 +21,7 @@ if __name__ == "__main__":
     scenario.add_agent(pedestrian)
     scenario.set_sensor(VehiclePedestrianSensor())
 
-    init_car = [[-5,-5,0,9,0],[5,5,0,10,0]]
+    init_car = [[-5,-5,0,5,0],[5,5,0,10,0]]
     init_pedestrian = [[140,-55,0,3,0],[150,-50,0,3,0]]
 
     scenario.set_init_single(
@@ -66,19 +66,9 @@ if __name__ == "__main__":
     # -----------------------------------------
 
     # # ------------- Verify refine -------------
-    com_traces = verify_refine(scenario, 50, 0.1)
-    # fig = go.Figure()
-    # fig = reachtube_anime(traces, None, fig, 1, 2)
-    # fig.show()
-    # fig = go.Figure()
-    # for traces in trace_list:
-    #     fig = go.Figure()
-    #     # fig = reachtube_tree(traces, None, fig, 0,1,[0,1],'lines', 'trace')
-    #     # fig = reachtube_tree(traces, None, fig, 0,2,[0,1],'lines', 'trace')
-    #     fig = reachtube_tree_3d(traces, None, fig, 0,'time', 1,'x',2,'y',[0,1,2])
-    #     fig.show()
-
+    com_traces = verify_refine(scenario, 50, 0.1, 'R3')
     fig = go.Figure()
-    fig = reachtube_tree_3d(com_traces, None, fig, 0,'time', 1,'x',2,'y',[0,1,2])
+    fig = reachtube_tree_3d(com_traces, None, fig,\
+                             0,'time', 1,'x',2,'y',[0,1,2])
     fig.show()
     # # -----------------------------------------
