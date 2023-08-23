@@ -13,7 +13,7 @@ from verse.analysis import AnalysisTreeNode, AnalysisTree, AnalysisTreeNodeType
 import copy 
 
 refine_profile = {
-    'R1': [3],
+    'R1': [0],
     'R2': [3,3,3,0],
     'R3': [3,3,3,0]
 }
@@ -24,13 +24,36 @@ def tree_safe(tree: AnalysisTree):
             return False 
     return True
 
-def verify_refine(scenario: Scenario, time_horizon, time_step, exp = 'R1'):
+def verify_refine(scenario: Scenario, time_horizon, time_step):
     refine_depth = 10
     init_car = scenario.init_dict['car']
     init_ped = scenario.init_dict['pedestrian']
     partition_depth = 0
-    init_queue = [(init_car, init_ped, partition_depth)]
+    if init_ped[1][0] - init_ped[0][0]>0.1:
+        exp = 'R3'
+    elif init_car[1][3] - init_car[0][3] > 0.1:
+        exp = 'R2'
+    else:
+        exp = 'R1'
     res_list = []
+    init_queue = []
+    if init_car[1][3]-init_car[0][3] > 0.05:
+        car_v_init_range = np.linspace(init_car[0][3], init_car[1][3], 33)
+    else:
+        car_v_init_range = [init_car[0][3], init_car[1][3]]
+    if init_car[1][0]-init_car[0][0] > 0.1:
+        car_x_init_range = np.linspace(init_car[0][0], init_car[1][0], 5)
+    else:
+        car_x_init_range = [init_car[0][0], init_car[1][0]]
+    for i in range(len(car_x_init_range)-1):
+        for j in range(len(car_v_init_range)-1):
+            tmp = copy.deepcopy(init_car)
+            tmp[0][0] = car_x_init_range[i]
+            tmp[1][0] = car_x_init_range[i+1]
+            tmp[0][3] = car_v_init_range[j]
+            tmp[1][3] = car_v_init_range[j+1]
+            init_queue.append((tmp, init_ped, partition_depth))
+    # init_queue = [(init_car, init_ped, partition_depth)]
     while init_queue!=[] and partition_depth < refine_depth:
         car_init, ped_init, partition_depth = init_queue.pop(0)
         print(f"######## {partition_depth}, car x, {car_init[0][0]}, {car_init[1][0]}, car v, {car_init[0][3]}, {car_init[1][3]}, ped x, {ped_init[0][0]}, {ped_init[1][0]}, ped y, {ped_init[0][1]}, {ped_init[1][1]}")
@@ -301,7 +324,7 @@ class VehiclePedestrianSensor:
         return cont, disc, len_dict
 
 
-def sample_init(init_dict, num_sample=50):
+def sample_init(scenario: Scenario, num_sample=50):
     """
     TODO:   given the initial set,
             generate multiple initial points located in the initial set
@@ -309,6 +332,7 @@ def sample_init(init_dict, num_sample=50):
             note that output should be formatted correctly and every point should be in inital set.
             refer the following sample code to write your code. 
     """
+    init_dict = scenario.init_dict
     print(init_dict)
     ############## Your Code Start Here ##############
     sample_dict_list = []
@@ -325,7 +349,8 @@ def sample_init(init_dict, num_sample=50):
 
     return sample_dict_list
 
-def eval_velocity(tree_list: List[AnalysisTree], agent_id):
+def eval_velocity(tree_list: List[AnalysisTree]):
+    agent_id = 'car'
     velo_list = []
     for tree in tree_list:
         assert agent_id in tree.root.init

@@ -257,7 +257,7 @@ def get_extreme(rect1, rect2):
 
 class VehiclePedestrianSensor:
     def __init__(self):
-        self.sensor_distance = 50
+        self.sensor_distance = 60
 
     # The baseline sensor is omniscient. Each agent can get the state of all other agents
     def sense(self, agent: BaseAgent, state_dict, lane_map):
@@ -278,17 +278,17 @@ class VehiclePedestrianSensor:
                     (state_dict['car'][0][1]-state_dict['pedestrian'][0][1])**2+\
                     (state_dict['car'][0][2]-state_dict['pedestrian'][0][2])**2
                 )
-                cont['ego.dist'] = dist
+                # cont['ego.dist'] = dist
                 if dist < self.sensor_distance:
-                    cont['ego.dist'] = dist
-                    cont['other.x'] = state_dict['pedestrian'][0][1]
-                    cont['other.y'] = state_dict['pedestrian'][0][2]
-                    cont['other.v'] = state_dict['pedestrian'][0][4]
+                    cont['other.dist'] = dist
+                    # cont['other.x'] = state_dict['pedestrian'][0][1]
+                    # cont['other.y'] = state_dict['pedestrian'][0][2]
+                    # cont['other.v'] = state_dict['pedestrian'][0][4]
                 else:
-                    cont['ego.dist'] = 1000
-                    cont['other.x'] = 1000
-                    cont['other.y'] = 1000
-                    cont['other.v'] = 1000
+                    cont['other.dist'] = 1000
+                    # cont['other.x'] = 1000
+                    # cont['other.y'] = 1000
+                    # cont['other.v'] = 1000
         else:
             if agent.id == 'car':
                 len_dict['others'] = 1 
@@ -308,40 +308,39 @@ class VehiclePedestrianSensor:
                 cont['ego.v'] = [
                     state_dict['car'][0][0][4], state_dict['car'][0][1][4]
                 ]
-                cont['ego.dist'] = [
+                cont['other.dist'] = [
                     dist_min, dist_max
                 ]
                 disc['ego.agent_mode'] = state_dict['car'][1][0]
                 if dist_min<self.sensor_distance:
-                    cont['ego.dist'] = [
+                    cont['other.dist'] = [
                         dist_min, dist_max
                     ]
-                    cont['other.x'] = [
-                        state_dict['pedestrian'][0][0][1], state_dict['pedestrian'][0][1][1]
-                    ]
-                    cont['other.y'] = [
-                        state_dict['pedestrian'][0][0][2], state_dict['pedestrian'][0][1][2]
-                    ]
-                    cont['other.v'] = [
-                        state_dict['pedestrian'][0][0][4], state_dict['pedestrian'][0][1][4]
-                    ]
+                    # cont['other.x'] = [
+                    #     state_dict['pedestrian'][0][0][1], state_dict['pedestrian'][0][1][1]
+                    # ]
+                    # cont['other.y'] = [
+                    #     state_dict['pedestrian'][0][0][2], state_dict['pedestrian'][0][1][2]
+                    # ]
+                    # cont['other.v'] = [
+                    #     state_dict['pedestrian'][0][0][4], state_dict['pedestrian'][0][1][4]
+                    # ]
                 else:
-                    cont['ego.dist'] = [
+                    cont['other.dist'] = [
                         1000, 1000
                     ]
-                    cont['other.x'] = [
-                        1000, 1000
-                    ]
-                    cont['other.y'] = [
-                        1000, 1000
-                    ]
-                    cont['other.v'] = [
-                        1000, 1000
-                    ]
+                    # cont['other.x'] = [
+                    #     1000, 1000
+                    # ]
+                    # cont['other.y'] = [
+                    #     1000, 1000
+                    # ]
+                    # cont['other.v'] = [
+                    #     1000, 1000
+                    # ]
 
 
         return cont, disc, len_dict
-
 
 def sample_init(scenario: Scenario, num_sample=50):
     """

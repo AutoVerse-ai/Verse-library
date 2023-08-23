@@ -11,7 +11,7 @@ import copy
 if __name__ == "__main__":
     import os 
     script_dir = os.path.realpath(os.path.dirname(__file__))
-    input_code_name = os.path.join(script_dir, "vehicle_controller_golden_R3.py")
+    input_code_name = os.path.join(script_dir, "vehicle_controller_base_R3.py")
     vehicle = VehicleAgent('car', file_name=input_code_name)
     pedestrian = PedestrianAgent('pedestrian')
 

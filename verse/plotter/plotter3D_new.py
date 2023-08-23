@@ -12,12 +12,12 @@ from verse.map.lane_segment_3d import StraightLane_3d, CircularLane_3d_v1
 
 color_array_def = [
     ["#CC0000", "#FF0000", "#FF3333", "#FF6666", "#FF9999", "#FFCCCC"],
+    ["#0066CC", "#0080FF", "#3399FF", "#66B2FF", "#99CCFF", "#CCE5FF"],
+    ["#00CCCC", "#00FFFF", "#33FFFF", "#66FFFF", "#99FFFF", "#CCFFE5"],
     ["#CCCC00", "#FFFF00", "#FFFF33", "#FFFF66", "#FFFF99", "#FFE5CC"],
     ["#66CC00", "#80FF00", "#99FF33", "#B2FF66", "#CCFF99", "#FFFFCC"],
     ["#00CC00", "#00FF00", "#33FF33", "#66FF66", "#99FF99", "#E5FFCC"],
     ["#00CC66", "#00FF80", "#33FF99", "#66FFB2", "#99FFCC", "#CCFFCC"],
-    ["#00CCCC", "#00FFFF", "#33FFFF", "#66FFFF", "#99FFFF", "#CCFFE5"],
-    ["#0066CC", "#0080FF", "#3399FF", "#66B2FF", "#99CCFF", "#CCE5FF"],
     ["#0000CC", "#0000FF", "#3333FF", "#6666FF", "#9999FF", "#CCCCFF"],
     ["#6600CC", "#7F00FF", "#9933FF", "#B266FF", "#CC99FF", "#E5CCFF"],
     ["#CC00CC", "#FF00FF", "#FF33FF", "#FF66FF", "#FF99FF", "#FFCCFF"],
@@ -27,7 +27,6 @@ color_array_def = [
 
 def simulation_tree_3d(
     root: Union[AnalysisTree, AnalysisTreeNode],
-    map=None,
     fig=go.Figure(),
     x_dim: int = 1,
     x_title: str = None, 
@@ -36,6 +35,7 @@ def simulation_tree_3d(
     z_dim: int = 3,
     z_title: str = None, 
     print_dim_list=None,
+    map=None,
     color_array=None,
     map_type="outline",
     sample_rate=1,
@@ -92,7 +92,6 @@ def simulation_tree_3d(
 
 def reachtube_tree_3d(
     root: Union[AnalysisTree, AnalysisTreeNode],
-    map=None,
     fig=go.Figure(),
     x_dim: int = 1,
     x_title: str = None, 
@@ -101,6 +100,7 @@ def reachtube_tree_3d(
     z_dim: int = 3,
     z_title: str = None, 
     print_dim_list=None,
+    map=None,
     color_array=None,
     map_type="outline",
     sample_rate=1,
@@ -274,7 +274,7 @@ def simulation_tree_single_3d(
                 mode="lines",
                 marker=dict(color=color_array[theme_id][color_id]),
                 line=dict(color=color_array[theme_id][color_id], 
-                        #   width=18
+                          width=18
                           ),
                 text=[
                     ["{:.2f}".format(trace[i, j]) for j in print_dim_list]
@@ -499,7 +499,7 @@ def update_style(fig: go.Figure() = go.Figure(), x_title=None, y_title=None, z_t
         # paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)"
     )
-    fig.update_layout(font={"size": 18})
+    fig.update_layout(font={"size": 14})
     linewidth = 4
     gridwidth = 2
     fig.update_layout(scene = dict(

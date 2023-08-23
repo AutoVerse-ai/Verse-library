@@ -24,11 +24,11 @@ class State:
 
 def decisionLogic(ego: State, other: State):
     output = copy.deepcopy(ego)
-    if ego.agent_mode == VehicleMode.Normal and ego.dist < 40:
-        output.agent_mode = VehicleMode.Brake 
+    if ego.agent_mode == VehicleMode.Normal and ego.dist < 30:
+        output.agent_mode = VehicleMode.HardBrake 
 
-    # if (ego.agent_mode == VehicleMode.Brake or ego.agent_mode == VehicleMode.HardBrake) and other.y>5:
-    #     output.agent_mode = VehicleMode.Accel
+    if (ego.agent_mode == VehicleMode.Brake or ego.agent_mode == VehicleMode.HardBrake) and ego.dist>50:
+        output.agent_mode = VehicleMode.Accel
 
     assert ego.dist > 2.0
 

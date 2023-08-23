@@ -16,10 +16,9 @@ class State:
     y: float 
     theta: float 
     v: float 
-    dist: float 
     agent_mode: VehicleMode 
 
-    def __init__(self, x, y, theta, v, dist, agent_mode: VehicleMode):
+    def __init__(self, x, y, theta, v, agent_mode: VehicleMode):
         pass 
 
 def decisionLogic(ego: State, other: State):
