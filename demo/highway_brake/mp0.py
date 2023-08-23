@@ -93,12 +93,12 @@ class PedestrianAgent(BaseAgent):
 
     @staticmethod
     def dynamic(t, state):
-        x, y, theta, v, _ = state
+        x, y, theta, v = state
         x_dot = 0
         y_dot = v
         theta_dot = 0
         v_dot = 0
-        return [x_dot, y_dot, theta_dot, v_dot, 0]    
+        return [x_dot, y_dot, theta_dot, v_dot]    
 
     def TC_simulate(
         self, mode: List[str], init, time_bound, time_step, lane_map = None
@@ -141,16 +141,16 @@ class VehicleAgent(BaseAgent):
          
     @staticmethod
     def dynamic(t, state, u):
-        x, y, theta, v, _ = state
+        x, y, theta, v = state
         delta, a = u
         x_dot = v * np.cos(theta + delta)
         y_dot = v * np.sin(theta + delta)
         theta_dot = v / 1.75 * np.sin(delta)
         v_dot = a
-        return [x_dot, y_dot, theta_dot, v_dot, 0]
+        return [x_dot, y_dot, theta_dot, v_dot]
     
     def action_handler(self, mode: List[str], state) -> Tuple[float, float]:
-        x, y, theta, v, _ = state
+        x, y, theta, v = state
         vehicle_mode,  = mode
         vehicle_pos = np.array([x, y])
         a = 0
@@ -256,6 +256,9 @@ def get_extreme(rect1, rect2):
     return dist_min, dist_max
 
 class VehiclePedestrianSensor:
+    def __init__(self):
+        self.sensor_distance = 60
+
     # The baseline sensor is omniscient. Each agent can get the state of all other agents
     def sense(self, agent: BaseAgent, state_dict, lane_map):
         len_dict = {}
@@ -270,20 +273,29 @@ class VehiclePedestrianSensor:
                 cont['ego.y'] = state_dict['car'][0][2]
                 cont['ego.theta'] = state_dict['car'][0][3]
                 cont['ego.v'] = state_dict['car'][0][4]
-                cont['ego.dist'] = np.sqrt(
+                disc['ego.agent_mode'] = state_dict['car'][1][0]
+                dist = np.sqrt(
                     (state_dict['car'][0][1]-state_dict['pedestrian'][0][1])**2+\
                     (state_dict['car'][0][2]-state_dict['pedestrian'][0][2])**2
                 )
-                disc['ego.agent_mode'] = state_dict['car'][1][0]
-                cont['other.x'] = state_dict['pedestrian'][0][1]
-                cont['other.y'] = state_dict['pedestrian'][0][2]
-                cont['other.theta'] = state_dict['pedestrian'][0][3]
-                cont['other.v'] = state_dict['pedestrian'][0][4]
-                cont['other.dist'] = cont['ego.dist']
-                disc['other.agent_mode'] = state_dict['pedestrian'][1][0]
+                # cont['ego.dist'] = dist
+                if dist < self.sensor_distance:
+                    cont['other.dist'] = dist
+                    # cont['other.x'] = state_dict['pedestrian'][0][1]
+                    # cont['other.y'] = state_dict['pedestrian'][0][2]
+                    # cont['other.v'] = state_dict['pedestrian'][0][4]
+                else:
+                    cont['other.dist'] = 1000
+                    # cont['other.x'] = 1000
+                    # cont['other.y'] = 1000
+                    # cont['other.v'] = 1000
         else:
             if agent.id == 'car':
                 len_dict['others'] = 1 
+                dist_min, dist_max = get_extreme(
+                    (state_dict['car'][0][0][1],state_dict['car'][0][0][2],state_dict['car'][0][1][1],state_dict['car'][0][1][2]),
+                    (state_dict['pedestrian'][0][0][1],state_dict['pedestrian'][0][0][2],state_dict['pedestrian'][0][1][1],state_dict['pedestrian'][0][1][2]),
+                )
                 cont['ego.x'] = [
                     state_dict['car'][0][0][1], state_dict['car'][0][1][1]
                 ]
@@ -296,33 +308,39 @@ class VehiclePedestrianSensor:
                 cont['ego.v'] = [
                     state_dict['car'][0][0][4], state_dict['car'][0][1][4]
                 ]
-                dist_min, dist_max = get_extreme(
-                    (state_dict['car'][0][0][1],state_dict['car'][0][0][2],state_dict['car'][0][1][1],state_dict['car'][0][1][2]),
-                    (state_dict['pedestrian'][0][0][1],state_dict['pedestrian'][0][0][2],state_dict['pedestrian'][0][1][1],state_dict['pedestrian'][0][1][2]),
-                )
-                cont['ego.dist'] = [
+                cont['other.dist'] = [
                     dist_min, dist_max
                 ]
                 disc['ego.agent_mode'] = state_dict['car'][1][0]
-
-                cont['other.x'] = [
-                    state_dict['pedestrian'][0][0][1], state_dict['pedestrian'][0][1][1]
-                ]
-                cont['other.y'] = [
-                    state_dict['pedestrian'][0][0][2], state_dict['pedestrian'][0][1][2]
-                ]
-                cont['other.theta'] = [
-                    state_dict['pedestrian'][0][0][3], state_dict['pedestrian'][0][1][3]
-                ]
-                cont['other.v'] = [
-                    state_dict['pedestrian'][0][0][4], state_dict['pedestrian'][0][1][4]
-                ]
-                cont['other.dist'] = cont['ego.dist']
-                disc['other.agent_mode'] = state_dict['pedestrian'][1][0]
+                if dist_min<self.sensor_distance:
+                    cont['other.dist'] = [
+                        dist_min, dist_max
+                    ]
+                    # cont['other.x'] = [
+                    #     state_dict['pedestrian'][0][0][1], state_dict['pedestrian'][0][1][1]
+                    # ]
+                    # cont['other.y'] = [
+                    #     state_dict['pedestrian'][0][0][2], state_dict['pedestrian'][0][1][2]
+                    # ]
+                    # cont['other.v'] = [
+                    #     state_dict['pedestrian'][0][0][4], state_dict['pedestrian'][0][1][4]
+                    # ]
+                else:
+                    cont['other.dist'] = [
+                        1000, 1000
+                    ]
+                    # cont['other.x'] = [
+                    #     1000, 1000
+                    # ]
+                    # cont['other.y'] = [
+                    #     1000, 1000
+                    # ]
+                    # cont['other.v'] = [
+                    #     1000, 1000
+                    # ]
 
 
         return cont, disc, len_dict
-
 
 def sample_init(scenario: Scenario, num_sample=50):
     """
@@ -352,12 +370,14 @@ def sample_init(scenario: Scenario, num_sample=50):
 def eval_velocity(tree_list: List[AnalysisTree]):
     agent_id = 'car'
     velo_list = []
+    unsafe_init = []
     for tree in tree_list:
         assert agent_id in tree.root.init
         leaves = list(filter(lambda node: node.child == [], tree.nodes))
         unsafe = list(filter(lambda node: node.assert_hits != None, leaves))
         if len(unsafe) != 0:
             print(f"unsafety detected in tree with init {tree.root.init}")
+            unsafe_init.append(tree.root.init)
         else:
             safe = np.array(list(filter(lambda node: node.assert_hits == None, leaves)))
             init_x = tree.root.init[agent_id][0]
@@ -369,8 +389,10 @@ def eval_velocity(tree_list: List[AnalysisTree]):
             print(f"max avg velocoty {max_velo} in tree with init {tree.root.init}")
     if len(tree_list) == len(velo_list):
         print(f"No unsafety detected! Overall average velocity is {sum(velo_list)/len(velo_list)}.")
+        return {sum(velo_list)/len(velo_list)}, 0, []
     else:
         print(f"Unsafety detected! Please update your DL.")
+        return None, float(len(unsafe_init))/float(len(tree_list)), unsafe_init
 
 def combine_tree(tree_list: List[AnalysisTree]):
     combined_trace={}
