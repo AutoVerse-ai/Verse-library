@@ -10,10 +10,6 @@ import ray, time
 
 from verse.analysis.analysis_tree import AnalysisTreeNode, AnalysisTree, TraceType
 from verse.analysis.dryvr import calc_bloated_tube, SIMTRACENUM
-from verse.analysis.mixmonotone import (
-    calculate_bloated_tube_mixmono_cont,
-    calculate_bloated_tube_mixmono_disc,
-)
 from verse.analysis.incremental import (
     ReachTubeCache,
     TubeCache,
@@ -39,6 +35,7 @@ class ReachabilityMethod(Enum):
     NEU_REACH = auto()
     MIXMONO_CONT = auto()
     MIXMONO_DISC = auto()
+    DRYVR_DISC = auto()
 
 
 @dataclass
@@ -254,6 +251,27 @@ class Verifier:
                     )
                     if config.incremental:
                         cache_tube_updates.extend(cache_tube_update)
+                elif consts.reachability_method == ReachabilityMethod.DRYVR_DISC:
+                    from verse.analysis.dryvr_disc import calc_bloated_tube_dryvr
+                    bloating_method = 'PW'
+                    if 'bloating_method' in params:
+                        bloating_method = params['bloating_method']
+                    init = inits[0]
+                    if isinstance(init, np.ndarray):
+                        init = init.tolist()
+                    cur_bloated_tube = calc_bloated_tube_dryvr(
+                        mode,
+                        init,
+                        remain_time,
+                        consts.time_step,
+                        node.agent[agent_id].TC_simulate,
+                        bloating_method, 
+                        100,
+                        SIMTRACENUM,
+                        lane_map = consts.lane_map
+                    )
+                    if isinstance(cur_bloated_tube, np.ndarray):
+                        cur_bloated_tube = cur_bloated_tube.tolist()
                 elif consts.reachability_method == ReachabilityMethod.NEU_REACH:
                     # pylint: disable=E0401
                     from verse.analysis.NeuReach.NeuReach_onestep_rect import postCont
@@ -268,6 +286,9 @@ class Verifier:
                         params,
                     )
                 elif consts.reachability_method == ReachabilityMethod.MIXMONO_CONT:
+                    from verse.analysis.mixmonotone import (
+                        calculate_bloated_tube_mixmono_cont,
+                    )
                     cur_bloated_tube = calculate_bloated_tube_mixmono_cont(
                         mode,
                         inits,
@@ -278,6 +299,9 @@ class Verifier:
                         consts.lane_map,
                     )
                 elif consts.reachability_method == ReachabilityMethod.MIXMONO_DISC:
+                    from verse.analysis.mixmonotone import (
+                        calculate_bloated_tube_mixmono_disc,
+                    )
                     cur_bloated_tube = calculate_bloated_tube_mixmono_disc(
                         mode,
                         inits,
