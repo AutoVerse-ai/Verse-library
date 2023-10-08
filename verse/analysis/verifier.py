@@ -256,6 +256,9 @@ class Verifier:
                     bloating_method = 'PW'
                     if 'bloating_method' in params:
                         bloating_method = params['bloating_method']
+                    traces = None
+                    if 'traces' in params:
+                        traces = params['traces']                   
                     init = inits[0]
                     if isinstance(init, np.ndarray):
                         init = init.tolist()
@@ -268,7 +271,8 @@ class Verifier:
                         bloating_method, 
                         100,
                         SIMTRACENUM,
-                        lane_map = consts.lane_map
+                        lane_map = consts.lane_map,
+                        traces = traces
                     )
                     if isinstance(cur_bloated_tube, np.ndarray):
                         cur_bloated_tube = cur_bloated_tube.tolist()
