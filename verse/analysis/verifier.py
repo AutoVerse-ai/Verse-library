@@ -258,7 +258,11 @@ class Verifier:
                         bloating_method = params['bloating_method']
                     traces = None
                     if 'traces' in params:
-                        traces = params['traces']                   
+                        traces = params['traces']     
+                    if 'sim_trace_num' in params:
+                        sim_trace_num = params['sim_trace_num']
+                    else:
+                        sim_trace_num = SIMTRACENUM              
                     init = inits[0]
                     if isinstance(init, np.ndarray):
                         init = init.tolist()
@@ -270,7 +274,7 @@ class Verifier:
                         node.agent[agent_id].TC_simulate,
                         bloating_method, 
                         100,
-                        SIMTRACENUM,
+                        sim_trace_num,
                         lane_map = consts.lane_map,
                         traces = traces
                     )
