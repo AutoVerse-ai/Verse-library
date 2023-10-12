@@ -404,6 +404,10 @@ class Simulator:
             start = timeit.default_timer()
             if len(self.simulation_queue) > 0:
                 node, later = self.simulation_queue.pop(0)
+                # Check height
+                if node.height >= max_height-1:
+                    print("max depth reached")
+                    break
                 # pp(("start sim", node.start_time, {a: (*node.mode[a], *node.init[a]) for a in node.mode}))
                 remain_time = round(time_horizon - node.start_time, 10)
                 if remain_time <= 0:
@@ -494,9 +498,9 @@ class Simulator:
         # Perform BFS through the simulation tree to loop through all possible transitions
         while simulation_queue != []:
             node: AnalysisTreeNode = simulation_queue.pop(0)
-            if node.height >= max_height:
+            if node.height >= max_height-1:
                 print("max depth reached")
-                continue
+                break
             # continue if we are at the depth limit
 
             pp(

@@ -523,6 +523,10 @@ class Verifier:
             if len(self.verification_queue) > 0:
                 # print([node.id for node in verification_queue])
                 node, later = self.verification_queue.pop(0)
+                # check height
+                if node.height >= max_height-1:
+                    print("max depth reached")
+                    break
                 num_transitions += 1
                 # pp(("start ver", node.start_time, {a: (*node.mode[a], *node.init[a]) for a in node.mode}))
                 remain_time = round(time_horizon - node.start_time, 10)

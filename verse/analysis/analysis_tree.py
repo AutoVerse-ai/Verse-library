@@ -534,6 +534,27 @@ class AnalysisTree:
                 count += 1
         return count
 
+    # get all the leaf nodes
+    def get_leaf_nodes(self, root):
+        leafs = []
+        self.collect_leaf_nodes(root, leafs)
+        return leafs
+
+    # helper method
+    def collect_leaf_nodes(self, node, leafs):
+        if node is not None:
+            if len(node.children) == 0:
+                leafs.append(node)
+            for n in node.children:
+                self.collect_leaf_nodes(n, leafs)
+
+    # get the height of the tree
+    def height(self, root):
+        if not root.child:
+            return 1
+
+        else:
+            return 1 + max(self.height(x) for x in root.child)
 
 def first_transitions(tree: AnalysisTree) -> Dict[str, float]:  # id, start time
     """Collects the time when each agent first transitions for a AnalysisTree. Returns a dict
