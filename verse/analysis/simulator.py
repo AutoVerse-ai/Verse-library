@@ -201,7 +201,8 @@ class Simulator:
         remain_time: float,
         consts: SimConsts,
     ) -> Tuple[int, int, List[AnalysisTreeNode], Dict[str, TraceType], list]:
-        print(f"node {node.id} start: {node.start_time}")
+        if config.print_level == 1:
+            print(f"node {node.id} start: {node.start_time}")
         # print(f"node id: {node.id}")
         cache_updates = []
         for agent_id in node.agent:
@@ -231,7 +232,7 @@ class Simulator:
                 new_cache, paths_to_sim = to_simulate(old_node.agent, node.agent, cached_segments)
 
         asserts, transitions, transition_idx = Simulator.get_transition_simulate(
-            new_cache, paths_to_sim, node, consts.lane_map, consts.sensor, consts.agent_dict
+            config, new_cache, paths_to_sim, node, consts.lane_map, consts.sensor, consts.agent_dict
         )
         # pp(("transitions:", transition_idx, transitions))
 
@@ -602,6 +603,7 @@ class Simulator:
 
     @staticmethod
     def get_transition_simulate(
+        config: "ScenarioConfig",
         cache: Dict[str, CachedSegment],
         paths: PathDiffs,
         node: AnalysisTreeNode,
@@ -727,7 +729,8 @@ class Simulator:
             if len(all_asserts) > 0:
                 return all_asserts, dict(transitions), idx
             if len(satisfied_guard) > 0:
-                print(len(satisfied_guard))
+                if config.print_level == 1:
+                    print(len(satisfied_guard))
                 for agent_idx, dest, next_init, paths in satisfied_guard:
                     assert isinstance(paths, list)
                     dest = tuple(dest)

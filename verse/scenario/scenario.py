@@ -43,6 +43,8 @@ class ScenarioConfig:
     """Enable parallelization. Uses the Ray library. Could be slower for small scenarios."""
     try_local: bool = False
     """Heuristic. When enabled, try to use the local thread when some results are cached."""
+    print_level: int = 1
+    """When print_level == 1, print all information. When print_level == 0, print nothing."""
 
 
 class Scenario:
@@ -227,16 +229,9 @@ class Scenario:
             type=AnalysisTreeNodeType.SIM_TRACE,
             ndigits=10,
         )
-        tree = self.simulator.simulate(
-            root,
-            self.sensor,
-            time_horizon,
-            time_step,
-            max_height,
-            self.map,
-            len(self.past_runs),
-            self.past_runs,
-        )
+        self.simulate = self.simulator.simulate(root, self.sensor, time_horizon, time_step, max_height, self.map,
+                                                len(self.past_runs), self.past_runs, )
+        tree = self.simulate
         self.past_runs.append(tree)
         return tree
 

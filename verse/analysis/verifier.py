@@ -216,9 +216,10 @@ class Verifier:
         params={},
     ) -> Tuple[int, int, List[AnalysisTreeNode], Dict[str, TraceType], list]:
         # t = timeit.default_timer()
-        print(f"node {node.id} start: {node.start_time}")
-        # print(f"node id: {node.id}")
-        print(node.mode)
+        if config.print_level == 1:
+            print(f"node {node.id} start: {node.start_time}")
+            # print(f"node id: {node.id}")
+            print(node.mode)
         cache_trans_tube_updates = []
         cache_tube_updates = []
         if max_height == None:
@@ -306,7 +307,7 @@ class Verifier:
 
         # Get all possible transitions to next mode
         asserts, all_possible_transitions = Verifier.get_transition_verify_opt(
-            new_cache, paths_to_sim, node, consts.lane_map, consts.sensor
+            config, new_cache, paths_to_sim, node, consts.lane_map, consts.sensor
         )
         node.assert_hits = asserts
 
@@ -642,7 +643,7 @@ class Verifier:
 
     @staticmethod
     def get_transition_verify_opt(
-        cache: Dict[str, CachedRTTrans], paths: PathDiffs, node: AnalysisTreeNode, track_map, sensor
+        config: "ScenarioConfig", cache: Dict[str, CachedRTTrans], paths: PathDiffs, node: AnalysisTreeNode, track_map, sensor
     ) -> Tuple[
         Optional[Dict[str, List[str]]],
         Optional[Dict[str, List[Tuple[str, List[str], List[float]]]]],
@@ -816,8 +817,10 @@ class Verifier:
                         if not eval_expr(a.cond):
                             if combine_len == 1:
                                 label = a.label if a.label != None else f"<assert {i}>"
-                                print(f'assert hit for {agent_id}: "{label}"')
-                                print(idx)
+                                if config.print_level == 1:
+                                    print(f'assert hit for {agent_id}: "{label}"')
+                                    print("index", idx)
+                                    print("start_time", node.start_time)
                                 asserts[agent_id].append(label)
                             else:
                                 new_len = int(np.ceil(combine_len / reduction_rate))
@@ -935,6 +938,7 @@ class Verifier:
         for agent in reset_dict:
             for reset_idx in reset_dict[agent]:
                 for dest in reset_dict[agent][reset_idx]:
+                    #output.x output.vx
                     reset_data = tuple(map(list, zip(*reset_dict[agent][reset_idx][dest])))
                     paths = [r[-1] for r in reset_data[-1]]
                     transition = (agent, node.mode[agent], dest, *reset_data[:-1], paths)
@@ -943,9 +947,13 @@ class Verifier:
                     dest_mode = node.get_mode(agent, dest)
                     dest_track = node.get_track(agent, dest)
                     if dest_track == track_map.h(src_track, src_mode, dest_mode):
-                        print(count)
+                        if config.print_level == 1:
+                            print(count)
                         count += 1
-                        print(agent, src_track, src_mode, dest_mode, "->", dest_track)
+                        if config.print_level == 1:
+                            print(agent, src_track, src_mode, "->", dest_mode, dest_track)
+                            print(reset_dict[agent][reset_idx][dest][0])
+                            print("start_time: ", node.start_time)
                         # print(unparse(paths[0].cond_veri))
                         possible_transitions.append(transition)
                         # print(transition[4])
@@ -966,7 +974,6 @@ class Verifier:
         rect = []
 
         agent_state, agent_mode, agent_static = all_agent_state[agent.id]
-
         dest = copy.deepcopy(agent_mode)
         possible_dest = [[elem] for elem in dest]
         ego_type = find(agent.decision_logic.args, lambda a: a.name == EGO).typ
