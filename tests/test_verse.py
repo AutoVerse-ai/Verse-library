@@ -5,7 +5,6 @@
 import unittest
 from ball_bounce_test import ball_bounce_test
 from highway_test import highway_test
-from tests.m2_2c5n_test import m2_2c5n_test
 from verse import BaseAgent
 from verse.analysis.analysis_tree import AnalysisTreeNodeType
 
