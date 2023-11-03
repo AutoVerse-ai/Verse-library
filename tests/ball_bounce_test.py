@@ -1,4 +1,3 @@
-from tests.test_controller import ball_controller2
 from verse.plotter.plotter2D import *
 from verse.agents.example_agent.ball_agent import BallAgent
 from verse.map.example_map.simple_map2 import SimpleMap3

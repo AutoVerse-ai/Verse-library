@@ -7,6 +7,7 @@ import numpy as np
 import warnings
 import ast
 import ray, time
+from verse.parser import unparse
 
 from verse.analysis.analysis_tree import AnalysisTreeNode, AnalysisTree, TraceType
 from verse.analysis.dryvr import calc_bloated_tube, SIMTRACENUM
@@ -951,8 +952,11 @@ class Verifier:
                             print(count)
                         count += 1
                         if config.print_level == 1:
-                            print(agent, src_track, src_mode, "->", dest_mode, dest_track)
-                            print(reset_dict[agent][reset_idx][dest][0])
+                            print(agent, src_mode, src_track, "->", dest_mode, dest_track)
+                            # print(reset_dict[agent][reset_idx][dest][0])
+                            modepath = reset_dict[agent][reset_idx][dest][0][2][4]
+                            print("cond_veri", unparse(modepath.cond_veri))
+                            print("val_veri", unparse(modepath.val_veri))
                             print("start_time: ", node.start_time)
                         # print(unparse(paths[0].cond_veri))
                         possible_transitions.append(transition)
