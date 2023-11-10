@@ -201,7 +201,7 @@ class Simulator:
         remain_time: float,
         consts: SimConsts,
     ) -> Tuple[int, int, List[AnalysisTreeNode], Dict[str, TraceType], list]:
-        if config.print_level == 1:
+        if config.print_level >= 1:
             print(f"node {node.id} start: {node.start_time}")
         # print(f"node id: {node.id}")
         cache_updates = []
@@ -729,7 +729,7 @@ class Simulator:
             if len(all_asserts) > 0:
                 return all_asserts, dict(transitions), idx
             if len(satisfied_guard) > 0:
-                if config.print_level == 1:
+                if config.print_level >= 1:
                     print(len(satisfied_guard))
                 for agent_idx, dest, next_init, paths in satisfied_guard:
                     assert isinstance(paths, list)

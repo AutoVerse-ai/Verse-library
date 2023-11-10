@@ -218,6 +218,7 @@ class Verifier:
     ) -> Tuple[int, int, List[AnalysisTreeNode], Dict[str, TraceType], list]:
         # t = timeit.default_timer()
         if config.print_level >= 1:
+            print("=============================================================")
             print(f"node {node.id} start: {node.start_time}")
             # print(f"node id: {node.id}")
             print(node.mode)
@@ -816,7 +817,7 @@ class Verifier:
 
                     if eval_expr(pre_expr):
                         if not eval_expr(a.cond):
-                            if combine_len >= 1:
+                            if combine_len == 1:
                                 label = a.label if a.label != None else f"<assert {i}>"
                                 if config.print_level >= 1:
                                     print(f'assert hit for {agent_id}: "{label}"')
@@ -948,17 +949,14 @@ class Verifier:
                     dest_mode = node.get_mode(agent, dest)
                     dest_track = node.get_track(agent, dest)
                     if dest_track == track_map.h(src_track, src_mode, dest_mode):
-                        if config.print_level >=2 :
+                        if config.print_level >= 2:
                             print(count)
                         count += 1
                         if config.print_level >= 2:
                             print(agent, src_mode, src_track, "->", dest_mode, dest_track)
-                            # print(reset_dict[agent][reset_idx][dest][0])
-                            modepath = reset_dict[agent][reset_idx][dest][0][2][4]
-                            print("cond_veri", unparse(modepath.cond_veri))
-                            print("val_veri", unparse(modepath.val_veri))
                             print("start_time: ", node.start_time)
-                        # print(unparse(paths[0].cond_veri))
+                            print("cond_veri", unparse(paths[0].cond_veri))
+                            print("val_veri", unparse(paths[0].val_veri))
                         possible_transitions.append(transition)
                         # print(transition[4])
         # Return result
