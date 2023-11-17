@@ -529,7 +529,7 @@ class Verifier:
                 # check height
                 if node.height >= max_height-1:
                     print("max depth reached")
-                    break
+                    continue
                 num_transitions += 1
                 # pp(("start ver", node.start_time, {a: (*node.mode[a], *node.init[a]) for a in node.mode}))
                 remain_time = round(time_horizon - node.start_time, 10)

@@ -202,6 +202,7 @@ class Simulator:
         consts: SimConsts,
     ) -> Tuple[int, int, List[AnalysisTreeNode], Dict[str, TraceType], list]:
         if config.print_level >= 1:
+            print("=============================================================")
             print(f"node {node.id} start: {node.start_time}")
         # print(f"node id: {node.id}")
         cache_updates = []
@@ -232,7 +233,7 @@ class Simulator:
                 new_cache, paths_to_sim = to_simulate(old_node.agent, node.agent, cached_segments)
 
         asserts, transitions, transition_idx = Simulator.get_transition_simulate(
-            config, new_cache, paths_to_sim, node, consts.lane_map, consts.sensor, consts.agent_dict
+            new_cache, paths_to_sim, node, consts.lane_map, consts.sensor, consts.agent_dict, config.print_level
         )
         # pp(("transitions:", transition_idx, transitions))
 
@@ -408,7 +409,7 @@ class Simulator:
                 # Check height
                 if node.height >= max_height-1:
                     print("max depth reached")
-                    break
+                    continue
                 # pp(("start sim", node.start_time, {a: (*node.mode[a], *node.init[a]) for a in node.mode}))
                 remain_time = round(time_horizon - node.start_time, 10)
                 if remain_time <= 0:
@@ -501,7 +502,7 @@ class Simulator:
             node: AnalysisTreeNode = simulation_queue.pop(0)
             if node.height >= max_height-1:
                 print("max depth reached")
-                break
+                continue
             # continue if we are at the depth limit
 
             pp(
@@ -603,13 +604,13 @@ class Simulator:
 
     @staticmethod
     def get_transition_simulate(
-        config: "ScenarioConfig",
         cache: Dict[str, CachedSegment],
         paths: PathDiffs,
         node: AnalysisTreeNode,
         track_map: LaneMap,
         sensor,
         agent_dict,
+        print_level: int
     ) -> Tuple[
         Optional[Dict[str, List[str]]],
         Optional[Dict[str, List[Tuple[str, List[str], List[float]]]]],
@@ -729,7 +730,7 @@ class Simulator:
             if len(all_asserts) > 0:
                 return all_asserts, dict(transitions), idx
             if len(satisfied_guard) > 0:
-                if config.print_level >= 1:
+                if print_level >= 1:
                     print(len(satisfied_guard))
                 for agent_idx, dest, next_init, paths in satisfied_guard:
                     assert isinstance(paths, list)
@@ -739,7 +740,7 @@ class Simulator:
                     dest_mode = node.get_mode(agent_idx, dest)
                     dest_track = node.get_track(agent_idx, dest)
                     if dest_track == track_map.h(src_track, src_mode, dest_mode):
-                        if config.print_level >= 2:
+                        if print_level >= 2 and len(paths) > 0:
                             print(agent, src_mode, src_track, "->", dest_mode, dest_track)
                             print("start_time: ", node.start_time)
                             print("cond_veri", unparse(paths[0].cond_veri))
@@ -848,23 +849,6 @@ class Simulator:
                     transitions[agent_idx].append((agent_idx, dest, next_init, paths))
                 return all_asserts, dict(transitions), idx
             if len(satisfied_guard) > 0:
-                # # if config.print_level >= 1:
-                # print(len(satisfied_guard))
-                # for agent_idx, dest, next_init, paths in satisfied_guard:
-                #     assert isinstance(paths, list)
-                #     dest = tuple(dest)
-                #     src_mode = node.get_mode(agent_idx, node.mode[agent_idx])
-                #     src_track = node.get_track(agent_idx, node.mode[agent_idx])
-                #     dest_mode = node.get_mode(agent_idx, dest)
-                #     dest_track = node.get_track(agent_idx, dest)
-                #     if dest_track == track_map.h(src_track, src_mode, dest_mode):
-                #         # if config.print_level >= 1:
-                #         print(agent_idx, src_mode, src_track, "->", dest_mode, dest_track)
-                #         print(paths)
-                #         # print("start_time: ", node.start_time)
-                #         # print("cond_veri", unparse(paths[0].cond_veri))
-                #         # print("val_veri", unparse(paths[0].val_veri))
-                #         transitions[agent_idx].append((agent_idx, dest, next_init, paths))
                 break
             # Convert output to asserts, transition and idx
         for agent_idx, dest, next_init, paths in satisfied_guard:

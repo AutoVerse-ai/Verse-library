@@ -44,7 +44,7 @@ class ScenarioConfig:
     try_local: bool = False
     """Heuristic. When enabled, try to use the local thread when some results are cached."""
     print_level: int = 1
-    """When print_level == 1, print all information. When print_level == 0, print nothing."""
+    """Adjust print_level from 0 - 2 to print different information."""
 
 
 class Scenario:
@@ -229,9 +229,16 @@ class Scenario:
             type=AnalysisTreeNodeType.SIM_TRACE,
             ndigits=10,
         )
-        self.simulate = self.simulator.simulate(root, self.sensor, time_horizon, time_step, max_height, self.map,
-                                                len(self.past_runs), self.past_runs, )
-        tree = self.simulate
+        tree = self.simulator.simulate(
+            root,
+            self.sensor,
+            time_horizon,
+            time_step,
+            max_height,
+            self.map,
+            len(self.past_runs),
+            self.past_runs,
+        )
         self.past_runs.append(tree)
         return tree
 
