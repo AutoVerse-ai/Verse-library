@@ -43,6 +43,8 @@ class ScenarioConfig:
     """Enable parallelization. Uses the Ray library. Could be slower for small scenarios."""
     try_local: bool = False
     """Heuristic. When enabled, try to use the local thread when some results are cached."""
+    print_level: int = 1
+    """Adjust print_level from 0 - 2 to print different information."""
 
 
 class Scenario:
