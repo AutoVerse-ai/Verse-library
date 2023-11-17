@@ -739,6 +739,11 @@ class Simulator:
                     dest_mode = node.get_mode(agent_idx, dest)
                     dest_track = node.get_track(agent_idx, dest)
                     if dest_track == track_map.h(src_track, src_mode, dest_mode):
+                        if config.print_level >= 2:
+                            print(agent, src_mode, src_track, "->", dest_mode, dest_track)
+                            print("start_time: ", node.start_time)
+                            print("cond_veri", unparse(paths[0].cond_veri))
+                            print("val_veri", unparse(paths[0].val_veri))
                         transitions[agent_idx].append((agent_idx, dest, next_init, paths))
                 break
         transitions = {aid: dedup(v, lambda p: p[1]) for aid, v in transitions.items()}
@@ -843,6 +848,23 @@ class Simulator:
                     transitions[agent_idx].append((agent_idx, dest, next_init, paths))
                 return all_asserts, dict(transitions), idx
             if len(satisfied_guard) > 0:
+                # # if config.print_level >= 1:
+                # print(len(satisfied_guard))
+                # for agent_idx, dest, next_init, paths in satisfied_guard:
+                #     assert isinstance(paths, list)
+                #     dest = tuple(dest)
+                #     src_mode = node.get_mode(agent_idx, node.mode[agent_idx])
+                #     src_track = node.get_track(agent_idx, node.mode[agent_idx])
+                #     dest_mode = node.get_mode(agent_idx, dest)
+                #     dest_track = node.get_track(agent_idx, dest)
+                #     if dest_track == track_map.h(src_track, src_mode, dest_mode):
+                #         # if config.print_level >= 1:
+                #         print(agent_idx, src_mode, src_track, "->", dest_mode, dest_track)
+                #         print(paths)
+                #         # print("start_time: ", node.start_time)
+                #         # print("cond_veri", unparse(paths[0].cond_veri))
+                #         # print("val_veri", unparse(paths[0].val_veri))
+                #         transitions[agent_idx].append((agent_idx, dest, next_init, paths))
                 break
             # Convert output to asserts, transition and idx
         for agent_idx, dest, next_init, paths in satisfied_guard:
