@@ -590,7 +590,7 @@ class Verifier:
                         if cached != None:
                             cached_trans_tubes[agent_id] = cached
                         # if incremental and DRYVR, check cache tube first
-                        if agent_id not in node.trace and reachability_method == "DRYVR":
+                        if agent_id not in node.trace and reachability_method == ReachabilityMethod.DRYVR:
                             # uncertain_param = node.uncertain_param[agent_id]
                             # CachedTube.tube
                             cur_bloated_tube, miss_seg_idx_list = self.check_cache_bloated_tube(
