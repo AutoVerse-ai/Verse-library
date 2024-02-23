@@ -30,21 +30,14 @@ class State:
 def decisionLogic(ego: State, track_map):
     output = copy.deepcopy(ego)
 
-    if ego.s == 0 and ego.t >= 2: #we're on the left side
+    if ego.s == 0 and ego.t >= 1: #we're on the left side
         output.agent_mode = AgentMode.Right #go right
         output.t = 0
-    elif ego.s == 1 and ego.t >= 2: #we're on the right side
+    elif ego.s == 1 and ego.t >= 1: #we're on the right side
         output.agent_mode = AgentMode.Left #go left
         output.t = 0
-    '''
-    if ego.s == -1 and ego.agent_mode == AgentMode.Left and ego.t >= 5:
-        output.t = 0
-        output.agent_mode = AgentMode.Right
-    elif ego.s == 1 and ego.agent_mode == AgentMode.Right and ego.t >= 5:
-        output.agent_mode = AgentMode.Left
-        output.t = 0
-    '''
-    assert ego.x >= -2 and ego.x <= 17
+        
+    assert (ego.x-14)**2 + (ego.y-14)**2 >= 10**2 and (ego.x-14)**2 + (ego.y-14)**2 <= 14**2
         
     return output
 

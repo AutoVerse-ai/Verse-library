@@ -280,8 +280,14 @@ class CircularLane(AbstractLane):
     def local_coordinates(self, position: np.ndarray) -> Tuple[float, float]:
         delta = position - self.center
         phi = np.arctan2(delta[1], delta[0])
+        wrap = (wrap_to_pi(phi - self.start_phase))
+        #if(wrap <= 0):
         phi = self.start_phase + wrap_to_pi(phi - self.start_phase)
+        if(wrap > 0):
+            #print("hi")
+            print(phi) 
         r = np.linalg.norm(delta)
+        # longitudinal = (phi - self.start_phase) * self.radius
         longitudinal = self.direction * (phi - self.start_phase) * self.radius
         lateral = self.direction * (self.radius - r)
         return longitudinal, lateral

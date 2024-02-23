@@ -27,12 +27,17 @@ class Lane:
         seg = None
         for seg_idx, segment in enumerate(self.segment_list):
             logitudinal, lateral = segment.local_coordinates(position)
+            #if(logitudinal > 37.5):
+            #print(logitudinal)
             is_on = 0 - Lane.COMPENSATE <= logitudinal < segment.length
             if is_on:
                 if lateral < min_lateral:
                     idx = seg_idx
                     seg = segment
                     min_lateral = lateral
+        if seg is None:
+            print("here")
+            segment.local_coordinates(position)
         return idx, seg
 
     def get_heading(self, position: np.ndarray) -> float:
