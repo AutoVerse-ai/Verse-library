@@ -194,8 +194,6 @@ def TC_simulate(
     trace[1:, 0] = [round(i * time_step, 10) for i in range(num_points)]
     trace[0, 1:] = init
     for i in range(num_points):
-        if i==300:
-            print("stop")
         steering, a = car_action_handler(mode, init, lane_map)
         r = ode(car_dynamics)
         r.set_initial_value(init).set_f_params([steering, a])
