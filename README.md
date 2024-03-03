@@ -85,7 +85,9 @@ In the proceedings <i>Computer Aided Verification (CAV),</i> LNCS vol 13964, pag
 Lin Song, Yangge Li, Sheng Cheng, Pan Zhao, Sayan Mitra, Naira Hovakimyan
 In the <i>Work in Progress Session of International Conference on Cyber-Physical Systems (WiP-ICCPS),</i> San Antonio, Tx, 2023.
 
-<b> Parallel and incremental verification of hybrid automata with Ray and Verse.</b>
+<b> [Parallel and incremental verification of hybrid automata with Ray and Verse](https://link.springer.com/chapter/10.1007/978-3-031-45329-8_5)</b>
 Haoqing Zhu, Yangge Li, Keyi Shen, and Sayan Mitra.
-To appear in the proceedings of  21st Intl. <i>Symposium on Automated Technologies for Verification and Analysis (ATVA)</i>, 2023.
+In the proceedings of  21st Intl. <i>Symposium on Automated Technologies for Verification and Analysis (ATVA)</i>, 2023.
 
+<b> [Parallelization and incremental algorithms in the verse hybrid system verification library](https://www.ideals.illinois.edu/items/127392)</b>
+Haoqing Zhu, Masters thesis, University of Illinois at Urbana-Champaign, May 2023.
