@@ -205,7 +205,8 @@ class StraightLane(AbstractLane):
     def local_coordinates(self, position: np.ndarray) -> Tuple[float, float]:
         delta = position - self.start
         longitudinal = np.dot(delta, self.direction)
-        lateral = np.dot(delta, self.direction_lateral)
+        #changed
+        lateral = -1 * np.dot(delta, self.direction_lateral)
         return float(longitudinal), float(lateral)
 
     @classmethod
@@ -279,19 +280,15 @@ class CircularLane(AbstractLane):
 
     def local_coordinates(self, position: np.ndarray) -> Tuple[float, float]:
         delta = position - self.center
-        phi = np.arctan2(delta[1], delta[0])
-        wrap = (wrap_to_pi(phi - self.start_phase))
-        #if(wrap <= 0):
-        phi = self.start_phase + wrap_to_pi(phi - self.start_phase)
         r = np.linalg.norm(delta)
-        # longitudinal = (phi - self.start_phase) * self.radius
+        phi = np.arctan2(delta[1], delta[0])
         phase_diff = wrap_to_pi(phi-self.start_phase)
         if self.direction<0 and phase_diff > 0:
             phase_diff -= np.pi*2 
         elif self.direction>0 and phase_diff <0:
             phase_diff += np.pi*2
         longitudinal = self.direction * phase_diff * self.radius
-        lateral = self.direction * (self.radius - r)
+        lateral = (self.radius - r)
         return longitudinal, lateral
 
     @classmethod
