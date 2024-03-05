@@ -1,4 +1,5 @@
 # Example agent.
+from re import L
 from typing import Tuple, List
 
 import numpy as np
@@ -7,6 +8,30 @@ from scipy.integrate import odeint
 from verse.agents import BaseAgent
 from verse.map import LaneMap
 from verse.parser import ControllerIR
+
+class LaubLoomisAgent(BaseAgent):
+    def __init__(self, id, code = None, file_name = None):
+        self.decision_logic: ControllerIR = ControllerIR.empty()
+        self.id = id
+        self.init_cont = None 
+        self.init_disc = None
+        self.static_parameters = None 
+        self.uncertain_parameters = None
+
+    def dynamics(self, x, t):
+        x1, x2, x3,\
+        x4, x5, x6,\
+        x7 = x 
+
+        dx1 = 1.4*x3-0.9*x1 
+        dx2 = 2.5*x5-1.5*x2 
+        dx3 = 0.6*x7-0.8*x2*x3 
+        dx4 = 2-1.3*x3*x4 
+        dx5 = 0.7*x1-x4*x5 
+        dx6 = 0.3*x1-3.1*x6 
+        dx7 = 1.8*x6-1.5*x2*x7  
+
+        return [dx1,dx2,dx3,dx4,dx5,dx6,dx7]
 
 class QuadrotorAgent(BaseAgent):
     def __init__(self, id, code = None, file_name = None):
@@ -57,12 +82,3 @@ class QuadrotorAgent(BaseAgent):
         du1 = 0 
 
         return [dx1,dx2,dx3,dx4,dx5,dx6,dx7,dx8,dx9,dx10,dx11,dx12,du1]
-
-    def TC_simulate(self, mode, initialSet, time_horizon, time_step, map=None):
-        y0 = initialSet 
-        t = np.round(np.arange(0.0, time_horizon+time_step/2, time_step), 8)
-        trace = odeint(func = self.dynamics, y0 = y0, t = t)
-        t = t.reshape((-1,1))
-        trace = np.hstack((t, trace))
-        return trace
-
