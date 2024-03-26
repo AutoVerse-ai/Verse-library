@@ -87,7 +87,7 @@ class BaseAgent:
         """
         y0 = initialSet 
         t = np.round(np.arange(0.0, time_horizon+time_step/2, time_step), 8)
-        trace = odeint(func = self.dynamics, y0 = y0, t = t)
+        trace = odeint(func = self.dynamics, y0 = y0, t = t, tfirst=True)
         t = t.reshape((-1,1))
         trace = np.hstack((t, trace))
         return trace

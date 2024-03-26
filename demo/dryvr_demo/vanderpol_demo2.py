@@ -25,7 +25,7 @@ if __name__ == "__main__":
             tuple([AgentMode.Default]),
         ],
     )
-    scenario.config.reachability_method = "NeuReach"
+    # scenario.config.reachability_method = "NeuReach"
     traces = scenario.verify(
         7,
         0.05,

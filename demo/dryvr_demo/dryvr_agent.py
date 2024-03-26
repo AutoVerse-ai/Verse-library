@@ -18,7 +18,7 @@ class LaubLoomisAgent(BaseAgent):
         self.static_parameters = None 
         self.uncertain_parameters = None
 
-    def dynamics(self, x, t):
+    def dynamics(self, t, x):
         x1, x2, x3,\
         x4, x5, x6,\
         x7 = x 
@@ -42,7 +42,7 @@ class QuadrotorAgent(BaseAgent):
         self.static_parameters = None 
         self.uncertain_parameters = None
 
-    def dynamics(self, x, t):
+    def dynamics(self, t, x):
         x1, x2, x3,\
         x4, x5, x6,\
         x7, x8, x9,\
