@@ -56,14 +56,15 @@ def pack_env(
             other = arg.name
             if other in packed:
                 other_keys, other_vals = tuple(map(list, zip(*packed[other].items())))
-                env[other] = list(
-                    map(
-                        lambda v: SimpleNamespace(**{k: v for k, v in zip(other_keys, v)}),
-                        zip(*other_vals),
-                    )
-                )
                 if not arg.is_list:
-                    env[other] = packed[other][0]
+                    env[other] = SimpleNamespace(**packed[other])
+                else:
+                    env[other] = list(
+                        map(
+                            lambda v: SimpleNamespace(**{k: v for k, v in zip(other_keys, v)}),
+                            zip(*other_vals),
+                        )
+                    )
             else:
                 if arg.is_list:
                     env[other] = []
@@ -235,9 +236,21 @@ class Simulator:
         asserts, transitions, transition_idx = Simulator.get_transition_simulate(
             new_cache, paths_to_sim, node, consts.lane_map, consts.sensor, consts.agent_dict, config.print_level
         )
-        # pp(("transitions:", transition_idx, transitions))
-
         node.assert_hits = asserts
+        
+        # pp(("transitions:", transition_idx, transitions))
+        if not config.unsafe_continue and asserts != None:
+            idx = transition_idx
+            for agent in node.agent:
+                node.trace[agent] = node.trace[agent][:idx]
+            return (
+                node.id,
+                later,
+                [], 
+                node.trace,
+                cache_updates
+            )
+
         # pp(("next init:", {a: trace[transition_idx] for a, trace in node.trace.items()}))
 
         # truncate the computed trajectories from idx and store the content after truncate
