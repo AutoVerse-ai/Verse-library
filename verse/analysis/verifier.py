@@ -340,7 +340,7 @@ class Verifier:
                 # pp(("to sim", new_cache.keys(), len(paths_to_sim)))
 
         # Get all possible transitions to next mode
-        asserts, all_possible_transitions = Verifier.get_transition_verify_opt(
+        asserts, all_possible_transitions = Verifier.get_transition_verify(
             config, new_cache, paths_to_sim, node, consts.lane_map, consts.sensor
         )
         node.assert_hits = asserts
@@ -674,6 +674,215 @@ class Verifier:
         self.num_transitions = num_transitions
 
         return self.reachtube_tree
+
+    @staticmethod
+    def get_transition_verify(
+        config: "ScenarioConfig", cache: Dict[str, CachedRTTrans], paths: PathDiffs, node: AnalysisTreeNode, track_map, sensor
+    ) -> Tuple[
+        Optional[Dict[str, List[str]]], 
+        Optional[Dict[str, List[Tuple[str, List[str], List[float]]]]]
+    ]:
+        # For each agent
+        agent_guard_dict = defaultdict(list)
+        cached_guards = defaultdict(list)
+        min_trans_ind = None
+        cached_trans = defaultdict(list)
+        agent_dict = node.agent
+
+        if not cache:
+            paths = [(agent, p) for agent in node.agent.values() for p in agent.decision_logic.paths]
+        else:
+
+            # _transitions = [trans.transition for seg in cache.values() for trans in seg.transitions]
+            _transitions = [(aid, trans) for aid, seg in cache.items() for trans in seg.transitions if reach_trans_suit(trans.inits, node.init)]
+            # pp(("cached trans", len(_transitions)))
+            if len(_transitions) > 0:
+                min_trans_ind = min([t.transition for _, t in _transitions])
+                # TODO: check for asserts
+                cached_trans = [(aid, tran.mode, tran.dest, tran.reset, tran.reset_idx, tran.paths) for aid, tran in dedup(_transitions, lambda p: (p[0], p[1].mode, p[1].dest)) if tran.transition == min_trans_ind]
+                if len(paths) == 0:
+                    # print(red("full cache"))
+                    return None, cached_trans
+
+                path_transitions = defaultdict(int)
+                for seg in cache.values():
+                    for tran in seg.transitions:
+                        for p in tran.paths:
+                            path_transitions[p.cond] = max(path_transitions[p.cond], tran.transition)
+                for agent_id, segment in cache.items():
+                    agent = node.agent[agent_id]
+                    if len(agent.decision_logic.args) == 0:
+                        continue
+                    state_dict = {aid: (node.trace[aid][0], node.mode[aid], node.static[aid]) for aid in node.agent}
+
+                    agent_paths = dedup([p for tran in segment.transitions for p in tran.paths], lambda i: (i.var, i.cond, i.val))
+                    for path in agent_paths:
+                        cont_var_dict_template, discrete_variable_dict, length_dict = sensor.sense(
+                            agent, state_dict, track_map)
+                        reset = (path.var, path.val_veri)
+                        guard_expression = GuardExpressionAst([path.cond_veri])
+
+                        cont_var_updater = guard_expression.parse_any_all_new(
+                            cont_var_dict_template, discrete_variable_dict, length_dict)
+                        Verifier.apply_cont_var_updater(
+                            cont_var_dict_template, cont_var_updater)
+                        guard_can_satisfied = guard_expression.evaluate_guard_disc(
+                            agent, discrete_variable_dict, cont_var_dict_template, track_map)
+                        if not guard_can_satisfied:
+                            continue
+                        cached_guards[agent_id].append((path, guard_expression, cont_var_updater, copy.deepcopy(discrete_variable_dict), reset, path_transitions[path.cond]))
+
+        # for aid, trace in node.trace.items():
+        #     if len(trace) < 2:
+        #         pp(("weird state", aid, trace))
+        for agent, path in paths:
+            if len(agent.decision_logic.args) == 0:
+                continue
+            agent_id = agent.id
+            state_dict = {aid: (node.trace[aid][0:2], node.mode[aid], node.static[aid]) for aid in node.agent}
+            cont_var_dict_template, discrete_variable_dict, length_dict = sensor.sense(
+                agent, state_dict, track_map)
+            # TODO-PARSER: Get equivalent for this function
+            # Construct the guard expression
+            guard_expression = GuardExpressionAst([path.cond_veri])
+
+            cont_var_updater = guard_expression.parse_any_all_new(
+                cont_var_dict_template, discrete_variable_dict, length_dict)
+            Verifier.apply_cont_var_updater(
+                cont_var_dict_template, cont_var_updater)
+            guard_can_satisfied = guard_expression.evaluate_guard_disc(
+                agent, discrete_variable_dict, cont_var_dict_template, track_map)
+            if not guard_can_satisfied:
+                continue
+            agent_guard_dict[agent_id].append(
+                (guard_expression, cont_var_updater, copy.deepcopy(discrete_variable_dict), path))
+
+        trace_length = int(min(len(v) for v in node.trace.values()) // 2)
+        # pp(("trace len", trace_length, {a: len(t) for a, t in node.trace.items()}))
+        guard_hits = []
+        guard_hit = False
+        for idx in range(trace_length):
+            if min_trans_ind != None and idx >= min_trans_ind:
+                return None, cached_trans
+            any_contained = False
+            hits = []
+            state_dict = {aid: (node.trace[aid][idx*2:idx*2+2], node.mode[aid], node.static[aid]) for aid in node.agent}
+
+            asserts = defaultdict(list)
+            for agent_id in agent_dict.keys():
+                agent: BaseAgent = agent_dict[agent_id]
+                if len(agent.decision_logic.args) == 0:
+                    continue
+                agent_state, agent_mode, agent_static = state_dict[agent_id]
+                # if np.array(agent_state).ndim != 2:
+                #     pp(("weird state", agent_id, agent_state))
+                agent_state = agent_state[1:]
+                cont_vars, disc_vars, len_dict = sensor.sense(agent, state_dict, track_map)
+                resets = defaultdict(list)
+                # Check safety conditions
+                for i, a in enumerate(agent.decision_logic.asserts_veri):
+                    pre_expr = a.pre
+
+                    def eval_expr(expr):
+                        ge = GuardExpressionAst([copy.deepcopy(expr)])
+                        cont_var_updater = ge.parse_any_all_new(cont_vars, disc_vars, len_dict)
+                        Verifier.apply_cont_var_updater(cont_vars, cont_var_updater)
+                        sat = ge.evaluate_guard_disc(agent, disc_vars, cont_vars, track_map)
+                        if sat:
+                            sat = ge.evaluate_guard_hybrid(agent, disc_vars, cont_vars, track_map)
+                            if sat:
+                                sat, contained = ge.evaluate_guard_cont(agent, cont_vars, track_map)
+                                sat = sat and contained
+                        return sat
+                    if eval_expr(pre_expr):
+                        if not eval_expr(a.cond):
+                            label = a.label if a.label != None else f"<assert {i}>"
+                            print(f"assert hit for {agent_id}: \"{label}\"")
+                            print(idx)
+                            asserts[agent_id].append(label)
+                if agent_id in asserts:
+                    continue
+                if agent_id not in agent_guard_dict:
+                    continue
+
+                unchecked_cache_guards = [g[:-1] for g in cached_guards[agent_id] if g[-1] < idx]     # FIXME: off by 1?
+                for guard_expression, continuous_variable_updater, discrete_variable_dict, path in agent_guard_dict[agent_id] + unchecked_cache_guards:
+                    assert isinstance(path, ModePath)
+                    new_cont_var_dict = copy.deepcopy(cont_vars)
+                    one_step_guard: GuardExpressionAst = copy.deepcopy(guard_expression)
+
+                    Verifier.apply_cont_var_updater(new_cont_var_dict, continuous_variable_updater)
+                    guard_can_satisfied = one_step_guard.evaluate_guard_hybrid(
+                        agent, discrete_variable_dict, new_cont_var_dict, track_map)
+                    if not guard_can_satisfied:
+                        continue
+                    guard_satisfied, is_contained = one_step_guard.evaluate_guard_cont(
+                        agent, new_cont_var_dict, track_map)
+                    any_contained = any_contained or is_contained
+                    # TODO: Can we also store the cont and disc var dict so we don't have to call sensor again?
+                    if guard_satisfied:
+                        reset_expr = ResetExpression((path.var, path.val_veri))
+                        resets[reset_expr.var].append(
+                            (reset_expr, discrete_variable_dict,
+                             new_cont_var_dict, guard_expression.guard_idx, path)
+                        )
+                # Perform combination over all possible resets to generate all possible real resets
+                combined_reset_list = list(itertools.product(*resets.values()))
+                if len(combined_reset_list) == 1 and combined_reset_list[0] == ():
+                    continue
+                for i in range(len(combined_reset_list)):
+                    # Compute reset_idx
+                    reset_idx = []
+                    for reset_info in combined_reset_list[i]:
+                        reset_idx.append(reset_info[3])
+                    # a list of reset expression
+                    hits.append((agent_id, tuple(reset_idx), combined_reset_list[i]))
+            if len(asserts) > 0:
+                return (asserts, idx), None
+            if hits != []:
+                guard_hits.append((hits, state_dict, idx))
+                guard_hit = True
+            elif guard_hit:
+                break
+            if any_contained:
+                break
+
+        reset_dict = {}  # defaultdict(lambda: defaultdict(list))
+        for hits, all_agent_state, hit_idx in guard_hits:
+            for agent_id, reset_idx, reset_list in hits:
+                # TODO: Need to change this function to handle the new reset expression and then I am done
+                dest_list, reset_rect = Verifier.apply_reset(node.agent[agent_id], reset_list, all_agent_state, track_map)
+                # pp(("dests", dest_list, *[astunparser.unparse(reset[-1].val_veri) for reset in reset_list]))
+                if agent_id not in reset_dict:
+                    reset_dict[agent_id] = {}
+                if not dest_list:
+                    warnings.warn(
+                        f"Guard hit for mode {node.mode[agent_id]} for agent {agent_id} without available next mode")
+                    dest_list.append(None)
+                if reset_idx not in reset_dict[agent_id]:
+                    reset_dict[agent_id][reset_idx] = {}
+                for dest in dest_list:
+                    if dest not in reset_dict[agent_id][reset_idx]:
+                        reset_dict[agent_id][reset_idx][dest] = []
+                    reset_dict[agent_id][reset_idx][dest].append((reset_rect, hit_idx, reset_list[-1]))
+
+        possible_transitions = []
+        # Combine reset rects and construct transitions
+        for agent in reset_dict:
+            for reset_idx in reset_dict[agent]:
+                for dest in reset_dict[agent][reset_idx]:
+                    reset_data = tuple(map(list, zip(*reset_dict[agent][reset_idx][dest])))
+                    paths = [r[-1] for r in reset_data[-1]]
+                    transition = (agent, node.mode[agent],dest, *reset_data[:-1], paths)
+                    src_mode = node.get_mode(agent, node.mode[agent])
+                    src_track = node.get_track(agent, node.mode[agent])
+                    dest_mode = node.get_mode(agent, dest)
+                    dest_track = node.get_track(agent, dest)
+                    if dest_track == track_map.h(src_track, src_mode, dest_mode):
+                        possible_transitions.append(transition)
+                        print(transition[4])
+        # Return result
+        return None, possible_transitions
 
     @staticmethod
     def get_transition_verify_opt(

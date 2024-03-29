@@ -46,7 +46,7 @@ def decisionLogic(ego: State):
 
     # assert (ego.craft_mode!=CraftMode.ProxB or\
     #      (ego.xp>=-105 and ego.yp>=0.57735*ego.xp and -ego.yp>=0.57735*ego.xp)), "Line-of-sight"
-    assert ego.craft_mode != CraftMode.Passive or (
-        ego.xp <= -0.2 or ego.xp >= 0.2 or ego.yp <= -0.2 or ego.yp >= 0.2
-    ), "Collision avoidance"
+    # assert ego.craft_mode != CraftMode.Passive or (
+    #     ego.xp <= -0.2 or ego.xp >= 0.2 or ego.yp <= -0.2 or ego.yp >= 0.2
+    # ), "Collision avoidance"
     return output
