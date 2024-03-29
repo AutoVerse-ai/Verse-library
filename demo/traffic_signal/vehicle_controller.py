@@ -25,7 +25,7 @@ class State:
 
 def decisionLogic(ego: State, other: State):
     output = copy.deepcopy(ego)
-    if ego.agent_mode == VehicleMode.Normal and other.signal_mode == TLMode.RED:
+    if ego.agent_mode == VehicleMode.Normal and other.signal_mode == TLMode.RED and other.dist<20:
         output.agent_mode = VehicleMode.Brake 
     if ego.agent_mode == VehicleMode.Brake and other.signal_mode != TLMode.RED:
         output.agent_mode = VehicleMode.Accel

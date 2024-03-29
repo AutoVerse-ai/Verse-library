@@ -63,13 +63,13 @@ if __name__ == "__main__":
     # # -----------------------------------------
 
     # ----------- verify old version ----------
-    # traces = scenario.verify(30, 1)
-    # # fig = go.Figure()
-    # # fig = reachtube_tree(traces, fig, 0,1,[0,1],'lines', 'trace')
-    # # fig.show()
-    # # fig = go.Figure()
-    # # fig = reachtube_tree(traces, fig, 0,2,[0,1],'lines', 'trace')
-    # # fig.show()
+    traces = scenario.verify(50, 0.1)
+    fig = go.Figure()
+    fig = reachtube_tree(traces, None, fig, 0,1,[0,1],'lines', 'trace')
+    fig.show()
+    fig = go.Figure()
+    fig = reachtube_tree(traces, None, fig, 0,2,[0,1],'lines', 'trace')
+    fig.show()
 
     # fig = go.Figure()
     # fig = reachtube_tree_3d(traces, fig, 0,'time', 1,'x',2,'y')
