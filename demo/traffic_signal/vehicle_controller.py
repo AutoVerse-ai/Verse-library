@@ -32,6 +32,6 @@ def decisionLogic(ego: State, other: State):
     # if (ego.agent_mode == VehicleMode.Brake or ego.agent_mode == VehicleMode.HardBrake) and other.y>5:
     #     output.agent_mode = VehicleMode.Accel
 
-    # assert other.dist > 2.0
+    # assert not (other.signal_mode == TLMode.RED and (ego.x>190 and ego.x<210))
 
     return output 

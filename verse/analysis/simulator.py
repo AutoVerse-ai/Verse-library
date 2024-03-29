@@ -242,7 +242,7 @@ class Simulator:
         if not config.unsafe_continue and asserts != None:
             idx = transition_idx
             for agent in node.agent:
-                node.trace[agent] = node.trace[agent][:idx]
+                node.trace[agent] = node.trace[agent][:idx+1]
             return (
                 node.id,
                 later,

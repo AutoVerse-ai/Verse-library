@@ -26,7 +26,7 @@ def decisionLogic(ego: State):
     if ego.signal_mode == TLMode.YELLOW and ego.timer > 5:
         output.signal_mode = TLMode.RED 
         output.timer = 0 
-    if ego.signal_mode == TLMode.RED and ego.timer > 10:
+    if ego.signal_mode == TLMode.RED and ego.timer > 20:
         output.signal_mode = TLMode.GREEN
         output.timer = 0  
 

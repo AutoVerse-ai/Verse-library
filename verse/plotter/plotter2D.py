@@ -1055,6 +1055,8 @@ def simulation_tree_single(
         if agent_id not in traces.keys():
             return fig
         trace = np.array(traces[agent_id])
+        if len(trace) == 0:
+            continue
         start = list(trace[0])
         end = list(trace[-1])
         # if (start in start_list) and (end in end_list):
