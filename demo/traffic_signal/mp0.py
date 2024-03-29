@@ -108,9 +108,9 @@ class VehicleAgent(BaseAgent):
         id, 
         code = None,
         file_name = None, 
-        accel_brake = 5,
-        accel_notbrake = 5,
-        accel_hardbrake = 20,
+        accel_brake = 1,
+        accel_notbrake = 1,
+        accel_hardbrake = 5,
         speed = 10
     ):
         super().__init__(

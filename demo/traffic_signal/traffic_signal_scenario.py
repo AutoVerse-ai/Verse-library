@@ -22,7 +22,7 @@ if __name__ == "__main__":
     scenario.set_sensor(TrafficSensor())
 
     # # R1
-    init_car = [[-5,-5,0,8],[5,5,0,8]]
+    init_car = [[-5,-5,0,5],[5,5,0,5]]
     init_pedestrian = [[200,0,0,0,0],[200,0,0,0,0]]
 
     # R2
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     )
 
     # # ----------- Simulate single -------------
-    trace = scenario.simulate(50, 0.1)
+    trace = scenario.simulate(80, 0.1)
     fig = go.Figure()
     # fig = simulation_tree_3d(trace, fig,\
     #                           0,'time', 1,'x',2,'y')
@@ -63,7 +63,7 @@ if __name__ == "__main__":
     # # -----------------------------------------
 
     # ----------- verify old version ----------
-    traces = scenario.verify(50, 0.1)
+    traces = scenario.verify(80, 0.1)
     fig = go.Figure()
     fig = reachtube_tree(traces, None, fig, 0,1,[0,1],'lines', 'trace')
     fig.show()
