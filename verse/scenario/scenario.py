@@ -111,8 +111,8 @@ class Scenario:
     def _update_agent_lane_mode(self, agent: BaseAgent, track_map: LaneMap):
         for lane_id in track_map.lane_dict:
             if (
-                "TrackMode" in agent.decision_logic.mode_defs
-                and lane_id not in agent.decision_logic.mode_defs["TrackMode"].modes
+                    "TrackMode" in agent.decision_logic.mode_defs
+                    and lane_id not in agent.decision_logic.mode_defs["TrackMode"].modes
             ):
                 agent.decision_logic.mode_defs["TrackMode"].modes.append(lane_id)
         # mode_vals = list(agent.decision_logic.modes.values())
@@ -120,7 +120,7 @@ class Scenario:
         # agent.decision_logic.vertexStrings = [','.join(elem) for elem in agent.decision_logic.vertices]
 
     def set_init_single(
-        self, agent_id, init: list, init_mode: tuple, static=[], uncertain_param=[]
+            self, agent_id, init: list, init_mode: tuple, static=[], uncertain_param=[]
     ):
         """Sets the initial conditions for a single agent."""
         assert agent_id in self.agent_dict, "agent_id not found"
@@ -163,10 +163,10 @@ class Scenario:
             self.agent_dict
         ), "the length of init_mode_list not fit the number of agents"
         assert (
-            len(static_list) == len(self.agent_dict) or len(static_list) == 0
+                len(static_list) == len(self.agent_dict) or len(static_list) == 0
         ), "the length of static_list not fit the number of agents or equal to 0"
         assert (
-            len(uncertain_param_list) == len(self.agent_dict) or len(uncertain_param_list) == 0
+                len(uncertain_param_list) == len(self.agent_dict) or len(uncertain_param_list) == 0
         ), "the length of uncertain_param_list not fit the number of agents or equal to 0"
         print(init_mode_list)
         print(type(init_mode_list))
@@ -189,7 +189,7 @@ class Scenario:
             )
             assert agent_id in self.static_dict, "static of {} not initialized".format(agent_id)
             assert (
-                agent_id in self.uncertain_param_dict
+                    agent_id in self.uncertain_param_dict
             ), "uncertain_param of {} not initialized".format(agent_id)
         return
 
@@ -198,8 +198,8 @@ class Scenario:
             if agent_id not in self.init_dict:
                 agent = self.agent_dict[agent_id]
                 if hasattr(agent, "init_cont") and agent.init_cont is not None and \
-                  hasattr(agent, "init_disc") and agent.init_disc is not None:
-                    init_cont = agent.init_cont 
+                        hasattr(agent, "init_disc") and agent.init_disc is not None:
+                    init_cont = agent.init_cont
                     init_disc = agent.init_disc
                     static_parameters = []
                     if hasattr(agent, "static_parameters") and agent.static_parameters is not None:
@@ -207,7 +207,7 @@ class Scenario:
                     uncertain_parameters = []
                     if hasattr(agent, "uncertain_parameters") and agent.uncertain_parameters is not None:
                         uncertain_parameters = agent.uncertain_parameters
-                    self.set_init_single(agent_id, init_cont, init_disc, static_parameters, uncertain_parameters)  
+                    self.set_init_single(agent_id, init_cont, init_disc, static_parameters, uncertain_parameters)
 
     def simulate(self, time_horizon, time_step, max_height=None, seed=None) -> AnalysisTree:
         '''Computes a single simulation trace of a scenario, starting from a single initial state.
@@ -312,6 +312,92 @@ class Scenario:
         self.past_runs.append(tree)
         return tree
 
+    def tree_safe(self, tree: AnalysisTree):
+        for node in tree.nodes:
+            if node.assert_hits is not None:
+                return False
+        return True
+
+    def combine_tree(self, tree_list: List[AnalysisTree]):
+        combined_trace = {}
+        for tree in tree_list:
+            for node in tree.nodes:
+                for agent_id in node.agent:
+                    traces = node.trace
+                    trace = np.array(traces[agent_id])
+                    if agent_id not in combined_trace:
+                        combined_trace[agent_id] = {}
+                    for i in range(0, len(trace), 2):
+                        step = round(trace[i][0], 3)
+                        if step not in combined_trace[agent_id]:
+                            combined_trace[agent_id][step] = [trace[i], trace[i + 1]]
+                        else:
+                            lower = np.min([combined_trace[agent_id][step][0], trace[i]], 0)
+                            upper = np.max([combined_trace[agent_id][step][1], trace[i + 1]], 0)
+                            combined_trace[agent_id][step] = [lower, upper]
+
+        final_trace = {
+            agent_id: np.array(list(combined_trace[agent_id].values())).flatten().reshape((-1, trace[i].size)).tolist()
+            for agent_id in combined_trace}
+        root = AnalysisTreeNode(final_trace, None, None, None, None, node.agent, None, None, [], 0, 10,
+                                AnalysisTreeNodeType.REACH_TUBE, 0)
+        return AnalysisTree(root)
+
+    def partition_init_dict(self, init_dict, agent_id, idx):
+        agent_init = init_dict[agent_id]
+        mid_init = (agent_init[0][idx] + agent_init[1][idx]) / 2
+        # part1
+        part1_dict = copy.deepcopy(init_dict)
+        part1_dict[agent_id][1][idx] = mid_init
+        # part2
+        part2_dict = copy.deepcopy(init_dict)
+        part2_dict[agent_id][0][idx] = mid_init
+
+        return part1_dict, part2_dict
+
+    def verify_refine(self, scenario, time_horizon, time_step, refine_depth, refine_profile_list, agent_list,
+                      max_height=None, params={}) -> List[AnalysisTree]:
+        com_traces_list = []
+        agent_dict = {}
+        partition_depth = 0
+        init_queue = []
+        # initialize the dict
+        for agent_id in agent_list:
+            init = scenario.init_dict.get(agent_id)
+            agent_dict[agent_id] = init
+        init_queue.append((agent_dict, partition_depth))
+        res_list = []
+        while init_queue != [] and partition_depth < refine_depth:
+            init_dict, partition_depth = init_queue.pop()
+            for agent_id in agent_list:
+                agent_init = init_dict[agent_id]
+                refine_profile = refine_profile_list[agent_id]
+                idx = refine_profile[partition_depth % len(refine_profile)]
+                print(f"######## partition_depth：{partition_depth}, agent_id: {agent_id}, idx: {idx}")
+                print(f"######## x: {agent_init[0][0]}, {agent_init[1][0]}")
+                print(f"######## y: {agent_init[0][1]}, {agent_init[1][1]}")
+                print(f"######## z: {agent_init[0][2]}, {agent_init[1][2]}")
+                print(f"######## v: {agent_init[0][3]}, {agent_init[1][3]}")
+                scenario.set_init_single(agent_id, agent_init,
+                                         (self.init_mode_dict[agent_id][0], self.init_mode_dict[agent_id][1]))
+                traces = scenario.verify(time_horizon, time_step)
+                if not self.tree_safe(traces):
+                    if agent_init[1][idx] - agent_init[0][idx] < 0.01:
+                        print(f"Stop refine state {idx}")
+                        init_queue.append((agent_dict, partition_depth + 1))
+                    elif partition_depth >= refine_depth:
+                        print('Threshold Reached. Scenario is UNSAFE.')
+                        res_list.append(traces)
+                        break
+                    part1_dict, part2_dict = self.partition_init_dict(init_dict, agent_id, idx)
+                    init_queue.append((part1_dict, partition_depth + 1))
+                    init_queue.append((part2_dict, partition_depth + 1))
+                else:
+                    res_list.append(traces)
+                    continue
+
+        return res_list
+
 
 @dataclass
 class ExprConfig:
@@ -392,9 +478,9 @@ class Benchmark:
             self.cache_hits = self.scenario.simulator.cache_hits
         else:
             self.cache_size = (
-                asizeof.asizeof(self.scenario.verifier.cache)
-                + asizeof.asizeof(self.scenario.verifier.trans_cache)
-            ) / 1_000_000
+                                      asizeof.asizeof(self.scenario.verifier.cache)
+                                      + asizeof.asizeof(self.scenario.verifier.trans_cache)
+                              ) / 1_000_000
             self.cache_hits = (
                 self.scenario.verifier.tube_cache_hits[0]
                 + self.scenario.verifier.trans_cache_hits[0],
@@ -411,7 +497,7 @@ class Benchmark:
             import ray
 
             parallel_time = (
-                sum(ev["dur"] for ev in ray.timeline() if ev["cname"] == "generic_work") / 1_000_000
+                    sum(ev["dur"] for ev in ray.timeline() if ev["cname"] == "generic_work") / 1_000_000
             )
             self.parallelness = (parallel_time - self.parallel_time_offset) / self.run_time
             self.parallel_time_offset = parallel_time
@@ -427,7 +513,7 @@ class Benchmark:
             # arg = self.config.rest[0]
             # self.config.config = ScenarioConfig(incremental='i' in arg, parallel='l' in arg, **self.config.kw)
             # self.scenario.update_config(self.config.config)
-            self.replace_scenario(self.config.rest[1]) # TODO: Check if this is correct
+            self.replace_scenario(self.config.rest[1])  # TODO: Check if this is correct
             traces2 = self.run(*a, **kw)
         self.report()
         print("trace1 contains trace2?", traces1.contains(traces2))
