@@ -22,8 +22,8 @@ if __name__ == "__main__":
     scenario.set_sensor(TrafficSensor())
 
     # # R1
-    init_car = [[-5,-5,0,5],[5,5,0,5]]
-    init_pedestrian = [[200,0,0,0,0],[200,0,0,0,0]]
+    init_car = [[0,-5,0,5],[50,5,0,5]]
+    init_pedestrian = [[300,0,0,0,0],[300,0,0,0,0]]
 
     # R2
     # init_car = [[-5,-5,0,5],[5,5,0,10]]
@@ -41,35 +41,36 @@ if __name__ == "__main__":
     )
 
     # # ----------- Simulate single -------------
-    trace = scenario.simulate(80, 0.1)
-    fig = go.Figure()
-    # fig = simulation_tree_3d(trace, fig,\
-    #                           0,'time', 1,'x',2,'y')
+    # trace = scenario.simulate(80, 0.1)
+    # fig = go.Figure()
+    # # fig = simulation_tree_3d(trace, fig,\
+    # #                           0,'time', 1,'x',2,'y')
+    # # fig.show()
+    # fig = simulation_tree(trace, None, fig, 0, 1)
     # fig.show()
-    fig = simulation_tree(trace, None, fig, 0, 1)
-    fig.show()
 
     # # ----------- Simulate multi -------------
-    # init_dict_list= sample_init(scenario, num_sample=50)
-    # trace_list = scenario.simulate_multi(50, 0.1,\
-    #      init_dict_list=init_dict_list)
-    # fig = go.Figure()
-    # for trace in trace_list:
-    #     fig = simulation_tree_3d(trace, fig,\
-    #                               0,'time', 1,'x',2,'y')
-    # fig.show()
+    init_dict_list= sample_init(scenario, num_sample=50)
+    trace_list = scenario.simulate_multi(100, 0.1,\
+         init_dict_list=init_dict_list)
+    fig = go.Figure()
+    for trace in trace_list:
+        # fig = simulation_tree_3d(trace, fig,\
+        #                           0,'time', 1,'x',2,'y')
+        fig = simulation_tree(trace, None, fig, 0, 1)
+    fig.show()
     # avg_vel, unsafe_frac, unsafe_init = eval_velocity(trace_list)
     # print(f"Average velocity {avg_vel}, Unsafe fraction {unsafe_frac}, Unsafe init {unsafe_init}")
     # # -----------------------------------------
 
     # ----------- verify old version ----------
-    traces = scenario.verify(80, 0.1)
+    traces = scenario.verify(100, 0.1)
     fig = go.Figure()
     fig = reachtube_tree(traces, None, fig, 0,1,[0,1],'lines', 'trace')
     fig.show()
-    fig = go.Figure()
-    fig = reachtube_tree(traces, None, fig, 0,2,[0,1],'lines', 'trace')
-    fig.show()
+    # fig = go.Figure()
+    # fig = reachtube_tree(traces, None, fig, 0,2,[0,1],'lines', 'trace')
+    # fig.show()
 
     # fig = go.Figure()
     # fig = reachtube_tree_3d(traces, fig, 0,'time', 1,'x',2,'y')

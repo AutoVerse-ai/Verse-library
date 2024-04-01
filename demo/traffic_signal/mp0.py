@@ -266,16 +266,19 @@ class TrafficSensor:
                     cont['other.dist'] = dist
                 else:
                     cont['other.dist'] = 1000
+                cont['other.x'] = state_dict['tl'][0][1]
             elif agent.id == 'tl':
                 cont['ego.timer'] = state_dict['tl'][0][5]
                 disc['ego.signal_mode'] = state_dict['tl'][1][0]
         else:
             if agent.id == 'car':
                 len_dict['others'] = 1 
-                dist_min, dist_max = get_extreme(
-                    (state_dict['car'][0][0][1],state_dict['car'][0][0][2],state_dict['car'][0][1][1],state_dict['car'][0][1][2]),
-                    (state_dict['tl'][0][0][1],state_dict['tl'][0][0][2],state_dict['tl'][0][1][1],state_dict['tl'][0][1][2]),
-                )
+                # dist_min, dist_max = get_extreme(
+                #     (state_dict['car'][0][0][1],state_dict['car'][0][0][2],state_dict['car'][0][1][1],state_dict['car'][0][1][2]),
+                #     (state_dict['tl'][0][0][1],state_dict['tl'][0][0][2],state_dict['tl'][0][1][1],state_dict['tl'][0][1][2]),
+                # )
+                dist_min = min(abs(state_dict['car'][0][0][1]-state_dict['tl'][0][0][1]), abs(state_dict['car'][0][1][1]-state_dict['tl'][0][0][1]))
+                dist_max = max(abs(state_dict['car'][0][0][1]-state_dict['tl'][0][0][1]), abs(state_dict['car'][0][1][1]-state_dict['tl'][0][0][1]))
                 cont['ego.x'] = [
                     state_dict['car'][0][0][1], state_dict['car'][0][1][1]
                 ]
@@ -287,6 +290,9 @@ class TrafficSensor:
                 ]
                 cont['ego.v'] = [
                     state_dict['car'][0][0][4], state_dict['car'][0][1][4]
+                ]
+                cont['other.x'] = [
+                    state_dict['tl'][0][0][1], state_dict['tl'][0][1][1]
                 ]
                 cont['other.dist'] = [
                     dist_min, dist_max

@@ -25,15 +25,20 @@ class State:
 
 def decisionLogic(ego: State, other: State):
     output = copy.deepcopy(ego)
-    if ego.agent_mode == VehicleMode.Normal and other.signal_mode == TLMode.RED and other.dist<40:
+    # if ego.x > 100000:
+    #     output.agent_mode = VehicleMode.Brake
+    # if ego.agent_mode == VehicleMode.Normal:
+    #     output.agent_mode = VehicleMode.Accel
+    if ego.agent_mode == VehicleMode.Normal and other.signal_mode == TLMode.RED and other.dist<60:
         output.agent_mode = VehicleMode.Brake 
-    elif ego.agent_mode == VehicleMode.Normal and other.signal_mode == TLMode.GREEN and other.dist < 20:
+    elif ego.agent_mode == VehicleMode.Normal and other.signal_mode == TLMode.YELLOW and other.dist < 60:
         output.agent_mode = VehicleMode.Brake
-    if ego.agent_mode == VehicleMode.Brake and other.signal_mode != TLMode.RED:
+    if ego.agent_mode == VehicleMode.Brake and other.signal_mode == TLMode.GREEN:
         output.agent_mode = VehicleMode.Accel
     # if (ego.agent_mode == VehicleMode.Brake or ego.agent_mode == VehicleMode.HardBrake) and other.y>5:
     #     output.agent_mode = VehicleMode.Accel
 
-    assert not (other.signal_mode == TLMode.RED and (ego.x>190 and ego.x<210))
+    assert not (other.signal_mode == TLMode.RED and (ego.x>other.x-20 and ego.x<other.x-15)), "run red light"  
+    assert not (other.signal_mode == TLMode.RED and (ego.x>other.x-15 and ego.x<other.x) and ego.v<1), "stop at intersection"
 
     return output 
