@@ -231,6 +231,7 @@ class Verifier:
                 uncertain_param = node.uncertain_param[agent_id]
                 if consts.reachability_method == ReachabilityMethod.DRYVR:
                     # pp(('tube', agent_id, mode, inits))
+                    #exact rectangles
                     (
                         cur_bloated_tube,
                         cache_tube_update,
@@ -666,6 +667,8 @@ class Verifier:
         # print(f">>>>>>>> Number of transitions happening: {num_transitions}")
         self.num_transitions = num_transitions
 
+        #print(len(self.nodes))
+
         return self.reachtube_tree
 
     @staticmethod
@@ -789,11 +792,15 @@ class Verifier:
         guard_hits = []
         guard_hit = False
         reduction_rate = 10
-        reduction_queue = [(0, trace_length, trace_length)]
+        reduction_queue = []
+        for i in range(trace_length):
+            reduction_queue.append((i,i+1,1))
+        #reduction_queue = [(0, trace_length, trace_length)]
         # for idx, end_idx,combine_len in reduction_queue:
         hits = []
         while reduction_queue:
-            idx, end_idx, combine_len = reduction_queue.pop()
+            #don't over approximate rectangles
+            idx, end_idx, combine_len = reduction_queue.pop(0)
             reduction_needed = False
             # print((idx, combine_len))
             any_contained = False

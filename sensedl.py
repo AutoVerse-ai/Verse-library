@@ -53,12 +53,12 @@ def decisionLogic(ego: State, track_map):
         output.track_mode = TrackMode.T0
 
     
-    x = ego.x
-    y = ego.y
-    position = [x,y]
-    lateral = track_map.get_lateral_distance("T0", position)
+    # x = ego.x
+    # y = ego.y
+    # position = [x,y]
+    # lateral = track_map.get_lateral_distance("T0", position)
     
-    # assert -2 <= lateral and lateral <= 2
+    #assert -2 <= lateral and lateral <= 2
     #assert ((ego.x-14)**2 + (ego.y-14)**2 >= 10**2 and (ego.x-14)**2 + (ego.y-14)**2 <= 14**2 and ego.y <= 14) or (ego.x > 0 and ego.x < 4 and ego.y > 14 and ego.y <= 24) or ((ego.x-14)**2 + (ego.y-24)**2 >= 10**2 and (ego.x-14)**2 + (ego.y-24)**2 <= 14**2 and ego.y > 24)
     assert True 
      

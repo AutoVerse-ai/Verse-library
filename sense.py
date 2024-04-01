@@ -66,7 +66,10 @@ class VechicleSensor:
                 x = cont['ego.x']
                 y = cont['ego.y']
                 position = np.array([x,y])
-                lateral = lane_map.get_lateral_distance("T0", position)
+                true_lateral = lane_map.get_lateral_distance("T0", position)
+
+                blowup = true_lateral + np.random.uniform(low=-0.25, high=0.25, size=5)
+                lateral = random.choice(blowup)
 
                 if(lateral < -1):
                     cont['ego.s'] = 0
@@ -77,6 +80,9 @@ class VechicleSensor:
                 else:
                     cont['ego.s'] = 1
 
+
+                #perception contract: blow up lateral array and randomly sample
+
         else:
             if agent.id == 'car':
                 cont['ego.x'] = [state_dict['car'][0][0][1], state_dict['car'][0][1][1]]
@@ -86,14 +92,21 @@ class VechicleSensor:
                 cont['ego.t'] = [state_dict['car'][0][0][5], state_dict['car'][0][1][5]]
                 disc['ego.agent_mode'] = state_dict['car'][1][0]
                 
-                lateral = []
+                true_lateral = []
+                #print("new four")
                 for x in cont['ego.x']:
                     for y in cont['ego.y']:
                         position = np.array([x,y])
-                        print(position)
-                        lateral.append(lane_map.get_lateral_distance("T0", position))
+                        #print(position)
+                        true_lateral.append(lane_map.get_lateral_distance("T0", position))
 
-                min_lateral = min(lateral)
+                blowup = []
+                for l in true_lateral:
+                    blowup += list(l + np.random.uniform(low=-0.25, high=0.25, size=5))
+                
+                min_lateral = min(blowup) #+ 0.1
+
+                #perception contract: blow up lateral array and choose minimum
 
                 if(min_lateral < -1):
                     cont['ego.s'] = [0,0]
@@ -113,7 +126,7 @@ class M1(LaneMap):
         segment0 = CircularLane("Seg0", [14, 14], 12, np.pi * 3 / 2, np.pi, True, 4)
         segment1 = StraightLane("Seg1", [2, 14], [2, 24], 4)
         segment2 = CircularLane("Seg2", [14, 24], 12, np.pi, 0, True, 4)
-        segment3 = StraightLane("Seg3", [26, 24], [26, 14], 4)
+        #segment3 = StraightLane("Seg3", [26, 24], [26, 14], 4)
         lane0 = Lane("T0", [segment0, segment1, segment2])# segment3])
         self.add_lanes([lane0])
         self.h_dict = {("T0", "Left", "Right"): "T0", ("T0", "Right", "Left"): "T0",
@@ -192,7 +205,19 @@ scenario.add_agent(car1)
 #traces_simu = scenario.simulate(60,0.01)
 traces_veri = scenario.verify(10, 0.01)
 
-traces_veri.dump("out.json")
+nodes = traces_veri._get_all_nodes(traces_veri.root)
+#print(len(nodes))
+# for n in nodes:
+#     print("new node")
+#     for l in n.trace['car']:
+#         print(l[1:3])
+
+#traces_veri.visualize()
+#print(nodes)
+#print("height")
+#print(traces_veri.height)
+
+#traces_veri.dump("out.json")
 
 # fig = go.Figure()
 # fig = simulation_tree(traces_simu, None, fig, 1, 2, [0, 1], "lines", "trace")
