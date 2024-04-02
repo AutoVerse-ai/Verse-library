@@ -41,24 +41,35 @@ if __name__ == "__main__":
     )
 
     # # ----------- Simulate single -------------
-    # trace = scenario.simulate(80, 0.1)
+    fig = go.Figure()
+    for i in range(50):
+        trace = scenario.simulate_simple(80, 0.1)
+    # fig = simulation_tree_3d(trace, fig,\
+    #                           0,'time', 1,'x',2,'y')
+    # fig.show()
+        fig = simulation_tree(trace, None, fig, 0, 1)
+        print("=========================================================")
+    fig.show()
+
+
     # fig = go.Figure()
+    # for i in range(10):
+    #     trace = scenario.simulate(80, 0.1)
     # # fig = simulation_tree_3d(trace, fig,\
     # #                           0,'time', 1,'x',2,'y')
     # # fig.show()
-    # fig = simulation_tree(trace, None, fig, 0, 1)
+    #     fig = simulation_tree(trace, None, fig, 0, 1)
     # fig.show()
-
     # # ----------- Simulate multi -------------
-    init_dict_list= sample_init(scenario, num_sample=50)
-    trace_list = scenario.simulate_multi(100, 0.1,\
-         init_dict_list=init_dict_list)
-    fig = go.Figure()
-    for trace in trace_list:
-        # fig = simulation_tree_3d(trace, fig,\
-        #                           0,'time', 1,'x',2,'y')
-        fig = simulation_tree(trace, None, fig, 0, 1)
-    fig.show()
+    # init_dict_list= sample_init(scenario, num_sample=50)
+    # trace_list = scenario.simulate_multi(100, 0.1,\
+    #      init_dict_list=init_dict_list)
+    # fig = go.Figure()
+    # for trace in trace_list:
+    #     # fig = simulation_tree_3d(trace, fig,\
+    #     #                           0,'time', 1,'x',2,'y')
+    #     fig = simulation_tree(trace, None, fig, 0, 1)
+    # fig.show()
     # avg_vel, unsafe_frac, unsafe_init = eval_velocity(trace_list)
     # print(f"Average velocity {avg_vel}, Unsafe fraction {unsafe_frac}, Unsafe init {unsafe_init}")
     # # -----------------------------------------

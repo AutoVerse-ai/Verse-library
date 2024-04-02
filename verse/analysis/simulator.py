@@ -142,15 +142,18 @@ def check_sim_transitions(agent: BaseAgent, guards: List[Tuple], cont, disc, map
     return None, satisfied_guard
 
 
-def convertStrToEnum(inp, agent: BaseAgent, dl):
+def convertStrToEnum(inp, agents: List[BaseAgent], dl):
     res = inp
+    if type(agents) != list:
+        agents = [agents]
     for field in res.__dict__:
-        for state_def_name in agent.decision_logic.state_defs:
-            if field in agent.decision_logic.state_defs[state_def_name].disc:
-                idx = agent.decision_logic.state_defs[state_def_name].disc.index(field)
-                field_type = agent.decision_logic.state_defs[state_def_name].disc_type[idx]
-                enum_class = getattr(dl, field_type)
-                setattr(res, field, enum_class[getattr(res, field)])
+        for agent in agents:
+            for state_def_name in agent.decision_logic.state_defs:
+                if field in agent.decision_logic.state_defs[state_def_name].disc:
+                    idx = agent.decision_logic.state_defs[state_def_name].disc.index(field)
+                    field_type = agent.decision_logic.state_defs[state_def_name].disc_type[idx]
+                    enum_class = getattr(dl, field_type)
+                    setattr(res, field, enum_class[getattr(res, field)])
     return res
 
 
@@ -828,7 +831,7 @@ class Simulator:
                                 tmp_list.append(tmp)
                             arg_list.append(tmp_list)
                         else:
-                            tmp = convertStrToEnum(env[arg.name], agent, dl)
+                            tmp = convertStrToEnum(env[arg.name], list(node.agent.values()), dl)
                             arg_list.append(tmp)
 
                 try:

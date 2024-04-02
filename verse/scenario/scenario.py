@@ -32,7 +32,7 @@ class ScenarioConfig:
     speed up experiments. Result is undefined when the map, agent dynamics and sensor are changed."""
     unsafe_continue: bool = False
     """Continue exploring the branch when an unsafe condition occurs."""
-    init_seg_length: int = 1000
+    init_seg_length: int = 1
     reachability_method: ReachabilityMethod = ReachabilityMethod.DRYVR
     """Method of performing reachability. Can be DryVR, NeuReach, MixMonoCont and MixMonoDisc."""
     parallel_sim_ahead: int = 8

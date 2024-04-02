@@ -98,7 +98,7 @@ class TrafficSignalAgent(BaseAgent):
         num_points = int(np.ceil(time_bound / time_step))
         trace = np.zeros((num_points + 1, 1 + len(init)))
         trace[1:, 0] = [round((i+1) * time_step, 10) for i in range(num_points)]
-        trace[:,-1] = trace[:,0]
+        trace[:,-1] = trace[:,0]+init[4]
         trace[:, 1:-1] = init[:-1]
         return trace
 
@@ -258,16 +258,21 @@ class TrafficSensor:
                 cont['ego.v'] = state_dict['car'][0][4]
                 disc['ego.agent_mode'] = state_dict['car'][1][0]
                 disc['other.signal_mode'] = state_dict['tl'][1][0]
-                dist = np.sqrt(
-                    (state_dict['car'][0][1]-state_dict['tl'][0][1])**2+\
-                    (state_dict['car'][0][2]-state_dict['tl'][0][2])**2
-                )
-                if dist < self.sensor_distance:
-                    cont['other.dist'] = dist
-                else:
-                    cont['other.dist'] = 1000
+                # dist = np.sqrt(
+                #     (state_dict['car'][0][1]-state_dict['tl'][0][1])**2+\
+                #     (state_dict['car'][0][2]-state_dict['tl'][0][2])**2
+                # )
+                # dist = state_dict['tl'][0][1] - state_dict['car'][0][1]
+                # if dist < self.sensor_distance:
+                #     cont['other.dist'] = dist
+                # else:
+                #     cont['other.dist'] = 1000
                 cont['other.x'] = state_dict['tl'][0][1]
             elif agent.id == 'tl':
+                cont['ego.x'] = state_dict['tl'][0][1]
+                cont['ego.y'] = state_dict['tl'][0][2]
+                cont['ego.theta'] = state_dict['tl'][0][3]
+                cont['ego.v'] = state_dict['tl'][0][4]
                 cont['ego.timer'] = state_dict['tl'][0][5]
                 disc['ego.signal_mode'] = state_dict['tl'][1][0]
         else:
@@ -277,8 +282,8 @@ class TrafficSensor:
                 #     (state_dict['car'][0][0][1],state_dict['car'][0][0][2],state_dict['car'][0][1][1],state_dict['car'][0][1][2]),
                 #     (state_dict['tl'][0][0][1],state_dict['tl'][0][0][2],state_dict['tl'][0][1][1],state_dict['tl'][0][1][2]),
                 # )
-                dist_min = min(abs(state_dict['car'][0][0][1]-state_dict['tl'][0][0][1]), abs(state_dict['car'][0][1][1]-state_dict['tl'][0][0][1]))
-                dist_max = max(abs(state_dict['car'][0][0][1]-state_dict['tl'][0][0][1]), abs(state_dict['car'][0][1][1]-state_dict['tl'][0][0][1]))
+                # dist_min = min(abs(state_dict['car'][0][0][1]-state_dict['tl'][0][0][1]), abs(state_dict['car'][0][1][1]-state_dict['tl'][0][0][1]))
+                # dist_max = max(abs(state_dict['car'][0][0][1]-state_dict['tl'][0][0][1]), abs(state_dict['car'][0][1][1]-state_dict['tl'][0][0][1]))
                 cont['ego.x'] = [
                     state_dict['car'][0][0][1], state_dict['car'][0][1][1]
                 ]
@@ -294,23 +299,35 @@ class TrafficSensor:
                 cont['other.x'] = [
                     state_dict['tl'][0][0][1], state_dict['tl'][0][1][1]
                 ]
-                cont['other.dist'] = [
-                    dist_min, dist_max
-                ]
+                # cont['other.dist'] = [
+                #     dist_min, dist_max
+                # ]
                 disc['ego.agent_mode'] = state_dict['car'][1][0]
                 disc['other.signal_mode'] = state_dict['tl'][1][0]
-                if dist_min<self.sensor_distance:
-                    cont['other.dist'] = [
-                        dist_min, dist_max
-                    ]
-                else:
-                    cont['other.dist'] = [
-                        1000, 1000
-                    ]
+                # if dist_min<self.sensor_distance:
+                #     cont['other.dist'] = [
+                #         dist_min, dist_max
+                #     ]
+                # else:
+                #     cont['other.dist'] = [
+                #         1000, 1000
+                #     ]
             elif agent.id == "tl":
                 cont['ego.timer'] = [
                     state_dict['tl'][0][0][5],state_dict['tl'][0][0][5]
                 ]
+                cont['ego.x'] = [
+                    state_dict['tl'][0][0][1],state_dict['tl'][0][0][1]
+                ] 
+                cont['ego.y'] = [
+                    state_dict['tl'][0][0][2],state_dict['tl'][0][0][2]
+                ] 
+                cont['ego.theta'] = [
+                    state_dict['tl'][0][0][3],state_dict['tl'][0][0][3]
+                ] 
+                cont['ego.v'] = [
+                    state_dict['tl'][0][0][4],state_dict['tl'][0][0][4]
+                ] 
                 disc['ego.signal_mode'] = state_dict['tl'][1][0]
 
         return cont, disc, len_dict
