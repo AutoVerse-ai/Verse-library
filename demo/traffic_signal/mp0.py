@@ -9,13 +9,13 @@ from verse.analysis.analysis_tree import TraceType, AnalysisTree
 from verse.parser import ControllerIR
 from vehicle_controller import VehicleMode
 from verse.analysis import AnalysisTreeNode, AnalysisTree, AnalysisTreeNodeType
-
+from traffic_controller import TLMode
 import copy 
 
 refine_profile = {
     'R1': [0],
-    'R2': [3,3,3,0],
-    'R3': [3,3,3,0]
+    'R2': [0],
+    'R3': [0,0,0,3]
 }
 
 def tree_safe(tree: AnalysisTree):
@@ -25,23 +25,23 @@ def tree_safe(tree: AnalysisTree):
     return True
 
 def verify_refine(scenario: Scenario, time_horizon, time_step):
-    refine_depth = 10
+    refine_depth = 5
     init_car = scenario.init_dict['car']
-    init_ped = scenario.init_dict['pedestrian']
+    init_tl = scenario.init_dict['tl']
     partition_depth = 0
-    if init_ped[1][0] - init_ped[0][0]>0.1:
+    if init_car[1][3] - init_car[0][3]>0.1:
         exp = 'R3'
-    elif init_car[1][3] - init_car[0][3] > 0.1:
+    elif init_car[1][0] - init_car[0][0] > 75:
         exp = 'R2'
     else:
         exp = 'R1'
     res_list = []
     init_queue = []
-    if init_car[1][3]-init_car[0][3] > 0.05:
-        car_v_init_range = np.linspace(init_car[0][3], init_car[1][3], 33)
+    if init_car[1][3]-init_car[0][3] > 0.1:
+        car_v_init_range = np.linspace(init_car[0][3], init_car[1][3], 5)
     else:
         car_v_init_range = [init_car[0][3], init_car[1][3]]
-    if init_car[1][0]-init_car[0][0] > 0.1:
+    if init_car[1][0]-init_car[0][0] > 1:
         car_x_init_range = np.linspace(init_car[0][0], init_car[1][0], 5)
     else:
         car_x_init_range = [init_car[0][0], init_car[1][0]]
@@ -52,20 +52,20 @@ def verify_refine(scenario: Scenario, time_horizon, time_step):
             tmp[1][0] = car_x_init_range[i+1]
             tmp[0][3] = car_v_init_range[j]
             tmp[1][3] = car_v_init_range[j+1]
-            init_queue.append((tmp, init_ped, partition_depth))
+            init_queue.append((tmp, init_tl, partition_depth))
     # init_queue = [(init_car, init_ped, partition_depth)]
     while init_queue!=[] and partition_depth < refine_depth:
-        car_init, ped_init, partition_depth = init_queue.pop(0)
-        print(f"######## {partition_depth}, car x, {car_init[0][0]}, {car_init[1][0]}, car v, {car_init[0][3]}, {car_init[1][3]}, ped x, {ped_init[0][0]}, {ped_init[1][0]}, ped y, {ped_init[0][1]}, {ped_init[1][1]}")
+        car_init, tl_init, partition_depth = init_queue.pop(0)
+        print(f"######## {partition_depth}, car x, {car_init[0][0]}, {car_init[1][0]}, car v, {car_init[0][3]}, {car_init[1][3]}")
         scenario.set_init_single('car', car_init, (VehicleMode.Normal,))
-        scenario.set_init_single('pedestrian', ped_init, (PedestrianMode.Normal,))
-        traces = scenario.verify(time_horizon, time_step)
+        scenario.set_init_single('tl', tl_init, (TLMode.GREEN,))
+        traces = scenario.verify(time_horizon, time_step, max_height=10)
         if not tree_safe(traces):
             # Partition car and pedestrian initial state
             idx = refine_profile[exp][partition_depth%len(refine_profile[exp])]
             if car_init[1][idx] - car_init[0][idx] < 0.01:
                 print(f"Stop refine car state {idx}")
-                init_queue.append((car_init, ped_init, partition_depth+1))
+                init_queue.append((car_init, tl_init, partition_depth+1))
             elif partition_depth >= refine_depth:
                 print('Threshold Reached. Scenario is UNSAFE.')
                 res_list.append(traces)
@@ -73,15 +73,15 @@ def verify_refine(scenario: Scenario, time_horizon, time_step):
             car_v_init = (car_init[0][idx] + car_init[1][idx])/2
             car_init1 = copy.deepcopy(car_init)
             car_init1[1][idx] = car_v_init 
-            init_queue.append((car_init1, ped_init, partition_depth+1))
+            init_queue.append((car_init1, tl_init, partition_depth+1))
             car_init2 = copy.deepcopy(car_init)
             car_init2[0][idx] = car_v_init 
-            init_queue.append((car_init2, ped_init, partition_depth+1))
+            init_queue.append((car_init2, tl_init, partition_depth+1))
         else:
             res_list.append(traces)
-    com_traces = combine_tree(res_list)
+    # com_traces = combine_tree(res_list)
     
-    return com_traces
+    return res_list
 
 class TrafficSignalAgent(BaseAgent):
     def __init__(
@@ -402,6 +402,6 @@ def combine_tree(tree_list: List[AnalysisTree]):
                         upper = np.max([combined_trace[agent_id][step][1],trace[i+1]], 0)
                         combined_trace[agent_id][step]=[lower, upper]
 
-    final_trace = {agent_id:np.array(list(combined_trace[agent_id].values())).flatten().reshape((-1, trace[i].size)).tolist() for agent_id in combined_trace}
-    root = AnalysisTreeNode(final_trace,None,None,None,None, node.agent, None,None,[],0,10,AnalysisTreeNodeType.REACH_TUBE,0)
+    final_trace = {agent_id:np.array(list(combined_trace[agent_id].values())).flatten().reshape((-1, np.array(list(combined_trace[agent_id].values())).shape[-1])).tolist() for agent_id in combined_trace}
+    root = AnalysisTreeNode(final_trace,None,tree_list[0].root.mode,None,None, node.agent, None,None,[],0,10,AnalysisTreeNodeType.REACH_TUBE,0)
     return AnalysisTree(root)

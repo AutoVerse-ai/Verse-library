@@ -14,8 +14,8 @@ import copy
 
 refine_profile = {
     'R1': [0],
-    'R2': [3,3,3,0],
-    'R3': [3,3,3,0]
+    'R2': [0,0,0,3],
+    'R3': [0,0,0,3]
 }
 
 def tree_safe(tree: AnalysisTree):
@@ -25,7 +25,7 @@ def tree_safe(tree: AnalysisTree):
     return True
 
 def verify_refine(scenario: Scenario, time_horizon, time_step):
-    refine_depth = 10
+    refine_depth = 5
     init_car = scenario.init_dict['car']
     init_ped = scenario.init_dict['pedestrian']
     partition_depth = 0
@@ -37,11 +37,12 @@ def verify_refine(scenario: Scenario, time_horizon, time_step):
         exp = 'R1'
     res_list = []
     init_queue = []
-    if init_car[1][3]-init_car[0][3] > 0.05:
-        car_v_init_range = np.linspace(init_car[0][3], init_car[1][3], 33)
+    if False:
+        car_v_init_range = np.linspace(init_car[0][3], init_car[1][3], 5)
     else:
         car_v_init_range = [init_car[0][3], init_car[1][3]]
     if init_car[1][0]-init_car[0][0] > 0.1:
+    # if False:
         car_x_init_range = np.linspace(init_car[0][0], init_car[1][0], 5)
     else:
         car_x_init_range = [init_car[0][0], init_car[1][0]]
@@ -59,7 +60,7 @@ def verify_refine(scenario: Scenario, time_horizon, time_step):
         print(f"######## {partition_depth}, car x, {car_init[0][0]}, {car_init[1][0]}, car v, {car_init[0][3]}, {car_init[1][3]}, ped x, {ped_init[0][0]}, {ped_init[1][0]}, ped y, {ped_init[0][1]}, {ped_init[1][1]}")
         scenario.set_init_single('car', car_init, (VehicleMode.Normal,))
         scenario.set_init_single('pedestrian', ped_init, (PedestrianMode.Normal,))
-        traces = scenario.verify(time_horizon, time_step)
+        traces = scenario.verify(time_horizon, time_step, max_height=6)
         if not tree_safe(traces):
             # Partition car and pedestrian initial state
             idx = refine_profile[exp][partition_depth%len(refine_profile[exp])]
@@ -413,5 +414,5 @@ def combine_tree(tree_list: List[AnalysisTree]):
                         combined_trace[agent_id][step]=[lower, upper]
 
     final_trace = {agent_id:np.array(list(combined_trace[agent_id].values())).flatten().reshape((-1, trace[i].size)).tolist() for agent_id in combined_trace}
-    root = AnalysisTreeNode(final_trace,None,None,None,None, node.agent, None,None,[],0,10,AnalysisTreeNodeType.REACH_TUBE,0)
+    root = AnalysisTreeNode(final_trace,None,tree_list[0].root.mode,None,None, node.agent, None,None,[],0,10,AnalysisTreeNodeType.REACH_TUBE,0)
     return AnalysisTree(root)

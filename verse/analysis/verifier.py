@@ -391,6 +391,7 @@ class Verifier:
                 later,
                 next_nodes,
                 node.trace,
+                # ("max depth", 0),
                 asserts,
                 cache_tube_updates,
                 cache_trans_tube_updates,

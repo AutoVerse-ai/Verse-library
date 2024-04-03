@@ -11,7 +11,7 @@ import copy
 if __name__ == "__main__":
     import os 
     script_dir = os.path.realpath(os.path.dirname(__file__))
-    input_code_name = os.path.join(script_dir, "vehicle_controller.py")
+    input_code_name = os.path.join(script_dir, "vehicle_controller_golden_R3.py")
     vehicle = VehicleAgent('car', file_name=input_code_name)
     pedestrian = PedestrianAgent('pedestrian')
 
@@ -26,12 +26,12 @@ if __name__ == "__main__":
     # init_pedestrian = [[140,-50,0,3],[140,-50,0,3]]
 
     # R2
-    init_car = [[-5,-5,0,5],[5,5,0,10]]
+    init_car = [[-5,-5,0,7],[5,5,0,9]]
     init_pedestrian = [[140,-50,0,3],[140,-50,0,3]]
 
     # # R3
-    # init_car = [[-5,-5,0,5],[5,5,0,10]]
-    # init_pedestrian = [[140,-55,0,3],[150,-50,0,3]]
+    init_car = [[-5,-5,0,7],[5,5,0,9]]
+    init_pedestrian = [[165,-55,0,3],[175,-50,0,3]]
 
     scenario.set_init_single(
         'car', init_car,(VehicleMode.Normal,)
@@ -56,8 +56,8 @@ if __name__ == "__main__":
         fig = simulation_tree_3d(trace, fig,\
                                   0,'time', 1,'x',2,'y')
     fig.show()
-    avg_vel, unsafe_frac, unsafe_init = eval_velocity(trace_list)
-    print(f"Average velocity {avg_vel}, Unsafe fraction {unsafe_frac}, Unsafe init {unsafe_init}")
+    # avg_vel, unsafe_frac, unsafe_init = eval_velocity(trace_list)
+    # print(f"Average velocity {avg_vel}, Unsafe fraction {unsafe_frac}, Unsafe init {unsafe_init}")
     # # -----------------------------------------
 
     # ----------- verify old version ----------
@@ -76,9 +76,10 @@ if __name__ == "__main__":
     # -----------------------------------------
 
     # # ------------- Verify refine -------------
-    # com_traces = verify_refine(scenario, 50, 0.1)
-    # fig = go.Figure()
-    # fig = reachtube_tree_3d(com_traces, fig,\
-    #                          0,'time', 1,'x',2,'y')
-    # fig.show()
+    com_traces = verify_refine(scenario, 50, 0.1)
+    fig = go.Figure()
+    fig = reachtube_tree_3d(com_traces, fig,\
+                             0,'time', 1,'x',2,'y')
+    # fig = reachtube_tree(com_traces, None, fig, 0, 1)
+    fig.show()
     # # -----------------------------------------

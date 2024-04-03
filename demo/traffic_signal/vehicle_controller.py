@@ -33,11 +33,13 @@ def decisionLogic(ego: State, other: State):
     # print(ego.agent_mode == VehicleMode.Normal)
     # print(other.signal_mode == TLMode.RED)
     # print(other.dist<60)
-    if ego.agent_mode == VehicleMode.Normal and other.signal_mode == TLMode.RED and other.x-ego.x<60 and other.x-ego.x>0:
-        output.agent_mode = VehicleMode.Brake 
-    elif ego.agent_mode == VehicleMode.Normal and other.signal_mode == TLMode.YELLOW and other.x-ego.x<60 and other.x-ego.x>0:
-        output.agent_mode = VehicleMode.Brake
-    if ego.agent_mode == VehicleMode.Brake and other.signal_mode == TLMode.GREEN:
+    if ego.agent_mode == VehicleMode.Normal:
+        output.agent_mode = VehicleMode.Accel
+    if ego.agent_mode == VehicleMode.Accel  and other.signal_mode == TLMode.RED and other.x-ego.x<80 and other.x-ego.x>0:
+        output.agent_mode = VehicleMode.HardBrake 
+    elif ego.agent_mode == VehicleMode.Accel and other.signal_mode == TLMode.YELLOW and other.x-ego.x<80 and other.x-ego.x>40:
+        output.agent_mode = VehicleMode.HardBrake
+    if (ego.agent_mode == VehicleMode.Brake or ego.agent_mode == VehicleMode.HardBrake) and (other.signal_mode == TLMode.GREEN or other.x-ego.x<0):
         output.agent_mode = VehicleMode.Accel
     # if (ego.agent_mode == VehicleMode.Brake or ego.agent_mode == VehicleMode.HardBrake) and other.y>5:
     #     output.agent_mode = VehicleMode.Accel

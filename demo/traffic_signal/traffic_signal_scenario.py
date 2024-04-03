@@ -21,18 +21,21 @@ if __name__ == "__main__":
     scenario.add_agent(tl)
     scenario.set_sensor(TrafficSensor())
 
-    # # R1
-    init_car = [[0,-5,0,5],[50,5,0,5]]
-    init_pedestrian = [[300,0,0,0,0],[300,0,0,0,0]]
+    # # # R1
+    # init_car = [[0,-5,0,5],[50,5,0,5]]
+    # init_pedestrian = [[300,0,0,0,0],[300,0,0,0,0]]
 
-    # R2
-    # init_car = [[-5,-5,0,5],[5,5,0,10]]
-    # init_pedestrian = [[140,0,0,0,0],[140,0,0,0,0]]
+    # # R2
+    # init_car = [[0,-5,0,5],[100,5,0,5]]
+    # init_pedestrian = [[300,0,0,0,0],[300,0,0,0,0]]
 
     # # R3
-    # init_car = [[-5,-5,0,5],[5,5,0,10]]
-    # init_pedestrian = [[140,-55,0,3],[150,-50,0,3]]
-
+    init_car = [[0,-5,0,0],[100,5,0,10]]
+    init_pedestrian = [[300,0,0,0,0],[300,0,0,0,0]]
+    # 78.125, 81.25, car v, 3.75, 5.0
+    # init_car = [[78.125,-5,0,3.75],[81.25,5,0,5]]
+    # init_pedestrian = [[300,0,0,0,0],[300,0,0,0,0]]
+    
     scenario.set_init_single(
         'car', init_car,(VehicleMode.Normal,)
     )
@@ -42,11 +45,8 @@ if __name__ == "__main__":
 
     # # ----------- Simulate single -------------
     fig = go.Figure()
-    for i in range(50):
+    for i in range(1):
         trace = scenario.simulate_simple(80, 0.1)
-    # fig = simulation_tree_3d(trace, fig,\
-    #                           0,'time', 1,'x',2,'y')
-    # fig.show()
         fig = simulation_tree(trace, None, fig, 0, 1)
         print("=========================================================")
     fig.show()
@@ -75,10 +75,10 @@ if __name__ == "__main__":
     # # -----------------------------------------
 
     # ----------- verify old version ----------
-    traces = scenario.verify(100, 0.1)
-    fig = go.Figure()
-    fig = reachtube_tree(traces, None, fig, 0,1,[0,1],'lines', 'trace')
-    fig.show()
+    # traces = scenario.verify(100, 0.1)
+    # fig = go.Figure()
+    # fig = reachtube_tree(traces, None, fig, 0,1,[0,1],'lines', 'trace')
+    # fig.show()
     # fig = go.Figure()
     # fig = reachtube_tree(traces, None, fig, 0,2,[0,1],'lines', 'trace')
     # fig.show()
@@ -90,9 +90,9 @@ if __name__ == "__main__":
     # -----------------------------------------
 
     # # ------------- Verify refine -------------
-    # com_traces = verify_refine(scenario, 50, 0.1)
-    # fig = go.Figure()
-    # fig = reachtube_tree_3d(com_traces, fig,\
-    #                          0,'time', 1,'x',2,'y')
-    # fig.show()
+    res_list = verify_refine(scenario, 80, 0.1)
+    fig = go.Figure()
+    for trace in res_list:
+        fig = reachtube_tree(trace, None, fig, 0, 1, label_mode = True)
+    fig.show()
     # # -----------------------------------------
