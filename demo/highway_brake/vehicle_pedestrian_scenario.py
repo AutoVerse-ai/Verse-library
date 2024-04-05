@@ -1,5 +1,5 @@
 from wsgiref.validate import PartialIteratorWrapper
-from mp0 import VehicleAgent, PedestrianAgent, VehiclePedestrianSensor, verify_refine, eval_velocity, sample_init
+from mp4_p1 import VehicleAgent, PedestrianAgent, VehiclePedestrianSensor, verify_refine, eval_velocity, sample_init
 from verse import Scenario, ScenarioConfig
 from vehicle_controller import VehicleMode, PedestrianMode
 
@@ -11,7 +11,7 @@ import copy
 if __name__ == "__main__":
     import os 
     script_dir = os.path.realpath(os.path.dirname(__file__))
-    input_code_name = os.path.join(script_dir, "vehicle_controller_golden_R3.py")
+    input_code_name = os.path.join(script_dir, "vehicle_controller.py")
     vehicle = VehicleAgent('car', file_name=input_code_name)
     pedestrian = PedestrianAgent('pedestrian')
 
@@ -21,17 +21,21 @@ if __name__ == "__main__":
     scenario.add_agent(pedestrian)
     scenario.set_sensor(VehiclePedestrianSensor())
 
-    # # R1
-    # init_car = [[-5,-5,0,8],[5,5,0,8]]
-    # init_pedestrian = [[140,-50,0,3],[140,-50,0,3]]
+    # # ----------- Different initial ranges -------------
+    # # Uncomment this block to use R1
+    init_car = [[-5,-5,0,8],[5,5,0,8]]
+    init_pedestrian = [[175,-55,0,3],[175,-55,0,3]]
+    # # -----------------------------------------
 
-    # R2
-    init_car = [[-5,-5,0,7],[5,5,0,9]]
-    init_pedestrian = [[140,-50,0,3],[140,-50,0,3]]
+    # # Uncomment this block to use R2
+    # init_car = [[-5,-5,0,7],[5,5,0,9]]
+    # init_pedestrian = [[175,-55,0,3],[175,-55,0,3]]
+    # # -----------------------------------------
 
-    # # R3
-    init_car = [[-5,-5,0,7],[5,5,0,9]]
-    init_pedestrian = [[165,-55,0,3],[175,-50,0,3]]
+    # # Uncomment this block to use R3
+    # init_car = [[-5,-5,0,7],[5,5,0,9]]
+    # init_pedestrian = [[165,-55,0,3],[175,-50,0,3]]
+    # # -----------------------------------------
 
     scenario.set_init_single(
         'car', init_car,(VehicleMode.Normal,)
@@ -40,46 +44,28 @@ if __name__ == "__main__":
         'pedestrian', init_pedestrian, (PedestrianMode.Normal,)
     )
 
-    # # ----------- Simulate single -------------
-    # trace = scenario.simulate(50, 0.1)
-    # fig = go.Figure()
-    # fig = simulation_tree_3d(trace, fig,\
-    #                           0,'time', 1,'x',2,'y')
-    # fig.show()
-
-    # # ----------- Simulate multi -------------
-    init_dict_list= sample_init(scenario, num_sample=50)
-    trace_list = scenario.simulate_multi(50, 0.1,\
-         init_dict_list=init_dict_list)
+    # ----------- Simulate single: Uncomment this block to perform single simulation -------------
+    trace = scenario.simulate(50, 0.1)
+    avg_vel, unsafe_frac, unsafe_init = eval_velocity([trace])
     fig = go.Figure()
-    for trace in trace_list:
-        fig = simulation_tree_3d(trace, fig,\
-                                  0,'time', 1,'x',2,'y')
+    fig = simulation_tree_3d(trace, fig,\
+                              0,'time', 1,'x',2,'y')
     fig.show()
-    # avg_vel, unsafe_frac, unsafe_init = eval_velocity(trace_list)
-    # print(f"Average velocity {avg_vel}, Unsafe fraction {unsafe_frac}, Unsafe init {unsafe_init}")
-    # # -----------------------------------------
-
-    # ----------- verify old version ----------
-    # traces = scenario.verify(30, 1)
-    # # fig = go.Figure()
-    # # fig = reachtube_tree(traces, fig, 0,1,[0,1],'lines', 'trace')
-    # # fig.show()
-    # # fig = go.Figure()
-    # # fig = reachtube_tree(traces, fig, 0,2,[0,1],'lines', 'trace')
-    # # fig.show()
-
-    # fig = go.Figure()
-    # fig = reachtube_tree_3d(traces, fig, 0,'time', 1,'x',2,'y')
-    # fig.show()
-
     # -----------------------------------------
 
-    # # ------------- Verify refine -------------
-    com_traces = verify_refine(scenario, 50, 0.1)
+    # ----------- verify no refine: Uncomment this block to perform verification without refinement ----------
+    # traces = scenario.verify(50, 0.1)
+    # fig = go.Figure()
+    # fig = reachtube_tree_3d(traces, fig,\
+    #                          0,'time', 1,'x',2,'y')
+    # fig.show()
+    # -----------------------------------------
+    
+    # # ------------- Verify refine: Uncomment this block to perform verification with refinement -------------
+    traces = verify_refine(scenario, 50, 0.1)
     fig = go.Figure()
-    fig = reachtube_tree_3d(com_traces, fig,\
+    for trace in traces:
+        fig = reachtube_tree_3d(trace, fig,\
                              0,'time', 1,'x',2,'y')
-    # fig = reachtube_tree(com_traces, None, fig, 0, 1)
     fig.show()
     # # -----------------------------------------

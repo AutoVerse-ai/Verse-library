@@ -80,9 +80,9 @@ def verify_refine(scenario: Scenario, time_horizon, time_step):
             init_queue.append((car_init2, ped_init, partition_depth+1))
         else:
             res_list.append(traces)
-    com_traces = combine_tree(res_list)
+    # com_traces = combine_tree(res_list)
     
-    return com_traces
+    return res_list
 
 class PedestrianAgent(BaseAgent):
     def __init__(

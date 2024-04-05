@@ -69,7 +69,7 @@ def verify_refine(scenario: Scenario, time_horizon, time_step):
             elif partition_depth >= refine_depth:
                 print('Threshold Reached. Scenario is UNSAFE.')
                 res_list.append(traces)
-                break
+                return res_list
             car_v_init = (car_init[0][idx] + car_init[1][idx])/2
             car_init1 = copy.deepcopy(car_init)
             car_init1[1][idx] = car_v_init 
@@ -80,7 +80,7 @@ def verify_refine(scenario: Scenario, time_horizon, time_step):
         else:
             res_list.append(traces)
     # com_traces = combine_tree(res_list)
-    
+    print("Scenario is SAFE.")
     return res_list
 
 class TrafficSignalAgent(BaseAgent):
