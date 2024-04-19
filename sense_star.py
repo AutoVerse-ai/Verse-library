@@ -14,6 +14,12 @@ from verse.map.lane import Lane
 from math import pi
 import random
 from verse.analysis.utils import wrap_to_pi 
+from verse.analysis import ReachabilityMethod
+import numpy as np
+from verse.map.lane_segment import StraightLane
+from verse.map.lane import Lane
+from verse.starsproto.starset import StarSet
+import polytope as pc
 
 
 #probabilistic sensors
@@ -55,74 +61,77 @@ class VechicleSensor:
         len_dict = {"others": len(state_dict) - 1}
         tmp = np.array(list(state_dict.values())[0][0])
         if tmp.ndim < 2:
+            num = 1
             if agent.id == 'car':
-                cont['ego.x'] = state_dict['car'][0][1]
-                cont['ego.y'] = state_dict['car'][0][2]
-                cont['ego.theta'] = state_dict['car'][0][3]
-                cont['ego.v'] = state_dict['car'][0][4]
-                cont['ego.t'] = state_dict['car'][0][5]
+                car = state_dict['car']
+                star = car[0][1]
+                rect = star.overapprox_rectangle()
+
+                cont['ego.x'] = star
+                cont['ego.y'] = star
+                cont['ego.theta'] = star
+                cont['ego.v'] = star
+                cont['ego.t'] = star
                 disc['ego.agent_mode'] = state_dict['car'][1][0]
 
-                x = cont['ego.x']
-                y = cont['ego.y']
-                position = np.array([x,y])
-                true_lateral = lane_map.get_lateral_distance("T0", position)
 
-                blowup = true_lateral + np.random.uniform(low=-0.25, high=0.25, size=5)
-                lateral = random.choice(blowup)
+                xlist = [rect[0][0], rect[1][0]]
+                ylist = [rect[0][1], rect[1][1]]
 
-                # if(lateral < -1):
-                #     cont['ego.s'] = 0
-                # elif(lateral < 0):
-                #     cont['ego.s'] = slightly_left()
-                # elif(lateral < 1):
-                #     cont['ego.s'] = slightly_right()
-                # else:
-                #     cont['ego.s'] = 1
-
-                cont['ego.s'] = lateral
-
-
-                #perception contract: blow up lateral array and randomly sample
-
-        else:
-            if agent.id == 'car':
-                cont['ego.x'] = [state_dict['car'][0][0][1], state_dict['car'][0][1][1]]
-                cont['ego.y'] = [state_dict['car'][0][0][2], state_dict['car'][0][1][2]]
-                cont['ego.theta'] = [state_dict['car'][0][0][3], state_dict['car'][0][1][3]]
-                cont['ego.v'] = [state_dict['car'][0][0][4], state_dict['car'][0][1][4]]
-                cont['ego.t'] = [state_dict['car'][0][0][5], state_dict['car'][0][1][5]]
-                disc['ego.agent_mode'] = state_dict['car'][1][0]
-                
                 true_lateral = []
-                #print("new four")
-                for x in cont['ego.x']:
-                    for y in cont['ego.y']:
+                for x in xlist:
+                    for y in ylist:
                         position = np.array([x,y])
                         #print(position)
                         true_lateral.append(lane_map.get_lateral_distance("T0", position))
 
-                # blowup = []
-                # for l in true_lateral:
-                #     blowup += list(l + np.random.uniform(low=-0.25, high=0.25, size=5))
-                
-                # min_lateral = min(blowup) #+ 0.1
+                pol = pc.box2poly([[min(true_lateral), min(true_lateral)], [min(true_lateral), min(true_lateral)]]) 
+                cont['ego.s'] = StarSet.from_polytope(pol)
 
-                blowup = [min(true_lateral) - 0.01, max(true_lateral) + 0.01]
+
+        else:
+            if agent.id == 'car':
+
+                car = state_dict['car']
+
+                star1 = car[0][0][1]
+                star2 = car[0][1][1]
+                
+                rect1 = star1.overapprox_rectangle()
+                rect2 = star2.overapprox_rectangle()
+
+                cont['ego.x'] = [star1, star2]
+                cont['ego.y'] = [star1, star2]
+                cont['ego.theta'] = [star1, star2]
+                cont['ego.v'] = [star1, star2]
+                cont['ego.t'] = [star1, star2]
+
+                disc['ego.agent_mode'] = state_dict['car'][1][0]
+
+                xlist = [rect2[0][0], rect2[1][0]]
+                ylist = [rect2[0][1], rect2[1][1]]
+
+                # print(cont)
+                # print(disc)
+
+                # print(xlist)
+                # print(ylist)
+
+
+                true_lateral = []
+                for x in xlist:
+                    for y in ylist:
+                        position = np.array([x,y])
+                        #print(position)
+                        true_lateral.append(lane_map.get_lateral_distance("T0", position))
+
+                blowup = [[min(true_lateral) - 0.005, min(true_lateral) - 0.005],[ max(true_lateral) + 0.005,  max(true_lateral) + 0.005]]
                 #perception contract: blow up lateral array and choose minimum
 
-                # if(min_lateral < -1):
-                #     cont['ego.s'] = [0,0]
-                # elif(min_lateral < 0):
-                #     cont['ego.s'] = [0,1]
-                # elif(min_lateral < 1):
-                #     cont['ego.s'] = [0,1]
-                # else:
-                #     cont['ego.s'] = [1,1]
-                cont['ego.s'] = blowup
-                #print(blowup)
-                # print(blowup)
-                # print("hi")
+                pol = pc.box2poly(blowup)
+                new_star = StarSet.from_polytope(pol)
+                cont['ego.s'] = [new_star, new_star]
+
 
                 
         return cont, disc, len_dict
@@ -204,18 +213,24 @@ scenario.set_sensor(VechicleSensor())
 
 
 car1 = CarAgent("car", file_name="sensedl.py")
-car1.set_initial([[14, 1.75, np.radians(180), 0.75, 0], [14, 2, np.radians(180), 0.75, 0]], (AgentMode.Right, TrackMode.T0))
+initial_set_polytope = pc.box2poly([[14, 14.1], [1.75, 2], [np.radians(180),np.radians(180)], [0.75,0.75], [0,0]])
+# car1.set_initial([[14, 1.75, np.radians(180), 0.75, 0], [14, 2, np.radians(180), 0.75, 0]], (AgentMode.Right, TrackMode.T0))
+car1.set_initial(StarSet.from_polytope(initial_set_polytope), (AgentMode.Right, TrackMode.T0))
+
+scenario.config.reachability_method = ReachabilityMethod.STAR_SETS
 scenario.add_agent(car1)
 
-traces_simu = scenario.simulate(35,0.01)
+# traces_simu = scenario.simulate(35,0.01)
 
-fig = go.Figure()
-fig = simulation_tree(traces_simu, None, fig, 1, 2, [0, 1], "lines", "trace")
-fig.show()
-
-
+# fig = go.Figure()
+# fig = simulation_tree(traces_simu, None, fig, 1, 2, [0, 1], "lines", "trace")
+# fig.show()
 
 traces_veri = scenario.verify(10, 0.01)
+
+# fig = go.Figure()
+# fig = reachtube_tree(traces_veri, None, fig, 1, 2, [0, 1], "lines", "trace")
+# fig.show()
 
 #nodes = traces_veri._get_all_nodes(traces_veri.root)
 #print(len(nodes))
@@ -231,13 +246,7 @@ traces_veri = scenario.verify(10, 0.01)
 
 #traces_veri.dump("out.json")
 
+import plotly.graph_objects as go
+from verse.plotter.plotterStar import *
 
-fig = go.Figure()
-fig = reachtube_tree(traces_veri, None, fig, 1, 2, [0, 1], "lines", "trace")
-fig.show()
-
-
-
-
-    
-
+plot_reachtube_stars(traces_veri, M1(), 0 , 1, 10)

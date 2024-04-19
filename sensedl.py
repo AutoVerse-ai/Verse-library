@@ -43,11 +43,11 @@ def decisionLogic(ego: State, track_map):
             output.track_mode = TrackMode.T1
     elif(ego.y < 14):
     '''
-    if ego.s == 0 and ego.t >= 2: #we're on the left side
+    if ego.s <= 0 and ego.t >= 2: #we're on the left side
         output.agent_mode = AgentMode.Right #go right
         output.t = 0
         output.track_mode = TrackMode.T0
-    elif ego.s == 1 and ego.t >= 2: #we're on the right side
+    elif ego.s > 0 and ego.t >= 2: #we're on the right side
         output.agent_mode = AgentMode.Left #go left
         output.t = 0
         output.track_mode = TrackMode.T0
