@@ -85,8 +85,9 @@ class VechicleSensor:
                         #print(position)
                         true_lateral.append(lane_map.get_lateral_distance("T0", position))
 
-                pol = pc.box2poly([[min(true_lateral), min(true_lateral)], [min(true_lateral), min(true_lateral)]]) 
-                cont['ego.s'] = StarSet.from_polytope(pol)
+                #pol = pc.box2poly([[min(true_lateral), min(true_lateral)], [min(true_lateral), min(true_lateral)]]) 
+
+                cont['ego.s'] = min(true_lateral)
 
 
         else:
@@ -130,7 +131,8 @@ class VechicleSensor:
 
                 pol = pc.box2poly(blowup)
                 new_star = StarSet.from_polytope(pol)
-                cont['ego.s'] = [new_star, new_star]
+
+                cont['ego.s'] = [min(true_lateral) - 0.01, min(true_lateral) + 0.01]
 
 
                 
@@ -226,7 +228,7 @@ scenario.add_agent(car1)
 # fig = simulation_tree(traces_simu, None, fig, 1, 2, [0, 1], "lines", "trace")
 # fig.show()
 
-traces_veri = scenario.verify(10, 0.01)
+traces_veri = scenario.verify(5, 0.01)
 
 # fig = go.Figure()
 # fig = reachtube_tree(traces_veri, None, fig, 1, 2, [0, 1], "lines", "trace")

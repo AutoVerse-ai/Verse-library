@@ -71,15 +71,6 @@ class VechicleSensor:
                 blowup = true_lateral + np.random.uniform(low=-0.25, high=0.25, size=5)
                 lateral = random.choice(blowup)
 
-                # if(lateral < -1):
-                #     cont['ego.s'] = 0
-                # elif(lateral < 0):
-                #     cont['ego.s'] = slightly_left()
-                # elif(lateral < 1):
-                #     cont['ego.s'] = slightly_right()
-                # else:
-                #     cont['ego.s'] = 1
-
                 cont['ego.s'] = lateral
 
 
@@ -102,27 +93,10 @@ class VechicleSensor:
                         #print(position)
                         true_lateral.append(lane_map.get_lateral_distance("T0", position))
 
-                # blowup = []
-                # for l in true_lateral:
-                #     blowup += list(l + np.random.uniform(low=-0.25, high=0.25, size=5))
-                
-                # min_lateral = min(blowup) #+ 0.1
 
                 blowup = [min(true_lateral) - 0.01, max(true_lateral) + 0.01]
                 #perception contract: blow up lateral array and choose minimum
-
-                # if(min_lateral < -1):
-                #     cont['ego.s'] = [0,0]
-                # elif(min_lateral < 0):
-                #     cont['ego.s'] = [0,1]
-                # elif(min_lateral < 1):
-                #     cont['ego.s'] = [0,1]
-                # else:
-                #     cont['ego.s'] = [1,1]
                 cont['ego.s'] = blowup
-                #print(blowup)
-                # print(blowup)
-                # print("hi")
 
                 
         return cont, disc, len_dict
@@ -134,6 +108,7 @@ class M1(LaneMap):
         segment1 = StraightLane("Seg1", [2, 14], [2, 24], 4)
         lane0 = Lane("T0", [segment0, segment1])
         self.add_lanes([lane0])
+        self.lane_dict = {"T0" : lane0}
         self.h_dict = {("T0", "Left", "Right"): "T0", ("T0", "Right", "Left"): "T0",
                        ("T0", "Left", "Left"): "T0",("T0", "Right", "Right"): "T0"}
 
@@ -207,34 +182,20 @@ car1 = CarAgent("car", file_name="sensedl.py")
 car1.set_initial([[14, 1.75, np.radians(180), 0.75, 0], [14, 2, np.radians(180), 0.75, 0]], (AgentMode.Right, TrackMode.T0))
 scenario.add_agent(car1)
 
-traces_simu = scenario.simulate(35,0.01)
+traces_simu = scenario.simulate(32.5,0.01)
 
 fig = go.Figure()
-fig = simulation_tree(traces_simu, None, fig, 1, 2, [0, 1], "lines", "trace")
+fig = simulation_tree(traces_simu, M1(), fig, 1, 2, [0, 1], "lines", "trace", label_mode=1)
 fig.show()
 
 
 
-traces_veri = scenario.verify(10, 0.01)
-
-#nodes = traces_veri._get_all_nodes(traces_veri.root)
-#print(len(nodes))
-# for n in nodes:
-#     print("new node")
-#     for l in n.trace['car']:
-#         print(l[1:3])
-
-#traces_veri.visualize()
-#print(nodes)
-#print("height")
-#print(traces_veri.height)
-
-#traces_veri.dump("out.json")
+# traces_veri = scenario.verify(10, 0.01)
 
 
-fig = go.Figure()
-fig = reachtube_tree(traces_veri, None, fig, 1, 2, [0, 1], "lines", "trace")
-fig.show()
+# fig = go.Figure()
+# fig = reachtube_tree(traces_veri, None, fig, 1, 2, [0, 1], "lines", "trace")
+# fig.show()
 
 
 
