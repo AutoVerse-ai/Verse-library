@@ -106,7 +106,31 @@ class GuardExpressionAst:
         )  # TODO use an object instead of `eval` a string
         return cur_solver, symbols_map
 
-    def evaluate_guard_cont(self, agent, continuous_variable_dict, track_map):
+    def get_agent_dictionaries(self, symbols, continuous_variable_dict):
+        agent_states = {}
+        for var in symbols.values():
+            agent = var.split(".")[0]
+            if not (agent in agent_states):
+                agent_states[agent] = continuous_variable_dict[var]
+        agent_vars = {}
+        for agent in agent_states.keys():
+            #TODO: make better
+            other_agents = agent.split("_")
+            if len(other_agents) == 1:
+                agent_vars[agent] = [v for k, v in self.varDict.items() if agent in k]
+            if len(other_agents) > 1:
+                agent_vars[agent] = []
+                #go through and find the other possible values
+                for var_string, value in continuous_variable_dict.items():
+                    if isinstance(value, list): 
+                        variable_name = var_string.split(".")[1]
+                        if not agent + "_" + variable_name in self.varDict.keys():
+                            agent_vars[agent].append(Real(agent + "." + variable_name))
+                        else:
+                            agent_vars[agent].append(self.varDict[agent + "_" + variable_name])
+        return agent_states, agent_vars
+
+    def evaluate_guard_cont(self, agent, continuous_variable_dict, track_map, stars):
         res = False
         is_contained = False
 
@@ -118,26 +142,58 @@ class GuardExpressionAst:
         z3_string = self.generate_z3_expression()
         if isinstance(z3_string, bool):
             return z3_string, z3_string
+        
+        if stars:
+            agent_states, agent_vars = self.get_agent_dictionaries(symbols, continuous_variable_dict)
+            for agent in agent_states.keys():
+                agent_states[agent].add_constraints(cur_solver, agent_vars[agent], agent)
+            #construct the border of the hyperrectangle at a specific time
+            #hyperrectangle = reach(t)
+            #breakpoint()
+            for agent in agent_states.keys():
+                agent_states[agent].add_constraints(cur_solver, agent_vars[agent], agent)
+            #guard \cap hyperrectangle =/= empty set
+            # if false, then they are disjoint
+            #breakpoint()
+            if cur_solver.check() == sat: #checking intersection with guard
+                # The reachtube hits the guard
+                # remove hyperrectangle
+                cur_solver.pop()
+                res = True
 
-        cur_solver, symbols = self._build_guard(z3_string, agent)
-        cur_solver.push()
-        for symbol in symbols:
-            start, end = continuous_variable_dict[symbols[symbol]]
-            cur_solver.add(self.varDict[symbol] >= start, self.varDict[symbol] <= end)
-        if cur_solver.check() == sat:
-            # The reachtube hits the guard
-            cur_solver.pop()
-            res = True
-
-            tmp_solver = Solver()
-            tmp_solver.add(Not(cur_solver.assertions()[0]))
+                tmp_solver = Solver()
+                #negation of guards
+                tmp_solver.add(Not(cur_solver.assertions()[0]))
+            
+            #KB todo faster way to add a second time without recomputing
+                for agent in agent_states.keys():
+                    agent_states[agent].add_constraints(tmp_solver, agent_vars[agent], agent)
+                #check if all starset in guard
+                if tmp_solver.check() == unsat:
+                    is_contained = True
+            #breakpoink()
+            #print(cur_solver)
+            return res, is_contained
+        else:
+            cur_solver, symbols = self._build_guard(z3_string, agent)
+            cur_solver.push()
             for symbol in symbols:
                 start, end = continuous_variable_dict[symbols[symbol]]
-                tmp_solver.add(self.varDict[symbol] >= start, self.varDict[symbol] <= end)
-            if tmp_solver.check() == unsat:
-                is_contained = True
+                cur_solver.add(self.varDict[symbol] >= start, self.varDict[symbol] <= end)
+            if cur_solver.check() == sat:
+                # The reachtube hits the guard
+                cur_solver.pop()
+                res = True
 
-        return res, is_contained
+                tmp_solver = Solver()
+                tmp_solver.add(Not(cur_solver.assertions()[0]))
+                for symbol in symbols:
+                    start, end = continuous_variable_dict[symbols[symbol]]
+                    tmp_solver.add(self.varDict[symbol] >= start, self.varDict[symbol] <= end)
+                if tmp_solver.check() == unsat:
+                    is_contained = True
+
+            return res, is_contained
 
     def generate_z3_expression(self):
         """
@@ -244,7 +300,7 @@ class GuardExpressionAst:
             return expr
 
     def evaluate_guard_hybrid(
-        self, agent, discrete_variable_dict, continuous_variable_dict, track_map: LaneMap
+        self, agent, discrete_variable_dict, continuous_variable_dict, track_map: LaneMap, stars
     ):
         """
         Handle guard atomics that contains both continuous and hybrid variables
@@ -256,21 +312,30 @@ class GuardExpressionAst:
         variables. We can then handle these using what we already have for the continous variables
         """
         res = True
+        agent_vars = {}
+        if stars:
+            cont_variables = {}
+            for cont_vars in continuous_variable_dict:
+                underscored = cont_vars.replace(".", "_")
+                cont_variables[cont_vars] = underscored
+            symbols = {v: k for k, v in cont_variables.items()}
+            agent_dict, agent_vars = self.get_agent_dictionaries(symbols, continuous_variable_dict)
+
         for i, node in enumerate(self.ast_list):
             tmp, self.ast_list[i] = self._evaluate_guard_hybrid(
-                node, agent, discrete_variable_dict, continuous_variable_dict, track_map
+                node, agent, discrete_variable_dict, continuous_variable_dict, track_map, agent_vars
             )
             res = res and tmp
         return res
 
-    def _evaluate_guard_hybrid(self, root, agent, disc_var_dict, cont_var_dict, track_map: LaneMap):
+    def _evaluate_guard_hybrid(self, root, agent, disc_var_dict, cont_var_dict, track_map: LaneMap, agent_vars):
         if isinstance(root, ast.Compare):
             expr = unparse(root)
             left, root.left = self._evaluate_guard_hybrid(
-                root.left, agent, disc_var_dict, cont_var_dict, track_map
+                root.left, agent, disc_var_dict, cont_var_dict, track_map, agent_vars
             )
             right, root.comparators[0] = self._evaluate_guard_hybrid(
-                root.comparators[0], agent, disc_var_dict, cont_var_dict, track_map
+                root.comparators[0], agent, disc_var_dict, cont_var_dict, track_map, agent_vars
             )
             return True, root
         elif isinstance(root, ast.BoolOp):
@@ -278,7 +343,7 @@ class GuardExpressionAst:
                 res = True
                 for i, val in enumerate(root.values):
                     tmp, root.values[i] = self._evaluate_guard_hybrid(
-                        val, agent, disc_var_dict, cont_var_dict, track_map
+                        val, agent, disc_var_dict, cont_var_dict, track_map, agent_vars
                     )
                     res = res and tmp
                     if not res:
@@ -288,16 +353,16 @@ class GuardExpressionAst:
                 res = False
                 for val in root.values:
                     tmp, val = self._evaluate_guard_hybrid(
-                        val, agent, disc_var_dict, cont_var_dict, track_map
+                        val, agent, disc_var_dict, cont_var_dict, track_map, agent_vars
                     )
                     res = res or tmp
                 return res, root
         elif isinstance(root, ast.BinOp):
             left, root.left = self._evaluate_guard_hybrid(
-                root.left, agent, disc_var_dict, cont_var_dict, track_map
+                root.left, agent, disc_var_dict, cont_var_dict, track_map, agent_vars
             )
             right, root.right = self._evaluate_guard_hybrid(
-                root.right, agent, disc_var_dict, cont_var_dict, track_map
+                root.right, agent, disc_var_dict, cont_var_dict, track_map, agent_vars
             )
             return True, root
         elif isinstance(root, ast.Call):
@@ -379,8 +444,21 @@ class GuardExpressionAst:
                                 var = elt.id
                             else:
                                 raise ValueError(f"Node type {type(elt)} is not supported")
-                            arg1_lower.append(cont_var_dict[var][0])
-                            arg1_upper.append(cont_var_dict[var][1])
+                            if agent_vars == {}:
+                                arg1_lower.append(cont_var_dict[var][0])
+                                arg1_upper.append(cont_var_dict[var][1])
+                            else:
+                                agent_star = cont_var_dict[var]
+                                index = -1
+                                #breakpoint()
+                                for var_set in agent_vars.values():
+                                    var_set_str = [str(x) for x in var_set]
+                                    if var in var_set_str:
+                                        index = var_set_str.index(var)
+                                min, max = agent_star.get_max_min(index)
+                                #KB is this pointless?? did we need to adjust the star differently?
+                                arg1_lower.append(min)
+                                arg1_upper.append(max) 
                         vehicle_pos = (arg1_lower, arg1_upper)
 
                         # Get corresponding lane segments with respect to the set of vehicle pos
@@ -425,11 +503,11 @@ class GuardExpressionAst:
         elif isinstance(root, ast.UnaryOp):
             if isinstance(root.op, ast.USub):
                 res, root.operand = self._evaluate_guard_hybrid(
-                    root.operand, agent, disc_var_dict, cont_var_dict, track_map
+                    root.operand, agent, disc_var_dict, cont_var_dict, track_map, agent_vars
                 )
             elif isinstance(root.op, ast.Not):
                 res, root.operand = self._evaluate_guard_hybrid(
-                    root.operand, agent, disc_var_dict, cont_var_dict, track_map
+                    root.operand, agent, disc_var_dict, cont_var_dict, track_map, agent_vars
                 )
                 if not res:
                     root.operand = ast.parse("False").body[0].value

@@ -22,7 +22,7 @@ def _check_ray_init(parallel: bool) -> None:
             ray.init()
 
 
-@dataclass(frozen=True)
+@dataclass()
 class ScenarioConfig:
     """Configuration for how simulation/verification is performed for a scenario. Properties are
     immutable so that incremental verification works correctly."""

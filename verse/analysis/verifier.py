@@ -1074,7 +1074,7 @@ class Verifier:
                         if sat:
                             sat = ge.evaluate_guard_hybrid(agent, disc_vars, cont_vars, track_map)
                             if sat:
-                                sat, contained = ge.evaluate_guard_cont(agent, cont_vars, track_map)
+                                sat, contained = ge.evaluate_guard_cont(agent, cont_vars, track_map, config.reachability_method == ReachabilityMethod.STAR_SETS)
                                 sat = sat and contained
                         return sat
 
@@ -1120,7 +1120,7 @@ class Verifier:
                     if not guard_can_satisfied:
                         continue
                     guard_satisfied, is_contained = one_step_guard.evaluate_guard_cont(
-                        agent, new_cont_var_dict, track_map
+                        agent, new_cont_var_dict, track_map, config.reachability_method == ReachabilityMethod.STAR_SETS
                     )
                     if combine_len == 1:
                         any_contained = any_contained or is_contained
