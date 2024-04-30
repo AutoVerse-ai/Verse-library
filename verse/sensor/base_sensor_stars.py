@@ -1,6 +1,6 @@
 import numpy as np
 from verse.agents.base_agent import BaseAgent
-from verse.starsproto import StarSet
+from verse.stars.starset import StarSet
 
 def sets(d, thing, attrs, vals, stars):
     if stars:

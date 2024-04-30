@@ -176,7 +176,7 @@ class Verifier:
             #    else:
             #        combined_rect[0, :] = np.minimum(combined_rect[0, :], rect[0, :])
             #        combined_rect[1, :] = np.maximum(combined_rect[1, :], rect[1, :])
-            from verse.starsproto.starset import StarSet
+            from verse.stars.starset import StarSet
             combined_star = initial_set[0]
             if len(rect_seg) > 1:
                 combined_star = StarSet.combine_stars(rect_seg)
@@ -666,8 +666,8 @@ class Verifier:
         assert_hits,
         cache_tube_updates,
         cache_trans_tube_updates,
-        max_height,
-    ):
+        max_height
+        ):
         # t = timeit.default_timer()
         # print('get id: ', id, self.nodes[id].start_time)
         done_node: AnalysisTreeNode = self.nodes[id]
@@ -684,7 +684,7 @@ class Verifier:
         self.verification_queue.sort(key=lambda p: p[1:])
         if done_node.height <= max_height:
             self.nodes.extend(next_nodes)
-        combined_inits = {a: combine_all(inits) for a, inits in done_node.init.items()}
+        combined_inits = {a: combine_all(inits,self.config.reachability_method == ReachabilityMethod.STAR_SETS) for a, inits in done_node.init.items()}
         for (
             new,
             aid,

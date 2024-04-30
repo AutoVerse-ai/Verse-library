@@ -119,8 +119,10 @@ def convert_reach_trans(agent_id, transit_agents, inits, transition, trans_ind):
     else:
         return []
 
-
-def combine_all(inits):
+def combine_all(inits, stars=False):
+    if stars:
+        from  verse.stars.starset import StarSet
+        return StarSet.combine_stars(inits)
     return [
         [min(a) for a in np.transpose(np.array(inits)[:, 0])],
         [max(a) for a in np.transpose(np.array(inits)[:, 1])],

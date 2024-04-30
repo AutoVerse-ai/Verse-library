@@ -1,6 +1,6 @@
 from verse.map.lane_segment import StraightLane
 from verse.map.lane import Lane
-from verse.starsproto.starset import StarSet
+from verse.stars.starset import StarSet
 import polytope as pc
 
 segment0 = StraightLane("seg0", [0, 0], [500, 0], 3)
