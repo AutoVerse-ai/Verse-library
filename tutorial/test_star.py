@@ -2,6 +2,7 @@ from verse.map.lane_segment import StraightLane
 from verse.map.lane import Lane
 from verse.stars.starset import StarSet
 import polytope as pc
+from verse.sensor.base_sensor_stars import BaseStarSensor
 
 segment0 = StraightLane("seg0", [0, 0], [500, 0], 3)
 lane0 = Lane("T0", [segment0])
@@ -90,6 +91,8 @@ initial_set_polytope_car2 = pc.box2poly([[15,15.5], [-0.5,0.5], [0,0], [1,1]])
 car2.set_initial(StarSet.from_polytope(initial_set_polytope_car2), (AgentMode.Normal, TrackMode.T0))
 scenario.add_agent(car1)
 scenario.add_agent(car2)
+
+scenario.set_sensor(BaseStarSensor())
 
 scenario.config.reachability_method = ReachabilityMethod.STAR_SETS
 

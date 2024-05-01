@@ -982,12 +982,16 @@ class Verifier:
             if len(agent.decision_logic.args) == 0:
                 continue
             agent_id = agent.id
-            state_dict = {
-                aid: (node.trace[aid][0:2], node.mode[aid], node.static[aid]) for aid in node.agent
-            }
-            cont_var_dict_template, discrete_variable_dict, length_dict = sensor.sense(
-                agent, state_dict, track_map
-            )
+            state_dict = {}
+            if config.reachability_method == ReachabilityMethod.STAR_SETS:
+                state_dict = {
+                    aid: (node.trace[aid][0:1], node.mode[aid], node.static[aid]) for aid in node.agent
+                }
+            else:
+                state_dict = {
+                    aid: (node.trace[aid][0:2], node.mode[aid], node.static[aid]) for aid in node.agent
+                }
+            cont_var_dict_template, discrete_variable_dict, length_dict = sensor.sense(agent, state_dict, track_map)
             # TODO-PARSER: Get equivalent for this function
             # Construct the guard expression
             guard_expression = GuardExpressionAst([path.cond_veri])
