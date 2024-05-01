@@ -371,7 +371,6 @@ class GuardExpressionAst:
                 func = root.func
                 if "map" in func.value.id:
                     if func.attr == "get_lateral_distance":
-                        breakpoint()
                         # Get function arguments
                         arg0_node = root.args[0]
                         arg1_node = root.args[1]
@@ -406,10 +405,10 @@ class GuardExpressionAst:
                                     var_set_str = [str(x) for x in var_set]
                                     if var in var_set_str:
                                         index = var_set_str.index(var)
-                                min, max = agent_star.get_max_min(index)
+                                min_val, max_val = agent_star.get_max_min(index)
                                 #KB is this pointless?? did we need to adjust the star differently?
-                                arg1_lower.append(min)
-                                arg1_upper.append(max) 
+                                arg1_lower.append(min_val)
+                                arg1_upper.append(max_val) 
                         vehicle_pos = (arg1_lower, arg1_upper)
 
                         # Get corresponding lane segments with respect to the set of vehicle pos
@@ -470,10 +469,10 @@ class GuardExpressionAst:
                                     var_set_str = [str(x) for x in var_set]
                                     if var in var_set_str:
                                         index = var_set_str.index(var)
-                                min, max = agent_star.get_max_min(index)
+                                min_val, max_val = agent_star.get_max_min(index)
                                 #KB is this pointless?? did we need to adjust the star differently?
-                                arg1_lower.append(min)
-                                arg1_upper.append(max) 
+                                arg1_lower.append(min_val)
+                                arg1_upper.append(max_val) 
                         vehicle_pos = (arg1_lower, arg1_upper)
 
                         # Get corresponding lane segments with respect to the set of vehicle pos
