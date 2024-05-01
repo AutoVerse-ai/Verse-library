@@ -69,23 +69,23 @@ from tutorial_agent import CarAgent
 car1 = CarAgent("car1", file_name="./dl_sec5_star.py")
 initial_set_polytope = pc.box2poly([[0,0.5], [-0.5,0.5], [0,0], [2,2]])
 initial_star = StarSet.from_polytope(initial_set_polytope)
-initial_star.basis[0][0] = .5
-initial_star.basis[0][1] = -.85
-initial_star.basis[1][1] = 0.5
-initial_star.basis[1][0] = 0.85
+#initial_star.basis[0][0] = .5
+#initial_star.basis[0][1] = -.85
+#initial_star.basis[1][1] = 0.5
+#initial_star.basis[1][0] = 0.85
 
-initial_star.basis[2][0] = .5
-initial_star.basis[2][1] = -.85
-initial_star.basis[3][1] = 0.5
-initial_star.basis[3][0] = 0.85
-initial_star.intersection_halfspace(np.array([1,0,0,0]), 0.2 )
-initial_star.intersection_halfspace(np.array([0,1,0,0]), 0.2 )
+#initial_star.basis[2][0] = .5
+#initial_star.basis[2][1] = -.85
+#initial_star.basis[3][1] = 0.5
+#initial_star.basis[3][0] = 0.85
+#initial_star.intersection_halfspace(np.array([1,0,0,0]), 0.2 )
+#initial_star.intersection_halfspace(np.array([0,1,0,0]), 0.2 )
 
 
 car1.set_initial(initial_star, (AgentMode.Normal, TrackMode.T0))
 car2 = CarAgent("car2", file_name="./dl_sec5_star.py")
 #initial_set_polytope_car2 = pc.box2poly([[20,20.5], [-0.5,0.5], [0,0], [1,1]])
-initial_set_polytope_car2 = pc.box2poly([[15,15.5], [-0.5,0.5], [0,0], [1,1]])
+initial_set_polytope_car2 = pc.box2poly([[9,9.5], [-0.5,0.5], [0,0], [1,1]])
 
 
 car2.set_initial(StarSet.from_polytope(initial_set_polytope_car2), (AgentMode.Normal, TrackMode.T0))

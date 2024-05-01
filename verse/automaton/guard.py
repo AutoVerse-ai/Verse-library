@@ -143,6 +143,9 @@ class GuardExpressionAst:
         if isinstance(z3_string, bool):
             return z3_string, z3_string
         
+        cur_solver, symbols = self._build_guard(z3_string, agent)
+        cur_solver.push()
+        
         if stars:
             agent_states, agent_vars = self.get_agent_dictionaries(symbols, continuous_variable_dict)
             for agent in agent_states.keys():
@@ -175,8 +178,6 @@ class GuardExpressionAst:
             #print(cur_solver)
             return res, is_contained
         else:
-            cur_solver, symbols = self._build_guard(z3_string, agent)
-            cur_solver.push()
             for symbol in symbols:
                 start, end = continuous_variable_dict[symbols[symbol]]
                 cur_solver.add(self.varDict[symbol] >= start, self.varDict[symbol] <= end)
@@ -370,6 +371,7 @@ class GuardExpressionAst:
                 func = root.func
                 if "map" in func.value.id:
                     if func.attr == "get_lateral_distance":
+                        breakpoint()
                         # Get function arguments
                         arg0_node = root.args[0]
                         arg1_node = root.args[1]
@@ -393,8 +395,21 @@ class GuardExpressionAst:
                                 var = elt.id
                             else:
                                 raise ValueError(f"Node type {type(elt)} is not supported")
-                            arg1_lower.append(cont_var_dict[var][0])
-                            arg1_upper.append(cont_var_dict[var][1])
+                            if agent_vars == {}:
+                                arg1_lower.append(cont_var_dict[var][0])
+                                arg1_upper.append(cont_var_dict[var][1])
+                            else:
+                                agent_star = cont_var_dict[var]
+                                index = -1
+                                #breakpoint()
+                                for var_set in agent_vars.values():
+                                    var_set_str = [str(x) for x in var_set]
+                                    if var in var_set_str:
+                                        index = var_set_str.index(var)
+                                min, max = agent_star.get_max_min(index)
+                                #KB is this pointless?? did we need to adjust the star differently?
+                                arg1_lower.append(min)
+                                arg1_upper.append(max) 
                         vehicle_pos = (arg1_lower, arg1_upper)
 
                         # Get corresponding lane segments with respect to the set of vehicle pos

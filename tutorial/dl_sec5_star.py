@@ -63,7 +63,7 @@ def decisionLogic(ego: State, others: List[State], track_map):
                 output.track_mode = track_map.h(
                     ego.track_mode, ego.agent_mode, AgentMode.SwitchRight
                 )
-    lat_dist = track_map.get_lateral_distance(ego.track_mode, [ego.x, ego.y])
+    lat_dist = ego.y #track_map.get_lateral_distance(ego.track_mode, [ego.x, ego.y])
     if ego.agent_mode == AgentMode.SwitchLeft:
         if lat_dist >= 2.5:
             output.agent_mode = AgentMode.Normal

@@ -1017,7 +1017,8 @@ class Verifier:
         reduction_queue = []
         if config.reachability_method == ReachabilityMethod.STAR_SETS:
             trace_length = int(min(len(v) for v in node.trace.values()))
-            reduction_queue = [(i, i+1, 1) for i in range(0, trace_length)].reverse()
+            reduction_queue = [(i, i+1, 1) for i in range(0, trace_length)]
+            reduction_queue.reverse()
         else:
             trace_length = int(min(len(v) for v in node.trace.values()) // 2)
             reduction_queue = [(0, trace_length, trace_length)]
@@ -1076,7 +1077,7 @@ class Verifier:
                         Verifier.apply_cont_var_updater(cont_vars, cont_var_updater)
                         sat = ge.evaluate_guard_disc(agent, disc_vars, cont_vars, track_map)
                         if sat:
-                            sat = ge.evaluate_guard_hybrid(agent, disc_vars, cont_vars, track_map)
+                            sat = ge.evaluate_guard_hybrid(agent, disc_vars, cont_vars, track_map, config.reachability_method == ReachabilityMethod.STAR_SETS)
                             if sat:
                                 sat, contained = ge.evaluate_guard_cont(agent, cont_vars, track_map, config.reachability_method == ReachabilityMethod.STAR_SETS)
                                 sat = sat and contained
@@ -1119,7 +1120,7 @@ class Verifier:
 
                     Verifier.apply_cont_var_updater(new_cont_var_dict, continuous_variable_updater)
                     guard_can_satisfied = one_step_guard.evaluate_guard_hybrid(
-                        agent, discrete_variable_dict, new_cont_var_dict, track_map
+                        agent, discrete_variable_dict, new_cont_var_dict, track_map,  config.reachability_method == ReachabilityMethod.STAR_SETS
                     )
                     if not guard_can_satisfied:
                         continue
