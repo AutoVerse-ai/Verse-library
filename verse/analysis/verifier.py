@@ -985,7 +985,7 @@ class Verifier:
             state_dict = {}
             if config.reachability_method == ReachabilityMethod.STAR_SETS:
                 state_dict = {
-                    aid: (node.trace[aid][0:1], node.mode[aid], node.static[aid]) for aid in node.agent
+                    aid: (node.trace[aid][0:1][0], node.mode[aid], node.static[aid]) for aid in node.agent
                 }
             else:
                 state_dict = {

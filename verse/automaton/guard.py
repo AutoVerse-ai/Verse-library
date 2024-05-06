@@ -127,7 +127,7 @@ class GuardExpressionAst:
                         if not agent + "_" + variable_name in self.varDict.keys():
                             agent_vars[agent].append(Real(agent + "." + variable_name))
                         else:
-                            agent_vars[agent].append(self.varDict[agent + "_" + variable_name])
+                            agent_vars[agent].append(self.varDict[agent + "_" + variable_name][0])
         return agent_states, agent_vars
 
     def evaluate_guard_cont(self, agent, continuous_variable_dict, track_map, stars):
@@ -149,6 +149,7 @@ class GuardExpressionAst:
         if stars:
             agent_states, agent_vars = self.get_agent_dictionaries(symbols, continuous_variable_dict)
             for agent in agent_states.keys():
+                breakpoint()
                 agent_states[agent].add_constraints(cur_solver, agent_vars[agent], agent)
             #construct the border of the hyperrectangle at a specific time
             #hyperrectangle = reach(t)
