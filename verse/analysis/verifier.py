@@ -950,7 +950,7 @@ class Verifier:
                     )
                     for path in agent_paths:
                         cont_var_dict_template, discrete_variable_dict, length_dict = sensor.sense(
-                            agent, state_dict, track_map
+                            agent, state_dict, track_map, False
                         )
                         reset = (path.var, path.val_veri)
                         guard_expression = GuardExpressionAst([path.cond_veri])
@@ -991,7 +991,7 @@ class Verifier:
                 state_dict = {
                     aid: (node.trace[aid][0:2], node.mode[aid], node.static[aid]) for aid in node.agent
                 }
-            cont_var_dict_template, discrete_variable_dict, length_dict = sensor.sense(agent, state_dict, track_map)
+            cont_var_dict_template, discrete_variable_dict, length_dict = sensor.sense(agent, state_dict, track_map, False)
             # TODO-PARSER: Get equivalent for this function
             # Construct the guard expression
             guard_expression = GuardExpressionAst([path.cond_veri])
@@ -1065,7 +1065,7 @@ class Verifier:
                     continue
                 # if np.array(agent_state).ndim != 2:
                 #     pp(("weird state", agent_id, agent_state))
-                cont_vars, disc_vars, len_dict = sensor.sense(agent, state_dict, track_map)
+                cont_vars, disc_vars, len_dict = sensor.sense(agent, state_dict, track_map, False)
                 resets = defaultdict(list)
                 # Check safety conditions
                 for i, a in enumerate(agent.decision_logic.asserts_veri):
