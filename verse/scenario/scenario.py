@@ -380,8 +380,11 @@ class Scenario:
                 print(f"######## v: {agent_init[0][3]}, {agent_init[1][3]}")
                 scenario.set_init_single(agent_id, agent_init,
                                          (self.init_mode_dict[agent_id][0], self.init_mode_dict[agent_id][1]))
-                traces = scenario.verify(time_horizon, time_step)
-                if not self.tree_safe(traces):
+                traces = scenario.verify(time_horizon, time_step, seed=4)
+                if self.tree_safe(traces):
+                    print(f"Scenario is SAFE")
+                    res_list.append(traces)
+                else:
                     if agent_init[1][idx] - agent_init[0][idx] < 0.01:
                         print(f"Stop refine state {idx}")
                         init_queue.append((agent_dict, partition_depth + 1))
@@ -392,10 +395,8 @@ class Scenario:
                     part1_dict, part2_dict = self.partition_init_dict(init_dict, agent_id, idx)
                     init_queue.append((part1_dict, partition_depth + 1))
                     init_queue.append((part2_dict, partition_depth + 1))
-                else:
-                    res_list.append(traces)
-                    continue
 
+        print(f"######## result size: {len(res_list)}")
         return res_list
 
 
