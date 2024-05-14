@@ -70,4 +70,5 @@ from verse.plotter.plotter2D import *
 
 fig = go.Figure()
 fig = reachtube_tree(traces_veri, Map2Lanes(), fig, 1, 2, [1, 2], "lines", "trace")
-fig.show()
+#fig.show()
+fig.write_html('figure.html', auto_open=True)

@@ -111,23 +111,30 @@ class GuardExpressionAst:
         for var in symbols.values():
             agent = var.split(".")[0]
             if not (agent in agent_states):
+                # KB star construction did not work here
+                # KB can update tmp variables that appear here to be stars!
                 agent_states[agent] = continuous_variable_dict[var]
         agent_vars = {}
         for agent in agent_states.keys():
             #TODO: make better
-            other_agents = agent.split("_")
-            if len(other_agents) == 1:
-                agent_vars[agent] = [v for k, v in self.varDict.items() if agent in k]
-            if len(other_agents) > 1:
-                agent_vars[agent] = []
-                #go through and find the other possible values
-                for var_string, value in continuous_variable_dict.items():
-                    if isinstance(value, list): 
-                        variable_name = var_string.split(".")[1]
-                        if not agent + "_" + variable_name in self.varDict.keys():
-                            agent_vars[agent].append(Real(agent + "." + variable_name))
-                        else:
-                            agent_vars[agent].append(self.varDict[agent + "_" + variable_name])
+            #KB handle tmp variable agent here!!
+            if "tmp_variable" in agent:
+                agent_vars[agent] = [(Real(agent))]
+            else:
+                other_agents = agent.split("_")
+                if len(other_agents) == 1:
+                    agent_vars[agent] = [v for k, v in self.varDict.items() if agent in k]
+                if len(other_agents) > 1:
+                    agent_vars[agent] = []
+                    #go through and find the other possible values
+                    for var_string, value in continuous_variable_dict.items():
+                        if isinstance(value, list): 
+                            variable_name = var_string.split(".")[1]
+                            if not agent + "_" + variable_name in self.varDict.keys():
+                                #KB understand how tmp variable appears in reset!!
+                                agent_vars[agent].append(Real(agent + "." + variable_name))
+                            else:
+                                agent_vars[agent].append(self.varDict[agent + "_" + variable_name])
         return agent_states, agent_vars
 
     def evaluate_guard_cont(self, agent, continuous_variable_dict, track_map, stars):
@@ -424,10 +431,15 @@ class GuardExpressionAst:
                             min(lateral_set1[0], lateral_set2[0]),
                             max(lateral_set1[1], lateral_set2[1]),
                         ]
+                        if agent_vars != {}: #stars:
+                            from verse.stars.starset import StarSet
+                            import polytope as pc
+                            lateral_set = StarSet.from_polytope(pc.box2poly([lateral_set]))
 
                         # Construct the tmp variable
                         tmp_var_name = f"tmp_variable{len(cont_var_dict)+1}"
                         # Add the tmp variable to the cont var dict
+                        # KB - here is whwere you could add a dimension to the tmp variable or make it a star
                         cont_var_dict[tmp_var_name] = lateral_set
                         # Replace the corresponding function call in ast
                         root = ast.parse(tmp_var_name).body[0].value
@@ -486,12 +498,17 @@ class GuardExpressionAst:
                         longitudinal_set2 = self._handle_longitudinal_set(
                             lane_seg2, np.array(vehicle_pos)
                         )
-
                         # Use the union of two sets as the set of possible longitudinal positions
                         longitudinal_set = [
                             min(longitudinal_set1[0], longitudinal_set2[0]),
                             max(longitudinal_set1[1], longitudinal_set2[1]),
                         ]
+
+                        if agent_vars != {}: #stars:
+                            from verse.stars.starset import StarSet
+                            import polytope as pc
+                            longitudinal_set = StarSet.from_polytope(pc.box2poly([longitudinal_set]))
+
 
                         # Construct the tmp variable
                         tmp_var_name = f"tmp_variable{len(cont_var_dict)+1}"

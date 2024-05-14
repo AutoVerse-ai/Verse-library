@@ -96,7 +96,7 @@ scenario.set_sensor(BaseStarSensor())
 
 scenario.config.reachability_method = ReachabilityMethod.STAR_SETS
 
-traces_veri = scenario.verify(20, 0.01)
+traces_veri = scenario.verify(8, 0.01)
 #traces_veri = scenario.verify(20, 0.01)
 
 

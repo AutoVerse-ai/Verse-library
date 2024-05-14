@@ -30,8 +30,9 @@ def vehicle_front(ego, others, track_map):
     res = any(
         (
             2
-            < 
-            other.x - ego.x
+            #other.x - ego.x
+            < track_map.get_longitudinal_position(other.track_mode, [other.x, other.y])
+            - track_map.get_longitudinal_position(ego.track_mode, [ego.x, ego.y])
             < 8
             and ego.track_mode == other.track_mode
         )
@@ -63,7 +64,7 @@ def decisionLogic(ego: State, others: List[State], track_map):
                 output.track_mode = track_map.h(
                     ego.track_mode, ego.agent_mode, AgentMode.SwitchRight
                 )
-    lat_dist = ego.y #track_map.get_lateral_distance(ego.track_mode, [ego.x, ego.y])
+    lat_dist = track_map.get_lateral_distance(ego.track_mode, [ego.x, ego.y])
     if ego.agent_mode == AgentMode.SwitchLeft:
         if lat_dist >= 2.5:
             output.agent_mode = AgentMode.Normal
