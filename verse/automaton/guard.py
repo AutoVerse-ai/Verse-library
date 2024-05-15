@@ -107,6 +107,8 @@ class GuardExpressionAst:
         return cur_solver, symbols_map
 
     def get_agent_dictionaries(self, symbols, continuous_variable_dict):
+        #TODO this should be computed once and reused instead of recomputing
+        #breakpoint()
         agent_states = {}
         for var in symbols.values():
             agent = var.split(".")[0]
@@ -125,17 +127,50 @@ class GuardExpressionAst:
                 if len(other_agents) == 1:
                     agent_vars[agent] = [v for k, v in self.varDict.items() if agent in k]
                 if len(other_agents) > 1:
+                    #agent_vars[agent] = [Real(str(k)) for k in continuous_variable_dict.keys() if agent in k]
                     agent_vars[agent] = []
                     #go through and find the other possible values
                     for var_string, value in continuous_variable_dict.items():
                         if isinstance(value, list): 
                             variable_name = var_string.split(".")[1]
                             if not agent + "_" + variable_name in self.varDict.keys():
-                                #KB understand how tmp variable appears in reset!!
-                                agent_vars[agent].append(Real(agent + "." + variable_name))
+                                agent_vars[agent].append(Real(agent + "_" + variable_name))
                             else:
                                 agent_vars[agent].append(self.varDict[agent + "_" + variable_name])
+
         return agent_states, agent_vars
+    
+
+    def get_agent_variable_indices(self, symbols, continuous_variable_dict):
+        #breakpoint()
+        agents = []
+        for var in symbols.values():
+            agent = var.split(".")[0]
+            if not (agent in agents):
+                if not isinstance(continuous_variable_dict[var], list):
+                    agents.append(agent)
+        agent_vars = {}
+        for agent in agents:
+            other_agents = agent.split("_")
+            if len(other_agents) == 1:
+                agent_vars[agent] = [str(k) for k in continuous_variable_dict.keys() if agent in k] # [v for k, v in self.varDict.items() if agent in k]
+            if len(other_agents) > 1:
+                    #agent_vars[agent] = [Real(str(k)) for k in continuous_variable_dict.keys() if agent in k]
+                agent_vars[agent] = []
+                    #go through and find the other possible values
+                for var_string, value in continuous_variable_dict.items():
+                        if not isinstance(value, list): 
+                            variable_name = var_string.split(".")[1]
+                            variable = str(agent) + "." + variable_name
+                            if variable not in agent_vars[agent]:
+                                agent_vars[agent].append(variable)
+        #for agent in agent_vars.keys():
+        #    if agent_vars[agent] == []:
+        #        breakpoint()
+        #if "ego" in agent_vars.keys() and "others_0" in agent_vars.keys():
+        #    if agent_vars['ego'] == [] and len(agent_vars['others_0']) > 1:
+        #        breakpoint()
+        return agent_vars
 
     def evaluate_guard_cont(self, agent, continuous_variable_dict, track_map, stars):
         res = False
@@ -155,7 +190,10 @@ class GuardExpressionAst:
         
         if stars:
             agent_states, agent_vars = self.get_agent_dictionaries(symbols, continuous_variable_dict)
+            print(agent_states)
+            print(agent_vars)
             for agent in agent_states.keys():
+                print(agent)
                 agent_states[agent].add_constraints(cur_solver, agent_vars[agent], agent)
             #construct the border of the hyperrectangle at a specific time
             #hyperrectangle = reach(t)
@@ -327,7 +365,7 @@ class GuardExpressionAst:
                 underscored = cont_vars.replace(".", "_")
                 cont_variables[cont_vars] = underscored
             symbols = {v: k for k, v in cont_variables.items()}
-            agent_dict, agent_vars = self.get_agent_dictionaries(symbols, continuous_variable_dict)
+            agent_vars = self.get_agent_variable_indices(symbols, continuous_variable_dict)
 
         for i, node in enumerate(self.ast_list):
             tmp, self.ast_list[i] = self._evaluate_guard_hybrid(
@@ -446,6 +484,7 @@ class GuardExpressionAst:
                         return True, root
                     elif func.attr == "get_longitudinal_position":
                         # Get function arguments
+                        #breakpoint()
                         arg0_node = root.args[0]
                         arg1_node = root.args[1]
                         # assert isinstance(arg0_node, ast.Attribute)
