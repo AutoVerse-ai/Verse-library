@@ -56,7 +56,43 @@ def reach_at(trace: AnalysisTree, t_lower: float = None, t_upper: float = None) 
                     reached[agent][modes[agent]].append([node.trace[agent][-2], node.trace[agent][-1]]) 
     return reached
 
+### revised version of top function
+### will now return a list of composed hyperrectangles (2 vertices per rect)
+def reach_at_fix(tree: AnalysisTree, t_lower: float = None, t_upper: float = None) -> List[List[float]]:
+    nodes: List[AnalysisTreeNode] = tree.nodes 
+    agents = nodes[0].agent.keys() # list of agents
+    reached: List[List[float]] = []
+    T = 0 # we know time horizon occurs in the leaf node, by definition, shouldn't matter which leaf node we check
+    if t_lower is None or t_upper is None:
+        last: list[AnalysisTreeNode] = tree.get_leaf_nodes(tree.root)
+        T = last[0].trace[list(agents)[0]][-1][0] # using list casting since the agent doesn't matter
+    for node in nodes:
+        modes = node.mode 
+        reach_node: Dict[str, List[List[float]]] = {} # will store ordered list of hyperrectangle vertices indexed by agents
+        for agent in agents:
+            reach_node[agent] = []
+            ### make error message for t_lower and t_upper
+            if t_lower is not None and t_upper is not None: ### may want to seperate this out into a seperate function
+                for i in range(0, len(node.trace[agent]), 2): # just check the upper bound, time difference between lower and upper known to be time step of scenario
+                    lower = list(node.trace[agent][i][1:]) #strip out time and add agent's mode(s)
+                    for mode in modes[agent]: # assume that size of modes[agent] doesn't change between nodes
+                        ### to do: this won't work, either hash each mode string to an int or figure another way to convert mode string to int
+                        lower.append(mode.value)
+                    upper = list(node.trace[agent][i+1][1:])
+                    for mode in modes[agent]:
+                        upper.append(mode.value) 
+                    if upper[0]>=t_lower and upper[0]<=t_upper: ### think about why cut off here explicitly -- includes T-delta T but not T if upper bound is T-delta T
+                        reach_node[agent] += [lower, upper]
+            else: ### for now, just assume if t_lower and t_upper not supplied, we just want last node 
+                if node.trace[agent][-1][0]==T:
+                    lower = list(node.trace[agent][-2][1:])
+                    uppper = list(node.trace[agent][-1][1:])
+                    reach_node[agent] += [node.trace[agent][-2][1:], node.trace[agent][-1][1:]]
+            
+    return reached
+
 ### assuming getting inputs from reach_at calls
+### this algorithm shouldn't work, it doesn't consider the composition of all agents
 def contain_all(reach1: Dict[str, Dict[str, List[List[np.array]]]], reach2: Dict[str, Dict[str, List[List[np.array]]]], state_len: int = None) -> bool:
     if state_len is None: ### taking from input now, could also derive from either reach1 or reach2
         agents = list(reach1.keys()) # if this works 100%, then get rid of if and option to pass state_len as input
