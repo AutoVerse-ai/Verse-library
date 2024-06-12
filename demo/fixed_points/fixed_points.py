@@ -60,7 +60,7 @@ def reach_at(trace: AnalysisTree, t_lower: float = None, t_upper: float = None) 
 
 ### revised version of top function
 ### will now return a list of the vertices of composed hyperrectangles (2 vertices per rect) index by node number
-def reach_at_fix(tree: AnalysisTree, t_lower: float = None, t_upper: float = None) -> List[List[float]]:
+def reach_at_fix(tree: AnalysisTree, t_lower: float = None, t_upper: float = None) -> Dict[int, List[List[float]]]:
     nodes: List[AnalysisTreeNode] = tree.nodes 
     agents = nodes[0].agent.keys() # list of agents
     reached: Dict[int, List[List[float]]] = {}
@@ -115,7 +115,31 @@ def reach_at_fix(tree: AnalysisTree, t_lower: float = None, t_upper: float = Non
             node_counter += 1
     return reached
 
-
+def contain_all_fix(reach1: Dict[int, List[List[float]]], reach2: Dict[int, List[List[float]]]) -> Bool:
+    nodes = list(reach1.keys()) # this is abritrary, could be from either reach set, just need this 
+    state_len = len(reach1[nodes[0]][0]) # taking the first vertex, could be any
+    P = RealVector('p', state_len)
+    in_r1 = Or() #just set this boolean statement to just Or for now, can sub with Or(False) if having issues
+    in_r2 = Or() #as above, sub with Or(False) if having issues
+    s = Solver()
+    for node in nodes: # for each node
+        for i in range(0, len(reach1[node]), 2): # for each vertex in the node
+            includes = And()
+            hr = [reach1[node][i], reach1[node][i+1]] # clarifies expressions and matches logic with contain_all
+            for j in range(state_len):
+                includes = And(includes, P[j] >= hr[0][j], P[j] <= hr[1][j])
+            in_r1 = Or(in_r1, includes)
+    
+    for node in nodes: #same as above loop except for r2 
+        for i in range(0, len(reach2[node]), 2): # for each vertex in the node
+            includes = And()
+            hr = [reach2[node][i], reach2[node][i+1]] # clarifies expressions and matches logic with contain_all
+            for j in range(state_len):
+                includes = And(includes, P[j] >= hr[0][j], P[j] <= hr[1][j])
+            in_r1 = Or(in_r2, includes)
+    
+    s.add(in_r1, Not(in_r2))
+    return s.check() == unsat
 
 ### assuming getting inputs from reach_at calls
 ### this algorithm shouldn't work, it doesn't consider the composition of all agents
@@ -146,6 +170,12 @@ def contain_all(reach1: Dict[str, Dict[str, List[List[np.array]]]], reach2: Dict
     
     s.add(in_r1, Not(in_r2))
     return s.check() == unsat
+
+def fixed_points_fix(tree: AnalysisTree, T: float = 40, t_step: float = 0.01) -> bool:
+    reach_end = reach_at_fix(tree)
+    reach_else = reach_at_fix(tree, 0, T-t_step+t_step*.01) # need to add some offset because of some potential decimical diffs  
+    # print(reach_end, reach_else)
+    return contain_all_fix(reach_end, reach_else)
 
 ### assuming user has T and t_step from previous scenario definition 
 def fixed_points_sat(tree: AnalysisTree, T: float = 40, t_step: float = 0.01) -> bool: 
