@@ -122,7 +122,8 @@ def contain_all_fix(reach1: Dict[int, List[List[float]]], reach2: Dict[int, List
     in_r1 = Or() #just set this boolean statement to just Or for now, can sub with Or(False) if having issues
     in_r2 = Or() #as above, sub with Or(False) if having issues
     s = Solver()
-    for node in nodes: # for each node
+    # print(reach1, reach2[5][3], reach2[5][5], reach2[6][3], reach2[6][5])
+    for node in reach1: # for each node
         for i in range(0, len(reach1[node]), 2): # for each vertex in the node
             includes = And()
             hr = [reach1[node][i], reach1[node][i+1]] # clarifies expressions and matches logic with contain_all
@@ -130,13 +131,13 @@ def contain_all_fix(reach1: Dict[int, List[List[float]]], reach2: Dict[int, List
                 includes = And(includes, P[j] >= hr[0][j], P[j] <= hr[1][j])
             in_r1 = Or(in_r1, includes)
     
-    for node in nodes: #same as above loop except for r2 
+    for node in reach2: #same as above loop except for r2 
         for i in range(0, len(reach2[node]), 2): # for each vertex in the node
             includes = And()
             hr = [reach2[node][i], reach2[node][i+1]] # clarifies expressions and matches logic with contain_all
             for j in range(state_len):
                 includes = And(includes, P[j] >= hr[0][j], P[j] <= hr[1][j])
-            in_r1 = Or(in_r2, includes)
+            in_r2 = Or(in_r2, includes)
     
     s.add(in_r1, Not(in_r2))
     return s.check() == unsat
