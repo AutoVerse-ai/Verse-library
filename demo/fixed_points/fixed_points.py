@@ -14,6 +14,8 @@ import plotly.graph_objects as go
 import copy
 from typing import Dict, Sequence
 from z3 import *
+from verse.analysis.simulator import convertStrToEnum
+import types
 
 from vehicle_controller import VehicleMode, TLMode # this line is not id of controller, but fixed_points should be
 
@@ -28,7 +30,7 @@ def contained_single(h1: List[np.array], h2: List[np.array]) -> bool:
 ### by default, will only extract the states from the very last
 def reach_at(trace: AnalysisTree, t_lower: float = None, t_upper: float = None) -> Dict[str, Dict[str, List[List[np.array]]]]: 
     nodes = trace.nodes 
-    agents = nodes[0].agent.keys() # list of agents
+    agents = nodes[0].agent.keys() # list of agents\
     reached: Dict[str, Dict[str, List[List[np.array]]]] = {}
     for agent in agents:
         reached[agent] = {}
@@ -57,39 +59,63 @@ def reach_at(trace: AnalysisTree, t_lower: float = None, t_upper: float = None) 
     return reached
 
 ### revised version of top function
-### will now return a list of composed hyperrectangles (2 vertices per rect)
+### will now return a list of the vertices of composed hyperrectangles (2 vertices per rect) index by node number
 def reach_at_fix(tree: AnalysisTree, t_lower: float = None, t_upper: float = None) -> List[List[float]]:
     nodes: List[AnalysisTreeNode] = tree.nodes 
     agents = nodes[0].agent.keys() # list of agents
-    reached: List[List[float]] = []
+    reached: Dict[int, List[List[float]]] = {}
+    node_counter = 0
+    sim_enum: Dict[str, Dict[str, int]] = {} #indexed by agent and then by mode -- simulates the enum class 
+    for agent in agents:
+        sim_enum[agent] = {'_index': 0} # initial start with an index of 0 
     T = 0 # we know time horizon occurs in the leaf node, by definition, shouldn't matter which leaf node we check
     if t_lower is None or t_upper is None:
         last: list[AnalysisTreeNode] = tree.get_leaf_nodes(tree.root)
         T = last[0].trace[list(agents)[0]][-1][0] # using list casting since the agent doesn't matter
     for node in nodes:
+        reached[node_counter] = None
         modes = node.mode 
         reach_node: Dict[str, List[List[float]]] = {} # will store ordered list of hyperrectangle vertices indexed by agents
         for agent in agents:
             reach_node[agent] = []
+            # could turn this into a subroutine
+            for mode in modes[agent]:
+                if mode not in sim_enum[agent]:
+                    sim_enum[agent][mode] = sim_enum[agent]['_index']
+                    sim_enum[agent]['_index'] += 1
+
             ### make error message for t_lower and t_upper
             if t_lower is not None and t_upper is not None: ### may want to seperate this out into a seperate function
                 for i in range(0, len(node.trace[agent]), 2): # just check the upper bound, time difference between lower and upper known to be time step of scenario
                     lower = list(node.trace[agent][i][1:]) #strip out time and add agent's mode(s)
-                    for mode in modes[agent]: # assume that size of modes[agent] doesn't change between nodes
-                        ### to do: this won't work, either hash each mode string to an int or figure another way to convert mode string to int
-                        lower.append(mode.value)
                     upper = list(node.trace[agent][i+1][1:])
-                    for mode in modes[agent]:
-                        upper.append(mode.value) 
+                    for mode in modes[agent]: # assume that size of modes[agent] doesn't change between nodes
+                        ### for now, use this simulated enum instead of trying to figure out how to access enum class
+                        lower.append(sim_enum[agent][mode])
+                        upper.append(sim_enum[agent][mode]) 
                     if upper[0]>=t_lower and upper[0]<=t_upper: ### think about why cut off here explicitly -- includes T-delta T but not T if upper bound is T-delta T
                         reach_node[agent] += [lower, upper]
             else: ### for now, just assume if t_lower and t_upper not supplied, we just want last node 
                 if node.trace[agent][-1][0]==T:
                     lower = list(node.trace[agent][-2][1:])
-                    uppper = list(node.trace[agent][-1][1:])
-                    reach_node[agent] += [node.trace[agent][-2][1:], node.trace[agent][-1][1:]]
-            
+                    upper = list(node.trace[agent][-1][1:])
+                    for mode in modes[agent]: # assume that size of modes[agent] doesn't change between nodes
+                        ### for now, use this simulated enum instead of trying to figure out how to access enum class
+                        lower.append(sim_enum[agent][mode])
+                        upper.append(sim_enum[agent][mode]) 
+                    reach_node[agent] += [lower, upper]
+        ### loop through each agent and add its state value to an existing composed state
+        for agent in agents:
+            for i in range(len(reach_node[agent])):
+                if reached[node_counter] is None:
+                    reached[node_counter] = [[] for _ in range(len(reach_node[agent]))] 
+                # print(len(reach_node[agent]))
+                reached[node_counter][i] += reach_node[agent][i]
+        if reached[node_counter] is not None:
+            node_counter += 1
     return reached
+
+
 
 ### assuming getting inputs from reach_at calls
 ### this algorithm shouldn't work, it doesn't consider the composition of all agents
