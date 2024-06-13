@@ -114,7 +114,7 @@ def reach_at_fix(tree: AnalysisTree, t_lower: float = None, t_upper: float = Non
                     reached[node_counter] = [[] for _ in range(len(reach_node[agent]))] 
                 # print(len(reach_node[agent]))
                 reached[node_counter][i] += reach_node[agent][i]
-        if reached[node_counter] is not None:
+        if reached[node_counter] is not None: ### design choice, decided not to add node if there wasn't anything in it, could alternatively added and then created an additional check in contains_all
             node_counter += 1
     return reached
 
@@ -134,7 +134,7 @@ def contain_all_fix(reach1: Dict[int, List[List[float]]], reach2: Dict[int, List
                 includes = And(includes, P[j] >= hr[0][j], P[j] <= hr[1][j])
             in_r1 = Or(in_r1, includes)
     
-    for node in reach2: #same as above loop except for r2 -- MAKE INTO SUBROUTINE
+    for node in reach2: #same as above loop except for r2 -- should probably make into subroutine
         for i in range(0, len(reach2[node]), 2): # for each vertex in the node
             includes = And()
             hr = [reach2[node][i], reach2[node][i+1]] # clarifies expressions and matches logic with contain_all
@@ -338,3 +338,14 @@ def fixed_points_aa_branching_composed(scenario: Scenario, tol: float = 0.01, t:
         if not flag:
             return False
     return True
+
+def pp_fix(reach_set: Dict[int, List[List[float]]]) -> None:
+    for node in reach_set:
+        for i in range(0, len(reach_set[node]), 2):
+            print(f'Non-empty node {node} -- {i//2}th state: {[reach_set[node][i], reach_set[node][i+1]]}')
+
+def pp_old(reach_set: Dict[str, Dict[str, List[List[np.array]]]]) -> None:
+    for agent in reach_set:
+        for mode in reach_set[agent]:
+            for state in reach_set[agent][mode]:
+                print(f'Agent {agent} in mode {mode}: {state}')
