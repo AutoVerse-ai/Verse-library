@@ -87,14 +87,17 @@ def reach_at_fix(tree: AnalysisTree, t_lower: float = None, t_upper: float = Non
             ### make error message for t_lower and t_upper
             if t_lower is not None and t_upper is not None: ### may want to seperate this out into a seperate function
                 for i in range(0, len(node.trace[agent]), 2): # just check the upper bound, time difference between lower and upper known to be time step of scenario
-                    lower = list(node.trace[agent][i][1:]) #strip out time and add agent's mode(s)
+                    if node.trace[agent][i+1][0]<t_lower: # first, use the time of the upper bound to see if we can add current node
+                        continue
+                    if node.trace[agent][i+1][0]>t_upper:
+                        break
+                    lower = list(node.trace[agent][i][1:]) # now strip out time and add agent's mode(s)
                     upper = list(node.trace[agent][i+1][1:])
                     for mode in modes[agent]: # assume that size of modes[agent] doesn't change between nodes
                         ### for now, use this simulated enum instead of trying to figure out how to access enum class
                         lower.append(sim_enum[agent][mode])
                         upper.append(sim_enum[agent][mode]) 
-                    if upper[0]>=t_lower and upper[0]<=t_upper: ### think about why cut off here explicitly -- includes T-delta T but not T if upper bound is T-delta T
-                        reach_node[agent] += [lower, upper]
+                    reach_node[agent] += [lower, upper]
             else: ### for now, just assume if t_lower and t_upper not supplied, we just want last node 
                 if node.trace[agent][-1][0]==T:
                     lower = list(node.trace[agent][-2][1:])
@@ -131,7 +134,7 @@ def contain_all_fix(reach1: Dict[int, List[List[float]]], reach2: Dict[int, List
                 includes = And(includes, P[j] >= hr[0][j], P[j] <= hr[1][j])
             in_r1 = Or(in_r1, includes)
     
-    for node in reach2: #same as above loop except for r2 
+    for node in reach2: #same as above loop except for r2 -- MAKE INTO SUBROUTINE
         for i in range(0, len(reach2[node]), 2): # for each vertex in the node
             includes = And()
             hr = [reach2[node][i], reach2[node][i+1]] # clarifies expressions and matches logic with contain_all
