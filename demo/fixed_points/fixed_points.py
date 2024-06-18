@@ -59,7 +59,7 @@ def reach_at(trace: AnalysisTree, t_lower: float = None, t_upper: float = None) 
     return reached
 
 ### revised version of top function
-### will now return a list of the vertices of composed hyperrectangles (2 vertices per rect) index by node number
+### will now return a list of the vertices of composed/product hyperrectangles (2 vertices per rect) index by node number
 def reach_at_fix(tree: AnalysisTree, t_lower: float = None, t_upper: float = None) -> Dict[int, List[List[float]]]:
     nodes: List[AnalysisTreeNode] = tree.nodes 
     agents = nodes[0].agent.keys() # list of agents
@@ -118,6 +118,7 @@ def reach_at_fix(tree: AnalysisTree, t_lower: float = None, t_upper: float = Non
             node_counter += 1
     return reached
 
+#unit test this
 def contain_all_fix(reach1: Dict[int, List[List[float]]], reach2: Dict[int, List[List[float]]]) -> Bool:
     nodes = list(reach1.keys()) # this is abritrary, could be from either reach set, just need this 
     state_len = len(reach1[nodes[0]][0]) # taking the first vertex, could be any

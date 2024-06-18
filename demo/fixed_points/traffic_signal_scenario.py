@@ -13,7 +13,8 @@ from ball_scenario_copy import BallScenario
 from ball_scenario_branch import BallScenarioBranch
 from ball_scenario_branch_nt import BallScenarioBranchNT
 from z3 import *
-from fixed_points import fixed_points, fixed_points_aa_branching, fixed_points_aa_branching_composed, contained_single, reach_at, fixed_points_sat
+from fixed_points import fixed_points_aa_branching, fixed_points_aa_branching_composed, contained_single, reach_at, fixed_points_sat, reach_at_fix, fixed_points_fix
+from fixed_points import contain_all_fix, contain_all, pp_fix, pp_old
 
 if __name__ == "__main__":
 
@@ -57,8 +58,11 @@ if __name__ == "__main__":
     # ----------- Simulate single: Uncomment this block to perform single simulation -------------
     # trace = scenario.simulate(80, 0.1)
     # trace = scenario.verify(80, 0.1)
-    # print(fixed_points_sat(trace, 80))
-    # print(len(trace.get_leaf_nodes(trace.root)), len(trace._get_all_nodes(trace.root)))
+    # pp_fix(reach_at_fix(trace, 0, 79.91))
+    # pp_fix(reach_at_fix(trace))
+    # pp_old(reach_at(trace, 0, 79.91))
+    # pp_old(reach_at(trace))
+    # print('Do fixed points exist in the scenario:', fixed_points_fix(trace, 80))
     # avg_vel, unsafe_frac, unsafe_init = eval_velocity([trace])
     # fig = go.Figure()
     # fig = simulation_tree_3d(trace, fig,\
@@ -83,22 +87,24 @@ if __name__ == "__main__":
     ###
     
     ###
-    ball_scenario = BallScenario().scenario
+    # ball_scenario = BallScenario().scenario
     ball_scenario_branch = BallScenarioBranch().scenario
 
-    # ball_scenario_branch_nt = BallScenarioBranchNT().scenario ### this scenario's verify doesn't really make any sense given its simulate -- figure out why
-    # ## trying to verify with two agents in NT takes forever for some reason
-    # trace = ball_scenario_branch_nt.verify(80, 0.1) 
-    # trace = ball_scenario_branch_nt.simulate(80, 0.1)
+    # # ball_scenario_branch_nt = BallScenarioBranchNT().scenario ### this scenario's verify doesn't really make any sense given its simulate -- figure out why
+    # # ## trying to verify with two agents in NT takes forever for some reason
+    # # trace = ball_scenario_branch_nt.verify(80, 0.1) 
+    # # trace = ball_scenario_branch_nt.simulate(80, 0.1)
 
     trace = ball_scenario_branch.verify(40, 0.1)
-    # print(reach_at(trace)) ### print out more elegantly, for example, line breaks and cut off array floats, test out more thoroughly
-    # print(reach_at(trace, 39, 39.91)) ### needs to be slightly more than T-delta T due to small differences in real trace, could also fix in reach_at by rounding off the times dimension
-    print(fixed_points_sat(trace, 40, 0.01))
+    pp_fix(reach_at_fix(trace)) ### print out more elegantly, for example, line breaks and cut off array floats, test out more thoroughly
+    # pp_old(reach_at(trace, 39, 39.91)) ### needs to be slightly more than T-delta T due to small differences in real trace, could also fix in reach_at by rounding off the times dimension
+    pp_fix(reach_at_fix(trace, 0, 39.91))
+    # # print(fixed_points_sat(trace, 40, 0.01))
+    print(fixed_points_fix(trace, 40, 0.01))
 
-    # fig = go.Figure()
-    # fig = simulation_tree(trace, None, fig, 1, 2, [1, 2], "fill", "trace")
-    # fig.show()
+    fig = go.Figure()
+    fig = reachtube_tree(trace, None, fig, 1, 2, [1, 2], "fill", "trace")
+    fig.show()
     # print(f'Do there exist fixed points? {fixed_points(ball_scenario, "red-ball", t=80)}')
     # print(f'Do there exist fixed points? {fixed_points_aa_branching(ball_scenario, t=80)}')
     # print(f'Do there exist fixed points? {fixed_points_aa_branching(ball_scenario_branch, t=80)}')
