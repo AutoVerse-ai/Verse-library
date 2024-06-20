@@ -32,10 +32,10 @@ if __name__ == "__main__":
         'cell', init_cell,(CellMode.On,)
     )
 
-    trace = scenario.verify(4, 0.01)
+    trace = scenario.verify(10, 0.01)
 
-    pp_fix(reach_at_fix(trace, 0, 4))
-    print(f'Fixed points exists? {fixed_points_fix(trace)}')
+    pp_fix(reach_at_fix(trace, 0, 10))
+    print(f'Fixed points exists? {fixed_points_fix(trace, 15, 0.01)}')
 
     fig = go.Figure()
     fig = reachtube_tree(trace, None, fig, 0, 1, [0, 1], "fill", "trace")

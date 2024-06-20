@@ -17,7 +17,7 @@ from verse.plotter.plotter2D import *
 from verse.plotter.plotter3D_new import *
 import plotly.graph_objects as go
 
-from fixed_points import fixed_points_fix, pp_fix, reach_at_fix, contain_all_fix
+from fixed_points import fixed_points_fix, pp_fix, reach_at_fix
 ### full disclosure, structure of file from mp4_p2
 
 #     <mode id="0" initial="True" name="Mode0">
@@ -93,9 +93,9 @@ class PowerTrainAgent(BaseAgent):
         trace[1:, 0] = [round(i * time_step, 10) for i in range(num_points)]
         trace[0, 1:] = init
         for i in range(num_points):
-            if mode[0]=="Mode0":
+            if mode[0]=="On":
                 r = ode(self.dynamic_mode0)
-            elif mode[0]=="Mode1":
+            elif mode[0]=="Off":
                 r = ode(self.dynamic_mode1)
             else:
                 raise ValueError
@@ -108,27 +108,20 @@ class PowerTrainAgent(BaseAgent):
 
 
 
-class PTMode(Enum):
-    Mode0=auto()
-    Mode1=auto()
+class HelicopterMode(Enum):
+    Normal=auto()
 
 class State:
-    p: float
-    lam: float
-    pe: float
-    ivalue: float 
-    t_int: float
-    agent_mode: PTMode 
+    x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16, x17, x18, x19, x20, x21, x22, x23, x24, x25: float
+    x26: float
+    x27: float
+    x28: float
 
     def __init__(self, p, lam, pe, ivalue, t_int, agent_mode: PTMode):
         pass 
 
 def decisionLogic(ego: State, other: State):
     output = copy.deepcopy(ego)
-
-    if ego.agent_mode == PTMode.Mode0 and ego.t_int>=9.5:
-        output.agent_mode = PTMode.Mode1
-        t_int = 0
 
     return output 
 
@@ -153,15 +146,10 @@ if __name__ == "__main__":
 
     trace = scenario.verify(15, 0.001)
 
-    # pp_fix(reach_at_fix(trace, 0, 15))
-
-    T, t_step = 15, 0.001
-    # r_final = reach_at_fix(trace)
-    # r_candid = reach_at_fix(trace, 0, T-t_step+t_step*.01)
-    # print(f'Does the candidate reachset contain the final reachset: {contain_all_fix(r_final, r_candid)}')
-    print(f'Fixed points exists? {fixed_points_fix(trace, 15, 0.001)}')
+    pp_fix(reach_at_fix(trace, 0, 15))
+    print(f'Fixed points exists? {fixed_points_fix(trace)}')
 
     fig = go.Figure()
-    fig = reachtube_tree(trace, None, fig, 0, 2, [0, 2], "fill", "trace")
+    fig = reachtube_tree(trace, None, fig, 0, 1, [0, 1], "fill", "trace")
     # fig = simulation_tree(trace, None, fig, 1, 2, [1, 2], "fill", "trace")
     fig.show()

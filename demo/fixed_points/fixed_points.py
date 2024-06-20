@@ -128,6 +128,8 @@ def contain_all_fix(reach1: Dict[int, List[List[float]]], reach2: Dict[int, List
     s = Solver()
     # print(reach1, reach2[5][3], reach2[5][5], reach2[6][3], reach2[6][5])
     for node in reach1: # for each node
+        if reach1[node] is None:
+            continue
         for i in range(0, len(reach1[node]), 2): # for each vertex in the node
             includes = And()
             hr = [reach1[node][i], reach1[node][i+1]] # clarifies expressions and matches logic with contain_all
@@ -136,6 +138,8 @@ def contain_all_fix(reach1: Dict[int, List[List[float]]], reach2: Dict[int, List
             in_r1 = Or(in_r1, includes)
     
     for node in reach2: #same as above loop except for r2 -- should probably make into subroutine
+        if reach2[node] is None: ### temp solution, reachset contained a node with nothing in it
+            continue
         for i in range(0, len(reach2[node]), 2): # for each vertex in the node
             includes = And()
             hr = [reach2[node][i], reach2[node][i+1]] # clarifies expressions and matches logic with contain_all
@@ -179,7 +183,6 @@ def contain_all(reach1: Dict[str, Dict[str, List[List[np.array]]]], reach2: Dict
 def fixed_points_fix(tree: AnalysisTree, T: float = 40, t_step: float = 0.01) -> bool:
     reach_end = reach_at_fix(tree)
     reach_else = reach_at_fix(tree, 0, T-t_step+t_step*.01) # need to add some offset because of some potential decimical diffs  
-    # print(reach_end, reach_else)
     return contain_all_fix(reach_end, reach_else)
 
 ### assuming user has T and t_step from previous scenario definition 
