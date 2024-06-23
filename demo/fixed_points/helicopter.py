@@ -136,14 +136,14 @@ if __name__ == "__main__":
     scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False))
 
     scenario.add_agent(helicopter) ### need to add breakpoint around here to check decision_logic of agents
-    init_h = [[10 for _ in range(28)],[10 for _ in range(28)]]
+    init_h = [[10 for _ in range(28)],[11 for _ in range(28)]]
     # # -----------------------------------------
 
     scenario.set_init_single(
         'Helicopter', init_h, (HelicopterMode.Normal,)
     )
 
-    trace = scenario.verify(10, 0.01)
+    trace = scenario.verify(20, 0.01)
 
     # is false, should be false
     print(f'Fixed points exists? {fixed_points_fix(trace, 10, 0.01)}')
