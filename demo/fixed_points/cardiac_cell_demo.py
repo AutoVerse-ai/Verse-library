@@ -33,11 +33,13 @@ if __name__ == "__main__":
     )
 
     trace = scenario.verify(10, 0.01)
-
+    sim = scenario.simulate(10, 0.01)
     pp_fix(reach_at_fix(trace, 0, 10))
     print(f'Fixed points exists? {fixed_points_fix(trace, 15, 0.01)}')
 
     fig = go.Figure()
     fig = reachtube_tree(trace, None, fig, 0, 1, [0, 1], "fill", "trace")
+    fig = reachtube_tree(trace, None, fig, 0, 1, [0, 1], "fill", "trace")
+
     # fig = simulation_tree(trace, None, fig, 1, 2, [1, 2], "fill", "trace")
     fig.show()

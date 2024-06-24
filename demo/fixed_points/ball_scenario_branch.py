@@ -63,8 +63,8 @@ class BallScenarioBranch:
         myball1 = BallAgent("red-ball", file_name=BALL_CONTROLLER)
         self.scenario.add_agent(myball1)
         self.scenario.set_init(
-            [[[0, 0, 2, 2], [0, 0, 2, 2]], ], # modified from original to check for fixed points, see below
-            # [[[5, 10, 2, 2], [5, 10, 2, 2]],],
+            # [[[0, 0, 2, 2], [0, 0, 2, 2]], ], # modified from original to check for fixed points, see below
+            [[[5, 10, 2, 2], [5, 10, 2, 2]],],
             [(BallMode.NORMAL,), ],
         )
 

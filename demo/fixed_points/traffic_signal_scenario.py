@@ -15,6 +15,7 @@ from ball_scenario_branch_nt import BallScenarioBranchNT
 from z3 import *
 from fixed_points import fixed_points_aa_branching, fixed_points_aa_branching_composed, contained_single, reach_at, fixed_points_sat, reach_at_fix, fixed_points_fix
 from fixed_points import contain_all_fix, contain_all, pp_fix, pp_old
+from reachtube_copy import reachtube_tree_slice
 
 if __name__ == "__main__":
 
@@ -87,33 +88,42 @@ if __name__ == "__main__":
     ###
     
     ### unit testing contain_all_fix
-    r1_1 = {0: [[0, 0], [1,0]]}
-    r2_1 = {0: [[-1, 0], [0.5, 0], [0.5, 0], [2, 0]]}
-    r3_1 = {0: [[-1, 0], [0.499, 0], [0.501, 0], [2, 0]]}
-    r4_1 = {0: [[-1, 0], [0.5, 0], [0.5, 1], [2, 1]]}
-    print(f'Is r1 contained within r2: {contain_all_fix(r1_1, r2_1)}')
-    print(f'Is r1 contained within r3: {contain_all_fix(r1_1, r3_1)}')
-    print(f'Is r1 contained within r4: {contain_all_fix(r1_1, r4_1)}')
+    # r1_1 = {0: [[0, 0], [1,0]]}
+    # r1_2 = {1: [[0, 0], [1,0]], 2: [[0, 1], [1,1]]}
+    # r2_1 = {0: [[-1, 0], [0.5, 0], [0.5, 0], [2, 0]]}
+    # r3_1 = {0: [[-1, 0], [0.499, 0], [0.501, 0], [2, 0]]}
+    # r3_2 = {0: [[-1, 0], [1, 0], [0, 1], [0.99, 2]]}
+    # r4_1 = {0: [[-1, 0], [0.5, 0], [0.5, 1], [2, 1]]}
+    # r4_2 = {0: [[-1, 0], [1, 0], [0, 1], [2, 1]]}
+    # print(f'Is r1 contained within r2: {contain_all_fix(r1_1, r2_1)}')
+    # print(f'Is r1 contained within r3: {contain_all_fix(r1_1, r3_1)}')
+    # print(f'Is r1 contained within r4: {contain_all_fix(r1_1, r4_1)}')
+    # print(f'Is r1_2 contained within r4_2: {contain_all_fix(r1_2, r4_2)}')
+    # print(f'Is r1_2 contained within r4_2: {contain_all_fix(r3_2, r4_2)}')
+
 
     ###
-    # ball_scenario = BallScenario().scenario
-    # ball_scenario_branch = BallScenarioBranch().scenario
+    ball_scenario = BallScenario().scenario
+    ball_scenario_branch = BallScenarioBranch().scenario
 
-    # # # ball_scenario_branch_nt = BallScenarioBranchNT().scenario ### this scenario's verify doesn't really make any sense given its simulate -- figure out why
-    # # # ## trying to verify with two agents in NT takes forever for some reason
-    # # # trace = ball_scenario_branch_nt.verify(80, 0.1) 
-    # # # trace = ball_scenario_branch_nt.simulate(80, 0.1)
+    # # ball_scenario_branch_nt = BallScenarioBranchNT().scenario ### this scenario's verify doesn't really make any sense given its simulate -- figure out why
+    # # ## trying to verify with two agents in NT takes forever for some reason
+    # # trace = ball_scenario_branch_nt.verify(80, 0.1) 
+    # # trace = ball_scenario_branch_nt.simulate(80, 0.1)
 
-    # trace = ball_scenario_branch.verify(40, 0.1)
+    trace = ball_scenario_branch.verify(40, 0.1)
+    sim = ball_scenario_branch.simulate(40, 0.1)
     # pp_fix(reach_at_fix(trace)) ### print out more elegantly, for example, line breaks and cut off array floats, test out more thoroughly
     # # pp_old(reach_at(trace, 39, 39.91)) ### needs to be slightly more than T-delta T due to small differences in real trace, could also fix in reach_at by rounding off the times dimension
     # pp_fix(reach_at_fix(trace, 0, 39.91))
     # # # print(fixed_points_sat(trace, 40, 0.01))
     # print(fixed_points_fix(trace, 40, 0.01))
 
-    # fig = go.Figure()
-    # fig = reachtube_tree(trace, None, fig, 1, 2, [1, 2], "fill", "trace")
-    # fig.show()
+    fig = go.Figure()
+    fig = reachtube_tree(trace, None, fig, 1, 2, [1, 2], "fill", "trace")
+    fig = reachtube_tree_slice(trace, None, fig, 1, 2, [1, 2], "fill", "trace", plot_color=[["#0000CC", "#0000FF", "#3333FF", "#6666FF", "#9999FF", "#CCCCFF"]])
+    fig = simulation_tree(sim, None, fig, 1, 2, [1, 2], "fill", "trace")
+    fig.show()
     # print(f'Do there exist fixed points? {fixed_points(ball_scenario, "red-ball", t=80)}')
     # print(f'Do there exist fixed points? {fixed_points_aa_branching(ball_scenario, t=80)}')
     # print(f'Do there exist fixed points? {fixed_points_aa_branching(ball_scenario_branch, t=80)}')
