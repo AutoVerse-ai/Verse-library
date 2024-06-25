@@ -159,6 +159,8 @@ def reachtube_tree_slice(
     fig = update_style(fig)
     return fig
 
+
+### for this to actually take an arbitrary slice rather than just the last state, needs to take in two time parameters and check like reach_at
 def reachtube_tree_single_slice(
     root: Union[AnalysisTree, AnalysisTreeNode],
     agent_id,
