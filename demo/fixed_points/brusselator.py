@@ -72,7 +72,7 @@ def decisionLogic(ego: State, other: State):
 if __name__ == "__main__":
     import os 
     script_dir = os.path.realpath(os.path.dirname(__file__))
-    input_code_name = os.path.join(script_dir, "jet_engine.py")
+    input_code_name = os.path.join(script_dir, "brusselator.py")
     Bruss = BrussAgent('bruss', file_name=input_code_name)
 
     scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False))
@@ -86,7 +86,7 @@ if __name__ == "__main__":
         'bruss', init_bruss, (BrussMode.Normal,)
     )
 
-    trace = scenario.verify(120, 0.01)
+    trace = scenario.verify(10, 0.01)
 
     # pp_fix(reach_at_fix(trace, 0, 10))
 
@@ -94,7 +94,7 @@ if __name__ == "__main__":
     print(f'Fixed points exists? {fixed_points_fix(trace, 10, 0.01)}')
 
     fig = go.Figure()
-    fig = reachtube_tree(trace, None, fig, 0, 1, [0, 1], "fill", "trace", plot_color=colors[1:])
+    fig = reachtube_tree(trace, None, fig, 0, 1, [0, 1], "fill", "trace", plot_color=colors[1:]) # easy way to get another color aside from red
     fig = reachtube_tree(trace, None, fig, 0, 2, [0, 2], "fill", "trace")
     # fig = simulation_tree(trace, None, fig, 1, 2, [1, 2], "fill", "trace")
     fig.show()
