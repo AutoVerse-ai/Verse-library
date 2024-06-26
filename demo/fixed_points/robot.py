@@ -19,7 +19,7 @@ import plotly.graph_objects as go
 
 from fixed_points import fixed_points_fix, pp_fix, reach_at_fix, contain_all_fix
 
-class BCAgent(BaseAgent):
+class RobotAgent(BaseAgent):
     def __init__(
         self, 
         id, 
@@ -30,10 +30,12 @@ class BCAgent(BaseAgent):
 
     @staticmethod
     def dynamic(t, state):
-        x, y = state
-        x_dot = y
-        y_dot = 2*x-x*x*x-0.2*y+0.1
-        return [x_dot, y_dot]
+        x0, x1, x2, x3 = state
+        x0_dot = x2
+        x1_dot = x3
+        x2_dot = (-2*1.0*x1*x2*x3-2.0*x0-2.0*x2)/(1.0*x1*x1 + 1.0)+(4)/(1.0*x1*x1+1.0)
+        x3_dot = x1*x2*x2 - 1.0*x1 - 1.0*x3 + 1.0
+        return [x0_dot, x1_dot, x2_dot, x3_dot]
 
     def TC_simulate(
         self, mode: List[str], init, time_bound, time_step, lane_map = None
@@ -52,15 +54,17 @@ class BCAgent(BaseAgent):
             trace[i + 1, 1:] = init
         return trace
 
-class BCMode(Enum):
+class RobotMode(Enum):
     Normal=auto()
 
 class State:
-    x: float
-    y: float
-    agent_mode: BCMode 
+    x0: float
+    x1: float
+    x2: float
+    x3: float
+    agent_mode: RobotMode 
 
-    def __init__(self, x, y, agent_mode: BCMode):
+    def __init__(self, x0, x1, x2, x3, agent_mode: RobotMode):
         pass 
 
 def decisionLogic(ego: State, other: State):
@@ -72,18 +76,18 @@ def decisionLogic(ego: State, other: State):
 if __name__ == "__main__":
     import os 
     script_dir = os.path.realpath(os.path.dirname(__file__))
-    input_code_name = os.path.join(script_dir, "buckling_col.py")
-    BCA = BCAgent('bca', file_name=input_code_name)
+    input_code_name = os.path.join(script_dir, "robot.py")
+    Robot = RobotAgent('robot', file_name=input_code_name)
 
     scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False))
 
-    scenario.add_agent(BCA) ### need to add breakpoint around here to check decision_logic of agents
+    scenario.add_agent(Robot) ### need to add breakpoint around here to check decision_logic of agents
 
-    init_bca = [[-0.5, -0.5],[-0.4, -0.4]]
+    init_robot = [[1.5, 1.5, 0, 0],[1.51, 1.51, 0.01, 0.01]]
     # # -----------------------------------------
 
     scenario.set_init_single(
-        'bca', init_bca, (BCMode.Normal,)
+        'robot', init_robot, (RobotMode.Normal,)
     )
 
     trace = scenario.verify(10, 0.01)
@@ -94,6 +98,8 @@ if __name__ == "__main__":
     print(f'Fixed points exists? {fixed_points_fix(trace, 10, 0.01)}')
 
     fig = go.Figure()
-    fig = reachtube_tree(trace, None, fig, 1, 2, [1, 2], "fill", "trace", plot_color=colors[1:]) 
+    for i in range(1, 5):
+        ### due to how the reachtube_tree is constructed, the final fig will just be zoomed in on x2 and x3, need to manually refit window
+        fig = reachtube_tree(trace, None, fig, 0, i, [0, i], "fill", "trace", plot_color=colors[i:]) 
     # fig = simulation_tree(trace, None, fig, 1, 2, [1, 2], "fill", "trace")
     fig.show()
