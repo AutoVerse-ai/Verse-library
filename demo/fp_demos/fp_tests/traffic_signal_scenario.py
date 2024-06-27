@@ -17,6 +17,8 @@ from z3 import *
 
 from reachtube_copy import reachtube_tree_slice
 
+### file used to test fixed_points functionality
+
 if __name__ == "__main__":
 
     import os 
