@@ -205,10 +205,9 @@ def reachtube_tree_single_slice(
         
         if delta_t is not None:
             if t_upper is not None and int(t_upper/delta_t)<max_id:
-                max_id = int(t_upper/delta_t)*2
-                print(max_id, t_upper)
+                max_id = int(t_upper/delta_t)*2-1
             if t_lower is not None and int(t_lower/delta_t)>=0:
-                min_id = int(t_lower/delta_t)*2
+                min_id = int(t_lower/delta_t)*2-1
 
         if len(node.child):
             queue += node.child
@@ -252,6 +251,8 @@ def reachtube_tree_single_slice(
                 )
             )
         elif combine_rect <= 1:
+            min_id+=1 # necessary due to how for loops are structured differently 
+            max_id+=1
             for idx in range(min_id, max_id, 2):
                 trace_x = np.array(
                     [
@@ -286,6 +287,8 @@ def reachtube_tree_single_slice(
                     )
                 )
         else:
+            min_id+=1 # again, necessary due to how for loops are structured differently 
+            max_id+=1
             for idx in range(min_id, max_id, combine_rect * 2):
                 trace_seg = trace[idx : idx + combine_rect * 2]
                 max_id = len(trace_seg - 1)
