@@ -122,11 +122,7 @@ if __name__ == "__main__":
     fig = reachtube_tree_slice(trace, None, fig, 1, 2, [1, 2], "fill", "trace", plot_color=colors[1:])
     fig = simulation_tree(sim, None, fig, 1, 2, [1, 2], "fill", "trace", plot_color=colors[2:])
     fig.show()
-    # print(f'Do there exist fixed points? {fixed_points(ball_scenario, "red-ball", t=80)}')
-    # print(f'Do there exist fixed points? {fixed_points_aa_branching(ball_scenario, t=80)}')
-    # print(f'Do there exist fixed points? {fixed_points_aa_branching(ball_scenario_branch, t=80)}')
-    # print(f'Do there exist fixed points? {fixed_points_aa_branching_composed(ball_scenario_branch, t=80)}')
-    # print(f'Do there exist fixed points? {fixed_points_aa_branching(ball_scenario_branch_nt, t=40)}')
+
     ###
     # -----------------------------------------
 
