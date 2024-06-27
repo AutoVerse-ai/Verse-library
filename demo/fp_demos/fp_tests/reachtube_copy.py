@@ -203,15 +203,19 @@ def reachtube_tree_single_slice(
         max_id: int = len(trace) - 1 # upper bound, not included
         min_id: int = max_id-2 # lower bound, included
         
-        if delta_t is not None:
-            if t_upper is not None and int(t_upper/delta_t)<max_id:
-                max_id = int(t_upper/delta_t)*2-1
-            if t_lower is not None and int(t_lower/delta_t)>=0:
-                min_id = int(t_lower/delta_t)*2-1
+        if t_lower is not None:
+            if t_lower > trace[-1][0]: ### if t_lower is greater than the largest possible time interval, get next node  
+                queue += node.child
+                continue
+        if t_upper is not None:
+            if t_upper < trace[0][0]: 
+                queue += node.child
+                continue
 
-        if len(node.child):
+        if t_lower is None and t_upper is None and len(node.child): ### means by default, only slices out last element
             queue += node.child
             continue
+
         if (
             len(np.unique(np.array([trace[i][x_dim] for i in range(0, max_id)]))) == 1
             and len(np.unique(np.array([trace[i][y_dim] for i in range(0, max_id)]))) == 1
@@ -231,6 +235,7 @@ def reachtube_tree_single_slice(
                 )
             )
         elif combine_rect == None:
+            ### ignoring this for now
             max_id = len(trace) - 1
             trace_x_odd = np.array([trace[i][x_dim] for i in range(min_id, max_id, 2)])
             trace_x_even = np.array([trace[i][x_dim] for i in range(min_id+1, max_id + 1, 2)])
@@ -251,9 +256,7 @@ def reachtube_tree_single_slice(
                 )
             )
         elif combine_rect <= 1:
-            min_id+=1 # necessary due to how for loops are structured differently 
-            max_id+=1
-            for idx in range(min_id, max_id, 2):
+            for idx in range(len(trace)-2, len(trace), 2):
                 trace_x = np.array(
                     [
                         trace[idx][x_dim],
@@ -287,9 +290,7 @@ def reachtube_tree_single_slice(
                     )
                 )
         else:
-            min_id+=1 # again, necessary due to how for loops are structured differently 
-            max_id+=1
-            for idx in range(min_id, max_id, combine_rect * 2):
+            for idx in range(len(trace)-2, len(trace), combine_rect * 2):
                 trace_seg = trace[idx : idx + combine_rect * 2]
                 max_id = len(trace_seg - 1)
                 if max_id <= 2:
