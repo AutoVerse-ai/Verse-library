@@ -1,5 +1,5 @@
 '''
-This file only exists to avoid having to mess around with imports
+This file contains plotter code for DryVR reachtube output
 '''
 
 from __future__ import annotations
@@ -65,6 +65,8 @@ def reachtube_tree_slice(
     sample_rate=1,
     combine_rect=1,
     plot_color=None,
+    t_lower: float = None,
+    t_upper: float = None
 ):
     """It statically shows all the traces of the verfication."""
     if plot_color is None:
@@ -93,6 +95,8 @@ def reachtube_tree_slice(
             print_dim_list,
             combine_rect,
             plot_color=plot_color,
+            t_lower=t_lower,
+            t_upper=t_upper
         )
         i = (i + 1) % num_theme
     if scale_type == "trace":
@@ -171,6 +175,8 @@ def reachtube_tree_single_slice(
     print_dim_list=None,
     combine_rect=1,
     plot_color=None,
+    t_lower: float = None,
+    t_upper: float = None
 ):
     """It statically shows the verfication traces of one given agent."""
     if isinstance(root, AnalysisTree):
@@ -189,7 +195,21 @@ def reachtube_tree_single_slice(
         node = queue.pop(0)
         traces = node.trace
         trace = np.array(traces[agent_id])
-        max_id = len(trace) - 1
+        delta_t: float = None
+        if len(trace)>1:
+            delta_t = trace[1][0]-trace[0][0]
+
+        ### by default, just slicing 
+        max_id: int = len(trace) - 1 # upper bound, not included
+        min_id: int = max_id-2 # lower bound, included
+        
+        if delta_t is not None:
+            if t_upper is not None and int(t_upper/delta_t)<max_id:
+                max_id = int(t_upper/delta_t)*2
+                print(max_id, t_upper)
+            if t_lower is not None and int(t_lower/delta_t)>=0:
+                min_id = int(t_lower/delta_t)*2
+
         if len(node.child):
             queue += node.child
             continue
@@ -213,10 +233,10 @@ def reachtube_tree_single_slice(
             )
         elif combine_rect == None:
             max_id = len(trace) - 1
-            trace_x_odd = np.array([trace[i][x_dim] for i in range(max_id-2, max_id, 2)])
-            trace_x_even = np.array([trace[i][x_dim] for i in range(max_id-1, max_id + 1, 2)])
-            trace_y_odd = np.array([trace[i][y_dim] for i in range(max_id-2, max_id, 2)])
-            trace_y_even = np.array([trace[i][y_dim] for i in range(max_id-1, max_id + 1, 2)])
+            trace_x_odd = np.array([trace[i][x_dim] for i in range(min_id, max_id, 2)])
+            trace_x_even = np.array([trace[i][x_dim] for i in range(min_id+1, max_id + 1, 2)])
+            trace_y_odd = np.array([trace[i][y_dim] for i in range(min_id, max_id, 2)])
+            trace_y_even = np.array([trace[i][y_dim] for i in range(min_id-1, max_id + 1, 2)])
             fig.add_trace(
                 go.Scatter(
                     x=trace_x_odd.tolist() + trace_x_even[::-1].tolist() + [trace_x_odd[0]],
@@ -232,7 +252,7 @@ def reachtube_tree_single_slice(
                 )
             )
         elif combine_rect <= 1:
-            for idx in range(len(trace)-2, len(trace), 2):
+            for idx in range(min_id, max_id, 2):
                 trace_x = np.array(
                     [
                         trace[idx][x_dim],
@@ -266,7 +286,7 @@ def reachtube_tree_single_slice(
                     )
                 )
         else:
-            for idx in range(0, len(trace), combine_rect * 2):
+            for idx in range(min_id, max_id, combine_rect * 2):
                 trace_seg = trace[idx : idx + combine_rect * 2]
                 max_id = len(trace_seg - 1)
                 if max_id <= 2:
