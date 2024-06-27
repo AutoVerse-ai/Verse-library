@@ -17,42 +17,7 @@ from verse.plotter.plotter2D import *
 from verse.plotter.plotter3D_new import *
 import plotly.graph_objects as go
 
-from fixed_points import fixed_points_fix, pp_fix, reach_at_fix, contain_all_fix
-### full disclosure, structure of file from mp4_p2
-
-#     <mode id="0" initial="True" name="Mode0">
-#       <dai equation="p_dot= -476.851246128715*p**2 + 563.63999719734*p - 65.460328416" />
-#       <dai equation="lam_dot= -4*lam - 33.3965838336589*p**2 + 99.359272121109*p + 33.8518550719433*pe**2 - 100.713764517065*pe - 4*(-5.05643107459819*p**2 + 15.0435539636327*p - 5.244048)*(-0.240071819537891*pe**2 + 0.714245545738554*pe - 0.248979591836735) + 4*(-4.97822527866553*pe**2 + 14.8108813346529*pe - 5.16294040816327)*(-0.240071819537891*pe**2 + 0.714245545738554*pe - 0.248979591836735) + 56.0441639020408" />
-#       <dai equation="pe_dot= -478.163885472*p**2 + 567.545273568*p + 1.45848815920571*pe**2 - 4.33919596739959*pe - 65.309067936" />
-#       <dai equation="ivalue_dot= 0" />
-#       <dai equation="t_dot= 1" />
-#       <dai equation="p_out= p" />
-#       <dai equation="lam_out= lam" />
-#       <dai equation="pe_out= pe" />
-#       <dai equation="ivalue_out= ivalue" />
-#       <dai equation="t_out= t" />
-#       <invariant equation="t&lt;9.5" />
-#     </mode>
-#     <mode id="1" initial="False" name="Mode1">
-#       <dai equation="p_dot= -476.851246128715*p**2 + 563.63999719734*p - 66.685538304" />
-#       <dai equation="lam_dot= -4*lam - 33.3965838336589*p**2 + 99.359272121109*p + 82.9456*(0.0680272108843537*ivalue + 0.00272108843537415*lam + 0.0280272108843537)**2*(-3.529055747207*pe**2 + 10.4994095223567*pe - 0.366)**2 - 4*(0.0680272108843537*ivalue + 0.00272108843537415*lam + 0.0280272108843537)*(-5.05643107459819*p**2 + 15.0435539636327*p - 0.5244048)*(-3.529055747207*pe**2 + 10.4994095223567*pe - 0.366) - 141.0072*(0.0680272108843537*ivalue + 0.00272108843537415*lam + 0.0280272108843537)*(-3.529055747207*pe**2 + 10.4994095223567*pe - 0.366) + 52.10842488" />
-#       <dai equation="pe_dot= -478.163885472*p**2 + 567.545273568*p + 1.45848815920571*pe**2 - 4.33919596739959*pe - 66.670412256" />
-#       <dai equation="ivalue_dot= 0.14*lam - 2.058" />
-#       <dai equation="t_dot= 1" />
-#       <dai equation="p_out= p" />
-#       <dai equation="lam_out= lam" />
-#       <dai equation="pe_out= pe" />
-#       <dai equation="ivalue_out= ivalue" />
-#       <dai equation="t_out= t" />
-#     </mode>
-#     <transition destination="1" id="1" source="0">
-#       <guard equation="t&gt;=9.5" />
-#       <action equation="t = 0" />
-#     </transition>
-#   </automaton>
-#   <composition automata="default_automaton" />
-#   <property initialSet="Mode0:p==0.6353&amp;&amp;lam==14.7&amp;&amp;pe==0.5573&amp;&amp;ivalue==0.017&amp;&amp;t==0" name="Prop1" type="Safety" unsafeSet="lam&gt;=100">
-#     <parameters kvalue="4000.0" timehorizon="15.0" timestep="0.001" />
+from verse.utils.fixed_points import *
 
 class PowerTrainAgent(BaseAgent):
     def __init__(

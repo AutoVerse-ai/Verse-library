@@ -4,6 +4,7 @@ from vehicle_controller import VehicleMode, TLMode
 
 from verse.plotter.plotter2D import *
 from verse.plotter.plotter3D_new import *
+from verse.utils.fixed_points import *
 import plotly.graph_objects as go
 import copy
 
@@ -13,8 +14,7 @@ from ball_scenario_copy import BallScenario
 from ball_scenario_branch import BallScenarioBranch
 from ball_scenario_branch_nt import BallScenarioBranchNT
 from z3 import *
-from fixed_points import fixed_points_aa_branching, fixed_points_aa_branching_composed, contained_single, reach_at, fixed_points_sat, reach_at_fix, fixed_points_fix
-from fixed_points import contain_all_fix, contain_all, pp_fix, pp_old
+
 from reachtube_copy import reachtube_tree_slice
 
 if __name__ == "__main__":
@@ -114,15 +114,13 @@ if __name__ == "__main__":
     trace = ball_scenario_branch.verify(40, 0.1)
     sim = ball_scenario_branch.simulate(40, 0.1)
     # pp_fix(reach_at_fix(trace)) ### print out more elegantly, for example, line breaks and cut off array floats, test out more thoroughly
-    # # pp_old(reach_at(trace, 39, 39.91)) ### needs to be slightly more than T-delta T due to small differences in real trace, could also fix in reach_at by rounding off the times dimension
     # pp_fix(reach_at_fix(trace, 0, 39.91))
-    # # # print(fixed_points_sat(trace, 40, 0.01))
-    # print(fixed_points_fix(trace, 40, 0.01))
+    print(fixed_points_fix(trace, 40, 0.01))
 
     fig = go.Figure()
     fig = reachtube_tree(trace, None, fig, 1, 2, [1, 2], "fill", "trace")
-    fig = reachtube_tree_slice(trace, None, fig, 1, 2, [1, 2], "fill", "trace", plot_color=[["#0000CC", "#0000FF", "#3333FF", "#6666FF", "#9999FF", "#CCCCFF"]])
-    fig = simulation_tree(sim, None, fig, 1, 2, [1, 2], "fill", "trace")
+    fig = reachtube_tree_slice(trace, None, fig, 1, 2, [1, 2], "fill", "trace", plot_color=colors[1:])
+    fig = simulation_tree(sim, None, fig, 1, 2, [1, 2], "fill", "trace", plot_color=colors[2:])
     fig.show()
     # print(f'Do there exist fixed points? {fixed_points(ball_scenario, "red-ball", t=80)}')
     # print(f'Do there exist fixed points? {fixed_points_aa_branching(ball_scenario, t=80)}')

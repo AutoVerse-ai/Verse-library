@@ -5,7 +5,6 @@ from verse import BaseAgent, Scenario,  ScenarioConfig
 from verse.analysis.utils import wrap_to_pi 
 from verse.analysis.analysis_tree import TraceType, AnalysisTree 
 from verse.parser import ControllerIR
-from vehicle_controller import VehicleMode
 from verse.analysis import AnalysisTreeNode, AnalysisTree, AnalysisTreeNodeType
 from enum import Enum, auto
 from verse.plotter.plotter2D import *
@@ -17,7 +16,6 @@ from z3 import *
 from verse.analysis.simulator import convertStrToEnum
 import types
 
-from vehicle_controller import VehicleMode, TLMode # this line is not id of controller, but fixed_points should be
 
 ### returns whether hyperrectangle 1 is contained within hyperrectangle 2
 ### expects to be given two states (lower and upper bounds for each state) from a trace/set of traces
@@ -192,50 +190,49 @@ def fixed_points_sat(tree: AnalysisTree, T: float = 40, t_step: float = 0.01) ->
     # print(reach_end, reach_else)
     return contain_all(reach_end, reach_else)
 
-### should we getting a scenario or is a trace enough? --shouldn't matter, but should switch to trace to be a bit faster
-def fixed_points(scenario: Scenario, agent: str, tol: float = 0.01, t: float = 160) -> bool: 
-    #what algorithm should do: 
-    #1: compute reachable states for t
-    #2: compute reachables states for t+dt
-    #3: repeat until either Reach_t+d(n-1)t = Reach_t_t+dnt or no fixed points exist
-    # **should be using verify instead of simulate
-    # **ask about or find scenarios where loops possible/not possible
+# def fixed_points(scenario: Scenario, agent: str, tol: float = 0.01, t: float = 160) -> bool: 
+#     #what algorithm should do: 
+#     #1: compute reachable states for t
+#     #2: compute reachables states for t+dt
+#     #3: repeat until either Reach_t+d(n-1)t = Reach_t_t+dnt or no fixed points exist
+#     # **should be using verify instead of simulate
+#     # **ask about or find scenarios where loops possible/not possible
 
-    ## v2
-    # just check if fixed points for a given time horizon
-    # can make helper function that calls this function with different time horizons if necessary
-    # should also make agent mode a parameter if only checking for a single agent (doesn't really make sense, should be checking for all, only makes sense for scenarios with only one non-stationary agent)
-    # see if rounded to nearest hundredth helps or using a tolerance value -- otherwise need too many simulations  
-    cur : AnalysisTree = scenario.verify(t, 0.1)
-    all : list[AnalysisTreeNode] = cur.nodes
-    last : AnalysisTreeNode = cur.get_leaf_nodes(cur.root)[0] # check to branching structures
-    ### present with better example -- non-trivial branching scenario, understand at variable level
-    check = list(map(lambda row: np.array(row[1:]), last.trace[agent][-2:])) # lambda function converts to np array and cuts off first col
-    reached = list(map(lambda row: np.array(row[1:]), last.trace[agent][:-2][1:]))
-    # # print(reached, check)
-    for node in all:
-        if node.mode == last.mode and node!=last:
-            # for state in node.trace[agent]:
-            reached += list(map(lambda row: np.array(row[1:]), node.trace[agent][:][1:]))
-    # print(len(reached))
-    # print(reached)
-    # print(check)
+#     ## v2
+#     # just check if fixed points for a given time horizon
+#     # can make helper function that calls this function with different time horizons if necessary
+#     # should also make agent mode a parameter if only checking for a single agent (doesn't really make sense, should be checking for all, only makes sense for scenarios with only one non-stationary agent)
+#     # see if rounded to nearest hundredth helps or using a tolerance value -- otherwise need too many simulations  
+#     cur : AnalysisTree = scenario.verify(t, 0.1)
+#     all : list[AnalysisTreeNode] = cur.nodes
+#     last : AnalysisTreeNode = cur.get_leaf_nodes(cur.root)[0] # check to branching structures
+#     ### present with better example -- non-trivial branching scenario, understand at variable level
+#     check = list(map(lambda row: np.array(row[1:]), last.trace[agent][-2:])) # lambda function converts to np array and cuts off first col
+#     reached = list(map(lambda row: np.array(row[1:]), last.trace[agent][:-2][1:]))
+#     # # print(reached, check)
+#     for node in all:
+#         if node.mode == last.mode and node!=last:
+#             # for state in node.trace[agent]:
+#             reached += list(map(lambda row: np.array(row[1:]), node.trace[agent][:][1:]))
+#     # print(len(reached))
+#     # print(reached)
+#     # print(check)
 
-    return contained(check, reached, tol)
-    # for state in check:
-    #     flag = False
-    #     # mini = np.inf
-    #     # r: np.array
-    #     for reach in reached: 
-    #         # if np.linalg.norm(state-reach)<mini:
-    #         #     mini = np.linalg.norm(state-reach)
-    #         #     r = reach
-    #         if np.linalg.norm(state-reach)<=tol:
-    #             flag = True
-    #             break
-    #     if not flag:
-    #         # print(mini, r, state)
-    #         return False
+#     return contained(check, reached, tol)
+#     # for state in check:
+#     #     flag = False
+#     #     # mini = np.inf
+#     #     # r: np.array
+#     #     for reach in reached: 
+#     #         # if np.linalg.norm(state-reach)<mini:
+#     #         #     mini = np.linalg.norm(state-reach)
+#     #         #     r = reach
+#     #         if np.linalg.norm(state-reach)<=tol:
+#     #             flag = True
+#     #             break
+#     #     if not flag:
+#     #         # print(mini, r, state)
+#     #         return False
 
 ### function that indicates whether some goal state(s) are in the current reachset based on l2 norm of diff between part of goal state(s) and reached states
 ### revise variable names to be more general

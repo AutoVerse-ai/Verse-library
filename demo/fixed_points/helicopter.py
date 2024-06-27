@@ -17,7 +17,7 @@ from verse.plotter.plotter2D import *
 from verse.plotter.plotter3D_new import *
 import plotly.graph_objects as go
 
-from fixed_points import fixed_points_fix, pp_fix, reach_at_fix
+from verse.utils.fixed_points import *
 ### full disclosure, structure of file from mp4_p2
 
 class HelicopterAgent(BaseAgent):
@@ -146,7 +146,7 @@ if __name__ == "__main__":
     trace = scenario.verify(20, 0.01)
 
     # is false, should be false
-    print(f'Fixed points exists? {fixed_points_fix(trace, 10, 0.01)}')
+    print(f'Fixed points exists? {fixed_points_fix(trace, 20, 0.01)}')
 
     fig = go.Figure()
     fig = reachtube_tree(trace, None, fig, 6, 7, [6, 7], "fill", "trace")

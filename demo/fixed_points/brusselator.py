@@ -17,7 +17,7 @@ from verse.plotter.plotter2D import *
 from verse.plotter.plotter3D_new import *
 import plotly.graph_objects as go
 
-from fixed_points import fixed_points_fix, pp_fix, reach_at_fix, contain_all_fix
+from verse.utils.fixed_points import *
 
 class BrussAgent(BaseAgent):
     def __init__(

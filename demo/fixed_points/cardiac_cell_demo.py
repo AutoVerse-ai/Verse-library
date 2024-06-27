@@ -11,8 +11,8 @@ from cardiac_cell_agent import CellAgent
 from cardiac_cell_controller import CellMode
 
 from z3 import *
-from fixed_points import fixed_points_aa_branching, fixed_points_aa_branching_composed, contained_single, reach_at, fixed_points_sat, reach_at_fix, fixed_points_fix
-from fixed_points import contain_all_fix, contain_all, pp_fix, pp_old
+from verse.utils.fixed_points import *
+
 
 if __name__ == "__main__":
 

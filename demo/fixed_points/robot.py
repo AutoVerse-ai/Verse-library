@@ -17,7 +17,7 @@ from verse.plotter.plotter2D import *
 from verse.plotter.plotter3D_new import *
 import plotly.graph_objects as go
 
-from fixed_points import fixed_points_fix, pp_fix, reach_at_fix, contain_all_fix
+from verse.utils.fixed_points import *
 
 class RobotAgent(BaseAgent):
     def __init__(
@@ -94,7 +94,8 @@ if __name__ == "__main__":
 
     # pp_fix(reach_at_fix(trace, 0, 10))
 
-    ### fixed points eventually reached at t=120, not quite at t=60 though
+    # no fixed points reached by t=60, x0, x1 seem to converge but x3 at least doesn't 
+    # fixed point reached by t=120, trying to plot it out will take a bit
     print(f'Fixed points exists? {fixed_points_fix(trace, 10, 0.01)}')
 
     fig = go.Figure()
