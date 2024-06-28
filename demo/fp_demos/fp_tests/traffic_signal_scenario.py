@@ -121,7 +121,7 @@ if __name__ == "__main__":
 
     fig = go.Figure()
     fig = reachtube_tree(trace, None, fig, 1, 2, [1, 2], "fill", "trace")
-    fig = reachtube_tree_slice(trace, None, fig, 1, 2, [1, 2], "fill", "trace", plot_color=colors[1:]) ### this doesn't work properly for t=[30, 40], find out why, also test on traffic scenario
+    fig = reachtube_tree_slice(trace, None, fig, 1, 2, [1, 2], "fill", "trace", plot_color=colors[1:], t_lower=39.9, t_upper=40) ### this doesn't work properly for t=[30, 40], find out why, also test on traffic scenario
     fig = simulation_tree(sim, None, fig, 1, 2, [1, 2], "fill", "trace", plot_color=colors[2:])
     fig.show()
 
