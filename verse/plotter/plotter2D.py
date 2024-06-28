@@ -66,6 +66,7 @@ def simulation_tree(
     scale_type="trace",
     label_mode="None",
     sample_rate=1,
+    plot_color=None,
 ):
     '''This function adds the traces of a simulation as a 2D plot to a plotly graph object.
         Parameters:
@@ -94,7 +95,7 @@ def simulation_tree(
     i = 0
     for agent_id in agent_list:
         fig = simulation_tree_single(
-            root, agent_id, fig, x_dim, y_dim, scheme_list[i], print_dim_list
+            root, agent_id, fig, x_dim, y_dim, scheme_list[i], print_dim_list, plot_color
         )
         i = (i + 1) % num_theme
     if scale_type == "trace":
@@ -1036,6 +1037,7 @@ def simulation_tree_single(
     y_dim: int = 2,
     color=None,
     print_dim_list=None,
+    plot_color = None
 ):
     """It statically shows the simulation traces of one given agent."""
     if isinstance(root, AnalysisTree):
@@ -1043,6 +1045,8 @@ def simulation_tree_single(
     global color_cnt
     queue = [root]
     color_id = 0
+    if plot_color is None:
+        plot_color = colors
     if color == None:
         color = list(scheme_dict.keys())[color_cnt]
         color_cnt = (color_cnt + 1) % num_theme
@@ -1072,7 +1076,7 @@ def simulation_tree_single(
                 x=trace[:, x_dim],
                 y=trace[:, y_dim],
                 mode="lines",
-                line_color=colors[scheme_dict[color]][color_id],
+                line_color=plot_color[scheme_dict[color]][color_id],
                 text=[
                     ["{:.2f}".format(trace[i, j]) for j in print_dim_list]
                     for i in range(trace.shape[0])

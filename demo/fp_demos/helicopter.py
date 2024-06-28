@@ -5,7 +5,7 @@ import numpy as np
 from scipy.integrate import ode 
 
 from verse import BaseAgent, Scenario, ScenarioConfig
-from verse.analysis.utils import wrap_to_pi 
+from verse.utils.utils import wrap_to_pi 
 from verse.analysis.analysis_tree import TraceType, AnalysisTree 
 from verse.parser import ControllerIR
 from verse.analysis import AnalysisTreeNode, AnalysisTree, AnalysisTreeNodeType
@@ -145,6 +145,7 @@ if __name__ == "__main__":
 
     trace = scenario.verify(20, 0.01)
 
+    wrap_to_pi(5)
     # is false, should be false
     print(f'Fixed points exists? {fixed_points_fix(trace, 20, 0.01)}')
 

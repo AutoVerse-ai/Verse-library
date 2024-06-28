@@ -4,7 +4,7 @@ import numpy as np
 from scipy.integrate import ode 
 
 from verse import BaseAgent, Scenario
-from verse.analysis.utils import wrap_to_pi 
+from verse.utils.utils import wrap_to_pi 
 from verse.analysis.analysis_tree import TraceType, AnalysisTree 
 from verse.parser import ControllerIR
 from verse.analysis import AnalysisTreeNode, AnalysisTree, AnalysisTreeNodeType

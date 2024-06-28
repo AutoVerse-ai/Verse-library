@@ -19,7 +19,7 @@ from verse.analysis.incremental import (
     combine_all,
 )
 from verse.analysis.incremental import CachedRTTrans, combine_all, reach_trans_suit
-from verse.analysis.utils import dedup
+from verse.utils.utils import dedup
 from verse.map.lane_map import LaneMap
 from verse.parser.parser import find, ModePath, unparse
 from verse.agents.base_agent import BaseAgent

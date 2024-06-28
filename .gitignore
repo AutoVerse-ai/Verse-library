@@ -24,3 +24,4 @@ docs/source/_autosummary/
 gif/
 debug/
 build/
+.python-version
