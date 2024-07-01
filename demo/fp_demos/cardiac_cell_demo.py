@@ -1,5 +1,4 @@
 from verse import Scenario, ScenarioConfig
-from vehicle_controller import VehicleMode, TLMode
 
 from verse.plotter.plotter2D import *
 from verse.plotter.plotter3D_new import *
@@ -39,7 +38,7 @@ if __name__ == "__main__":
 
     fig = go.Figure()
     fig = reachtube_tree(trace, None, fig, 0, 1, [0, 1], "fill", "trace")
-    # fig = reachtube_tree(trace, None, fig, 0, 1, [0, 1], "fill", "trace")
+    # fig = reachtube_tree_slice(trace, None, fig, 0, 1, [0, 1], "fill", "trace", plot_color=colors[1:])
 
     # fig = simulation_tree(trace, None, fig, 1, 2, [1, 2], "fill", "trace")
     fig.show()

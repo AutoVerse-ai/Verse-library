@@ -13,7 +13,6 @@ neighbor_directory_path = os.path.abspath(os.path.join(os.path.dirname(__file__)
 sys.path.append(neighbor_directory_path)
 
 from verse.utils.fixed_points import *
-from reachtube_copy import *
 ###
 
 class AgentMode(Enum):
@@ -52,7 +51,7 @@ if __name__ == "__main__":
 
     fig = go.Figure()
     fig = reachtube_tree(traces, None, fig, 1, 2, [1, 2], "lines", "trace")
-    fig = reachtube_tree_slice(traces, None, fig, 1, 2, [1, 2], "lines", "trace", plot_color=colors[1:], t_lower=6.95, t_upper=7)
+    fig = reachtube_tree_slice(traces, None, fig, 1, 2, [1, 2], "lines", "trace", plot_color=colors[1:])
     for i in range(10):
         sim = scenario.simulate(7, 0.05)
         fig = simulation_tree(sim, None, fig, 1, 2, [1, 2], "lines", "trace", plot_color=colors[2:])
