@@ -56,7 +56,7 @@ if __name__ == "__main__":
         sim = scenario.simulate(7, 0.05)
         fig = simulation_tree(sim, None, fig, 1, 2, [1, 2], "lines", "trace", plot_color=colors[2:])
     fig.show()
-
+    print("last", reach_at_fix(traces))
     print("Do fixed points exist for this scenario: ", fixed_points_fix(traces, 7, 0.05))
     # pp_fix(reach_at_fix(traces, 0, 6.96))
     # pp_fix(reach_at_fix(traces))

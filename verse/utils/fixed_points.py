@@ -18,6 +18,7 @@ import types
 
 ### revised version of top function
 ### will now return a list of the vertices of composed/product hyperrectangles (2 vertices per rect) index by node number
+### t_lower and t_upper need to completely enclose the time interval defined by a hyperrectangle
 def reach_at_fix(tree: AnalysisTree, t_lower: float = None, t_upper: float = None) -> Dict[int, List[List[float]]]:
     nodes: List[AnalysisTreeNode] = tree.nodes 
     agents = nodes[0].agent.keys() # list of agents
@@ -45,9 +46,9 @@ def reach_at_fix(tree: AnalysisTree, t_lower: float = None, t_upper: float = Non
             ### make error message for t_lower and t_upper
             if t_lower is not None and t_upper is not None: ### may want to seperate this out into a seperate function
                 for i in range(0, len(node.trace[agent]), 2): # just check the upper bound, time difference between lower and upper known to be time step of scenario
-                    if node.trace[agent][i+1][0]<t_lower: # first, use the time of the upper bound to see if we can add current node
+                    if node.trace[agent][i][0]<t_lower: # first, use the time of the lower bound to see if we can add current node
                         continue
-                    if node.trace[agent][i+1][0]>t_upper:
+                    if node.trace[agent][i+1][0]>t_upper: # then, use the time of the upper bound to do the same thing
                         break
                     lower = list(node.trace[agent][i][1:]) # now strip out time and add agent's mode(s)
                     upper = list(node.trace[agent][i+1][1:])
