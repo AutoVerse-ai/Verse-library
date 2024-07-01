@@ -84,6 +84,11 @@ def reachtube_tree_slice(
 
     # scheme_list = list(scheme_dict.keys())
     i = 0
+    if t_lower is None:
+        t_lower = 0
+    if t_upper is None:
+        t_upper = np.inf
+        
     for agent_id in agent_list:
         fig = reachtube_tree_single_slice(
             root,
@@ -195,23 +200,8 @@ def reachtube_tree_single_slice(
         node = queue.pop(0)
         traces = node.trace
         trace = np.array(traces[agent_id])
-        delta_t: float = None
-        if len(trace)>1:
-            delta_t = trace[1][0]-trace[0][0]
+        max_id = len(trace) - 1 
 
-        ### by default, just slicing 
-        max_id: int = len(trace) - 1 # upper bound, not included
-        min_id: int = max_id-2 # lower bound, included
-        
-        if delta_t is not None:
-            if t_upper is not None and int(t_upper/delta_t)<max_id:
-                max_id = int(t_upper/delta_t)*2-1
-            if t_lower is not None and int(t_lower/delta_t)>=0:
-                min_id = int(t_lower/delta_t)*2-1
-
-        if len(node.child):
-            queue += node.child
-            continue
         if (
             len(np.unique(np.array([trace[i][x_dim] for i in range(0, max_id)]))) == 1
             and len(np.unique(np.array([trace[i][y_dim] for i in range(0, max_id)]))) == 1
@@ -231,11 +221,12 @@ def reachtube_tree_single_slice(
                 )
             )
         elif combine_rect == None:
+            ### may have to modify if statements
             max_id = len(trace) - 1
-            trace_x_odd = np.array([trace[i][x_dim] for i in range(min_id, max_id, 2)])
-            trace_x_even = np.array([trace[i][x_dim] for i in range(min_id+1, max_id + 1, 2)])
-            trace_y_odd = np.array([trace[i][y_dim] for i in range(min_id, max_id, 2)])
-            trace_y_even = np.array([trace[i][y_dim] for i in range(min_id-1, max_id + 1, 2)])
+            trace_x_odd = np.array([trace[i][x_dim] for i in range(0, max_id, 2) if trace[i][0]>=t_lower and trace[i+1][0]<=t_upper])
+            trace_x_even = np.array([trace[i][x_dim] for i in range(1, max_id + 1, 2) if trace[i][0]>=t_lower and trace[i+1][0]<=t_upper])
+            trace_y_odd = np.array([trace[i][y_dim] for i in range(0, max_id, 2) if trace[i][0]>=t_lower and trace[i+1][0]<=t_upper])
+            trace_y_even = np.array([trace[i][y_dim] for i in range(1, max_id + 1, 2) if trace[i][0]>=t_lower and trace[i+1][0]<=t_upper])
             fig.add_trace(
                 go.Scatter(
                     x=trace_x_odd.tolist() + trace_x_even[::-1].tolist() + [trace_x_odd[0]],
@@ -251,9 +242,11 @@ def reachtube_tree_single_slice(
                 )
             )
         elif combine_rect <= 1:
-            min_id+=1 # necessary due to how for loops are structured differently 
-            max_id+=1
-            for idx in range(min_id, max_id, 2):
+            for idx in range(0, len(trace), 2):
+                if trace[idx][0]<t_lower:
+                    continue
+                if trace[idx+1][0]>t_upper:
+                    break
                 trace_x = np.array(
                     [
                         trace[idx][x_dim],
@@ -287,9 +280,7 @@ def reachtube_tree_single_slice(
                     )
                 )
         else:
-            min_id+=1 # again, necessary due to how for loops are structured differently 
-            max_id+=1
-            for idx in range(min_id, max_id, combine_rect * 2):
+            for idx in range(0, len(trace), combine_rect * 2):
                 trace_seg = trace[idx : idx + combine_rect * 2]
                 max_id = len(trace_seg - 1)
                 if max_id <= 2:
@@ -326,11 +317,12 @@ def reachtube_tree_single_slice(
                         )
                     )
                 else:
-                    trace_x_odd = np.array([trace_seg[i][x_dim] for i in range(0, max_id, 2)])
-                    trace_x_even = np.array([trace_seg[i][x_dim] for i in range(1, max_id + 1, 2)])
+                    ### assuming max_id is <=len(trace)-1, if not, modify the conditions
+                    trace_x_odd = np.array([trace_seg[i][x_dim] for i in range(0, max_id, 2) if trace[i][0]>=t_lower and trace[i+1][0]<=t_upper])
+                    trace_x_even = np.array([trace_seg[i][x_dim] for i in range(1, max_id + 1, 2) if trace[i][0]>=t_lower and trace[i+1][0]<=t_upper])
 
-                    trace_y_odd = np.array([trace_seg[i][y_dim] for i in range(0, max_id, 2)])
-                    trace_y_even = np.array([trace_seg[i][y_dim] for i in range(1, max_id + 1, 2)])
+                    trace_y_odd = np.array([trace_seg[i][y_dim] for i in range(0, max_id, 2) if trace[i][0]>=t_lower and trace[i+1][0]<=t_upper])
+                    trace_y_even = np.array([trace_seg[i][y_dim] for i in range(1, max_id + 1, 2) if trace[i][0]>=t_lower and trace[i+1][0]<=t_upper])
 
                     x_start = 0
                     x_end = 0
