@@ -543,9 +543,9 @@ class AnalysisTree:
     # helper method
     def collect_leaf_nodes(self, node, leafs):
         if node is not None:
-            if len(node.children) == 0:
+            if len(node.child) == 0: ###
                 leafs.append(node)
-            for n in node.children:
+            for n in node.child: ###
                 self.collect_leaf_nodes(n, leafs)
 
     # get the height of the tree

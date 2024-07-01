@@ -756,7 +756,7 @@ def proc(node: ast.AST, env: Env) -> Any:
     # Data massaging
     elif isinstance(node, ast.For) or isinstance(node, ast.While):
         raise NotImplementedError("loops not supported")
-    elif isinstance(node, ast.If):
+    elif isinstance(node, ast.If): # add error message/assert message if else is called
         if is_main_check(node):
             return START_OF_MAIN
         test = proc(node.test, env)

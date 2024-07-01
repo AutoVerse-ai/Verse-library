@@ -14,7 +14,7 @@ from enum import Enum
 
 from verse.agents.base_agent import BaseAgent
 from verse.analysis.incremental import CachedSegment, SimTraceCache, convert_sim_trans, to_simulate
-from verse.analysis.utils import dedup
+from verse.utils.utils import dedup
 from verse.map.lane_map import LaneMap
 from verse.parser.parser import ModePath, find, unparse
 from verse.analysis.incremental import (
@@ -219,7 +219,7 @@ class Simulator:
                     trace = node.agent[agent_id].TC_simulate(
                         mode, init, remain_time, consts.time_step, consts.lane_map
                     )
-                    trace[:, 0] += node.start_time
+                    trace[:, 0] += node.start_time ### breakpoints here
                     node.trace[agent_id] = trace
         # pp(("cached_segments", cached_segments.keys()))
         # TODO: for now, make sure all the segments comes from the same node; maybe we can do
