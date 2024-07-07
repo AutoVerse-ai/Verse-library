@@ -116,8 +116,8 @@ class StarSet:
 
 
     def overapprox_rectangles(self):
-        breakpoint()
-        print("this version does work!!")
+        # breakpoint()
+        # print("this version does work!!")
         #get the sum of each column
         coefficents = self.basis.sum(axis = 0)
 

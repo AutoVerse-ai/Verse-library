@@ -1,6 +1,12 @@
 import numpy as np
 from starset import StarSet
 from starset import HalfSpace
+from verse.analysis.utils import sample_rect
+from typing_extensions import List
+from scipy.integrate import ode
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
+from mathplotlib.patches import Ellipse
 
 basis = np.array([[1, 0], [0, 1]])
 center = np.array([3,3])
@@ -56,6 +62,33 @@ def sim_simple(vec, t):
     out_vec.append(y+0.7)
     return out_vec
 
+### testing dynamic fnctions like this
+
+def dynamic_test(vec, t):
+    x, y = t # hack to access right variable, not sure how integrate, ode are supposed to work
+    x = y
+    y = (1 - x**2) * y - x
+    return [x, y]
+
+def sim_test(
+    mode: List[str], initialCondition, time_bound, time_step, 
+) -> np.ndarray:
+    time_bound = float(time_bound)
+    number_points = int(np.ceil(time_bound / time_step))
+    t = [round(i * time_step, 10) for i in range(0, number_points)]
+    # note: digit of time
+    init = initialCondition
+    trace = [[0] + init]
+    for i in range(len(t)):
+        r = ode(dynamic_test)
+        r.set_initial_value(init)
+        res: np.ndarray = r.integrate(r.t + time_step)
+        init = res.flatten().tolist()
+        trace.append([t[i] + time_step] + init)
+    return np.array(trace)
+
+###
+
 test = StarSet(center,basis, C, g)
 basis = np.array([[1.0, 0.0], [0.0, 1.0]])
 center = np.array([3.0,3.0])
@@ -64,6 +97,35 @@ g = np.array([1,1,1,1])
 test1 = StarSet(center,basis, C, g)
 test_transformed = test1.post_cont(sim_simple, 1)
 test_transformed2 = test1.post_cont(sim_ugly, 1)
+
+rect = test.overapprox_rectangles()
+N = 100 # parameter to control num samples
+rect_t = []
+for i in range(N):
+    point = sample_rect(rect)
+    rect_t.append(sim_test(mode=None, initialCondition=point, time_bound=7, time_step=0.1).tolist()[-1][1:])
+rect_t = np.array(rect_t)
+
+pca = PCA(n_components=2)
+pca.fit(rect_t)
+# print(rect_t)
+# print(pca.components_, pca.explained_variance_ratio_)
+pc1 = pca.components_[0]
+pc2 = pca.components_[1]
+scale_factor = np.sqrt(pca.explained_variance_)  # Scale factor based on explained variance
+angle = np.arctan2(pca.components_[0, 1], pca.components_[0, 0])  # Angle of the first principal component
+
+plt.scatter(rect_t[:, 0], rect_t[:, 1])
+origin = np.mean(rect_t, axis=0)
+plt.quiver(*origin, pc1[0], pc1[1], color='r', scale=3, label='PC1')
+plt.quiver(*origin, pc2[0], pc2[1], color='g', scale=3, label='PC2')
+ellipse = plt.Circle(pca.mean_, width=2*scale_factor[0], height=2*scale_factor[1], angle=np.degrees(angle), fill=False, color='b', linestyle='--', linewidth=2, label='Ellipsoid')
+
+plt.gca().add_patch(ellipse)
+plt.show()
+
+exit()
+
 print(test1.overapprox_rectangles())
 
 print(test_transformed.overapprox_rectangles())

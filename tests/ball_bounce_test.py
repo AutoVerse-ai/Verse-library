@@ -5,12 +5,13 @@ from verse import Scenario, ScenarioConfig
 from enum import Enum, auto
 import copy
 import os 
+from verse.scenario.scenario import ReachabilityMethod
 
 class BallMode(Enum):
     Normal = auto()
 
 def ball_bounce_test():
-    bouncingBall = Scenario(ScenarioConfig(parallel=True, print_level=2))  # scenario too small, parallel too slow
+    bouncingBall = Scenario(ScenarioConfig(parallel=True, print_level=2, reachability_method=ReachabilityMethod.STAR_SETS))  # scenario too small, parallel too slow
     script_dir = os.path.realpath(os.path.dirname(__file__))
     ball_controller = os.path.join(script_dir, './test_controller/ball_controller.py')
     ball_controller2 = os.path.join(script_dir, './test_controller/ball_controller2.py')
