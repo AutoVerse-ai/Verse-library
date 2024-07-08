@@ -6,7 +6,8 @@ from typing_extensions import List
 from scipy.integrate import ode
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
-from mathplotlib.patches import Ellipse
+from matplotlib.patches import Ellipse
+import cvxpy as cp
 
 basis = np.array([[1, 0], [0, 1]])
 center = np.array([3,3])
@@ -112,17 +113,37 @@ pca.fit(rect_t)
 # print(pca.components_, pca.explained_variance_ratio_)
 pc1 = pca.components_[0]
 pc2 = pca.components_[1]
-scale_factor = np.sqrt(pca.explained_variance_)  # Scale factor based on explained variance
+scale_factor = np.sqrt(pca.explained_variance_)*3  # Scale factor based on explained variance
 angle = np.arctan2(pca.components_[0, 1], pca.components_[0, 0])  # Angle of the first principal component
 
 plt.scatter(rect_t[:, 0], rect_t[:, 1])
 origin = np.mean(rect_t, axis=0)
 plt.quiver(*origin, pc1[0], pc1[1], color='r', scale=3, label='PC1')
 plt.quiver(*origin, pc2[0], pc2[1], color='g', scale=3, label='PC2')
-ellipse = plt.Circle(pca.mean_, width=2*scale_factor[0], height=2*scale_factor[1], angle=np.degrees(angle), fill=False, color='b', linestyle='--', linewidth=2, label='Ellipsoid')
+ellipse = Ellipse(pca.mean_, width=2*scale_factor[0], height=2*scale_factor[1], angle=np.degrees(angle), fill=False, color='b', linestyle='--', linewidth=2, label='Ellipsoid')
+ax = plt.gca()
+ax.add_patch(ellipse)
+# print(angle)
 
-plt.gca().add_patch(ellipse)
+bloat = cp.Variable()
+constraints = []
+for i in range(rect_t.shape[0]):
+    width = bloat*scale_factor[0]
+    height = bloat*scale_factor[1] # in real implementation, would need to do this using a list somehow either through comprehension or looping
+    constraints.append(((rect_t[i, 0] - origin[0]) / width)**2 + ((rect_t[i, 1] - origin[1]) / height)**2 <= 1) # these constraints don't work, just multiplying won't help as w**2*h**2 is also non-convex
+    ### solution: overapprox here as rect, turn into polytope -- checking should be easier -- just check half-spaces
+
+# objective = cp.Minimize(bloat) # again, for larger dimenions will have to use determinant
+# prob = cp.Problem(objective, constraints)
+# prob.solve()
+# scaled_factors = scale_factor*bloat.value
+# opt_ellipse = Ellipse(pca.mean_, width=2*scaled_factors[0], height=2*scaled_factors[1], angle=np.degrees(angle), fill=False, color='b', linestyle='--', linewidth=2, label='Ellipsoid Opt')
+# ax.add_patch(opt_ellipse)
+
 plt.show()
+
+### have ellipsoid from PCA -- axes, lengths, now how to optimize such that volume is minimized while the only parameter is coefficient of all axes? 
+### i.e., twiddle bloating factor in all directions at once instead of doing so for each axis
 
 exit()
 
