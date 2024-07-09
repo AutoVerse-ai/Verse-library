@@ -102,11 +102,34 @@ test1 = StarSet(center,basis, C, g)
 test_transformed = test1.post_cont(sim_simple, 1)
 test_transformed2 = test1.post_cont(sim_ugly, 1)
 
-p1 = np.array([0, 0])
-p2 = np.array([3, 3])
-print(containment_poly(test, p1))
-print(containment_poly(test, p2))
+### my tests
 
+
+# p1 = np.array([2, 1.9])
+# p2 = np.array([4, 4.1])
+# ### from testing, know it works for rectangles, need to check more complex shapes
+# print(containment_poly(test, p1))
+# print(containment_poly(test, p2))
+# points = np.array(sample_star(test, 100))
+
+# plt.scatter(points[:, 0], points[:, 1])
+# plot_stars([test])
+
+basis = np.array([[3, 1/3], [3, -1/4]])
+center = np.array([9,1])
+C = np.transpose(np.array([[1,-1,0,0],[0,0,1,-1]]))
+g = np.array([1,1,1,1])
+test_nrect = StarSet(center, basis, C, g)
+
+points = np.array(sample_star(test_nrect, 100))
+
+print(test_nrect.basis, test_nrect.center, test_nrect.C, test_nrect.g)
+rect_nrect = StarSet.rect_to_star(*test_nrect.overapprox_rectangle()) ### note to self, never use overapprox_rectangles(), at least not for this purpose
+print(rect_nrect.basis, rect_nrect.center, rect_nrect.C, rect_nrect.g)
+
+plt.scatter(points[:, 0], points[:, 1])
+plot_stars([test_nrect, StarSet.rect_to_star(*test_nrect.overapprox_rectangle())])
+###
 
 # rect = test.overapprox_rectangles()
 # N = 100 # parameter to control num samples
