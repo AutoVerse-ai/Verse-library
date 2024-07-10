@@ -139,9 +139,9 @@ post_test = post_cont_pca(test_nrect, new_center, derived_basis, post_points)
 
 # plt.scatter(points[:, 0], points[:, 1])
 # plot_stars([test_nrect, StarSet.rect_to_star(*test_nrect.overapprox_rectangle())])
+print(post_test.center, post_test.basis, post_test.C, post_test.g)
 plt.scatter(post_points[:, 0], post_points[:, 1])
 plot_stars([post_test])
-print(post)
 ###
 
 # rect = test.overapprox_rectangles()

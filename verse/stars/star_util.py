@@ -63,30 +63,32 @@ def post_cont_pca(old_star: StarSet, new_center: np.ndarray, derived_basis: np.n
         raise ValueError(f'Dimension of given basis does not match basis of original starset')
 
     center, basis, C, g = old_star.center, old_star.basis, old_star.C, old_star.g
-    alpha = RealVector('a', C.shape[1])
+    alpha = [RealVector(f'a_{i}', C.shape[1]) for i in range(points.shape[0])]
     u = Real('u')
 
     o = Optimize()
     ### add equality constraints
     ### this makes no sense, need to be able to add constraints such that checking a set of points instead of just a single points makes sense instead of this mess
-    for point in points:
+    for p in range(len(points)):
+        point = points[p]
         for i in range(old_star.dimension()):
             exp = center[i]
-            for j in range(len(alpha)):
-                exp += alpha[j]*derived_basis[j][i] # from the jth alpha/v, grab the ith dimension
+            for j in range(len(alpha[p])):
+                exp += alpha[p][j]*derived_basis[j][i] # from the jth alpha/v, grab the ith dimension
             # print(exp)
-            o.add(exp >= point[i])
+            o.add(exp == point[i])
 
-    ### add alpha constraints
-    for i in range(C.shape[0]): # iterate over each row
-        exp = 0 # there's probably a better way to do this, but this works
-        for j in range(len(alpha)): # iterate over alphas
-            exp += C[i][j]*alpha[j]
-        # print(exp)
-        o.add(exp <= u*g[i])
+        ### add alpha constraints
+        for i in range(C.shape[0]): # iterate over each row
+            exp = 0 # there's probably a better way to do this, but this works
+            for j in range(len(alpha[p])): # iterate over alphas
+                exp += C[i][j]*alpha[p][j]
+            # print(exp)
+            o.add(exp <= u*g[i])
     
     o.minimize(u)
 
+    model = None
     new_basis = derived_basis
     if o.check() == sat:
         model = o.model()
@@ -94,4 +96,4 @@ def post_cont_pca(old_star: StarSet, new_center: np.ndarray, derived_basis: np.n
     else:
         raise RuntimeError(f'Optimizer was unable to find a valid mu') # this is also hit if the function is interrupted
 
-    return old_star.superposition(new_center, new_basis)
+    return StarSet(new_center, derived_basis, C, g*float(model[u].as_fraction()))
