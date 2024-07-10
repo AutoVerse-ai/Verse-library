@@ -9,10 +9,11 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 import cvxpy as cp
 from star_util import *
+from sklearn.preprocessing import StandardScaler
 
 import matplotlib.pyplot as plt 
 
-def plot_stars(stars):
+def plot_stars(stars: List[StarSet]):
     for star in stars:
         x, y = np.array(star.get_verts())
         plt.plot(x, y, lw = 1)
@@ -44,6 +45,7 @@ def sim_simple(vec, t):
 
 def dynamic_test(vec, t):
     x, y = t # hack to access right variable, not sure how integrate, ode are supposed to work
+    # vanderpool
     x = y
     y = (1 - x**2) * y - x
     return [x, y]
@@ -116,7 +118,7 @@ test_transformed2 = test1.post_cont(sim_ugly, 1)
 # plot_stars([test])
 
 basis = np.array([[3, 1/3], [3, -1/4]])
-center = np.array([9,1])
+center = np.array([1.35,2.25])
 C = np.transpose(np.array([[1,-1,0,0],[0,0,1,-1]]))
 g = np.array([1,1,1,1])
 test_nrect = StarSet(center, basis, C, g)
@@ -127,21 +129,44 @@ post_points = []
 for point in points:
     # print(point)
     post_points.append(sim_test(mode=None, initialCondition=point, time_bound=7, time_step=0.1).tolist()[-1][1:])
-new_center = np.array(sim_test(mode=None, initialCondition=center, time_bound=7, time_step=0.1).tolist()[-1][1:])
+# new_center = np.array(sim_test(mode=None, initialCondition=center, time_bound=7, time_step=0.1).tolist()[-1][1:])
 post_points = np.array(post_points)
+new_center = np.mean(post_points, axis=0)
+scaler = StandardScaler()
+norm_pp = scaler.fit_transform(post_points)
+
 pca = PCA(n_components=2) ### in the future, this process should be done in relation to dimension
+# pca.fit(norm_pp)
 pca.fit(post_points)
-derived_basis = np.array([pca.components_[0]*pca.explained_variance_[0], pca.components_[1]*pca.explained_variance_[1]]) # this especially should be a loop
+scale_factor = np.sqrt(pca.explained_variance_)
+
+# derived_basis = np.array([pca.components_[0]*pca.explained_variance_[0], pca.components_[1]*pca.explained_variance_[1]]) # this especially should be a loop
+derived_basis = np.array([pca.components_[0]*scale_factor[0], pca.components_[1]*scale_factor[1]]) # this especially should be a loop
+db_unscaled = np.array([pca.components_[0], pca.components_[1]]) # this especially should be a loop
+print(derived_basis)
+# print(derived_basis[0]*pca.explained_variance_[0], derived_basis[1]*pca.explained_variance_[1])
+# print(pca.explained_variance_, pca.explained_variance_ratio_)
+
+# plt.quiver(*new_center, derived_basis[0][0]*pca.explained_variance_[0], derived_basis[0][1]*pca.explained_variance_[0], color='r', scale=3, label='PC1')
+# plt.quiver(*new_center, derived_basis[1][0]*pca.explained_variance_[1], derived_basis[1][1]*pca.explained_variance_[1], color='g', scale=3, label='PC2')
+# plt.scatter(post_points[:, 0], post_points[:, 1])
+# plt.show()
 post_test = post_cont_pca(test_nrect, new_center, derived_basis, post_points)
-# print(test_nrect.basis, test_nrect.center, test_nrect.C, test_nrect.g)
+unbloated_test = StarSet(new_center, derived_basis, C, g)
+# post_test = post_cont_pca(StarSet.rect_to_star(*test_nrect.overapprox_rectangle()), new_center, derived_basis, post_points)
+
+print(test_nrect.basis, test_nrect.center, test_nrect.C, test_nrect.g)
+print(post_test.basis, post_test.center, post_test.C, post_test.g)
+
 # rect_nrect = StarSet.rect_to_star(*test_nrect.overapprox_rectangle()) ### note to self, never use overapprox_rectangles(), at least not for this purpose
 # print(rect_nrect.basis, rect_nrect.center, rect_nrect.C, rect_nrect.g)
 
 # plt.scatter(points[:, 0], points[:, 1])
 # plot_stars([test_nrect, StarSet.rect_to_star(*test_nrect.overapprox_rectangle())])
-print(post_test.center, post_test.basis, post_test.C, post_test.g)
+# print(post_test.center, post_test.basis, post_test.C, post_test.g)
 plt.scatter(post_points[:, 0], post_points[:, 1])
-plot_stars([post_test])
+plt.scatter(points[:, 0], points[:, 1])
+plot_stars([post_test, unbloated_test, test_nrect])
 ###
 
 # rect = test.overapprox_rectangles()

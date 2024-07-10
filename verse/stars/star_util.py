@@ -65,6 +65,8 @@ def post_cont_pca(old_star: StarSet, new_center: np.ndarray, derived_basis: np.n
     center, basis, C, g = old_star.center, old_star.basis, old_star.C, old_star.g
     alpha = [RealVector(f'a_{i}', C.shape[1]) for i in range(points.shape[0])]
     u = Real('u')
+    c = RealVector('i', old_star.dimension())
+    # u = RealVector('u', C.shape[0])
 
     o = Optimize()
     ### add equality constraints
@@ -72,7 +74,8 @@ def post_cont_pca(old_star: StarSet, new_center: np.ndarray, derived_basis: np.n
     for p in range(len(points)):
         point = points[p]
         for i in range(old_star.dimension()):
-            exp = center[i]
+            # exp = new_center[i]
+            exp = c[i]
             for j in range(len(alpha[p])):
                 exp += alpha[p][j]*derived_basis[j][i] # from the jth alpha/v, grab the ith dimension
             # print(exp)
@@ -85,6 +88,7 @@ def post_cont_pca(old_star: StarSet, new_center: np.ndarray, derived_basis: np.n
                 exp += C[i][j]*alpha[p][j]
             # print(exp)
             o.add(exp <= u*g[i])
+            # o.add(exp <= u[i]*g[i])
     
     o.minimize(u)
 
@@ -96,4 +100,8 @@ def post_cont_pca(old_star: StarSet, new_center: np.ndarray, derived_basis: np.n
     else:
         raise RuntimeError(f'Optimizer was unable to find a valid mu') # this is also hit if the function is interrupted
 
-    return StarSet(new_center, derived_basis, C, g*float(model[u].as_fraction()))
+    print(model[u].as_decimal(10))
+    # return StarSet(new_center, derived_basis, C, g * float(model[u].as_fraction()))
+    new_center = np.array([float(model[c[i]].as_fraction()) for i in range(len(c))])
+    return StarSet(new_center, derived_basis, C, g * float(model[u].as_fraction()))
+    # return old_star.superposition(new_center, new_basis)
