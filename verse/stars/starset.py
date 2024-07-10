@@ -53,7 +53,7 @@ class StarSet:
                 raise Exception("Basis for star set must be the same dimension as center")
         self.basis = np.copy(basis)
         if C.shape[1] != self.m:
-            raise Exception("Width of C should be equal to " + str(m))
+            raise Exception("Width of C should be equal to " + str(self.m))
         if len(g) !=  len(C):
             raise Exception("Length of g vector should be equal length of C")
         self.C = np.copy(C)

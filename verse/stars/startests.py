@@ -55,7 +55,7 @@ def sim_test(
     number_points = int(np.ceil(time_bound / time_step))
     t = [round(i * time_step, 10) for i in range(0, number_points)]
     # note: digit of time
-    init = initialCondition
+    init = list(initialCondition)
     trace = [[0] + init]
     for i in range(len(t)):
         r = ode(dynamic_test)
@@ -123,12 +123,25 @@ test_nrect = StarSet(center, basis, C, g)
 
 points = np.array(sample_star(test_nrect, 100))
 
-print(test_nrect.basis, test_nrect.center, test_nrect.C, test_nrect.g)
-rect_nrect = StarSet.rect_to_star(*test_nrect.overapprox_rectangle()) ### note to self, never use overapprox_rectangles(), at least not for this purpose
-print(rect_nrect.basis, rect_nrect.center, rect_nrect.C, rect_nrect.g)
+post_points = []
+for point in points:
+    # print(point)
+    post_points.append(sim_test(mode=None, initialCondition=point, time_bound=7, time_step=0.1).tolist()[-1][1:])
+new_center = np.array(sim_test(mode=None, initialCondition=center, time_bound=7, time_step=0.1).tolist()[-1][1:])
+post_points = np.array(post_points)
+pca = PCA(n_components=2) ### in the future, this process should be done in relation to dimension
+pca.fit(post_points)
+derived_basis = np.array([pca.components_[0]*pca.explained_variance_[0], pca.components_[1]*pca.explained_variance_[1]]) # this especially should be a loop
+post_test = post_cont_pca(test_nrect, new_center, derived_basis, post_points)
+# print(test_nrect.basis, test_nrect.center, test_nrect.C, test_nrect.g)
+# rect_nrect = StarSet.rect_to_star(*test_nrect.overapprox_rectangle()) ### note to self, never use overapprox_rectangles(), at least not for this purpose
+# print(rect_nrect.basis, rect_nrect.center, rect_nrect.C, rect_nrect.g)
 
-plt.scatter(points[:, 0], points[:, 1])
-plot_stars([test_nrect, StarSet.rect_to_star(*test_nrect.overapprox_rectangle())])
+# plt.scatter(points[:, 0], points[:, 1])
+# plot_stars([test_nrect, StarSet.rect_to_star(*test_nrect.overapprox_rectangle())])
+plt.scatter(post_points[:, 0], post_points[:, 1])
+plot_stars([post_test])
+print(post)
 ###
 
 # rect = test.overapprox_rectangles()
