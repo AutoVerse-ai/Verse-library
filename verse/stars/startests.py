@@ -46,9 +46,9 @@ def sim_simple(vec, t):
 def dynamic_test(vec, t):
     x, y = t # hack to access right variable, not sure how integrate, ode are supposed to work
     # vanderpool
-    x = y
-    y = (1 - x**2) * y - x
-    return [x, y]
+    x_dot = y
+    y_dot = (1 - x**2) * y - x
+    return [x_dot, y_dot]
 
 def sim_test(
     mode: List[str], initialCondition, time_bound, time_step, 
@@ -123,99 +123,52 @@ C = np.transpose(np.array([[1,-1,0,0],[0,0,1,-1]]))
 g = np.array([1,1,1,1])
 test_nrect = StarSet(center, basis, C, g)
 
+# stars = gen_starsets_post_sim(test_nrect, sim_test)
+
+# # plot_stars(stars)
+# plot_stars(stars)
+
 points = np.array(sample_star(test_nrect, 100))
 
 post_points = []
 for point in points:
     # print(point)
-    post_points.append(sim_test(mode=None, initialCondition=point, time_bound=7, time_step=0.1).tolist()[-1][1:])
+    post_points.append(sim_test(mode=None, initialCondition=point, time_bound=1, time_step=0.05).tolist()[-1][1:])
+    # post_points.append(sim_test(mode=None, initialCondition=point, time_bound=7, time_step=0.05).tolist())
 # new_center = np.array(sim_test(mode=None, initialCondition=center, time_bound=7, time_step=0.1).tolist()[-1][1:])
 post_points = np.array(post_points)
+print(post_points.shape)
+
 new_center = np.mean(post_points, axis=0)
 scaler = StandardScaler()
-norm_pp = scaler.fit_transform(post_points)
 
 pca = PCA(n_components=2) ### in the future, this process should be done in relation to dimension
-# pca.fit(norm_pp)
 pca.fit(post_points)
 scale_factor = np.sqrt(pca.explained_variance_)
-
-# derived_basis = np.array([pca.components_[0]*pca.explained_variance_[0], pca.components_[1]*pca.explained_variance_[1]]) # this especially should be a loop
-derived_basis = np.array([pca.components_[0]*scale_factor[0], pca.components_[1]*scale_factor[1]]) # this especially should be a loop
+derived_basis = pca.components_ @ np.diag(scale_factor)
 db_unscaled = np.array([pca.components_[0], pca.components_[1]]) # this especially should be a loop
 print(derived_basis)
-# print(derived_basis[0]*pca.explained_variance_[0], derived_basis[1]*pca.explained_variance_[1])
-# print(pca.explained_variance_, pca.explained_variance_ratio_)
 
-# plt.quiver(*new_center, derived_basis[0][0]*pca.explained_variance_[0], derived_basis[0][1]*pca.explained_variance_[0], color='r', scale=3, label='PC1')
-# plt.quiver(*new_center, derived_basis[1][0]*pca.explained_variance_[1], derived_basis[1][1]*pca.explained_variance_[1], color='g', scale=3, label='PC2')
-# plt.scatter(post_points[:, 0], post_points[:, 1])
-# plt.show()
-post_test = post_cont_pca(test_nrect, new_center, derived_basis, post_points)
+# post_test = post_cont_pca(test_nrect, derived_basis, post_points)
+post_test = gen_starset(post_points, test_nrect)
 unbloated_test = StarSet(new_center, derived_basis, C, g)
-# post_test = post_cont_pca(StarSet.rect_to_star(*test_nrect.overapprox_rectangle()), new_center, derived_basis, post_points)
 
 print(test_nrect.basis, test_nrect.center, test_nrect.C, test_nrect.g)
 print(post_test.basis, post_test.center, post_test.C, post_test.g)
 
-# rect_nrect = StarSet.rect_to_star(*test_nrect.overapprox_rectangle()) ### note to self, never use overapprox_rectangles(), at least not for this purpose
-# print(rect_nrect.basis, rect_nrect.center, rect_nrect.C, rect_nrect.g)
 
-# plt.scatter(points[:, 0], points[:, 1])
-# plot_stars([test_nrect, StarSet.rect_to_star(*test_nrect.overapprox_rectangle())])
-# print(post_test.center, post_test.basis, post_test.C, post_test.g)
 plt.scatter(post_points[:, 0], post_points[:, 1])
 plt.scatter(points[:, 0], points[:, 1])
 plot_stars([post_test, unbloated_test, test_nrect])
-###
 
-# rect = test.overapprox_rectangles()
-# N = 100 # parameter to control num samples
-# rect_t = []
-# for i in range(N):
-#     point = sample_rect(rect)
-#     rect_t.append(sim_test(mode=None, initialCondition=point, time_bound=7, time_step=0.1).tolist()[-1][1:])
-# rect_t = np.array(rect_t)
-
-# pca = PCA(n_components=2)
-# pca.fit(rect_t)
-# # print(rect_t)
-# # print(pca.components_, pca.explained_variance_ratio_)
-# pc1 = pca.components_[0]
-# pc2 = pca.components_[1]
-# scale_factor = np.sqrt(pca.explained_variance_)*3  # Scale factor based on explained variance
-# angle = np.arctan2(pca.components_[0, 1], pca.components_[0, 0])  # Angle of the first principal component
-
-# plt.scatter(rect_t[:, 0], rect_t[:, 1])
-# origin = np.mean(rect_t, axis=0)
-# plt.quiver(*origin, pc1[0], pc1[1], color='r', scale=3, label='PC1')
-# plt.quiver(*origin, pc2[0], pc2[1], color='g', scale=3, label='PC2')
-# ellipse = Ellipse(pca.mean_, width=2*scale_factor[0], height=2*scale_factor[1], angle=np.degrees(angle), fill=False, color='b', linestyle='--', linewidth=2, label='Ellipsoid')
-# ax = plt.gca()
-# ax.add_patch(ellipse)
-# # print(angle)
-
-# bloat = cp.Variable()
-# constraints = []
-# for i in range(rect_t.shape[0]):
-#     width = bloat*scale_factor[0]
-#     height = bloat*scale_factor[1] # in real implementation, would need to do this using a list somehow either through comprehension or looping
-#     constraints.append(((rect_t[i, 0] - origin[0]) / width)**2 + ((rect_t[i, 1] - origin[1]) / height)**2 <= 1) # these constraints don't work, just multiplying won't help as w**2*h**2 is also non-convex
-#     ### solution: overapprox here as rect, turn into polytope -- checking should be easier -- just check half-spaces
-
-# # objective = cp.Minimize(bloat) # again, for larger dimenions will have to use determinant
-# # prob = cp.Problem(objective, constraints)
-# # prob.solve()
-# # scaled_factors = scale_factor*bloat.value
-# # opt_ellipse = Ellipse(pca.mean_, width=2*scaled_factors[0], height=2*scaled_factors[1], angle=np.degrees(angle), fill=False, color='b', linestyle='--', linewidth=2, label='Ellipsoid Opt')
-# # ax.add_patch(opt_ellipse)
-
-# plt.show()
-
-### have ellipsoid from PCA -- axes, lengths, now how to optimize such that volume is minimized while the only parameter is coefficient of all axes? 
-### i.e., twiddle bloating factor in all directions at once instead of doing so for each axis
 
 exit()
+
+
+# rect_nrect = StarSet.rect_to_star(*test_nrect.overapprox_rectangle()) ### note to self, never use overapprox_rectangles(), at least not for this purpose
+# print(rect_nrect.basis, rect_nrect.center, rect_nrect.C, rect_nrect.g)
+
+# plot_stars([test_nrect, StarSet.rect_to_star(*test_nrect.overapprox_rectangle())])
 
 print(test1.overapprox_rectangles())
 

@@ -1,7 +1,7 @@
 import numpy as np
 from starset import StarSet, HalfSpace
 from verse.analysis.utils import sample_rect
-from typing_extensions import List
+from typing_extensions import List, Callable
 from scipy.integrate import ode
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
@@ -52,13 +52,12 @@ def sample_star(star: StarSet, N: int, tol: float = 0.2) -> List[List[float]]:
                 raise Exception("Too many consecutive misses, halting function. Call smple_rect instead.")
     return points
 
-def post_cont_pca(old_star: StarSet, new_center: np.ndarray, derived_basis: np.ndarray,  points: np.ndarray) -> StarSet:
+# def post_cont_pca(old_star: StarSet, new_center: np.ndarray, derived_basis: np.ndarray,  points: np.ndarray) -> StarSet:
+def post_cont_pca(old_star: StarSet, derived_basis: np.ndarray,  points: np.ndarray) -> StarSet:
     if points.size==0:
         raise ValueError(f'No points given as input')
     if old_star.dimension() != points.shape[1]:
         raise ValueError(f'Dimension of points does not match the dimenions of the starset')
-    if old_star.dimension() != new_center.shape[0]:
-        raise ValueError(f'Dimension of center does not match the dimenions of the starset')
     if  old_star.basis.shape != derived_basis.shape:
         raise ValueError(f'Dimension of given basis does not match basis of original starset')
 
@@ -105,3 +104,26 @@ def post_cont_pca(old_star: StarSet, new_center: np.ndarray, derived_basis: np.n
     new_center = np.array([float(model[c[i]].as_fraction()) for i in range(len(c))])
     return StarSet(new_center, derived_basis, C, g * float(model[u].as_fraction()))
     # return old_star.superposition(new_center, new_basis)
+
+### from a set of points at a given time, generate a starset -- could possible reformat or remake this function to be more general
+### expects an input with shape N (num points) x n (state dimenion) NOT N x n+1 (state dimension + time)
+def gen_starset(points: np.ndarray, old_star: StarSet) -> StarSet:
+    new_center = np.mean(points, axis=0) # probably won't be used, delete if unused in final product
+    pca: PCA = PCA(n_components=points.shape[1])
+    pca.fit(points)
+    scale = np.sqrt(pca.explained_variance_)
+    derived_basis = pca.components_ @ np.diag(scale) # scaling each component by sqrt of dimension
+    
+    return post_cont_pca(old_star, derived_basis, points)
+
+### doing post_computations using simulation then constructing star sets around each set of points afterwards -- not iterative
+def gen_starsets_post_sim(old_star: StarSet, sim: Callable, T: int = 7, ts: float = 0.05, N: int = 100) -> List[StarSet]:
+    points = np.array(sample_star(old_star, N))
+    post_points = []
+    for point in points:
+        post_points.append(sim(mode=None, initialCondition=point, time_bound=T, time_step=ts).tolist())
+    post_points = np.array(post_points)
+    stars: List[StarSet] = []
+    for t in range(post_points.shape[1]): # pp has shape N x (T/dt) x (n + 1), so index using first 
+        stars.append(gen_starset(post_points[:, t, 1:], old_star))
+    return stars

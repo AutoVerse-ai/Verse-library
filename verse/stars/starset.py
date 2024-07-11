@@ -395,7 +395,7 @@ class StarSet:
         for i in range(0, extra_dims_ct):
             zeros.append([0])
         # sample the angles from 0 to 2pi, 100 samples
-        for angle in np.linspace(0, 2*np.pi, 1000):
+        for angle in np.linspace(0, 2*np.pi, 100):
             x_component = np.cos(angle)
             y_component = np.sin(angle)
             #TODO: needs to work for 3d and any dim of non-graphed state
