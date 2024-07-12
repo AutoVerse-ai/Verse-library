@@ -117,49 +117,50 @@ test_transformed2 = test1.post_cont(sim_ugly, 1)
 # plt.scatter(points[:, 0], points[:, 1])
 # plot_stars([test])
 
-basis = np.array([[3, 1/3], [3, -1/4]])
+basis = np.array([[3, 1/3], [3, -1/4]]) * np.diag([0.001, 0.001])
 center = np.array([1.35,2.25])
 C = np.transpose(np.array([[1,-1,0,0],[0,0,1,-1]]))
 g = np.array([1,1,1,1])
 test_nrect = StarSet(center, basis, C, g)
 
 # stars = gen_starsets_post_sim(test_nrect, sim_test)
+stars = sim_star(test_nrect, sim_test, T=0.25)
 
-# # plot_stars(stars)
 # plot_stars(stars)
+plot_stars(stars)
 
-points = np.array(sample_star(test_nrect, 100))
+# points = np.array(sample_star(test_nrect, 100))
 
-post_points = []
-for point in points:
-    # print(point)
-    post_points.append(sim_test(mode=None, initialCondition=point, time_bound=1, time_step=0.05).tolist()[-1][1:])
-    # post_points.append(sim_test(mode=None, initialCondition=point, time_bound=7, time_step=0.05).tolist())
-# new_center = np.array(sim_test(mode=None, initialCondition=center, time_bound=7, time_step=0.1).tolist()[-1][1:])
-post_points = np.array(post_points)
-print(post_points.shape)
+# post_points = []
+# for point in points:
+#     # print(point)
+#     post_points.append(sim_test(mode=None, initialCondition=point, time_bound=1, time_step=0.05).tolist()[-1][1:])
+#     # post_points.append(sim_test(mode=None, initialCondition=point, time_bound=7, time_step=0.05).tolist())
+# # new_center = np.array(sim_test(mode=None, initialCondition=center, time_bound=7, time_step=0.1).tolist()[-1][1:])
+# post_points = np.array(post_points)
+# print(post_points.shape)
 
-new_center = np.mean(post_points, axis=0)
-scaler = StandardScaler()
+# new_center = np.mean(post_points, axis=0)
+# scaler = StandardScaler()
 
-pca = PCA(n_components=2) ### in the future, this process should be done in relation to dimension
-pca.fit(post_points)
-scale_factor = np.sqrt(pca.explained_variance_)
-derived_basis = pca.components_ @ np.diag(scale_factor)
-db_unscaled = np.array([pca.components_[0], pca.components_[1]]) # this especially should be a loop
-print(derived_basis)
+# pca = PCA(n_components=2) ### in the future, this process should be done in relation to dimension
+# pca.fit(post_points)
+# scale_factor = np.sqrt(pca.explained_variance_)
+# derived_basis = pca.components_ @ np.diag(scale_factor)
+# db_unscaled = np.array([pca.components_[0], pca.components_[1]]) # this especially should be a loop
+# print(derived_basis)
 
-# post_test = post_cont_pca(test_nrect, derived_basis, post_points)
-post_test = gen_starset(post_points, test_nrect)
-unbloated_test = StarSet(new_center, derived_basis, C, g)
+# # post_test = post_cont_pca(test_nrect, derived_basis, post_points)
+# post_test = gen_starset(post_points, test_nrect)
+# unbloated_test = StarSet(new_center, derived_basis, C, g)
 
-print(test_nrect.basis, test_nrect.center, test_nrect.C, test_nrect.g)
-print(post_test.basis, post_test.center, post_test.C, post_test.g)
+# print(test_nrect.basis, test_nrect.center, test_nrect.C, test_nrect.g)
+# print(post_test.basis, post_test.center, post_test.C, post_test.g)
 
 
-plt.scatter(post_points[:, 0], post_points[:, 1])
-plt.scatter(points[:, 0], points[:, 1])
-plot_stars([post_test, unbloated_test, test_nrect])
+# plt.scatter(post_points[:, 0], post_points[:, 1])
+# plt.scatter(points[:, 0], points[:, 1])
+# plot_stars([post_test, unbloated_test, test_nrect])
 
 
 exit()

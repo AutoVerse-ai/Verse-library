@@ -107,6 +107,7 @@ def post_cont_pca(old_star: StarSet, derived_basis: np.ndarray,  points: np.ndar
 
 ### from a set of points at a given time, generate a starset -- could possible reformat or remake this function to be more general
 ### expects an input with shape N (num points) x n (state dimenion) NOT N x n+1 (state dimension + time)
+### this may get an exception if mu can't be generated, either figure out what to do about that or modify post_cont_pca s.t. it doesn't throw an error
 def gen_starset(points: np.ndarray, old_star: StarSet) -> StarSet:
     new_center = np.mean(points, axis=0) # probably won't be used, delete if unused in final product
     pca: PCA = PCA(n_components=points.shape[1])
@@ -117,13 +118,31 @@ def gen_starset(points: np.ndarray, old_star: StarSet) -> StarSet:
     return post_cont_pca(old_star, derived_basis, points)
 
 ### doing post_computations using simulation then constructing star sets around each set of points afterwards -- not iterative
-def gen_starsets_post_sim(old_star: StarSet, sim: Callable, T: int = 7, ts: float = 0.05, N: int = 100) -> List[StarSet]:
+def gen_starsets_post_sim(old_star: StarSet, sim: Callable, T: float = 7, ts: float = 0.05, N: int = 100, no_init: bool = False) -> List[StarSet]:
     points = np.array(sample_star(old_star, N))
     post_points = []
-    for point in points:
-        post_points.append(sim(mode=None, initialCondition=point, time_bound=T, time_step=ts).tolist())
+    if no_init: 
+        for point in points:
+            post_points.append(sim(mode=None, initialCondition=point, time_bound=T, time_step=ts).tolist()[1:])
+    else:
+        for point in points:
+            post_points.append(sim(mode=None, initialCondition=point, time_bound=T, time_step=ts).tolist())
     post_points = np.array(post_points)
     stars: List[StarSet] = []
     for t in range(post_points.shape[1]): # pp has shape N x (T/dt) x (n + 1), so index using first 
         stars.append(gen_starset(post_points[:, t, 1:], old_star))
+    return stars
+
+### doing sim and post_cont iteratively to construct new starsets and get new points from them every ts
+### this takes a decent amount of time -- guessing coming from post_cont_pca and/or sample_star as sim should be pretty fast
+### also size of star set blows up quickly, check what's going on -- probably need a better/different plotter function now
+def sim_star(init_star: StarSet, sim: Callable, T: int = 7, ts: float = 0.05, N: int = 100) -> List[StarSet]:
+    t = 0
+    stars: List[StarSet] = []
+    old_star = init_star
+    while t<T:
+        new_star = gen_starsets_post_sim(old_star, sim, ts, ts, N, True)[0] # gen_starset should return a list including only one starset
+        stars.append(new_star)
+        t += ts
+        old_star = copy.deepcopy(new_star)
     return stars
