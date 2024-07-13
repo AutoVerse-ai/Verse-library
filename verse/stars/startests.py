@@ -126,8 +126,8 @@ test_nrect = StarSet(center, basis, C, g)
 
 # # stars = gen_starsets_post_sim(test_nrect, sim_test)
 # # stars = sim_star(test_nrect, sim_test, T=0.25)
-sim_star_vis(test_nrect, sim_test, T=1)
-
+# sim_star_vis(test_nrect, sim_test, T=1)
+gen_starsets_post_sim_vis_nonit(test_nrect, sim_test, 7)
 
 # # plot_stars(stars)
 

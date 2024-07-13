@@ -180,6 +180,33 @@ def gen_starsets_post_sim_vis(old_star: StarSet, sim: Callable, T: float = 7, ts
     plot_stars_points(stars, post_points[:, 0, 1:]) # this only makes sense if points is 2D, i.e., only simulated one ts
     return stars
 
+def plot_stars_points_nonit(stars: List[StarSet], points: np.ndarray):
+    for star in stars:
+        x, y = np.array(star.get_verts())
+        plt.plot(x, y, lw = 1)
+        centerx, centery = star.get_center_pt(0, 1)
+        plt.plot(centerx, centery, 'o')
+    for t in range(points.shape[1]): # pp has shape N x (T/dt) x (n + 1), so index using first 
+        plt.scatter(points[:, t, 1], points[:, t, 2])
+    # plt.show()
+
+def gen_starsets_post_sim_vis_nonit(old_star: StarSet, sim: Callable, T: float = 7, ts: float = 0.05, N: int = 100, no_init: bool = False) -> None:
+    points = np.array(sample_star(old_star, N, tol=10)) ### sho
+    post_points = []
+    if no_init: 
+        for point in points:
+            post_points.append(sim(mode=None, initialCondition=point, time_bound=T, time_step=ts).tolist()[1:])
+    else:
+        for point in points:
+            post_points.append(sim(mode=None, initialCondition=point, time_bound=T, time_step=ts).tolist())
+    post_points = np.array(post_points)
+    stars: List[StarSet] = []
+    for t in range(post_points.shape[1]): # pp has shape N x (T/dt) x (n + 1), so index using first 
+        stars.append(gen_starset(post_points[:, t, 1:], old_star))
+    # print(post_points)
+    plot_stars_points_nonit(stars, post_points) # this only makes sense if points is 2D, i.e., only simulated one ts
+    plt.show()
+
 def sim_star_vis(init_star: StarSet, sim: Callable, T: int = 7, ts: float = 0.05, N: int = 100) -> None:
     t = 0
     stars: List[StarSet] = []
