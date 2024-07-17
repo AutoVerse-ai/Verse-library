@@ -45,9 +45,13 @@ def sim_simple(vec, t):
 
 def dynamic_test(vec, t):
     x, y = t # hack to access right variable, not sure how integrate, ode are supposed to work
-    # vanderpool
-    x_dot = y
-    y_dot = (1 - x**2) * y - x
+    ### vanderpool
+    # x_dot = y
+    # y_dot = (1 - x**2) * y - x
+
+    ### cardiac cell
+    x_dot = -0.9*x*x-x*x*x-0.9*x-y+1
+    y_dot = x-2*y
     return [x_dot, y_dot]
 
 def sim_test(
@@ -117,9 +121,9 @@ test_transformed2 = test1.post_cont(sim_ugly, 1)
 # plt.scatter(points[:, 0], points[:, 1])
 # plot_stars([test])
 
-basis = np.array([[3, 1/3], [3, -1/4]]) * np.diag([0.001, 0.001])
+basis = np.array([[3, 1/3], [3, -1/4]]) * np.diag([0.1, 0.1])
 # basis = np.array([[3, 1/3], [3, -1/4]]) 
-center = np.array([1.35,2.25])
+center = np.array([1.35,2.25]) ### vanderpol
 C = np.transpose(np.array([[1,-1,0,0],[0,0,1,-1]]))
 g = np.array([1,1,1,1])
 test_nrect = StarSet(center, basis, C, g)
