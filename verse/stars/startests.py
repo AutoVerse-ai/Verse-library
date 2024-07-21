@@ -50,8 +50,12 @@ def dynamic_test(vec, t):
     # y_dot = (1 - x**2) * y - x
 
     ### cardiac cell
-    x_dot = -0.9*x*x-x*x*x-0.9*x-y+1
-    y_dot = x-2*y
+    # x_dot = -0.9*x*x-x*x*x-0.9*x-y+1
+    # y_dot = x-2*y
+
+    ### jet engine
+    x_dot = -y-1.5*x*x-0.5*x*x*x-0.5
+    y_dot = 3*x-y
     return [x_dot, y_dot]
 
 def sim_test(

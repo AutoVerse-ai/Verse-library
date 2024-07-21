@@ -8,12 +8,16 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 import cvxpy as cp
 from z3 import *
+from verse.analysis import AnalysisTreeNode, AnalysisTree, AnalysisTreeNodeType
 
 ### assuming mode is not a parameter
-def reach_star(trace: Dict[str, List], t_l: float = 0, t_u: float = None) -> Dict[str, List[StarSet]]: 
+def reach_star(trace: AnalysisTree, t_l: float = 0, t_u: float = None) -> Dict[str, List[StarSet]]: 
     reach = {}
+    nodes: List[AnalysisTreeNode] = trace.nodes 
+    agents = nodes[0].agent.keys() # list of agents
+    
     if t_u is None:
-        for agent in trace:
+        for agent in agents:
             t_u = trace[agent][-1][0] # T
             break
     
