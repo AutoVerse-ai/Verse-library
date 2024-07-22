@@ -54,8 +54,16 @@ def dynamic_test(vec, t):
     # y_dot = x-2*y
 
     ### jet engine
-    x_dot = -y-1.5*x*x-0.5*x*x*x-0.5
-    y_dot = 3*x-y
+    # x_dot = -y-1.5*x*x-0.5*x*x*x-0.5
+    # y_dot = 3*x-y
+
+    ### brusselator 
+    x_dot = 1+x**2*y-2.5*x
+    y_dot = 1.5*x-x**2*y
+
+    ### bucking col -- change center to around -0.5 and keep basis size low
+    # x_dot = y
+    # y_dot = 2*x-x*x*x-0.2*y+0.1
     return [x_dot, y_dot]
 
 def sim_test(
@@ -125,9 +133,12 @@ test_transformed2 = test1.post_cont(sim_ugly, 1)
 # plt.scatter(points[:, 0], points[:, 1])
 # plot_stars([test])
 
+# basis = np.array([[3, 1/3], [3, -1/4]]) * np.diag([0.01, 0.01])
 basis = np.array([[3, 1/3], [3, -1/4]]) * np.diag([0.1, 0.1])
 # basis = np.array([[3, 1/3], [3, -1/4]]) 
-center = np.array([1.35,2.25]) ### vanderpol
+center = np.array([1.35,2.25]) ### vanderpol, everything else unless listed otherwise
+# center = np.array([-0.5, -0.5])
+
 C = np.transpose(np.array([[1,-1,0,0],[0,0,1,-1]]))
 g = np.array([1,1,1,1])
 test_nrect = StarSet(center, basis, C, g)
@@ -135,7 +146,7 @@ test_nrect = StarSet(center, basis, C, g)
 # # stars = gen_starsets_post_sim(test_nrect, sim_test)
 # # stars = sim_star(test_nrect, sim_test, T=0.25)
 # sim_star_vis(test_nrect, sim_test, T=1)
-gen_starsets_post_sim_vis_nonit(test_nrect, sim_test, 7)
+gen_starsets_post_sim_vis_nonit(test_nrect, sim_test, 7) ### may need to modify get verts 
 
 # # plot_stars(stars)
 
