@@ -203,6 +203,7 @@ def gen_starsets_post_sim_vis_nonit(old_star: StarSet, sim: Callable, T: float =
     stars: List[StarSet] = []
     for t in range(post_points.shape[1]): # pp has shape N x (T/dt) x (n + 1), so index using first 
         stars.append(gen_starset(post_points[:, t, 1:], old_star))
+        # print(np.inner(*stars[-1].basis), '\n ----------- \n', *stars[-1].basis)
     # print(post_points)
     plot_stars_points_nonit(stars, post_points) # this only makes sense if points is 2D, i.e., only simulated one ts
     plt.show()
@@ -214,6 +215,7 @@ def sim_star_vis(init_star: StarSet, sim: Callable, T: int = 7, ts: float = 0.05
     while t<T:
         new_star = gen_starsets_post_sim_vis(old_star, sim, ts, ts, N, True)[0] # gen_starset should return a list including only one starset
         stars.append(new_star)
+        ### print out each star set, check for orthogonality
         t += ts
         old_star = copy.deepcopy(new_star)
     plt.show()

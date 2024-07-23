@@ -45,7 +45,7 @@ def sim_simple(vec, t):
 
 def dynamic_test(vec, t):
     x, y = t # hack to access right variable, not sure how integrate, ode are supposed to work
-    ### vanderpool
+    ### vanderpol
     # x_dot = y
     # y_dot = (1 - x**2) * y - x
 
@@ -58,13 +58,15 @@ def dynamic_test(vec, t):
     # y_dot = 3*x-y
 
     ### brusselator 
-    x_dot = 1+x**2*y-2.5*x
-    y_dot = 1.5*x-x**2*y
+    # x_dot = 1+x**2*y-2.5*x
+    # y_dot = 1.5*x-x**2*y
 
     ### bucking col -- change center to around -0.5 and keep basis size low
-    # x_dot = y
-    # y_dot = 2*x-x*x*x-0.2*y+0.1
+    x_dot = y
+    y_dot = 2*x-x*x*x-0.2*y+0.1
     return [x_dot, y_dot]
+
+### TO-DO: add another dynamic function(s) to test out dynamics with more than 2 dimension
 
 def sim_test(
     mode: List[str], initialCondition, time_bound, time_step, 
@@ -140,6 +142,8 @@ center = np.array([1.35,2.25]) ### vanderpol, everything else unless listed othe
 # center = np.array([-0.5, -0.5])
 
 C = np.transpose(np.array([[1,-1,0,0],[0,0,1,-1]]))
+# C = np.transpose(np.array([[1,-1,0,0, 1],[0,0,1,-1, 1]]))
+# g = np.array([1,1,1,1, 1.5])
 g = np.array([1,1,1,1])
 test_nrect = StarSet(center, basis, C, g)
 
