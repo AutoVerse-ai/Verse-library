@@ -384,7 +384,7 @@ class StarSet:
         return (self.center[x_dim], self.center[y_dim])
 
     #stanley bak code
-    def get_verts(stateset):
+    def get_verts(stateset, dim1=None, dim2=None):
         """get the vertices of the stateset"""
         #TODO: generalize for n dimensional
         verts = []
@@ -399,8 +399,13 @@ class StarSet:
             x_component = np.cos(angle)
             y_component = np.sin(angle)
             #TODO: needs to work for 3d and any dim of non-graphed state
-            direction = [[x_component], [y_component]]
-            direction.extend(zeros)
+            if dim1 is None or dim2 is None:
+                direction = [[x_component], [y_component]]
+                direction.extend(zeros)
+            else:
+                direction = [0 for _ in range(stateset.dimension())]
+                direction[dim1] = x_component
+                direction[dim2] = y_component 
             direction = np.array(direction)
             #for i in range(0, extra_dims_ct):
             #    direction.append([0])

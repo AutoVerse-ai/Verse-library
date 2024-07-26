@@ -13,9 +13,9 @@ from sklearn.preprocessing import StandardScaler
 
 import matplotlib.pyplot as plt 
 
-def plot_stars(stars: List[StarSet]):
+def plot_stars(stars: List[StarSet], dim1: int = None, dim2: int = None):
     for star in stars:
-        x, y = np.array(star.get_verts())
+        x, y = np.array(star.get_verts(dim1, dim2))
         plt.plot(x, y, lw = 1)
         centerx, centery = star.get_center_pt(0, 1)
         plt.plot(centerx, centery, 'o')
@@ -68,6 +68,16 @@ def dynamic_test(vec, t):
 
 ### TO-DO: add another dynamic function(s) to test out dynamics with more than 2 dimension
 
+def dyn_3d(vec, t):
+    x, y, z = t
+
+    ### purely for testing, doesn't correspond to any model
+    x_dot = y
+    y_dot = (1 - x**2) * y - x
+    z_dot = x
+
+    return [x_dot, y_dot, z_dot]
+
 def sim_test(
     mode: List[str], initialCondition, time_bound, time_step, 
 ) -> np.ndarray:
@@ -79,6 +89,23 @@ def sim_test(
     trace = [[0] + init]
     for i in range(len(t)):
         r = ode(dynamic_test)
+        r.set_initial_value(init)
+        res: np.ndarray = r.integrate(r.t + time_step)
+        init = res.flatten().tolist()
+        trace.append([t[i] + time_step] + init)
+    return np.array(trace)
+
+def sim_test_3d(
+    mode: List[str], initialCondition, time_bound, time_step, 
+) -> np.ndarray:
+    time_bound = float(time_bound)
+    number_points = int(np.ceil(time_bound / time_step))
+    t = [round(i * time_step, 10) for i in range(0, number_points)]
+    # note: digit of time
+    init = list(initialCondition)
+    trace = [[0] + init]
+    for i in range(len(t)):
+        r = ode(dyn_3d)
         r.set_initial_value(init)
         res: np.ndarray = r.integrate(r.t + time_step)
         init = res.flatten().tolist()
@@ -136,22 +163,30 @@ test_transformed2 = test1.post_cont(sim_ugly, 1)
 # plot_stars([test])
 
 # basis = np.array([[3, 1/3], [3, -1/4]]) * np.diag([0.01, 0.01])
-basis = np.array([[3, 1/3], [3, -1/4]]) * np.diag([0.1, 0.1])
-# basis = np.array([[3, 1/3], [3, -1/4]]) 
-center = np.array([1.35,2.25]) ### vanderpol, everything else unless listed otherwise
+# # basis = np.array([[3, 1/3], [3, -1/4]]) * np.diag([0.1, 0.1])
+# # basis = np.array([[3, 1/3], [3, -1/4]]) 
+# # center = np.array([1.35,2.25]) ### vanderpol, everything else unless listed otherwise
 # center = np.array([-0.5, -0.5])
 
-C = np.transpose(np.array([[1,-1,0,0],[0,0,1,-1]]))
-# C = np.transpose(np.array([[1,-1,0,0, 1],[0,0,1,-1, 1]]))
-# g = np.array([1,1,1,1, 1.5])
-g = np.array([1,1,1,1])
-test_nrect = StarSet(center, basis, C, g)
+# C = np.transpose(np.array([[1,-1,0,0],[0,0,1,-1]]))
+# # C = np.transpose(np.array([[1,-1,0,0, 1],[0,0,1,-1, 1]]))
+# # g = np.array([1,1,1,1, 1.5])
+# g = np.array([1,1,1,1])
+# test_nrect = StarSet(center, basis, C, g)
 
-# # stars = gen_starsets_post_sim(test_nrect, sim_test)
-# # stars = sim_star(test_nrect, sim_test, T=0.25)
-# sim_star_vis(test_nrect, sim_test, T=1)
-gen_starsets_post_sim_vis_nonit(test_nrect, sim_test, 7) ### may need to modify get verts 
+# # # stars = gen_starsets_post_sim(test_nrect, sim_test)
+# # # stars = sim_star(test_nrect, sim_test, T=0.25)
+# # sim_star_vis(test_nrect, sim_test, T=1)
+# gen_starsets_post_sim_vis_nonit(test_nrect, sim_test, 7) ### may need to modify get verts 
 
+basis = np.array([[3, 1/3, -1], [3, -1/4, 0], [3, 0, 1]]) * np.diag([0.01, 0.01, 0.01])
+center = np.array([1, 1, 1])
+C = np.transpose(np.array([[1,-1,0,0,0,0],[0,0,1,-1,0,0], [0,0,0,0,1,-1]]))
+g = np.ones(6)
+test_3d = StarSet(center, basis, C, g)
+new_stars = gen_starsets_post_sim(test_3d, sim_test_3d)
+# print(new_stars[-1])
+plot_stars(new_stars, 1, 2)
 # # plot_stars(stars)
 
 # points = np.array(sample_star(test_nrect, 100))
