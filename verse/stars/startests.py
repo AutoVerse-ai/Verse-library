@@ -179,15 +179,13 @@ test_transformed2 = test1.post_cont(sim_ugly, 1)
 # # sim_star_vis(test_nrect, sim_test, T=1)
 # gen_starsets_post_sim_vis_nonit(test_nrect, sim_test, 7) ### may need to modify get verts 
 
-basis = np.array([[3, 1/3, -1], [3, -1/4, 0], [3, 0, 1]]) * np.diag([0.01, 0.01, 0.01])
+basis = np.array([[3, 1/3, -1], [3, -1/4, 0], [3, 0, 1]]) * np.diag([0.1, 0.1, 0.1])
 center = np.array([1, 1, 1])
 C = np.transpose(np.array([[1,-1,0,0,0,0],[0,0,1,-1,0,0], [0,0,0,0,1,-1]]))
 g = np.ones(6)
 test_3d = StarSet(center, basis, C, g)
-new_stars = gen_starsets_post_sim(test_3d, sim_test_3d)
-# print(new_stars[-1])
-plot_stars(new_stars, 1, 2)
-# # plot_stars(stars)
+# plot_stars([test_3d])
+new_stars = gen_starsets_post_sim_vis_nonit_nd(test_3d, sim_test_3d)
 
 # points = np.array(sample_star(test_nrect, 100))
 

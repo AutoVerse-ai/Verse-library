@@ -396,6 +396,7 @@ class StarSet:
             zeros.append([0])
         # sample the angles from 0 to 2pi, 100 samples
         for angle in np.linspace(0, 2*np.pi, 100):
+        # for angle in np.linspace(0, 2*np.pi, 1000):
             x_component = np.cos(angle)
             y_component = np.sin(angle)
             #TODO: needs to work for 3d and any dim of non-graphed state
@@ -403,9 +404,9 @@ class StarSet:
                 direction = [[x_component], [y_component]]
                 direction.extend(zeros)
             else:
-                direction = [0 for _ in range(stateset.dimension())]
-                direction[dim1] = x_component
-                direction[dim2] = y_component 
+                direction = [[0] for _ in range(stateset.dimension())]
+                direction[dim1] = [x_component]
+                direction[dim2] = [y_component] 
             direction = np.array(direction)
             #for i in range(0, extra_dims_ct):
             #    direction.append([0])
@@ -415,9 +416,13 @@ class StarSet:
 
             verts.append(pt)
             #print(pt)
-            x_pts.append(pt[0][0])
-            #print(pt[0][0])
-            y_pts.append(pt[0][1])
+            if dim1 is None or dim2 is None:
+                x_pts.append(pt[0][0])
+                #print(pt[0][0])
+                y_pts.append(pt[0][1])
+            else:
+                x_pts.append(pt[0][dim1])
+                y_pts.append(pt[0][dim2])
             #print(pt[1][0])
         x_pts.append(x_pts[0])
         y_pts.append(y_pts[0])

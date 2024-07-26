@@ -208,6 +208,39 @@ def gen_starsets_post_sim_vis_nonit(old_star: StarSet, sim: Callable, T: float =
     plot_stars_points_nonit(stars, post_points) # this only makes sense if points is 2D, i.e., only simulated one ts
     plt.show()
 
+def plot_stars_points_nonit_nd(stars: List[StarSet], points: np.ndarray, dim1, dim2):
+    for star in stars:
+        x, y = np.array(star.get_verts(dim1, dim2))
+        plt.plot(x, y, lw = 1)
+        # plt.plot(x, y, 'b', lw = 1)
+        centerx, centery = star.get_center_pt(dim1, dim2)
+        plt.plot(centerx, centery, 'o')
+    for t in range(points.shape[1]): # pp has shape N x (T/dt) x (n + 1), so index using first 
+        plt.scatter(points[:, t, dim1+1], points[:, t, dim2+1])
+    # plt.show()
+
+def gen_starsets_post_sim_vis_nonit_nd(old_star: StarSet, sim: Callable, T: float = 7, ts: float = 0.05, N: int = 100, no_init: bool = False, dim1=0, dim2=1) -> None:
+    points = np.array(sample_star(old_star, N, tol=10)) ### sho
+    post_points = []
+    if no_init: 
+        for point in points:
+            post_points.append(sim(mode=None, initialCondition=point, time_bound=T, time_step=ts).tolist()[1:])
+    else:
+        for point in points:
+            post_points.append(sim(mode=None, initialCondition=point, time_bound=T, time_step=ts).tolist())
+    post_points = np.array(post_points)
+    stars: List[StarSet] = []
+    for t in range(post_points.shape[1]): # pp has shape N x (T/dt) x (n + 1), so index using first 
+        stars.append(gen_starset(post_points[:, t, 1:], old_star))
+        # print(np.inner(*stars[-1].basis), '\n ----------- \n', *stars[-1].basis)
+    # print(post_points)
+    if dim1>=old_star.dimension():
+        dim1 = 0
+    if dim2>old_star.dimension():
+        dim2 = 1
+    plot_stars_points_nonit_nd(stars, post_points, dim1, dim2) # this only makes sense if points is 2D, i.e., only simulated one ts
+    plt.show()
+
 def sim_star_vis(init_star: StarSet, sim: Callable, T: int = 7, ts: float = 0.05, N: int = 100) -> None:
     t = 0
     stars: List[StarSet] = []
