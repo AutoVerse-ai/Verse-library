@@ -6,6 +6,7 @@ import polytope as pc
 from z3 import *
 from verse.plotter.plotterStar import *
 import polytope as pc
+from scipy.spatial import ConvexHull
 
 from verse.analysis.dryvr import calc_bloated_tube
 
@@ -414,7 +415,8 @@ class StarSet:
 
             pt = stateset.maximize(direction)
 
-            verts.append(pt)
+            # verts.append(pt)
+            verts.append([pt[0][dim1], pt[0][dim2]])
             #print(pt)
             if dim1 is None or dim2 is None:
                 x_pts.append(pt[0][0])
@@ -424,6 +426,11 @@ class StarSet:
                 x_pts.append(pt[0][dim1])
                 y_pts.append(pt[0][dim2])
             #print(pt[1][0])
+        verts = np.array(verts)
+        ch = ConvexHull(verts)
+        # print(verts[ch.vertices], verts[ch.vertices[0]])
+        verts = np.vstack((verts[ch.vertices], verts[ch.vertices[0]]))
+        return (verts[:, 0], verts[:, 1])
         x_pts.append(x_pts[0])
         y_pts.append(y_pts[0])
         return (x_pts, y_pts)
@@ -451,7 +458,7 @@ class StarSet:
         #if domain_direction[0][0] == -1 and domain_direction[0][1] == 0:
         #    print(domain_pt)
         #range_pt = self.center + self.basis @ domain_pt
-        range_pt = self.center + domain_pt.T @ self.basis 
+        range_pt = self.center + domain_pt.T @ self.basis # does this makes sense for the alpha of the basis vectors not included
 
         #if domain_direction[0][0] == -1 and domain_direction[0][1] == 0:
         #    print(self.basis)
