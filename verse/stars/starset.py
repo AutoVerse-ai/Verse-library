@@ -148,6 +148,9 @@ class StarSet:
         poly = pc.box2poly(dims)
         return StarSet.from_polytope(poly)
 
+    '''
+    TO-DO: see if just modifying this function (while not considering kvalue and bloating_method) will allow my alg to run
+    '''
     def calc_reach_tube(self, mode_label,time_horizon,time_step,sim_func,bloating_method,kvalue,sim_trace_num,lane_map):
         #get rectangle
 
