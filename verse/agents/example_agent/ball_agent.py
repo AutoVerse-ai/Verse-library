@@ -23,8 +23,7 @@ class BallAgent(BaseAgent):
         # Calling the constructor of tha base class
         super().__init__(id, code, file_name)
 
-    @staticmethod
-    def dynamic(t, state):
+    def dynamics(self, t, state):
         """Defines the RHS of the ODE used to simulate trajectories"""
         x, y, vx, vy = state
         x_dot = vx

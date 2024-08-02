@@ -1,6 +1,6 @@
 from verse.parser.parser import ControllerIR
 import numpy as np
-from scipy.integrate import ode
+from scipy.integrate import ode, odeint
 import copy
 
 
@@ -85,15 +85,9 @@ class BaseAgent:
             map: LaneMap, optional
                 Provided if the map is used
         """
-        num_points = int(np.ceil(time_horizon / time_step))
-        trace = np.zeros((num_points + 1, 1 + len(initialSet)))
-        trace[1:, 0] = [round(i * time_step, 10) for i in range(num_points)]
-        trace[0, 1:] = initialSet
-        for i in range(num_points):
-            result = ode(self.dynamic)
-            result.set_initial_value(initialSet)
-            res: np.ndarray = result.integrate(result.t + time_step)
-            initialSet = res.flatten()
-            trace[i + 1, 0] = time_step * (i + 1)
-            trace[i + 1, 1:] = initialSet
-        return np.array(trace)
+        y0 = initialSet 
+        t = np.round(np.arange(0.0, time_horizon+time_step/2, time_step), 8)
+        trace = odeint(func = self.dynamics, y0 = y0, t = t, tfirst=True)
+        t = t.reshape((-1,1))
+        trace = np.hstack((t, trace))
+        return trace

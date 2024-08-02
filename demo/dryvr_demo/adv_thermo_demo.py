@@ -42,19 +42,8 @@ def run(meas=False):
 
 if __name__ == "__main__":
     input_code_name = "./demo/dryvr_demo/adv_thermo_controller.py"
-    args = (
-        {k: v for k, v in (p.split(":") for p in sys.argv[2].split(","))}
-        if len(sys.argv) > 1
-        else {}
-    )
 
-    dirs = "WSEN"
-    RUN_TIME = float(args.get("time", 3.5))
-    TIME_STEP = float(args.get("step", 0.05))
-    par = int(args.get("par", 8))
-
-    bench = Benchmark(sys.argv, parallel_sim_ahead=par, parallel_ver_ahead=par)
-    print(RUN_TIME, TIME_STEP, par)
+    bench = Benchmark(sys.argv)
     bench = Benchmark(sys.argv)
 
     bench.scenario.add_agent(adv_thermo_agent("test", file_name=input_code_name))

@@ -279,7 +279,7 @@ def calc_bloated_tube(
 
     """
     # print(initial_set)
-    random.seed(4)
+    # random.seed(4)
     cur_center = calcCenterPoint(initial_set[0], initial_set[1])
     cur_delta = calcDelta(initial_set[0], initial_set[1])
     traces = [sim_func(mode_label, cur_center, time_horizon, time_step, lane_map)]

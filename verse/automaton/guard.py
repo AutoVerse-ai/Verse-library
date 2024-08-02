@@ -6,7 +6,7 @@ import ast
 from z3 import *
 
 from verse.map import LaneMap, AbstractLane
-from verse.analysis.utils import *
+from verse.utils.utils import *
 from verse.agents.base_agent import BaseAgent
 from verse.parser import Reduction, ReductionType, unparse
 

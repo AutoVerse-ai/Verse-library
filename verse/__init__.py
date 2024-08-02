@@ -3,3 +3,4 @@ from verse.agents import BaseAgent
 from verse.sensor import BaseSensor
 from verse.map import LaneSegment, LaneMap, Lane
 from verse.scenario import Scenario, ScenarioConfig
+from verse.utils import fixed_points

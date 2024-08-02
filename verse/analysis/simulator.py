@@ -14,7 +14,7 @@ from enum import Enum
 
 from verse.agents.base_agent import BaseAgent
 from verse.analysis.incremental import CachedSegment, SimTraceCache, convert_sim_trans, to_simulate
-from verse.analysis.utils import dedup
+from verse.utils.utils import dedup
 from verse.map.lane_map import LaneMap
 from verse.parser.parser import ModePath, find, unparse
 from verse.analysis.incremental import (
@@ -56,14 +56,15 @@ def pack_env(
             other = arg.name
             if other in packed:
                 other_keys, other_vals = tuple(map(list, zip(*packed[other].items())))
-                env[other] = list(
-                    map(
-                        lambda v: SimpleNamespace(**{k: v for k, v in zip(other_keys, v)}),
-                        zip(*other_vals),
-                    )
-                )
                 if not arg.is_list:
-                    env[other] = packed[other][0]
+                    env[other] = SimpleNamespace(**packed[other])
+                else:
+                    env[other] = list(
+                        map(
+                            lambda v: SimpleNamespace(**{k: v for k, v in zip(other_keys, v)}),
+                            zip(*other_vals),
+                        )
+                    )
             else:
                 if arg.is_list:
                     env[other] = []
@@ -201,7 +202,9 @@ class Simulator:
         remain_time: float,
         consts: SimConsts,
     ) -> Tuple[int, int, List[AnalysisTreeNode], Dict[str, TraceType], list]:
-        print(f"node {node.id} start: {node.start_time}")
+        if config.print_level >= 1:
+            print("=============================================================")
+            print(f"node {node.id} start: {node.start_time}")
         # print(f"node id: {node.id}")
         cache_updates = []
         for agent_id in node.agent:
@@ -216,7 +219,7 @@ class Simulator:
                     trace = node.agent[agent_id].TC_simulate(
                         mode, init, remain_time, consts.time_step, consts.lane_map
                     )
-                    trace[:, 0] += node.start_time
+                    trace[:, 0] += node.start_time ### breakpoints here
                     node.trace[agent_id] = trace
         # pp(("cached_segments", cached_segments.keys()))
         # TODO: for now, make sure all the segments comes from the same node; maybe we can do
@@ -231,11 +234,23 @@ class Simulator:
                 new_cache, paths_to_sim = to_simulate(old_node.agent, node.agent, cached_segments)
 
         asserts, transitions, transition_idx = Simulator.get_transition_simulate(
-            new_cache, paths_to_sim, node, consts.lane_map, consts.sensor, consts.agent_dict
+            new_cache, paths_to_sim, node, consts.lane_map, consts.sensor, consts.agent_dict, config.print_level
         )
-        # pp(("transitions:", transition_idx, transitions))
-
         node.assert_hits = asserts
+        
+        # pp(("transitions:", transition_idx, transitions))
+        if not config.unsafe_continue and asserts != None:
+            idx = transition_idx
+            for agent in node.agent:
+                node.trace[agent] = node.trace[agent][:idx]
+            return (
+                node.id,
+                later,
+                [], 
+                node.trace,
+                cache_updates
+            )
+
         # pp(("next init:", {a: trace[transition_idx] for a, trace in node.trace.items()}))
 
         # truncate the computed trajectories from idx and store the content after truncate
@@ -404,6 +419,10 @@ class Simulator:
             start = timeit.default_timer()
             if len(self.simulation_queue) > 0:
                 node, later = self.simulation_queue.pop(0)
+                # Check height
+                if node.height >= max_height-1:
+                    print("max depth reached")
+                    continue
                 # pp(("start sim", node.start_time, {a: (*node.mode[a], *node.init[a]) for a in node.mode}))
                 remain_time = round(time_horizon - node.start_time, 10)
                 if remain_time <= 0:
@@ -494,7 +513,7 @@ class Simulator:
         # Perform BFS through the simulation tree to loop through all possible transitions
         while simulation_queue != []:
             node: AnalysisTreeNode = simulation_queue.pop(0)
-            if node.height >= max_height:
+            if node.height >= max_height-1:
                 print("max depth reached")
                 continue
             # continue if we are at the depth limit
@@ -604,6 +623,7 @@ class Simulator:
         track_map: LaneMap,
         sensor,
         agent_dict,
+        print_level: int
     ) -> Tuple[
         Optional[Dict[str, List[str]]],
         Optional[Dict[str, List[Tuple[str, List[str], List[float]]]]],
@@ -723,7 +743,8 @@ class Simulator:
             if len(all_asserts) > 0:
                 return all_asserts, dict(transitions), idx
             if len(satisfied_guard) > 0:
-                print(len(satisfied_guard))
+                if print_level >= 1:
+                    print(len(satisfied_guard))
                 for agent_idx, dest, next_init, paths in satisfied_guard:
                     assert isinstance(paths, list)
                     dest = tuple(dest)
@@ -732,6 +753,11 @@ class Simulator:
                     dest_mode = node.get_mode(agent_idx, dest)
                     dest_track = node.get_track(agent_idx, dest)
                     if dest_track == track_map.h(src_track, src_mode, dest_mode):
+                        if print_level >= 2 and len(paths) > 0:
+                            print(agent, src_mode, src_track, "->", dest_mode, dest_track)
+                            print("start_time: ", node.start_time)
+                            print("cond_veri", unparse(paths[0].cond_veri))
+                            print("val_veri", unparse(paths[0].val_veri))
                         transitions[agent_idx].append((agent_idx, dest, next_init, paths))
                 break
         transitions = {aid: dedup(v, lambda p: p[1]) for aid, v in transitions.items()}
