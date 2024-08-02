@@ -23,6 +23,7 @@ def set_states_2d(cnts, disc, thing, val, cont_var, disc_var, stat_var):
 
 def set_states_3d(cnts, disc, thing, val, cont_var, disc_var, stat_var):
     state, mode, static = val
+    print(state)
     transp = np.transpose(np.array(state)[:, 1:])
     # assert len(transp) == 4
     sets(cnts, thing, cont_var, transp)
