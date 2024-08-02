@@ -2,7 +2,7 @@ import functools, pprint, random, math
 from typing import Dict, Optional, Tuple
 from verse.agents.example_agent import CarAgentDebounced
 from verse.analysis.analysis_tree import AnalysisTree, first_transitions
-from verse.analysis.utils import wrap_to_pi
+from verse.utils.utils import wrap_to_pi
 from verse.map.example_map.intersection import Intersection
 from verse.scenario.scenario import Benchmark, Scenario
 

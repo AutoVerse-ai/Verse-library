@@ -6,7 +6,7 @@ import numpy as np
 from verse.agents.base_agent import BaseAgent
 from verse.analysis import Simulator, Verifier, AnalysisTreeNode, AnalysisTree, ReachabilityMethod
 from verse.analysis.analysis_tree import AnalysisTreeNodeType
-from verse.analysis.utils import sample_rect
+from verse.utils.utils import sample_rect
 from verse.parser.parser import ControllerIR
 from verse.sensor.base_sensor import BaseSensor
 from verse.map.lane_map import LaneMap
@@ -43,6 +43,8 @@ class ScenarioConfig:
     """Enable parallelization. Uses the Ray library. Could be slower for small scenarios."""
     try_local: bool = False
     """Heuristic. When enabled, try to use the local thread when some results are cached."""
+    print_level: int = 1
+    """Adjust print_level from 0 - 2 to print different information."""
 
 
 class Scenario:
@@ -254,6 +256,46 @@ class Scenario:
         )
         self.past_runs.append(tree)
         return tree
+
+    def simulate_multi(self, time_horizon, time_step, init_dict_list=None, max_height=None, seed=None):
+        '''Computes multiple simulation traces of a scenario, starting from multiple initial states.
+            `seed`: the random seed for sampling a point in the region specified by the initial
+            conditions
+        '''
+        _check_ray_init(self.config.parallel)
+        self._get_init_from_agent()
+        self._check_init()
+        tree_list = []
+        if init_dict_list is None:
+            for i in range(10):
+                tree_list.append(self.simulate(time_horizon, time_step, max_height, seed))
+        else:
+            for init_dict in init_dict_list:
+                root = AnalysisTreeNode.root_from_inits(
+                    init=init_dict,
+                    mode={
+                        aid: tuple(elem if isinstance(elem, str) else elem.name for elem in modes)
+                        for aid, modes in self.init_mode_dict.items()
+                    },
+                    static={aid: [elem.name for elem in modes] for aid, modes in self.static_dict.items()},
+                    uncertain_param=self.uncertain_param_dict,
+                    agent=self.agent_dict,
+                    type=AnalysisTreeNodeType.SIM_TRACE,
+                    ndigits=10,
+                )
+                tree = self.simulator.simulate(
+                    root,
+                    self.sensor,
+                    time_horizon,
+                    time_step,
+                    max_height,
+                    self.map,
+                    len(self.past_runs),
+                    self.past_runs,
+                )
+                self.past_runs.append(tree)
+                tree_list.append(tree)            
+        return tree_list
 
     def simulate_simple(self, time_horizon, time_step, max_height=None, seed=None) -> AnalysisTree:
         '''Computes a simulation trace of the scenario, starting from a single initial state. Evaluates the decision

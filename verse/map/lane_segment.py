@@ -2,7 +2,7 @@ import numpy as np
 from abc import ABCMeta, abstractmethod
 from typing import Tuple, List, Optional
 
-from verse.analysis.utils import wrap_to_pi, Vector, get_class_path, to_serializable
+from verse.utils.utils import wrap_to_pi, Vector, get_class_path, to_serializable
 
 
 class LineType:

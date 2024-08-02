@@ -7,7 +7,6 @@ from scipy.integrate import ode
 from verse.agents import BaseAgent
 from verse.map import LaneMap
 
-
 class vanderpol_agent(BaseAgent):
     def __init__(self, id, code=None, file_name=None):
         # Calling the constructor of tha base class

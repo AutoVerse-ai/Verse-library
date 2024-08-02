@@ -1,6 +1,6 @@
 # Verse Library
 
-Verse is a Python library for creating, simulating, and verifying scenarios with interacting, decision making agents. The decision logic can be written in an expressive subset of Python. The continuous evolution can be described as a black-box simulation function. The agent can be ported across different maps, which can be defined from scratch or imported from [opendrive](https://www.opendrive.com/) files. Verse scenarios can be simulated and verified using hybrid reachability analysis. Verse is developed abd maintained by the [Reliable Autonomy Research Group](https://mitras.ece.illinois.edu/group.html) at the [University of Illinois at Urbana-Champaign](https://ece.illinois.edu/).
+Verse is a Python library for creating, simulating, and verifying scenarios with interacting, decision making agents. The decision logic can be written in an expressive subset of Python. The continuous evolution can be described as a black-box simulation function. The agent can be ported across different maps, which can be defined from scratch or imported from [opendrive](https://www.opendrive.com/) files. Verse scenarios can be simulated and verified using hybrid reachability analysis. Verse is developed and maintained by the [Reliable Autonomy Research Group](https://mitras.ece.illinois.edu/group.html) at the [University of Illinois at Urbana-Champaign](https://ece.illinois.edu/).
 
 <img src="./docs/source/figs/drone-2-8.gif" height="200"/>
 
@@ -94,7 +94,9 @@ Lin Song, Yangge Li, Sheng Cheng, Pan Zhao, Sayan Mitra, Naira Hovakimyan
 >>>>>>> 021a3b00c410d7a266a36407dd210d791daa4868
 In the <i>Work in Progress Session of International Conference on Cyber-Physical Systems (WiP-ICCPS),</i> San Antonio, Tx, 2023.
 
-<b> Parallel and incremental verification of hybrid automata with Ray and Verse.</b>
+<b> [Parallel and incremental verification of hybrid automata with Ray and Verse](https://link.springer.com/chapter/10.1007/978-3-031-45329-8_5)</b>
 Haoqing Zhu, Yangge Li, Keyi Shen, and Sayan Mitra.
-To appear in the proceedings of  21st Intl. <i>Symposium on Automated Technologies for Verification and Analysis (ATVA)</i>, 2023.
+In the proceedings of  21st Intl. <i>Symposium on Automated Technologies for Verification and Analysis (ATVA)</i>, 2023.
 
+<b> [Parallelization and incremental algorithms in the verse hybrid system verification library](https://www.ideals.illinois.edu/items/127392)</b>
+Haoqing Zhu, Masters thesis, University of Illinois at Urbana-Champaign, May 2023.

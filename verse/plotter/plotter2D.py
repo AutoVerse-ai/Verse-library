@@ -45,6 +45,7 @@ scheme_list = list(scheme_dict.keys())
 num_theme = len(colors)
 color_cnt = 0
 text_size = 8
+marker_size = 4
 scale_factor = 0.25
 mode_point_color = "rgba(0,0,0,0.5)"
 mode_text_color = "black"
@@ -65,6 +66,7 @@ def simulation_tree(
     scale_type="trace",
     label_mode="None",
     sample_rate=1,
+    plot_color=None,
 ):
     '''This function adds the traces of a simulation as a 2D plot to a plotly graph object.
         Parameters:
@@ -93,7 +95,7 @@ def simulation_tree(
     i = 0
     for agent_id in agent_list:
         fig = simulation_tree_single(
-            root, agent_id, fig, x_dim, y_dim, scheme_list[i], print_dim_list
+            root, agent_id, fig, x_dim, y_dim, scheme_list[i], print_dim_list, plot_color
         )
         i = (i + 1) % num_theme
     if scale_type == "trace":
@@ -129,7 +131,7 @@ def simulation_tree(
                             text=str(agent_id) + ": " + text,
                             opacity=0.5,
                             textposition=text_pos,
-                            textfont=dict(size=text_size, color=mode_text_color),
+                            marker={"size": marker_size, "color": mode_text_color},
                             showlegend=False,
                         )
                     )
@@ -141,8 +143,8 @@ def simulation_tree(
                         y=[trace[-1, y_dim]],
                         mode="markers+text",
                         text=["HIT:\n" + a for a in node.assert_hits[agent_id]],
-                        textfont={"color": "grey"},
-                        marker={"size": 4, "color": "black"},
+                        # textfont={"color": "grey"},
+                        marker={"size": marker_size, "color": "black"},
                         #  legendgroup=agent_id,
                         #  legendgrouptitle_text=agent_id,
                         #  name=str(round(start[0], 2))+'-'+str(round(end[0], 2)) +
@@ -150,34 +152,34 @@ def simulation_tree(
                         showlegend=False,
                     )
                 )
-            if label_mode != "None":
-                if previous_mode[agent_id] != node.mode[agent_id]:
-                    text_pos, text = get_text_pos(node.mode[agent_id][0])
-                    texts = [f"{agent_id}: {text}" for _ in trace]
-                    mark_colors = [mode_point_color for _ in trace]
-                    mark_sizes = [0 for _ in trace]
-                    if node.assert_hits != None and agent_id in node.assert_hits:
-                        mark_colors[-1] = "black"
-                        mark_sizes[-1] = 10
-                        texts[-1] = "BOOM!!!\nAssertions hit:\n" + "\n".join(
-                            "  " + a for a in node.assert_hits[agent_id]
-                        )
-                    marker = Marker(color=mark_colors, size=mark_sizes)
-                    fig.add_trace(
-                        go.Scatter(
-                            x=[trace[0, x_dim]],
-                            y=[trace[0, y_dim]],
-                            mode="markers+lines",
-                            line_color=mode_point_color,
-                            opacity=0.5,
-                            text=texts,
-                            marker=marker,
-                            textposition=text_pos,
-                            textfont=dict(size=text_size, color=mode_text_color),
-                            showlegend=False,
-                        )
-                    )
-                    previous_mode[agent_id] = node.mode[agent_id]
+            # if label_mode != "None":
+            #     if previous_mode[agent_id] != node.mode[agent_id]:
+            #         text_pos, text = get_text_pos(node.mode[agent_id][0])
+            #         texts = [f"{agent_id}: {text}" for _ in trace]
+            #         mark_colors = [mode_point_color for _ in trace]
+            #         mark_sizes = [0 for _ in trace]
+            #         if node.assert_hits != None and agent_id in node.assert_hits:
+            #             mark_colors[-1] = "black"
+            #             mark_sizes[-1] = 10
+            #             texts[-1] = "BOOM!!!\nAssertions hit:\n" + "\n".join(
+            #                 "  " + a for a in node.assert_hits[agent_id]
+            #             )
+            #         marker = Marker(color=mark_colors, size=mark_sizes)
+            #         fig.add_trace(
+            #             go.Scatter(
+            #                 x=[trace[0, x_dim]],
+            #                 y=[trace[0, y_dim]],
+            #                 mode="markers+lines",
+            #                 line_color=mode_point_color,
+            #                 opacity=0.5,
+            #                 text=texts,
+            #                 marker=marker,
+            #                 textposition=text_pos,
+            #                 textfont=dict(size=text_size, color=mode_text_color),
+            #                 showlegend=False,
+            #             )
+            #         )
+            #         previous_mode[agent_id] = node.mode[agent_id]
         queue += node.child
     if scale_type == "trace":
         fig.update_xaxes(
@@ -458,7 +460,7 @@ def simulation_anime(
                             text=str(agent_id) + ": " + text,
                             opacity=0.5,
                             textposition=text_pos,
-                            textfont=dict(size=text_size, color=mode_text_color),
+                            marker={"size": marker_size, "color": mode_text_color},
                             showlegend=False,
                         )
                     )
@@ -470,8 +472,8 @@ def simulation_anime(
                         y=[trace[-1, y_dim]],
                         mode="markers+text",
                         text=["HIT:\n" + a for a in node.assert_hits[agent_id]],
-                        textfont={"color": "grey"},
-                        marker={"size": 4, "color": "black"},
+                        # textfont={"color": "grey"},
+                        marker={"size": marker_size, "color": "black"},
                         #  legendgroup=agent_id,
                         #  legendgrouptitle_text=agent_id,
                         #  name=str(round(start[0], 2))+'-'+str(round(end[0], 2)) +
@@ -584,20 +586,20 @@ def reachtube_tree(
                             opacity=0.5,
                             text=str(agent_id) + ": " + text,
                             textposition=text_pos,
-                            textfont=dict(size=text_size, color=mode_text_color),
+                            marker={"size": marker_size, "color": mode_text_color},
                             showlegend=False,
                         )
                     )
                     previous_mode[agent_id] = node.mode[agent_id]
-                if node.assert_hits != None and agent_id in node.assert_hits[0]:
+                if node.assert_hits != None and agent_id in node.assert_hits:
                     fig.add_trace(
                         go.Scatter(
                             x=[trace[-1, x_dim]],
                             y=[trace[-1, y_dim]],
                             mode="markers+text",
-                            text=["HIT:\n" + a for a in node.assert_hits[0][agent_id]],
-                            textfont={"color": "black"},
-                            marker={"size": 4, "color": "black"},
+                            text=["HIT:\n" + a for a in node.assert_hits[agent_id]],
+                            # textfont={"color": "grey"},
+                            marker={"size": marker_size, "color": "black"},
                             showlegend=False,
                         )
                     )
@@ -760,7 +762,7 @@ def reachtube_anime(
                             text=str(agent_id) + ": " + text,
                             textposition=text_pos,
                             opacity=0.5,
-                            textfont=dict(size=text_size, color=mode_text_color),
+                            marker={"size": marker_size, "color": mode_text_color},
                             showlegend=False,
                         )
                     )
@@ -772,8 +774,8 @@ def reachtube_anime(
                             y=[trace[-1, y_dim]],
                             mode="markers+text",
                             text=["HIT:\n" + a for a in node.assert_hits[agent_id]],
-                            textfont={"color": "black"},
-                            marker={"size": 4, "color": "black"},
+                            # textfont={"color": "grey"},
+                            marker={"size": marker_size, "color": "black"},
                             showlegend=False,
                         )
                     )
@@ -1035,6 +1037,7 @@ def simulation_tree_single(
     y_dim: int = 2,
     color=None,
     print_dim_list=None,
+    plot_color = None
 ):
     """It statically shows the simulation traces of one given agent."""
     if isinstance(root, AnalysisTree):
@@ -1042,6 +1045,8 @@ def simulation_tree_single(
     global color_cnt
     queue = [root]
     color_id = 0
+    if plot_color is None:
+        plot_color = colors
     if color == None:
         color = list(scheme_dict.keys())[color_cnt]
         color_cnt = (color_cnt + 1) % num_theme
@@ -1071,7 +1076,7 @@ def simulation_tree_single(
                 x=trace[:, x_dim],
                 y=trace[:, y_dim],
                 mode="lines",
-                line_color=colors[scheme_dict[color]][color_id],
+                line_color=plot_color[scheme_dict[color]][color_id],
                 text=[
                     ["{:.2f}".format(trace[i, j]) for j in print_dim_list]
                     for i in range(trace.shape[0])
@@ -1435,4 +1440,367 @@ def update_style(fig: go.Figure() = go.Figure()):
         gridwidth=gridwidth,
         gridcolor="LightGrey",
     )
+    return fig
+
+def reachtube_tree_slice(
+    root: Union[AnalysisTree, AnalysisTreeNode],
+    map=None,
+    fig=go.Figure(),
+    x_dim: int = 1,
+    y_dim: int = 2,
+    print_dim_list=None,
+    map_type="lines",
+    scale_type="trace",
+    label_mode="None",
+    sample_rate=1,
+    combine_rect=1,
+    plot_color=None,
+    t_lower: float = None,
+    t_upper: float = None
+):
+    """It statically shows all the traces of the verfication."""
+    if plot_color is None:
+        plot_color = colors
+    if isinstance(root, AnalysisTree):
+        root = root.root
+    root = sample_trace(root, sample_rate)
+    fig = draw_map(map=map, fig=fig, fill_type=map_type)
+    agent_list = list(root.agent.keys())
+    # input check
+    num_dim = np.array(root.trace[agent_list[0]]).shape[1]
+    check_dim(num_dim, x_dim, y_dim, print_dim_list)
+    if print_dim_list is None:
+        print_dim_list = range(0, num_dim)
+
+    # scheme_list = list(scheme_dict.keys())
+    i = 0
+    if t_lower is None:
+        t_lower = 0
+    if t_upper is None:
+        t_upper = np.inf
+        
+    for agent_id in agent_list:
+        fig = reachtube_tree_single_slice(
+            root,
+            agent_id,
+            fig,
+            x_dim,
+            y_dim,
+            scheme_list[i],
+            print_dim_list,
+            combine_rect,
+            plot_color=plot_color,
+            t_lower=t_lower,
+            t_upper=t_upper
+        )
+        i = (i + 1) % num_theme
+    if scale_type == "trace":
+        queue = [root]
+        x_min, x_max = float("inf"), -float("inf")
+        y_min, y_max = float("inf"), -float("inf")
+    i = 0
+    queue = [root]
+    previous_mode = {}
+    for agent_id in root.mode:
+        previous_mode[agent_id] = []
+    text_pos = "middle center"
+    while queue != []:
+        node = queue.pop(0)
+        traces = node.trace
+        # print({k: len(v) for k, v in traces.items()})
+        i = 0
+        for agent_id in traces:
+            trace = np.array(traces[agent_id])
+            if scale_type == "trace":
+                x_min = min(x_min, min(trace[:, x_dim]))
+                x_max = max(x_max, max(trace[:, x_dim]))
+                y_min = min(y_min, min(trace[:, y_dim]))
+                y_max = max(y_max, max(trace[:, y_dim]))
+            i = agent_list.index(agent_id)
+            if label_mode != "None":
+                if previous_mode[agent_id] != node.mode[agent_id]:
+                    text_pos, text = get_text_pos(node.mode[agent_id][0])
+                    mode_point_color = plot_color[agent_list.index(agent_id) % num_theme][0]
+                    fig.add_trace(
+                        go.Scatter(
+                            x=[trace[0, x_dim]],
+                            y=[trace[0, y_dim]],
+                            mode="markers+text",
+                            line_color=mode_point_color,
+                            opacity=0.5,
+                            text=str(agent_id) + ": " + text,
+                            textposition=text_pos,
+                            marker={"size": marker_size, "color": mode_text_color},
+                            showlegend=False,
+                        )
+                    )
+                    previous_mode[agent_id] = node.mode[agent_id]
+                if node.assert_hits != None and agent_id in node.assert_hits:
+                    fig.add_trace(
+                        go.Scatter(
+                            x=[trace[-1, x_dim]],
+                            y=[trace[-1, y_dim]],
+                            mode="markers+text",
+                            text=["HIT:\n" + a for a in node.assert_hits[agent_id]],
+                            # textfont={"color": "grey"},
+                            marker={"size": marker_size, "color": "black"},
+                            showlegend=False,
+                        )
+                    )
+        queue += node.child
+    if scale_type == "trace":
+        fig.update_xaxes(
+            range=[x_min - scale_factor * (x_max - x_min), x_max + scale_factor * (x_max - x_min)]
+        )
+        fig.update_yaxes(
+            range=[y_min - scale_factor * (y_max - y_min), y_max + scale_factor * (y_max - y_min)]
+        )
+    fig = update_style(fig)
+    return fig
+
+
+### for this to actually take an arbitrary slice rather than just the last state, needs to take in two time parameters and check like reach_at
+### raise exception if user's provided time interval does not enclose a hyperrectangle time interval
+### write this out in math
+def reachtube_tree_single_slice(
+    root: Union[AnalysisTree, AnalysisTreeNode],
+    agent_id,
+    fig=go.Figure(),
+    x_dim: int = 1,
+    y_dim: int = 2,
+    color=None,
+    print_dim_list=None,
+    combine_rect=1,
+    plot_color=None,
+    t_lower: float = None,
+    t_upper: float = None
+):
+    """It statically shows the verfication traces of one given agent."""
+    if isinstance(root, AnalysisTree):
+        root = root.root
+    if plot_color is None:
+        plot_color = colors
+    global color_cnt
+    if color == None:
+        color = list(scheme_dict.keys())[color_cnt]
+        color_cnt = (color_cnt + 1) % num_theme
+    queue = [root]
+    show_legend = False
+    fillcolor = plot_color[scheme_dict[color]][1]
+    linecolor = plot_color[scheme_dict[color]][0]
+    while queue != []:
+        node = queue.pop(0)
+        traces = node.trace
+        trace = np.array(traces[agent_id])
+        max_id = len(trace) - 1 
+
+        if (
+            len(np.unique(np.array([trace[i][x_dim] for i in range(0, max_id)]))) == 1
+            and len(np.unique(np.array([trace[i][y_dim] for i in range(0, max_id)]))) == 1
+        ):
+            fig.add_trace(
+                go.Scatter(
+                    x=[trace[0][x_dim]],
+                    y=[trace[0][y_dim]],
+                    mode="markers+lines",
+                    #  fill='toself',
+                    #  fillcolor=fillcolor,
+                    #  opacity=0.5,
+                    marker={"size": 5},
+                    line_color=linecolor,
+                    line={"width": 1},
+                    showlegend=show_legend,
+                )
+            )
+        elif combine_rect == None:
+            ### may have to modify if statements
+            max_id = len(trace) - 1
+            trace_x_odd = np.array([trace[i][x_dim] for i in range(0, max_id, 2) if trace[i][0]>=t_lower and trace[i+1][0]<=t_upper])
+            trace_x_even = np.array([trace[i][x_dim] for i in range(1, max_id + 1, 2) if trace[i][0]>=t_lower and trace[i+1][0]<=t_upper])
+            trace_y_odd = np.array([trace[i][y_dim] for i in range(0, max_id, 2) if trace[i][0]>=t_lower and trace[i+1][0]<=t_upper])
+            trace_y_even = np.array([trace[i][y_dim] for i in range(1, max_id + 1, 2) if trace[i][0]>=t_lower and trace[i+1][0]<=t_upper])
+            fig.add_trace(
+                go.Scatter(
+                    x=trace_x_odd.tolist() + trace_x_even[::-1].tolist() + [trace_x_odd[0]],
+                    y=trace_y_odd.tolist() + trace_y_even[::-1].tolist() + [trace_y_odd[0]],
+                    mode="markers+lines",
+                    fill="toself",
+                    fillcolor=fillcolor,
+                    #  opacity=0.5,
+                    marker={"size": 1},
+                    line_color=linecolor,
+                    line={"width": 2},
+                    showlegend=show_legend,
+                )
+            )
+        elif combine_rect <= 1:
+            for idx in range(0, len(trace), 2):
+                if trace[idx][0]<t_lower:
+                    continue
+                if trace[idx+1][0]>t_upper:
+                    break
+                trace_x = np.array(
+                    [
+                        trace[idx][x_dim],
+                        trace[idx + 1][x_dim],
+                        trace[idx + 1][x_dim],
+                        trace[idx][x_dim],
+                        trace[idx][x_dim],
+                    ]
+                )
+                trace_y = np.array(
+                    [
+                        trace[idx][y_dim],
+                        trace[idx][y_dim],
+                        trace[idx + 1][y_dim],
+                        trace[idx + 1][y_dim],
+                        trace[idx][y_dim],
+                    ]
+                )
+                fig.add_trace(
+                    go.Scatter(
+                        x=trace_x,
+                        y=trace_y,
+                        mode="markers+lines",
+                        fill="toself",
+                        fillcolor=fillcolor,
+                        #  opacity=0.5,
+                        marker={"size": 1},
+                        line_color=linecolor,
+                        line={"width": 1},
+                        showlegend=show_legend,
+                    )
+                )
+        else:
+            for idx in range(0, len(trace), combine_rect * 2):
+                trace_seg = trace[idx : idx + combine_rect * 2]
+                max_id = len(trace_seg - 1)
+                if max_id <= 2:
+                    trace_x = np.array(
+                        [
+                            trace_seg[0][x_dim],
+                            trace_seg[0 + 1][x_dim],
+                            trace_seg[0 + 1][x_dim],
+                            trace_seg[0][x_dim],
+                            trace_seg[0][x_dim],
+                        ]
+                    )
+                    trace_y = np.array(
+                        [
+                            trace_seg[0][y_dim],
+                            trace_seg[0][y_dim],
+                            trace_seg[0 + 1][y_dim],
+                            trace_seg[0 + 1][y_dim],
+                            trace_seg[0][y_dim],
+                        ]
+                    )
+                    fig.add_trace(
+                        go.Scatter(
+                            x=trace_x,
+                            y=trace_y,
+                            mode="markers+lines",
+                            fill="toself",
+                            fillcolor=fillcolor,
+                            #  opacity=0.5,
+                            marker={"size": 1},
+                            line_color=linecolor,
+                            line={"width": 1},
+                            showlegend=show_legend,
+                        )
+                    )
+                else:
+                    ### assuming max_id is <=len(trace)-1, if not, modify the conditions
+                    trace_x_odd = np.array([trace_seg[i][x_dim] for i in range(0, max_id, 2) if trace[i][0]>=t_lower and trace[i+1][0]<=t_upper])
+                    trace_x_even = np.array([trace_seg[i][x_dim] for i in range(1, max_id + 1, 2) if trace[i][0]>=t_lower and trace[i+1][0]<=t_upper])
+
+                    trace_y_odd = np.array([trace_seg[i][y_dim] for i in range(0, max_id, 2) if trace[i][0]>=t_lower and trace[i+1][0]<=t_upper])
+                    trace_y_even = np.array([trace_seg[i][y_dim] for i in range(1, max_id + 1, 2) if trace[i][0]>=t_lower and trace[i+1][0]<=t_upper])
+
+                    x_start = 0
+                    x_end = 0
+                    if trace_x_odd[-1] >= trace_x_odd[-2] and trace_x_even[-1] >= trace_x_even[-2]:
+                        x_end = trace_x_even[-1]
+                    elif (
+                        trace_x_odd[-1] <= trace_x_odd[-2] and trace_x_even[-1] <= trace_x_even[-2]
+                    ):
+                        x_end = trace_x_odd[-1]
+                    else:
+                        x_end = trace_x_odd[-1]
+
+                    if (
+                        trace_x_odd[1 - 1] >= trace_x_odd[2 - 1]
+                        and trace_x_even[1 - 1] >= trace_x_even[2 - 1]
+                    ):
+                        x_start = trace_x_even[1 - 1]
+                    elif (
+                        trace_x_odd[1 - 1] <= trace_x_odd[2 - 1]
+                        and trace_x_even[1 - 1] <= trace_x_even[2 - 1]
+                    ):
+                        x_start = trace_x_odd[1 - 1]
+                    else:
+                        x_start = trace_x_odd[1 - 1]
+
+                    y_start = 0
+                    y_end = 0
+                    if trace_y_odd[-1] >= trace_y_odd[-2] and trace_y_even[-1] >= trace_y_even[-2]:
+                        y_end = trace_y_even[-1]
+                        if (
+                            trace_x_odd[-1] >= trace_x_odd[-2]
+                            and trace_x_even[-1] >= trace_x_even[-2]
+                        ):
+                            x_end = trace_x_odd[-1]
+                    elif (
+                        trace_y_odd[-1] <= trace_y_odd[-2] and trace_y_even[-1] <= trace_y_even[-2]
+                    ):
+                        y_end = trace_y_odd[-1]
+                    else:
+                        y_end = trace_y_odd[-1]
+
+                    if (
+                        trace_y_odd[1 - 1] >= trace_y_odd[2 - 1]
+                        and trace_y_even[1 - 1] >= trace_y_even[2 - 1]
+                    ):
+                        y_start = trace_y_even[1 - 1]
+                    elif (
+                        trace_y_odd[1 - 1] <= trace_y_odd[2 - 1]
+                        and trace_y_even[1 - 1] <= trace_y_even[2 - 1]
+                    ):
+                        y_start = trace_y_odd[1 - 1]
+                        if (
+                            trace_x_odd[1 - 1] <= trace_x_odd[2 - 1]
+                            and trace_x_even[1 - 1] <= trace_x_even[2 - 1]
+                        ):
+                            x_start = trace_x_even[1 - 1]
+                    else:
+                        y_start = trace_y_even[1 - 1]
+
+                    trace_x = (
+                        trace_x_odd.tolist()
+                        + [x_end]
+                        + trace_x_even[::-1].tolist()
+                        + [x_start]
+                        + [trace_x_odd[0]]
+                    )
+                    trace_y = (
+                        trace_y_odd.tolist()
+                        + [y_end]
+                        + trace_y_even[::-1].tolist()
+                        + [y_start]
+                        + [trace_y_odd[0]]
+                    )
+                    fig.add_trace(
+                        go.Scatter(
+                            x=trace_x,
+                            y=trace_y,
+                            mode="markers+lines",
+                            fill="toself",
+                            fillcolor=fillcolor,
+                            #  opacity=0.5,
+                            marker={"size": 1},
+                            line_color=linecolor,
+                            line={"width": 1},
+                            showlegend=show_legend,
+                        )
+                    )
+        queue += node.child
     return fig

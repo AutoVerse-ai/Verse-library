@@ -4,7 +4,7 @@ from abc import ABCMeta, abstractmethod
 from typing import Tuple, List, Optional, Union
 from math import pi, cos, sin, acos, asin, atan, tan
 
-from verse.analysis.utils import (
+from verse.utils.utils import (
     wrap_to_pi,
     Vector,
     get_class_path,
