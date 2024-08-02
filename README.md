@@ -77,12 +77,21 @@ pre-commit install
 
 # Related Publications
 
+<<<<<<< HEAD
 <b> [Verse: A Python library for reasoning about multi-agent hybrid system scenarios](https://link.springer.com/chapter/10.1007/978-3-031-37706-8_18)</b> [arxiv](https://arxiv.org/abs/2301.08714) 
 Yangge Li, Haoqing Zhu, Katherine Braught, Keyi Shen, Sayan Mitra.
 In the proceedings of <i>Computer Aided Verification (CAV),</i> LNCS vol 13964, pages 351–364, 2023.
 
 <b> [Verification of L1 Adaptive Control using Verse Library: A Case Study of Quadrotors](https://arxiv.org/abs/2303.13819) </b>
 Lin Song, Yangge Li, Sheng Cheng, Pan Zhao, Sayan Mitra, Naira Hovakimyan.
+=======
+<b> [Verse: A Python library for reasoning about multi-agent hybrid system scenarios](https://arxiv.org/abs/2301.08714)</b>
+Yangge Li, Haoqing Zhu, Katherine Braught, Keyi Shen, Sayan Mitra
+In the proceedings <i>Computer Aided Verification (CAV),</i> LNCS vol 13964, pages 351–364, 2023.
+
+<b> [Verification of L1 Adaptive Control using Verse Library: A Case Study of Quadrotors](https://arxiv.org/abs/2303.13819) </b>
+Lin Song, Yangge Li, Sheng Cheng, Pan Zhao, Sayan Mitra, Naira Hovakimyan
+>>>>>>> 021a3b00c410d7a266a36407dd210d791daa4868
 In the <i>Work in Progress Session of International Conference on Cyber-Physical Systems (WiP-ICCPS),</i> San Antonio, Tx, 2023.
 
 <b> Parallel and incremental verification of hybrid automata with Ray and Verse.</b>

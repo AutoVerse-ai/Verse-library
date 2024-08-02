@@ -62,6 +62,9 @@ class LaneMap_3d:
     def h_func(self, lane_idx: str, agent_mode_src: str, agent_mode_dest: str) -> str:
         raise NotImplementedError
 
+    def h_exist_func(self, lane_idx: str, agent_mode_src: str, agent_mode_dest: str) -> bool:
+        raise NotImplementedError
+
     def g_func(self, agent_state, lane_idx) -> np.ndarray:
         raise NotImplementedError
 
@@ -229,7 +232,7 @@ class LaneMap_3d:
     # waypoints related
 
     def get_curr_waypoint(self, agent_id):
-        return self.waypoints[agent_id]
+        return self.wps[agent_id]
 
     def check_guard_box(self, agent_id, state, box_side):
         dest = self.curr_wp[agent_id][3:]
@@ -287,5 +290,5 @@ class LaneMap_3d:
         # print('next', next_waypoint)
         return next_waypoint
 
-    def get_time_limit(self, agent_id):
-        return self.t_v_pair[agent_id][0]
+    # def get_time_limit(self, agent_id):
+    #     return self.t_v_pair[agent_id][0]

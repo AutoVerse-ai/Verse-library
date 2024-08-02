@@ -193,8 +193,8 @@ class CarAgentDebounced(CarAgent):
         return super(CarAgentDebounced, CarAgentDebounced).dynamic(t, state[:4], u) + [1]
 
     def action_handler(self, mode: List[str], state, lane_map: LaneMap) -> Tuple[float, float]:
-        return super(CarAgentDebounced, CarAgentDebounced).action_handler(
-            self, mode, state[:4], lane_map
+        return super(CarAgentDebounced, self).action_handler(
+            mode, state[:4], lane_map
         )
 
 

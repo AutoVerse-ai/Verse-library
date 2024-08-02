@@ -8,7 +8,7 @@ import numpy as np
 
 class SimpleMap1(LaneMap_3d):
     def __init__(self, box_side: dict = {}, t_v_pair: dict = {}):
-        super().__init__(box_side=box_side, t_v_pair=t_v_pair)
+        super().__init__()
         width = 0.3
         y_offset = 0
         z_offset = 0
@@ -39,7 +39,7 @@ class SimpleMap1(LaneMap_3d):
 
 class SimpleMap2(LaneMap_3d):
     def __init__(self, box_side: dict = {}, t_v_pair: dict = {}):
-        super().__init__(box_side=box_side, t_v_pair=t_v_pair)
+        super().__init__()
         segment0 = CircularLane_3d_v1("seg0", [0, 0, 0], 6, [1, 1, 1], 0, 2 * pi, True, 2)
         # segment1 = StraightLane_3d(
         #     'seg0',
@@ -55,7 +55,7 @@ class SimpleMap2(LaneMap_3d):
 
 class SimpleMap3(LaneMap_3d):
     def __init__(self, box_side: dict = {}, t_v_pair: dict = {}):
-        super().__init__(box_side=box_side, t_v_pair=t_v_pair)
+        super().__init__()
         phase = 1.5 * pi
         n = np.array([1, 1, 1])
         segment0 = CircularLane_3d_v1("seg0", [0, -20, 0], 20, n, 0, phase, True, 5)
@@ -72,7 +72,7 @@ class SimpleMap3(LaneMap_3d):
 
 class SimpleMap4(LaneMap_3d):
     def __init__(self, box_side: dict = {}, t_v_pair: dict = {}):
-        super().__init__(box_side=box_side, t_v_pair=t_v_pair)
+        super().__init__()
         phase = 1.5 * pi
         n = np.array([1, 1, 1])
         width = 1
@@ -103,7 +103,7 @@ class SimpleMap4(LaneMap_3d):
 
 class SimpleMap5(LaneMap_3d):
     def __init__(self, box_side: dict = {}, t_v_pair: dict = {}):
-        super().__init__(box_side=box_side, t_v_pair=t_v_pair)
+        super().__init__()
         phase = 1.5 * pi
         n = np.array([1, 1, 1])
         width = 3
