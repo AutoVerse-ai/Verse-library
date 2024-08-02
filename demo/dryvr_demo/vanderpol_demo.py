@@ -30,7 +30,7 @@ if __name__ == "__main__":
     # scenario.add_agent(car)
     # scenario.set_sensor(FakeSensor2())
     # modify mode list input
-    basis = np.array([[1, 0], [0, 1]])
+    basis = np.array([[1, 0], [0, 1]]) * np.diag([0.1, 0.1])
     center = np.array([1.40,2.30])
     C = np.transpose(np.array([[1,-1,0,0],[0,0,1,-1]]))
     g = np.array([1,1,1,1])

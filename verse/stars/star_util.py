@@ -9,6 +9,10 @@ from matplotlib.patches import Ellipse
 import cvxpy as cp
 from z3 import *
 
+'''
+this file is deprecated, moved everything to starset to resolve circular imports
+'''
+
 def containment_poly(star: StarSet, point: np.ndarray) -> bool:
     if star.dimension() != point.shape[0]:
         raise ValueError(f'Dimension of point does not match the dimenions of the starset')

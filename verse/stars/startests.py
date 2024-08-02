@@ -1,6 +1,6 @@
 import numpy as np
 from starset import StarSet
-from starset import HalfSpace
+from starset import *
 from verse.analysis.utils import sample_rect
 from typing_extensions import List
 from scipy.integrate import ode
@@ -8,7 +8,6 @@ from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 import cvxpy as cp
-from star_util import *
 from sklearn.preprocessing import StandardScaler
 
 import matplotlib.pyplot as plt 
