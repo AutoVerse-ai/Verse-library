@@ -807,7 +807,9 @@ class Simulator:
 
                 try:
                     # Input the environment into the actual controller
+                    # pylint: disable=E1101
                     output = dl.decisionLogic(*arg_list)
+                    # pylint: enable=E1101
                     # output = convertEnumToStr(output, agent, dl)
                     # Check if output is the same as ego
                     if env[EGO] != output:

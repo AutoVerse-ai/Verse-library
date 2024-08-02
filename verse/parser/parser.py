@@ -73,12 +73,14 @@ class CustomIR(ast.expr):
     def __reduce__(self):
         return type(self), tuple(getattr(self, k) for k in self.__class__._fields)
 
+    # pylint: disable=E1120
     def __deepcopy__(self, _memo):
         cls = self.__class__
         result = cls.__new__(cls)
         for k, v in self.__dict__.items():
             setattr(result, k, copy.deepcopy(v))
         return result
+    # pylint: enable=E1120
 
     @staticmethod
     def set_fields(klass):

@@ -168,7 +168,7 @@ class GuardExpressionAst:
         res = "And(" + ",".join(res) + ")"
         return res
 
-    def _generate_z3_expression_node(self, node):
+    def _generate_z3_expression_node(self, node) -> Any:
         """
         Perform a DFS over expression ast and generate the guard expression
         The return value of this function can be a bool/str
@@ -231,7 +231,7 @@ class GuardExpressionAst:
             # If is UnaryOp,
             value = self._generate_z3_expression_node(node.operand)
             if isinstance(node.op, ast.USub):
-                return -value
+                return f"-({value})"
             elif isinstance(node.op, ast.Not):
                 z3_str = f"Not({value})"
                 return z3_str

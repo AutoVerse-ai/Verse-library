@@ -1,8 +1,7 @@
 from enum import Enum, auto
 import copy
 from typing import List
-
-from verse.map.track_map import LaneMap
+from verse.map import LaneMap
 
 
 class LaneObjectMode(Enum):
@@ -42,7 +41,7 @@ class State:
         pass
 
 
-def vehicle_front(ego, others, track_map):
+def vehicle_front(ego, others, track_map: LaneMap):
     res = any(
         (
             5

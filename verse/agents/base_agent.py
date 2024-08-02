@@ -18,6 +18,8 @@ class BaseAgent:
         id,
         code=None,
         file_name=None,
+        initial_state = None, 
+        initial_mode = None
     ):
         """
         Constructor of agent base class.
@@ -33,8 +35,8 @@ class BaseAgent:
         """
         self.decision_logic: ControllerIR = ControllerIR.parse(code, file_name)
         self.id = id
-        self.init_cont = None
-        self.init_disc = None
+        self.init_cont = initial_state
+        self.init_disc = initial_mode
         self.static_parameters = None 
         self.uncertain_parameters = None
 

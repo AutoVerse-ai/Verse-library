@@ -1,3 +1,4 @@
+# pylint: skip-file
 "Usage: unparse.py <path to source file>"
 from __future__ import print_function, unicode_literals
 import six

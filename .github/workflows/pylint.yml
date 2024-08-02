@@ -39,4 +39,4 @@ jobs:
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
     - name: Analysing the code with pylint
       run: |
-        python -m pylint $(git ls-files '*.py')
+        python -m pylint --rc-files .pylintrc $(git ls-files '*.py')

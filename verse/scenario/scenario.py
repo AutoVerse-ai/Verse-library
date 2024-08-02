@@ -440,7 +440,7 @@ class Benchmark:
             # arg = self.config.rest[0]
             # self.config.config = ScenarioConfig(incremental='i' in arg, parallel='l' in arg, **self.config.kw)
             # self.scenario.update_config(self.config.config)
-            self.replace_scenario()
+            self.replace_scenario(self.config.rest[1]) # TODO: Check if this is correct
             traces2 = self.run(*a, **kw)
         self.report()
         print("trace1 contains trace2?", traces1.contains(traces2))
