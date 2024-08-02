@@ -2,7 +2,7 @@
 
 Verse is a Python library for creating, simulating, and verifying scenarios with interacting, decision making agents. The decision logic can be written in an expressive subset of Python. The continuous evolution can be described as a black-box simulation function. The agent can be ported across different maps, which can be defined from scratch or imported from [opendrive](https://www.opendrive.com/) files. Verse scenarios can be simulated and verified using hybrid reachability analysis. Verse is developed and maintained by the [Reliable Autonomy Research Group](https://mitras.ece.illinois.edu/group.html) at the [University of Illinois at Urbana-Champaign](https://ece.illinois.edu/).
 
-<img src="./docs/source/figs/drone-2-8.gif" height="200"/>
+<img src="./docs/source/figs/drone-2-8.gif" height="200"/> <img src="./docs/source/figs/nondeterm_sensor.png" height="200"/> <img src="./docs/source/figs/car-ped-1.png" height="200"/>
 
 ## Installation
 The package requires python 3.8+. The package can be installed using pip with all required dependencies
@@ -60,14 +60,20 @@ The source code of the package is contained in the verse folder, which contains 
 
 - **plotter** contains code for visualizing the computed results
 
-# Contributors
+# Core Dev Team
 
 - Katherine Braught
 - Yangge Li
 - Sayan Mitra
-- Keyi Shen
+- Alex Yuan
 - Haoqing Zhu
+
+# Contributors
+- Nitish Bhupathi Raju 
+- Keyi Shen
+- Louis Sungwoo Cho
 - Daniel Zhuang
+
 
 In order to contribute to this repository, you should run the following commands:
 ```sh
