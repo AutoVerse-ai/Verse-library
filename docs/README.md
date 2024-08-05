@@ -14,19 +14,11 @@ python3 -m pip install -r requirements-doc.txt
 ```
 
 ## Compiling documents
-### For Linux
-For linux user, the document can be compiled using command 
+The document can be compiled using command 
 ```
-make html
+python3 -m sphinx -M html docs/source docs/build
 ```
-in the ```docs/``` folder
-
-### For Windows
-For Windows user, the document can be compiled using command 
-```
-./make.bat html
-```
-in the ```docs/``` folder
+in the root folder
 
 ## Viewing documents
 The compiled result can be found in ```docs/build/html``` folder. The root of the compiled document is stored in ```docs/build/html/index.html```
