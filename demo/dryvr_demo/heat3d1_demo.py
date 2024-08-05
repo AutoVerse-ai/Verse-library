@@ -20,7 +20,7 @@ class CraftMode(Enum):
 if __name__ == "__main__":
     input_code_name = './demo/dryvr_demo/heat3d1_controller.py'
     #scenario = Scenario()
-    scenario = Scenario()
+    scenario = Scenario(ScenarioConfig(parallel=False))
 
 
     car = heat3d1_agent('test', file_name=input_code_name)

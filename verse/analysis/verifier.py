@@ -193,6 +193,7 @@ class Verifier:
             #print(initial_set)
             #inital_star = initial_set[0]
 
+            ### add a parameter here, either bool or create an enum
             reach_tube = combined_star.calc_reach_tube(
             mode_label,
             time_horizon,

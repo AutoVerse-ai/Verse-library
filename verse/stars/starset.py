@@ -190,7 +190,7 @@ class StarSet:
         # #KB: TODO: where is min for last time point and first time point
         # star_tube.pop()
         # from verse.stars.star_util import gen_starsets_post_sim
-        reach = gen_starsets_post_sim(self, sim_func, time_horizon, time_step)
+        reach = gen_starsets_post_sim(self, sim_func, time_horizon, time_step, mode_label=mode_label)
         star_tube = []
         for i in range(len(reach)):
             star_tube.append([i*time_step, reach[i]])
@@ -670,15 +670,16 @@ def gen_starset(points: np.ndarray, old_star: StarSet) -> StarSet:
     return post_cont_pca(old_star, derived_basis, points)
 
 ### doing post_computations using simulation then constructing star sets around each set of points afterwards -- not iterative
-def gen_starsets_post_sim(old_star: StarSet, sim: Callable, T: float = 7, ts: float = 0.05, N: int = 100, no_init: bool = False) -> List[StarSet]:
+def gen_starsets_post_sim(old_star: StarSet, sim: Callable, T: float = 7, ts: float = 0.05, N: int = 100, no_init: bool = False, mode_label: int = None) -> List[StarSet]:
     points = np.array(sample_star(old_star, N))
     post_points = []
     if no_init: 
         for point in points:
-            post_points.append(sim(mode=None, initialCondition=point, time_bound=T, time_step=ts).tolist()[1:])
+            post_points.append(sim(mode=mode_label, initialCondition=point, time_bound=T, time_step=ts).tolist()[1:])
     else:
         for point in points:
-            post_points.append(sim(mode=None, initialCondition=point, time_bound=T, time_step=ts).tolist())
+            # post_points.append(sim(mode=mode_label, initialCondition=point, time_bound=T, time_step=ts).tolist())
+            post_points.append(sim(mode_label, point, T, ts).tolist())
     post_points = np.array(post_points)
     stars: List[StarSet] = []
     for t in range(post_points.shape[1]): # pp has shape N x (T/dt) x (n + 1), so index using first 

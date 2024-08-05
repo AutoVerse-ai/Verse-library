@@ -153,6 +153,10 @@ class Scenario:
             self.uncertain_param_dict[agent_id] = []
         return
 
+    '''
+    overload this function to work for star sets -- not a priority, behind technical aspects if this is complex
+    currently, star sets need to be initialized using set_initial on agents
+    '''
     def set_init(self, init_list, init_mode_list, static_list=[], uncertain_param_list=[]):
         """Sets the initial conditions for all agents. The order will be the same as the order in
         which the agents are added."""
