@@ -97,3 +97,7 @@ In the proceedings of  21st Intl. <i>Symposium on Automated Technologies for Ver
 
 <b> [Parallelization and incremental algorithms in the verse hybrid system verification library](https://www.ideals.illinois.edu/items/127392)</b>
 Haoqing Zhu, Masters thesis, University of Illinois at Urbana-Champaign, May 2023.
+
+# Sponsors
+- [NASA ULI Aviate](https://aviate.illinois.edu/event/nasa-uli-annual-review/)
+
