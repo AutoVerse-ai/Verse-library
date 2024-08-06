@@ -23,6 +23,7 @@ def set_states_2d(cnts, disc, thing, val, cont_var, disc_var, stat_var):
 
 def set_states_3d(cnts, disc, thing, val, cont_var, disc_var, stat_var):
     state, mode, static = val
+    print(state)
     transp = np.transpose(np.array(state)[:, 1:])
     # assert len(transp) == 4
     sets(cnts, thing, cont_var, transp)
@@ -51,12 +52,12 @@ def add_states_3d(cont, disc, thing, val, cont_var, disc_var, stat_var):
 
 class BaseSensor:
     # The baseline sensor is omniscient. Each agent can get the state of all other agents
-    def sense(self, agent: BaseAgent, state_dict, lane_map):
+    def sense(self, agent: BaseAgent, state_dict, lane_map, simulate = True):
         cont = {}
         disc = {}
         len_dict = {"others": len(state_dict) - 1}
         tmp = np.array(list(state_dict.values())[0][0])
-        if tmp.ndim < 2:
+        if simulate:
             for agent_id in state_dict:
                 if agent_id == agent.id:
                     # Get type of ego

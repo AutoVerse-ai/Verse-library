@@ -22,7 +22,7 @@ def _check_ray_init(parallel: bool) -> None:
             ray.init()
 
 
-@dataclass(frozen=True)
+@dataclass()
 class ScenarioConfig:
     """Configuration for how simulation/verification is performed for a scenario. Properties are
     immutable so that incremental verification works correctly."""
@@ -153,6 +153,10 @@ class Scenario:
             self.uncertain_param_dict[agent_id] = []
         return
 
+    '''
+    overload this function to work for star sets -- not a priority, behind technical aspects if this is complex
+    currently, star sets need to be initialized using set_initial on agents
+    '''
     def set_init(self, init_list, init_mode_list, static_list=[], uncertain_param_list=[]):
         """Sets the initial conditions for all agents. The order will be the same as the order in
         which the agents are added."""
@@ -337,7 +341,8 @@ class Scenario:
         self._check_init()
         root = AnalysisTreeNode.root_from_inits(
             init={
-                aid: [[init, init] if np.array(init).ndim < 2 else init]
+                #KB: todo: must fix this!!!
+                aid: [init] #[[init, init] if np.array(init).ndim < 2 else init]
                 for aid, init in self.init_dict.items()
             },
             mode={

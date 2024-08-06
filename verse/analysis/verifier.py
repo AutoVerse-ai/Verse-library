@@ -37,6 +37,7 @@ class ReachabilityMethod(Enum):
     MIXMONO_CONT = auto()
     MIXMONO_DISC = auto()
     DRYVR_DISC = auto()
+    STAR_SETS = auto()
 
 
 @dataclass
@@ -60,6 +61,173 @@ class Verifier:
         self.trans_cache_hits = (0, 0)
         self.config = config
         self.compute_full_reachtube_step_remote = ray.remote(Verifier.compute_full_reachtube_step)
+
+    def check_cache_bloated_tube_stars(
+        self,
+        agent_id,
+        mode_label,
+        initial_set,
+        combine_seg_length=1000,
+    ):
+        """
+        Check the bloated tubes cached already
+
+        :param TBA
+        :return:    the combined bloated tube with all cached tube segs
+                    a list of indexs of missing segs
+        """
+        print("in stars check cache")
+        missing_seg_idx_list = []
+        res_tube = None
+        tube_length = 0
+        for combine_seg_idx in range(0, len(initial_set), combine_seg_length):
+            rect_seg = initial_set[combine_seg_idx : combine_seg_idx + combine_seg_length]
+            combined_rect = None
+            for rect in rect_seg:
+                rect = np.array(rect)
+                if combined_rect is None:
+                    combined_rect = rect
+                else:
+                    combined_rect[0, :] = np.minimum(combined_rect[0, :], rect[0, :])
+                    combined_rect[1, :] = np.maximum(combined_rect[1, :], rect[1, :])
+            combined_rect = combined_rect.tolist()
+            if self.config.incremental:
+                cached = self.cache.check_hit(agent_id, mode_label, combined_rect)
+                if cached != None:
+                    self.tube_cache_hits = self.tube_cache_hits[0] + 1, self.tube_cache_hits[1]
+                    # print('cache', agent_id, time_horizon, self.tube_cache_hits )
+                else:
+                    self.tube_cache_hits = self.tube_cache_hits[0], self.tube_cache_hits[1] + 1
+                    # print('noncache', agent_id, time_horizon, self.tube_cache_hits )
+            else:
+                cached = None
+            if cached != None:
+                cur_bloated_tube = cached.tube
+            else:
+                missing_seg_idx_list.append(combine_seg_idx)
+                continue
+            # FIXME
+            if res_tube is None:
+                res_tube = cur_bloated_tube
+                tube_length = cur_bloated_tube.shape[0]
+            else:
+                cur_bloated_tube = cur_bloated_tube[: tube_length - combine_seg_idx * 2, :]
+                # Handle Lower Bound
+                res_tube[combine_seg_idx * 2 :: 2, 1:] = np.minimum(
+                    res_tube[combine_seg_idx * 2 :: 2, 1:], cur_bloated_tube[::2, 1:]
+                )
+                # Handle Upper Bound
+                res_tube[combine_seg_idx * 2 + 1 :: 2, 1:] = np.maximum(
+                    res_tube[combine_seg_idx * 2 + 1 :: 2, 1:], cur_bloated_tube[1::2, 1:]
+                )
+        return res_tube, missing_seg_idx_list
+
+    @staticmethod
+    def calculate_full_bloated_tube_stars(
+        agent_id,
+        cached_tube_info,
+        incremental,
+        mode_label,
+        initial_set,
+        time_horizon,
+        time_step,
+        sim_func,
+        params,
+        kvalue,
+        sim_trace_num,
+        combine_seg_length=1000,
+        guard_checker=None,
+        guard_str="",
+        lane_map=None,
+    ):
+        #this should return a list of stars for one time step along the horizon
+        """
+        Get the full bloated tube. use cached tubes, calculate noncached tubes
+
+        :param TBA
+        :return:    the full bloated tube
+                    cache to be updated
+        """
+        bloating_method = "PW"
+        if "bloating_method" in params:
+            bloating_method = params["bloating_method"]
+        cache_tube_updates = []
+        if incremental:
+            cached_tube, missing_seg_idx_list = cached_tube_info
+        else:
+            cached_tube, missing_seg_idx_list = None, range(0, len(initial_set), combine_seg_length)
+        res_tube = cached_tube
+        if res_tube is None:
+            tube_length = 0
+        else:
+            tube_length = res_tube.shape[0]
+        #What is this and why does the same star set appear twice?    
+        print(missing_seg_idx_list)
+
+        for combine_seg_idx in missing_seg_idx_list:
+            rect_seg = initial_set[combine_seg_idx : combine_seg_idx + combine_seg_length]
+            print("len of rect_sec:")
+            print(len(rect_seg))
+            #combined_rect = None
+            #for rect in rect_seg:
+            #    rect = np.array(rect)
+            #    if combined_rect is None:
+            #        combined_rect = rect
+            #    else:
+            #        combined_rect[0, :] = np.minimum(combined_rect[0, :], rect[0, :])
+            #        combined_rect[1, :] = np.maximum(combined_rect[1, :], rect[1, :])
+            from verse.stars.starset import StarSet
+            combined_star = initial_set[0]
+            if len(rect_seg) > 1:
+                combined_star = StarSet.combine_stars(rect_seg)
+            #print(combined_rect)
+            #print("done with combined rec")
+        
+        #TODO: what to do with the list of initial set? Some sort of combining?
+
+        #fix this!
+        #print("TODO: is the initial set correct?")
+        #print(initial_set)
+        #breakpoint()
+        #KB HERE: combine the stars into a rectangle
+            #print(initial_set)
+            #inital_star = initial_set[0]
+
+            ### add a parameter here, either bool or create an enum
+            reach_tube = combined_star.calc_reach_tube(
+            mode_label,
+            time_horizon,
+            time_step,
+            sim_func,
+            bloating_method,
+            kvalue,
+            sim_trace_num,
+            lane_map=lane_map
+            )
+
+           
+            if incremental:
+                cache_tube_updates.append((agent_id, mode_label, combined_rect, cur_bloated_tube))
+                #EXISTING CODE, NOT SURE WHAT TO DO:
+            old_code = False
+            if old_code:
+                if res_tube is None:
+                    res_tube = cur_bloated_tube
+                    tube_length = cur_bloated_tube.shape[0]
+                else:
+                    if not tube_length <= 2 * combine_seg_idx:
+                        
+                        cur_bloated_tube = cur_bloated_tube[: tube_length - combine_seg_idx * 2, :]
+                        # Handle Lower Bound
+                        res_tube[combine_seg_idx * 2 :: 2, 1:] = np.minimum(
+                            res_tube[combine_seg_idx * 2 :: 2, 1:], cur_bloated_tube[::2, 1:]
+                        )
+                        # Handle Upper Bound
+                        res_tube[combine_seg_idx * 2 + 1 :: 2, 1:] = np.maximum(
+                            res_tube[combine_seg_idx * 2 + 1 :: 2, 1:], cur_bloated_tube[1::2, 1:]
+                        )
+        
+        return reach_tube, cache_tube_updates
 
     def check_cache_bloated_tube(
         self,
@@ -254,6 +422,29 @@ class Verifier:
                     )
                     if config.incremental:
                         cache_tube_updates.extend(cache_tube_update)
+                elif consts.reachability_method == ReachabilityMethod.STAR_SETS:
+                    # pp(('tube', agent_id, mode, inits))
+                    (
+                        cur_bloated_tube,
+                        cache_tube_update,
+                    ) = Verifier.calculate_full_bloated_tube_stars(
+                        agent_id,
+                        cached_tubes[agent_id] if config.incremental else None,
+                        config.incremental,
+                        mode,
+                        inits,
+                        remain_time,
+                        consts.time_step,
+                        node.agent[agent_id].TC_simulate,
+                        params,
+                        100,
+                        SIMTRACENUM,
+                        combine_seg_length=consts.init_seg_length,
+                        lane_map=consts.lane_map,
+                    )
+                    if config.incremental:
+                        cache_tube_updates.extend(cache_tube_update)
+                
                 elif consts.reachability_method == ReachabilityMethod.DRYVR_DISC:
                     from verse.analysis.dryvr_disc import calc_bloated_tube_dryvr
                     bloating_method = 'PW'
@@ -347,8 +538,12 @@ class Verifier:
 
         if not config.unsafe_continue and asserts != None:
             asserts, idx = asserts
-            for agent in node.agent:
-                node.trace[agent] = node.trace[agent][: (idx + 1) * 2]
+            if not consts.reachability_method == ReachabilityMethod.STAR_SETS:
+                for agent in node.agent:
+                    node.trace[agent] = node.trace[agent][: (idx + 1) * 2]
+            else:
+                for agent in node.agent:
+                    node.trace[agent] = node.trace[agent][: (idx + 1)]
             return (
                 node.id,
                 later,
@@ -404,8 +599,12 @@ class Verifier:
             start_idx, end_idx = idx[0], idx[-1]
 
             truncated_trace = {}
-            for agent_idx in node.agent:
-                truncated_trace[agent_idx] = node.trace[agent_idx][start_idx * 2 :]
+            if not consts.reachability_method == ReachabilityMethod.STAR_SETS:
+                for agent_idx in node.agent:
+                    truncated_trace[agent_idx] = node.trace[agent_idx][start_idx * 2 :]
+            else:
+               for agent_idx in node.agent:
+                    truncated_trace[agent_idx] = node.trace[agent_idx][start_idx :]                
             if end_idx > max_end_idx:
                 max_end_idx = end_idx
 
@@ -441,9 +640,14 @@ class Verifier:
 
         """Truncate trace of current node based on max_end_idx"""
         """Only truncate when there's transitions"""
-        if all_possible_transitions:
-            for agent_idx in node.agent:
-                node.trace[agent_idx] = node.trace[agent_idx][: (max_end_idx + 1) * 2]
+        if not consts.reachability_method == ReachabilityMethod.STAR_SETS:
+            if all_possible_transitions:
+                for agent_idx in node.agent:
+                    node.trace[agent_idx] = node.trace[agent_idx][: (max_end_idx + 1) * 2]
+        else:
+            if all_possible_transitions:
+                for agent_idx in node.agent:
+                    node.trace[agent_idx] = node.trace[agent_idx][: (max_end_idx + 1)]            
         return (
             node.id,
             later,
@@ -463,8 +667,8 @@ class Verifier:
         assert_hits,
         cache_tube_updates,
         cache_trans_tube_updates,
-        max_height,
-    ):
+        max_height
+        ):
         # t = timeit.default_timer()
         # print('get id: ', id, self.nodes[id].start_time)
         done_node: AnalysisTreeNode = self.nodes[id]
@@ -481,7 +685,7 @@ class Verifier:
         self.verification_queue.sort(key=lambda p: p[1:])
         if done_node.height <= max_height:
             self.nodes.extend(next_nodes)
-        combined_inits = {a: combine_all(inits) for a, inits in done_node.init.items()}
+        combined_inits = {a: combine_all(inits,self.config.reachability_method == ReachabilityMethod.STAR_SETS) for a, inits in done_node.init.items()}
         for (
             new,
             aid,
@@ -572,7 +776,7 @@ class Verifier:
                 for agent_id in node.agent:
                     mode = node.mode[agent_id]
                     inits = node.init[agent_id]
-                    combined = combine_all(inits)
+                    combined = combine_all(inits, reachability_method == ReachabilityMethod.STAR_SETS)
                     if self.config.incremental:
                         # CachedRTTrans
                         cached = self.trans_cache.check_hit(agent_id, mode, combined, node.init)
@@ -589,8 +793,18 @@ class Verifier:
                         # pp(("check hit", agent_id, mode, combined))
                         if cached != None:
                             cached_trans_tubes[agent_id] = cached
-                        # if incremental and DRYVR, check cache tube first
-                        if agent_id not in node.trace and reachability_method == ReachabilityMethod.DRYVR:
+                        if agent_id not in node.trace and reachability_method == ReachabilityMethod.STAR_SETS:
+                            print("in check bloat tube")
+                            # uncertain_param = node.uncertain_param[agent_id]
+                            # CachedTube.tube
+                            cur_bloated_tube, miss_seg_idx_list = self.check_cache_bloated_tube_stars(
+                                agent_id, mode, inits, combine_seg_length=init_seg_length
+                            )
+                            cached_tubes[agent_id] = (cur_bloated_tube, miss_seg_idx_list)
+                            print("done")
+
+						# if incremental and DRYVR, check cache tube first
+                        elif agent_id not in node.trace and reachability_method == ReachabilityMethod.DRYVR:
                             # uncertain_param = node.uncertain_param[agent_id]
                             # CachedTube.tube
                             cur_bloated_tube, miss_seg_idx_list = self.check_cache_bloated_tube(
@@ -675,6 +889,7 @@ class Verifier:
 
         return self.reachtube_tree
 
+
     @staticmethod
     def get_transition_verify_opt(
         config: "ScenarioConfig", cache: Dict[str, CachedRTTrans], paths: PathDiffs, node: AnalysisTreeNode, track_map, sensor
@@ -736,7 +951,7 @@ class Verifier:
                     )
                     for path in agent_paths:
                         cont_var_dict_template, discrete_variable_dict, length_dict = sensor.sense(
-                            agent, state_dict, track_map
+                            agent, state_dict, track_map, False
                         )
                         reset = (path.var, path.val_veri)
                         guard_expression = GuardExpressionAst([path.cond_veri])
@@ -768,12 +983,16 @@ class Verifier:
             if len(agent.decision_logic.args) == 0:
                 continue
             agent_id = agent.id
-            state_dict = {
-                aid: (node.trace[aid][0:2], node.mode[aid], node.static[aid]) for aid in node.agent
-            }
-            cont_var_dict_template, discrete_variable_dict, length_dict = sensor.sense(
-                agent, state_dict, track_map
-            )
+            state_dict = {}
+            if config.reachability_method == ReachabilityMethod.STAR_SETS:
+                state_dict = {
+                    aid: (node.trace[aid][0:1][0], node.mode[aid], node.static[aid]) for aid in node.agent
+                }
+            else:
+                state_dict = {
+                    aid: (node.trace[aid][0:2], node.mode[aid], node.static[aid]) for aid in node.agent
+                }
+            cont_var_dict_template, discrete_variable_dict, length_dict = sensor.sense(agent, state_dict, track_map, False)
             # TODO-PARSER: Get equivalent for this function
             # Construct the guard expression
             guard_expression = GuardExpressionAst([path.cond_veri])
@@ -791,12 +1010,19 @@ class Verifier:
                 (guard_expression, cont_var_updater, copy.deepcopy(discrete_variable_dict), path)
             )
 
-        trace_length = int(min(len(v) for v in node.trace.values()) // 2)
+
         # pp(("trace len", trace_length, {a: len(t) for a, t in node.trace.items()}))
         guard_hits = []
         guard_hit = False
         reduction_rate = 10
-        reduction_queue = [(0, trace_length, trace_length)]
+        reduction_queue = []
+        if config.reachability_method == ReachabilityMethod.STAR_SETS:
+            trace_length = int(min(len(v) for v in node.trace.values()))
+            reduction_queue = [(i, i+1, 1) for i in range(0, trace_length)]
+            reduction_queue.reverse()
+        else:
+            trace_length = int(min(len(v) for v in node.trace.values()) // 2)
+            reduction_queue = [(0, trace_length, trace_length)]
         # for idx, end_idx,combine_len in reduction_queue:
         hits = []
         while reduction_queue:
@@ -805,14 +1031,25 @@ class Verifier:
             # print((idx, combine_len))
             any_contained = False
             # end_idx = min(idx+combine_len, trace_length)
-            state_dict = {
-                aid: (
-                    combine_rect(node.trace[aid][idx * 2 : end_idx * 2]),
-                    node.mode[aid],
-                    node.static[aid],
-                )
-                for aid in node.agent
-            }
+            state_dict = {}
+            if config.reachability_method == ReachabilityMethod.STAR_SETS:
+                state_dict = {
+					aid: (
+						node.trace[aid][idx],
+						node.mode[aid],
+						node.static[aid],
+					)
+					for aid in node.agent
+				}                
+            else:
+                state_dict = {
+					aid: (
+						combine_rect(node.trace[aid][idx * 2 : end_idx * 2]),
+						node.mode[aid],
+						node.static[aid],
+					)
+					for aid in node.agent
+				}
             if min_trans_ind != None and idx > min_trans_ind:
                 if hits:
                     guard_hits.append((hits, state_dict, idx))
@@ -829,7 +1066,7 @@ class Verifier:
                     continue
                 # if np.array(agent_state).ndim != 2:
                 #     pp(("weird state", agent_id, agent_state))
-                cont_vars, disc_vars, len_dict = sensor.sense(agent, state_dict, track_map)
+                cont_vars, disc_vars, len_dict = sensor.sense(agent, state_dict, track_map, False)
                 resets = defaultdict(list)
                 # Check safety conditions
                 for i, a in enumerate(agent.decision_logic.asserts_veri):
@@ -841,9 +1078,9 @@ class Verifier:
                         Verifier.apply_cont_var_updater(cont_vars, cont_var_updater)
                         sat = ge.evaluate_guard_disc(agent, disc_vars, cont_vars, track_map)
                         if sat:
-                            sat = ge.evaluate_guard_hybrid(agent, disc_vars, cont_vars, track_map)
+                            sat = ge.evaluate_guard_hybrid(agent, disc_vars, cont_vars, track_map, config.reachability_method == ReachabilityMethod.STAR_SETS)
                             if sat:
-                                sat, contained = ge.evaluate_guard_cont(agent, cont_vars, track_map)
+                                sat, contained = ge.evaluate_guard_cont(agent, cont_vars, track_map, config.reachability_method == ReachabilityMethod.STAR_SETS)
                                 sat = sat and contained
                         return sat
 
@@ -884,12 +1121,12 @@ class Verifier:
 
                     Verifier.apply_cont_var_updater(new_cont_var_dict, continuous_variable_updater)
                     guard_can_satisfied = one_step_guard.evaluate_guard_hybrid(
-                        agent, discrete_variable_dict, new_cont_var_dict, track_map
+                        agent, discrete_variable_dict, new_cont_var_dict, track_map,  config.reachability_method == ReachabilityMethod.STAR_SETS
                     )
                     if not guard_can_satisfied:
                         continue
                     guard_satisfied, is_contained = one_step_guard.evaluate_guard_cont(
-                        agent, new_cont_var_dict, track_map
+                        agent, new_cont_var_dict, track_map, config.reachability_method == ReachabilityMethod.STAR_SETS
                     )
                     if combine_len == 1:
                         any_contained = any_contained or is_contained
@@ -940,12 +1177,14 @@ class Verifier:
                 break
             if any_contained:
                 break
-
+        reset_func = Verifier.apply_reset
+        if config.reachability_method == ReachabilityMethod.STAR_SETS:
+            reset_func = Verifier.apply_reset_stars
         reset_dict = {}  # defaultdict(lambda: defaultdict(list))
         for hits, all_agent_state, hit_idx in guard_hits:
             for agent_id, reset_idx, reset_list in hits:
                 # TODO: Need to change this function to handle the new reset expression and then I am done
-                dest_list, reset_rect = Verifier.apply_reset(
+                dest_list, reset_rect = reset_func(
                     node.agent[agent_id], reset_list, all_agent_state, track_map
                 )
                 # pp(("dests", dest_list, *[astunparser.unparse(reset[-1].val_veri) for reset in reset_list]))
@@ -1094,6 +1333,113 @@ class Verifier:
             dest.append(tmp)
 
         return dest, rect
+
+    @staticmethod
+    def apply_reset_stars(
+        agent: BaseAgent, reset_list, all_agent_state, track_map
+    ) -> Tuple[str, np.ndarray]:
+        dest = []
+        rect = []
+
+        agent_state, agent_mode, agent_static = all_agent_state[agent.id]
+        dest = copy.deepcopy(agent_mode)
+        possible_dest = [[elem] for elem in dest]
+        ego_type = find(agent.decision_logic.args, lambda a: a.name == EGO).typ
+
+
+        new_state =  agent_state[1].starcopy() #copy.deepcopy([agent_state[0][1:], agent_state[1][1:]])
+
+        # The reset_list here are all the resets for a single transition. Need to evaluate each of them
+        # and then combine them together
+        for reset_tuple in reset_list:
+            reset, disc_var_dict, cont_var_dict, _, _p = reset_tuple
+            reset_variable = reset.var
+            expr = reset.expr
+            #breakpoint()
+
+            # First get the transition destinations
+            if "mode" in reset_variable:
+                found = False
+                for var_loc, discrete_variable_ego in enumerate(
+                    agent.decision_logic.state_defs[ego_type].disc
+                ):
+                    if discrete_variable_ego == reset_variable:
+                        found = True
+                        break
+                if not found:
+                    raise ValueError(f"Reset discrete variable {discrete_variable_ego} not found")
+                if isinstance(reset.val_ast, ast.Constant):
+                    val = eval(expr)
+                    possible_dest[var_loc] = [val]
+                else:
+                    tmp = expr.split(".")
+                    if "map" in tmp[0]:
+                        for var in disc_var_dict:
+                            expr = expr.replace(var, f"'{disc_var_dict[var]}'")
+                        res = eval(expr)
+                        if not isinstance(res, list):
+                            res = [res]
+                        possible_dest[var_loc] = res
+                    else:
+                        expr = tmp
+                        if expr[0].strip(" ") in agent.decision_logic.mode_defs:
+                            possible_dest[var_loc] = [expr[1]]
+
+            # Assume linear function for continuous variables
+            else:
+                #agent_state.continuous_reset(reset_variable, expr, agent, ego_type,cont_var_dict, rect)
+                lhs = reset_variable
+                rhs = expr
+                found = False
+                for lhs_idx, cts_variable in enumerate(
+                    agent.decision_logic.state_defs[ego_type].cont
+                ):
+                    if cts_variable == lhs:
+                        found = True
+                        break
+                if not found:
+                    raise ValueError(f"Reset continuous variable {cts_variable} not found")
+                # substituting low variables
+                statevec = []
+                for var in cont_var_dict:
+                    #TODO: check that this only gets run on ego?
+                    if 'ego' in var:
+                        statevec.append(var)
+
+
+                #print(statevec)
+
+                #concern: how to handle the case where you need other agents state. for now: assume you do not
+                def reset_func(state): #[ego.x, ego.y, ...]
+                    #breakpoint()
+                    output = np.copy(state)
+                    val_dict = {}
+                    tmp_exp = copy.deepcopy(expr)
+                    for i in range(0, len(state)):
+                        if statevec[i] in tmp_exp:
+                            tmp_exp = tmp_exp.replace(statevec[i], str(state[i]))
+                    #print(tmp_exp)
+                    result = eval(tmp_exp, {}, val_dict)
+                    for i in range(0, len(state)):
+                        if lhs in statevec[i]:
+                            output[i] = result
+                    return output
+                #print("TODO: find where/when this gets set elsewhere")
+                #breakpoint()
+                #print("foo")
+                #breakpoint()
+                new_state = new_state.apply_reset(reset_func)
+                #print("bar")
+                #breakpoint()
+
+
+        all_dest = itertools.product(*possible_dest)
+        dest = []
+        for tmp in all_dest:
+            dest.append(tmp)
+        #breakpoint()
+        return dest, new_state
+
 
     @staticmethod
     def _get_combinations(symbols, cont_var_dict):

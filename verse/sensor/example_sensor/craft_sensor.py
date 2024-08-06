@@ -42,12 +42,12 @@ def add_states_3d_ball(cont, disc, thing, val):
 
 
 class CraftSensor:
-    def sense(self, agent, state_dict, lane_map):
+    def sense(self, agent, state_dict, lane_map, simulate= True):
         cont = {}
         disc = {}
         len_dict = {"others": len(state_dict) - 1}
         tmp = np.array(list(state_dict.values())[0][0])
-        if tmp.ndim < 2:
+        if simulate:
             for agent_id in state_dict:
                 if agent_id == agent.id:
                     set_states_2d_ball(cont, disc, "ego", state_dict[agent_id])

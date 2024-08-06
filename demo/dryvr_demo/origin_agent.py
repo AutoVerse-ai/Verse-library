@@ -29,13 +29,15 @@ class vanderpol_agent(BaseAgent):
         t = [round(i * time_step, 10) for i in range(0, number_points)]
         # note: digit of time
         init = initialCondition
-        trace = [[0] + init]
+        trace = [[0] + list(init)]
+        # print(trace)
         for i in range(len(t)):
             r = ode(self.dynamic)
             r.set_initial_value(init)
             res: np.ndarray = r.integrate(r.t + time_step)
             init = res.flatten().tolist()
             trace.append([t[i] + time_step] + init)
+        # print(trace)
         return np.array(trace)
 
 
