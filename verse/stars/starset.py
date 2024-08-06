@@ -217,15 +217,15 @@ class StarSet:
     '''
     given a reset function, this will construct a new star set
     '''
-    def apply_reset(self, reset_function):
+    def apply_reset(self, reset_function, expr_list, reset_vars):
         #print("YES WE ARE APPLYING A RESET")
         #center = np.copy(self.center)
         #basis = np.copy(self.basis)
-        new_center = reset_function(self.center)
+        new_center = reset_function(self.center, expr_list, reset_vars)
         new_basis = np.empty_like(self.basis)
         for i in range(0, len(self.basis)):
             vec = self.basis[i]
-            new_x = reset_function(np.add(self.center, vec))
+            new_x = reset_function(np.add(self.center, vec), expr_list, reset_vars)
             new_basis[i] = np.subtract(new_x, new_center)
         return self.superposition(new_center, new_basis)
 

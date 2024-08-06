@@ -1347,7 +1347,10 @@ class Verifier:
         ego_type = find(agent.decision_logic.args, lambda a: a.name == EGO).typ
 
 
-        new_state =  agent_state[1].starcopy() #copy.deepcopy([agent_state[0][1:], agent_state[1][1:]])
+        #Modified
+        old_state =  agent_state[1].starcopy() #copy.deepcopy([agent_state[0][1:], agent_state[1][1:]])
+        reset_vars = {}
+        expr_list = {}
 
         # The reset_list here are all the resets for a single transition. Need to evaluate each of them
         # and then combine them together
@@ -1388,6 +1391,7 @@ class Verifier:
             # Assume linear function for continuous variables
             else:
                 #agent_state.continuous_reset(reset_variable, expr, agent, ego_type,cont_var_dict, rect)
+                #breakpoint()
                 lhs = reset_variable
                 rhs = expr
                 found = False
@@ -1396,6 +1400,8 @@ class Verifier:
                 ):
                     if cts_variable == lhs:
                         found = True
+                        expr_list[lhs_idx] = rhs
+                        reset_vars[lhs_idx] = lhs
                         break
                 if not found:
                     raise ValueError(f"Reset continuous variable {cts_variable} not found")
@@ -1405,32 +1411,36 @@ class Verifier:
                     #TODO: check that this only gets run on ego?
                     if 'ego' in var:
                         statevec.append(var)
+                
+
 
 
                 #print(statevec)
 
                 #concern: how to handle the case where you need other agents state. for now: assume you do not
-                def reset_func(state): #[ego.x, ego.y, ...]
-                    #breakpoint()
-                    output = np.copy(state)
-                    val_dict = {}
-                    tmp_exp = copy.deepcopy(expr)
-                    for i in range(0, len(state)):
-                        if statevec[i] in tmp_exp:
-                            tmp_exp = tmp_exp.replace(statevec[i], str(state[i]))
-                    #print(tmp_exp)
-                    result = eval(tmp_exp, {}, val_dict)
-                    for i in range(0, len(state)):
-                        if lhs in statevec[i]:
-                            output[i] = result
-                    return output
-                #print("TODO: find where/when this gets set elsewhere")
-                #breakpoint()
-                #print("foo")
-                #breakpoint()
-                new_state = new_state.apply_reset(reset_func)
-                #print("bar")
-                #breakpoint()
+        def reset_func(state, expr_list, reset_vars): #[ego.x, ego.y, ...]
+            #breakpoint()
+            output = np.copy(state)
+            idxs = list(reset_vars.keys())
+            for idx in idxs:
+                val_dict = {}
+                tmp_exp = copy.deepcopy(expr_list[idx])
+                for i in range(0, len(state)):
+                    if statevec[i] in tmp_exp:
+                        tmp_exp = tmp_exp.replace(statevec[i], str(state[i]))
+                #print(tmp_exp)
+                result = eval(tmp_exp, {}, val_dict)
+                for i in range(0, len(state)):
+                    if reset_vars[idx] == statevec[i].split('.',1)[1]:
+                        output[i] = result 
+            return output
+            #print("TODO: find where/when this gets set elsewhere")
+            #breakpoint()
+            #print("foo")
+            #breakpoint()
+        new_state = old_state.apply_reset(reset_func, expr_list, reset_vars)
+            #print("bar")
+            #breakpoint()
 
 
         all_dest = itertools.product(*possible_dest)
@@ -1438,6 +1448,10 @@ class Verifier:
         for tmp in all_dest:
             dest.append(tmp)
         #breakpoint()
+
+        # print("apply_reset")
+        # print(dest)
+        # print(new_state.overapprox_rectangle())
         return dest, new_state
 
 
