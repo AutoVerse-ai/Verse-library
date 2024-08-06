@@ -1,4 +1,5 @@
-# Creating Scenario
+# A first look at Verse
+
 This is an introduction to creating scenarios in Verse. An interactive tutorial with more details are in [this Jupyter notebook](https://github.com/AutoVerse-ai/Verse-library/blob/main/tutorial/tutorial.ipynb).
 
 A Verse *scenario* is defined by a *map*, a set of *agents*, and optionally  a *sensor*. We will create a  scenario with a drone following a straight path that dodges obstacles by moving up or down.
@@ -133,7 +134,7 @@ fig.set_background("#e0e0e0")
 fig.show()
 ```
 
-The visualized result looks like
+The visualized reachable set result looks like this:
 
 z vs t plot             |  x,y,z plot
 :-------------------------:|:-------------------------:

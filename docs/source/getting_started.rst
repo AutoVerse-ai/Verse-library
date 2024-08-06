@@ -1,7 +1,7 @@
-Getting Started
+Installation
 ===============
 
-The package requires python 3.8+. The package can be installed using pip with all required dependencies::
+Verse requires python 3.8+. The package can be installed using pip with all required dependencies::
 
 	python3 -m pip install -e .
 
