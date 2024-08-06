@@ -1,6 +1,8 @@
 # Verse Library Documentation
 This forder contains the documentation template for the Verse library. The documentation is automatically generated using [sphinx](https://www.sphinx-doc.org/en/master/). 
 
+<img src="source/figs/drone-2-8.gif" height="160"/> <img src="source/figs/nondeterm_sensor.png" height="160"/> <img src="source/figs/car-ped-1.png" height="160"/> <img src="source/figs/uam-collision.png" height="160"/>
+
 ## Prerequsites 
 The following libraries are required for compile verse's document
 - sphinx
