@@ -3,6 +3,7 @@ __pycache__/
 .vscode/
 .idea/
 venv/
+.venv/
 .DS_Store
 **.egg-info/
 .VSCodeCounter/
