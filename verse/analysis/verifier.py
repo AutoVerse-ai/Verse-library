@@ -166,8 +166,8 @@ class Verifier:
 
         for combine_seg_idx in missing_seg_idx_list:
             rect_seg = initial_set[combine_seg_idx : combine_seg_idx + combine_seg_length]
-            print("len of rect_sec:")
-            print(len(rect_seg))
+            # print("len of rect_sec:")
+            # print(len(rect_seg))
             #combined_rect = None
             #for rect in rect_seg:
             #    rect = np.array(rect)
@@ -194,14 +194,16 @@ class Verifier:
             #inital_star = initial_set[0]
 
             ### add a parameter here, either bool or create an enum
-            reach_tube = combined_star.calc_reach_tube(
+            #To use Alex's version, change to "calc_reach_tube", and uncomment bloating method, kvalue, sim_trace_num
+            #To use Katherine's version, change to "calc_reach_tube_linear", and comment bloating method, kvalue, sim_trace_num
+            reach_tube = combined_star.calc_reach_tube_linear(
             mode_label,
             time_horizon,
             time_step,
             sim_func,
-            bloating_method,
-            kvalue,
-            sim_trace_num,
+            # bloating_method,
+            # kvalue,
+            # sim_trace_num,
             lane_map=lane_map
             )
 

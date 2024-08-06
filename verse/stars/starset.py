@@ -8,7 +8,7 @@ from verse.plotter.plotterStar import *
 import polytope as pc
 from scipy.spatial import ConvexHull
 from sklearn.decomposition import PCA
-from verse.analysis.utils import sample_rect
+from verse.utils.utils import sample_rect
 from typing_extensions import List, Callable
 
 from verse.analysis.dryvr import calc_bloated_tube
