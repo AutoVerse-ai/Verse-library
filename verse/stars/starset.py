@@ -616,7 +616,7 @@ def post_cont_pca(old_star: StarSet, derived_basis: np.ndarray,  points: np.ndar
         raise ValueError(f'Dimension of given basis does not match basis of original starset')
 
     center, basis, C, g = old_star.center, old_star.basis, old_star.C, old_star.g
-    
+
     old_star.print()
     print(derived_basis)
     print(np.average(points, axis=0))
@@ -624,7 +624,6 @@ def post_cont_pca(old_star: StarSet, derived_basis: np.ndarray,  points: np.ndar
     alpha = [RealVector(f'a_{i}', C.shape[1]) for i in range(points.shape[0])]
     u = Real('u')
     c = RealVector('i', old_star.dimension())
-    # u = RealVector('u', C.shape[0])
 
     o = Optimize()
     ### add equality constraints
@@ -644,15 +643,14 @@ def post_cont_pca(old_star: StarSet, derived_basis: np.ndarray,  points: np.ndar
             exp = 0 # there's probably a better way to do this, but this works
             for j in range(len(alpha[p])): # iterate over alphas
                 exp += C[i][j]*alpha[p][j]
-            # print(exp)
             o.add(exp <= u*g[i])
-            # o.add(exp <= u[i]*g[i])
     
     o.minimize(u)
 
     model = None
     new_basis = derived_basis
-    if o.check() == sat:
+
+    if o.check() == sat: 
         model = o.model()
         new_basis = derived_basis * float(model[u].as_fraction())
     else:
@@ -662,9 +660,7 @@ def post_cont_pca(old_star: StarSet, derived_basis: np.ndarray,  points: np.ndar
 
     # return StarSet(new_center, derived_basis, C, g * float(model[u].as_fraction()))
     new_center = np.array([float(model[c[i]].as_fraction()) for i in range(len(c))])
-
     print('---------\n---------')
-    StarSet(new_center, derived_basis, C, g * float(model[u].as_fraction())).print()
 
     return StarSet(new_center, derived_basis, C, g * float(model[u].as_fraction()))
     # return old_star.superposition(new_center, new_basis)
