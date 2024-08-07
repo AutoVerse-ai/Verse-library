@@ -8,7 +8,7 @@ from verse.plotter.plotterStar import *
 import polytope as pc
 from scipy.spatial import ConvexHull
 from sklearn.decomposition import PCA
-from verse.analysis.utils import sample_rect
+from verse.utils.utils import sample_rect
 from typing_extensions import List, Callable
 
 from verse.analysis.dryvr import calc_bloated_tube
@@ -547,6 +547,8 @@ class StarSet:
         import polytope as pc
         return StarSet.from_polytope(pc.box2poly(new_rect))
 
+    def print(self) -> None:
+        print(f'{self.center}\n------\n{self.basis}\n------\n{self.C}\n------\n{self.g}')
 
 class HalfSpace:
     '''
@@ -614,6 +616,11 @@ def post_cont_pca(old_star: StarSet, derived_basis: np.ndarray,  points: np.ndar
         raise ValueError(f'Dimension of given basis does not match basis of original starset')
 
     center, basis, C, g = old_star.center, old_star.basis, old_star.C, old_star.g
+    
+    old_star.print()
+    print(derived_basis)
+    print(np.average(points, axis=0))
+
     alpha = [RealVector(f'a_{i}', C.shape[1]) for i in range(points.shape[0])]
     u = Real('u')
     c = RealVector('i', old_star.dimension())
@@ -652,8 +659,13 @@ def post_cont_pca(old_star: StarSet, derived_basis: np.ndarray,  points: np.ndar
         raise RuntimeError(f'Optimizer was unable to find a valid mu') # this is also hit if the function is interrupted
 
     print(model[u].as_decimal(10))
+
     # return StarSet(new_center, derived_basis, C, g * float(model[u].as_fraction()))
     new_center = np.array([float(model[c[i]].as_fraction()) for i in range(len(c))])
+
+    print('---------\n---------')
+    StarSet(new_center, derived_basis, C, g * float(model[u].as_fraction())).print()
+
     return StarSet(new_center, derived_basis, C, g * float(model[u].as_fraction()))
     # return old_star.superposition(new_center, new_basis)
 
@@ -806,3 +818,4 @@ def sim_star_vis(init_star: StarSet, sim: Callable, T: int = 7, ts: float = 0.05
         old_star = copy.deepcopy(new_star)
     plt.show()
     # return stars
+
