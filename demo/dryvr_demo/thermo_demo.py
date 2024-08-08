@@ -5,7 +5,7 @@ from verse.sensor.example_sensor.thermo_sensor import ThermoSensor
 import plotly.graph_objects as go
 from enum import Enum, auto
 from verse.analysis.verifier import ReachabilityMethod
-
+from z3 import *
 from verse.stars.starset import *
 
 from verse.sensor.base_sensor_stars import *
@@ -21,6 +21,17 @@ if __name__ == "__main__":
     scenario = Scenario(ScenarioConfig(parallel=False))
 
     car = thermo_agent("test", file_name=input_code_name)
+
+    # test = np.array([0.2])
+    # s = Solver()
+    # exp = test[0]
+    # print(exp, type(exp), exp==0.2, type(exp==0.2))
+    # exp += 0
+    # s.add(exp == 0.2)    
+    # s.check()
+    # print(s.sexpr())
+    # exit()
+    
     # scenario.add_agent(car)
     # scenario.set_sensor(ThermoSensor())
     # modify mode list input
