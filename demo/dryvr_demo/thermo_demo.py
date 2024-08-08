@@ -31,7 +31,7 @@ if __name__ == "__main__":
     # s.check()
     # print(s.sexpr())
     # exit()
-    
+
     # scenario.add_agent(car)
     # scenario.set_sensor(ThermoSensor())
     # modify mode list input
@@ -77,5 +77,5 @@ if __name__ == "__main__":
     scenario.config.reachability_method = ReachabilityMethod.STAR_SETS
     scenario.set_sensor(BaseStarSensor())
 
-    scenario.verify(2, 0.1)
+    scenario.verify(7, 0.1)
     # fig.show()

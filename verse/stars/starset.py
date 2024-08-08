@@ -615,31 +615,18 @@ def post_cont_pca(old_star: StarSet, derived_basis: np.ndarray,  points: np.ndar
     if  old_star.basis.shape != derived_basis.shape:
         raise ValueError(f'Dimension of given basis does not match basis of original starset')
 
+    ### these two lines exist to resolve some precision issues, things like 0.2 and 0 aren't actually 0.2 and 0 but rather 0.200000004 and 9e-63 which causes errors when using the solver
     center, basis, C, g = old_star.center, old_star.basis, old_star.C, old_star.g
-    derived_basis = np.around(derived_basis, decimals=10) ### exists to stop floating point errors
-    points = np.around(points, decimals=10)
-    # temp_basis = []
-    # for basis in derived_basis: 
-    #     temp_basis.append(list(basis))
-    # derived_basis = temp_basis
-    # old_star.print()
-    # print(derived_basis)
-    # print(np.average(points, axis=0), '\n--------\n--------')
-    new_center = np.around(np.average(points, axis=0), decimals=15)
-    # if np.average(points, axis=0)[1]>1.25 and np.average(points, axis=0)[1]<1.26 or (np.average(points, axis=0)[1]>1.24 and np.average(points, axis=0)[1]<1.25):
-    # if new_center[1]==0.2:
-    #     for point in points:
-    #         # print('here')
-    #         if check_unsat(old_star, derived_basis, point, np.average(points, axis=0)):
-    #             print(point[2])
+    derived_basis = np.around(derived_basis, decimals=10) 
 
+    points = np.around(points, decimals=10)
+    new_center = np.around(np.average(points, axis=0), decimals=15)
     alpha = [RealVector(f'a_{i}', C.shape[1]) for i in range(points.shape[0])]
     u = Real('u')
     c = RealVector('i', old_star.dimension())
 
     o = Optimize()
     ### add equality constraints
-    ### this makes no sense, need to be able to add constraints such that checking a set of points instead of just a single points makes sense instead of this mess
     for p in range(len(points)):
         point = points[p]
         for i in range(old_star.dimension()):
@@ -670,7 +657,6 @@ def post_cont_pca(old_star: StarSet, derived_basis: np.ndarray,  points: np.ndar
     print(model[u].as_decimal(10))
     new_center = np.array([float(model[c[i]].as_fraction()) for i in range(len(c))])
     return StarSet(new_center, np.array(derived_basis), C, g * float(model[u].as_fraction()))
-    # return old_star.superposition(new_center, new_basis)
 
 ### from a set of points at a given time, generate a starset -- could possible reformat or remake this function to be more general
 ### expects an input with shape N (num points) x n (state dimenion) NOT N x n+1 (state dimension + time)
