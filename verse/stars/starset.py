@@ -616,10 +616,17 @@ def post_cont_pca(old_star: StarSet, derived_basis: np.ndarray,  points: np.ndar
         raise ValueError(f'Dimension of given basis does not match basis of original starset')
 
     center, basis, C, g = old_star.center, old_star.basis, old_star.C, old_star.g
-
+    derived_basis = np.around(derived_basis, decimals=15) ### exists to stop floating point errors
     old_star.print()
     print(derived_basis)
-    print(np.average(points, axis=0))
+    print(np.average(points, axis=0), '\n--------\n--------')
+    new_center = np.around(np.average(points, axis=0), decimals=15)
+    # if np.average(points, axis=0)[1]>1.25 and np.average(points, axis=0)[1]<1.26 or (np.average(points, axis=0)[1]>1.24 and np.average(points, axis=0)[1]<1.25):
+    if new_center[1]==0.2:
+        for point in points:
+            # print('here')
+            if check_unsat(old_star, derived_basis, point, np.average(points, axis=0)):
+                print(point)
 
     alpha = [RealVector(f'a_{i}', C.shape[1]) for i in range(points.shape[0])]
     u = Real('u')
@@ -657,11 +664,7 @@ def post_cont_pca(old_star: StarSet, derived_basis: np.ndarray,  points: np.ndar
         raise RuntimeError(f'Optimizer was unable to find a valid mu') # this is also hit if the function is interrupted
 
     print(model[u].as_decimal(10))
-
-    # return StarSet(new_center, derived_basis, C, g * float(model[u].as_fraction()))
     new_center = np.array([float(model[c[i]].as_fraction()) for i in range(len(c))])
-    print('---------\n---------')
-
     return StarSet(new_center, derived_basis, C, g * float(model[u].as_fraction()))
     # return old_star.superposition(new_center, new_basis)
 
@@ -709,7 +712,37 @@ def sim_star(init_star: StarSet, sim: Callable, T: int = 7, ts: float = 0.05, N:
         old_star = copy.deepcopy(new_star)
     return stars
 
+'''
+Utility function to see if there's anything wrong with the post_cont_pca alg
+'''
+def check_unsat(old_star: StarSet, derived_basis: np.ndarray, point: np.ndarray, ncenter: np.ndarray = None) -> bool:
+    center, basis, C, g = old_star.center, old_star.basis, old_star.C, old_star.g        
+    alpha = RealVector('a', C.shape[1])
+    u = Real('u')
+    c = RealVector('i', old_star.dimension())
+    new_center = ncenter
+    o = Optimize()
 
+    for i in range(old_star.dimension()):
+        exp = new_center[i]
+        # exp = c[i]
+        for j in range(len(alpha)):
+            exp += alpha[j]*derived_basis[j][i] # from the jth alpha/v, grab the ith dimension
+        # print(exp)
+        o.add(exp == point[i])
+
+    ### add alpha constraints
+    for i in range(C.shape[0]): # iterate over each row
+        exp = 0 # there's probably a better way to do this, but this works
+        for j in range(len(alpha)): # iterate over alphas
+            exp += C[i][j]*alpha[j]
+        o.add(exp <= u*g[i])
+    
+    # o.minimize(u)
+
+    if o.check() == unsat:
+        print(o.sexpr())
+    return o.check() == unsat
 
 '''
 Visualization functions
