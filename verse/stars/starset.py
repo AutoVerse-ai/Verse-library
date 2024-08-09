@@ -607,7 +607,7 @@ def sample_star(star: StarSet, N: int, tol: float = 0.2) -> List[List[float]]:
     return points
 
 # def post_cont_pca(old_star: StarSet, new_center: np.ndarray, derived_basis: np.ndarray,  points: np.ndarray) -> StarSet:
-def post_cont_pca(old_star: StarSet, derived_basis: np.ndarray,  points: np.ndarray) -> StarSet:
+def post_cont_pca(old_star: StarSet, derived_basis: np.ndarray,  points: np.ndarray, usat: Bool = False) -> StarSet:
     if points.size==0:
         raise ValueError(f'No points given as input')
     if old_star.dimension() != points.shape[1]:
@@ -617,14 +617,13 @@ def post_cont_pca(old_star: StarSet, derived_basis: np.ndarray,  points: np.ndar
 
     ### these two lines exist to resolve some precision issues, things like 0.2 and 0 aren't actually 0.2 and 0 but rather 0.200000004 and 9e-63 which causes errors when using the solver
     center, basis, C, g = old_star.center, old_star.basis, old_star.C, old_star.g
-    derived_basis = np.around(derived_basis, decimals=10) 
-
-    points = np.around(points, decimals=10)
+    # derived_basis = np.around(derived_basis, decimals=10) 
+    # points = np.around(points, decimals=10)
     new_center = np.around(np.average(points, axis=0), decimals=15)
     alpha = [RealVector(f'a_{i}', C.shape[1]) for i in range(points.shape[0])]
     u = Real('u')
     c = RealVector('i', old_star.dimension())
-
+    
     o = Optimize()
     ### add equality constraints
     for p in range(len(points)):
@@ -652,11 +651,34 @@ def post_cont_pca(old_star: StarSet, derived_basis: np.ndarray,  points: np.ndar
     if o.check() == sat: 
         model = o.model()
     else:
+        ### think about doing post_cont_pca except with an always valid predicate, i.e., [1, 0, ...0, , -1], [1, ..., 1] -- may be able to do this with just box2poly
+        if not usat: ### see if this works
+            # print("Solution not found with current predicate, trying a generic predicate instead.")
+            return post_cont_pca(new_pred(old_star), derived_basis, points, True)
         raise RuntimeError(f'Optimizer was unable to find a valid mu') # this is also hit if the function is interrupted
 
     print(model[u].as_decimal(10))
     new_center = np.array([float(model[c[i]].as_fraction()) for i in range(len(c))])
     return StarSet(new_center, np.array(derived_basis), C, g * float(model[u].as_fraction()))
+
+# alternatively this could just take the dimension of the starset
+def new_pred(old_star: StarSet) -> StarSet:
+    cols = old_star.C.shape[1] # should be == old_star.dimension
+    new_C = []
+    ### this loop generates a zonotope predicate, i.e., each alpha gets [-1, 1] range 
+    for i in range(cols): ### there' probably a faster way to do this, possibly using a lambda function
+        col_i = []
+        for j in range(cols*2):
+            if i*2==j:
+                col_i.append(1)
+            elif i*2+1==j:
+                col_i.append(-1)
+            else:
+                col_i.append(0)
+        new_C.append(col_i)
+    new_C = np.transpose(np.array(new_C))
+    new_g = np.ones(old_star.g.shape)
+    return StarSet(old_star.center, old_star.basis, new_C, new_g)
 
 ### from a set of points at a given time, generate a starset -- could possible reformat or remake this function to be more general
 ### expects an input with shape N (num points) x n (state dimenion) NOT N x n+1 (state dimension + time)

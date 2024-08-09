@@ -77,5 +77,5 @@ if __name__ == "__main__":
     scenario.config.reachability_method = ReachabilityMethod.STAR_SETS
     scenario.set_sensor(BaseStarSensor())
 
-    scenario.verify(7, 0.1)
+    scenario.verify(2, 0.1)
     # fig.show()

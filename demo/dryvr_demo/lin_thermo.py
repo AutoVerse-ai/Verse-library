@@ -106,7 +106,7 @@ if __name__ == "__main__":
 
     basis = np.array([1]) * np.diag([0.1]) # this doesn't actually make sense, but not sure how algorithm actually handles 1d polytopes
     center = np.array([68.5])
-    C = np.transpose(np.array([1,-1]))
+    C = np.transpose(np.array([[1,-1]]))
     g = np.array([1,1])
 
 
