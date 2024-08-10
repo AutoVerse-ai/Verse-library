@@ -61,10 +61,10 @@ if __name__ == "__main__":
     bench.scenario.set_map(tmp_map)
     # traces = scenario.simulate(70, 0.05)
     # # traces.dump('./output1.json')
-    # fig = go.Figure()
-    # fig = simulation_anime(traces, tmp_map, fig, 1,
+    fig = go.Figure()
+    fig = simulation_anime(traces, tmp_map, fig, 1,
     #                        2, [1, 2], 'lines', 'trace', anime_mode='trail', full_trace = True)
-    # fig.show()
+    fig.show()
 
     time_step = 0.05
     if bench.config.compare:
