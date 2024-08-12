@@ -1,0 +1,6 @@
+=============================================================
+node 0 start: 0
+{'car1': ('Default',)}
+range(0, 1, 1000)
+{'tool': 'verse', 'benchmark': 'LALO20', 'setup': 'W01', 'result': '1', 'time': 1108.3794662952423, 'metric3': ''}
+graphing

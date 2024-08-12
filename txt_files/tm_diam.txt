@@ -1,0 +1,18 @@
+0 {'tm': ['SlowDown']}
+('transitions:', [('tm', ('StartTurn1',))])
+6.5 {'tm': ('StartTurn1',)}
+('transitions:', [('tm', ('EndTurn1',))])
+13.7 {'tm': ('EndTurn1',)}
+('transitions:', [('tm', ('SpeedUp',))])
+22.1 {'tm': ('SpeedUp',)}
+('transitions:', [])
+reachtube time: 8.738454800000001 transition time: 0 transition opt time: 0.9100954000000003
+time
+9.652742147445679
+diams
+400
+2002.13813834744
+0.1901310884655534
+4.758000966586707
+None 0
+red

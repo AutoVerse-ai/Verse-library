@@ -1,0 +1,22 @@
+[(<CraftMode.Default: 1>,)]
+<class 'list'>
+[2m[36m(compute_full_reachtube_step pid=29484)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=29484)[0m ('transitions:', [])
+{'tool': 'verse', 'benchmark': 'SpaceStation', 'setup': 'ISS02', 'result': '1', 'time': 1237.6216180324554, 'metric2': 'n/a', 'metric3': 'n/a'}
+1999
+1748.748570864252
+0.8262356069260833
+0.6898827988687465
+None 0
+red
+[(<CraftMode.Default: 1>,)]
+<class 'list'>
+[2m[36m(compute_full_reachtube_step pid=29484)[0m ###############
+[2m[36m(compute_full_reachtube_step pid=29484)[0m ('transitions:', [])
+{'tool': 'verse', 'benchmark': 'SpaceStation', 'setup': 'ISSU02', 'result': '1', 'time': 1322.7681021690369, 'metric2': 'n/a', 'metric3': 'n/a'}
+1999
+1748.7502462208406
+0.8262376779779449
+0.6898829899016318
+None 1
+orange

@@ -1,0 +1,33 @@
+C:\Users\nitis\Desktop\Summer_Verse\Research Assignment\Verse-library
+[(<AgentMode.Default: 1>,)]
+<class 'list'>
+0 {'car1': ['Default']}
+('transitions:', [])
+reachtube time: 5.5059796 transition time: 0 transition opt time: 0.00047099999999922204
+{'tool': 'verse', 'benchmark': 'ROBE21', 'setup': 'B3G7', 'result': '1', 'time': 5.4937663078308105, 'metric2': 400, 'metric3': 0.00012943671138265778}
+None 0
+red
+399
+3.9156708470110932
+0.1553396866834233
+0.000258873422765243
+[(<AgentMode.Default: 1>,)]
+<class 'list'>
+0 {'car1': ['Default']}
+('transitions:', [])
+reachtube time: 6.6458806 transition time: 0 transition opt time: 0.00041820000000214463
+{'tool': 'verse', 'benchmark': 'ROBE21', 'setup': 'B2G3', 'result': '1', 'time': 6.648234844207764, 'metric2': 400, 'metric3': 0.0006385381833604598}
+399
+2.812241278228453
+0.15239871989798784
+0.0012770763667211023
+[(<AgentMode.Default: 1>,)]
+<class 'list'>
+0 {'car1': ['Default']}
+('transitions:', [])
+reachtube time: 6.595424000000001 transition time: 0 transition opt time: 0.0004286000000028878
+{'tool': 'verse', 'benchmark': 'ROBE21', 'setup': 'B3G5', 'result': '1', 'time': 6.58291220664978, 'metric2': 400, 'metric3': 0.000636869489475056}
+399
+2.751382553725021
+0.1444071965862321
+0.001273738978950264

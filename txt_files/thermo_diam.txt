@@ -1,0 +1,16 @@
+0 {'thermo': ['Heat']}
+('transitions:', [('thermo', ('Cool',))])
+1.57 {'thermo': ('Cool',)}
+('transitions:', [('thermo', ('Heat',))])
+3.7 {'thermo': ('Heat',)}
+('transitions:', [])
+reachtube time: 5.4142287000000024 transition time: 0 transition opt time: 1.6385183999999997
+time
+7.052661657333374
+diams
+400
+497.8841477215784
+1.0548515664982716
+3.5194936573467714
+None 0
+red

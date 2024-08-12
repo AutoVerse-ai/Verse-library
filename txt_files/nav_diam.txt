@@ -1,0 +1,16 @@
+0 {'nav': ['Zone1']}
+('transitions:', [('nav', ('Zone3',))])
+1.04 {'nav': ('Zone3',)}
+('transitions:', [('nav', ('Zone4',))])
+1.76 {'nav': ('Zone4',)}
+('transitions:', [])
+reachtube time: 1.4806065999999998 transition time: 0 transition opt time: 1.1649002
+time
+2.650925874710083
+diams
+200
+64.20614575707684
+0.11298058420095798
+1.1151859232414951
+None 0
+red

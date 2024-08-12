@@ -1,0 +1,13 @@
+[(<AgentMode.Default: 1>,)]
+<class 'list'>
+[2m[36m(compute_full_reachtube_step pid=17400)[0m ###############
+None 0
+red
+[2m[36m(compute_full_reachtube_step pid=17400)[0m ('transitions:', [])
+time
+10.731396436691284
+diams
+140
+20.837621089626605
+0.2510052879742697
+0.24042926533757636

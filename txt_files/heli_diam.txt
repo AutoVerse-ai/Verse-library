@@ -1,0 +1,12 @@
+0 {'Helicopter': ['Normal']}
+('transitions:', [])
+reachtube time: 33.0153306 transition time: 0 transition opt time: 0.006585000000001173
+time
+33.02094578742981
+diams
+2000
+245474.64837429853
+95.88201434497678
+52.70533028971729
+None 0
+red
