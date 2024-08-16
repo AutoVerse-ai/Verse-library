@@ -139,6 +139,7 @@ class Verifier:
         guard_checker=None,
         guard_str="",
         lane_map=None,
+        pca=True,
     ):
         #this should return a list of stars for one time step along the horizon
         """
@@ -196,15 +197,17 @@ class Verifier:
             ### add a parameter here, either bool or create an enum
             #To use Alex's version, change to "calc_reach_tube", and uncomment bloating method, kvalue, sim_trace_num
             #To use Katherine's version, change to "calc_reach_tube_linear", and comment bloating method, kvalue, sim_trace_num
-            reach_tube = combined_star.calc_reach_tube_linear(
+            # reach_tube = combined_star.calc_reach_tube_linear(
+            reach_tube = combined_star.calc_reach_tube(
             mode_label,
             time_horizon,
             time_step,
             sim_func,
-            # bloating_method,
-            # kvalue,
-            # sim_trace_num,
-            lane_map=lane_map
+            bloating_method,
+            kvalue,
+            sim_trace_num,
+            lane_map=lane_map,
+            pca=pca,
             )
 
            
@@ -443,6 +446,7 @@ class Verifier:
                         SIMTRACENUM,
                         combine_seg_length=consts.init_seg_length,
                         lane_map=consts.lane_map,
+                        pca=config.pca
                     )
                     if config.incremental:
                         cache_tube_updates.extend(cache_tube_update)

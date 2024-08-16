@@ -152,50 +152,53 @@ class StarSet:
         return StarSet.from_polytope(poly)
 
     '''
-    TO-DO: see if just modifying this function (while not considering kvalue and bloating_method) will allow my alg to run
+    TO-DO: see if I can toggle which alg to use (DryVR, mine) based on some parameter, see if a new scenarioconfig can be added without much fuss
     '''
-    def calc_reach_tube(self, mode_label,time_horizon,time_step,sim_func,bloating_method,kvalue,sim_trace_num,lane_map):
+    def calc_reach_tube(self, mode_label,time_horizon,time_step,sim_func,bloating_method,kvalue,sim_trace_num,lane_map,pca):
         #get rectangle
 
-        # initial_set = self.overapprox_rectangle()
-        # #get reachtube
-        # bloat_tube = calc_bloated_tube(
-        #     mode_label,
-        #     initial_set,
-        #     time_horizon,
-        #     time_step,
-        #     sim_func,
-        #     bloating_method,
-        #     kvalue,
-        #     sim_trace_num,
-        #     lane_map=lane_map
-        # )
-        # #transform back into star
-        # star_tube = []
-        # #odd entries: bloat_tube[::2, 1:]   
-        # #even entries: bloat_tube[1::2, 1:] 
-        # #data only bloat_tube[ 1:]
-        # for entry in bloat_tube:
-        #     time = entry[0] 
-        #     data = entry[1:]
-        #     if len(star_tube) > 0:
-        #         if star_tube[-1][0] == time:
-        #             star_tube[-1][1] = StarSet.rect_to_star(data,star_tube[-1][1])
-        #         else:
-        #             if not isinstance(star_tube[-1][1], StarSet):
-        #                 star_tube[-1][1] = StarSet.rect_to_star(star_tube[-1][1], star_tube[-1][1])
-        #             star_tube.append([time,data])
-        #     else:
-        #         star_tube.append([time,data])
-        # #KB: TODO: where is min for last time point and first time point
-        # star_tube.pop()
-        # from verse.stars.star_util import gen_starsets_post_sim
-        reach = gen_starsets_post_sim(self, sim_func, time_horizon, time_step, mode_label=mode_label)
-        star_tube = []
-        for i in range(len(reach)):
-            star_tube.append([i*time_step, reach[i]])
+        if not pca:
+            initial_set = self.overapprox_rectangle()
+            #get reachtube
+            bloat_tube = calc_bloated_tube(
+                mode_label,
+                initial_set,
+                time_horizon,
+                time_step,
+                sim_func,
+                bloating_method,
+                kvalue,
+                sim_trace_num,
+                lane_map=lane_map
+            )
+            #transform back into star
+            star_tube = []
+            #odd entries: bloat_tube[::2, 1:]   
+            #even entries: bloat_tube[1::2, 1:] 
+            #data only bloat_tube[ 1:]
+            for entry in bloat_tube:
+                time = entry[0] 
+                data = entry[1:]
+                if len(star_tube) > 0:
+                    if star_tube[-1][0] == time:
+                        star_tube[-1][1] = StarSet.rect_to_star(data,star_tube[-1][1])
+                    else:
+                        if not isinstance(star_tube[-1][1], StarSet):
+                            star_tube[-1][1] = StarSet.rect_to_star(star_tube[-1][1], star_tube[-1][1])
+                        star_tube.append([time,data])
+                else:
+                    star_tube.append([time,data])
+            #KB: TODO: where is min for last time point and first time point
+            star_tube.pop()
+            return star_tube
 
-        return star_tube
+        else:
+            reach = gen_starsets_post_sim(self, sim_func, time_horizon, time_step, mode_label=mode_label)
+            star_tube = []
+            for i in range(len(reach)):
+                star_tube.append([i*time_step, reach[i]])
+
+            return star_tube
 
 
     #def get_new_basis(x_0, new_x_0, new_x_i, basis):
@@ -547,6 +550,8 @@ class StarSet:
         import polytope as pc
         return StarSet.from_polytope(pc.box2poly(new_rect))
 
+    def print(self) -> None:
+        print(f'{self.center}\n------\n{self.basis}\n------\n{self.C}\n------\n{self.g}')
 
 class HalfSpace:
     '''
@@ -605,7 +610,7 @@ def sample_star(star: StarSet, N: int, tol: float = 0.2) -> List[List[float]]:
     return points
 
 # def post_cont_pca(old_star: StarSet, new_center: np.ndarray, derived_basis: np.ndarray,  points: np.ndarray) -> StarSet:
-def post_cont_pca(old_star: StarSet, derived_basis: np.ndarray,  points: np.ndarray) -> StarSet:
+def post_cont_pca(old_star: StarSet, derived_basis: np.ndarray,  points: np.ndarray, usat: Bool = False) -> StarSet:
     if points.size==0:
         raise ValueError(f'No points given as input')
     if old_star.dimension() != points.shape[1]:
@@ -613,15 +618,17 @@ def post_cont_pca(old_star: StarSet, derived_basis: np.ndarray,  points: np.ndar
     if  old_star.basis.shape != derived_basis.shape:
         raise ValueError(f'Dimension of given basis does not match basis of original starset')
 
+    ### these two lines exist to resolve some precision issues, things like 0.2 and 0 aren't actually 0.2 and 0 but rather 0.200000004 and 9e-63 which causes errors when using the solver
     center, basis, C, g = old_star.center, old_star.basis, old_star.C, old_star.g
+    # derived_basis = np.around(derived_basis, decimals=10) 
+    # points = np.around(points, decimals=10)
+    new_center = np.around(np.average(points, axis=0), decimals=15)
     alpha = [RealVector(f'a_{i}', C.shape[1]) for i in range(points.shape[0])]
     u = Real('u')
     c = RealVector('i', old_star.dimension())
-    # u = RealVector('u', C.shape[0])
 
     o = Optimize()
     ### add equality constraints
-    ### this makes no sense, need to be able to add constraints such that checking a set of points instead of just a single points makes sense instead of this mess
     for p in range(len(points)):
         point = points[p]
         for i in range(old_star.dimension()):
@@ -637,25 +644,44 @@ def post_cont_pca(old_star: StarSet, derived_basis: np.ndarray,  points: np.ndar
             exp = 0 # there's probably a better way to do this, but this works
             for j in range(len(alpha[p])): # iterate over alphas
                 exp += C[i][j]*alpha[p][j]
-            # print(exp)
             o.add(exp <= u*g[i])
-            # o.add(exp <= u[i]*g[i])
     
     o.minimize(u)
 
     model = None
     new_basis = derived_basis
-    if o.check() == sat:
+
+    if o.check() == sat: 
         model = o.model()
-        new_basis = derived_basis * float(model[u].as_fraction())
     else:
+        ### think about doing post_cont_pca except with an always valid predicate, i.e., [1, 0, ...0, , -1], [1, ..., 1] -- may be able to do this with just box2poly
+        if not usat: ### see if this works, could also move this in gen_starset if efficiency is more of a concern than possible compactness
+            # print("Solution not found with current predicate, trying a generic predicate instead.")
+            return post_cont_pca(new_pred(old_star), derived_basis, points, True)
         raise RuntimeError(f'Optimizer was unable to find a valid mu') # this is also hit if the function is interrupted
 
     print(model[u].as_decimal(10))
-    # return StarSet(new_center, derived_basis, C, g * float(model[u].as_fraction()))
     new_center = np.array([float(model[c[i]].as_fraction()) for i in range(len(c))])
-    return StarSet(new_center, derived_basis, C, g * float(model[u].as_fraction()))
-    # return old_star.superposition(new_center, new_basis)
+    return StarSet(new_center, np.array(derived_basis), C, g * float(model[u].as_fraction()))
+
+# alternatively this could just take the dimension of the starset
+def new_pred(old_star: StarSet) -> StarSet:
+    cols = old_star.C.shape[1] # should be == old_star.dimension
+    new_C = []
+    ### this loop generates a zonotope predicate, i.e., each alpha gets [-1, 1] range 
+    for i in range(cols): ### there' probably a faster way to do this, possibly using a lambda function
+        col_i = []
+        for j in range(cols*2):
+            if i*2==j:
+                col_i.append(1)
+            elif i*2+1==j:
+                col_i.append(-1)
+            else:
+                col_i.append(0)
+        new_C.append(col_i)
+    new_C = np.transpose(np.array(new_C))
+    new_g = np.ones(old_star.g.shape)
+    return StarSet(old_star.center, old_star.basis, new_C, new_g)
 
 ### from a set of points at a given time, generate a starset -- could possible reformat or remake this function to be more general
 ### expects an input with shape N (num points) x n (state dimenion) NOT N x n+1 (state dimension + time)
@@ -701,7 +727,37 @@ def sim_star(init_star: StarSet, sim: Callable, T: int = 7, ts: float = 0.05, N:
         old_star = copy.deepcopy(new_star)
     return stars
 
+'''
+Utility function to see if there's anything wrong with the post_cont_pca alg
+'''
+def check_unsat(old_star: StarSet, derived_basis: np.ndarray, point: np.ndarray, ncenter: np.ndarray = None) -> bool:
+    center, basis, C, g = old_star.center, old_star.basis, old_star.C, old_star.g        
+    alpha = RealVector('a', C.shape[1])
+    u = Real('u')
+    c = RealVector('i', old_star.dimension())
+    new_center = ncenter
+    o = Optimize()
 
+    for i in range(old_star.dimension()):
+        exp = new_center[i]
+        # exp = c[i]
+        for j in range(len(alpha)):
+            exp += alpha[j]*derived_basis[j][i] # from the jth alpha/v, grab the ith dimension
+        # print(exp)
+        o.add(exp == point[i])
+
+    ### add alpha constraints
+    for i in range(C.shape[0]): # iterate over each row
+        exp = 0 # there's probably a better way to do this, but this works
+        for j in range(len(alpha)): # iterate over alphas
+            exp += C[i][j]*alpha[j]
+        o.add(exp <= u*g[i])
+    
+    # o.minimize(u)
+
+    if o.check() == unsat:
+        print(o.sexpr())
+    return o.check() == unsat
 
 '''
 Visualization functions
@@ -806,3 +862,4 @@ def sim_star_vis(init_star: StarSet, sim: Callable, T: int = 7, ts: float = 0.05
         old_star = copy.deepcopy(new_star)
     plt.show()
     # return stars
+
