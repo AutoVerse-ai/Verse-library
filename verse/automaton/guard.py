@@ -190,10 +190,10 @@ class GuardExpressionAst:
         
         if stars:
             agent_states, agent_vars = self.get_agent_dictionaries(symbols, continuous_variable_dict)
-            print(agent_states)
-            print(agent_vars)
+            # print(agent_states)
+            # print(agent_vars)
             for agent in agent_states.keys():
-                print(agent)
+                #print(agent)
                 agent_states[agent].add_constraints(cur_solver, agent_vars[agent], agent)
             #construct the border of the hyperrectangle at a specific time
             #hyperrectangle = reach(t)

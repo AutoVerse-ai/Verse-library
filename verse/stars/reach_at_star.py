@@ -1,6 +1,6 @@
 import numpy as np
 from starset import StarSet, HalfSpace
-from verse.analysis.utils import sample_rect
+from verse.utils.utils import sample_rect
 from typing_extensions import List, Callable, Dict
 from scipy.integrate import ode
 from sklearn.decomposition import PCA
