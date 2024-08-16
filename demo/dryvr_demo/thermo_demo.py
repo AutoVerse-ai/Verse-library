@@ -75,7 +75,9 @@ if __name__ == "__main__":
 
     scenario.add_agent(car)
     scenario.config.reachability_method = ReachabilityMethod.STAR_SETS
+    # scenario.config.pca = False
     scenario.set_sensor(BaseStarSensor())
 
-    scenario.verify(2, 0.1)
+    trace = scenario.verify(7, 0.1)
+    plot_reachtube_stars(trace)
     # fig.show()

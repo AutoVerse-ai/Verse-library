@@ -152,50 +152,53 @@ class StarSet:
         return StarSet.from_polytope(poly)
 
     '''
-    TO-DO: see if just modifying this function (while not considering kvalue and bloating_method) will allow my alg to run
+    TO-DO: see if I can toggle which alg to use (DryVR, mine) based on some parameter, see if a new scenarioconfig can be added without much fuss
     '''
-    def calc_reach_tube(self, mode_label,time_horizon,time_step,sim_func,bloating_method,kvalue,sim_trace_num,lane_map):
+    def calc_reach_tube(self, mode_label,time_horizon,time_step,sim_func,bloating_method,kvalue,sim_trace_num,lane_map,pca):
         #get rectangle
 
-        # initial_set = self.overapprox_rectangle()
-        # #get reachtube
-        # bloat_tube = calc_bloated_tube(
-        #     mode_label,
-        #     initial_set,
-        #     time_horizon,
-        #     time_step,
-        #     sim_func,
-        #     bloating_method,
-        #     kvalue,
-        #     sim_trace_num,
-        #     lane_map=lane_map
-        # )
-        # #transform back into star
-        # star_tube = []
-        # #odd entries: bloat_tube[::2, 1:]   
-        # #even entries: bloat_tube[1::2, 1:] 
-        # #data only bloat_tube[ 1:]
-        # for entry in bloat_tube:
-        #     time = entry[0] 
-        #     data = entry[1:]
-        #     if len(star_tube) > 0:
-        #         if star_tube[-1][0] == time:
-        #             star_tube[-1][1] = StarSet.rect_to_star(data,star_tube[-1][1])
-        #         else:
-        #             if not isinstance(star_tube[-1][1], StarSet):
-        #                 star_tube[-1][1] = StarSet.rect_to_star(star_tube[-1][1], star_tube[-1][1])
-        #             star_tube.append([time,data])
-        #     else:
-        #         star_tube.append([time,data])
-        # #KB: TODO: where is min for last time point and first time point
-        # star_tube.pop()
-        # from verse.stars.star_util import gen_starsets_post_sim
-        reach = gen_starsets_post_sim(self, sim_func, time_horizon, time_step, mode_label=mode_label)
-        star_tube = []
-        for i in range(len(reach)):
-            star_tube.append([i*time_step, reach[i]])
+        if not pca:
+            initial_set = self.overapprox_rectangle()
+            #get reachtube
+            bloat_tube = calc_bloated_tube(
+                mode_label,
+                initial_set,
+                time_horizon,
+                time_step,
+                sim_func,
+                bloating_method,
+                kvalue,
+                sim_trace_num,
+                lane_map=lane_map
+            )
+            #transform back into star
+            star_tube = []
+            #odd entries: bloat_tube[::2, 1:]   
+            #even entries: bloat_tube[1::2, 1:] 
+            #data only bloat_tube[ 1:]
+            for entry in bloat_tube:
+                time = entry[0] 
+                data = entry[1:]
+                if len(star_tube) > 0:
+                    if star_tube[-1][0] == time:
+                        star_tube[-1][1] = StarSet.rect_to_star(data,star_tube[-1][1])
+                    else:
+                        if not isinstance(star_tube[-1][1], StarSet):
+                            star_tube[-1][1] = StarSet.rect_to_star(star_tube[-1][1], star_tube[-1][1])
+                        star_tube.append([time,data])
+                else:
+                    star_tube.append([time,data])
+            #KB: TODO: where is min for last time point and first time point
+            star_tube.pop()
+            return star_tube
 
-        return star_tube
+        else:
+            reach = gen_starsets_post_sim(self, sim_func, time_horizon, time_step, mode_label=mode_label)
+            star_tube = []
+            for i in range(len(reach)):
+                star_tube.append([i*time_step, reach[i]])
+
+            return star_tube
 
 
     #def get_new_basis(x_0, new_x_0, new_x_i, basis):
@@ -623,7 +626,7 @@ def post_cont_pca(old_star: StarSet, derived_basis: np.ndarray,  points: np.ndar
     alpha = [RealVector(f'a_{i}', C.shape[1]) for i in range(points.shape[0])]
     u = Real('u')
     c = RealVector('i', old_star.dimension())
-    
+
     o = Optimize()
     ### add equality constraints
     for p in range(len(points)):
@@ -652,7 +655,7 @@ def post_cont_pca(old_star: StarSet, derived_basis: np.ndarray,  points: np.ndar
         model = o.model()
     else:
         ### think about doing post_cont_pca except with an always valid predicate, i.e., [1, 0, ...0, , -1], [1, ..., 1] -- may be able to do this with just box2poly
-        if not usat: ### see if this works
+        if not usat: ### see if this works, could also move this in gen_starset if efficiency is more of a concern than possible compactness
             # print("Solution not found with current predicate, trying a generic predicate instead.")
             return post_cont_pca(new_pred(old_star), derived_basis, points, True)
         raise RuntimeError(f'Optimizer was unable to find a valid mu') # this is also hit if the function is interrupted
