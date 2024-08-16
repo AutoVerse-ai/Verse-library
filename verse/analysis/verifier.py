@@ -195,6 +195,7 @@ class Verifier:
             #inital_star = initial_set[0]
 
             #LINEAR STARSET
+            # print({"combined_star": combined_star.overapprox_rectangle()})
             reach_tube = combined_star.calc_reach_tube(
             mode_label,
             time_horizon,
@@ -590,12 +591,16 @@ class Verifier:
                 cache_trans_tube_updates,
             )
         max_end_idx = 0
+        # print("next_init")
         for transition in all_possible_transitions:
             # Each transition will contain a list of rectangles and their corresponding indexes in the original list
             # if len(transition) != 6:
             #     pp(("weird trans", transition))
             transit_agent_idx, src_mode, dest_mode, next_init, idx, path = transition
             start_idx, end_idx = idx[0], idx[-1]
+            # for init in next_init:
+            #     print(init.overapprox_rectangle())
+            # print(dest_mode)
 
             truncated_trace = {}
             if not consts.reachability_method == ReachabilityMethod.STAR_SETS:
@@ -646,7 +651,9 @@ class Verifier:
         else:
             if all_possible_transitions:
                 for agent_idx in node.agent:
-                    node.trace[agent_idx] = node.trace[agent_idx][: (max_end_idx + 1)]            
+                    node.trace[agent_idx] = node.trace[agent_idx][: (max_end_idx + 1)]   
+
+        #breakpoint()         
         return (
             node.id,
             later,
@@ -1009,6 +1016,9 @@ class Verifier:
                 (guard_expression, cont_var_updater, copy.deepcopy(discrete_variable_dict), path)
             )
 
+        # print("initial")
+        # print(node.trace['test'][0])
+        # print(node.trace['test'][0][1].overapprox_rectangle())
 
         # pp(("trace len", trace_length, {a: len(t) for a, t in node.trace.items()}))
         guard_hits = []
@@ -1452,6 +1462,7 @@ class Verifier:
         #breakpoint()
 
         # print("apply_reset")
+        # print([agent_state[0]])
         # print(dest)
         # print(new_state.overapprox_rectangle())
         return dest, new_state

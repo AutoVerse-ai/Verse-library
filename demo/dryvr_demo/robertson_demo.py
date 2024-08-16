@@ -41,7 +41,7 @@ if __name__ == "__main__":
     input_code_name = './demo/dryvr_demo/robertson_controller.py'
     fig = go.Figure()
 
-    scenario1 = Scenario(ScenarioConfig(parallel=False))
+    scenario1 = Scenario(ScenarioConfig(parallel=False, init_seg_length=10))
 
     car1 = robertson_agent('car1', file_name=input_code_name, beta = 1e3, gamma=1e7)
     # scenario1.add_agent(car1)
@@ -55,7 +55,7 @@ if __name__ == "__main__":
     #     ]
     # )
 
-    initial_set_polytope = pc.box2poly([[1,1],[0,0],[0,0]])
+    initial_set_polytope = pc.box2poly([[1,1.02],[0,0.05],[0,0.05]])
     car1.set_initial(StarSet.from_polytope(initial_set_polytope), (AgentMode.Default,))
 
     scenario1.config.reachability_method = ReachabilityMethod.STAR_SETS
@@ -94,11 +94,11 @@ if __name__ == "__main__":
     import plotly.graph_objects as go
     from verse.plotter.plotterStar import *
 
-    plot_reachtube_stars(traces1, None, 1, 2,1)
+    plot_reachtube_stars(traces1, 'robertson_star_rect.png', None, 1, 2,1)
 
 
 
-    scenario = Scenario(ScenarioConfig(parallel=False))
+    scenario = Scenario(ScenarioConfig(parallel=False, init_seg_length=10))
     car = robertson_agent('car1', file_name=input_code_name, beta = 1e2, gamma=1e3)
     # scenario.add_agent(car)
     # scenario.set_init(
@@ -111,7 +111,7 @@ if __name__ == "__main__":
     #     ]
     # )
 
-    initial_set_polytope = pc.box2poly([[1,1],[0,0],[0,0]])
+    initial_set_polytope = pc.box2poly([[1,1.02],[0,0.05],[0,0.05]])
     car.set_initial(StarSet.from_polytope(initial_set_polytope), (AgentMode.Default,))
 
     scenario.config.reachability_method = ReachabilityMethod.STAR_SETS
@@ -146,7 +146,7 @@ if __name__ == "__main__":
 
     # fig = reachtube_tree(traces, None, fig, 0, 4, [0, 1], 'lines', 'trace', combine_rect=3)
 
-    scenario2 = Scenario(ScenarioConfig(parallel=False))
+    scenario2 = Scenario(ScenarioConfig(parallel=False, init_seg_length=10))
     car2 = robertson_agent('car1', file_name=input_code_name, beta = 1e3, gamma=1e5)
     # scenario2.add_agent(car2)
     # scenario2.set_init(
@@ -159,7 +159,7 @@ if __name__ == "__main__":
     #     ]
     # )
 
-    initial_set_polytope = pc.box2poly([[1,1],[0,0],[0,0]])
+    initial_set_polytope = pc.box2poly([[1,1.02],[0,0.05],[0,0.05]])
     car2.set_initial(StarSet.from_polytope(initial_set_polytope), (AgentMode.Default,))
 
     scenario2.config.reachability_method = ReachabilityMethod.STAR_SETS

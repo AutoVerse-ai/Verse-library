@@ -8,7 +8,7 @@ from enum import Enum, auto
 import time
 
 from verse.analysis import ReachabilityMethod
-from verse.stars.starset import StarSet
+from verse.stars.starset import *
 from verse.sensor.base_sensor_stars import *
 import polytope as pc
 
@@ -22,7 +22,7 @@ class CraftMode(Enum):
 if __name__ == "__main__":
     input_code_name = './demo/dryvr_demo/volterra_controller.py'
     #scenario = Scenario()
-    scenario = Scenario(ScenarioConfig(parallel=False))
+    scenario = Scenario(ScenarioConfig(parallel=False, init_seg_length=1))
 
 
     car = volterra_agent('test', file_name=input_code_name)
@@ -45,7 +45,7 @@ if __name__ == "__main__":
     #                        1, 2], 'lines', 'trace', sample_rate=1)
     # fig.show()
 
-    initial_set_polytope = pc.box2poly([[1.3 - e, 1.3 + e], [1,1.01], [0,0.01]])
+    initial_set_polytope = pc.box2poly([[1.3 - e, 1.3 + e], [1,1.025], [0,0.025]])
     car.set_initial(StarSet.from_polytope(initial_set_polytope), (CraftMode.outside,))
 
     scenario.config.reachability_method = ReachabilityMethod.STAR_SETS
@@ -56,7 +56,7 @@ if __name__ == "__main__":
 
     start_time = time.time()
 
-    traces = scenario.verify(1.6, .01)
+    traces = scenario.verify(3.64, .01)
     run_time = time.time() - start_time
 
     print({
@@ -69,16 +69,18 @@ if __name__ == "__main__":
         "metric3": "",
     })
 
-    # diams = time_step_diameter(traces, 3.64, .01)
-    # print(len(diams))
-    # print(sum(diams))
-    # print(diams[0])
-    # print(diams[-1])
+    diams = time_step_diameter(traces, 3.64, .01)
+    print(len(diams))
+    print(sum(diams))
+    print(diams[0])
+    print(diams[-1])
 
     import plotly.graph_objects as go
     from verse.plotter.plotterStar import *
 
-    plot_reachtube_stars(traces, None, 1, 2,10)
+    plot_reachtube_stars(traces,'volterra_star_rect.png', None, 1, 2, 10)
+
+    #plot_star_reachtubes(traces, 0, 1)
 
 
     # fig = go.Figure()

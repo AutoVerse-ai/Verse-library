@@ -13,10 +13,11 @@ colors = ['orange', 'blue', 'green', 'red', 'yellow', 'purple', 'teal']
 
 def plot_reachtube_stars(
     root: Union[AnalysisTree, AnalysisTreeNode],
+    name,
     map=None,
     x_dim: int = 0,
     y_dim: int = 1,
-    filter: int = 100
+    filter: int = 100,
 ):
     print("graphing")
     if isinstance(root, AnalysisTree):
@@ -33,7 +34,11 @@ def plot_reachtube_stars(
             y_dim,
             colors[i])
         i = (i+1)%7
-    plt.show()
+    #plt.show()
+    plt.savefig(name)  # You can change the file name and format (e.g., 'my_plot.pdf')
+    # Close the plot
+    plt.close()
+
 
 
 def plot_reach_tube(traces, agent_id, freq = 100):

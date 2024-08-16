@@ -21,7 +21,7 @@ class AgentMode(Enum):
 
 if __name__ == "__main__":
     input_code_name = './demo/dryvr_demo/vanderpol_controller.py'
-    scenario = Scenario(ScenarioConfig(parallel=False))
+    scenario = Scenario(ScenarioConfig(parallel=False, init_seg_length=10))
 
     car = vanderpol_agent('car1', file_name=input_code_name)
     # scenario.add_agent(car)
@@ -60,7 +60,7 @@ if __name__ == "__main__":
     import plotly.graph_objects as go
     from verse.plotter.plotterStar import *
 
-    plot_reachtube_stars(traces, None, 1, 2,1)
+    plot_reachtube_stars(traces, 'vand_star_rect.png', None, 1, 2,1)
 
     print("time")
     print(run_time)

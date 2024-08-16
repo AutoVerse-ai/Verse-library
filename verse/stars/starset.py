@@ -155,7 +155,15 @@ class StarSet:
     TO-DO: see if just modifying this function (while not considering kvalue and bloating_method) will allow my alg to run
     '''
     def calc_reach_tube(self, mode_label,time_horizon,time_step,sim_func,bloating_method,kvalue,sim_trace_num,lane_map):
-        #get rectangle
+        reach, points = gen_starsets_post_sim(self, sim_func, time_horizon, time_step, mode_label=mode_label, N = 25)
+        star_tube = []
+        for i in range(len(reach)):
+            if i == 0:
+                star_tube.append([i*time_step, self])
+            else:
+                star_tube.append([i*time_step, reach[i]])
+
+        return star_tube
 
         # initial_set = self.overapprox_rectangle()
         # #get reachtube
@@ -189,13 +197,9 @@ class StarSet:
         #         star_tube.append([time,data])
         # #KB: TODO: where is min for last time point and first time point
         # star_tube.pop()
-        # from verse.stars.star_util import gen_starsets_post_sim
-        reach = gen_starsets_post_sim(self, sim_func, time_horizon, time_step, mode_label=mode_label)
-        star_tube = []
-        for i in range(len(reach)):
-            star_tube.append([i*time_step, reach[i]])
+        # return star_tube
+    
 
-        return star_tube
 
 
     #def get_new_basis(x_0, new_x_0, new_x_i, basis):
@@ -657,7 +661,7 @@ def post_cont_pca(old_star: StarSet, derived_basis: np.ndarray,  points: np.ndar
             return post_cont_pca(new_pred(old_star), derived_basis, points, True)
         raise RuntimeError(f'Optimizer was unable to find a valid mu') # this is also hit if the function is interrupted
 
-    print(model[u].as_decimal(10))
+    #print(model[u].as_decimal(10))
     new_center = np.array([float(model[c[i]].as_fraction()) for i in range(len(c))])
     return StarSet(new_center, np.array(derived_basis), C, g * float(model[u].as_fraction()))
 
@@ -694,7 +698,7 @@ def gen_starset(points: np.ndarray, old_star: StarSet) -> StarSet:
 
 ### doing post_computations using simulation then constructing star sets around each set of points afterwards -- not iterative
 def gen_starsets_post_sim(old_star: StarSet, sim: Callable, T: float = 7, ts: float = 0.05, N: int = 100, no_init: bool = False, mode_label: int = None) -> List[StarSet]:
-    points = np.array(sample_star(old_star, N))
+    points = np.array(sample_star(old_star, N, tol=3))
     post_points = []
     if no_init: 
         for point in points:
@@ -704,10 +708,11 @@ def gen_starsets_post_sim(old_star: StarSet, sim: Callable, T: float = 7, ts: fl
             # post_points.append(sim(mode=mode_label, initialCondition=point, time_bound=T, time_step=ts).tolist())
             post_points.append(sim(mode_label, point, T, ts).tolist())
     post_points = np.array(post_points)
+
     stars: List[StarSet] = []
     for t in range(post_points.shape[1]): # pp has shape N x (T/dt) x (n + 1), so index using first 
         stars.append(gen_starset(post_points[:, t, 1:], old_star)) ### something is up with this 
-    return stars
+    return stars, post_points
 
 ### doing sim and post_cont iteratively to construct new starsets and get new points from them every ts
 ### this takes a decent amount of time -- guessing coming from post_cont_pca and/or sample_star as sim should be pretty fast
@@ -792,9 +797,10 @@ def plot_stars_points_nonit(stars: List[StarSet], points: np.ndarray):
         plt.plot(x, y, lw = 1)
         centerx, centery = star.get_center_pt(0, 1)
         plt.plot(centerx, centery, 'o')
-    for t in range(points.shape[1]): # pp has shape N x (T/dt) x (n + 1), so index using first 
-        plt.scatter(points[:, t, 1], points[:, t, 2])
-    # plt.show()
+    if len(points) > 0:
+        for t in range(points.shape[1]): # pp has shape N x (T/dt) x (n + 1), so index using first 
+            plt.scatter(points[:, t, 1], points[:, t, 2])
+    plt.show()
 
 def gen_starsets_post_sim_vis_nonit(old_star: StarSet, sim: Callable, T: float = 7, ts: float = 0.05, N: int = 100, no_init: bool = False) -> None:
     points = np.array(sample_star(old_star, N, tol=10)) ### sho
@@ -859,3 +865,33 @@ def sim_star_vis(init_star: StarSet, sim: Callable, T: int = 7, ts: float = 0.05
         old_star = copy.deepcopy(new_star)
     plt.show()
     # return stars
+
+def plot_star_reachtubes(reachtube, dim1=0, dim2=1):
+    nodes = reachtube.nodes
+    agent_list = list(reachtube.root.agent.keys())
+    for node in nodes:
+        traces = node.trace
+        for agent in agent_list:
+            if agent in traces.keys():
+                for time, star_set in traces[agent]:
+                    # Sample points from the star set
+                    points = sample_star(star_set, N = 10, tol = 10)
+
+                    # Slice the points to the specific dimensions
+                    sliced_points = [[row[dim1],row[dim2]] for row in points]
+
+                    # Create a convex hull of the sliced points
+                    hull = ConvexHull(sliced_points, qhull_options='QJ')
+
+                    sliced_points = np.array(sliced_points)
+
+                    # Plot the convex hull
+                    plt.fill(sliced_points[hull.vertices, 0], sliced_points[hull.vertices, 1], alpha=0.6)
+
+    # Plot customization
+    plt.xlabel(f'Dimension {dim1 + 1}')
+    plt.ylabel(f'Dimension {dim2 + 1}')
+    plt.title('Convex Hulls of Star Set Reachtubes')
+    plt.legend()
+    plt.grid(True)
+    plt.show()

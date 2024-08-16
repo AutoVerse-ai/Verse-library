@@ -47,7 +47,7 @@ if __name__ == "__main__":
 
     start_time = time.time()
 
-    traces = scenario.verify(5, 0.02)
+    traces = scenario.verify(10, 0.02)
 
     run_time = time.time() - start_time
     print({
@@ -63,10 +63,10 @@ if __name__ == "__main__":
     import plotly.graph_objects as go
     from verse.plotter.plotterStar import *
 
-    plot_reachtube_stars(traces, None, 1, 2,1)
+    plot_reachtube_stars(traces, 'laub_star_rect.png', None, 1, 2,1)
 
 
-    diams = time_step_diameter(traces, 20, 0.02)
+    diams = time_step_diameter(traces, 10, 0.02)
     print(len(diams))
     print(sum(diams))
     print(diams[0])
@@ -102,7 +102,7 @@ if __name__ == "__main__":
 
     start_time = time.time()
 
-    traces = scenario1.verify(20, 0.02)
+    traces = scenario1.verify(10, 0.02)
     run_time = time.time() - start_time
     print({
         "tool": "verse",
@@ -114,7 +114,7 @@ if __name__ == "__main__":
         "metric3": "",
     })
 
-    diams = time_step_diameter(traces, 20, 0.02)
+    diams = time_step_diameter(traces, 10, 0.02)
     print(len(diams))
     print(sum(diams))
     print(diams[0])
@@ -151,7 +151,7 @@ if __name__ == "__main__":
     scenario2.set_sensor(BaseStarSensor())
     start_time = time.time()
 
-    traces = scenario2.verify(20, 0.02)
+    traces = scenario2.verify(10, 0.02)
     run_time = time.time() - start_time
 
     print({
@@ -164,39 +164,8 @@ if __name__ == "__main__":
         "metric3": "",
     })
 
-    diams = time_step_diameter(traces, 20, 0.02)
+    diams = time_step_diameter(traces, 10, 0.02)
     print(len(diams))
     print(sum(diams))
     print(diams[0])
     print(diams[-1])
-
-    # fig = reachtube_tree(traces, None, fig, 0, 4, [1, 2], 'lines', 'trace', combine_rect=3)
-    # fig.update_layout(
-    #     xaxis_title="t", yaxis_title="x4"
-    # )
-    # fig.show()
-
-    # scenario3 = Scenario()
-    #
-    # car3 = laub_loomis_agent('car1', file_name=input_code_name)
-    # scenario3.add_agent(car3)
-    # # car = vanderpol_agent('car2', file_name=input_code_name)
-    # # scenario.add_agent(car)
-    # # scenario.set_sensor(FakeSensor2())
-    # # modify mode list input
-    # W = .1
-    # scenario3.set_init(
-    #     [
-    #         [[1.2 - W/4.5, 1.05 - W/2, 1.5 - W/16, 2.4 + W/3, 1 - W/7, .1 + W/1, .45 - W/2.5, W]],
-    #     ],
-    #     [
-    #         tuple([AgentMode.Default]),
-    #         # tuple([AgentMode.Default]),
-    #     ]
-    # )
-    #
-    # traces = scenario3.simulate(20, 0.02)
-    #
-    # fig = simulation_tree(traces, None, fig, 0, 4, [0, 4],
-    #                       'lines', 'trace')
-    # fig.show()

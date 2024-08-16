@@ -86,7 +86,7 @@ if __name__ == "__main__":
     input_code_name = os.path.join(script_dir, "robot.py")
     Robot = RobotAgent('robot', file_name=input_code_name)
 
-    scenario = Scenario()
+    scenario = Scenario(ScenarioConfig(parallel=False))
 
     #scenario.add_agent(Robot) ### need to add breakpoint around here to check decision_logic of agents
 
@@ -133,4 +133,4 @@ if __name__ == "__main__":
     import plotly.graph_objects as go
     from verse.plotter.plotterStar import *
 
-    plot_reachtube_stars(trace, None, 1, 2,1)
+    plot_reachtube_stars(trace, 'robot_star_rect.png', None, 1, 2,1)

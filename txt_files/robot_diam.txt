@@ -1,12 +1,12 @@
-0 {'robot': ['Normal']}
-('transitions:', [])
-reachtube time: 1.7627745 transition time: 0 transition opt time: 0.002440299999999951
+[2m[36m(compute_full_reachtube_step pid=13388)[0m =============================================================
+[2m[36m(compute_full_reachtube_step pid=13388)[0m node 0 start: 0
+[2m[36m(compute_full_reachtube_step pid=13388)[0m {'robot': ('Normal',)}
+[2m[36m(compute_full_reachtube_step pid=13388)[0m range(0, 1, 1000)
 time
-1.7604973316192627
+330.65075302124023
 diams
-1000
-17.25867374924555
-0.04824971278068434
-0.000765923952327832
-None 0
-red
+1001
+12.949196049413
+0.04000000000000002
+0.0005534346357860013
+graphing

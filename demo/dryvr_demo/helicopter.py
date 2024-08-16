@@ -146,7 +146,7 @@ if __name__ == "__main__":
     helicopter.set_initial(StarSet.from_polytope(initial_set_polytope),  tuple([HelicopterMode.Normal]))
     
 
-    scenario = Scenario()
+    scenario = Scenario(ScenarioConfig(parallel=False, init_seg_length=10))
 
     scenario.config.reachability_method = ReachabilityMethod.STAR_SETS
     scenario.add_agent(helicopter)

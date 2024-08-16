@@ -1,0 +1,29 @@
+C:\Users\nitis\Desktop\Summer_Verse\Verse-library-star_path
+=============================================================
+node 0 start: 0
+{'car1': ('Default',)}
+range(0, 1, 10)
+{'tool': 'verse', 'benchmark': 'ROBE21', 'setup': 'B3G7', 'result': '1', 'time': 7.467042684555054, 'metric2': 400}
+399
+44.42671200099665
+-0.0
+0.1066347588704311
+graphing
+=============================================================
+node 0 start: 0
+{'car1': ('Default',)}
+range(0, 1, 10)
+{'tool': 'verse', 'benchmark': 'ROBE21', 'setup': 'B2G3', 'result': '1', 'time': 4.5925233364105225, 'metric2': 400}
+399
+43.83793545132779
+-0.0
+0.10717077834416879
+=============================================================
+node 0 start: 0
+{'car1': ('Default',)}
+range(0, 1, 10)
+{'tool': 'verse', 'benchmark': 'ROBE21', 'setup': 'B3G5', 'result': '1', 'time': 5.611140251159668, 'metric2': 400}
+399
+43.81684478527991
+-0.0
+0.1071689861909869

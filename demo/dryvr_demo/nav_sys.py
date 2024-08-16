@@ -19,7 +19,7 @@ import plotly.graph_objects as go
 
 #starset
 from verse.analysis import ReachabilityMethod
-from verse.stars.starset import StarSet
+from verse.stars.starset import *
 import polytope as pc
 from verse.sensor.base_sensor_stars import *
 from new_files.star_diams import *
@@ -110,22 +110,22 @@ class State:
 def decisionLogic(ego: State, other: State):
     output = copy.deepcopy(ego)
 
-    if ego.agent_mode == NavMode.Zone1 and ego.x>=1 and ego.vx>0:
-        output.agent_mode = NavMode.Zone2
-    if ego.agent_mode == NavMode.Zone2 and ego.x<=1 and ego.vx<0:
-        output.agent_mode = NavMode.Zone1
-    if ego.agent_mode == NavMode.Zone2 and ego.y>=1 and ego.vy>0:
-        output.agent_mode = NavMode.Zone4
-    if ego.agent_mode == NavMode.Zone4 and ego.y<=1 and ego.vy<0:
-        output.agent_mode = NavMode.Zone2
-    if ego.agent_mode == NavMode.Zone1 and ego.y>=1 and ego.vy>0:
-        output.agent_mode = NavMode.Zone3
-    if ego.agent_mode == NavMode.Zone3 and ego.y<=1 and ego.vy<0:
-        output.agent_mode = NavMode.Zone1
-    if ego.agent_mode == NavMode.Zone3 and ego.x>=1 and ego.vx>0:
-        output.agent_mode = NavMode.Zone4
-    if ego.agent_mode == NavMode.Zone4 and ego.x<=1 and ego.vx<0:
-        output.agent_mode = NavMode.Zone3
+    # if ego.agent_mode == NavMode.Zone1 and ego.x>=1 and ego.vx>0:
+    #     output.agent_mode = NavMode.Zone2
+    # if ego.agent_mode == NavMode.Zone2 and ego.x<=1 and ego.vx<0:
+    #     output.agent_mode = NavMode.Zone1
+    # if ego.agent_mode == NavMode.Zone2 and ego.y>=1 and ego.vy>0:
+    #     output.agent_mode = NavMode.Zone4
+    # if ego.agent_mode == NavMode.Zone4 and ego.y<=1 and ego.vy<0:
+    #     output.agent_mode = NavMode.Zone2
+    # if ego.agent_mode == NavMode.Zone1 and ego.y>=1 and ego.vy>0:
+    #     output.agent_mode = NavMode.Zone3
+    # if ego.agent_mode == NavMode.Zone3 and ego.y<=1 and ego.vy<0:
+    #     output.agent_mode = NavMode.Zone1
+    # if ego.agent_mode == NavMode.Zone3 and ego.x>=1 and ego.vx>0:
+    #     output.agent_mode = NavMode.Zone4
+    # if ego.agent_mode == NavMode.Zone4 and ego.x<=1 and ego.vx<0:
+    #     output.agent_mode = NavMode.Zone3
 
     return output 
 
@@ -137,11 +137,11 @@ if __name__ == "__main__":
     input_code_name = os.path.join(script_dir, "nav_sys.py")
     Nav = NavAgent('nav', file_name=input_code_name)
 
-    init_nav = [[0.5, 0.55], [0.5, 0.55], [0, 0], [0, 0]]
+    init_nav = [[0.5, 1], [0.5, 1], [0, 0.5], [0, 0.5]]
     initial_set_polytope = pc.box2poly(init_nav)
     Nav.set_initial(StarSet.from_polytope(initial_set_polytope),  tuple([NavMode.Zone1]))
 
-    scenario = Scenario()
+    scenario = Scenario(ScenarioConfig(parallel=False, init_seg_length=10))
 
     scenario.config.reachability_method = ReachabilityMethod.STAR_SETS
     scenario.add_agent(Nav)
@@ -159,7 +159,7 @@ if __name__ == "__main__":
     #trace = scenario.verify(2, 0.01)
 
     start_time = time.time()
-    trace = scenario.verify(2, 0.01)
+    trace = scenario.verify(0.5, 0.01)
     run_time = time.time() - start_time
 
     print("time")
@@ -170,16 +170,17 @@ if __name__ == "__main__":
     ### fixed points eventually reached at t=120, not quite at t=60 though
     #print(f'Fixed points exists? {fixed_points_fix(trace, 2, 0.01)}')
 
-    print("diams")
-    diams = time_step_diameter(trace, 2, 0.01)
-    print(len(diams))
-    print(sum(diams))
-    print(diams[0])
-    print(diams[-1])
+    # print("diams")
+    # diams = time_step_diameter(trace, 2, 0.01)
+    # print(len(diams))
+    # print(sum(diams))
+    # print(diams[0])
+    # print(diams[-1])
 
     import plotly.graph_objects as go
     from verse.plotter.plotterStar import *
 
+    plot_star_reachtubes(trace, 0, 1)
     #plot_reachtube_stars(trace, None, 0, 1,10)
 
 
