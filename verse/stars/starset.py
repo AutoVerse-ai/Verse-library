@@ -763,13 +763,14 @@ def check_unsat(old_star: StarSet, derived_basis: np.ndarray, point: np.ndarray,
 Visualization functions
 '''
 
-def plot_stars_points(stars: List[StarSet], points: np.ndarray):
+def plot_stars_points(stars: List[StarSet], points: np.ndarray = None):
     for star in stars:
         x, y = np.array(star.get_verts())
         plt.plot(x, y, lw = 1)
         centerx, centery = star.get_center_pt(0, 1)
         plt.plot(centerx, centery, 'o')
-    plt.scatter(points[:, 0], points[:, 1])
+    if points is not None:
+        plt.scatter(points[:, 0], points[:, 1])
     # plt.show()
 
 def gen_starsets_post_sim_vis(old_star: StarSet, sim: Callable, T: float = 7, ts: float = 0.05, N: int = 100, no_init: bool = False) -> List[StarSet]:

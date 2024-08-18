@@ -18,6 +18,11 @@ from verse.plotter.plotter3D_new import *
 import plotly.graph_objects as go
 
 from verse.utils.fixed_points import *
+from verse.analysis.verifier import ReachabilityMethod
+from z3 import *
+from verse.stars.starset import *
+
+from verse.sensor.base_sensor_stars import *
 
 class BCAgent(BaseAgent):
     def __init__(
@@ -77,23 +82,39 @@ if __name__ == "__main__":
 
     scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False))
 
-    scenario.add_agent(BCA) ### need to add breakpoint around here to check decision_logic of agents
 
-    init_bca = [[-0.5, -0.5],[-0.4, -0.4]]
-    # # -----------------------------------------
+    basis = np.array([[1, 0], [0, 0]]) * np.diag([0.05, 0.05]) 
+    center = np.array([-.45,-.45])
+    C = np.transpose(np.array([[1,-1,0,0],[0,0,1,-1]]))
+    g = np.array([1,1,1,1])
 
-    scenario.set_init_single(
-        'bca', init_bca, (BCMode.Normal,)
+    BCA.set_initial(
+        StarSet(center, basis, C, g),
+        tuple([BCMode.Normal])
     )
 
-    trace = scenario.verify(10, 0.01)
+    scenario.add_agent(BCA) ### need to add breakpoint around here to check decision_logic of agents
 
-    # pp_fix(reach_at_fix(trace, 0, 10))
+    scenario.config.reachability_method = ReachabilityMethod.STAR_SETS
+    # scenario.config.pca = False
+    scenario.set_sensor(BaseStarSensor())
 
-    ### fixed points eventually reached at t=120, not quite at t=60 though
-    print(f'Fixed points exists? {fixed_points_fix(trace, 10, 0.01)}')
+    # trace = scenario.verify(10, 0.01)
 
-    fig = go.Figure()
-    fig = reachtube_tree(trace, None, fig, 1, 2, [1, 2], "fill", "trace", plot_color=colors[1:]) 
-    # fig = simulation_tree(trace, None, fig, 1, 2, [1, 2], "fill", "trace")
-    fig.show()
+    # # pp_fix(reach_at_fix(trace, 0, 10))
+
+    # ### fixed points eventually reached at t=120, not quite at t=60 though
+    # print(f'Fixed points exists? {fixed_points_fix(trace, 10, 0.01)}')
+
+    # fig = go.Figure()
+    # fig = reachtube_tree(trace, None, fig, 1, 2, [1, 2], "fill", "trace", plot_color=colors[1:]) 
+    # # fig = simulation_tree(trace, None, fig, 1, 2, [1, 2], "fill", "trace")
+    # fig.show()
+
+    trace = scenario.verify(7, 0.1)
+    stars = []
+    for star in trace.nodes[0].trace['bca']:
+        stars.append(star[1])
+    plot_stars_points(stars)
+    plt.show()
+    plot_reachtube_stars(trace)
