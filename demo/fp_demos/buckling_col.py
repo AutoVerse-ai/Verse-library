@@ -19,7 +19,6 @@ import plotly.graph_objects as go
 
 from verse.utils.fixed_points import *
 from verse.analysis.verifier import ReachabilityMethod
-from z3 import *
 from verse.stars.starset import *
 
 from verse.sensor.base_sensor_stars import *
