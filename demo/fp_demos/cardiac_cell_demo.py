@@ -56,6 +56,6 @@ if __name__ == "__main__":
         stars.append(star[1])
     plot_stars_points(stars)
     print(stars[-1].basis[0][0])
-    plot_reachtube_stars(stars)
+    plot_reachtube_stars(trace,filter=1)
     # fig = simulation_tree(trace, None, fig, 1, 2, [1, 2], "fill", "trace")
     plt.show()

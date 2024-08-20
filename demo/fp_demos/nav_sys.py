@@ -19,6 +19,10 @@ import plotly.graph_objects as go
 
 from verse.utils.fixed_points import *
 
+from verse.analysis.verifier import ReachabilityMethod
+from verse.stars.starset import *
+
+from verse.sensor.base_sensor_stars import *
 ### adapted from c2e2 
 
 class NavAgent(BaseAgent):
@@ -132,24 +136,35 @@ if __name__ == "__main__":
 
     scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False))
 
-    scenario.add_agent(Nav) ### need to add breakpoint around here to check decision_logic of agents
+    # scenario.add_agent(Nav) ### need to add breakpoint around here to check decision_logic of agents
 
     init_nav = [[0.5, 0.5, 0, 0],[0.55, 0.55, 0, 0]]
     # # -----------------------------------------
+    basis = np.array([[0.025, 0, 0, 0], [0, 0.025, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]])  
+    center = np.array([0.525,0.525, 0, 0])
+    C = np.transpose(np.array([[1,-1,0,0, 0, 0, 0, 0],[0,0,1,-1, 0, 0, 0,0], [0,0,0,0,1,-1, 0, 0],[0,0,0,0,0,0,1,-1]]))
+    g = np.array([1,1,1,1,1,1,1,1])
 
-    scenario.set_init_single(
-        'nav', init_nav, (NavMode.Zone1,)
+    Nav.set_initial(
+        StarSet(center, basis, C, g),
+        tuple([NavMode.Zone1])
     )
-
+    # scenario.set_init_single(
+    #     'nav', init_nav, (NavMode.Zone1,)
+    # )
+    scenario.add_agent(Nav)
+    scenario.config.reachability_method = ReachabilityMethod.STAR_SETS
+    scenario.set_sensor(BaseStarSensor())
     # for t>2 seconds (I think around 3.7 seconds) verify starts taking a bit -- not that relevant considering x>0.5 is unsafe and that occurs pretty much constantly
-    trace = scenario.verify(2, 0.01)
+    trace = scenario.verify(2, 0.1)
+    # sampling breaks at zone 3?
 
     # pp_fix(reach_at_fix(trace, 0, 10))
 
     ### fixed points eventually reached at t=120, not quite at t=60 though
-    print(f'Fixed points exists? {fixed_points_fix(trace, 2, 0.01)}')
+    # print(f'Fixed points exists? {fixed_points_fix(trace, 2, 0.01)}')
 
-    fig = go.Figure()
-    fig = reachtube_tree(trace, None, fig, 0, 1, [0, 1], "fill", "trace") 
+    # fig = go.Figure()
+    # fig = reachtube_tree(trace, None, fig, 0, 1, [0, 1], "fill", "trace") 
     # fig = simulation_tree(trace, None, fig, 1, 2, [1, 2], "fill", "trace")
-    fig.show()
+    plt.show()
