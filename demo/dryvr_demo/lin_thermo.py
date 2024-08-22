@@ -115,8 +115,10 @@ if __name__ == "__main__":
         , (ThermoMode.Heat,)
     )
 
+    scenario.add_agent(Thermo)
+
     scenario.config.reachability_method = ReachabilityMethod.STAR_SETS
     scenario.set_sensor(BaseStarSensor())
     ### t=10 takes quite a long time to run, try t=4 like in c2e2 example
     ### seems to actually loop at t=4.14, not sure what that is about -- from first glance, reason seems to be hyperrectangles blowing up in size
-    trace = scenario.verify(4, 0.01)
+    trace = scenario.verify(4, 0.1)

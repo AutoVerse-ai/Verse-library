@@ -19,6 +19,11 @@ import plotly.graph_objects as go
 
 from verse.utils.fixed_points import *
 
+from verse.stars.starset import *
+
+from verse.sensor.base_sensor_stars import *
+from verse.analysis.verifier import ReachabilityMethod
+
 class PowerTrainAgent(BaseAgent):
     def __init__(
         self, 
@@ -107,27 +112,42 @@ if __name__ == "__main__":
 
     scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False))
 
+    basis = np.array([[0.001, 0, 0, 0,0], [0, 0.001, 0, 0,0], [0, 0, 0.001, 0,0], [0, 0, 0, 0.001,0], [0,0,0,0,0]])  
+    center = np.array([0.6353,14.7, 0.5573, 0.017,0])
+    C = np.transpose(np.array([[1,-1,0,0, 0, 0, 0, 0,0,0],[0,0,1,-1, 0, 0, 0,0,0,0], [0,0,0,0,1,-1, 0, 0,0,0],[0,0,0,0,0,0,1,-1,0,0],[0,0,0,0,0,0,0,0,1,-1]]))
+    g = np.array([1,1,1,1,1,1,1,1,1,1])
+
+    PT.set_initial(
+        StarSet(center, basis, C, g),
+        tuple([PTMode.Mode0])
+    )
+    # scenario.set_init_single(
+    #     'nav', init_nav, (NavMode.Zone1,)
+    # )
+    scenario.config.reachability_method = ReachabilityMethod.STAR_SETS
+    scenario.set_sensor(BaseStarSensor())
+
     scenario.add_agent(PT) ### need to add breakpoint around here to check decision_logic of agents
 
-    init_PT = [[0.6353, 14.7, 0.5573, 0.017, 0],[0.6353, 14.7, 0.5573, 0.017, 0]]
+    # init_PT = [[0.6353, 14.7, 0.5573, 0.017, 0],[0.6353, 14.7, 0.5573, 0.017, 0]]
     # # -----------------------------------------
 
-    scenario.set_init_single(
-        'PT', init_PT,(PTMode.Mode0,)
-    )
+    # scenario.set_init_single(
+    #     'PT', init_PT,(PTMode.Mode0,)
+    # )
 
-    trace = scenario.verify(15, 0.001)
+    trace = scenario.verify(15, 0.1)
 
     # pp_fix(reach_at_fix(trace, 0, 15))
 
-    T, t_step = 15, 0.001
-    # r_final = reach_at_fix(trace)
-    # r_candid = reach_at_fix(trace, 0, T-t_step+t_step*.01)
-    # print(f'Does the candidate reachset contain the final reachset: {contain_all_fix(r_final, r_candid)}')
-    print(f'Fixed points exists? {fixed_points_fix(trace, 15, 0.001)}')
+    # T, t_step = 15, 0.001
+    # # r_final = reach_at_fix(trace)
+    # # r_candid = reach_at_fix(trace, 0, T-t_step+t_step*.01)
+    # # print(f'Does the candidate reachset contain the final reachset: {contain_all_fix(r_final, r_candid)}')
+    # print(f'Fixed points exists? {fixed_points_fix(trace, 15, 0.001)}')
 
-    fig = go.Figure()
-    fig = reachtube_tree(trace, None, fig, 0, 2, [0, 2], "fill", "trace")
-    # fig = reachtube_tree_slice(trace, None, fig, 0, 2, [0, 2], "fill", "trace", plot_color=colors[1:])
-    # fig = simulation_tree(trace, None, fig, 1, 2, [1, 2], "fill", "trace")
-    fig.show()
+    # fig = go.Figure()
+    # fig = reachtube_tree(trace, None, fig, 0, 2, [0, 2], "fill", "trace")
+    # # fig = reachtube_tree_slice(trace, None, fig, 0, 2, [0, 2], "fill", "trace", plot_color=colors[1:])
+    # # fig = simulation_tree(trace, None, fig, 1, 2, [1, 2], "fill", "trace")
+    # fig.show()
