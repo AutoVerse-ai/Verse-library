@@ -595,6 +595,7 @@ def containment_poly(star: StarSet, point: np.ndarray) -> bool:
 
 ### N is the number of points, tol is how many misses consecutively we can see before raising an error  
 def sample_star(star: StarSet, N: int, tol: float = 0.2) -> List[List[float]]:
+    star = StarSet(np.round(star.center, 6), np.round(star.basis, 6), np.round(star.C, 6), np.round(star.g, 6))
     rect = star.overapprox_rectangle()
     points = []
     misses = 0
@@ -606,6 +607,9 @@ def sample_star(star: StarSet, N: int, tol: float = 0.2) -> List[List[float]]:
         else:
             misses+=1
             if misses>int(N*tol):
+                star.print()
+                print(rect)
+                containment_poly(star, point)
                 raise Exception("Too many consecutive misses, halting function. Call smple_rect instead.")
     return points
 
