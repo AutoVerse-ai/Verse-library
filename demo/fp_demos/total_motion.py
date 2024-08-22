@@ -198,7 +198,6 @@ if __name__ == "__main__":
         'tm', init_tm, (TMMode.SlowDown,)
     )
 
-    # for t>2 seconds (I think around 3.7 seconds) verify starts taking a bit -- not that relevant considering x>0.5 is unsafe and that occurs pretty much constantly
     trace = scenario.verify(40, 0.1)
 
     # pp_fix(reach_at_fix(trace, 0, 10))
