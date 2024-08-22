@@ -53,6 +53,7 @@ def ball_bounce_test():
     bouncingBall.set_sensor(BaseStarSensor())
 
     ### why do we keep having nodes that start at 0.5? occurs when initial set is not a single point i.e., basis not the zero matrix
+    ### for some reason this also doesn't work for dryvr either when initial set is not a single point:    assert np.all(df >= 0) AssertionError
     traces = bouncingBall.verify(10, 0.1)
     # TODO: There should be a print({traces}) function
     # fig = go.Figure()
