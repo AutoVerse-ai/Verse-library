@@ -19,6 +19,11 @@ import plotly.graph_objects as go
 
 from verse.utils.fixed_points import *
 
+from verse.analysis.verifier import ReachabilityMethod
+from verse.stars.starset import *
+
+from verse.sensor.base_sensor_stars import *
+
 class RobotAgent(BaseAgent):
     def __init__(
         self, 
@@ -79,28 +84,41 @@ if __name__ == "__main__":
     input_code_name = os.path.join(script_dir, "robot.py")
     Robot = RobotAgent('robot', file_name=input_code_name)
 
-    scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False))
+    scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False, reachability_method=ReachabilityMethod.STAR_SETS))
+
+    # scenario.add_agent(Robot) ### need to add breakpoint around here to check decision_logic of agents
+
+    # init_robot = [[1.5, 1.5, 0, 0],[1.51, 1.51, 0.01, 0.01]]
+    
+    basis = np.array([[0.005, 0, 0, 0], [0, 0.005, 0, 0], [0, 0, .005, 0], [0, 0, 0, .005]])  
+    center = np.array([1.505,1.505, 0.005, 0.005])
+    C = np.transpose(np.array([[1,-1,0,0, 0, 0, 0, 0],[0,0,1,-1, 0, 0, 0,0], [0,0,0,0,1,-1, 0, 0],[0,0,0,0,0,0,1,-1]]))
+    g = np.array([1,1,1,1,1,1,1,1])
+    # # -----------------------------------------
+
+    Robot.set_initial(
+        StarSet(center, basis, C, g),
+        tuple([RobotMode.Normal])
+    )
+
+    scenario.set_sensor(BaseStarSensor())
+    # scenario.set_init_single(
+    #     'robot', init_robot, (RobotMode.Normal,)
+    # )
 
     scenario.add_agent(Robot) ### need to add breakpoint around here to check decision_logic of agents
 
-    init_robot = [[1.5, 1.5, 0, 0],[1.51, 1.51, 0.01, 0.01]]
-    # # -----------------------------------------
-
-    scenario.set_init_single(
-        'robot', init_robot, (RobotMode.Normal,)
-    )
-
-    trace = scenario.verify(10, 0.01)
+    trace = scenario.verify(10, 0.1)
 
     # pp_fix(reach_at_fix(trace, 0, 10))
 
     # no fixed points reached by t=60, x0, x1 seem to converge but x3 at least doesn't 
     # fixed point reached by t=120, trying to plot it out will take a bit
-    print(f'Fixed points exists? {fixed_points_fix(trace, 10, 0.01)}')
-
-    fig = go.Figure()
-    for i in range(1, 5):
-        ### due to how the reachtube_tree is constructed, the final fig will just be zoomed in on x2 and x3, need to manually refit window
-        fig = reachtube_tree(trace, None, fig, 0, i, [0, i], "fill", "trace", plot_color=colors[i:]) 
-    # fig = simulation_tree(trace, None, fig, 1, 2, [1, 2], "fill", "trace")
-    fig.show()
+    # print(f'Fixed points exists? {fixed_points_fix(trace, 10, 0.01)}')
+# 
+    # fig = go.Figure()
+    # for i in range(1, 5):
+    #     ### due to how the reachtube_tree is constructed, the final fig will just be zoomed in on x2 and x3, need to manually refit window
+    #     fig = reachtube_tree(trace, None, fig, 0, i, [0, i], "fill", "trace", plot_color=colors[i:]) 
+    # # fig = simulation_tree(trace, None, fig, 1, 2, [1, 2], "fill", "trace")
+    # fig.show()

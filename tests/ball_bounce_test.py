@@ -22,7 +22,7 @@ def ball_bounce_test():
     myball1 = BallAgent("red-ball", file_name=ball_controller)
     myball2 = BallAgent("green-ball", file_name=ball_controller2)
 
-    basis = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]) * np.diag([0.001, 0.001, 0.001, 0.001])  
+    basis = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]) * np.diag([0, 0, 0, 0])  
     center = np.array([5, 10, 2, 2])
     center2 = np.array([15, 1, 1, -2])
     C = np.transpose(np.array([[1,-1,0,0, 0, 0, 0, 0],[0,0,1,-1, 0, 0, 0,0], [0,0,0,0,1,-1, 0, 0],[0,0,0,0,0,0,1,-1]]))
