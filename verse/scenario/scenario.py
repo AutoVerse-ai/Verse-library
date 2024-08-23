@@ -46,7 +46,7 @@ class ScenarioConfig:
     print_level: int = 1
     """Adjust print_level from 0 - 2 to print different information."""
     pca: bool = True
-    """If true, uses the PCA algorithm to generate the starsets, otherwise, uses DryVR and rectangular overapproximations"""
+    """If true, uses the PCA algorithm to generate the starsets, otherwise, uses DryVR and rectangular over-approximations"""
 
 
 class Scenario:

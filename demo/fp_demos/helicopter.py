@@ -18,7 +18,11 @@ from verse.plotter.plotter3D_new import *
 import plotly.graph_objects as go
 
 from verse.utils.fixed_points import *
-### full disclosure, structure of file from mp4_p2
+
+from verse.stars.starset import *
+
+from verse.sensor.base_sensor_stars import *
+from verse.analysis.verifier import ReachabilityMethod
 
 class HelicopterAgent(BaseAgent):
     def __init__(
@@ -133,23 +137,53 @@ if __name__ == "__main__":
     input_code_name = os.path.join(script_dir, "helicopter.py")
     helicopter = HelicopterAgent('Helicopter', file_name=input_code_name)
 
-    scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False))
+    # toggle b/t postcont algs using pca parameter
+    scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False, pca=False))
 
-    scenario.add_agent(helicopter) ### need to add breakpoint around here to check decision_logic of agents
-    init_h = [[10 for _ in range(28)],[11 for _ in range(28)]]
-    # # -----------------------------------------
+    # scenario.add_agent(helicopter) ### need to add breakpoint around here to check decision_logic of agents
+    # init_h = [[10 for _ in range(28)],[11 for _ in range(28)]]
+    # # # -----------------------------------------
 
-    scenario.set_init_single(
-        'Helicopter', init_h, (HelicopterMode.Normal,)
+    # scenario.set_init_single(
+    #     'Helicopter', init_h, (HelicopterMode.Normal,)
+    # )
+
+    # trace = scenario.verify(20, 0.01)
+
+    basis = np.diag([0.5 for _ in range(28)])
+    center = np.array([10.5 for _ in range(28)])
+    C = []
+    ### this loop generates a zonotope predicate, i.e., each alpha gets [-1, 1] range 
+    for i in range(28): ### there' probably a faster way to do this, possibly using a lambda function
+        col_i = []
+        for j in range(28*2):
+            if i*2==j:
+                col_i.append(1)
+            elif i*2+1==j:
+                col_i.append(-1)
+            else:
+                col_i.append(0)
+        C.append(col_i)
+    C = np.transpose(np.array(C))
+    g = np.ones(56)
+
+    helicopter.set_initial(
+        StarSet(center, basis, C, g)
+        , (HelicopterMode.Normal,)
     )
 
-    trace = scenario.verify(20, 0.01)
+    scenario.add_agent(helicopter)
 
-    wrap_to_pi(5)
+    scenario.config.reachability_method = ReachabilityMethod.STAR_SETS
+    scenario.set_sensor(BaseStarSensor())
+
+    scenario.verify(20, 0.01) # takes several minutes to find a single star set -- guessing fitting taking too long given the number of dimensions (28)
+    # orders of magnitude worse than overapprox with rectangles and do dryvr
+    
     # is false, should be false
-    print(f'Fixed points exists? {fixed_points_fix(trace, 20, 0.01)}')
+    # print(f'Fixed points exists? {fixed_points_fix(trace, 20, 0.01)}')
 
-    fig = go.Figure()
-    fig = reachtube_tree(trace, None, fig, 6, 7, [6, 7], "fill", "trace")
-    # fig = simulation_tree(trace, None, fig, 1, 2, [1, 2], "fill", "trace")
-    fig.show()
+    # fig = go.Figure()
+    # fig = reachtube_tree(trace, None, fig, 6, 7, [6, 7], "fill", "trace")
+    # # fig = simulation_tree(trace, None, fig, 1, 2, [1, 2], "fill", "trace")
+    # fig.show()

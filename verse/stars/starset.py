@@ -700,7 +700,8 @@ def gen_starset(points: np.ndarray, old_star: StarSet) -> StarSet:
     return post_cont_pca(old_star, derived_basis, points)
 
 ### doing post_computations using simulation then constructing star sets around each set of points afterwards -- not iterative
-def gen_starsets_post_sim(old_star: StarSet, sim: Callable, T: float = 7, ts: float = 0.05, N: int = 100, no_init: bool = False, mode_label: int = None) -> List[StarSet]:
+### modified N from 100 to 30 for helicopter scenario
+def gen_starsets_post_sim(old_star: StarSet, sim: Callable, T: float = 7, ts: float = 0.05, N: int = 30, no_init: bool = False, mode_label: int = None) -> List[StarSet]:
     points = np.array(sample_star(old_star, N))
     post_points = []
     if no_init: 
