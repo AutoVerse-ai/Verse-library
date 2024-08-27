@@ -1,4 +1,4 @@
-# A first look at Verse
+# A First Look at Verse
 
 This is an introduction to creating scenarios in Verse. An interactive tutorial with more details are in [this Jupyter notebook](https://github.com/AutoVerse-ai/Verse-library/blob/main/tutorial/tutorial.ipynb).
 
