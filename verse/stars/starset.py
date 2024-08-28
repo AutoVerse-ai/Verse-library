@@ -702,13 +702,13 @@ def gen_starset(points: np.ndarray, old_star: StarSet) -> StarSet:
     
     return post_cont_pca(old_star, derived_basis, points)
 
-def starset_loss(old_star: StarSet, derived_basis: np.ndarray, points: np.ndarray, mu: float) -> float:
+def starset_loss(C: np.ndarray, g: np.ndarray, derived_basis: np.ndarray, points: np.ndarray, mu: float) -> float:
     output = mu
     x_0 = np.mean(points, axis=0) # this should be a parameter to optimze in the future but hold it here for now
     V_m1 = np.linalg.inv(derived_basis) # derived_basis assumed to be invertible, may not necessarily be true right now
     for point in points:
-        contain = old_star.C@V_m1@(point-x_0)-mu*old_star.g ### kxm mxm nx1 - kx1 = kx1, should work so long as m=n which is the case if doing by PCA
-        output += np.linalg.norm(jax.nn.relu(contain), ord=np.inf) ### unsure if l inf norm or any norm is the correct approach
+        contain = C@V_m1@(point-x_0)-mu*g ### kxm mxm nx1 - kx1 = kx1, should work so long as m=n which is the case if doing by PCA
+        output += jax.numpy.linalg.norm(jax.nn.relu(contain), ord=np.inf) ### unsure if l inf norm or any norm is the correct approach
     return output
 
 def gen_starset_grad(points: np.ndarray, old_star: StarSet) -> StarSet:
@@ -718,14 +718,14 @@ def gen_starset_grad(points: np.ndarray, old_star: StarSet) -> StarSet:
     scale = np.sqrt(pca.explained_variance_)
     derived_basis = (pca.components_.T @ np.diag(scale)).T # scaling each component by sqrt of dimension
     
-    grad = jax.grad(starset_loss) # following Yangge's example
-    mu = 1
+    grad = jax.grad(starset_loss, argnums=4) # following Yangge's example
+    mu = 1.0
     lr = 0.01 # assuming this is a hyperparameter for adjustment rate
     for i in range(100):
-        loss = starset_loss(old_star, derived_basis, points, mu)
-        grads = grad(old_star, derived_basis, points, mu)
+        loss = starset_loss(old_star.C, old_star.g, derived_basis, points, mu)
+        grads = grad(old_star.C, old_star.g, derived_basis, points, mu)
         mu = mu - lr*grads ### does this work? apparently I should change grad to specify an argnum=3, but unsure if this is correct
-
+    print(mu)
     return StarSet(new_center, derived_basis, old_star.C, mu*old_star.g)
 
 ### doing post_computations using simulation then constructing star sets around each set of points afterwards -- not iterative

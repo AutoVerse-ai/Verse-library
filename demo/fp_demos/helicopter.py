@@ -138,7 +138,7 @@ if __name__ == "__main__":
     helicopter = HelicopterAgent('Helicopter', file_name=input_code_name)
 
     # toggle b/t postcont algs using pca parameter
-    scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False, pca=False))
+    scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False, pca=True))
 
     # scenario.add_agent(helicopter) ### need to add breakpoint around here to check decision_logic of agents
     # init_h = [[10 for _ in range(28)],[11 for _ in range(28)]]
