@@ -13,6 +13,7 @@ from typing_extensions import List, Callable
 
 from verse.analysis.dryvr import calc_bloated_tube
 
+import jax
 class StarSet:
     """
     StarSet
@@ -700,6 +701,15 @@ def gen_starset(points: np.ndarray, old_star: StarSet) -> StarSet:
     derived_basis = (pca.components_.T @ np.diag(scale)).T # scaling each component by sqrt of dimension
     
     return post_cont_pca(old_star, derived_basis, points)
+
+def starset_loss(old_star: StarSet, derived_basis: np.ndarray, points: np.ndarray, mu: float) -> float:
+    output = mu
+    x_0 = np.mean(points, axis=0) # this should be a parameter to optimze in the future but hold it here for now
+    V_m1 = np.linalg.inv(derived_basis) # derived_basis assumed to be invertible, may not necessarily be true right now
+    for point in points:
+        contain = old_star.C@V_m1@(point-x_0)-mu*old_star.g
+        output += np.linalg.norm(jax.nn.relu(contain), ord=np.inf)
+    return output
 
 ### doing post_computations using simulation then constructing star sets around each set of points afterwards -- not iterative
 ### modified N from 100 to 30 for helicopter scenario
