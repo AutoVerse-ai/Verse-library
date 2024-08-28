@@ -707,9 +707,26 @@ def starset_loss(old_star: StarSet, derived_basis: np.ndarray, points: np.ndarra
     x_0 = np.mean(points, axis=0) # this should be a parameter to optimze in the future but hold it here for now
     V_m1 = np.linalg.inv(derived_basis) # derived_basis assumed to be invertible, may not necessarily be true right now
     for point in points:
-        contain = old_star.C@V_m1@(point-x_0)-mu*old_star.g
-        output += np.linalg.norm(jax.nn.relu(contain), ord=np.inf)
+        contain = old_star.C@V_m1@(point-x_0)-mu*old_star.g ### kxm mxm nx1 - kx1 = kx1, should work so long as m=n which is the case if doing by PCA
+        output += np.linalg.norm(jax.nn.relu(contain), ord=np.inf) ### unsure if l inf norm or any norm is the correct approach
     return output
+
+def gen_starset_grad(points: np.ndarray, old_star: StarSet) -> StarSet:
+    new_center = np.mean(points, axis=0) # probably won't be used, delete if unused in final product
+    pca: PCA = PCA(n_components=points.shape[1])
+    pca.fit(points)
+    scale = np.sqrt(pca.explained_variance_)
+    derived_basis = (pca.components_.T @ np.diag(scale)).T # scaling each component by sqrt of dimension
+    
+    grad = jax.grad(starset_loss) # following Yangge's example
+    mu = 1
+    lr = 0.01 # assuming this is a hyperparameter for adjustment rate
+    for i in range(100):
+        loss = starset_loss(old_star, derived_basis, points, mu)
+        grads = grad(old_star, derived_basis, points, mu)
+        mu = mu - lr*grads ### does this work? apparently I should change grad to specify an argnum=3, but unsure if this is correct
+
+    return StarSet(new_center, derived_basis, old_star.C, mu*old_star.g)
 
 ### doing post_computations using simulation then constructing star sets around each set of points afterwards -- not iterative
 ### modified N from 100 to 30 for helicopter scenario
@@ -726,7 +743,8 @@ def gen_starsets_post_sim(old_star: StarSet, sim: Callable, T: float = 7, ts: fl
     post_points = np.array(post_points)
     stars: List[StarSet] = []
     for t in range(post_points.shape[1]): # pp has shape N x (T/dt) x (n + 1), so index using first 
-        stars.append(gen_starset(post_points[:, t, 1:], old_star)) ### something is up with this 
+        # stars.append(gen_starset(post_points[:, t, 1:], old_star)) 
+        stars.append(gen_starset_grad(post_points[:, t, 1:], old_star)) ### testing out new algorithm here, could also do so in startests if I remember 
     return stars
 
 ### doing sim and post_cont iteratively to construct new starsets and get new points from them every ts

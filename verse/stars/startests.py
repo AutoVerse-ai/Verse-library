@@ -45,8 +45,8 @@ def sim_simple(vec, t):
 def dynamic_test(vec, t):
     x, y = t # hack to access right variable, not sure how integrate, ode are supposed to work
     ### vanderpol
-    # x_dot = y
-    # y_dot = (1 - x**2) * y - x
+    x_dot = y
+    y_dot = (1 - x**2) * y - x
 
     ### cardiac cell
     # x_dot = -0.9*x*x-x*x*x-0.9*x-y+1
@@ -61,8 +61,8 @@ def dynamic_test(vec, t):
     # y_dot = 1.5*x-x**2*y
 
     ### bucking col -- change center to around -0.5 and keep basis size low
-    x_dot = y
-    y_dot = 2*x-x*x*x-0.2*y+0.1
+    # x_dot = y
+    # y_dot = 2*x-x*x*x-0.2*y+0.1
     return [x_dot, y_dot]
 
 ### TO-DO: add another dynamic function(s) to test out dynamics with more than 2 dimension
@@ -139,14 +139,14 @@ def sim(vec, t):
 #basis_rot = np.array([[0.707,0.707],[-0.707,0.707]])
 
 
-test = StarSet(center,basis, C, g)
-basis = np.array([[1.0, 0.0], [0.0, 1.0]])
-center = np.array([3.0,3.0])
-C = np.transpose(np.array([[1,-1,0,0],[0,0,1,-1]]))
-g = np.array([1,1,1,1])
-test1 = StarSet(center,basis, C, g)
-test_transformed = test1.post_cont(sim_simple, 1)
-test_transformed2 = test1.post_cont(sim_ugly, 1)
+# test = StarSet(center,basis, C, g)
+# basis = np.array([[1.0, 0.0], [0.0, 1.0]])
+# center = np.array([3.0,3.0])
+# C = np.transpose(np.array([[1,-1,0,0],[0,0,1,-1]]))
+# g = np.array([1,1,1,1])
+# test1 = StarSet(center,basis, C, g)
+# test_transformed = test1.post_cont(sim_simple, 1)
+# test_transformed2 = test1.post_cont(sim_ugly, 1)
 
 ### my tests
 
@@ -178,13 +178,13 @@ test_transformed2 = test1.post_cont(sim_ugly, 1)
 # # sim_star_vis(test_nrect, sim_test, T=1)
 # gen_starsets_post_sim_vis_nonit(test_nrect, sim_test, 7) ### may need to modify get verts 
 
-basis = np.array([[3, 1/3, -1], [3, -1/4, 0], [3, 0, 1]]) * np.diag([0.1, 0.1, 0.1])
-center = np.array([1, 1, 1])
-C = np.transpose(np.array([[1,-1,0,0,0,0],[0,0,1,-1,0,0], [0,0,0,0,1,-1]]))
-g = np.ones(6)
-test_3d = StarSet(center, basis, C, g)
-# plot_stars([test_3d])
-new_stars = gen_starsets_post_sim_vis_nonit_nd(test_3d, sim_test_3d)
+# basis = np.array([[3, 1/3, -1], [3, -1/4, 0], [3, 0, 1]]) * np.diag([0.1, 0.1, 0.1])
+# center = np.array([1, 1, 1])
+# C = np.transpose(np.array([[1,-1,0,0,0,0],[0,0,1,-1,0,0], [0,0,0,0,1,-1]]))
+# g = np.ones(6)
+# test_3d = StarSet(center, basis, C, g)
+# # plot_stars([test_3d])
+# new_stars = gen_starsets_post_sim_vis_nonit_nd(test_3d, sim_test_3d)
 
 # points = np.array(sample_star(test_nrect, 100))
 
@@ -221,163 +221,3 @@ new_stars = gen_starsets_post_sim_vis_nonit_nd(test_3d, sim_test_3d)
 # plt.scatter(post_points[:, 0], post_points[:, 1])
 # plt.scatter(points[:, 0], points[:, 1])
 # plot_stars([post_test, unbloated_test, test_nrect])
-
-
-exit()
-
-
-# rect_nrect = StarSet.rect_to_star(*test_nrect.overapprox_rectangle()) ### note to self, never use overapprox_rectangles(), at least not for this purpose
-# print(rect_nrect.basis, rect_nrect.center, rect_nrect.C, rect_nrect.g)
-
-# plot_stars([test_nrect, StarSet.rect_to_star(*test_nrect.overapprox_rectangle())])
-
-print(test1.overapprox_rectangles())
-
-print(test_transformed.overapprox_rectangles())
-
-print(test_transformed2.overapprox_rectangles())
-
-plot_stars([test1, test_transformed])
-plot_stars([test1, test_transformed2])
-test1.show()
-print('__________')
-test_transformed.show()
-print('__________')
-test_transformed2.show()
-print('__________')
-
-basis = np.array([[1, 0], [0, 1]])
-center = np.array([0,0])
-C = np.transpose(np.array([[1,-1,0,0],[0,0,1,-1]]))
-g = np.array([4,-2,4,-2])
-test2 = StarSet(center,basis, C, g)
-#plot_star(test)
-test_transformed = test2.post_cont(sim_simple, 1)
-test_transformed2 = test2.post_cont(sim_ugly, 1)
-
-print(test2.overapprox_rectangles())
-
-print(test_transformed.overapprox_rectangles())
-
-print(test_transformed2.overapprox_rectangles())
-
-
-plot_stars([test2, test_transformed])
-plot_stars([test_transformed2])
-test1.show()
-print('__________')
-test_transformed.show()
-print('__________')
-test_transformed2.show()
-#plot_star(test)
-
-exit()
-basis = np.array([[3, 1/3], [3, -1/4]])
-center = np.array([9,1])
-C = np.transpose(np.array([[1,-1,0,0],[0,0,1,-1]]))
-g = np.array([1,1,1,1])
-test1post = StarSet(center,basis, C, g)
-plot_stars([test1, test1post])
-
-
-basis = np.array([[1, 0], [0, 1]])
-center = np.array([3.7,3.7])
-C = np.transpose(np.array([[1,-1,0,0],[0,0,1,-1]]))
-g = np.array([1,1,1,1])
-test1post = StarSet(center,basis, C, g)
-plot_stars([test1, test1post])
-
-
-#test = StarSet(center,basis, C, g)
-#basis = np.array([[1, 0], [0, 1]])
-#center = np.array([3,3])
-#C = np.transpose(np.array([[1,-1,0,0],[0,0,1,-1]]))
-#g = np.array([1,1,1,1])
-#test1lin = StarSet(center,basis, C, g)
-#plot_stars([test1, test1lin])
-
-basis = np.array([[0, 0], [0, 0]])
-center = np.array([0,0])
-C = np.transpose(np.array([[1,-1,0,0],[0,0,1,-1]]))
-g = np.array([4,-2,4,-2])
-test2post = StarSet(center,basis, C, g)
-plot_stars([test2, test2post])
-
-basis = np.array([[1, 0], [0, 1]])
-center = np.array([0.7,0.7])
-C = np.transpose(np.array([[1,-1,0,0],[0,0,1,-1]]))
-g = np.array([4,-2,4,-2])
-test2post = StarSet(center,basis, C, g)
-plot_stars([test2, test2post])
-
-
-#print(test.get_max_min(1))
-
-exit()
-
-test.contains_point(np.array([3,2]))
-print("done with contains test")
-exit()
-test.plot()
-
-
-test.is_empty()
-print("orig")
-test.show()
-
-print(test.satisfies(np.array([1,0]), -2))
-print(test.satisfies(np.array([1,0]), 10))
-
-print("test star set after")
-test.show()
-
-test.intersection_halfspace(np.array([5,5]), 3)
-print("add single const")
-test.show()
-print("add multiple constr")
-test.intersection_poly(np.array([[8,8],[9,9]]), np.array([4,5]))
-test.show()
-
-#print("results!")
-
-#print(test.contains_point(np.array([1,0])))
-#print(test.contains_point(np.array([3,3])))
-#print(test.contains_point(np.array([2,2])))
-#print(test.contains_point(np.array([4,2])))
-#print(test.contains_point(np.array([4,1])))
-
-
-new_test = test.post_cont(sim, 1)
-new_test.show()
-
-
-print("from poly test")
-new_star = StarSet.from_poly(np.array([[8,8],[9,9]]), np.array([4,5]))
-new_star.show()
-
-
-#print("to poly test")
-polystar = StarSet(center, basis,C, g)
-#mat, rhs = polystar.to_poly()
-#print(mat)
-#print(rhs)
-#print(np.matmul(mat, [3,3]))
-
-#print(polystar.satisfies(np.array([[1,1]]),np.array([7])))
-
-#print("verts test")
-#print(StarSet.get_verts(polystar))
-
-#new = test.superposition([2], [[4]])
-#new.show()
-
-#new = new.superposition([2], [[5,6]])
-
-#test_half = HalfSpace(np.array([1,1]), 2)
-
-#foo = np.array([3,3])
-#bar = 
-#test_star = StarSet(np.array([3,3]), np.array([[0,5],[0,5]]), C, g)
-
-#result = test_star.intersection_halfspace(test_half)
-#result.show()
