@@ -722,7 +722,6 @@ def gen_starset_grad(points: np.ndarray, old_star: StarSet) -> StarSet:
     mu = 1.0
     lr = 0.01 # assuming this is a hyperparameter for adjustment rate
     for i in range(100):
-        loss = starset_loss(old_star.C, old_star.g, derived_basis, points, mu)
         grads = grad(old_star.C, old_star.g, derived_basis, points, mu)
         mu = mu - lr*grads ### does this work? apparently I should change grad to specify an argnum=3, but unsure if this is correct
     print(mu)
