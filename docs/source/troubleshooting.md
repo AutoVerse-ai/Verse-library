@@ -29,8 +29,23 @@ It is also highly recommended not to use else/elif statements.
 
 If something is not supported, the parser will usually throw a "Not Supported" error message
 
+In terms of formatting, you may nest if statements as follows:
+
+```python
+
+if ego.craft_mode == CraftMode.Normal:
+    if .... :
+        next.craft_mode == ....
+    if ....:
+        next.craft_mode ==....
+
+
+```
+
 
 ## Resolving Infinite Loops
+
+At each timestep, each if statement will be checked. all if conditions marked as true will be evaluated. 
 
 Take this decision logic snippet:
 
@@ -59,7 +74,7 @@ if ego.craft_mode == CraftMode.Up:
 ```
 
 
-In this example, we can clearly see a cycle. Think about how the program will run line by line.  When the craft mode is "Normal", it will transition to "Up" due to the 1st if statement. Then in the next timestep, the craft will transition to "Normal" due to the 2nd if condition. In the next timestep, the craft will transition to "Up" again due to the 1st if statement. Avoid situations where a mode transition can occur too soon. This includes "self-loops" where a mode transitions to itself.
+In this example, we can clearly see a cycle. Think about how the program will run timestep by timestep. When the craft mode is "Normal", it will transition to "Up" due to the 1st if statement. Then in the next timestep, the craft will transition to "Normal" due to the 2nd if condition. In the next timestep, the craft will transition to "Up" again due to the 1st if statement. Avoid situations where a mode transition can occur too soon. This includes "self-loops" where a mode transitions to itself.
 <br/><br/>
 
 To fix this problem, make the transition condition more specific:
@@ -77,6 +92,24 @@ if ego.craft_mode == CraftMode.Up and ego.z > 50:
 
 In this scenario, let's assume that z is a state variable that is increasing in the "Up" tactical mode. Now, the transition condition for the first branch (z <= 50) does not overlap with the second branch (z > 50). There is no longer any chance of a cycle occuring.
 
+Another example:
+```python
+
+if ego.z <= 50:
+    next.craft_mode == CraftMode.Up
+
+```
+
+In this case, this if statement will be evaluated consecutively between timesteps as long as ego.z <= 50. 
+
+Again, make the transition condition more specific:
+
+```python
+
+if ego.craft_mode == CraftMode.Normal and ego.z <= 50:
+    next.craft_mode == CraftMode.Up
+
+```
 
 ## Other Issues
 
