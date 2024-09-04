@@ -21,8 +21,10 @@ Verse's parser only supports the following:
 This means that the following are *not* supported (don't even try it):
 - print statements
 - numpy functions
-- else/elif statements
 - loops (except any and all statements)
+
+It is also highly recommended not to use else/elif statements.
+
 
 
 If something is not supported, the parser will usually throw a "Not Supported" error message
@@ -57,7 +59,7 @@ if ego.craft_mode == CraftMode.Up:
 ```
 
 
-In this example, we can clearly see a cycle. The mode will transition to "Up", then immediately transition to "Normal", then "Up" again. Avoid situations where a mode transition can occur too soon.
+In this example, we can clearly see a cycle. Think about how the program will run line by line.  When the craft mode is "Normal", it will transition to "Up" due to the 1st if statement. Then in the next timestep, the craft will transition to "Normal" due to the 2nd if condition. In the next timestep, the craft will transition to "Up" again due to the 1st if statement. Avoid situations where a mode transition can occur too soon. This includes "self-loops" where a mode transitions to itself.
 <br/><br/>
 
 To fix this problem, make the transition condition more specific:
