@@ -111,6 +111,23 @@ if ego.craft_mode == CraftMode.Normal and ego.z <= 50:
 
 ```
 
+if you are still having an infinite loop consider this example:
+
+![](figs/vehicle1.png)
+
+The vehicle is in normal mode and is moving to the left. If it passes the red boundary, it will transition. If it passes the blue boundary, it will transition to the original mode.
+
+![](figs/rect1.png)
+
+Verse over-approximates the reachable set for the car as a rectangle. 
+
+![](figs/rect2.png)
+
+If this rectangle is too big, it may cross both boundaries at the same time. As you can probably imagine, if both conditions are met at the same time, then there may be a loop since VERSE will try to run both transitions at the same time.
+
+If you do not see a cycle in your logic and there is still an infinite loop, you may need to make the transition conditions further apart or restructure the logic. 
+
+
 ## Other Issues
 
 ### The lower bounds in the initial conditions should always be lower than the upper bounds.
