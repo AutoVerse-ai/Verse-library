@@ -52,6 +52,7 @@ class SimpleNN(nn.Module):
         super(SimpleNN, self).__init__()
         self.fc1 = nn.Linear(input_size, hidden_size)
         self.fc2 = nn.Linear(hidden_size, hidden_size)
+        # self.fc4 = nn.Linear(hidden_size, hidden_size)
         self.fc3 = nn.Linear(hidden_size, output_size)
         self.relu = nn.ReLU()
 
@@ -59,6 +60,8 @@ class SimpleNN(nn.Module):
         x = self.fc1(x)
         x = self.relu(x)
         x = self.fc2(x)
+        # x = self.relu(x)
+        # x = self.fc4(x)
         x = self.relu(x)
         x = self.fc3(x)
         x = self.relu(x)
@@ -66,21 +69,20 @@ class SimpleNN(nn.Module):
         return x
 
 input_size = 1     # Number of input features -- this should change to reflect dimensions of starset 
-hidden_size = 25     # Number of neurons in the hidden layers -- this may change, I know NeuReach has this at default 64
+hidden_size = 64     # Number of neurons in the hidden layers -- this may change, I know NeuReach has this at default 64
 output_size = 1     # Number of output neurons -- this should stay 1 until nn outputs V instead of mu, whereupon it should reflect dimensions of starset
 
 model = SimpleNN(input_size, hidden_size, output_size)
 
-criterion = nn.MSELoss() # this eventually needs to change
-
 # Use SGD as the optimizer
-optimizer = optim.SGD(model.parameters(), lr=0.01)
+optimizer = optim.Adam(model.parameters(), lr=0.01, weight_decay=1e-5)
+scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
 
-num_epochs = 10 # sample number of epoch -- can play with this/set this as a hyperparameter
-num_samples = 25 # number of samples per time step
+num_epochs = 50 # sample number of epoch -- can play with this/set this as a hyperparameter
+num_samples = 50 # number of samples per time step
 
 T = 7
-ts = 0.01
+ts = 0.1
 
 C = np.transpose(np.array([[1,-1,0,0],[0,0,1,-1]]))
 g = np.array([1,1,1,1])
@@ -111,8 +113,8 @@ for epoch in range(num_epochs):
     
     bases = [] # now grab V_t 
     centers = [] ### eventually this should be a NN output too
-    for t in times: 
-        points = post_points[:, int(t), 1:]
+    for i in range(len(times)):
+        points = post_points[:, i, 1:]
         new_center = np.mean(points, axis=0) # probably won't be used, delete if unused in final product
         pca: PCA = PCA(n_components=points.shape[1])
         pca.fit(points)
@@ -125,25 +127,28 @@ for epoch in range(num_epochs):
     post_points = torch.tensor(post_points)
     ### for now, don't worry about batch training, just do single input, makes more sense to me to think of loss function like this
     ### I would really like to be able to do batch training though, figure out a way to make it work
-    for t in times:
+    for i in range(len(times)):
         # Forward pass
-        t = torch.tensor([t], dtype=torch.float32)
+        t = torch.tensor([times[i]], dtype=torch.float32)
         mu = model(t)
         
         # Compute the loss
-        t = int(t)
-        cont = lambda p, t: torch.linalg.vector_norm(torch.relu(C@torch.linalg.inv(bases[t])@(p-centers[t])-mu*g))
-        loss = mu + torch.sum(torch.stack([cont(point, t) for point in post_points[:, t, 1:]]))
+        cont = lambda p, i: torch.linalg.vector_norm(torch.relu(C@torch.linalg.inv(bases[i])@(p-centers[i])-mu*g))
+        loss = mu + torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))
 
         # Backward pass and optimize
         # pretty sure I'll need to modify this if I'm not doing batch training 
         # will just putting optimizer on the earlier for loop help?
-        torch.autograd.set_detect_anomaly(True)
         loss.backward()
+        if i==50:
+            print(model.fc1.weight.grad, model.fc1.bias.grad)
         optimizer.step()
-    
+        
+        print(f'Loss: {loss.item()}, mu: {mu.item()}, t: {t}')
+
+    scheduler.step()
     # Print loss periodically
-    print(f'Loss: {loss.item():.4f}')
+    # print(f'Loss: {loss.item():.4f}')
     if (epoch + 1) % 100 == 0:
         print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {loss.item():.4f}')
 
@@ -154,10 +159,6 @@ for epoch in range(num_epochs):
 
 model.eval()
 
-print(model(torch.tensor([5], dtype=torch.float32)))
-# with torch.no_grad():
-#     test_outputs = model(test_inputs)
-#     test_loss = criterion(test_outputs, test_lables)
-
-# print(f'Test Loss: {test_loss.item()}')
-# print(test_lables, test_outputs, test_inputs, inputs)
+test_times = torch.arange(0, T, ts)
+test = torch.reshape(test_times, (len(test_times), 1))
+print(model(test), test)
