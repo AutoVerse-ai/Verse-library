@@ -45,7 +45,7 @@ if ego.craft_mode == CraftMode.Normal:
 
 ## Resolving Infinite Loops
 
-At each timestep, each if statement will be checked. all if conditions marked as true will be evaluated. 
+At each timestep, each if statement will be checked. All if conditions marked as true will be evaluated. 
 
 Take this decision logic snippet:
 
@@ -100,7 +100,7 @@ if ego.z <= 50:
 
 ```
 
-In this case, this if statement will be evaluated consecutively between timesteps as long as ego.z <= 50. 
+In this case, this if statement will be evaluated consecutively between timesteps as long as ego.z <= 50. Verse will keep trying a transition to "Up" and will appear like an infinite loop.
 
 Again, make the transition condition more specific:
 
