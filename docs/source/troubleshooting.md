@@ -41,6 +41,21 @@ if ego.craft_mode == CraftMode.Normal:
 
 
 ```
+## Interpreting the Console Output
+
+Remember that Verse builds a tree of nodes everytime a mode transition needs to happen.
+
+Whenever a transition is evaluated, a console message will appear.
+
+![](figs/console.png)
+
+The node number is the id of the node in order of when it was first added to the processing queue.
+
+The "start:" indicates the time that this transition occured. If this number is not changing, then an infinite loop has occured.
+
+On the next line, it will display each agent and the mode of that agent after the transition.
+
+Ignore the array of numbers
 
 
 ## Resolving Infinite Loops
