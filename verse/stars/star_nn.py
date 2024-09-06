@@ -55,6 +55,7 @@ class SimpleNN(nn.Module):
         # self.fc4 = nn.Linear(hidden_size, hidden_size)
         self.fc3 = nn.Linear(hidden_size, output_size)
         self.relu = nn.ReLU()
+        self.tanh = nn.Tanh()
 
     def forward(self, x):
         x = self.fc1(x)
@@ -64,13 +65,19 @@ class SimpleNN(nn.Module):
         # x = self.fc4(x)
         x = self.relu(x)
         x = self.fc3(x)
-        x = self.relu(x)
-        
+        # x = self.relu(x)
+
         return x
+
+C = np.transpose(np.array([[1,-1,0,0],[0,0,1,-1]]))
+g = np.array([1,1,1,1])
+basis = np.array([[1, 0], [0, 1]]) * np.diag([0.1, 0.1])
+center = np.array([1.40,2.30])
 
 input_size = 1     # Number of input features -- this should change to reflect dimensions of starset 
 hidden_size = 64     # Number of neurons in the hidden layers -- this may change, I know NeuReach has this at default 64
 output_size = 1     # Number of output neurons -- this should stay 1 until nn outputs V instead of mu, whereupon it should reflect dimensions of starset
+output_size = g.shape[0]
 
 model = SimpleNN(input_size, hidden_size, output_size)
 
@@ -84,13 +91,8 @@ num_samples = 50 # number of samples per time step
 T = 7
 ts = 0.1
 
-C = np.transpose(np.array([[1,-1,0,0],[0,0,1,-1]]))
-g = np.array([1,1,1,1])
-basis = np.array([[1, 0], [0, 1]]) * np.diag([0.01, 0.01])
-center = np.array([1.40,2.30])
 initial_star = StarSet(center, basis, C, g)
 # Toy Function to learn: x^2+20
-to_learn = lambda x : x**2+20
 
 inputs = torch.randn(50, 1)  # 50 inputes to lear
 labels = inputs * inputs + 20 # apply_ is inplace which I don't want, just use torch multiplication
@@ -98,7 +100,7 @@ labels = inputs * inputs + 20 # apply_ is inplace which I don't want, just use t
 times = np.arange(0, T+ts, ts) # times to supply, right now this is fixed while S_t is random. can consider making this random as well
 
 C = torch.tensor(C, dtype=torch.double)
-g = torch.tensor(g, dtype=torch.double)
+g = torch.tensor(g, dtype=torch.float)
 lam = 100
 # Training loop
 for epoch in range(num_epochs):
@@ -119,10 +121,15 @@ for epoch in range(num_epochs):
         pca: PCA = PCA(n_components=points.shape[1])
         pca.fit(points)
         scale = np.sqrt(pca.explained_variance_)
+        # print(pca.components_.T, "...", scale, '\n _______ \n')
         derived_basis = (pca.components_.T @ np.diag(scale)).T # scaling each component by sqrt of dimension
-        
+        # derived_basis = (pca.components_) # scaling each component by sqrt of dimension
+        # print(derived_basis, '\n______\n')
+        # if np.linalg.norm(derived_basis[1])<=0.00001:
+        #      print("P:",points)
         bases.append(torch.tensor(derived_basis))
         centers.append(torch.tensor(new_center))
+    # print(bases, centers)
 
     post_points = torch.tensor(post_points)
     ### for now, don't worry about batch training, just do single input, makes more sense to me to think of loss function like this
@@ -133,24 +140,27 @@ for epoch in range(num_epochs):
         mu = model(t)
         
         # Compute the loss
-        cont = lambda p, i: torch.linalg.vector_norm(torch.relu(C@torch.linalg.inv(bases[i])@(p-centers[i])-mu*g))
-        loss = mu + torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))
+        cont = lambda p, i: torch.linalg.vector_norm(torch.relu(C@torch.linalg.inv(bases[i])@(p-centers[i])-torch.diag(mu)@g))
+        # loss = 10*mu + torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))
+        loss = 25*torch.linalg.vector_norm(mu) + torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))
 
+        if i==len(times)-1 and epoch % 5==2:
+            f = 1
         # Backward pass and optimize
         # pretty sure I'll need to modify this if I'm not doing batch training 
         # will just putting optimizer on the earlier for loop help?
         loss.backward()
-        if i==50:
-            print(model.fc1.weight.grad, model.fc1.bias.grad)
+        # if i==50:
+        #     print(model.fc1.weight.grad, model.fc1.bias.grad)
         optimizer.step()
         
-        print(f'Loss: {loss.item()}, mu: {mu.item()}, t: {t}')
+        print(f'Loss: {loss.item()}, mu: {mu}, t: {t}')
 
     scheduler.step()
     # Print loss periodically
     # print(f'Loss: {loss.item():.4f}')
-    if (epoch + 1) % 100 == 0:
-        print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {loss.item():.4f}')
+    # if (epoch + 1) % 100 == 0:
+    #     print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {loss.item():.4f}')
 
 
 # test the new model
@@ -159,6 +169,35 @@ for epoch in range(num_epochs):
 
 model.eval()
 
-test_times = torch.arange(0, T, ts)
+S_0 = sample_star(initial_star, num_samples) ### this is critical step -- this needs to be recomputed per training step
+post_points = []
+for point in S_0:
+        post_points.append(sim_test(None, point, T, ts).tolist())
+post_points = np.array(post_points) ### this has shape N x (T/ts) x (n+1), S_t is equivalent to p_p[:, t, 1:]
+
+test_times = torch.arange(0, T+ts, ts)
 test = torch.reshape(test_times, (len(test_times), 1))
+bases = [] # now grab V_t 
+centers = [] ### eventually this should be a NN output too
+for i in range(len(times)):
+    points = post_points[:, i, 1:]
+    new_center = np.mean(points, axis=0) # probably won't be used, delete if unused in final product
+    pca: PCA = PCA(n_components=points.shape[1])
+    pca.fit(points)
+    scale = np.sqrt(pca.explained_variance_)
+    derived_basis = (pca.components_.T @ np.diag(scale)).T # scaling each component by sqrt of dimension
+    # derived_basis = (pca.components_.T ).T # scaling each component by sqrt of dimension
+
+    bases.append(torch.tensor(derived_basis))
+    centers.append(torch.tensor(new_center))
+
+stars = []
+for i in range(len(times)):
+    # stars.append(StarSet(centers[i], bases[i], C.numpy(), model(test[i]).detach().numpy()*g.numpy()))
+    stars.append(StarSet(centers[i], bases[i], C.numpy(), np.diag(model(test[i]).detach().numpy())@g.numpy()))
 print(model(test), test)
+# for b in bases:
+#      print(b)
+# plt.plot(test_times, model(test).detach().numpy())
+plot_stars_points_nonit(stars, post_points)
+plt.show()

@@ -412,8 +412,8 @@ class StarSet:
         for i in range(0, extra_dims_ct):
             zeros.append([0])
         # sample the angles from 0 to 2pi, 100 samples
+        # for angle in np.linspace(0, 2*np.pi, 100):
         for angle in np.linspace(0, 2*np.pi, 100):
-        # for angle in np.linspace(0, 2*np.pi, 1000):
             x_component = np.cos(angle)
             y_component = np.sin(angle)
             #TODO: needs to work for 3d and any dim of non-graphed state
@@ -698,8 +698,9 @@ def gen_starset(points: np.ndarray, old_star: StarSet) -> StarSet:
     pca: PCA = PCA(n_components=points.shape[1])
     pca.fit(points)
     scale = np.sqrt(pca.explained_variance_)
+    print(pca.components_.T, '...', scale, '\n_____\n', )
     derived_basis = (pca.components_.T @ np.diag(scale)).T # scaling each component by sqrt of dimension
-    
+    print(derived_basis, '\n_____\n')
     return post_cont_pca(old_star, derived_basis, points)
 
 def starset_loss(C: np.ndarray, g: np.ndarray, derived_basis: np.ndarray, points: np.ndarray, mu: float) -> float:
@@ -742,8 +743,10 @@ def gen_starsets_post_sim(old_star: StarSet, sim: Callable, T: float = 7, ts: fl
     post_points = np.array(post_points)
     stars: List[StarSet] = []
     for t in range(post_points.shape[1]): # pp has shape N x (T/dt) x (n + 1), so index using first 
-        # stars.append(gen_starset(post_points[:, t, 1:], old_star)) 
-        stars.append(gen_starset_grad(post_points[:, t, 1:], old_star)) ### testing out new algorithm here, could also do so in startests if I remember 
+        stars.append(gen_starset(post_points[:, t, 1:], old_star)) 
+        # stars.append(gen_starset_grad(post_points[:, t, 1:], old_star)) ### testing out new algorithm here, could also do so in startests if I remember 
+    for t in range(post_points.shape[1]):
+        plt.scatter(post_points[:, t, 1], post_points[:, t, 2])
     return stars
 
 ### doing sim and post_cont iteratively to construct new starsets and get new points from them every ts
