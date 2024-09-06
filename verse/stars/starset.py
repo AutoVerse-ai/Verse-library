@@ -698,9 +698,9 @@ def gen_starset(points: np.ndarray, old_star: StarSet) -> StarSet:
     pca: PCA = PCA(n_components=points.shape[1])
     pca.fit(points)
     scale = np.sqrt(pca.explained_variance_)
-    print(pca.components_.T, '...', scale, '\n_____\n', )
+    # print(pca.components_.T, '...', scale, '\n_____\n', )
     derived_basis = (pca.components_.T @ np.diag(scale)).T # scaling each component by sqrt of dimension
-    print(derived_basis, '\n_____\n')
+    # print(derived_basis, '\n_____\n')
     return post_cont_pca(old_star, derived_basis, points)
 
 def starset_loss(C: np.ndarray, g: np.ndarray, derived_basis: np.ndarray, points: np.ndarray, mu: float) -> float:

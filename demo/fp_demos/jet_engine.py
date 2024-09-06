@@ -86,7 +86,7 @@ if __name__ == "__main__":
         'JE', init_JE, (JEMode.Mode4,)
     )
 
-    trace = scenario.verify(60, 0.01)
+    trace = scenario.verify(10, 0.01)
 
     # pp_fix(reach_at_fix(trace, 0, 10))
 
