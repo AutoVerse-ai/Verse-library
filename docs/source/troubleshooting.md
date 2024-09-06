@@ -140,7 +140,7 @@ Verse over-approximates the reachable set for the car as a rectangle.
 
 If this rectangle is too big, it may cross both boundaries at the same time. As you can probably imagine, if both conditions are met at the same time, then there may be a loop since VERSE will try to run both transitions at the same time.
 
-If you do not see a cycle in your logic and there is still an infinite loop, you may need to make the transition conditions further apart or restructure the logic. 
+If you do not see a cycle in your logic and there is still an infinite loop, you may need to make the transition conditions further apart or restructure the logic. If you are doing the 484 MP, you may also use verify_refine which will not cause an infinite loop this way. However, this might take much longer.
 
 
 ## Other Issues
