@@ -77,7 +77,7 @@ center = np.array([1.40,2.30])
 input_size = 1     # Number of input features -- this should change to reflect dimensions of starset 
 hidden_size = 64     # Number of neurons in the hidden layers -- this may change, I know NeuReach has this at default 64
 output_size = 1     # Number of output neurons -- this should stay 1 until nn outputs V instead of mu, whereupon it should reflect dimensions of starset
-output_size = g.shape[0]
+# output_size = g.shape[0]
 
 model = SimpleNN(input_size, hidden_size, output_size)
 
@@ -86,7 +86,7 @@ optimizer = optim.Adam(model.parameters(), lr=0.01, weight_decay=1e-5)
 scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
 
 num_epochs = 50 # sample number of epoch -- can play with this/set this as a hyperparameter
-num_samples = 50 # number of samples per time step
+num_samples = 100 # number of samples per time step
 
 T = 7
 ts = 0.1
@@ -140,12 +140,13 @@ for epoch in range(num_epochs):
         mu = model(t)
         
         # Compute the loss
-        cont = lambda p, i: torch.linalg.vector_norm(torch.relu(C@torch.linalg.inv(bases[i])@(p-centers[i])-torch.diag(mu)@g))
-        # loss = 10*mu + torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))
-        loss = 25*torch.linalg.vector_norm(mu) + torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))
+        cont = lambda p, i: torch.linalg.vector_norm(torch.relu(C@torch.linalg.inv(bases[i])@(p-centers[i])-mu*g))
+        # cont = lambda p, i: torch.linalg.vector_norm(torch.relu(C@torch.linalg.inv(bases[i])@(p-centers[i])-torch.diag(mu)@g))
+        loss = mu + torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))/len(post_points[:,i,1:])
+        # loss = 25*torch.linalg.vector_norm(mu) + torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))
 
-        if i==len(times)-1 and epoch % 5==2:
-            f = 1
+        # if i==len(times)-1 and epoch % 5==2:
+        #     f = 1
         # Backward pass and optimize
         # pretty sure I'll need to modify this if I'm not doing batch training 
         # will just putting optimizer on the earlier for loop help?
@@ -154,7 +155,7 @@ for epoch in range(num_epochs):
         #     print(model.fc1.weight.grad, model.fc1.bias.grad)
         optimizer.step()
         
-        print(f'Loss: {loss.item()}, mu: {mu}, t: {t}')
+        print(f'Loss: {loss.item()}, mu: {mu.item()}, t: {t}')
 
     scheduler.step()
     # Print loss periodically
@@ -193,8 +194,8 @@ for i in range(len(times)):
 
 stars = []
 for i in range(len(times)):
-    # stars.append(StarSet(centers[i], bases[i], C.numpy(), model(test[i]).detach().numpy()*g.numpy()))
-    stars.append(StarSet(centers[i], bases[i], C.numpy(), np.diag(model(test[i]).detach().numpy())@g.numpy()))
+    stars.append(StarSet(centers[i], bases[i], C.numpy(), model(test[i]).detach().numpy()*g.numpy()))
+    # stars.append(StarSet(centers[i], bases[i], C.numpy(), np.diag(model(test[i]).detach().numpy())@g.numpy()))
 print(model(test), test)
 # for b in bases:
 #      print(b)
