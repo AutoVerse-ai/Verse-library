@@ -18,16 +18,17 @@ Verse's parser only supports the following:
 - "all" function
 
 
-This means that the following are *not* supported (don't even try it):
+This means that the following are *not* supported in reachability (don't even try it):
 - print statements
 - numpy functions
 - loops (except any and all statements)
 
+
 It is also highly recommended not to use else/elif statements.
 
+If something is not supported, the parser will usually throw a "Not Supported" error message.
 
-
-If something is not supported, the parser will usually throw a "Not Supported" error message
+Since simulate_simple bypasses the parser, it may be able to handle code unsuported by the parser. 
 
 In terms of formatting, you may nest if statements as follows:
 
@@ -60,7 +61,7 @@ Ignore the array of numbers
 
 ## Resolving Infinite Loops
 
-At each timestep, each if statement will be checked. All if conditions marked as true will be evaluated. 
+**At each timestep, each if statement will be checked. All if conditions marked as true will be evaluated.**
 
 Take this decision logic snippet:
 
@@ -115,7 +116,7 @@ if ego.z <= 50:
 
 ```
 
-In this case, this if statement will be evaluated consecutively between timesteps as long as ego.z <= 50. Verse will keep trying a transition to "Up" and will appear like an infinite loop.
+In this case, this if statement will be evaluated consecutively between timesteps as long as ego.z <= 50. Verse will keep trying a transition to "Up" and will appear like an infinite loop. This is because at each timestep, Verse will check all if branches to and analyze all branches that are 'true.'
 
 Again, make the transition condition more specific:
 
@@ -140,7 +141,9 @@ Verse over-approximates the reachable set for the car as a rectangle.
 
 If this rectangle is too big, it may cross both boundaries at the same time. As you can probably imagine, if both conditions are met at the same time, then there may be a loop since VERSE will try to run both transitions at the same time.
 
-If you do not see a cycle in your logic and there is still an infinite loop, you may need to make the transition conditions further apart or restructure the logic. If you are doing the 484 MP, you may also use verify_refine which will not cause an infinite loop this way. However, this might take much longer.
+If you do not see a cycle in your logic and there is still an infinite loop, you may need to make the transition conditions further apart or restructure the logic. 
+
+If you are doing the 484 MP, you may also use verify_refine which will not cause an infinite loop this way. However, this will take much longer. Verify_refine will repeatedly call verify on partitions of the initial set. It starts by partitioning into larger regions, then get progressively gets smaller if those larger partitions are unsafe or cause an infinite loop. When the initial set is partitioned into smaller regions, the rectangles/reachable set created will eventually get small enough to fit between transition regions. Please note that verify_refine will not help if there is a cycle in your logic 
 
 
 ## Other Issues
