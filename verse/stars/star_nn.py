@@ -88,9 +88,9 @@ model = PostNN(input_size, hidden_size, output_size)
 optimizer = optim.Adam(model.parameters(), lr=0.01, weight_decay=1e-5)
 scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
 
-num_epochs = 100 # sample number of epoch -- can play with this/set this as a hyperparameter
-num_samples = 50 # number of samples per time step
-lamb = 0.50
+num_epochs = 50 # sample number of epoch -- can play with this/set this as a hyperparameter
+num_samples = 100 # number of samples per time step
+lamb = 0.60
 
 T = 7
 ts = 0.1
@@ -103,13 +103,23 @@ times = torch.arange(0, T+ts, ts) # times to supply, right now this is fixed whi
 C = torch.tensor(C, dtype=torch.double)
 g = torch.tensor(g, dtype=torch.float)
 # Training loop
+S_0 = sample_star(initial_star, num_samples*10) # should eventually be a hyperparameter as the second input, 
+np.random.seed()
+
+def sample_initial(num_samples: int = num_samples) -> List[List[float]]:
+    samples = []
+    for _ in range(num_samples):
+        samples.append(S_0[np.random.randint(0, len(S_0))])
+    return samples
+
 for epoch in range(num_epochs):
     # Zero the parameter gradients
     optimizer.zero_grad()
 
-    S_0 = sample_star(initial_star, num_samples) ### this is critical step -- this needs to be recomputed per training step
+    samples = sample_initial()
+
     post_points = []
-    for point in S_0:
+    for point in samples:
             post_points.append(sim_test(None, point, T, ts).tolist())
     post_points = np.array(post_points) ### this has shape N x (T/ts) x (n+1), S_t is equivalent to p_p[:, t, 1:]
     
@@ -122,7 +132,7 @@ for epoch in range(num_epochs):
         pca.fit(points)
         scale = np.sqrt(pca.explained_variance_)
         # print(pca.components_.T, "...", scale, '\n _______ \n')
-        derived_basis = (pca.components_.T @ np.diag(scale)).T # scaling each component by sqrt of dimension
+        derived_basis = (pca.components_.T @ np.diag(scale)) # scaling each component by sqrt of dimension
         # derived_basis = (pca.components_) # scaling each component by sqrt of dimension
         # print(derived_basis, '\n______\n')
         # if np.linalg.norm(derived_basis[1])<=0.00001:
@@ -147,8 +157,8 @@ for epoch in range(num_epochs):
         loss = (1-lamb)*mu + lamb*torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))/len(post_points[:,i,1:])
         # loss = 25*torch.linalg.vector_norm(mu) + torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))
 
-        # if i==len(times)-1 and epoch % 5==2:
-        #     f = 1
+        if i==len(times)-1 and (epoch+1)%10==0:
+            f = 1
         # Backward pass and optimize
         # pretty sure I'll need to modify this if I'm not doing batch training 
         # will just putting optimizer on the earlier for loop help?
@@ -163,13 +173,13 @@ for epoch in range(num_epochs):
     # Print loss periodically
     # print(f'Loss: {loss.item():.4f}')
     if (epoch + 1) % 10 == 0:
-        print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {loss.item():.4f}, mu: {mu.item()}')
+        print(f'Epoch [{epoch + 1}/{num_epochs}] \n_____________\n')
         for i in range(len(times)):
             t = torch.tensor([times[i]], dtype=torch.float32)
             mu = model(t)
             cont = lambda p, i: torch.linalg.vector_norm(torch.relu(C@torch.linalg.inv(bases[i])@(p-centers[i])-mu*g))
             loss = (1-lamb)*mu + lamb*torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))/len(post_points[:,i,1:])
-            print(f'Loss: {loss.item():.4f}, mu: {mu.item():.4f}')
+            print(f'loss: {loss.item():.4f}, mu: {mu.item():.4f}, time: {t.item():.1f}')
 
 
 # test the new model
