@@ -706,7 +706,7 @@ def gen_starset(points: np.ndarray, old_star: StarSet) -> StarSet:
 def starset_loss(C: np.ndarray, g: np.ndarray, derived_basis: np.ndarray, points: np.ndarray, mu: float) -> float:
     output = mu
     x_0 = np.mean(points, axis=0) # this should be a parameter to optimze in the future but hold it here for now
-    V_m1 = np.linalg.inv(derived_basis) # derived_basis assumed to be invertible, may not necessarily be true right now
+    V_m1 = np.linalg.inv(derived_basis.T) # derived_basis assumed to be invertible, may not necessarily be true right now
     for point in points:
         contain = C@V_m1@(point-x_0)-mu*g ### kxm mxm nx1 - kx1 = kx1, should work so long as m=n which is the case if doing by PCA
         output += jax.numpy.linalg.norm(jax.nn.relu(contain), ord=np.inf) ### unsure if l inf norm or any norm is the correct approach
@@ -743,8 +743,8 @@ def gen_starsets_post_sim(old_star: StarSet, sim: Callable, T: float = 7, ts: fl
     post_points = np.array(post_points)
     stars: List[StarSet] = []
     for t in range(post_points.shape[1]): # pp has shape N x (T/dt) x (n + 1), so index using first 
-        stars.append(gen_starset(post_points[:, t, 1:], old_star)) 
-        # stars.append(gen_starset_grad(post_points[:, t, 1:], old_star)) ### testing out new algorithm here, could also do so in startests if I remember 
+        # stars.append(gen_starset(post_points[:, t, 1:], old_star)) 
+        stars.append(gen_starset_grad(post_points[:, t, 1:], old_star)) ### testing out new algorithm here, could also do so in startests if I remember 
     for t in range(post_points.shape[1]):
         plt.scatter(post_points[:, t, 1], post_points[:, t, 2])
     return stars

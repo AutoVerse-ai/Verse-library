@@ -50,7 +50,7 @@ if __name__ == "__main__":
     scenario.add_agent(car)
     scenario.config.reachability_method = ReachabilityMethod.STAR_SETS
     scenario.set_sensor(BaseStarSensor())
-    traces = scenario.verify(7, 0.05)
+    traces = scenario.verify(7, 0.1)
     
     car1 = traces.nodes[0].trace['car1']
     car1 = [star[1] for star in car1]
