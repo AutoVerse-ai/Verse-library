@@ -59,13 +59,13 @@ class PostNN(nn.Module):
 
     def forward(self, x):
         x = self.fc1(x)
-        # x = self.relu(x)
-        x = self.tanh(x)
+        x = self.relu(x)
+        # x = self.tanh(x)
         x = self.fc2(x)
-        # x = self.relu(x)
+        x = self.relu(x)
         # x = self.fc4(x)
         # x = self.relu(x)
-        x = self.tanh(x)
+        # x = self.tanh(x)
         x = self.fc3(x)
         # x = self.relu(x)
 
@@ -73,7 +73,7 @@ class PostNN(nn.Module):
 
 C = np.transpose(np.array([[1,-1,0,0],[0,0,1,-1]]))
 g = np.array([1,1,1,1])
-basis = np.array([[1, 0], [0, 1]]) * np.diag([0.01, 0.01])
+basis = np.array([[1, 0], [0, 1]]) * np.diag([0.1, 0.1])
 center = np.array([1.40,2.30])
 
 input_size = 1    # Number of input features 
@@ -88,9 +88,9 @@ model = PostNN(input_size, hidden_size, output_size)
 optimizer = optim.Adam(model.parameters(), lr=0.01, weight_decay=1e-5)
 scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
 
-num_epochs = 25 # sample number of epoch -- can play with this/set this as a hyperparameter
+num_epochs = 100 # sample number of epoch -- can play with this/set this as a hyperparameter
 num_samples = 50 # number of samples per time step
-lamb = 0.60
+lamb = 0.50
 
 T = 7
 ts = 0.1
@@ -102,7 +102,6 @@ times = torch.arange(0, T+ts, ts) # times to supply, right now this is fixed whi
 
 C = torch.tensor(C, dtype=torch.double)
 g = torch.tensor(g, dtype=torch.float)
-lam = 100
 # Training loop
 for epoch in range(num_epochs):
     # Zero the parameter gradients
@@ -163,8 +162,14 @@ for epoch in range(num_epochs):
     scheduler.step()
     # Print loss periodically
     # print(f'Loss: {loss.item():.4f}')
-    if (epoch + 1) % 5 == 0:
-        print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {loss.item():.4f}', r'$\mu$:', f' {mu.item()}')
+    if (epoch + 1) % 10 == 0:
+        print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {loss.item():.4f}, mu: {mu.item()}')
+        for i in range(len(times)):
+            t = torch.tensor([times[i]], dtype=torch.float32)
+            mu = model(t)
+            cont = lambda p, i: torch.linalg.vector_norm(torch.relu(C@torch.linalg.inv(bases[i])@(p-centers[i])-mu*g))
+            loss = (1-lamb)*mu + lamb*torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))/len(post_points[:,i,1:])
+            print(f'Loss: {loss.item():.4f}, mu: {mu.item():.4f}')
 
 
 # test the new model
