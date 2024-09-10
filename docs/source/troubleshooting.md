@@ -143,6 +143,29 @@ If this rectangle is too big, it may cross both boundaries at the same time. As 
 
 If you do not see a cycle in your logic and there is still an infinite loop, you may need to make the transition conditions further apart or restructure the logic. 
 
+Take this example:
+
+```python
+
+if ego.craft_mode == CraftMode.Normal and ego.x <= 30:
+    next.craft_mode == CraftMode.Accel
+if ego.craft_mode == CraftMode.Accel and ego.x > 30:
+    next.craft_mode == CraftMode.Normal
+    
+
+```
+Here the the transition boundary is x = 30 for both transitions. The distance between these boundaries needs to be increased:
+
+```python
+
+if ego.craft_mode == CraftMode.Normal and ego.x <= 30:
+    next.craft_mode == CraftMode.Accel
+if ego.craft_mode == CraftMode.Accel and ego.x > 45:
+    next.craft_mode == CraftMode.Normal
+    
+
+```
+
 If you are doing the 484 MP, you may also use verify_refine which will not cause an infinite loop this way. However, this will take much longer. Verify_refine will repeatedly call verify on partitions of the initial set. It starts by partitioning into larger regions, then get progressively gets smaller if those larger partitions are unsafe or cause an infinite loop. When the initial set is partitioned into smaller regions, the rectangles/reachable set created will eventually get small enough to fit between transition regions. Please note that verify_refine will not help if there is a cycle in your logic 
 
 
