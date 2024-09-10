@@ -166,7 +166,9 @@ if ego.craft_mode == CraftMode.Accel and ego.x > 45:
 
 ```
 
-If you are doing the 484 MP, you may also use verify_refine which will not cause an infinite loop this way. However, this will take much longer. Verify_refine will repeatedly call verify on partitions of the initial set. It starts by partitioning into larger regions, then get progressively gets smaller if those larger partitions are unsafe or cause an infinite loop. When the initial set is partitioned into smaller regions, the rectangles/reachable set created will eventually get small enough to fit between transition regions. Please note that verify_refine will not help if there is a cycle in your logic 
+If you are doing the 484 MP, you may also use verify_refine which will not cause an infinite loop this way. However, this will take much longer. Verify_refine will repeatedly call verify on partitions of the initial set. It starts by partitioning into larger regions, then get progressively gets smaller if those larger partitions are unsafe or cause an infinite loop. When the initial set is partitioned into smaller regions, the rectangles/reachable set created will eventually get small enough to fit between transition regions. Please note that verify_refine will not help if there is a cycle in your logic.
+
+**When running verify_refine, please let it run to the very end and ignore any intermediate console output**
 
 
 ## Other Issues
