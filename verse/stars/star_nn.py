@@ -90,7 +90,7 @@ output_size = 1
 model = PostNN(input_size, hidden_size, output_size)
 
 # Use SGD as the optimizer
-optimizer = optim.Adam(model.parameters(), lr=0.01, weight_decay=1e-5)
+optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-5)
 scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
 
 num_epochs = 50 # sample number of epoch -- can play with this/set this as a hyperparameter
@@ -98,7 +98,7 @@ num_samples = 100 # number of samples per time step
 lamb = 1
 
 T = 14
-ts = 0.2
+ts = 0.1
 
 initial_star = StarSet(center, basis, C, g)
 # Toy Function to learn: x^2+20
@@ -145,13 +145,12 @@ for epoch in range(num_epochs):
         bases.append(torch.tensor(derived_basis))
         centers.append(torch.tensor(new_center))
     
-    ### V_t is now always I -- check that mu should go to zero
+    # ### V_t is now always I -- check that mu should go to zero
     # for i in range(len(times)):
     #     points = post_points[:, i, 1:]
     #     new_center = np.mean(points, axis=0) # probably won't be used, delete if unused in final product
     #     bases.append(torch.eye(points.shape[1], dtype=torch.double))
     #     centers.append(torch.tensor(new_center))
-    # print(bases, centers)
 
     post_points = torch.tensor(post_points)
     ### for now, don't worry about batch training, just do single input, makes more sense to me to think of loss function like this
@@ -167,7 +166,7 @@ for epoch in range(num_epochs):
         # cont = lambda p, i: torch.linalg.vector_norm(torch.relu(C@torch.linalg.inv(bases[i])@(p-centers[i])-torch.diag(mu)@g))
         # cont = lambda p, i: torch.linalg.vector_norm(torch.relu(C@torch.linalg.inv(bases[i])@(p-center)-mu*g))
         # loss = (1-lamb)*mu + lamb*torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))/len(post_points[:,i,1:])
-        loss = 2*mu + lamb*torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))
+        loss = mu + 10*torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))/num_samples
 
         # if i==len(times)-1 and (epoch+1)%10==0:
         #     f = 1
@@ -229,7 +228,7 @@ for i in range(len(times)):
 stars = []
 for i in range(len(times)):
     # mu, center = model(test[i])[0].detach().numpy(), model(test[i])[1:].detach().numpy()
-    stars.append(StarSet(centers[i], bases[i], C.numpy(), model(test[i]).detach().numpy()*g.numpy()))
+    stars.append(StarSet(centers[i], bases[i], C.numpy(), torch.relu(model(test[i])).detach().numpy()*g.numpy()))
     # stars.append(StarSet(center, bases[i], C.numpy(), mu*g.numpy()))
     # stars.append(StarSet(centers[i], bases[i], C.numpy(), np.diag(model(test[i]).detach().numpy())@g.numpy()))
 print(model(test), test)
@@ -239,5 +238,5 @@ print(model(test), test)
 #      print(b)
 # plt.plot(test_times, model(test).detach().numpy())
 plot_stars_points_nonit(stars, post_points)
-# plt.plot(test.numpy(), model(test).detach().numpy())
+plt.plot(test.numpy(), model(test).detach().numpy())
 plt.show()
