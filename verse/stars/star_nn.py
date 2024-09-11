@@ -105,7 +105,7 @@ scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
 
 num_epochs = 50 # sample number of epoch -- can play with this/set this as a hyperparameter
 num_samples = 100 # number of samples per time step
-lamb = 30
+lamb = 100
 
 T = 7
 ts = 0.1
@@ -126,6 +126,31 @@ def sample_initial(num_samples: int = num_samples) -> List[List[float]]:
     for _ in range(num_samples):
         samples.append(S_0[np.random.randint(0, len(S_0))])
     return samples
+
+def containment(points: torch.Tensor, times: torch.Tensor, bases: List[torch.Tensor], centers: List[torch.Tensor]):
+    #  cont = lambda p, i: torch.linalg.vector_norm(torch.relu(C@torch.linalg.inv(bases[i])@(p-centers[i])-mu*g))
+    #  the non-vectorized containment function for reference
+    mu = model(times.unsqueeze(1))
+    len_times = times.shape[0]
+    dim = points.shape[2]
+
+    shifted_points = points - torch.stack(centers).unsqueeze(0) 
+    shifted_points_flat = shifted_points.view(num_samples * len_times, dim) 
+    bases_inv = torch.linalg.inv(torch.stack(bases)) # 
+
+    transformed_points_flat = torch.bmm(shifted_points_flat.unsqueeze(1), bases_inv.repeat(num_samples, 1, 1))  # Shape: (n_samples * n_times, 1, point_dim)
+
+    transformed_points = transformed_points_flat.squeeze(1)  # Reshape back to (n_samples * n_times, point_dim)
+    transformed_points = transformed_points.view(num_samples, len_times, dim)  # Reshape back to (n_samples, n_times, point_dim)
+
+    # Step 4: Apply C matrix (batch-matrix multiplication)
+    transformed_points = torch.matmul(transformed_points, C.T)  # C has shape (point_dim, point_dim), apply to all points
+
+    # Step 5: Apply ReLU and subtract time-dependent mu
+    transformed_points = torch.relu(transformed_points - mu.view(1, len_times, 1) * g)
+
+    # Step 6: Compute vector norm for each point for each time step
+    return torch.linalg.vector_norm(transformed_points) 
 
 for epoch in range(num_epochs):
     # Zero the parameter gradients
@@ -165,30 +190,32 @@ for epoch in range(num_epochs):
     post_points = torch.tensor(post_points)
     ### for now, don't worry about batch training, just do single input, makes more sense to me to think of loss function like this
     ### I would really like to be able to do batch training though, figure out a way to make it work
-    for i in range(len(times)):
-        # Forward pass
-        t = torch.tensor([times[i]], dtype=torch.float32)
-        mu = model(t)
-        # mu, center = model(t)[0], model(t)[1:]
+    # for i in range(len(times)):
+    #     # Forward pass
+    #     t = torch.tensor([times[i]], dtype=torch.float32)
+    #     mu = model(t)
+    #     # mu, center = model(t)[0], model(t)[1:]
         
-        # Compute the loss
-        cont = lambda p, i: torch.linalg.vector_norm(torch.relu(C@torch.linalg.inv(bases[i])@(p-centers[i])-mu*g))
-        # cont = lambda p, i: torch.linalg.vector_norm(torch.relu(C@torch.linalg.inv(bases[i])@(p-centers[i])-torch.diag(mu)@g))
-        # cont = lambda p, i: torch.linalg.vector_norm(torch.relu(C@torch.linalg.inv(bases[i])@(p-center)-mu*g))
-        # loss = (1-lamb)*mu + lamb*torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))/len(post_points[:,i,1:])
-        loss = mu + lamb*torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))/num_samples
+    #     # Compute the loss
+    #     cont = lambda p, i: torch.linalg.vector_norm(torch.relu(C@torch.linalg.inv(bases[i])@(p-centers[i])-mu*g))
+    #     # cont = lambda p, i: torch.linalg.vector_norm(torch.relu(C@torch.linalg.inv(bases[i])@(p-centers[i])-torch.diag(mu)@g))
+    #     # cont = lambda p, i: torch.linalg.vector_norm(torch.relu(C@torch.linalg.inv(bases[i])@(p-center)-mu*g))
+    #     # loss = (1-lamb)*mu + lamb*torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))/len(post_points[:,i,1:])
+    #     loss = mu + lamb*torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))/num_samples
 
-        # if i==len(times)-1 and (epoch+1)%10==0:
-        #     f = 1
-        # Backward pass and optimize
-        # pretty sure I'll need to modify this if I'm not doing batch training 
-        # will just putting optimizer on the earlier for loop help?
-        loss.backward()
-        # if i==50:
-        #     print(model.fc1.weight.grad, model.fc1.bias.grad)
-        optimizer.step()
-        
-        # print(f'Loss: {loss.item()}, mu: {mu.item()}, t: {t}')
+    #     # if i==len(times)-1 and (epoch+1)%10==0:
+    #     #     f = 1
+    #     # Backward pass and optimize
+    #     # pretty sure I'll need to modify this if I'm not doing batch training 
+    #     # will just putting optimizer on the earlier for loop help?
+    #     loss.backward()
+    #     # if i==50:
+    #     #     print(model.fc1.weight.grad, model.fc1.bias.grad)
+    #     optimizer.step()
+    mu = model(times.unsqueeze(1)) # get times in right form
+    loss = torch.sum(mu)/len(times)+lamb*containment(post_points[:, :, 1:], times, bases, centers)/(num_samples*len(times))
+    loss.backward()
+    optimizer.step()
 
     scheduler.step()
     # Print loss periodically
@@ -237,23 +264,30 @@ for i in range(len(times)):
 
 
 stars = []
+percent_contained = []
+cont = lambda p, i: torch.linalg.vector_norm(torch.relu(C@torch.linalg.inv(bases[i].T)@(p-centers[i])-model(test[i])*g))
+
 for i in range(len(times)):
     # mu, center = model(test[i])[0].detach().numpy(), model(test[i])[1:].detach().numpy()
     stars.append(StarSet(centers[i], bases[i], C.numpy(), torch.relu(model(test[i])).detach().numpy()*g.numpy()))
+    points = torch.tensor(post_points[:, i, 1:])
+    contain = torch.sum(torch.stack([cont(point, i) == 0 for point in points]))
+    percent_contained.append(contain/(num_samples*10)*100)
     # stars.append(StarSet(center, bases[i], C.numpy(), mu*g.numpy()))
     # stars.append(StarSet(centers[i], bases[i], C.numpy(), np.diag(model(test[i]).detach().numpy())@g.numpy()))
-print(model(test), test)
+
+percent_contained = np.array(percent_contained)
 # for t in test:
 #      print(model(t), t)
 # for b in bases:
 #      print(b)
 # plt.plot(test_times, model(test).detach().numpy())
 plot_stars_points_nonit(stars, post_points)
-plt.plot(test.numpy(), model(test).detach().numpy())
 
 results = pd.DataFrame({
     'time': test.squeeze().numpy(),
-    'mu': model(test).squeeze().detach().numpy()
+    'mu': model(test).squeeze().detach().numpy(),
+    'percent of points contained': percent_contained
 })
 
 results.to_csv('./verse/stars/nn_results.csv', index=False)

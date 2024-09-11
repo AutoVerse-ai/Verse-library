@@ -567,7 +567,7 @@ class HalfSpace:
 
 ### from star_util
 
-def containment_poly(star: StarSet, point: np.ndarray) -> bool:
+def containment_poly(star: StarSet, point: np.ndarray) -> bool: ### improve this by using the containment function used in the nn instead -- note that it only works if V is inverteble. Also check to make sure V is not tranpose
     if star.dimension() != point.shape[0]:
         raise ValueError(f'Dimension of point does not match the dimenions of the starset')
     
