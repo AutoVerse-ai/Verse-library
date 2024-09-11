@@ -105,7 +105,7 @@ scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
 
 num_epochs = 50 # sample number of epoch -- can play with this/set this as a hyperparameter
 num_samples = 100 # number of samples per time step
-lamb = 100
+lamb = 15
 
 T = 7
 ts = 0.1
@@ -135,22 +135,28 @@ def containment(points: torch.Tensor, times: torch.Tensor, bases: List[torch.Ten
     dim = points.shape[2]
 
     shifted_points = points - torch.stack(centers).unsqueeze(0) 
-    shifted_points_flat = shifted_points.view(num_samples * len_times, dim) 
-    bases_inv = torch.linalg.inv(torch.stack(bases)) # 
+    shifted_points_flat = shifted_points.view(num_samples * len_times, dim) # (n_samples*len_times, dim)
+    bases_inv = torch.linalg.inv(torch.stack(bases)) # has shape (len_times, dim, dim)
 
-    transformed_points_flat = torch.bmm(shifted_points_flat.unsqueeze(1), bases_inv.repeat(num_samples, 1, 1))  # Shape: (n_samples * n_times, 1, point_dim)
+    bases_inv_repeated = bases_inv.repeat(num_samples, 1, 1)  # Shape: (n_samples, n_times, point_dim, point_dim)
 
-    transformed_points = transformed_points_flat.squeeze(1)  # Reshape back to (n_samples * n_times, point_dim)
-    transformed_points = transformed_points.view(num_samples, len_times, dim)  # Reshape back to (n_samples, n_times, point_dim)
+    # Reshape bases_inv_repeated to (n_samples * n_times, point_dim, point_dim)
+    bases_inv_flat = bases_inv_repeated.view(num_samples * len_times, dim, dim)
+    
+    # Perform batched matrix multiplication
+    transformed_points_flat = torch.bmm(bases_inv_flat, shifted_points_flat.unsqueeze(2)).squeeze(2)  # Shape: (n_samples * n_times, point_dim)
+
+    transformed_points = transformed_points_flat.squeeze(1)  # Reshape back to (n_samples * len_times, point_dim)
+    transformed_points = transformed_points.view(num_samples, len_times, dim)  # Reshape back to (n_samples, len_times, dim)
 
     # Step 4: Apply C matrix (batch-matrix multiplication)
-    transformed_points = torch.matmul(transformed_points, C.T)  # C has shape (point_dim, point_dim), apply to all points
+    transformed_points = torch.matmul(transformed_points, C.T)  # C has shape (k, dim), apply to all points
 
-    # Step 5: Apply ReLU and subtract time-dependent mu
+    # Step 5: Apply ReLU and subtract time-dependent mu*g
     transformed_points = torch.relu(transformed_points - mu.view(1, len_times, 1) * g)
 
     # Step 6: Compute vector norm for each point for each time step
-    return torch.linalg.vector_norm(transformed_points) 
+    return torch.linalg.vector_norm(transformed_points, dim=2) 
 
 for epoch in range(num_epochs):
     # Zero the parameter gradients
@@ -213,7 +219,7 @@ for epoch in range(num_epochs):
     #     #     print(model.fc1.weight.grad, model.fc1.bias.grad)
     #     optimizer.step()
     mu = model(times.unsqueeze(1)) # get times in right form
-    loss = torch.sum(mu)/len(times)+lamb*containment(post_points[:, :, 1:], times, bases, centers)/(num_samples*len(times))
+    loss = (torch.sum(mu)+lamb*torch.sum(containment(post_points[:, :, 1:], times, bases, centers))/num_samples)/len(times)
     loss.backward()
     optimizer.step()
 
@@ -222,7 +228,8 @@ for epoch in range(num_epochs):
     # print(f'Loss: {loss.item():.4f}')
     if (epoch + 1) % 10 == 0:
         print(f'Epoch [{epoch + 1}/{num_epochs}] \n_____________\n')
-        # print("Gradients of weights and loss", model.fc1.weight.grad, model.fc1.bias.grad)
+        print("Gradients of weights and loss", model.fc1.weight.grad, model.fc1.bias.grad)
+        losses = 0
         for i in range(len(times)):
             t = torch.tensor([times[i]], dtype=torch.float32)
             mu = model(t)
@@ -230,7 +237,10 @@ for epoch in range(num_epochs):
             loss = mu + lamb*torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))/len(post_points[:,i,1:])
             # loss = (1-lamb)*mu + lamb*torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))/len(post_points[:,i,1:])
             print(f'loss: {loss.item():.4f}, mu: {mu.item():.4f}, time: {t.item():.1f}')
-
+            losses += loss.item()
+        mu = model(times.unsqueeze(1)) # get times in right form
+        other_loss = torch.sum(mu)+lamb*torch.sum(containment(post_points[:, :, 1:], times, bases, centers))/(num_samples)
+        print(f'Losses: {losses/len(times):.4f}, ..., other loss {other_loss/len(times)}')
 
 # test the new model
 
