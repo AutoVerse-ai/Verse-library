@@ -5,6 +5,7 @@ import torch.nn.functional as F
 from starset import *
 from scipy.integrate import ode
 from sklearn.decomposition import PCA
+import pandas as pd
 
 ### synthetic dynamic and simulation function
 def dynamic_test(vec, t):
@@ -89,15 +90,24 @@ output_size = 1
 
 model = PostNN(input_size, hidden_size, output_size)
 
+def he_init(m):
+    if isinstance(m, nn.Linear):
+        nn.init.kaiming_normal_(m.weight, nonlinearity='relu')  # Apply He Normal Initialization
+        if m.bias is not None:
+            nn.init.constant_(m.bias, 0)  # Initialize biases to 0 (optional)
+
+# Apply He initialization to the existing model
+model.apply(he_init)
+
 # Use SGD as the optimizer
 optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-5)
 scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
 
 num_epochs = 50 # sample number of epoch -- can play with this/set this as a hyperparameter
 num_samples = 100 # number of samples per time step
-lamb = 1
+lamb = 30
 
-T = 14
+T = 7
 ts = 0.1
 
 initial_star = StarSet(center, basis, C, g)
@@ -166,7 +176,7 @@ for epoch in range(num_epochs):
         # cont = lambda p, i: torch.linalg.vector_norm(torch.relu(C@torch.linalg.inv(bases[i])@(p-centers[i])-torch.diag(mu)@g))
         # cont = lambda p, i: torch.linalg.vector_norm(torch.relu(C@torch.linalg.inv(bases[i])@(p-center)-mu*g))
         # loss = (1-lamb)*mu + lamb*torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))/len(post_points[:,i,1:])
-        loss = mu + 10*torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))/num_samples
+        loss = mu + lamb*torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))/num_samples
 
         # if i==len(times)-1 and (epoch+1)%10==0:
         #     f = 1
@@ -185,7 +195,7 @@ for epoch in range(num_epochs):
     # print(f'Loss: {loss.item():.4f}')
     if (epoch + 1) % 10 == 0:
         print(f'Epoch [{epoch + 1}/{num_epochs}] \n_____________\n')
-        print("Gradients of weights and loss", model.fc1.weight.grad, model.fc1.bias.grad)
+        # print("Gradients of weights and loss", model.fc1.weight.grad, model.fc1.bias.grad)
         for i in range(len(times)):
             t = torch.tensor([times[i]], dtype=torch.float32)
             mu = model(t)
@@ -199,9 +209,10 @@ for epoch in range(num_epochs):
 
 model.eval()
 
-S_0 = sample_star(initial_star, num_samples*10) ### this is critical step -- this needs to be recomputed per training step
+# S_0 = sample_star(initial_star, num_samples*10) ### this is critical step -- this needs to be recomputed per training step
+S = sample_initial(num_samples*10)
 post_points = []
-for point in S_0:
+for point in S:
         post_points.append(sim_test(None, point, T, ts).tolist())
 post_points = np.array(post_points) ### this has shape N x (T/ts) x (n+1), S_t is equivalent to p_p[:, t, 1:]
 
@@ -239,4 +250,11 @@ print(model(test), test)
 # plt.plot(test_times, model(test).detach().numpy())
 plot_stars_points_nonit(stars, post_points)
 plt.plot(test.numpy(), model(test).detach().numpy())
+
+results = pd.DataFrame({
+    'time': test.squeeze().numpy(),
+    'mu': model(test).squeeze().detach().numpy()
+})
+
+results.to_csv('./verse/stars/nn_results.csv', index=False)
 plt.show()
