@@ -52,9 +52,9 @@ Whenever a transition is evaluated, a console message will appear.
 
 The node number is the id of the node in order of when it was first added to the processing queue.
 
-The "start:" indicates the time that this transition occured. If this number is not changing, then an infinite loop has occured.
+The "start:" indicates the time that this transition occured. If this number is not changing, then an infinite loop has occured. 
 
-On the next line, it will display each agent and the mode of that agent after the transition.
+On the next line, it will display each agent and the mode of that agent after the transition. If an infinite loop occurs, you can look at this line to see which modes are being looped through.
 
 Ignore the array of numbers
 
@@ -101,7 +101,7 @@ To fix this problem, make the transition condition more specific:
 if ego.craft_mode == CraftMode.Normal and ego.z <= 50:
     next.craft_mode == CraftMode.Up
 
-if ego.craft_mode == CraftMode.Up and ego.z > 50:
+if ego.craft_mode == CraftMode.Up and ego.z > 70:
     next.craft_mode == CraftMode.Normal
 
 ```
