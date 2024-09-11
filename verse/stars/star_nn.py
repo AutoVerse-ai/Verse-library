@@ -237,23 +237,30 @@ for i in range(len(times)):
 
 
 stars = []
+percent_contained = []
+cont = lambda p, i: torch.linalg.vector_norm(torch.relu(C@torch.linalg.inv(bases[i].T)@(p-centers[i])-model(test[i])*g))
+
 for i in range(len(times)):
     # mu, center = model(test[i])[0].detach().numpy(), model(test[i])[1:].detach().numpy()
     stars.append(StarSet(centers[i], bases[i], C.numpy(), torch.relu(model(test[i])).detach().numpy()*g.numpy()))
+    points = torch.tensor(post_points[:, i, 1:])
+    contain = torch.sum(torch.stack([cont(point, i) == 0 for point in points]))
+    percent_contained.append(contain/(num_samples*10)*100)
     # stars.append(StarSet(center, bases[i], C.numpy(), mu*g.numpy()))
     # stars.append(StarSet(centers[i], bases[i], C.numpy(), np.diag(model(test[i]).detach().numpy())@g.numpy()))
-print(model(test), test)
+
+percent_contained = np.array(percent_contained)
 # for t in test:
 #      print(model(t), t)
 # for b in bases:
 #      print(b)
 # plt.plot(test_times, model(test).detach().numpy())
 plot_stars_points_nonit(stars, post_points)
-plt.plot(test.numpy(), model(test).detach().numpy())
 
 results = pd.DataFrame({
     'time': test.squeeze().numpy(),
-    'mu': model(test).squeeze().detach().numpy()
+    'mu': model(test).squeeze().detach().numpy(),
+    'percent of points contained': percent_contained
 })
 
 results.to_csv('./verse/stars/nn_results.csv', index=False)
