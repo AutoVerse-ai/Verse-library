@@ -73,7 +73,7 @@ class PostNN(nn.Module):
         x = self.relu(x)
         # x = self.tanh(x)
         x = self.fc3(x)
-        x = self.relu(x)
+        # x = self.relu(x)
 
         return x
 
@@ -105,7 +105,7 @@ scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
 
 num_epochs = 50 # sample number of epoch -- can play with this/set this as a hyperparameter
 num_samples = 100 # number of samples per time step
-lamb = 15
+lamb = 0.9
 
 T = 7
 ts = 0.1
@@ -219,7 +219,7 @@ for epoch in range(num_epochs):
     #     #     print(model.fc1.weight.grad, model.fc1.bias.grad)
     #     optimizer.step()
     mu = model(times.unsqueeze(1)) # get times in right form
-    loss = (torch.sum(mu)+lamb*torch.sum(containment(post_points[:, :, 1:], times, bases, centers))/num_samples)/len(times)
+    loss = (1-lamb)*torch.sum(mu)+lamb*torch.sum(containment(post_points[:, :, 1:], times, bases, centers))/num_samples
     loss.backward()
     optimizer.step()
 
@@ -234,12 +234,12 @@ for epoch in range(num_epochs):
             t = torch.tensor([times[i]], dtype=torch.float32)
             mu = model(t)
             cont = lambda p, i: torch.linalg.vector_norm(torch.relu(C@torch.linalg.inv(bases[i])@(p-centers[i])-mu*g))
-            loss = mu + lamb*torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))/len(post_points[:,i,1:])
+            loss = (1-lamb)*mu + lamb*torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))/len(post_points[:,i,1:])
             # loss = (1-lamb)*mu + lamb*torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))/len(post_points[:,i,1:])
             print(f'loss: {loss.item():.4f}, mu: {mu.item():.4f}, time: {t.item():.1f}')
             losses += loss.item()
         mu = model(times.unsqueeze(1)) # get times in right form
-        other_loss = torch.sum(mu)+lamb*torch.sum(containment(post_points[:, :, 1:], times, bases, centers))/(num_samples)
+        other_loss = (1-lamb)*torch.sum(mu)+lamb*torch.sum(containment(post_points[:, :, 1:], times, bases, centers))/(num_samples)
         print(f'Losses: {losses/len(times):.4f}, ..., other loss {other_loss/len(times)}')
 
 # test the new model
