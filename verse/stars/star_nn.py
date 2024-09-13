@@ -105,7 +105,7 @@ scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
 
 num_epochs = 50 # sample number of epoch -- can play with this/set this as a hyperparameter
 num_samples = 100 # number of samples per time step
-lamb = 0.5
+lamb = 3
 
 T = 30
 ts = 0.1
@@ -191,7 +191,7 @@ for epoch in range(num_epochs):
     post_points = torch.tensor(post_points)
 
     mu = model(times.unsqueeze(1)) # get times in right form
-    loss = ((1-lamb)*torch.sum(mu)+lamb*torch.sum(containment(post_points[:, :, 1:], times, bases, centers))/num_samples)/len(times)
+    loss = (torch.log(1+torch.sum(mu))+lamb*torch.sum(containment(post_points[:, :, 1:], times, bases, centers))/num_samples)
     loss.backward()
     optimizer.step()
 
@@ -206,13 +206,13 @@ for epoch in range(num_epochs):
             t = torch.tensor([times[i]], dtype=torch.float32)
             mu = model(t)
             cont = lambda p, i: torch.linalg.vector_norm(torch.relu(C@torch.linalg.inv(bases[i])@(p-centers[i])-mu*g))
-            loss = (1-lamb)*mu + lamb*torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))/len(post_points[:,i,1:])
+            loss = torch.log(1+mu) + lamb*torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))/len(post_points[:,i,1:])
             # loss = (1-lamb)*mu + lamb*torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))/len(post_points[:,i,1:])
             print(f'loss: {loss.item():.4f}, mu: {mu.item():.4f}, time: {t.item():.1f}')
             losses += loss.item()
         mu = model(times.unsqueeze(1)) # get times in right form
-        other_loss = (1-lamb)*torch.sum(mu)+lamb*torch.sum(containment(post_points[:, :, 1:], times, bases, centers))/(num_samples)
-        print(f'Losses: {losses/len(times):.4f}, ..., other loss {other_loss/len(times):.5f}')
+        other_loss = (torch.log(1+torch.sum(mu))+lamb*torch.sum(containment(post_points[:, :, 1:], times, bases, centers)))/(num_samples*len(times))
+        print(f'Losses: {losses/len(times):.4f}, ..., other loss {other_loss:.5f}')
 
 # test the new model
 
