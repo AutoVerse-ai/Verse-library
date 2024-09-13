@@ -11,8 +11,8 @@ import pandas as pd
 def dynamic_test(vec, t):
     x, y = t # hack to access right variable, not sure how integrate, ode are supposed to work
     ### vanderpol
-    x_dot = y
-    y_dot = (1 - x**2) * y - x
+    # x_dot = y
+    # y_dot = (1 - x**2) * y - x
 
     ### cardiac cell
     # x_dot = -0.9*x*x-x*x*x-0.9*x-y+1
@@ -31,8 +31,8 @@ def dynamic_test(vec, t):
     # y_dot = 2*x-x*x*x-0.2*y+0.1
 
     ###non-descript convergent system
-    # x_dot = y
-    # y_dot = -5*x-5*x**3-y
+    x_dot = y
+    y_dot = -5*x-5*x**3-y
     return [x_dot, y_dot]
 
 def sim_test(
@@ -57,7 +57,7 @@ class PostNN(nn.Module):
         super(PostNN, self).__init__()
         self.fc1 = nn.Linear(input_size, hidden_size)
         self.fc2 = nn.Linear(hidden_size, hidden_size)
-        # self.fc4 = nn.Linear(hidden_size, hidden_size)
+        self.fc4 = nn.Linear(hidden_size, hidden_size)
         self.fc3 = nn.Linear(hidden_size, output_size)
         # self.relu = nn.ReLU()
         self.relu = nn.LeakyReLU()
@@ -68,8 +68,8 @@ class PostNN(nn.Module):
         x = self.relu(x)
         # x = self.tanh(x)
         x = self.fc2(x)
-        # x = self.relu(x)
-        # x = self.fc4(x)
+        x = self.relu(x)
+        x = self.fc4(x)
         x = self.relu(x)
         # x = self.tanh(x)
         x = self.fc3(x)
@@ -103,12 +103,12 @@ model.apply(he_init)
 optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-5)
 scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
 
-num_epochs = 50 # sample number of epoch -- can play with this/set this as a hyperparameter
+num_epochs = 60 # sample number of epoch -- can play with this/set this as a hyperparameter
 num_samples = 100 # number of samples per time step
-lamb = 30
+lamb = 7
 
-T = 7
-ts = 0.1
+T = 14
+ts = 0.2
 
 initial_star = StarSet(center, basis, C, g)
 # Toy Function to learn: x^2+20
@@ -140,27 +140,27 @@ for epoch in range(num_epochs):
     
     bases = [] # now grab V_t 
     centers = [] ### eventually this should be a NN output too
-    for i in range(len(times)):
-        points = post_points[:, i, 1:]
-        new_center = np.mean(points, axis=0) # probably won't be used, delete if unused in final product
-        pca: PCA = PCA(n_components=points.shape[1])
-        pca.fit(points)
-        scale = np.sqrt(pca.explained_variance_)
-        # print(pca.components_.T, "...", scale, '\n _______ \n')
-        derived_basis = (pca.components_.T @ np.diag(scale)) # scaling each component by sqrt of dimension
-        # derived_basis = (pca.components_) # scaling each component by sqrt of dimension
-        # print(derived_basis, '\n______\n')
-        # if np.linalg.norm(derived_basis[1])<=0.00001:
-        #      print("P:",points)
-        bases.append(torch.tensor(derived_basis))
-        centers.append(torch.tensor(new_center))
-    
-    # ### V_t is now always I -- check that mu should go to zero
     # for i in range(len(times)):
     #     points = post_points[:, i, 1:]
     #     new_center = np.mean(points, axis=0) # probably won't be used, delete if unused in final product
-    #     bases.append(torch.eye(points.shape[1], dtype=torch.double))
+    #     pca: PCA = PCA(n_components=points.shape[1])
+    #     pca.fit(points)
+    #     scale = np.sqrt(pca.explained_variance_)
+    #     # print(pca.components_.T, "...", scale, '\n _______ \n')
+    #     derived_basis = (pca.components_.T @ np.diag(scale)) # scaling each component by sqrt of dimension
+    #     # derived_basis = (pca.components_) # scaling each component by sqrt of dimension
+    #     # print(derived_basis, '\n______\n')
+    #     # if np.linalg.norm(derived_basis[1])<=0.00001:
+    #     #      print("P:",points)
+    #     bases.append(torch.tensor(derived_basis))
     #     centers.append(torch.tensor(new_center))
+    
+    # ### V_t is now always I -- check that mu should go to zero
+    for i in range(len(times)):
+        points = post_points[:, i, 1:]
+        new_center = np.mean(points, axis=0) # probably won't be used, delete if unused in final product
+        bases.append(torch.eye(points.shape[1], dtype=torch.double))
+        centers.append(torch.tensor(new_center))
 
     post_points = torch.tensor(post_points)
     ### for now, don't worry about batch training, just do single input, makes more sense to me to think of loss function like this
@@ -176,7 +176,7 @@ for epoch in range(num_epochs):
         # cont = lambda p, i: torch.linalg.vector_norm(torch.relu(C@torch.linalg.inv(bases[i])@(p-centers[i])-torch.diag(mu)@g))
         # cont = lambda p, i: torch.linalg.vector_norm(torch.relu(C@torch.linalg.inv(bases[i])@(p-center)-mu*g))
         # loss = (1-lamb)*mu + lamb*torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))/len(post_points[:,i,1:])
-        loss = mu + lamb*torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))/num_samples
+        loss = torch.log1p(mu) + lamb*torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))/num_samples
 
         # if i==len(times)-1 and (epoch+1)%10==0:
         #     f = 1
@@ -200,7 +200,7 @@ for epoch in range(num_epochs):
             t = torch.tensor([times[i]], dtype=torch.float32)
             mu = model(t)
             cont = lambda p, i: torch.linalg.vector_norm(torch.relu(C@torch.linalg.inv(bases[i])@(p-centers[i])-mu*g))
-            loss = mu + lamb*torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))/len(post_points[:,i,1:])
+            loss = torch.log1p(mu)  + lamb*torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))/len(post_points[:,i,1:])
             # loss = (1-lamb)*mu + lamb*torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))/len(post_points[:,i,1:])
             print(f'loss: {loss.item():.4f}, mu: {mu.item():.4f}, time: {t.item():.1f}')
 
