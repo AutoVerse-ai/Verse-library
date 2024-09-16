@@ -103,9 +103,9 @@ model.apply(he_init)
 optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-5)
 scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
 
-num_epochs = 60 # sample number of epoch -- can play with this/set this as a hyperparameter
+num_epochs = 50 # sample number of epoch -- can play with this/set this as a hyperparameter
 num_samples = 100 # number of samples per time step
-lamb = 7
+lamb = 15
 
 T = 14
 ts = 0.2
@@ -176,7 +176,7 @@ for epoch in range(num_epochs):
         # cont = lambda p, i: torch.linalg.vector_norm(torch.relu(C@torch.linalg.inv(bases[i])@(p-centers[i])-torch.diag(mu)@g))
         # cont = lambda p, i: torch.linalg.vector_norm(torch.relu(C@torch.linalg.inv(bases[i])@(p-center)-mu*g))
         # loss = (1-lamb)*mu + lamb*torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))/len(post_points[:,i,1:])
-        loss = torch.log1p(mu) + lamb*torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))/num_samples
+        loss = torch.log1p(mu) + lamb*torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))/num_samples 
 
         # if i==len(times)-1 and (epoch+1)%10==0:
         #     f = 1
@@ -223,16 +223,16 @@ centers = [] ### eventually this should be a NN output too
 for i in range(len(times)):
     points = post_points[:, i, 1:]
     new_center = np.mean(points, axis=0) # probably won't be used, delete if unused in final product
-    pca: PCA = PCA(n_components=points.shape[1])
-    pca.fit(points)
-    scale = np.sqrt(pca.explained_variance_)
-    # print(pca.components_, scale)
-    derived_basis = (pca.components_.T @ np.diag(scale)).T # scaling each component by sqrt of dimension
-    # derived_basis = (pca.components_.T ).T # scaling each component by sqrt of dimension
-    # print(pca.components_[0]*scale[0], pca.components_[1]*scale[1])
-    # plt.arrow(new_center[0], new_center[1], *derived_basis[0]
-    bases.append(torch.tensor(derived_basis))
-    # bases.append(torch.eye(points.shape[1], dtype=torch.double))
+    # pca: PCA = PCA(n_components=points.shape[1])
+    # pca.fit(points)
+    # scale = np.sqrt(pca.explained_variance_)
+    # # print(pca.components_, scale)
+    # derived_basis = (pca.components_.T @ np.diag(scale)).T # scaling each component by sqrt of dimension
+    # # derived_basis = (pca.components_.T ).T # scaling each component by sqrt of dimension
+    # # print(pca.components_[0]*scale[0], pca.components_[1]*scale[1])
+    # # plt.arrow(new_center[0], new_center[1], *derived_basis[0]
+    # bases.append(torch.tensor(derived_basis))
+    bases.append(torch.eye(points.shape[1], dtype=torch.double))
     centers.append(torch.tensor(new_center))
 
 
