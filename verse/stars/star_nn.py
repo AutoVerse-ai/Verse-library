@@ -100,15 +100,15 @@ def he_init(m):
 model.apply(he_init)
 
 # Use SGD as the optimizer
-optimizer = optim.Adam(model.parameters(), lr=0.002, weight_decay=1e-5)
+optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-5)
 scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.95)
 
-num_epochs = 75 # sample number of epoch -- can play with this/set this as a hyperparameter
+num_epochs = 50 # sample number of epoch -- can play with this/set this as a hyperparameter
 num_samples = 100 # number of samples per time step
-lamb = 10
+lamb = 7
 
 T = 7
-ts = 0.1
+ts = 0.05
 
 initial_star = StarSet(center, basis, C, g)
 # Toy Function to learn: x^2+20
