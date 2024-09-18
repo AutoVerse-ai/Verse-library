@@ -7,6 +7,10 @@ from scipy.integrate import ode
 from sklearn.decomposition import PCA
 import pandas as pd
 
+# Check if CUDA is available
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"Using device: {device}")
+
 ### synthetic dynamic and simulation function
 def dynamic_test(vec, t):
     x, y = t # hack to access right variable, not sure how integrate, ode are supposed to work
@@ -88,7 +92,8 @@ hidden_size = 64     # Number of neurons in the hidden layers -- this may change
 output_size = 1
 # output_size = g.shape[0]
 
-model = PostNN(input_size, hidden_size, output_size)
+# if device is not None:
+model = PostNN(input_size, hidden_size, output_size).to(device)
 
 def he_init(m):
     if isinstance(m, nn.Linear):
@@ -101,22 +106,23 @@ model.apply(he_init)
 
 # Use SGD as the optimizer
 optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-5)
-scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
+scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.95)
 
 num_epochs = 50 # sample number of epoch -- can play with this/set this as a hyperparameter
 num_samples = 100 # number of samples per time step
-lamb = 3
+lamb = 1
+batch_size = 1 # number of times computed at once, lower should be better but slower
 
-T = 30
-ts = 0.1
+T = 14
+ts = 0.2
 
 initial_star = StarSet(center, basis, C, g)
 # Toy Function to learn: x^2+20
 
-times = torch.arange(0, T+ts, ts) # times to supply, right now this is fixed while S_t is random. can consider making this random as well
+times = torch.arange(0, T+ts, ts).to(device) # times to supply, right now this is fixed while S_t is random. can consider making this random as well
 
-C = torch.tensor(C, dtype=torch.double)
-g = torch.tensor(g, dtype=torch.float)
+C = torch.tensor(C, dtype=torch.double).to(device)
+g = torch.tensor(g, dtype=torch.float).to(device)
 # Training loop
 S_0 = sample_star(initial_star, num_samples*10) # should eventually be a hyperparameter as the second input, 
 np.random.seed()
@@ -137,24 +143,17 @@ def containment(points: torch.Tensor, times: torch.Tensor, bases: List[torch.Ten
     shifted_points = points - torch.stack(centers).unsqueeze(0) 
     shifted_points_flat = shifted_points.view(num_samples * len_times, dim) # (n_samples*len_times, dim)
     bases_inv = torch.linalg.inv(torch.stack(bases)) # has shape (len_times, dim, dim)
-
     bases_inv_repeated = bases_inv.repeat(num_samples, 1, 1)  # Shape: (n_samples, n_times, point_dim, point_dim)
-
     # Reshape bases_inv_repeated to (n_samples * n_times, point_dim, point_dim)
     bases_inv_flat = bases_inv_repeated.view(num_samples * len_times, dim, dim)
-    
     # Perform batched matrix multiplication
     transformed_points_flat = torch.bmm(bases_inv_flat, shifted_points_flat.unsqueeze(2)).squeeze(2)  # Shape: (n_samples * n_times, point_dim)
-
     transformed_points = transformed_points_flat.squeeze(1)  # Reshape back to (n_samples * len_times, point_dim)
     transformed_points = transformed_points.view(num_samples, len_times, dim)  # Reshape back to (n_samples, len_times, dim)
-
     # Apply C matrix (batch-matrix multiplication)
     transformed_points = torch.matmul(transformed_points, C.T)  # C has shape (k, dim), apply to all points
-
     # Apply ReLU and subtract time-dependent mu*g
     transformed_points = torch.relu(transformed_points - mu.view(1, len_times, 1) * g)
-
     # Compute vector norm for each point for each time step
     return torch.linalg.vector_norm(transformed_points, dim=2) 
 
@@ -185,25 +184,33 @@ for epoch in range(num_epochs):
     for i in range(len(times)):
         points = post_points[:, i, 1:]
         new_center = np.mean(points, axis=0) # probably won't be used, delete if unused in final product
-        bases.append(torch.eye(points.shape[1], dtype=torch.double))
-        centers.append(torch.tensor(new_center))
+        bases.append(torch.eye(points.shape[1], dtype=torch.double).to(device))
+        centers.append(torch.tensor(new_center).to(device))
 
-    post_points = torch.tensor(post_points)
+    post_points = torch.tensor(post_points).to(device)
 
-    mu = model(times.unsqueeze(1)) # get times in right form
-    loss = (torch.log(1+torch.sum(mu))+lamb*torch.sum(containment(post_points[:, :, 1:], times, bases, centers))/num_samples)
-    loss.backward()
-    optimizer.step()
+    for i in range(len(times)//batch_size+1):
+        batch_times: torch.Tensor
+        if i==len(times)/batch_size:
+            batch_times = times[i*batch_size:]
+        else:
+            batch_times = times[i*batch_size:(i+1)*batch_size]
+        ### very naive way to do this, probably would want more or less equal batch sizes if not dividing equally
+
+        mu = model(times.unsqueeze(1)) # get times in right form
+        loss = (torch.log(1+torch.sum(mu))+lamb*torch.sum(containment(post_points[:, :, 1:], times, bases, centers))/num_samples)
+        loss.backward()
+        optimizer.step()
 
     scheduler.step()
-    # Print loss periodically
-    # print(f'Loss: {loss.item():.4f}')
+        # Print loss periodically
+        # print(f'Loss: {loss.item():.4f}')
     if (epoch + 1) % 10 == 0:
         print(f'Epoch [{epoch + 1}/{num_epochs}] \n_____________\n')
         print("Gradients of weights and loss", model.fc1.weight.grad, model.fc1.bias.grad)
         losses = 0
         for i in range(len(times)):
-            t = torch.tensor([times[i]], dtype=torch.float32)
+            t = torch.tensor([times[i]], dtype=torch.float32).to(device)
             mu = model(t)
             cont = lambda p, i: torch.linalg.vector_norm(torch.relu(C@torch.linalg.inv(bases[i])@(p-centers[i])-mu*g))
             loss = torch.log(1+mu) + lamb*torch.sum(torch.stack([cont(point, i) for point in post_points[:, i, 1:]]))/len(post_points[:,i,1:])
@@ -211,12 +218,15 @@ for epoch in range(num_epochs):
             print(f'loss: {loss.item():.4f}, mu: {mu.item():.4f}, time: {t.item():.1f}')
             losses += loss.item()
         mu = model(times.unsqueeze(1)) # get times in right form
-        other_loss = (torch.log(1+torch.sum(mu))+lamb*torch.sum(containment(post_points[:, :, 1:], times, bases, centers)))/(num_samples*len(times))
-        print(f'Losses: {losses/len(times):.4f}, ..., other loss {other_loss:.5f}')
+        other_loss = (torch.log(1+torch.sum(mu))+lamb*torch.sum(containment(post_points[:, :, 1:], times, bases, centers)))/(num_samples)
+        print(f'Losses: {losses:.4f}, ..., other loss {other_loss:.5f}')
 
 # test the new model
 
 model.eval()
+
+### should probably use something to get local path but whatever
+torch.save(model.state_dict(), "./verse/stars/model_weights.pth")
 
 # S_0 = sample_star(initial_star, num_samples*10) ### this is critical step -- this needs to be recomputed per training step
 S = sample_initial(num_samples*10)
@@ -246,9 +256,12 @@ stars = []
 percent_contained = []
 cont = lambda p, i: torch.linalg.vector_norm(torch.relu(C@torch.linalg.inv(bases[i].T)@(p-centers[i])-model(test[i])*g))
 
+model = model.to('cpu')
+C, g = torch.Tensor.cpu(C), torch.Tensor.cpu(g)
+
 for i in range(len(times)):
     # mu, center = model(test[i])[0].detach().numpy(), model(test[i])[1:].detach().numpy()
-    stars.append(StarSet(centers[i], bases[i], C.numpy(), torch.relu(model(test[i])).detach().numpy()*g.numpy()))
+    stars.append(StarSet(centers[i], bases[i], C.numpy(), model(test[i]).detach().numpy()*g.numpy()))
     points = torch.tensor(post_points[:, i, 1:])
     contain = torch.sum(torch.stack([cont(point, i) == 0 for point in points]))
     percent_contained.append(contain/(num_samples*10)*100)
