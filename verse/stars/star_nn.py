@@ -110,7 +110,7 @@ scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.95)
 
 num_epochs: int = 50 # sample number of epoch -- can play with this/set this as a hyperparameter
 num_samples: int = 100 # number of samples per time step
-lamb: float = 1
+lamb: float = 5
 batch_size: int = 5 # number of times computed at once, lower should be better but slower, min of 1
 
 T = 14
@@ -196,7 +196,7 @@ for epoch in range(num_epochs):
         ### very naive way to do this, probably would want more or less equal batch sizes if not dividing equally
 
         mu = model(times[start:end].unsqueeze(1)) # get times in right form
-        loss = torch.sum(mu)+lamb*torch.sum(containment(post_points[:, start:end, 1:], times[start:end], bases[start:end], centers[start:end]))/num_samples
+        loss = torch.log1p(torch.sum(mu))+lamb*torch.sum(containment(post_points[:, start:end, 1:], times[start:end], bases[start:end], centers[start:end]))/num_samples
         loss.backward()
         optimizer.step()
 
