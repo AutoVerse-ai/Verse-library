@@ -47,7 +47,7 @@ if __name__ == "__main__":
     scenario.config.reachability_method = ReachabilityMethod.STAR_SETS
     # scenario.config.pca = False
     scenario.set_sensor(BaseStarSensor())
-    trace = scenario.verify(5, 0.1)
+    trace = scenario.verify(30, 0.5)
     # sim = scenario.simulate(10, 0.01)
     # pp_fix(reach_at_fix(trace, 0, 10))
 
@@ -55,7 +55,7 @@ if __name__ == "__main__":
     for star in trace.nodes[0].trace['cell']:
         stars.append(star[1])
     plot_stars_points(stars)
-    print(stars[-1].basis[0][0])
-    plot_reachtube_stars(trace,filter=1)
+    # print(stars[-1].basis[0][0])
+    # plot_reachtube_stars(trace,filter=1)
     # fig = simulation_tree(trace, None, fig, 1, 2, [1, 2], "fill", "trace")
     plt.show()

@@ -16,7 +16,7 @@ def plot_reachtube_stars(
     map=None,
     x_dim: int = 0,
     y_dim: int = 1,
-    filter: int = 100
+    filter: int = 1
 ):
     print("graphing")
     if isinstance(root, AnalysisTree):
