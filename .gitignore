@@ -26,3 +26,5 @@ gif/
 debug/
 build/
 .python-version
+*.csv
+*.pth
