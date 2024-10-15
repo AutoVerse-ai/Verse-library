@@ -6,6 +6,7 @@ from starset import *
 from scipy.integrate import ode
 from sklearn.decomposition import PCA
 import pandas as pd
+from tqdm import tqdm
 
 ### synthetic dynamic and simulation function
 def dynamic_test(vec, t):
@@ -103,7 +104,7 @@ model.apply(he_init)
 optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-5)
 scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.95)
 
-num_epochs = 50 # sample number of epoch -- can play with this/set this as a hyperparameter
+num_epochs = 30 # sample number of epoch -- can play with this/set this as a hyperparameter
 num_samples = 100 # number of samples per time step
 lamb = 7
 
@@ -127,10 +128,7 @@ def sample_initial(num_samples: int = num_samples) -> List[List[float]]:
         samples.append(S_0[np.random.randint(0, len(S_0))])
     return samples
 
-for epoch in range(num_epochs):
-    # Zero the parameter gradients
-    optimizer.zero_grad()
-
+for epoch in tqdm(range(num_epochs), desc="Training Progress"):
     samples = sample_initial()
 
     post_points = []
@@ -166,6 +164,7 @@ for epoch in range(num_epochs):
     ### for now, don't worry about batch training, just do single input, makes more sense to me to think of loss function like this
     ### I would really like to be able to do batch training though, figure out a way to make it work
     for i in range(len(times)):
+        optimizer.zero_grad()
         # Forward pass
         t = torch.tensor([times[i]], dtype=torch.float32)
         mu = model(t)
