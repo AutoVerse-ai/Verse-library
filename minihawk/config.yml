@@ -1,0 +1,122 @@
+adv_objects:
+  enabled: false
+  objects:
+  - model: uli_cora
+    pose:
+      location:
+        x: 20
+        y: 20
+        z: 20
+      rotation:
+        pitch: 0
+        roll: 0
+        yaw: 0
+      type: relative
+    velocity:
+      x: 0
+      y: 0
+      z: 0
+ego_vehicle:
+  debug: false
+  include: ego_vehicle/jaxguam.yml
+  location:
+    x: -80
+    y: 75
+    z: 75
+  model: uli_cora
+  perception_control_topic: /controller_node/tgt_box_rcvd
+  perception_vel_topic: /controller_node/vel_cmd
+  planner:
+    distance_threshold: 1
+    speed_check_time: 0.5
+    speed_threshold: 3
+    type: a_star
+  planner_topic: /target/waypoint
+  plot: false
+  reference_topic: /target/pose
+  save_video: false
+  skip_sleep: false
+  type: jaxguam
+  velocity:
+    x: 0
+    y: 0
+    z: 0
+landing_threshold: 0.1
+loglevel: DEBUG
+map: Town02_Opt
+optional_features:
+  include: optional_features/static_obstacles_record.yml
+  record_static_obstacles:
+    enabled: true
+    frame: global
+record_persistent: true
+record_rosbag: true
+services:
+  carla:
+    include: services/carla.yml
+    start_delay: 15
+  env_sim:
+    host_setup:
+    - 'xhost -local:'
+    - 'xhost +local:'
+    include: services/env_sim.yml
+    ros:
+      launch_file: run.launch
+      ros_package: rraaa
+      workspace: /catkin_ws
+    start_delay: 1
+    weather:
+      lighting:
+        cloudiness: 80.0
+        fog_density: 20.0
+        fog_distance: 150.0
+        precipitation: 50.0
+        precipitation_deposits: 30.0
+        sun_altitude_angle: 15.0
+        sun_azimuth_angle: 90.0
+      lighting_flag: default
+      type: ClearSunset
+      weather_flag: default
+  ground_station:
+    include: services/ground_station.yml
+    ros:
+      ros_package: ground_station
+      rosrun_files:
+      - node_target.py
+      workspace: /catkin_ws
+    start_delay: 1
+  jaxguam:
+    include: services/jaxguam.yml
+    ros:
+      ros_package: jaxguam
+      rosrun_files:
+      - node_vehicle.py
+      - node_planner.py
+      - landing_controller.py
+      workspace: /catkin_ws
+    start_delay: 1
+  sim_control:
+    include: services/sim_control.yml
+    ros:
+      ros_package: sim_control
+      rosrun_files:
+      - node_recorder.py
+      - node_sim_start.py
+      - node_control.py
+      workspace: /catkin_ws
+    start_delay: 1
+  yolov5:
+    include: services/yolov5.yml
+    ros:
+      ros_package: yolov5
+      rosrun_files:
+      - node_yolo.py
+      workspace: /catkin_ws
+    start_delay: 1
+simulation_mode: 1
+spectator_follows_ego_vehicle: false
+target:
+  type: relative
+  x: 0
+  y: 0
+  z: -50

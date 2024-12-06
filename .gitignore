@@ -26,3 +26,4 @@ gif/
 debug/
 build/
 .python-version
+**.bag
