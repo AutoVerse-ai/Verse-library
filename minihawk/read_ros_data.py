@@ -4,6 +4,7 @@ from datetime import datetime
 import os
 import numpy as np 
 import cv2
+import sys
 
 def rosbag_to_csv(bag_file, output_dir):
     # Open the bag file
@@ -82,6 +83,7 @@ def rosbag_to_csv(bag_file, output_dir):
                 msg_dict['rvz'] = msg.angular.z
                 messages.append(msg_dict)
             else:
+                continue
                 # Convert ROS message to dictionary
                 msg_dict = {}
                 for slot in msg.__slots__:
@@ -102,18 +104,25 @@ def rosbag_to_csv(bag_file, output_dir):
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
 
-fn_list = [
-    "20241204153116",
-    "20241204153536",
-    "20241204154010",
-    "20241204154352",
-    # "20241204154828",
-]
+# fn_list = [
+#     "20241205213753",
+#     "20241205214208",
+#     # "20241204154010",
+#     # "20241204154352",
+#     # "20241204154828",
+# ]
 
 if __name__ == "__main__":
-    for i in range(4):
-        fn = os.path.join(script_dir, './MiniHawk_Runs-5', fn_list[i], './tmp/recorded_topics.bag')
-        # img_dir = os.path.join(script_dir, './pi_images/')
-        # if not os.path.exists(img_dir):
-        #     os.mkdir(img_dir)
-        rosbag_to_csv(fn, os.path.join(script_dir, f'./extracted_{i}/'))
+    output_folder = sys.argv[1]
+    output_folder = os.path.join(script_dir, output_folder)
+    for i, name in enumerate(os.listdir(output_folder)):
+        if name.startswith('2024'):
+            fn = os.path.join(output_folder, name, './tmp/recorded_topics.bag')
+            print(fn)
+            rosbag_to_csv(fn, os.path.join(output_folder, f'./extracted_{i}/'))
+    # for i in range(2):
+    #     fn = os.path.join(output_folder, fn_list[i], './tmp/recorded_topics.bag')
+    #     # img_dir = os.path.join(script_dir, './pi_images/')
+    #     # if not os.path.exists(img_dir):
+    #     #     os.mkdir(img_dir)
+    #     rosbag_to_csv(fn, os.path.join(output_folder, f'./extracted_{i}/'))

@@ -15,15 +15,17 @@ from verse.parser import ControllerIR
 script_dir = os.path.dirname(os.path.realpath(__file__))
 
 class MiniHawkAgent(BaseAgent):
-    def __init__(self, id, code=None, file_name=None):
+    def __init__(self, id, code=None, file_name=None, folder_name = './MiniHawk_Obstacles-None_Landing-Rooftop_Uncertainty-Uniform-5m'):
         # Calling the constructor of tha base class
 
         # super().__init__(id, code, file_name)
         self.id = id
+        output_dir = folder_name
         self.traces_list = []
-        for i in range(4):
-            df = pd.read_csv(os.path.join(script_dir, f'extracted_{i}','./_minihawk_pose.csv'))
-            self.traces_list.append(df)
+        for i, name in enumerate(os.listdir(output_dir)):
+            if name.startswith('extracted'):
+                df = pd.read_csv(os.path.join(output_dir, name, './_minihawk_pose.csv'))
+                self.traces_list.append(df)
         self.decision_logic: ControllerIR = ControllerIR.empty()
         self.process_traces()
     

@@ -1,0 +1,203 @@
+# Global
+loglevel: DEBUG # One of ["TRACE", "DEBUG", "INFO", "SUCCESS", "WARNING", "ERROR", "CRITICAL"]
+
+# The topics recorded are defined in sim_control/script/node_recorder.py
+# Final rosbag is in utils/tmp
+record_rosbag: true
+record_persistent: true
+
+# Simulation modes
+# simple: run the simulator and let it run until user stops it via ctrl+c
+# integer value: run simulator for value number of iterations
+simulation_mode: 6
+
+landing_threshold: 3.5 #  in meters
+
+# Order of services here is also the order in which services are started
+services:
+  carla:
+    include: services/carla.yml
+  env_sim:
+    include: services/env_sim.yml
+  # jaxguam:
+  #   include: services/jaxguam.yml
+  minihawk:
+    include: services/minihawk.yml
+  ground_station:
+    include: services/ground_station.yml
+  yolov5:
+    include: services/yolov5.yml
+  sim_control:
+    include: services/sim_control.yml
+  # verifiable_od:
+  #   include: services/verifiable_od.yml
+
+
+# Test
+map: Town02_Opt
+spectator_follows_ego_vehicle: False
+
+# Vehicle
+ego_vehicle:
+  reference_topic: /target/pose
+  planner_topic: /target/waypoint
+  perception_vel_topic: /controller_node/vel_cmd
+  perception_control_topic: /controller_node/tgt_box_rcvd
+  # planner_topic: /controller_node/vel_cmd
+  planner:
+    type: a_star # One of ["simple", "a_star"]
+    distance_threshold: 3.5 # distance threshold to the current waypoint
+    speed_threshold: 1.0 # minimum speed required when moving between intermediate points
+    speed_check_time: 0.5 # time period in s to check the speed
+  # include: ego_vehicle/jaxguam.yml
+  include: ego_vehicle/minihawk.yml
+  debug: false
+  location:
+    x: -80
+    y: 75
+    z: 75
+    # x: -80
+    # y: 75
+    # z: 75
+  velocity:
+    x: 0
+    y: 0
+    z: 0
+
+# Adversarial objects
+adv_objects:
+  enabled: True # One of ["True", "False"]
+  objects:
+    - pose:
+        type: absolute # One of ["absolute", "relative"]. If "relative", then relative to the starting pose of the ego vehicle.
+        location:
+          x: -80
+          y: 75
+          z: 65
+        rotation:
+          roll: 0
+          pitch: 0
+          yaw: 0
+      velocity:
+        x: 0
+        y: 0
+        z: 0
+      model: uli_cora
+    # - pose:
+    #     type: relative # One of ["absolute", "relative"]. If "relative", then relative to the starting pose of the ego vehicle.
+    #     location:
+    #       x: 10
+    #       y: -5
+    #       z: -49.5
+    #     rotation:
+    #       roll: 0
+    #       pitch: 0
+    #       yaw: 0
+    #   velocity:
+    #     x: 0
+    #     y: 0
+    #     z: 2
+    #   model: uli_cora
+    # - pose:
+    #     type: relative # One of ["absolute", "relative"]. If "relative", then relative to the starting pose of the ego vehicle.
+    #     location:
+    #       x: -20
+    #       y: -20
+    #       z: 0
+    #     rotation:
+    #       roll: 0
+    #       pitch: 0
+    #       yaw: 180
+    #   velocity:
+    #     x: 0
+    #     y: 0
+    #     z: 0
+    #   model: uli_cora
+    # - pose:
+    #     type: relative # One of ["absolute", "relative"]. If "relative", then relative to the starting pose of the ego vehicle.
+    #     location:
+    #       x: -10
+    #       y: -10
+    #       z: -40
+    #     rotation:
+    #       roll: 0
+    #       pitch: 0
+    #       yaw: 180
+    #   velocity:
+    #     x: 0
+    #     y: 0
+    #     z: 0
+    #   model: vehicle.bmw.grandtourer
+    # - pose:
+    #     type: relative # One of ["absolute", "relative"]. If "relative", then relative to the starting pose of the ego vehicle.
+    #     location:
+    #       x: -4
+    #       y: -28
+    #       z: -45
+    #     rotation:
+    #       roll: 0
+    #       pitch: 0
+    #       yaw: 90
+    #   velocity:
+    #     x: 0
+    #     y: 3
+    #     z: 0
+    #   model: vehicle.dodge.charger_police
+    # - pose:
+    #     type: relative # One of ["absolute", "relative"]. If "relative", then relative to the starting pose of the ego vehicle.
+    #     location:
+    #       x: 7
+    #       y: 7
+    #       z: -25
+    #     rotation:
+    #       roll: 0
+    #       pitch: 0
+    #       yaw: 0
+    #   velocity:
+    #     x: 0
+    #     y: 0
+    #     z: 0
+    #   model: vehicle.nissan.patrol
+    # - pose:
+    #     type: relative # One of ["absolute", "relative"]. If "relative", then relative to the starting pose of the ego vehicle.
+    #     location:
+    #       x: -8
+    #       y: 12
+    #       z: -17
+    #     rotation:
+    #       roll: 0
+    #       pitch: 0
+    #       yaw: 0
+    #   velocity:
+    #     x: 0
+    #     y: 0
+    #     z: 0
+    #   model: vehicle.tesla.cybertruck
+    # - pose:
+    #     type: relative # One of ["absolute", "relative"]. If "relative", then relative to the starting pose of the ego vehicle.
+    #     location:
+    #       x: -20
+    #       y: 15
+    #       z: -34
+    #     rotation:
+    #       roll: 0
+    #       pitch: 0
+    #       yaw: 0
+    #   velocity:
+    #     x: 0
+    #     y: 0
+    #     z: 0
+    #   model: vehicle.mercedes.sprinter
+
+# Target point
+target:
+  type: absolute # One of ["absolute", "relative"]. Absolute -- absolute in CARLA's global coordinate frame. Relative -- relative to the vehicle's starting location.
+  x: -80
+  y: 75
+  z: 29
+  # x: -45
+  # y: 35
+  # z: 0
+
+optional_features:
+  include: optional_features/static_obstacles_record.yml
