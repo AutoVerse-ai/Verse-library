@@ -236,16 +236,16 @@ if __name__ == "__main__":
         plotter, color='green'
     )
 
-    plot3dRect(
-        [-83.2235, 69.56748, 60.03582],
-        [-76.77987,  80.43198,  62.21454],
-        plotter, color='red', trans=1
-    )
+    # plot3dRect(
+    #     [-83.2235, 69.56748, 60.03582],
+    #     [-76.77987,  80.43198,  62.21454],
+    #     plotter, color='red', trans=1
+    # )
 
     min_ub = np.inf
     for i in range(0, len(obstacle_data_removed)):
-        if i==66598:
-            continue
+        # if i==66598:
+        #     continue
         rect = obstacle_data_removed[i]
         lb = np.array([rect['x_min'], rect['y_min'], rect['z_min']])
         ub = np.array([rect['x_max'], rect['y_max'], rect['z_max']])
