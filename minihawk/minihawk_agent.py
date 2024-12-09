@@ -23,8 +23,8 @@ class MiniHawkAgent(BaseAgent):
         output_dir = folder_name
         self.traces_list = []
         for i, name in enumerate(os.listdir(output_dir)):
-            if i==1 or i==8 or i==9:
-                continue
+            # if i==1 or i==8 or i==9 or i==4:
+            #     continue
             if name.startswith('extracted'):
                 df = pd.read_csv(os.path.join(output_dir, name, './_minihawk_pose.csv'))
                 self.traces_list.append(df)
