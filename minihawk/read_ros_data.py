@@ -115,11 +115,13 @@ script_dir = os.path.dirname(os.path.realpath(__file__))
 if __name__ == "__main__":
     output_folder = sys.argv[1]
     output_folder = os.path.join(script_dir, output_folder)
+    counter = 0
     for i, name in enumerate(os.listdir(output_folder)):
         if name.startswith('2024'):
             fn = os.path.join(output_folder, name, './tmp/recorded_topics.bag')
             print(fn)
-            rosbag_to_csv(fn, os.path.join(output_folder, f'./extracted_{i}/'))
+            rosbag_to_csv(fn, os.path.join(output_folder, f'./extracted_{counter}/'))
+            counter += 1
     # for i in range(2):
     #     fn = os.path.join(output_folder, fn_list[i], './tmp/recorded_topics.bag')
     #     # img_dir = os.path.join(script_dir, './pi_images/')

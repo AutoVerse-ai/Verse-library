@@ -31,11 +31,11 @@ def plot3dRect(lb, ub, ax, color, edge=True, trans=0.2):
     ax = plot_polytope_3d(poly.A, poly.b, ax=ax, color=color, edge=edge, trans=trans)
     return ax
 
-# output_folder = sys.argv[1]
-output_folder = 'Scenario-02/'
+output_folder = sys.argv[1]
+# output_folder = 'Scenario-02/'
 output_folder = os.path.join(script_dir, output_folder)
 
-with open(os.path.join(script_dir, 'static_obstacles_GUAM_below.json'), 'r') as f:
+with open(os.path.join(output_folder, 'static_obstacles.json'), 'r') as f:
     obstacle_data = json.load(f)
 
 tmp = []
@@ -114,6 +114,12 @@ for i in range(0, len(obstacle_data_removed)):
         continue
     if ub[2]<min_ub:
         min_ub = ub[2]
+    if lb[2]<-75:
+        continue 
+    if lb[1]<-500 or ub[1]>500:
+        continue 
+    if lb[0]<-500 or ub[0]>500:
+        continue
     print(i)
     # lb[2] += 77.01757264137268
     # ub[2] += 77.01757264137268

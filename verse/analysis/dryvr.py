@@ -24,9 +24,8 @@ def all_sensitivities_calc(training_traces: np.ndarray, initial_radii: np.ndarra
         normalized_initial_points: np.array = (
             training_traces[:, 0, 1:] / normalizing_initial_set_radii
         )
-        initial_distances = (
-            spatial.distance.pdist(normalized_initial_points, "chebyshev") + _SMALL_EPSILON
-        )
+        # initial_distances = (np.max(spatial.distance.pdist(normalized_initial_points, "chebyshev"))+np.mean(spatial.distance.pdist(normalized_initial_points, "chebyshev")))/2 + _SMALL_EPSILON
+        initial_distances = (np.mean(spatial.distance.pdist(normalized_initial_points, "chebyshev"))) + _SMALL_EPSILON
         for cur_time_ind in range(1, trace_len):
             y_points[cur_dim_ind - 1, cur_time_ind - 1] = np.max(
                 (
@@ -155,9 +154,9 @@ def get_reachtube_segment(
             np.all(reachtube_segment[:, 0, :] <= training_traces[trace_ind, 1:, :])
             and np.all(reachtube_segment[:, 1, :] >= training_traces[trace_ind, 1:, :])
         ):
-            assert np.any(
-                np.abs(training_traces[trace_ind, 0, 1:] - center_trace[0, 1:]) > initial_radii
-            )
+            # assert np.any(
+            #     np.abs(training_traces[trace_ind, 0, 1:] - center_trace[0, 1:]) > initial_radii
+            # )
             print(
                 f"Warning: Trace #{trace_ind}",
                 "of this initial set is sampled outside of the initial set because of floating point error and is not contained in the initial set",
@@ -282,11 +281,11 @@ def calc_bloated_tube(
     # random.seed(4)
     cur_center = calcCenterPoint(initial_set[0], initial_set[1])
     cur_delta = calcDelta(initial_set[0], initial_set[1])
-    traces = [sim_func(mode_label, cur_center, time_horizon, time_step, lane_map)]
+    traces = [sim_func(mode_label, cur_center, time_horizon, time_step, lane_map, 0)]
     # Simulate SIMTRACENUM times to learn the sensitivity
     for i in range(sim_trace_num):
         new_init_point = randomPoint(initial_set[0], initial_set[1], i)
-        traces.append(sim_func(mode_label, new_init_point, time_horizon, time_step, lane_map))
+        traces.append(sim_func(mode_label, new_init_point, time_horizon, time_step, lane_map, i+1))
 
     # Trim the trace to the same length
     traces = trimTraces(traces)

@@ -10,6 +10,29 @@ SIMTRACENUM = 10
 PW = "PW"
 GLOBAL = "GLOBAL"
 
+# def all_sensitivities_calc(training_traces: np.ndarray, initial_radii: np.ndarray):
+#     num_traces: int
+#     trace_len: int
+#     ndims: int
+#     num_traces, trace_len, ndims = training_traces.shape
+#     normalizing_initial_set_radii: np.array = initial_radii.copy()
+#     y_points: np.array = np.zeros(
+#         (normalizing_initial_set_radii.shape[0], trace_len - 1))
+#     normalizing_initial_set_radii[np.where(
+#         normalizing_initial_set_radii == 0)] = 1.0
+#     for cur_dim_ind in range(1, ndims):
+#         # keyi: move out of loop
+#         normalized_initial_points: np.array = training_traces[:,
+#                                                               0, 1:] / normalizing_initial_set_radii
+#         initial_distances = spatial.distance.pdist(
+#             normalized_initial_points, 'chebyshev') + _SMALL_EPSILON
+#         for cur_time_ind in range(1, trace_len):
+#             y_points[cur_dim_ind - 1, cur_time_ind - 1] = np.max((spatial.distance.pdist(
+#                 np.reshape(training_traces[:, cur_time_ind, cur_dim_ind],
+#                            (training_traces.shape[0], 1)), 'chebychev'
+#             ) / normalizing_initial_set_radii[cur_dim_ind - 1]) / initial_distances)
+#     return y_points
+
 def all_sensitivities_calc(training_traces: np.ndarray, initial_radii: np.ndarray):
     num_traces: int
     trace_len: int
@@ -22,15 +45,24 @@ def all_sensitivities_calc(training_traces: np.ndarray, initial_radii: np.ndarra
         normalizing_initial_set_radii == 0)] = 1.0
     for cur_dim_ind in range(1, ndims):
         # keyi: move out of loop
-        normalized_initial_points: np.array = training_traces[:,
+        normalized_initial_points: np.array = training_traces[:, 
                                                               0, 1:] / normalizing_initial_set_radii
-        initial_distances = spatial.distance.pdist(
-            normalized_initial_points, 'chebyshev') + _SMALL_EPSILON
+        initial_distances = np.max(spatial.distance.pdist(
+            normalized_initial_points, "chebyshev")) + _SMALL_EPSILON
         for cur_time_ind in range(1, trace_len):
-            y_points[cur_dim_ind - 1, cur_time_ind - 1] = np.max((spatial.distance.pdist(
-                np.reshape(training_traces[:, cur_time_ind, cur_dim_ind],
-                           (training_traces.shape[0], 1)), 'chebychev'
-            ) / normalizing_initial_set_radii[cur_dim_ind - 1]) / initial_distances)
+            y_points[cur_dim_ind - 1, cur_time_ind - 1] = np.max(
+                (
+                    spatial.distance.pdist(
+                        np.reshape(
+                            training_traces[:, cur_time_ind, cur_dim_ind],
+                            (training_traces.shape[0], 1),
+                        ),
+                        "chebychev",
+                    )
+                    / normalizing_initial_set_radii[cur_dim_ind - 1]
+                )
+                / initial_distances
+            )
     return y_points
 
 def get_reachtube_segment(training_traces: np.ndarray, initial_radii: np.ndarray, method='PWGlobal') -> np.array:
@@ -234,11 +266,11 @@ def calc_bloated_tube_dryvr(
     cur_center = calcCenterPoint(initial_set[0], initial_set[1])
     cur_delta = calcDelta(initial_set[0], initial_set[1])
     if traces is None:
-        traces = [sim_func(mode_label, cur_center, time_horizon, time_step, lane_map)]
+        traces = [sim_func(mode_label, cur_center, time_horizon, time_step, lane_map, 0)]
         # Simulate SIMTRACENUM times to learn the sensitivity
         for i in range(sim_trace_num):
             new_init_point = randomPoint(initial_set[0], initial_set[1], i)
-            traces.append(sim_func(mode_label, new_init_point, time_horizon, time_step, lane_map))
+            traces.append(sim_func(mode_label, new_init_point, time_horizon, time_step, lane_map, i+1))
     # Trim the trace to the same length
     traces = trimTraces(traces)
     if guard_checker is not None:

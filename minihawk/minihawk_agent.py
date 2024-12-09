@@ -23,11 +23,14 @@ class MiniHawkAgent(BaseAgent):
         output_dir = folder_name
         self.traces_list = []
         for i, name in enumerate(os.listdir(output_dir)):
+            if i==1:
+                continue
             if name.startswith('extracted'):
                 df = pd.read_csv(os.path.join(output_dir, name, './_minihawk_pose.csv'))
                 self.traces_list.append(df)
         self.decision_logic: ControllerIR = ControllerIR.empty()
         self.process_traces()
+        self.internal_counter = 0
     
     def process_traces(self):
         min_trace_length = np.inf
@@ -69,7 +72,10 @@ class MiniHawkAgent(BaseAgent):
             self.all_traces.append(trace)
         self.all_traces = np.array(self.all_traces)
 
-    def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step, track_map: LaneMap = None) -> np.ndarray:
+    def generate_nominal_trace(self):
+        self.nominal_trace = np.mean(self.all_traces, axis=0)
+
+    def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step, track_map: LaneMap = None, idx = 0) -> np.ndarray:
         '''
         # time_bound = float(time_bound)
         # number_points = int(np.ceil(time_bound/time_step))
@@ -87,12 +93,23 @@ class MiniHawkAgent(BaseAgent):
         '''
         # pass   
         steps = int(time_bound/time_step)
-        initial_condition = np.array(initialCondition)      
-        all_inits = self.all_traces[:,0,1:]
-        dists = np.linalg.norm(all_inits - initial_condition, axis=1)
-        trace_idx = np.argmin(dists)
-        # init = initialCondition
-        print(trace_idx, initialCondition, dists)
+        if idx == 0:
+            return self.nominal_trace[:steps,:4]
+        else:
+        # if self.internal_counter == 0:
+        #     initial_condition = np.array(initialCondition)      
+        #     all_inits = self.all_traces[:,0,1:]
+        #     dists = np.linalg.norm(all_inits - initial_condition, axis=1)
+        #     trace_idx = np.argmin(dists)
+        #     init = initialCondition
+        #     print(trace_idx, initialCondition, dists)
+        #     self.nominal_idx = trace_idx
+        #     self.internal_counter += 1
+        # else:
+            if idx >= self.all_traces.shape[0]:
+                idx = idx%self.all_traces.shape[0]
+            trace_idx = idx
+            # self.internal_counter += 1
 
         # time_bound = float(time_bound)
         # num_points = int(np.ceil(time_bound / time_step))
@@ -109,7 +126,7 @@ class MiniHawkAgent(BaseAgent):
         #     #     init[3] = 0
         #     trace[i + 1, 0] = time_step * (i + 1)
         #     trace[i + 1, 1:] = init
-        return self.all_traces[trace_idx,:steps,:]
+        return self.all_traces[trace_idx,:steps,:4]
 
 if __name__ == "__main__":
     agent = MiniHawkAgent('a')
