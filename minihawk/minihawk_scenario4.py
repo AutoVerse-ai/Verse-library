@@ -91,17 +91,17 @@ if __name__ == "__main__":
         # params={'bloating_method':'GLOBAL'}
     )
 
-    fig = go.Figure()
-    fig = reachtube_tree(traces, None, fig, 0, 1)
-    fig.show()
+    # fig = go.Figure()
+    # fig = reachtube_tree(traces, None, fig, 0, 1)
+    # fig.show()
 
-    fig = go.Figure()
-    fig = reachtube_tree(traces, None, fig, 0, 2)
-    fig.show()
+    # fig = go.Figure()
+    # fig = reachtube_tree(traces, None, fig, 0, 2)
+    # fig.show()
 
-    fig = go.Figure()
-    fig = reachtube_tree(traces, None, fig, 0, 3)
-    fig.show()
+    # fig = go.Figure()
+    # fig = reachtube_tree(traces, None, fig, 0, 3)
+    # fig.show()
 
 
     trace = traces.nodes[0].trace['quad']
