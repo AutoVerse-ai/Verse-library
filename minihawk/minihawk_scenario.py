@@ -12,6 +12,7 @@ import sys
 import matplotlib.pyplot as plt 
 import yaml
 import pandas as pd 
+import seaborn as sns
 
 def plot_polytope_3d(A, b, ax=None, color="red", trans=0.2, edge=True):
     if ax is None:
@@ -143,6 +144,10 @@ if __name__ == "__main__":
     plt.plot(trace[::2,0], trace[1::2,3], 'r')
     plt.title('z')
     plt.show()
+
+    sns.color_palette('deep', n_colors=2)
+    trajectory_color, reachtube_color, _, obstacle_color = sns.color_palette()[:4]
+
     plotter = pv.Plotter()
 
     trace_array = np.array(traces.nodes[0].trace['quad'])
@@ -202,7 +207,7 @@ if __name__ == "__main__":
             obs_intersect[obs_idx] = 1
             plot3dRect(trace_lb[j], trace_ub[j], plotter, color='red')
         else:
-            plot3dRect(trace_lb[j], trace_ub[j], plotter, color='blue')
+            plot3dRect(trace_lb[j], trace_ub[j], plotter, color=reachtube_color)
         # if j>620:
         #     print("stop")
         # Condition for intersection
@@ -230,17 +235,17 @@ if __name__ == "__main__":
     #     else:
     #         plotter.add_mesh(trajectory, color='blue', line_width=3)        
 
-    plot3dRect(
-        [-78.6-4.5, 71.8-4.5, 30-2],
-        [-78.6+4.5, 71.8+4.5, 30+2],
-        plotter, color='green'
-    )
-
     # plot3dRect(
-    #     [-83.2235, 69.56748, 60.03582],
-    #     [-76.77987,  80.43198,  62.21454],
-    #     plotter, color='red', trans=1
+    #     [-78.6-4.5, 71.8-4.5, 30-2],
+    #     [-78.6+4.5, 71.8+4.5, 30+2],
+    #     plotter, color='green'
     # )
+
+    plot3dRect(
+        [-83.2235, 69.56748, 60.03582],
+        [-76.77987,  80.43198,  62.21454],
+        plotter, color=obstacle_color, trans=1
+    )
 
     min_ub = np.inf
     for i in range(0, len(obstacle_data_removed)):
@@ -265,7 +270,7 @@ if __name__ == "__main__":
             continue 
         if lb[0]<-500 or ub[0]>500:
             continue
-        print(i)
+        # print(i)
         # lb[2] += 77.01757264137268
         # ub[2] += 77.01757264137268
         if obs_intersect[i] == 1:

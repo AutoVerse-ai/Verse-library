@@ -14,6 +14,10 @@ import yaml
 import pandas as pd 
 from verse.plotter.plotter2D import *
 import plotly.graph_objects as go 
+import seaborn as sns
+
+sns.set_theme()
+sns.set_context('paper')
 
 def plot_polytope_3d(A, b, ax=None, color="red", trans=0.2, edge=True):
     if ax is None:
@@ -197,6 +201,13 @@ if __name__ == "__main__":
         #         plotter.add_mesh(trajectory, color='red', line_width=3)
         #         idx_start = j-1 
         #     prev_intersect = False 
+    # fig0 = plt.figure(0, figsize=(2,2))
+    # fig1 = plt.figure(1, figsize=(2,2))
+    # fig2 = plt.figure(2, figsize=(2,2))
+    
+    sns.color_palette('deep', n_colors=2)
+    trajectory_color, reachtube_color = sns.color_palette()[:2]
+
     obstacles_idxes = np.where(obs_intersect)[0]
     for i in range(quad.all_traces.shape[0]):
         # if np.linalg.norm(quad.all_traces[i,0,1:]-init_c)<=0.01:
@@ -209,18 +220,18 @@ if __name__ == "__main__":
         # else:
         if i==0:
             plt.figure(0)
-            plt.plot(quad.all_traces[i,:,0],quad.all_traces[i,:,1]+79.5,'b', label='Simulated Trajectory')
+            plt.plot(quad.all_traces[i,:,0],quad.all_traces[i,:,1]+79.5,color=trajectory_color, label='Simulated Trajectory')
             plt.figure(1)
-            plt.plot(quad.all_traces[i,:,0],quad.all_traces[i,:,2]-71.8,'b', label='Simulated Trajectory')
+            plt.plot(quad.all_traces[i,:,0],quad.all_traces[i,:,2]-71.8,color=trajectory_color, label='Simulated Trajectory')
             plt.figure(2)
-            plt.plot(quad.all_traces[i,:,0],quad.all_traces[i,:,3],'b', label='Simulated Trajectory')
+            plt.plot(quad.all_traces[i,:,0],quad.all_traces[i,:,3],color=trajectory_color, label='Simulated Trajectory')
         else:
             plt.figure(0)
-            plt.plot(quad.all_traces[i,:,0],quad.all_traces[i,:,1]+79.5,'b')
+            plt.plot(quad.all_traces[i,:,0],quad.all_traces[i,:,1]+79.5,color=trajectory_color)
             plt.figure(1)
-            plt.plot(quad.all_traces[i,:,0],quad.all_traces[i,:,2]-71.8,'b')
+            plt.plot(quad.all_traces[i,:,0],quad.all_traces[i,:,2]-71.8,color=trajectory_color)
             plt.figure(2)
-            plt.plot(quad.all_traces[i,:,0],quad.all_traces[i,:,3],'b')
+            plt.plot(quad.all_traces[i,:,0],quad.all_traces[i,:,3],color=trajectory_color)
     # plt.figure(0)
     # plt.plot(quad.nominal_trace[:,0],quad.nominal_trace[:,1],'g')
     # plt.figure(1)
@@ -228,36 +239,35 @@ if __name__ == "__main__":
     # plt.figure(2)
     # plt.plot(quad.nominal_trace[:,0],quad.nominal_trace[:,3],'g')
 
-
     trace = np.array(traces.nodes[0].trace['quad'])
     plt.figure(0)
-    plt.plot(trace[::2,0], trace[::2,1]+79.5, 'r')
-    plt.plot(trace[::2,0], trace[1::2,1]+79.5, 'r')
-    plt.fill_between(trace[::2,0], trace[::2,1]+79.5, trace[1::2,1]+79.5, color='r' ,label='Reachtube')
+    plt.plot(trace[::2,0], trace[::2,1]+79.5, color=reachtube_color)
+    plt.plot(trace[::2,0], trace[1::2,1]+79.5, color=reachtube_color)
+    plt.fill_between(trace[::2,0], trace[::2,1]+79.5, trace[1::2,1]+79.5, color=reachtube_color ,label='Reachtube')
     # plt.title('x')
     plt.figure(1)
-    plt.plot(trace[::2,0], trace[::2,2]-71.8, 'r')
-    plt.plot(trace[::2,0], trace[1::2,2]-71.8, 'r')
-    plt.fill_between(trace[::2,0], trace[::2,2]-71.8, trace[1::2,2]-71.8, color='r' ,label='Reachtube')
+    plt.plot(trace[::2,0], trace[::2,2]-71.8, color=reachtube_color)
+    plt.plot(trace[::2,0], trace[1::2,2]-71.8, color=reachtube_color)
+    plt.fill_between(trace[::2,0], trace[::2,2]-71.8, trace[1::2,2]-71.8, color=reachtube_color ,label='Reachtube')
     # plt.title('y')
     plt.figure(2)
-    plt.plot(trace[::2,0], trace[::2,3], 'r')
-    plt.plot(trace[::2,0], trace[1::2,3], 'r')
-    plt.fill_between(trace[::2,0], trace[::2,3], trace[1::2,3], color='r' ,label='Reachtube')
+    plt.plot(trace[::2,0], trace[::2,3], color=reachtube_color)
+    plt.plot(trace[::2,0], trace[1::2,3], color=reachtube_color)
+    plt.fill_between(trace[::2,0], trace[::2,3], trace[1::2,3], color=reachtube_color ,label='Reachtube')
     # plt.title('z')
 
     goal_lb = [-79.5-5, 71.8-5, 30-2]
     goal_ub = [-79.5+5, 71.8+5, 30+2]
 
-    plt.figure(0)
-    plt.plot([trace[0,0], trace[-1,0]], [goal_lb[0]+79.5,goal_lb[0]+79.5], 'g', label = 'goal set')
-    plt.plot([trace[0,0], trace[-1,0]], [goal_ub[0]+79.5,goal_ub[0]+79.5], 'g')
-    plt.figure(1)
-    plt.plot([trace[0,0], trace[-1,0]], [goal_lb[1]-71.8,goal_lb[1]-71.8], 'g', label = 'goal set')
-    plt.plot([trace[0,0], trace[-1,0]], [goal_ub[1]-71.8,goal_ub[1]-71.8], 'g')
-    plt.figure(2)
-    plt.plot([trace[0,0], trace[-1,0]], [goal_lb[2],goal_lb[2]], 'g', label = 'goal set')
-    plt.plot([trace[0,0], trace[-1,0]], [goal_ub[2],goal_ub[2]], 'g')
+    # plt.figure(0)
+    # plt.plot([trace[0,0], trace[-1,0]], [goal_lb[0]+79.5,goal_lb[0]+79.5], 'g', label = 'goal set')
+    # plt.plot([trace[0,0], trace[-1,0]], [goal_ub[0]+79.5,goal_ub[0]+79.5], 'g')
+    # plt.figure(1)
+    # plt.plot([trace[0,0], trace[-1,0]], [goal_lb[1]-71.8,goal_lb[1]-71.8], 'g', label = 'goal set')
+    # plt.plot([trace[0,0], trace[-1,0]], [goal_ub[1]-71.8,goal_ub[1]-71.8], 'g')
+    # plt.figure(2)
+    # plt.plot([trace[0,0], trace[-1,0]], [goal_lb[2],goal_lb[2]], 'g', label = 'goal set')
+    # plt.plot([trace[0,0], trace[-1,0]], [goal_ub[2],goal_ub[2]], 'g')
     
     for obs_idx in obstacles_idxes:
         print(obs_idx, obs_lb[obs_idx], obs_ub[obs_idx])
@@ -270,25 +280,32 @@ if __name__ == "__main__":
         plt.figure(2)
         plt.plot([trace[0,0], trace[-1,0]], [obs_lb[obs_idx, 2],obs_lb[obs_idx, 2]], 'r')
         plt.plot([trace[0,0], trace[-1,0]], [obs_ub[obs_idx, 2],obs_ub[obs_idx, 2]], 'r')
-    plt.figure(0)
+    plt.figure(0,figsize=(2,2))
     plt.xlabel('t',fontsize=14)
     plt.ylabel('x',fontsize=14)
-    plt.legend(prop={'size': 14})
-    plt.xticks(fontsize=12)
-    plt.yticks(fontsize=12)
-    plt.figure(1)
+    plt.legend(prop={'size': 14},loc='upper right')
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
+    plt.tight_layout()
+    plt.savefig('sc4_x.png', bbox_inches='tight', pad_inches=0.0, dpi=300)
+    plt.figure(1,figsize=(2,2))
     plt.xlabel('t',fontsize=14)
     plt.ylabel('y',fontsize=14)
-    plt.xticks(fontsize=12)
-    plt.yticks(fontsize=12)
-    plt.legend(prop={'size': 14})
-    plt.figure(2)
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
+    plt.legend(prop={'size': 14},loc='upper right')
+    plt.tight_layout()
+    plt.savefig('sc4_y.png', bbox_inches='tight', pad_inches=0.0, dpi=300)
+    plt.figure(2,figsize=(2,2))
     plt.xlabel('t',fontsize=14)
     plt.ylabel('z',fontsize=14)
-    plt.xticks(fontsize=12)
-    plt.yticks(fontsize=12)
-    plt.legend(prop={'size': 14})
-    plt.show()
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
+    plt.legend(prop={'size': 14},loc='upper right')
+    plt.tight_layout()
+    plt.savefig('sc4_z.png', bbox_inches='tight', pad_inches=0.0, dpi=300)
+    # plt.show()
+
     # if idx_start < pos.shape[0]:
     #     color = 'red' if prev_intersect else 'blue'
     #     trajectory = pv.lines_from_points(pos[idx_start:])
