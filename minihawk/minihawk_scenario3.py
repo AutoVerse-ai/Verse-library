@@ -45,8 +45,8 @@ if __name__ == "__main__":
         # reachability_method=ReachabilityMethod.DRYVR_DISC
     ))
 
-    output_folder = sys.argv[1]
-    # output_folder = './Scenario-02/'
+    # output_folder = sys.argv[1]
+    output_folder = './Scenario-05/'
 
     data_dir = os.path.join(script_dir, output_folder)
     # with open(os.path.join(data_dir, 'vnv_scitech.yml'), 'r') as f:
@@ -104,44 +104,44 @@ if __name__ == "__main__":
     #         pos[:,1] = ty
     #         pos[:,2] = tz
             
-    for i in range(quad.all_traces.shape[0]):
-        # if np.linalg.norm(quad.all_traces[i,0,1:]-init_c)<=0.01:
-        #     plt.figure(0)
-        #     plt.plot(quad.all_traces[i,:,0],quad.all_traces[i,:,1],'g')
-        #     plt.figure(1)
-        #     plt.plot(quad.all_traces[i,:,0],quad.all_traces[i,:,2],'g')
-        #     plt.figure(2)
-        #     plt.plot(quad.all_traces[i,:,0],quad.all_traces[i,:,3],'g')
-        # else:
-        plt.figure(0)
-        plt.plot(quad.all_traces[i,:,0],quad.all_traces[i,:,1],'b')
-        plt.figure(1)
-        plt.plot(quad.all_traces[i,:,0],quad.all_traces[i,:,2],'b')
-        plt.figure(2)
-        plt.plot(quad.all_traces[i,:,0],quad.all_traces[i,:,3],'b')
+    # for i in range(quad.all_traces.shape[0]):
+    #     # if np.linalg.norm(quad.all_traces[i,0,1:]-init_c)<=0.01:
+    #     #     plt.figure(0)
+    #     #     plt.plot(quad.all_traces[i,:,0],quad.all_traces[i,:,1],'g')
+    #     #     plt.figure(1)
+    #     #     plt.plot(quad.all_traces[i,:,0],quad.all_traces[i,:,2],'g')
+    #     #     plt.figure(2)
+    #     #     plt.plot(quad.all_traces[i,:,0],quad.all_traces[i,:,3],'g')
+    #     # else:
+    #     plt.figure(0)
+    #     plt.plot(quad.all_traces[i,:,0],quad.all_traces[i,:,1],'b')
+    #     plt.figure(1)
+    #     plt.plot(quad.all_traces[i,:,0],quad.all_traces[i,:,2],'b')
+    #     plt.figure(2)
+    #     plt.plot(quad.all_traces[i,:,0],quad.all_traces[i,:,3],'b')
 
-    plt.figure(0)
-    plt.plot(quad.nominal_trace[:,0],quad.nominal_trace[:,1],'g')
-    plt.figure(1)
-    plt.plot(quad.nominal_trace[:,0],quad.nominal_trace[:,2],'g')
-    plt.figure(2)
-    plt.plot(quad.nominal_trace[:,0],quad.nominal_trace[:,3],'g')
+    # plt.figure(0)
+    # plt.plot(quad.nominal_trace[:,0],quad.nominal_trace[:,1],'g')
+    # plt.figure(1)
+    # plt.plot(quad.nominal_trace[:,0],quad.nominal_trace[:,2],'g')
+    # plt.figure(2)
+    # plt.plot(quad.nominal_trace[:,0],quad.nominal_trace[:,3],'g')
 
 
-    trace = np.array(traces.nodes[0].trace['quad'])
-    plt.figure(0)
-    plt.plot(trace[::2,0], trace[::2,1], 'r')
-    plt.plot(trace[::2,0], trace[1::2,1], 'r')
-    plt.title('x')
-    plt.figure(1)
-    plt.plot(trace[::2,0], trace[::2,2], 'r')
-    plt.plot(trace[::2,0], trace[1::2,2], 'r')
-    plt.title('y')
-    plt.figure(2)
-    plt.plot(trace[::2,0], trace[::2,3], 'r')
-    plt.plot(trace[::2,0], trace[1::2,3], 'r')
-    plt.title('z')
-    plt.show()
+    # trace = np.array(traces.nodes[0].trace['quad'])
+    # plt.figure(0)
+    # plt.plot(trace[::2,0], trace[::2,1], 'r')
+    # plt.plot(trace[::2,0], trace[1::2,1], 'r')
+    # plt.title('x')
+    # plt.figure(1)
+    # plt.plot(trace[::2,0], trace[::2,2], 'r')
+    # plt.plot(trace[::2,0], trace[1::2,2], 'r')
+    # plt.title('y')
+    # plt.figure(2)
+    # plt.plot(trace[::2,0], trace[::2,3], 'r')
+    # plt.plot(trace[::2,0], trace[1::2,3], 'r')
+    # plt.title('z')
+    # plt.show()
     # plotter = pv.Plotter()
 
     trace_array = np.array(traces.nodes[0].trace['quad'])
