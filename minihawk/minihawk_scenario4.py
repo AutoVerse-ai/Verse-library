@@ -95,6 +95,8 @@ if __name__ == "__main__":
         # params={'bloating_method':'GLOBAL'}
     )
 
+    traces.dump('sc1.json')
+
     # fig = go.Figure()
     # fig = reachtube_tree(traces, None, fig, 0, 1)
     # fig.show()
@@ -287,7 +289,7 @@ if __name__ == "__main__":
     plt.xticks(fontsize=14)
     plt.yticks(fontsize=14)
     plt.tight_layout()
-    plt.savefig('sc4_x.png', bbox_inches='tight', pad_inches=0.0, dpi=300)
+    # plt.savefig('sc4_x.png', bbox_inches='tight', pad_inches=0.0, dpi=300)
     plt.figure(1,figsize=(2,2))
     plt.xlabel('t',fontsize=14)
     plt.ylabel('y',fontsize=14)
@@ -295,7 +297,7 @@ if __name__ == "__main__":
     plt.yticks(fontsize=14)
     plt.legend(prop={'size': 14},loc='upper right')
     plt.tight_layout()
-    plt.savefig('sc4_y.png', bbox_inches='tight', pad_inches=0.0, dpi=300)
+    # plt.savefig('sc4_y.png', bbox_inches='tight', pad_inches=0.0, dpi=300)
     plt.figure(2,figsize=(2,2))
     plt.xlabel('t',fontsize=14)
     plt.ylabel('z',fontsize=14)
@@ -303,8 +305,8 @@ if __name__ == "__main__":
     plt.yticks(fontsize=14)
     plt.legend(prop={'size': 14},loc='upper right')
     plt.tight_layout()
-    plt.savefig('sc4_z.png', bbox_inches='tight', pad_inches=0.0, dpi=300)
-    # plt.show()
+    # plt.savefig('sc4_z.png', bbox_inches='tight', pad_inches=0.0, dpi=300)
+    plt.show()
 
     # if idx_start < pos.shape[0]:
     #     color = 'red' if prev_intersect else 'blue'
