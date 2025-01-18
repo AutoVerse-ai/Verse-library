@@ -5,6 +5,13 @@ from math import pi, cos, sin, acos, asin
 from plotly.subplots import make_subplots
 from enum import Enum, auto
 
+import matplotlib.pyplot as plt
+from scipy.spatial import ConvexHull
+
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+from matplotlib.animation import FuncAnimation
+import math
+
 # import time
 from verse.analysis.analysis_tree import AnalysisTree, AnalysisTreeNode
 from verse.map.lane_map_3d import LaneMap_3d
@@ -538,4 +545,173 @@ def update_style(fig: go.Figure() = go.Figure(), x_title=None, y_title=None, z_t
     #     gridwidth=gridwidth,
     #     gridcolor="LightGrey",
     # )
+    return fig
+
+colors = [
+    ["#CC0000", "#FF0000", "#FF3333", "#FF6666", "#FF9999", "#FFCCCC"],  # red
+    ["#0000CC", "#0000FF", "#3333FF", "#6666FF", "#9999FF", "#CCCCFF"],  # blue
+    ["#00CC00", "#00FF00", "#33FF33", "#66FF66", "#99FF99", "#CCFFCC"],  # green
+    ["#CCCC00", "#FFFF00", "#FFFF33", "#FFFF66", "#FFFF99", "#FFE5CC"],  # yellow
+    #   ['#66CC00', '#80FF00', '#99FF33', '#B2FF66', '#CCFF99', '#FFFFCC'], # yellowgreen
+    ["#CC00CC", "#FF00FF", "#FF33FF", "#FF66FF", "#FF99FF", "#FFCCFF"],  # magenta
+    #   ['#00CC66', '#00FF80', '#33FF99', '#66FFB2', '#99FFCC', '#CCFFCC'], # springgreen
+    ["#00CCCC", "#00FFFF", "#33FFFF", "#66FFFF", "#99FFFF", "#CCFFE5"],  # cyan
+    #   ['#0066CC', '#0080FF', '#3399FF', '#66B2FF', '#99CCFF', '#CCE5FF'], # cyanblue
+    ["#CC6600", "#FF8000", "#FF9933", "#FFB266", "#FFCC99", "#FFE5CC"],  # orange
+    #   ['#6600CC', '#7F00FF', '#9933FF', '#B266FF', '#CC99FF', '#E5CCFF'], # purple
+    ["#00CC00", "#00FF00", "#33FF33", "#66FF66", "#99FF99", "#E5FFCC"],  # lime
+    ["#CC0066", "#FF007F", "#FF3399", "#FF66B2", "#FF99CC", "#FFCCE5"],  # pink
+]
+
+scheme_dict = {
+    "red": 0,
+    "blue": 1,
+    "green": 2,
+    "yellow": 3,
+    "yellowgreen": 4,
+    "lime": 5,
+    "springgreen": 6,
+    "cyan": 7,
+    "cyanblue": 8,
+    "orange": 9,
+    "purple": 10,
+    "magenta": 11,
+    "pink": 12,
+}
+scheme_list = list(scheme_dict.keys())
+num_theme = len(colors)
+color_cnt = 0
+text_size = 8
+marker_size = 4
+scale_factor = 0.25
+mode_point_color = "rgba(0,0,0,0.5)"
+mode_text_color = "black"
+duration = 1
+
+def reachtube_anime_3d(
+    root: Union[AnalysisTree, AnalysisTreeNode],
+    fig=go.Figure(),
+    x_dim: int = 1,
+    x_title: str = None, 
+    y_dim: int = 2,
+    y_title: str = None, 
+    z_dim: int = 3,
+    z_title: str = None, 
+    print_dim_list=None,
+    color_array=scheme_list,
+    sample_rate=1,
+    combine_rect=None,
+    save = False,
+    name = "animation.gif"
+):
+    """It gives the animation of the verification traces in 3D."""
+    if isinstance(root, AnalysisTree):
+        root = root.root
+
+   
+    num_digit = 3
+    root = sample_trace(root, sample_rate)
+    agent_list = list(root.agent.keys())
+    timed_point_dict = {}
+    queue = [root]
+    
+
+    num_dim = np.array(root.trace[agent_list[0]]).shape[1]
+    check_dim(num_dim, x_dim, y_dim, z_dim, print_dim_list)
+    if print_dim_list is None:
+        print_dim_list = range(0, num_dim)
+    
+    num_points = 0
+    while queue:
+        node = queue.pop()
+        traces = node.trace
+        for agent_id in traces:
+            trace = np.array(traces[agent_id])
+            if trace[0][0] > 0:
+                trace = trace[8:]
+            for i in range(0, len(trace) - 1, 2):
+                time_point = round(trace[i][0], num_digit)
+                
+                rect = [trace[i][0:].tolist(), trace[i + 1][0:].tolist()]
+                if time_point not in timed_point_dict:
+                    num_points += 1
+                    timed_point_dict[time_point] = {agent_id: [rect]}
+                else:
+                    if agent_id in timed_point_dict[time_point]:
+                        timed_point_dict[time_point][agent_id].append(rect)
+                    else:
+                        timed_point_dict[time_point][agent_id] = [rect]
+
+        queue += node.child
+
+    fig = plt.figure(figsize=(14, 10))
+    ax = fig.add_subplot(111, projection='3d')
+
+    time_steps = sorted(timed_point_dict.keys())
+
+    #init agent colors
+    time_step = time_steps[0]
+    step_info = timed_point_dict[time_step]
+    agents = list(step_info.keys())
+    agent_colors = {}
+    for i,agent in enumerate(agents):
+        agent_colors[agent] = color_array[i]
+
+    # init plot
+    def init():
+        ax.set_xlabel(x_title)
+        ax.set_ylabel(y_title)
+        ax.set_zlabel(z_title)    
+        ax.set_xlim([0, 55])
+        ax.set_ylim([-10, 260])
+        ax.set_zlim([-50, 100])
+        ax.set_title('3D Rectangle Animation')
+
+    def update(frame):
+        time_step = time_steps[frame]
+        step_info = timed_point_dict[time_step]
+        agents = list(step_info.keys())
+
+        for agent in agents:
+            agent_rectangles = step_info[agent]
+            for rect in agent_rectangles:
+                x_min = rect[0][x_dim]
+                y_min = rect[0][y_dim]
+                z_min = rect[0][z_dim]
+
+                x_max = rect[1][x_dim]
+                y_max = rect[1][y_dim]
+                z_max = rect[1][z_dim]
+
+                vertices = np.array([
+                    [x_min, y_min, z_min],  # Bottom-left-front
+                    [x_max, y_min, z_min],  # Bottom-right-front
+                    [x_max, y_max, z_min],  # Bottom-right-back
+                    [x_min, y_max, z_min],  # Bottom-left-back
+                    [x_min, y_min, z_max],  # Top-left-front
+                    [x_max, y_min, z_max],  # Top-right-front
+                    [x_max, y_max, z_max],  # Top-right-back
+                    [x_min, y_max, z_max]   # Top-left-back
+                ])
+
+                faces = [
+                    [vertices[0], vertices[1], vertices[2], vertices[3]],  # Bottom face
+                    [vertices[4], vertices[5], vertices[6], vertices[7]],  # Top face
+                    [vertices[0], vertices[1], vertices[5], vertices[4]],  # Front face
+                    [vertices[2], vertices[3], vertices[7], vertices[6]],  # Back face
+                    [vertices[1], vertices[2], vertices[6], vertices[5]],  # Right face
+                    [vertices[0], vertices[3], vertices[7], vertices[4]],  # Left face
+                ]
+
+                # Plot the rectangle
+                cuboid = Poly3DCollection(faces, facecolors=agent_colors[agent], linewidths=1, edgecolors=agent_colors[agent], alpha=.125)
+                ax.add_collection3d(cuboid)
+                ax.view_init(elev=15, azim=frame*0.75)
+
+
+    # Create animation
+    ani = FuncAnimation(fig, update, frames=len(time_steps), init_func=init, interval = 25, repeat=True)
+    if save:
+        ani.save(name)
+    # plt.show()
     return fig
