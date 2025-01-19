@@ -6,6 +6,13 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 from z3 import *
 from verse.utils.star_manhattan import *
+from verse.utils.fixed_points import *
+
+import numpy as np 
+from scipy.integrate import ode 
+from verse import BaseAgent, Scenario 
+from verse.analysis.analysis_tree import AnalysisTree 
+from verse.analysis import AnalysisTreeNode, AnalysisTree
 
 
 def over_approx_rectangle(trace, time_horizon, time_step):
@@ -59,6 +66,23 @@ def time_step_diameter(trace, time_horizon, time_step):
         #print({"timesteps": time_steps[i]})
 
     #print(diameters)
+    return diameters
+
+def manhattan(a, b):
+    return sum(abs(val1-val2) for val1, val2 in zip(a,b))
+
+def time_step_diameter_rect(tree: AnalysisTree, time_horizon, time_step):
+    time_steps = np.linspace(0, time_horizon, int(time_horizon/time_step) + 1, endpoint= True)
+    diameters = []
+    for i in range(len(time_steps) - 1):
+        curr_diam = []
+        reach_tubes = reach_at_fix(tree, time_steps[i] - time_step*.05, time_steps[i+1] + time_step*.05)
+        nodes = list(reach_tubes.keys())
+        for node in nodes:
+            if reach_tubes[node] is not None:
+                curr_diam.append(manhattan(reach_tubes[node][0], reach_tubes[node][1]))
+        if len(curr_diam) > 0:
+            diameters.append(max(curr_diam))
     return diameters
 
 ### assuming mode is not a parameter
