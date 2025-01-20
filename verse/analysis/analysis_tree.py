@@ -11,7 +11,7 @@ import graphviz
 from verse.analysis.dryvr import _EPSILON
 from verse.agents.base_agent import BaseAgent
 
-TraceType = nptyp.NDArray[np.float_]
+TraceType = nptyp.NDArray[np.double]
 
 _T = TypeVar("_T")
 

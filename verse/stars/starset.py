@@ -176,22 +176,31 @@ class StarSet:
             #odd entries: bloat_tube[::2, 1:]   
             #even entries: bloat_tube[1::2, 1:] 
             #data only bloat_tube[ 1:]
-            for entry in bloat_tube:
-                time = entry[0] 
-                data = entry[1:]
-                if len(star_tube) > 0:
-                    if star_tube[-1][0] == time:
-                        star_tube[-1][1] = StarSet.rect_to_star(data,star_tube[-1][1])
-                    else:
-                        if not isinstance(star_tube[-1][1], StarSet):
-                            star_tube[-1][1] = StarSet.rect_to_star(star_tube[-1][1], star_tube[-1][1])
-                        star_tube.append([time,data])
-                else:
-                    star_tube.append([time,data])
-            #KB: TODO: where is min for last time point and first time point
-            star_tube.pop()
-            return star_tube
+            for i in range(0,len(bloat_tube),2):
+                # time = entry[0] 
+                # data = entry[1:]
+                # if len(star_tube) > 0:
+                #     if star_tube[-1][0] == time:
+                #         star_tube[-1][1] = StarSet.rect_to_star(data,star_tube[-1][1])
+                #     else:
+                #         if not isinstance(star_tube[-1][1], StarSet):
+                #             star_tube[-1][1] = StarSet.rect_to_star(star_tube[-1][1], star_tube[-1][1])
+                #         star_tube.append([time,data])
+                # else:
+                #     star_tube.append([time,data])
+                entry1 = bloat_tube[i]
+                entry2 = bloat_tube[i+1]
 
+                time = entry1[0]
+                data1 = entry1[1:]
+                data2 = entry2[1:]
+
+                star = StarSet.rect_to_star(data1, data2)
+                star_tube.append([time,star])
+            #KB: TODO: where is min for last time point and first time point
+            # star_tube.pop()
+            return star_tube
+        
         else:
             reach = gen_starsets_post_sim(self, sim_func, time_horizon, time_step, mode_label=mode_label)
             star_tube = []
