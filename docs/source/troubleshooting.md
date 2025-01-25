@@ -49,7 +49,7 @@ Verse builds a tree where each node stores the trace/reachable set after each mo
 
 Whenever a transition has occured, a console message will appear.
 
-![](figs/console.png)
+![](figs/console1.png)
 
 The node number is the id of the node in order of when it was first added to the processing queue.
 
@@ -127,7 +127,7 @@ if ego.x > 50 and ego.mode != M:
 
 ```
 
-![](figs/vehicle1.png)
+![](figs/vehicle.png)
 
 Vehicle state is single point with negative velocity and mode M. This means it is moving to the left.
 The colored regions (loosely) represent the guard/transition region where a transition can happen
@@ -156,7 +156,7 @@ Solution:
 
 Make guard region boundaries further apart
 
-![](figs/rect2.png)
+![](figs/rect.png)
 
 ```python
 
@@ -167,7 +167,7 @@ if ego.x > 50 and ego.mode != M:
     next.mode = M
 
 ```
-OR, use verify_refine() function which will repeatedly partition the initial set into smaller and smaller chunks until all of the initial set is safe. 
+If you are doing 484 MP0, you may also use the verify_refine() function which will repeatedly partition the initial set into smaller and smaller chunks until all of the initial set is safe. 
 
 ![](figs/refine.png)
 
