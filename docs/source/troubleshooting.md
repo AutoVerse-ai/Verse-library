@@ -3,7 +3,7 @@
 This is a guide to troubleshooting the most common issues in using Verse.
 
 
-## Unsuported Operations
+## Unsupported Operations
 
 Even though the decision logic for mode transitions is written in Python, it is not run in the traditional sense. Verse takes the decision logic and parses it for analysis.
 
@@ -29,7 +29,7 @@ It is also highly recommended not to use else/elif statements.
 
 If something is not supported, the parser will usually throw a "Not Supported" error message.
 
-Since simulate_simple bypasses the parser, it may be able to handle code unsuported by the parser. 
+Since simulate_simple bypasses the parser, it may be able to handle code unsupported by the parser. 
 
 In terms of formatting, you may nest if statements as follows:
 
