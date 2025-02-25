@@ -227,7 +227,7 @@ class Scenario:
             Parameters:
 
                 time_horizon (float): Time limit of simulation. Positive float.
-                time_step (float): \delta, the sampling period for continuous evolution.
+                time_step (float): delta, the sampling period for continuous evolution.
                 max_height (int): Maximum number of discrete transitions
                 seed (int): Seed for sampling initial state if a initial region is given.
 
