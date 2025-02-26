@@ -42,7 +42,7 @@ def sim_simple(vec, t):
 
 ### testing dynamic fnctions like this
 
-def dynamic_test(vec, t):
+def dynamics_test(vec, t):
     x, y = t # hack to access right variable, not sure how integrate, ode are supposed to work
     ### vanderpol
     # x_dot = y
@@ -87,7 +87,7 @@ def sim_test(
     init = list(initialCondition)
     trace = [[0] + init]
     for i in range(len(t)):
-        r = ode(dynamic_test)
+        r = ode(dynamics_test)
         r.set_initial_value(init)
         res: np.ndarray = r.integrate(r.t + time_step)
         init = res.flatten().tolist()

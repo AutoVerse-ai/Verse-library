@@ -34,7 +34,7 @@ class sleeve_agent(BaseAgent):
         super().__init__(id, code, file_name)
 
     @staticmethod
-    def dynamic_free(t, state):
+    def dynamics_free(t, state):
         px, py, vx, vy, i = state
         vx_dot = Fs / ms
         vy_dot = -Rs * Tf / Jg2
@@ -44,7 +44,7 @@ class sleeve_agent(BaseAgent):
         return [px_dot, py_dot, vx_dot, vy_dot, i_dot]
 
     @staticmethod
-    def dynamic_meshed(t, state):
+    def dynamics_meshed(t, state):
         px, py, vx, vy, i = state
         vx_dot = 0
         vy_dot = 0
@@ -64,9 +64,9 @@ class sleeve_agent(BaseAgent):
         trace = [[0] + init]
         for i in range(len(t)):
             if mode[0] == "Free":
-                r = ode(self.dynamic_free)
+                r = ode(self.dynamics_free)
             elif mode[0] == "Meshed":
-                r = ode(self.dynamic_meshed)
+                r = ode(self.dynamics_meshed)
             else:
                 raise ValueError
             r.set_initial_value(init)

@@ -41,14 +41,14 @@ class CellAgent(BaseAgent):
         super().__init__(id, code, file_name)
          
     @staticmethod
-    def dynamic_on(t, state):
+    def dynamics_on(t, state):
         u, v = state
         u_dot = -0.9*u*u-u*u*u-0.9*u-v+1
         v_dot = u-2*v
         return [u_dot, v_dot]
     
     @staticmethod
-    def dynamic_off(t, state):
+    def dynamics_off(t, state):
         u, v = state
         u_dot = -0.9*u*u-u*u*u-0.9*u-v
         v_dot = u-2*v
@@ -65,9 +65,9 @@ class CellAgent(BaseAgent):
         trace[0, 1:] = init
         for i in range(num_points):
             if mode[0]=="On":
-                r = ode(self.dynamic_on)
+                r = ode(self.dynamics_on)
             elif mode[0]=="Off":
-                r = ode(self.dynamic_off)
+                r = ode(self.dynamics_off)
             else:
                 raise ValueError
             r.set_initial_value(init)

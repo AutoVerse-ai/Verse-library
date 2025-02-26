@@ -30,7 +30,7 @@ class HelicopterAgent(BaseAgent):
         super().__init__(id, code, file_name)
 
     @staticmethod
-    def dynamic(t, state):
+    def dynamics(t, state):
         x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16, x17, x18, x19, x20, x21, x22, x23, x24, x25, x26, x27, x28 = state
         x1_dot= (0.998573780060) *x4 + (0.053384274244) *x5
         x2_dot= x3 + (-0.003182219341) *x4 + (0.059524655342) *x5
@@ -72,7 +72,7 @@ class HelicopterAgent(BaseAgent):
         trace[1:, 0] = [round(i * time_step, 10) for i in range(num_points)]
         trace[0, 1:] = init
         for i in range(num_points):
-            r = ode(self.dynamic)
+            r = ode(self.dynamics)
             r.set_initial_value(init)
             res: np.ndarray = r.integrate(r.t + time_step)
             init = res.flatten()
