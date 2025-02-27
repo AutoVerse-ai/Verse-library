@@ -29,7 +29,7 @@ class PowerTrainAgent(BaseAgent):
         super().__init__(id, code, file_name)
 
     @staticmethod
-    def dynamic_mode0(t, state):
+    def dynamics_mode0(t, state):
         p, lam, pe, ivalue, t_int = state
         p_dot = -476.851246128715*p**2 + 563.63999719734*p - 65.460328416
         lam_dot= -4*lam - 33.3965838336589*p**2 + 99.359272121109*p + 33.8518550719433*pe**2 - 100.713764517065*pe - 4*(-5.05643107459819*p**2 + 15.0435539636327*p - 5.244048)*(-0.240071819537891*pe**2 + 0.714245545738554*pe - 0.248979591836735) + 4*(-4.97822527866553*pe**2 + 14.8108813346529*pe - 5.16294040816327)*(-0.240071819537891*pe**2 + 0.714245545738554*pe - 0.248979591836735) + 56.0441639020408
@@ -39,7 +39,7 @@ class PowerTrainAgent(BaseAgent):
         return [p_dot, lam_dot, pe_dot, ivalue_dot, t_dot]
 
     @staticmethod
-    def dynamic_mode1(t, state):
+    def dynamics_mode1(t, state):
         p, lam, pe, ivalue, t_int = state
         p_dot= -476.851246128715*p**2 + 563.63999719734*p - 66.685538304
         lam_dot= -4*lam - 33.3965838336589*p**2 + 99.359272121109*p + 82.9456*(0.0680272108843537*ivalue + 0.00272108843537415*lam + 0.0280272108843537)**2*(-3.529055747207*pe**2 + 10.4994095223567*pe - 0.366)**2 - 4*(0.0680272108843537*ivalue + 0.00272108843537415*lam + 0.0280272108843537)*(-5.05643107459819*p**2 + 15.0435539636327*p - 0.5244048)*(-3.529055747207*pe**2 + 10.4994095223567*pe - 0.366) - 141.0072*(0.0680272108843537*ivalue + 0.00272108843537415*lam + 0.0280272108843537)*(-3.529055747207*pe**2 + 10.4994095223567*pe - 0.366) + 52.10842488        
@@ -59,9 +59,9 @@ class PowerTrainAgent(BaseAgent):
         trace[0, 1:] = init
         for i in range(num_points):
             if mode[0]=="Mode0":
-                r = ode(self.dynamic_mode0)
+                r = ode(self.dynamics_mode0)
             elif mode[0]=="Mode1":
-                r = ode(self.dynamic_mode1)
+                r = ode(self.dynamics_mode1)
             else:
                 raise ValueError
             r.set_initial_value(init)

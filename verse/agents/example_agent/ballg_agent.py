@@ -25,7 +25,7 @@ class Ball_g_agent(BaseAgent):
         self.g_acc = g_acc_val
 
     @staticmethod
-    def dynamic(self, t, state):
+    def dynamics(self, t, state):
         """Defines the RHS of the ODE used to simulate trajectories"""
         x, y, vx, vy = state
         x_dot = vx

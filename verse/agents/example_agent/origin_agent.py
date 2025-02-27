@@ -14,7 +14,7 @@ class vanderpol_agent(BaseAgent):
         super().__init__(id, code, file_name)
 
     @staticmethod
-    def dynamic(t, state):
+    def dynamics(t, state):
         x, y = state
         x = float(x)
         y = float(y)
@@ -32,7 +32,7 @@ class vanderpol_agent(BaseAgent):
         init = initialCondition
         trace = [[0] + init]
         for i in range(len(t)):
-            r = ode(self.dynamic)
+            r = ode(self.dynamics)
             r.set_initial_value(init)
             res: np.ndarray = r.integrate(r.t + time_step)
             init = res.flatten().tolist()
@@ -46,7 +46,7 @@ class thermo_agent(BaseAgent):
         super().__init__(id, code, file_name)
 
     @staticmethod
-    def dynamic(t, state, rate):
+    def dynamics(t, state, rate):
         temp, total_time, cycle_time = state
         temp = float(temp)
         total_time = float(total_time)
@@ -77,7 +77,7 @@ class thermo_agent(BaseAgent):
         trace = [[0] + init]
         for i in range(len(t)):
             rate = self.action_handler(mode[0])
-            r = ode(self.dynamic)
+            r = ode(self.dynamics)
             r.set_initial_value(init).set_f_params(rate)
             res: np.ndarray = r.integrate(r.t + time_step)
             init = res.flatten().tolist()
