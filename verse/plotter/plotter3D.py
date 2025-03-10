@@ -12,10 +12,13 @@ vtk.vtkLogger.SetStderrVerbosity(vtk.vtkLogger.VERBOSITY_OFF)
 
 
 def plot3dReachtubeSingle(tube, x_dim, y_dim, z_dim, ax, color, edge=True):
-    for lb, ub in tube:
-        box = [[lb[x_dim], lb[y_dim], lb[z_dim]], [ub[x_dim], ub[y_dim], ub[z_dim]]]
-        poly = pc.box2poly(np.array(box).T)
-        ax = plot_polytope_3d(poly.A, poly.b, ax=ax, color=color, edge=edge)
+    
+    for i, (lb, ub) in enumerate(tube):
+        if(i%11 ==0 ):
+            box = [[lb[x_dim], lb[y_dim], lb[z_dim]], [ub[x_dim], ub[y_dim], ub[z_dim]]]
+            poly = pc.box2poly(np.array(box).T)
+            ax = plot_polytope_3d(poly.A, poly.b, ax=ax, color=color, edge=edge)
+
     return ax
 
 
@@ -47,6 +50,7 @@ def plot3dReachtube(root, agent_id, x_dim, y_dim, z_dim, color="b", ax=None, edg
 
     queue = [root]
     idx = 0
+
     while queue != []:
         node = queue.pop(0)
         traces = node.trace
@@ -59,6 +63,7 @@ def plot3dReachtube(root, agent_id, x_dim, y_dim, z_dim, color="b", ax=None, edg
         # for key in sorted(node.upper_bound):
         #     upper_bound.append(node.upper_bound[key])
         ax = plot3dReachtubeSingle(data, x_dim, y_dim, z_dim, ax, color, edge=edge)
+
         queue += node.child
         idx += 1
 
@@ -82,11 +87,15 @@ def plot_polytope_3d(A, b, ax=None, color="red", trans=0.2, edge=True):
     volume = cloud.delaunay_3d()
     shell = volume.extract_geometry()
     if len(shell.points) <= 0:
+        ax.reset_camera()
+
         return ax
     ax.add_mesh(shell, opacity=trans, color=color)
     if edge:
         edges = shell.extract_feature_edges(20)
         ax.add_mesh(edges, color="k", line_width=0.1, opacity=0.5)
+    ax.reset_camera()
+
     return ax
 
 

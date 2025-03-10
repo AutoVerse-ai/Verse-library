@@ -8,6 +8,7 @@ import warnings
 import ast
 import ray, time
 from verse.parser import unparse
+import json
 
 from verse.analysis.analysis_tree import AnalysisTreeNode, AnalysisTree, TraceType
 from verse.analysis.dryvr import calc_bloated_tube, SIMTRACENUM
@@ -24,7 +25,10 @@ from verse.map.lane_map import LaneMap
 from verse.parser.parser import find, ModePath, unparse
 from verse.agents.base_agent import BaseAgent
 from verse.automaton import GuardExpressionAst, ResetExpression
-
+import json
+import os
+import pyvista as pv
+from verse.plotter.plotter3D import *
 pp = functools.partial(pprint.pprint, compact=True, width=130)
 
 PathDiffs = List[Tuple[BaseAgent, ModePath]]
@@ -50,6 +54,29 @@ class ReachConsts:
     past_runs: List[AnalysisTree]
     sensor: "BaseSensor"
     agent_dict: Dict
+
+
+def save_node(node):
+    filename = "nodes.json"
+    
+    # Load existing data if the file exists
+    if os.path.exists(filename):
+        with open(filename, "r") as file:
+            try:
+                data = json.load(file)
+            except json.JSONDecodeError:
+                data = []  # Start fresh if file is corrupted
+    else:
+        data = []
+
+    # Append new node data
+    data.append({ "id": node.id, "trace": node.trace })
+
+    # Write back the updated data
+    with open(filename, "w") as file:
+        print("dumping")
+        json.dump(data, file, indent=4)
+
 
 
 class Verifier:
@@ -384,6 +411,8 @@ class Verifier:
         remain_time: float,
         consts: ReachConsts,
         max_height: int,
+        ax: pv.Plotter,
+
         params={},
     ) -> Tuple[int, int, List[AnalysisTreeNode], Dict[str, TraceType], list]:
         # t = timeit.default_timer()
@@ -550,6 +579,20 @@ class Verifier:
             else:
                 for agent in node.agent:
                     node.trace[agent] = node.trace[agent][: (idx + 1)]
+
+            print("writing data")
+            data = []
+            ids = []
+            for agent_id in node.trace:
+                ids.append(agent_id)
+
+            l  = len(node.trace[ids[0]])
+            for i in range(0, l, 2):
+                for agent_id in ids:
+                    trace = node.trace[agent_id]
+                    data.append([trace[i], trace[i + 1]])
+            plot3dReachtubeSingle(data, 0, 1, 2, ax, 'b', edge=True)
+            #ax.render()
             return (
                 node.id,
                 later,
@@ -653,7 +696,44 @@ class Verifier:
         else:
             if all_possible_transitions:
                 for agent_idx in node.agent:
-                    node.trace[agent_idx] = node.trace[agent_idx][: (max_end_idx + 1)]            
+                    node.trace[agent_idx] = node.trace[agent_idx][: (max_end_idx + 1)]
+       
+
+        # with open("nodes.jsonl", "a") as file:
+        #     print("dumping")
+        #     try:
+        #         file.write(json.dumps({ "id": node.id, "trace": node.trace }) + "\n")
+        #     except json.JSONDecodeError:
+        #         print("Error")
+        # if(node.start_time == 29.7):
+        #     print(len(node.trace['car']))
+        #     print(len(node.trace['pedestrian']))
+        #     with open("nodes.jsonl", "a") as file:
+        #         print("dumping")
+        #         try:
+        #             file.write(json.dumps({ "id": node.id, "trace": node.trace['car'] }) + "\n")
+        #         except json.JSONDecodeError:
+        #             print("Error")
+
+        data = []
+        ids = []
+        for agent_id in node.trace:
+            ids.append(agent_id)
+
+        l  = len(node.trace[ids[0]])
+        for i in range(0, l, 2):
+            for agent_id in ids:
+                trace = node.trace[agent_id]
+                data.append([trace[i], trace[i + 1]])
+        plot3dReachtubeSingle(data, 0, 1, 2, ax, 'b', edge=True)
+        ax.render()
+            
+            #ax.show()
+
+
+
+       
+
         return (
             node.id,
             later,
@@ -739,6 +819,7 @@ class Verifier:
         reachability_method,
         run_num,
         past_runs,
+        ax,
         params={},
     ):
         if max_height == None:
@@ -840,6 +921,7 @@ class Verifier:
                             remain_time,
                             consts,
                             max_height,
+                            ax,
                             params,
                         ),
                         max_height,

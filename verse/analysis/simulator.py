@@ -700,7 +700,7 @@ class Simulator:
                 aid: (node.trace[aid][0], node.mode[aid], node.static[aid]) for aid in node.agent
             }
             cont_var_dict_template, discrete_variable_dict, len_dict = sensor.sense(
-                agent, state_dict, track_map
+                agent, state_dict, track_map, True
             )
             agent_guard_dict[agent_id].append((path, discrete_variable_dict))
 
@@ -720,7 +720,7 @@ class Simulator:
                 agent_state, agent_mode, agent_static = state_dict[agent_id]
                 agent_state = agent_state[1:]
                 continuous_variable_dict, orig_disc_vars, _ = sensor.sense(
-                    agent, state_dict, track_map
+                    agent, state_dict, track_map,True
                 )
                 unchecked_cache_guards = [
                     g[:2] for g in cached_guards[agent_id] if g[2] < idx
