@@ -7,6 +7,9 @@ from verse import Scenario, ScenarioConfig
 from verse.analysis.verifier import ReachabilityMethod
 import sys
 import plotly.graph_objects as go
+import torch
+from auto_LiRPA import BoundedTensor
+from verse.utils.utils import wrap_to_pi
 
 class AgentMode(Enum):
     COC = auto()
@@ -23,6 +26,13 @@ class TrackMode(Enum):
     M12 = auto()
     M21 = auto()
     M10 = auto()
+
+def get_acas_state(own_state: List[float], int_state: List[float]) -> torch.Tensor:
+    dist = np.sqrt((own_state[0]-int_state[0])**2+(own_state[1]-int_state[1])**2)
+    theta = wrap_to_pi((2*np.pi-own_state[2])+np.arctan2(int_state[0], int_state[1]))
+    psi = wrap_to_pi(int_state[2]-own_state[2])
+    return torch.tensor([dist, theta, own_state[3], int_state[3]])
+
 
 if __name__ == "__main__":
     import os
@@ -41,6 +51,7 @@ if __name__ == "__main__":
     )
     scenario.add_agent(car)
     scenario.add_agent(car2)
-    trace = scenario.verify(0.1,0.1) # increasing ts to 0.1 to increase learning speed, do the same for dryvr
-    fig = reachtube_tree(trace) 
-    fig.show()
+    trace = scenario.simulate()
+    # trace = scenario.verify(0.2,0.1) # increasing ts to 0.1 to increase learning speed, do the same for dryvr2
+    # fig = reachtube_tree(trace) 
+    # fig.show() 

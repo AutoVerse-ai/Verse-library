@@ -45,3 +45,4 @@ def decisionLogic(ego: State, others: List[State], track_map):
     output = copy.deepcopy(ego)
     # assert not vehicle_close(ego, others)
     return output
+

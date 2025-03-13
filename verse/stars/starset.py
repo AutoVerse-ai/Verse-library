@@ -223,7 +223,7 @@ class StarSet:
                 os.makedirs(path, exist_ok=True)
                 with open(path+f'/{agent_id}_{mode_label}_{metadata}.pkl', 'wb') as f:
                     pickle.dump(reach, f)
-                print(f'Stars saved to ./verse/stars/learned_stars/{path}/{agent_id}_{mode_label}_{metadata}.pkl')
+                print(f'Stars saved to {path}/{agent_id}_{mode_label}_{metadata}.pkl')
             else:
                 with open(f'./verse/stars/learned_stars/{path}/{agent_id}_{mode_label}_{metadata}.pkl', 'rb') as f:
                     reach = pickle.load(f)
@@ -592,44 +592,44 @@ class StarSet:
         if m==1:
             return stars[0]
 
-        # new_rect = []
-        # n = stars[0].n
-        # for i in range(n):
-        #     max = None
-        #     min = None
-        #     for star in stars:
-        #         this_min, this_max = star.get_max_min(i)
-        #         if min == None or this_min < min:
-        #             min = this_min
-        #         if max == None or this_max > max:
-        #             max = this_max
-        #     new_rect.append([min, max])
+        new_rect = []
+        n = stars[0].n
+        for i in range(n):
+            max = None
+            min = None
+            for star in stars:
+                this_min, this_max = star.get_max_min(i)
+                if min == None or this_min < min:
+                    min = this_min
+                if max == None or this_max > max:
+                    max = this_max
+            new_rect.append([min, max])
 
-        # new_rect = np.array(new_rect).T
-        # basis = []
-        # for i in range(n):
-        #     diff = new_rect[1]-new_rect[0] #max - min
-        #     center = (new_rect[1]+new_rect[0])/2
-        #     basis = np.eye(n)*np.diag(diff/2)
-        #     C, g = new_pred(n) 
+        new_rect = np.array(new_rect).T
+        basis = []
+        for i in range(n):
+            diff = new_rect[1]-new_rect[0] #max - min
+            center = (new_rect[1]+new_rect[0])/2
+            basis = np.eye(n)*np.diag(diff/2)
+            C, g = new_pred(n) 
 
-        # return StarSet(center, basis, C, g)
+        return StarSet(center, basis, C, g)
 
-        all_verts = []
-        for star in stars:
-            all_verts.append(star.get_verts_opt()) 
-        all_verts = np.vstack(all_verts)
-        all_verts = all_verts[ConvexHull(all_verts, qhull_options='QJ').vertices]
-        plt.scatter(all_verts[:,0], all_verts[:,4])
-        ns = gen_starset(all_verts, stars[0]) # doesn't matter which star set we choose, only the predicate is being looked at and all star sets in a sequence should have the same predicate
-        colors = ['r','b']
-        i = 0
-        for b in ns.basis:
-            i = (i+1)%2
-            plt.quiver(*ns.center[[0,4]], *b[[0, 4]], angles='xy', scale_units='xy', scale=1, color=colors[i], linewidth=0.5)
+        # all_verts = []
+        # for star in stars:
+        #     all_verts.append(star.get_verts_opt()) 
+        # all_verts = np.vstack(all_verts)
+        # all_verts = all_verts[ConvexHull(all_verts, qhull_options='QJ').vertices]
+        # plt.scatter(all_verts[:,0], all_verts[:,4])
+        # ns = gen_starset(all_verts, stars[0]) # doesn't matter which star set we choose, only the predicate is being looked at and all star sets in a sequence should have the same predicate
+        # colors = ['r','b']
+        # i = 0
+        # for b in ns.basis:
+        #     i = (i+1)%2
+        #     plt.quiver(*ns.center[[0,4]], *b[[0, 4]], angles='xy', scale_units='xy', scale=1, color=colors[i], linewidth=0.5)
         
-        plot_stars_points([ns])
-        return ns
+        # plot_stars_points([ns])
+        # return ns
         # return gen_starset(all_verts, stars[0]) # doesn't matter which star set we choose, only the predicate is being looked at and all star sets in a sequence should have the same predicate
         # there's a possibility that the above will fail if the predicate is bad, in that case, just return StarSet(np.zeros(...), np.eye(...), *new_pred(stars[0].n))
 
@@ -737,7 +737,17 @@ class HalfSpace:
         self.g = g
 
 ### from star_util
-
+def from_rect(inf: list, sup: list) -> StarSet:
+    if len(inf)!=len(sup):
+        raise Exception("Lower and upper bounds have mismatched lengths")
+    inf, sup = np.array(inf), np.array(sup)
+    if (inf>sup).all():
+        raise Exception("Lower less than upper bound")
+    dim = len(inf)
+    center = (inf+sup)/2
+    basis = np.eye(dim)*np.diag(center-inf)
+    C, g = new_pred(dim)
+    return StarSet(center, basis, C, g)
 
 # change this to check if point in convex hull of vertices 
 def containment_poly(star: StarSet, point: np.ndarray) -> bool:
