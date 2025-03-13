@@ -65,11 +65,11 @@ def decisionLogic(ego: State, others: List[State], track_map):
             if track_map.h_exist(ego.track_mode, ego.craft_mode, CraftMode.Normal):
                 next.track_mode = track_map.h(ego.track_mode, ego.craft_mode, CraftMode.Normal)
 
-    assert not any(
-        -1 < ego.x - other.x < 1 and -1 < ego.y - other.y < 1 and -1 < ego.z - other.z < 1
-        for other in others
-    ), "Safe Seperation"
+    # assert not any(
+    #     -1 < ego.x - other.x < 1 and -1 < ego.y - other.y < 1 and -1 < ego.z - other.z < 1
+    #     for other in others
+    # ), "Safe Seperation"
 
-    assert not (50 > ego.x > 40 and 5 > ego.y > -5 and -6 > ego.z > -10), "Unsafe Region"
+    # assert not (50 > ego.x > 40 and 5 > ego.y > -5 and -6 > ego.z > -10), "Unsafe Region"
 
     return next

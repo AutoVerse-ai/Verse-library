@@ -65,7 +65,10 @@ if __name__ == "__main__":
     )
     init_l_2 = [19.5, -0.5, -0.5, 0, 0, 0]
     init_u_2 = [20.5, 0.5, 0.5, 0, 0, 0]
+    
     init_2 = from_rect(init_l_2, init_u_2)
+    # print(init_2, init_2.overapprox_rectangle())
+    # exit()
     quadrotor2.set_initial(init_2, (CraftMode.Normal, TrackMode.T1))
     scenario.add_agent(quadrotor2)
 

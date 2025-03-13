@@ -63,7 +63,7 @@ if __name__ == "__main__":
     # # traces.dump('./output1.json')
     fig = go.Figure()
     fig = simulation_anime(traces, tmp_map, fig, 1,
-    #                        2, [1, 2], 'lines', 'trace', anime_mode='trail', full_trace = True)
+                            2, [1, 2], 'lines', 'trace', anime_mode='trail', full_trace = True)
     fig.show()
 
     time_step = 0.05
