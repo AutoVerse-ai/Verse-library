@@ -215,13 +215,6 @@ class Scenario:
                         uncertain_parameters = agent.uncertain_parameters
                     self.set_init_single(agent_id, init_cont, init_disc, static_parameters, uncertain_parameters)  
 
-    def simulate_multi(self, time_horizon, time_step, max_height=None, num_sim=3):
-        res_list = []
-        for i in range(num_sim):
-            trace = self.simulate(time_horizon, time_step,max_height)
-            res_list.append(trace)
-        return res_list
-
     def simulate(self, time_horizon, time_step, max_height=None, seed=None) -> AnalysisTree:
         '''Computes a single simulation trace of a scenario, starting from a single initial state.
             Parameters:
