@@ -267,7 +267,7 @@ class Scenario:
         tree_list = []
         if init_dict_list is None:
             for i in range(num_sims):
-                tree_list.append(self.simulate(time_horizon, time_step, max_height, seed + i))
+                tree_list.append(self.simulate(time_horizon, time_step, max_height, (seed + i) if seed is not None else None))
         else:
             for init_dict in init_dict_list:
                 root = AnalysisTreeNode.root_from_inits(
