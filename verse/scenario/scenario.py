@@ -256,7 +256,7 @@ class Scenario:
         self.past_runs.append(tree)
         return tree
 
-    def simulate_multi(self, time_horizon, time_step, init_dict_list=None, max_height=None, seed=None):
+    def simulate_multi(self, time_horizon, time_step, init_dict_list=None, max_height=None, seed=None, num_sims=10):
         '''Computes multiple simulation traces of a scenario, starting from multiple initial states.
             `seed`: the random seed for sampling a point in the region specified by the initial
             conditions
@@ -266,7 +266,7 @@ class Scenario:
         self._check_init()
         tree_list = []
         if init_dict_list is None:
-            for i in range(10):
+            for i in range(num_sims):
                 tree_list.append(self.simulate(time_horizon, time_step, max_height, seed))
         else:
             for init_dict in init_dict_list:
