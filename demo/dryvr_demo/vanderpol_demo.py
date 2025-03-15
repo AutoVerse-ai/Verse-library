@@ -70,6 +70,7 @@ if __name__ == "__main__":
     )
 
     scenario.add_agent(car)
+    # scenario.config.overwrite = True
     scenario.config.reachability_method = ReachabilityMethod.STAR_SETS
     scenario.set_sensor(BaseStarSensor())
     # scenario.config.overwrite = True
