@@ -213,7 +213,8 @@ class StarSet:
             # could potentially allow users to specify hyperparameters using a specific scenario config parameter, like model_hyperparams for example
             '''Still going to store to local memory to keep learned starsets, model path a misnomer now'''
             reach: List[StarSet]
-
+            # print('Initial star set:')
+            # self.print()
             path = 'default' if model_path is None else model_path
             metadata = f'{hash(self)}__{time_horizon}__{time_step}'
 
@@ -707,12 +708,16 @@ class StarSet:
         if rank == 0:
             return np.tile(V0, (num_samples, 1)) # just return the sole vertex if the star set is 0D
 
-        V_proj = (V_shifted @ basis) # Express in lower-dimensional space if necessary
+        # V_proj = (V_shifted @ basis) # Express in lower-dimensional space if necessary
+        V_proj = (V_shifted @ basis)-1e12 # include a term to catch small numerical errors 
         P_proj = pc.qhull(V_proj)  # Compute H-rep of projected star set 
         A_proj, b_proj = P_proj.A, P_proj.b  
 
         problem = hopsy.Problem(A_proj, b_proj)
-        chain = hopsy.MarkovChain(problem, starting_point=np.mean(V_proj, axis=0))
+        try:
+            chain = hopsy.MarkovChain(problem, starting_point=np.mean(V_proj, axis=0))
+        except Exception as e:
+            print(f'Error: {e}')
         rng = hopsy.RandomNumberGenerator()
         
         burn_in = 10*num_samples if burn_in is None else burn_in
@@ -773,13 +778,13 @@ def sample_star(star: StarSet, N: int = 100, tol: float = 0.2) -> List[List[floa
         else:
             misses+=1
             if misses>int(N*tol):
-                # center, basis, C, g = star.center, star.basis, star.C, star.g
-                # points.append(point)
+                center, basis, C, g = star.center, star.basis, star.C, star.g
+                points.append(point)
                 # star.print()
                 # print(rect)
                 # print(np.maximum(C@np.linalg.inv(basis+1e-6*np.eye(star.dimension()))@(point-center)-g, 0))
-                print("Warning: could potentially be sampling outside starset")
-                raise Exception("Too many consecutive misses, halting function. Call smple_rect instead.")
+                # print("Warning: could potentially be sampling outside starset")
+                # raise Exception("Too many consecutive misses, halting function. Call smple_rect instead.")
     return points
 
 # def post_cont_pca(old_star: StarSet, new_center: np.ndarray, derived_basis: np.ndarray,  points: np.ndarray) -> StarSet:
@@ -897,8 +902,8 @@ def gen_starset(points: np.ndarray, old_star: StarSet) -> StarSet:
 ### doing post_computations using simulation then constructing star sets around each set of points afterwards -- not iterative
 ### modified N from 100 to 30 for helicopter scenario
 def gen_starsets_post_sim(old_star: StarSet, sim: Callable, T: float = 7, ts: float = 0.05, N: int = 100, mode_label: int = None, lane_map: LaneMap = None) -> List[StarSet]:
-    # points = np.array(sample_star(old_star, N))
-    points = np.array(old_star.sample_h(N))
+    points = np.array(sample_star(old_star, N))
+    # points = np.array(old_star.sample_h(N)) # bug with sample_h -- R3 on 
     post_points = []
 
     for point in points:

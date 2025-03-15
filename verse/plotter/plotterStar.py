@@ -67,6 +67,7 @@ def reachtube_tree_single(root,agent_id,x_dim,y_dim, color):
                 #y=[verts[:,1]]
                 #print(y)
                 plt.plot(x, y, lw = 1, color = color)
+                # plt.scatter(x, y, color=color)
                 # x, y = np.array(trace[i][1].get_verts_dim())
                 # plt.plot(x, y, 'o', color = 'red')
                 #plt.show()
@@ -117,7 +118,8 @@ def plot_stars_time(root: AnalysisTree, dim: int=0, title: str = 'Star Set Reach
             for star in node.trace[agent]:
                 s_mode.append(star)
             stars.append(s_mode)
-            modes.append(list(node.mode.values())[0]) # only considering nodes with one mode
+            # modes.append(list(node.mode.values())[0]) # only considering nodes with one mode
+            modes.append(node.mode[agent]) # only considering nodes with one mode
         verts = []
 
         for i in range(len(stars)): # per mode
@@ -132,29 +134,34 @@ def plot_stars_time(root: AnalysisTree, dim: int=0, title: str = 'Star Set Reach
                     star_0 = star[1]
                 v_mode.append([star[0], *star[1].get_max_min(dim)]) # each vertex is actually the time index and the min/max of that dimension at that time
             v_mode = np.array(v_mode)
-            # print(v_mode.shape)
-            # print(v_mode[-1][0], v_mode[0][0])
             verts.append(v_mode)
-            if scenario_agent is not None:
-                points = star_0.sample(num_samples)
-                ts = v_mode[1][0]-v_mode[0][0]
-                t0 = v_mode[0][0]
-                T = v_mode[-1][0]-t0
-                # print(t0, T)
-                for point in points:
-                    post_points.append(scenario_agent.TC_simulate(mode, point, T, ts, lane_map).tolist())
-                post_points = np.array(post_points) ### this has shape N x (T/ts) x (n+1), S_t is equivalent to p_p[:, t, 1:]
-                for t in range(len(post_points[0])):
-                    plt.scatter(np.ones(len(post_points))*post_points[0,t,0]+t0, post_points[:,t,dim+1], color=colors[j%7]) 
+
+            # if scenario_agent is not None:
+            #     points = star_0.sample(num_samples)
+            #     ts = v_mode[1][0]-v_mode[0][0]
+            #     t0 = v_mode[0][0]
+            #     T = v_mode[-1][0]-t0
+            #     # print(t0, T)
+            #     for point in points:
+            #         post_points.append(scenario_agent.TC_simulate(mode, point, T, ts, lane_map).tolist())
+            #     post_points = np.array(post_points) ### this has shape N x (T/ts) x (n+1), S_t is equivalent to p_p[:, t, 1:]
+            #     for t in range(len(post_points[0])):
+            #         plt.scatter(np.ones(len(post_points))*post_points[0,t,0]+t0, post_points[:,t,dim+1], color=colors[j%7]) 
 
         # for i in range(len(verts)):
         #     v_mode = verts[i]
         #     plt.fill_between(v_mode[:, 0], v_mode[:, 1], v_mode[:, 2], color=colors[j%7], alpha=0.5, label=f'Agent {agent}, Mode {mode}')
         # j+=1
+        color_ind = 0
         for i in range(len(verts)):
             v_mode = verts[i]
-            plt.fill_between(v_mode[:, 0], v_mode[:, 1], v_mode[:, 2], color=colors[i*j%7], alpha=0.5, label=f'Agent {agent}, Mode: {modes[i]}')
+            if i>0 and modes[i]!=modes[i-1]:
+                color_ind+=1
+            plt.fill_between(v_mode[:, 0], v_mode[:, 1], v_mode[:, 2], color=colors[color_ind*j%7], alpha=0.5, label=f'Agent {agent}, Mode: {modes[i]}')
         j+=1
+        
+        stars = []
+        modes = []
     
         
         
