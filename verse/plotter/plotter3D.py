@@ -14,8 +14,8 @@ vtk.vtkLogger.SetStderrVerbosity(vtk.vtkLogger.VERBOSITY_OFF)
 def plot3dReachtubeSingle(tube, x_dim, y_dim, z_dim, ax, color, edge=True):
     
     for i, (lb, ub) in enumerate(tube):
-        if(i%11 ==0 ):
-            box = [[lb[x_dim], lb[y_dim], lb[z_dim]], [ub[x_dim], ub[y_dim], ub[z_dim]]]
+        if(i%5 ==0 ):
+            box = [[lb[x_dim]-1, lb[y_dim]-1, lb[z_dim]-1], [ub[x_dim]+1, ub[y_dim]+1, ub[z_dim]+1]]
             poly = pc.box2poly(np.array(box).T)
             ax = plot_polytope_3d(poly.A, poly.b, ax=ax, color=color, edge=edge)
 
@@ -128,3 +128,4 @@ if __name__ == "__main__":
     fig = plot_polytope_3d(A, b, ax=fig, color="red")
     fig = plot_polytope_3d(A, b2, ax=fig, color="green")
     fig.show()
+    

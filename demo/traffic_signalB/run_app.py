@@ -5,153 +5,363 @@ from vehicle_controller import VehicleMode, PedestrianMode
 
 from verse.plotter.plotter2D import *
 from verse.plotter.plotter3D import *
-
 from verse.plotter.plotter3D_new import *
-import plotly.graph_objects as go
-
 
 import sys
 import numpy as np
-import pyvista as pv
-import pyvistaqt as pvqt
-from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton
-from PyQt6.QtWebEngineWidgets import QWebEngineView
+import os
 import threading
 import time
+from PyQt6.QtWidgets import (
+    QApplication, QMainWindow, QVBoxLayout, QWidget, 
+    QPushButton, QSizePolicy, QStackedLayout, QSlider,
+    QLabel, QFrame
+)
+from PyQt6.QtCore import Qt, QPoint, QRect, QSize
+from PyQt6.QtGui import QPainter, QPixmap, QColor, QPalette, QFont
+from PyQt6.QtSvg import QSvgRenderer
+import pyvistaqt as pvqt
+from PyQt6.QtWebEngineWidgets import QWebEngineView
+from PyQt6.QtWidgets import QStyleOptionSlider
+from PyQt6.QtCore import QRectF
+from PyQt6.QtWidgets import QStyle
+
+class StyledSlider(QSlider):
+    """Custom styled slider with modern look"""
+    def __init__(self, orientation, parent=None):
+        super().__init__(orientation, parent)
+        self.setStyleSheet("""
+            QSlider::groove:vertical {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                          stop:0 #2c3e50, stop:1 #34495e);
+                width: 8px;
+                border-radius: 4px;
+            }
+            QSlider::handle:vertical {
+                background: #3498db;
+                border: 2px solid #2980b9;
+                border-radius: 10px;
+                height: 20px;
+                width: 20px;
+                margin: -6px 0;
+            }
+            QSlider::handle:vertical:hover {
+                background: #2980b9;
+            }
+            QSlider::sub-page:vertical {
+                background: #3498db;
+                border-radius: 4px;
+            }
+        """)
+
+class StyledButton(QPushButton):
+    """Custom styled button with modern look"""
+    def __init__(self, text, parent=None):
+        super().__init__(text, parent)
+        self.setStyleSheet("""
+            QPushButton {
+                background-color: #3498db;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #2980b9;
+            }
+            QPushButton:pressed {
+                background-color: #2472a4;
+            }
+            QPushButton:disabled {
+                background-color: #bdc3c7;
+            }
+        """)
+
+class InfoPanel(QFrame):
+    """Information panel with modern styling"""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setStyleSheet("""
+            QFrame {
+                background-color: rgba(44, 62, 80, 0.9);
+                border-radius: 8px;
+                padding: 10px;
+            }
+            QLabel {
+                color: white;
+                font-size: 12px;
+            }
+            QLabel#title {
+                font-size: 14px;
+                font-weight: bold;
+                color: #3498db;
+                margin-bottom: 5px;
+            }
+        """)
+        self.setup_ui()
+
+    def setup_ui(self):
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(10, 10, 10, 10)
+        
+        title = QLabel("Simulation Controls")
+        title.setObjectName("title")
+        layout.addWidget(title)
+        
+        self.status_label = QLabel("Ready to start simulation")
+        layout.addWidget(self.status_label)
+        
+        layout.addStretch()
+
+class SvgPlaneSlider(QSlider):
+    """Custom styled slider with plane icon handle"""
+    def __init__(self, svg_file, parent=None):
+        super().__init__(Qt.Orientation.Vertical, parent)
+        self.svg_renderer = QSvgRenderer(svg_file)
+        self.setMinimum(0)
+        self.setMaximum(100)
+        self.setValue(50)
+        self.setFixedSize(30, 280)
+        self.setStyleSheet("""
+            QSlider::groove:vertical {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                          stop:0 #2c3e50, stop:1 #34495e);
+                width: 8px;
+                border-radius: 4px;
+            }
+            QSlider::handle:vertical {
+                background: transparent;
+                height: 30px;
+                width: 30px;
+                margin: 0 -12px;
+            }
+        """)
+        self.setInvertedAppearance(True)
+        
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        
+        # First, clear the background
+        painter.fillRect(self.rect(), self.palette().brush(self.backgroundRole()))
+        
+        # Draw the groove
+        option = QStyleOptionSlider()
+        self.initStyleOption(option)
+        
+        # Draw the base slider
+        self.style().drawComplexControl(QStyle.ComplexControl.CC_Slider, option, painter, self)
+        
+        # Calculate position for the SVG
+        handle_pos = self.style().sliderPositionFromValue(
+            self.minimum(), self.maximum(), self.value(), self.height() - 30)
+        
+        # Draw the SVG at the calculated position
+        plane_rect = QRectF(0, handle_pos, 30, 30)
+        self.svg_renderer.render(painter, plane_rect)
+        
+        painter.end()
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-
-        self.setWindowTitle("PyVista in Qt Web App")
+        self.setWindowTitle("Traffic Signal Visualization")
         self.setGeometry(100, 100, 1200, 800)
+        
+        # Initialize variables
         self.plane1_position = 0
         self.plane2_position = 0
         self.thread = None
+        
+        # Setup main UI
+        self.setup_main_ui()
+        
+        # Setup overlay
+        self.setup_overlay()
+        
+        # Setup web view
+        self.setup_web_view()
+        
+        # Make sure overlay is visible
+        self.overlay_container.raise_()
+        self.overlay_container.show()
 
-        # Main Widget and Layout
-        main_widget = QWidget()
-        layout = QVBoxLayout()
+    def setup_main_ui(self):
+        """Setup the main UI components"""
+        self.main_widget = QWidget()
+        self.setCentralWidget(self.main_widget)
+        
+        self.main_layout = QVBoxLayout(self.main_widget)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Setup PyVista plotter
+        self.plotter = pvqt.QtInteractor()
+        self.plotter.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.main_layout.addWidget(self.plotter.interactor)
 
-        # PyVistaQt QtInteractor (for 3D visualization)
-        self.plotter = pvqt.QtInteractor(main_widget)
-        #self.plotter.setMinimumHeight(400)  # Fixed to half of 800px
+    def setup_overlay(self):
+        """Setup the overlay container and its components"""
+        self.overlay_container = QWidget(self.main_widget)
+        self.overlay_container.setGeometry(0, 0, 480, 400)
+        
+        # Create info panel
+        self.info_panel = InfoPanel(self.overlay_container)
+        self.info_panel.setGeometry(10, 10, 350, 350)
+        
+        # Setup sliders
+        self.setup_sliders()
+        
+        # Setup buttons
+        self.setup_buttons()
 
-        layout.addWidget(self.plotter.interactor)
+    def setup_sliders(self):
+        """Setup the altitude sliders"""
+        self.slider_container = QWidget(self.overlay_container)
+        self.slider_container.setGeometry(370, 10, 100, 350)
+        
+        try:
+            self.blue_slider = SvgPlaneSlider("plane_blue.svg", self.slider_container)
+            self.blue_slider.setGeometry(5, 30, 30, 280)
+            self.blue_slider.setValue(50)
 
-        # QWebEngineView (for web UI)
-        self.web_view = QWebEngineView()
-        layout.addWidget(self.plotter.interactor)
-        #self.plotter.setMinimumHeight(400)  # Fixed to half of 800px
+            self.red_slider = SvgPlaneSlider("plane_red.svg", self.slider_container)
+            self.red_slider.setGeometry(55, 30, 30, 280)
+            self.red_slider.setValue(50)
+            
+            # Add labels
+            self.blue_label = QLabel("Altitude", self.slider_container)
+            self.blue_label.setGeometry(5, 5, 40, 20)
+            self.blue_label.setStyleSheet("color: #3498db; font-weight: bold;")
 
-        # QWebEngineView (for web UI)
-        self.web_view = QWebEngineView()
-        self.web_view.setHtml("""
+            self.red_label = QLabel("Altitude", self.slider_container)
+            self.red_label.setGeometry(55, 5, 40, 20)
+            self.red_label.setStyleSheet("color: #e74c3c; font-weight: bold;")
+            
+            self.setup_slider_markers()
+        except Exception as e:
+            print(f"Error loading SVG sliders: {e}")
+            self.setup_fallback_sliders()
+
+    def setup_slider_markers(self):
+        """Setup markers for the sliders"""
+        marker_values = [0, 33, 66, 100]
+        
+        # Blue slider markers
+        self.blue_markers = []
+        for value in marker_values:
+            marker = QLabel(f"{value}", self.slider_container)
+            y_pos = 30 + 280 - (280 * value / 100) - 10
+            marker.setGeometry(36, int(y_pos), 30, 20)
+            marker.setStyleSheet("color: #3498db; font-size: 10px;")
+            self.blue_markers.append(marker)
+        
+        # Red slider markers
+        self.red_markers = []
+        for value in marker_values:
+            marker = QLabel(f"{value}", self.slider_container)
+            y_pos = 30 + 280 - (280 * value / 100) - 10
+            marker.setGeometry(86, int(y_pos), 30, 20)
+            marker.setStyleSheet("color: #e74c3c; font-size: 10px;")
+            self.red_markers.append(marker)
+
+    def setup_fallback_sliders(self):
+        """Setup fallback sliders if SVG loading fails"""
+        self.blue_slider = StyledSlider(Qt.Orientation.Vertical, self.slider_container)
+        self.blue_slider.setGeometry(5, 30, 30, 280)
+        self.blue_slider.setValue(50)
+        
+        self.red_slider = StyledSlider(Qt.Orientation.Vertical, self.slider_container)
+        self.red_slider.setGeometry(55, 30, 30, 280)
+        self.red_slider.setValue(50)
+
+    def setup_buttons(self):
+        """Setup the control buttons"""
+        self.run_button = StyledButton("Run", self.overlay_container)
+        self.run_button.setGeometry(10, 365, 60, 30)
+        self.run_button.clicked.connect(self.run_button_clicked)
+        
+        self.toggle_button = StyledButton("Hide Overlay", self.overlay_container)
+        self.toggle_button.setGeometry(80, 365, 100, 30)
+        self.toggle_button.clicked.connect(self.toggle_overlay)
+
+    def setup_web_view(self):
+        """Setup the web view for the visualization"""
+        self.web_view = QWebEngineView(self.overlay_container)
+        self.web_view.setGeometry(10, 10, 350, 350)
+        self.web_view.setHtml(self.get_web_content())
+
+    def get_web_content(self):
+        """Get the HTML content for the web view"""
+        return """
         <html>
             <head>
-                <title>Embedded PyVista</title>
+                <title>Traffic Signal Visualization</title>
                 <style>
                     * { margin: 0; padding: 0; box-sizing: border-box; }
-                    body { overflow: hidden; } /* No Scrollbars */
-
-                    #container {
-                        position: relative;
-                        width: 400px;
-                        height: 400px;
-                        background-color: #f0f0f0;
-                        display: flex;
-                        justify-content: center;
-                        align-items: center;
-                        border: 2px solid black;
-                        margin: auto;
+                    body { 
+                        overflow: hidden;
+                        background-color: transparent;
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
                     }
-                    /* X and Y Axes */
+                    #container {
+                        position: absolute;
+                        top: 0px;
+                        left: 0px;
+                        width: 350px;
+                        height: 350px;
+                        background-color: rgba(225, 244, 255, 0.8);
+                        border: 2px solid #3498db;
+                        border-radius: 8px;
+                        z-index: 2;
+                    }
                     .axis {
                         position: absolute;
-                        background-color: black;
+                        background-color: #3498db;
                         z-index: 1;
                     }
-
                     #x-axis {
                         width: 100%;
                         height: 2px;
-                        top: 50%;
+                        top: 98%;
                         left: 0;
                     }
-
                     #y-axis {
                         width: 2px;
                         height: 100%;
                         left: 2%;
                         top: 0;
                     }
-                              /* Axis Markers */
                     .marker {
                         position: absolute;
-                        font-size: 14px;
-                        color: black;
+                        font-size: 12px;
+                        color: #3498db;
                         font-weight: bold;
                     }
-
-                    /* X-axis markers */
-                    .x-marker {
-                        top: 52%;
-                        transform: translateX(-50%);
-                    }
-
-                    .x-tick {
-                        width: 2px;
-                        height: 10px;
-                        background: black;
-                        position: absolute;
-                        top: 48%;
-                    }
-
-                    /* Y-axis markers */
-                    .y-marker {
-                        left: 2%;
-                        transform: translateY(-50%);
-                    }
-
-                    .y-tick {
-                        width: 10px;
-                        height: 2px;
-                        background: black;
-                        position: absolute;
-                        left: 2%;
-                    }
-
-
                     .draggable {
-                        width: 80px;
-                        height: 80px;
-                        background-color: #007BFF;
+                        width: 20px;
+                        height: 20px;
                         color: white;
                         text-align: center;
-                        line-height: 80px;
+                        line-height: 20px;
                         font-weight: bold;
                         border-radius: 10px;
                         position: absolute;
                         cursor: grab;
+                        z-index: 2;
+                        transition: transform 0.2s;
+                        transform-origin: center center;
                     }
-
-                    #plane1 { left: 30px; top: 30px; }
-                    #plane2 { right: 30px; top: 30px; }
-
-                    button {
-                        display: block;
-                        margin: 10px auto;
-                        padding: 10px 20px;
-                        font-size: 16px;
-                        cursor: pointer;
-                        border: none;
-                        background-color: #28a745;
-                        color: white;
-                        border-radius: 5px;
+                    .draggable:hover {
+                        transform: scale(1.1);
                     }
+                    #plane1 { left: 10px; top: 10px; }
+                    #plane2 { right: 10px; top: 10px; }
                 </style>
                 <script>
                     let draggedElement = null;
+                    let selectedPlane = null;
+                    let initialSize = 20;
 
                     function dragStart(event) {
                         draggedElement = event.target;
@@ -163,20 +373,99 @@ class MainWindow(QMainWindow):
 
                     function drop(event) {
                         if (draggedElement) {
-                            draggedElement.style.left = event.clientX - draggedElement.offsetWidth / 2 + 'px';
-                            draggedElement.style.top = event.clientY - draggedElement.offsetHeight / 2 + 'px';
+                            let container = document.getElementById("container");
+                            let rect = container.getBoundingClientRect();
+
+                            let newX = event.clientX - rect.left - draggedElement.offsetWidth / 2;
+                            let newY = event.clientY - rect.top - draggedElement.offsetHeight / 2;
+
+                            newX = Math.max(0, Math.min(newX, rect.width - draggedElement.offsetWidth));
+                            newY = Math.max(0, Math.min(newY, rect.height - draggedElement.offsetHeight));
+
+                            draggedElement.style.left = newX + "px";
+                            draggedElement.style.top = newY + "px";
+
                             event.preventDefault();
+                        }
+                    }
+
+                    function planeClick(event) {
+                        event.stopPropagation();
+                        
+                        // If clicking the same plane, deselect it
+                        if (selectedPlane === event.target) {
+                            selectedPlane = null;
+                            event.target.style.border = "none";
+                            return;
+                        }
+                        
+                        // Deselect previous plane if any
+                        if (selectedPlane) {
+                            selectedPlane.style.border = "none";
+                        }
+                        
+                        // Select new plane
+                        selectedPlane = event.target;
+                        selectedPlane.style.border = "2px dashed white";
+                        
+                        if (event.target === draggedElement) {
+                            draggedElement = null;
+                        }
+                    }
+
+                    function handleWheel(event) {
+                        if (selectedPlane) {
+                            event.preventDefault();
+                            
+                            const currentSize = parseInt(selectedPlane.style.width || initialSize);
+                            const delta = event.deltaY > 0 ? -2 : 2;
+                            const newSize = Math.max(10, Math.min(50, currentSize + delta));
+                            
+                            // Store current position
+                            const currentLeft = parseInt(selectedPlane.style.left);
+                            const currentTop = parseInt(selectedPlane.style.top);
+                            
+                            // Calculate center point
+                            const centerX = currentLeft + currentSize / 2;
+                            const centerY = currentTop + currentSize / 2;
+                            
+                            // Apply new size
+                            selectedPlane.style.width = newSize + "px";
+                            selectedPlane.style.height = newSize + "px";
+                            selectedPlane.style.lineHeight = newSize + "px";
+                            selectedPlane.style.borderRadius = (newSize / 2) + "px";
+                            
+                            // Adjust position to maintain center point
+                            selectedPlane.style.left = (centerX - newSize / 2) + "px";
+                            selectedPlane.style.top = (centerY - newSize / 2) + "px";
                         }
                     }
 
                     function getPlanePositions() {
                         let plane1 = document.getElementById("plane1");
                         let plane2 = document.getElementById("plane2");
-
+                        
                         return {
-                            plane1: { x: plane1.style.left, y: plane1.style.top },
-                            plane2: { x: plane2.style.left, y: plane2.style.top }
+                            plane1: { 
+                                x: plane1.style.left, 
+                                y: plane1.style.top,
+                                size: plane1.style.width || initialSize + "px"
+                            },
+                            plane2: { 
+                                x: plane2.style.left, 
+                                y: plane2.style.top,
+                                size: plane2.style.width || initialSize + "px"
+                            }
                         };
+                    }
+
+                    function clearSelection(event) {
+                        if (event.target.id === "container") {
+                            if (selectedPlane) {
+                                selectedPlane.style.border = "none";
+                                selectedPlane = null;
+                            }
+                        }
                     }
 
                     function runSimulation() {
@@ -189,16 +478,19 @@ class MainWindow(QMainWindow):
                         let container = document.getElementById('container');
                         container.addEventListener('dragover', dragOver);
                         container.addEventListener('drop', drop);
+                        container.addEventListener('click', clearSelection);
+                        container.addEventListener('wheel', handleWheel);
+                        
+                        document.getElementById('plane1').addEventListener('click', planeClick);
+                        document.getElementById('plane2').addEventListener('click', planeClick);
                     };
                 </script>
             </head>
             <body>
                 <div id="container">
-                              
-                    <!-- X and Y Axes -->
                     <div id="x-axis" class="axis"></div>
                     <div id="y-axis" class="axis"></div>
-
+                    
                     <!-- X-Axis Markers -->
                     <div class="marker x-marker" style="left: 0%;">0</div>
                     <div class="marker x-marker" style="left: 25%;">50</div>
@@ -226,24 +518,41 @@ class MainWindow(QMainWindow):
                     <div class="y-tick" style="top: 50%;"></div>
                     <div class="y-tick" style="top: 75%;"></div>
                     <div class="y-tick" style="top: 100%;"></div>
-                    <div id="plane1" class="draggable" draggable="true" ondragstart="dragStart(event)">✈ 1</div>
-                    <div id="plane2" class="draggable" draggable="true" ondragstart="dragStart(event)">✈ 2</div>
+                    <div id="plane1" class="draggable" draggable="true" ondragstart="dragStart(event)">
+                    <svg viewBox="0 0 24 24" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+                        <path d="M21,16V14L13,9V3.5A1.5,1.5,0,0,0,11.5,2A1.5,1.5,0,0,0,10,3.5V9L2,14V16L10,13.5V19L8,20.5V22L11.5,21L15,22V20.5L13,19V13.5Z" fill="#007BFF"/>
+                    </svg>
+                    </div>
+                    <div id="plane2" class="draggable" draggable="true" ondragstart="dragStart(event)">
+                    <svg viewBox="0 0 24 24" width="100%" height="100%" preserveAspectRatio="xMidYMid meet" style="transform: rotate(90deg);">
+                        <path d="M21,16V14L13,9V3.5A1.5,1.5,0,0,0,11.5,2A1.5,1.5,0,0,0,10,3.5V9L2,14V16L10,13.5V19L8,20.5V22L11.5,21L15,22V20.5L13,19V13.5Z" fill="#FF0000"/>
+                    </svg>
+                    </div>
                 </div>
             </body>
-            </html>
-        """)
-        layout.addWidget(self.web_view)
+        </html>
+        """
 
-        # Run button to trigger saving the positions
-        self.run_button = QPushButton("Run")
-        self.run_button.clicked.connect(self.run_button_clicked)
-        layout.addWidget(self.run_button)
-
-        main_widget.setLayout(layout)
-        self.setCentralWidget(main_widget)
-
-    def run_verse(self, x1,y1, r1 , x2,y2, r2 ):
-        import os 
+    def toggle_overlay(self):
+        if self.overlay_container.isVisible():
+            self.overlay_container.hide()
+            # Create a floating button to show the overlay again
+            if not hasattr(self, 'floating_button'):
+                self.floating_button =  StyledButton("Change Initial Conditions", self.main_widget)
+                self.floating_button.setGeometry(10, 10, 100, 30)
+                self.floating_button.clicked.connect(self.show_overlay)
+            self.floating_button.show()
+            self.floating_button.raise_()
+        else:
+            self.show_overlay()
+    
+    def show_overlay(self):
+        if hasattr(self, 'floating_button'):
+            self.floating_button.hide()
+        self.overlay_container.show()
+        self.overlay_container.raise_()
+    
+    def run_verse(self, x1, y1,z1, r1, x2, y2,z2, r2):
         script_dir = os.path.realpath(os.path.dirname(__file__))
         input_code_name = os.path.join(script_dir, "vehicle_controller.py")
         vehicle = VehicleAgent('car', file_name=input_code_name)
@@ -255,57 +564,44 @@ class MainWindow(QMainWindow):
         scenario.add_agent(pedestrian)
         scenario.set_sensor(VehiclePedestrianSensor())
 
-
-        # init_car = [[4,-5,0,8],[5,5,0,8]]
-        # init_pedestrian = [[170,-55,0,3],[175,-52,0,5]]
-
-        init_car = [[x1 - r1,y1 -r1 ,0,8],[x1+r1,y1 +r1,0,8]]
-        init_pedestrian = [[x2 -r2, y2- r2,0,3],[x2 +r2,y2+r2,0,5]]
+        init_car = [[x1 - r1, y1 - r1, 0, 8], [x1 + r1, y1 + r1, 0, 8]]
+        init_pedestrian = [[x2 - r2, y2 - r2, 0, 3], [x2 + r2, y2 + r2, 0, 5]]
 
         scenario.set_init_single(
-            'car', init_car,(VehicleMode.Normal,)
+            'car', init_car, (VehicleMode.Normal,)
         )
         scenario.set_init_single(
             'pedestrian', init_pedestrian, (PedestrianMode.Normal,)
         )
 
-            # traces = []
-            # fig = go.Figure()
-            # n=3
-            # for i in range(n):
-            #     trace = scenario.simulate(50, 0.1)
-            #     traces.append(trace)
-            #     fig = simulation_tree_3d(trace, fig,\
-            #                             0,'time', 1,'x',2,'y')
-            # avg_vel, unsafe_frac, unsafe_init = eval_velocity(traces)
-            # fig.show()
-            #fig = pv.Plotter()
-            #fig.show(interactive_update=True)
-        _ = self.plotter.add_axes_at_origin(    xlabel='',
-    ylabel='',
-    zlabel='')
+        self.plotter.show_grid()
         traces = scenario.verify(80, 0.1, self.plotter)
 
-        # Add an interactive 3D sphere
     def run_button_clicked(self):
         self.web_view.page().runJavaScript("getPlanePositions();", self.handle_positions)
-    def start_animation(self, x1,y1,r1, x2,y2,r2):
+
+    def start_animation(self, x1, y1, z1,  r1, x2, y2, z2, r2):
         """Starts a background thread to move the sphere."""
-        if(self.thread):
+        if hasattr(self, 'thread') and self.thread:
             self.thread.join()
         self.plotter.clear()
 
-        self.thread = threading.Thread(target=self.run_verse,args=[x1,y1,r1, x2,y2,r2], daemon=True)
+        self.thread = threading.Thread(target=self.run_verse, args=[x1, y1,z1, r1, x2, y2,z2, r2], daemon=True)
         self.thread.start()
 
-
-    def handle_positions(self, positions):
+    def handle_positions(self, positions, scaling =2):
         def position_to_int(pos):
-            x = int(pos['x'][:-2])
-            y = int(pos['y'][:-2])
-            return (x/2,y/2)
+            # Handle case where positions might be empty
+            try:
+                x = float(pos['x'].replace('px', ''))
+                y = float(pos['y'].replace('px', ''))
 
-            
+                s = float(pos['size'].replace('px', ''))
+                return (x/scaling, y/scaling, s/scaling)
+            except (ValueError, KeyError):
+                return (0, 0,0)
+        alt1 = self.blue_slider.value() / 10  # Scale as needed
+        alt2 = self.red_slider.value() / 10  # Scale as needed
         # positions is a JavaScript object containing the current positions of the planes
         print("Positions of planes:", positions)
 
@@ -313,91 +609,31 @@ class MainWindow(QMainWindow):
         self.plane1_position = positions['plane1']
         self.plane2_position = positions['plane2']
 
-        x1, y1 = position_to_int(self.plane1_position)
-        x2, y2 = position_to_int(self.plane2_position)
+        x1, y1,s1= (position_to_int(self.plane1_position))
+        x2, y2,s2= (position_to_int(self.plane2_position))
 
-        self.start_animation(x1, y1,1,x2,y2,1)
+        self.start_animation(x1, y1, alt1, s1, x2, y2, alt2, s2)
 
-        #print(self.plane1_position, self.plane2_position)
-       
-        # You can further process these positions in your PyVista 3D
     def _set_python_bridge(self, result):
         """Sets the python bridge object in JS"""
         self.web_view.page().runJavaScript("window.pyQtApp = pyQtApp;", self._set_python_bridge)
-        
-        # Start background thread for animation
 
-      
+    def resizeEvent(self, event):
+        """Handle window resize events"""
+        super().resizeEvent(event)
+        # If we have a floating button, keep it in position
+        if hasattr(self, 'floating_button') and self.floating_button.isVisible():
+            self.floating_button.move(10, 10)
 
 # Run the Qt Application
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    
+    # Set application style
+    app.setStyle('Fusion')
+    
+    # Create and show main window
     main_window = MainWindow()
-    main_window.show()
+    main_window.showMaximized()
+    
     sys.exit(app.exec())
-
-
-# if __name__ == "__main__":
-#     import os 
-#     script_dir = os.path.realpath(os.path.dirname(__file__))
-#     input_code_name = os.path.join(script_dir, "vehicle_controller.py")
-#     vehicle = VehicleAgent('car', file_name=input_code_name)
-#     pedestrian = PedestrianAgent('pedestrian')
-
-#     scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False))
-
-#     scenario.add_agent(vehicle) 
-#     scenario.add_agent(pedestrian)
-#     scenario.set_sensor(VehiclePedestrianSensor())
-
-#     # # ----------- Different initial ranges -------------
-#     # # Uncomment this block to use R1
-#     init_car = [[4,-5,0,8],[5,5,0,8]]
-#     init_pedestrian = [[170,-55,0,3],[175,-52,0,5]]
-#     # # -----------------------------------------
-
-#     # # Uncomment this block to use R2
-#     # init_car = [[-5,-5,0,7.5],[5,5,0,8.5]]
-#     # init_pedestrian = [[175,-55,0,3],[175,-55,0,3]]
-#     # # -----------------------------------------
-
-#     # # Uncomment this block to use R3
-#     # init_car = [[-5,-5,0,7.5],[5,5,0,8.5]]
-#     # init_pedestrian = [[173,-55,0,3],[176,-53,0,3]]
-#     # # -----------------------------------------
-
-#     scenario.set_init_single(
-#         'car', init_car,(VehicleMode.Normal,)
-#     )
-#     scenario.set_init_single(
-#         'pedestrian', init_pedestrian, (PedestrianMode.Normal,)
-#     )
-
-#     # traces = []
-#     # fig = go.Figure()
-#     # n=3
-#     # for i in range(n):
-#     #     trace = scenario.simulate(50, 0.1)
-#     #     traces.append(trace)
-#     #     fig = simulation_tree_3d(trace, fig,\
-#     #                             0,'time', 1,'x',2,'y')
-#     # avg_vel, unsafe_frac, unsafe_init = eval_velocity(traces)
-#     # fig.show()
-#     fig = pv.Plotter()
-#     fig.show(interactive_update=True)
-#     traces = scenario.verify(80, 0.1, fig)
-    
-
-#     # fig = pv.Plotter()
-#     # fig = plot3dReachtube(traces,'car',0,1,2,'b',fig)
-#     # fig = plot3dReachtube(traces,'pedestrian',0,1,2,'r',fig)
-
-#     # fig = reachtube_tree_3d(traces, fig,\
-#     #                          0,'time', 1,'x',2,'y')
-#     # fig.show()
-
-
-
-   
-   
-    
