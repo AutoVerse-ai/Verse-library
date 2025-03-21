@@ -18,7 +18,7 @@ from PyQt6.QtWidgets import (
     QLabel, QFrame
 )
 from PyQt6.QtCore import Qt, QPoint, QRect, QSize
-from PyQt6.QtGui import QPainter, QPixmap, QColor, QPalette, QFont
+from PyQt6.QtGui import QPainter, QPixmap, QColor, QPalette, QFont, QPen, QPainterPath
 from PyQt6.QtSvg import QSvgRenderer
 import pyvistaqt as pvqt
 from PyQt6.QtWebEngineWidgets import QWebEngineView
@@ -34,11 +34,11 @@ class StyledSlider(QSlider):
             QSlider::groove:vertical {
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
                                           stop:0 #2c3e50, stop:1 #34495e);
-                width: 8px;
-                border-radius: 4px;
+                width: 1px;
+                border-radius: 1px;
             }
             QSlider::handle:vertical {
-                background: #3498db;
+                background: #E1F4FF;
                 border: 2px solid #2980b9;
                 border-radius: 10px;
                 height: 20px;
@@ -49,7 +49,7 @@ class StyledSlider(QSlider):
                 background: #2980b9;
             }
             QSlider::sub-page:vertical {
-                background: #3498db;
+                background: #E1F4FF;
                 border-radius: 4px;
             }
         """)
@@ -77,6 +77,59 @@ class StyledButton(QPushButton):
                 background-color: #bdc3c7;
             }
         """)
+class OverlayTab(QFrame):
+    """Side tab for showing/hiding overlay with rounded corners and smaller size"""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setFixedSize(15, 100)  # Smaller size
+        self.setStyleSheet("""
+            QFrame {
+                background-color: #77B1D4;
+                border-top-right-radius: 15px;
+                border-bottom-right-radius: 15px;
+                border: none;
+            }
+            QFrame:hover {
+                background-color: #2980b9;
+            }
+        """)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        
+        # Save the current state
+        painter.save()
+        
+        # Set up the pen for drawing
+        painter.setPen(QPen(Qt.GlobalColor.black, 2))  # Using black color with thicker line
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        
+        # Get widget dimensions
+        width = self.width()
+        height = self.height()
+        
+        # Draw triangular line (two connected lines forming a triangle-like shape)
+        path = QPainterPath()
+        # Start from top right area
+        path.moveTo(width * 0.7, height * 0.2)
+        # Draw line to middle left
+        path.lineTo(width * 0.3, height * 0.5)
+        # Draw line to bottom right area
+        path.lineTo(width * 0.7, height * 0.8)
+        
+        painter.drawPath(path)
+        
+        # Restore the previous state
+        painter.restore()
+
+    def mousePressEvent(self, event):
+        # Call the callback function
+        if hasattr(self, 'on_click_callback') and self.on_click_callback:
+            self.on_click_callback()
+        super().mousePressEvent(event)
 
 class InfoPanel(QFrame):
     """Information panel with modern styling"""
@@ -113,9 +166,8 @@ class InfoPanel(QFrame):
         layout.addWidget(self.status_label)
         
         layout.addStretch()
-
 class SvgPlaneSlider(QSlider):
-    """Custom styled slider with plane icon handle"""
+    """Custom styled slider with plane icon handle and internal markers that match the webview style"""
     def __init__(self, svg_file, parent=None):
         super().__init__(Qt.Orientation.Vertical, parent)
         self.svg_renderer = QSvgRenderer(svg_file)
@@ -123,45 +175,111 @@ class SvgPlaneSlider(QSlider):
         self.setMaximum(100)
         self.setValue(50)
         self.setFixedSize(30, 280)
-        self.setStyleSheet("""
-            QSlider::groove:vertical {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                          stop:0 #2c3e50, stop:1 #34495e);
-                width: 8px;
-                border-radius: 4px;
-            }
-            QSlider::handle:vertical {
-                background: transparent;
-                height: 30px;
-                width: 30px;
-                margin: 0 -12px;
-            }
-        """)
         self.setInvertedAppearance(True)
+        
+        # Create marker values (every 50 units to match webview)
+        self.marker_values = [0, 50, 100, 150, 200, 250, 300]
         
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         
-        # First, clear the background
-        painter.fillRect(self.rect(), self.palette().brush(self.backgroundRole()))
+        # First, clear the background with the same color as the webview
+        painter.fillRect(self.rect(), QColor("#E1F4FF"))
         
         # Draw the groove
         option = QStyleOptionSlider()
         self.initStyleOption(option)
         
-        # Draw the base slider
-        self.style().drawComplexControl(QStyle.ComplexControl.CC_Slider, option, painter, self)
+        # Get groove dimensions
+        groove_rect = self.style().subControlRect(QStyle.ComplexControl.CC_Slider, option, QStyle.SubControl.SC_SliderGroove, self)
+        slider_length = groove_rect.height()
+        slider_start = groove_rect.top()
+        slider_center_x = groove_rect.center().x()
         
-        # Calculate position for the SVG
-        handle_pos = self.style().sliderPositionFromValue(
-            self.minimum(), self.maximum(), self.value(), self.height() - 30)
+        # Draw vertical axis line that matches the webview blue color
+        #painter.setPen(QPen(QColor("#3498db"), 2))
+        #painter.drawLine(slider_center_x, slider_start, slider_center_x, slider_start + slider_length)
+        
+        # Add marker lines and text with the webview styling
+        font = painter.font()
+        font.setPointSize(8)
+        font.setBold(True)
+        painter.setFont(font)
+        
+        # Draw grid lines matching webview
+        painter.setPen(QPen(QColor("rgba(52, 152, 219, 0.15)"), 1))
+        line_width = 28
+        
+        # Draw horizontal grid lines
+        for value in self.marker_values:
+            if value == 0:
+                continue  # Skip the bottom line as we'll draw it separately
+                
+            # Calculate y position for the marker (inverted to match altitude)
+            normalized_value = 300 - value  # Invert to match altitude (0=bottom, 300=top)
+            y_pos = slider_start + int(slider_length * normalized_value / 300)
+            
+            # Draw grid line
+            painter.drawLine(2, y_pos, 28, y_pos)
+        
+        # Draw marker text and ticks with webview blue color
+        painter.setPen(QPen(QColor("#3498db"), 1))
+        
+        for i, value in enumerate(self.marker_values):
+            # Calculate y position for the marker (inverted to match altitude)
+            normalized_value = 300 - value  # Invert to match altitude (0=bottom, 300=top)
+            y_pos = slider_start + int(slider_length * normalized_value / 300)
+            
+            # Draw ticker mark
+            painter.drawLine(slider_center_x - 4, y_pos, slider_center_x + 4, y_pos)
+            
+            # Draw text with same style as webview
+            text = str(value)
+            text_rect = QRectF(2, y_pos - 13, 25, 16)
+            painter.drawText(text_rect, Qt.AlignmentFlag.AlignLeft, text)
         
         # Draw the SVG at the calculated position
-        plane_rect = QRectF(0, handle_pos, 30, 30)
-        self.svg_renderer.render(painter, plane_rect)
+        handle_rect = self.style().subControlRect(
+            QStyle.ComplexControl.CC_Slider, option, QStyle.SubControl.SC_SliderHandle, self)
+        
+        # Use the plane SVG for the handle
+        self.svg_renderer.render(painter, QRectF(0, handle_rect.top(), 30, 30))
         
         painter.end()
+
+def setup_sliders(self):
+    """Setup the altitude sliders"""
+    self.slider_container = QWidget(self.overlay_container)
+    self.slider_container.setGeometry(370, 10, 100, 350)
+    
+    try:
+        self.blue_slider = SvgPlaneSlider("plane_blue.svg", self.slider_container)
+        self.blue_slider.setGeometry(5, 30, 30, 280)
+        self.blue_slider.setValue(50)
+
+        self.red_slider = SvgPlaneSlider("plane_red.svg", self.slider_container)
+        self.red_slider.setGeometry(55, 30, 30, 280)
+        self.red_slider.setValue(50)
+        
+        # Add labels
+        self.blue_label = QLabel("Altitude", self.slider_container)
+        self.blue_label.setGeometry(20, 3, 50, 20)
+        self.blue_label.setStyleSheet("color: white; font-weight: bold;")
+        
+    except Exception as e:
+        print(f"Error loading SVG sliders: {e}")
+        self.setup_fallback_sliders()
+
+def setup_fallback_sliders(self):
+    """Setup fallback sliders if SVG loading fails"""
+    self.blue_slider = StyledSlider(Qt.Orientation.Vertical, self.slider_container)
+    self.blue_slider.setGeometry(5, 30, 30, 280)
+    self.blue_slider.setValue(50)
+    
+    self.red_slider = StyledSlider(Qt.Orientation.Vertical, self.slider_container)
+    self.red_slider.setGeometry(55, 30, 30, 280)
+    self.red_slider.setValue(50)
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -173,6 +291,7 @@ class MainWindow(QMainWindow):
         self.plane1_position = 0
         self.plane2_position = 0
         self.thread = None
+        self.overlay_visible = True
         
         # Setup main UI
         self.setup_main_ui()
@@ -183,9 +302,15 @@ class MainWindow(QMainWindow):
         # Setup web view
         self.setup_web_view()
         
+        # Setup side tab
+        self.setup_side_tab()
+        
         # Make sure overlay is visible
         self.overlay_container.raise_()
         self.overlay_container.show()
+        
+        self.side_tab.raise_()
+
 
     def setup_main_ui(self):
         """Setup the main UI components"""
@@ -215,10 +340,38 @@ class MainWindow(QMainWindow):
         # Setup buttons
         self.setup_buttons()
 
+    def setup_side_tab(self):
+        """Setup the side tab for showing/hiding overlay"""
+        self.side_tab = OverlayTab(self.main_widget)
+        self.side_tab.overlay_visible = self.overlay_visible
+        # Instead of assigning to a 'clicked' attribute, set a callback function
+        self.side_tab.on_click_callback = self.toggle_overlay
+        self.update_side_tab_position()
+       
+
+    def update_side_tab_position(self):
+        """Update the position of the side tab based on overlay visibility"""
+        if self.overlay_visible:
+
+            self.side_tab.setGeometry(480, 150, 40, 80)
+
+            
+        else:
+            #self.side_tab.setGeometry(0, 150, 40, 80)
+
+            self.side_tab.setGeometry(0, 150, 40, 80)
+
+
+
     def setup_sliders(self):
-        """Setup the altitude sliders"""
+        """Setup the altitude sliders with styling that matches the webview"""
         self.slider_container = QWidget(self.overlay_container)
         self.slider_container.setGeometry(370, 10, 100, 350)
+        
+        # Create a label to show "Altitude" text
+        self.altitude_label = QLabel("Altitude", self.slider_container)
+        self.altitude_label.setGeometry(20, 3, 60, 20)
+        self.altitude_label.setStyleSheet("color: #3498db; font-weight: bold;")
         
         try:
             self.blue_slider = SvgPlaneSlider("plane_blue.svg", self.slider_container)
@@ -229,16 +382,12 @@ class MainWindow(QMainWindow):
             self.red_slider.setGeometry(55, 30, 30, 280)
             self.red_slider.setValue(50)
             
-            # Add labels
-            self.blue_label = QLabel("Altitude", self.slider_container)
-            self.blue_label.setGeometry(5, 5, 40, 20)
-            self.blue_label.setStyleSheet("color: #3498db; font-weight: bold;")
-
-            self.red_label = QLabel("Altitude", self.slider_container)
-            self.red_label.setGeometry(55, 5, 40, 20)
-            self.red_label.setStyleSheet("color: #e74c3c; font-weight: bold;")
+        except Exception as e:
+            print(f"Error loading SVG sliders: {e}")
+            self.setup_fallback_sliders()
+          
             
-            self.setup_slider_markers()
+            #self.setup_slider_markers()
         except Exception as e:
             print(f"Error loading SVG sliders: {e}")
             self.setup_fallback_sliders()
@@ -278,12 +427,8 @@ class MainWindow(QMainWindow):
     def setup_buttons(self):
         """Setup the control buttons"""
         self.run_button = StyledButton("Run", self.overlay_container)
-        self.run_button.setGeometry(10, 365, 60, 30)
+        self.run_button.setGeometry(10, 365, 350, 30)
         self.run_button.clicked.connect(self.run_button_clicked)
-        
-        self.toggle_button = StyledButton("Hide Overlay", self.overlay_container)
-        self.toggle_button.setGeometry(80, 365, 100, 30)
-        self.toggle_button.clicked.connect(self.toggle_overlay)
 
     def setup_web_view(self):
         """Setup the web view for the visualization"""
@@ -314,6 +459,7 @@ class MainWindow(QMainWindow):
                         border: 2px solid #3498db;
                         border-radius: 8px;
                         z-index: 2;
+                        overflow: hidden;
                     }
                     .axis {
                         position: absolute;
@@ -323,13 +469,13 @@ class MainWindow(QMainWindow):
                     #x-axis {
                         width: 100%;
                         height: 2px;
-                        top: 98%;
+                        bottom: 0;
                         left: 0;
                     }
                     #y-axis {
                         width: 2px;
                         height: 100%;
-                        left: 2%;
+                        left: 0;
                         top: 0;
                     }
                     .marker {
@@ -337,6 +483,33 @@ class MainWindow(QMainWindow):
                         font-size: 12px;
                         color: #3498db;
                         font-weight: bold;
+                    }
+                    .x-marker {
+                        bottom: 5px;
+                        transform: translateX(-50%);
+                    }
+                    .y-marker {
+                        left: 5px;
+                        transform: translateY(-50%);
+                    }
+                    /* Origin marker */
+                    .origin-marker {
+                        bottom: 5px;
+                        left: 5px;
+                    }
+                    /* Grid lines */
+                    .grid-line {
+                        position: absolute;
+                        background-color: rgba(52, 152, 219, 0.15);
+                        z-index: 0;
+                    }
+                    .grid-line-x {
+                        width: 100%;
+                        height: 1px;
+                    }
+                    .grid-line-y {
+                        width: 1px;
+                        height: 100%;
                     }
                     .draggable {
                         width: 20px;
@@ -362,7 +535,8 @@ class MainWindow(QMainWindow):
                     let draggedElement = null;
                     let selectedPlane = null;
                     let initialSize = 20;
-
+                    let plane1Size = initialSize;
+                    let plane2Size = initialSize;
                     function dragStart(event) {
                         draggedElement = event.target;
                     }
@@ -392,10 +566,19 @@ class MainWindow(QMainWindow):
                     function planeClick(event) {
                         event.stopPropagation();
                         
+                        // Find the parent element with class "draggable" (the plane div)
+                        let planeElement = event.target;
+                        while (planeElement && !planeElement.classList.contains('draggable')) {
+                            planeElement = planeElement.parentElement;
+                        }
+                        
+                        // If we couldn't find a draggable parent, exit
+                        if (!planeElement) return;
+                        
                         // If clicking the same plane, deselect it
-                        if (selectedPlane === event.target) {
+                        if (selectedPlane === planeElement) {
                             selectedPlane = null;
-                            event.target.style.border = "none";
+                            planeElement.style.border = "none";
                             return;
                         }
                         
@@ -405,29 +588,41 @@ class MainWindow(QMainWindow):
                         }
                         
                         // Select new plane
-                        selectedPlane = event.target;
-                        selectedPlane.style.border = "2px dashed white";
+                        selectedPlane = planeElement;
+                        selectedPlane.style.border = "2px dashed black";
                         
-                        if (event.target === draggedElement) {
+                        if (planeElement === draggedElement) {
                             draggedElement = null;
                         }
+                        
+                        console.log("Selected plane ID:", selectedPlane.id);
                     }
+                   
 
+                    // Modified handleWheel function
                     function handleWheel(event) {
                         if (selectedPlane) {
                             event.preventDefault();
-                            
-                            const currentSize = parseInt(selectedPlane.style.width || initialSize);
+                            // Determine which plane is selected and update its size variable
+                            let planeSize = String(selectedPlane.id) === "plane1" ? plane1Size : plane2Size;
                             const delta = event.deltaY > 0 ? -2 : 2;
-                            const newSize = Math.max(10, Math.min(50, currentSize + delta));
+                            const newSize = Math.max(10, Math.min(50, planeSize + delta));
+                            
+                            // Update the appropriate size variable
+                            if (selectedPlane.id === "plane1") {
+                                plane1Size = newSize;
+
+                            } else {
+                                plane2Size = newSize;
+                            }
                             
                             // Store current position
-                            const currentLeft = parseInt(selectedPlane.style.left);
-                            const currentTop = parseInt(selectedPlane.style.top);
+                            const currentLeft = parseInt(selectedPlane.style.left || 0);
+                            const currentTop = parseInt(selectedPlane.style.top || 0);
                             
                             // Calculate center point
-                            const centerX = currentLeft + currentSize / 2;
-                            const centerY = currentTop + currentSize / 2;
+                            const centerX = currentLeft + planeSize / 2;
+                            const centerY = currentTop + planeSize / 2;
                             
                             // Apply new size
                             selectedPlane.style.width = newSize + "px";
@@ -441,20 +636,21 @@ class MainWindow(QMainWindow):
                         }
                     }
 
+                    // Modified getPlanePositions function
                     function getPlanePositions() {
                         let plane1 = document.getElementById("plane1");
                         let plane2 = document.getElementById("plane2");
                         
                         return {
                             plane1: { 
-                                x: plane1.style.left, 
-                                y: plane1.style.top,
-                                size: plane1.style.width || initialSize + "px"
+                                x: plane1.style.left || "0px", 
+                                y: plane1.style.top || "0px",
+                                size: plane1Size + "px"
                             },
                             plane2: { 
-                                x: plane2.style.left, 
-                                y: plane2.style.top,
-                                size: plane2.style.width || initialSize + "px"
+                                x: plane2.style.left || "0px", 
+                                y: plane2.style.top || "0px",
+                                size: plane2Size + "px"
                             }
                         };
                     }
@@ -474,6 +670,17 @@ class MainWindow(QMainWindow):
                         window.pyQtApp.savePositions(positions);
                     }
 
+                    function setupPlaneEventListeners(planeId) {
+                        const plane = document.getElementById(planeId);
+                        plane.addEventListener('click', planeClick);
+                        
+                        // Also attach to all children elements
+                        const children = plane.querySelectorAll('*');
+                        children.forEach(child => {
+                            child.addEventListener('click', planeClick);
+                        });
+                    }
+
                     window.onload = function() {
                         let container = document.getElementById('container');
                         container.addEventListener('dragover', dragOver);
@@ -481,43 +688,51 @@ class MainWindow(QMainWindow):
                         container.addEventListener('click', clearSelection);
                         container.addEventListener('wheel', handleWheel);
                         
-                        document.getElementById('plane1').addEventListener('click', planeClick);
-                        document.getElementById('plane2').addEventListener('click', planeClick);
+                        setupPlaneEventListeners('plane1');
+                        setupPlaneEventListeners('plane2');
                     };
                 </script>
             </head>
             <body>
                 <div id="container">
+                    <!-- Grid lines for X-axis (horizontal lines) -->
+                    <div class="grid-line grid-line-x" style="top: 50px;"></div>
+                    <div class="grid-line grid-line-x" style="top: 100px;"></div>
+                    <div class="grid-line grid-line-x" style="top: 150px;"></div>
+                    <div class="grid-line grid-line-x" style="top: 200px;"></div>
+                    <div class="grid-line grid-line-x" style="top: 250px;"></div>
+                    <div class="grid-line grid-line-x" style="top: 300px;"></div>
+                    
+                    <!-- Grid lines for Y-axis (vertical lines) -->
+                    <div class="grid-line grid-line-y" style="left: 50px;"></div>
+                    <div class="grid-line grid-line-y" style="left: 100px;"></div>
+                    <div class="grid-line grid-line-y" style="left: 150px;"></div>
+                    <div class="grid-line grid-line-y" style="left: 200px;"></div>
+                    <div class="grid-line grid-line-y" style="left: 250px;"></div>
+                    <div class="grid-line grid-line-y" style="left: 300px;"></div>
+                    
                     <div id="x-axis" class="axis"></div>
                     <div id="y-axis" class="axis"></div>
                     
+                    <!-- Origin marker (0,0) -->
+                    <div class="marker origin-marker">0</div>
+                    
                     <!-- X-Axis Markers -->
-                    <div class="marker x-marker" style="left: 0%;">0</div>
-                    <div class="marker x-marker" style="left: 25%;">50</div>
-                    <div class="marker x-marker" style="left: 50%;">100</div>
-                    <div class="marker x-marker" style="left: 75%;">150</div>
-                    <div class="marker x-marker" style="left: 100%;">200</div>
-
-                    <!-- X-Axis Ticks -->
-                    <div class="x-tick" style="left: 0%;"></div>
-                    <div class="x-tick" style="left: 25%;"></div>
-                    <div class="x-tick" style="left: 50%;"></div>
-                    <div class="x-tick" style="left: 75%;"></div>
-                    <div class="x-tick" style="left: 100%;"></div>
+                    <div class="marker x-marker" style="left: 50px;">50</div>
+                    <div class="marker x-marker" style="left: 100px;">100</div>
+                    <div class="marker x-marker" style="left: 150px;">150</div>
+                    <div class="marker x-marker" style="left: 200px;">200</div>
+                    <div class="marker x-marker" style="left: 250px;">250</div>
+                    <div class="marker x-marker" style="left: 300px;">300</div>
 
                     <!-- Y-Axis Markers -->
-                    <div class="marker y-marker" style="top: 0%;">200</div>
-                    <div class="marker y-marker" style="top: 25%;">150</div>
-                    <div class="marker y-marker" style="top: 50%;">100</div>
-                    <div class="marker y-marker" style="top: 75%;">50</div>
-                    <div class="marker y-marker" style="top: 100%;">0</div>
+                    <div class="marker y-marker" style="top: 50px;">300</div>
+                    <div class="marker y-marker" style="top: 100px;">250</div>
+                    <div class="marker y-marker" style="top: 150px;">200</div>
+                    <div class="marker y-marker" style="top: 200px;">150</div>
+                    <div class="marker y-marker" style="top: 250px;">100</div>
+                    <div class="marker y-marker" style="top: 300px;">50</div>
 
-                    <!-- Y-Axis Ticks -->
-                    <div class="y-tick" style="top: 0%;"></div>
-                    <div class="y-tick" style="top: 25%;"></div>
-                    <div class="y-tick" style="top: 50%;"></div>
-                    <div class="y-tick" style="top: 75%;"></div>
-                    <div class="y-tick" style="top: 100%;"></div>
                     <div id="plane1" class="draggable" draggable="true" ondragstart="dragStart(event)">
                     <svg viewBox="0 0 24 24" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
                         <path d="M21,16V14L13,9V3.5A1.5,1.5,0,0,0,11.5,2A1.5,1.5,0,0,0,10,3.5V9L2,14V16L10,13.5V19L8,20.5V22L11.5,21L15,22V20.5L13,19V13.5Z" fill="#007BFF"/>
@@ -532,27 +747,30 @@ class MainWindow(QMainWindow):
             </body>
         </html>
         """
-
     def toggle_overlay(self):
-        if self.overlay_container.isVisible():
-            self.overlay_container.hide()
-            # Create a floating button to show the overlay again
-            if not hasattr(self, 'floating_button'):
-                self.floating_button =  StyledButton("Change Initial Conditions", self.main_widget)
-                self.floating_button.setGeometry(10, 10, 100, 30)
-                self.floating_button.clicked.connect(self.show_overlay)
-            self.floating_button.show()
-            self.floating_button.raise_()
+        self.overlay_visible = not self.overlay_visible
+        
+        # Delete and recreate the tab with the new position
+        if hasattr(self, 'side_tab'):
+            self.side_tab.deleteLater()
+        
+        # Create new tab in the correct position
+        
+        self.setup_side_tab()
+        # Show/hide overlay as needed
+        if self.overlay_visible:
+            self.overlay_container.show()
+            self.overlay_container.raise_()
         else:
-            self.show_overlay()
+            self.overlay_container.hide()
+        self.side_tab.show()
+
+
+      
+        
+
     
-    def show_overlay(self):
-        if hasattr(self, 'floating_button'):
-            self.floating_button.hide()
-        self.overlay_container.show()
-        self.overlay_container.raise_()
-    
-    def run_verse(self, x1, y1,z1, r1, x2, y2,z2, r2):
+    def run_verse(self, x1, y1, z1, r1, x2, y2, z2, r2):
         script_dir = os.path.realpath(os.path.dirname(__file__))
         input_code_name = os.path.join(script_dir, "vehicle_controller.py")
         vehicle = VehicleAgent('car', file_name=input_code_name)
@@ -580,26 +798,26 @@ class MainWindow(QMainWindow):
     def run_button_clicked(self):
         self.web_view.page().runJavaScript("getPlanePositions();", self.handle_positions)
 
-    def start_animation(self, x1, y1, z1,  r1, x2, y2, z2, r2):
+    def start_animation(self, x1, y1, z1, r1, x2, y2, z2, r2):
         """Starts a background thread to move the sphere."""
         if hasattr(self, 'thread') and self.thread:
             self.thread.join()
         self.plotter.clear()
 
-        self.thread = threading.Thread(target=self.run_verse, args=[x1, y1,z1, r1, x2, y2,z2, r2], daemon=True)
+        self.thread = threading.Thread(target=self.run_verse, args=[x1, y1, z1, r1, x2, y2, z2, r2], daemon=True)
         self.thread.start()
 
-    def handle_positions(self, positions, scaling =2):
+    def handle_positions(self, positions, scaling=1):
         def position_to_int(pos):
             # Handle case where positions might be empty
             try:
                 x = float(pos['x'].replace('px', ''))
                 y = float(pos['y'].replace('px', ''))
-
                 s = float(pos['size'].replace('px', ''))
                 return (x/scaling, y/scaling, s/scaling)
             except (ValueError, KeyError):
-                return (0, 0,0)
+                return (0, 0, 0)
+                
         alt1 = self.blue_slider.value() / 10  # Scale as needed
         alt2 = self.red_slider.value() / 10  # Scale as needed
         # positions is a JavaScript object containing the current positions of the planes
@@ -609,8 +827,8 @@ class MainWindow(QMainWindow):
         self.plane1_position = positions['plane1']
         self.plane2_position = positions['plane2']
 
-        x1, y1,s1= (position_to_int(self.plane1_position))
-        x2, y2,s2= (position_to_int(self.plane2_position))
+        x1, y1, s1 = (position_to_int(self.plane1_position))
+        x2, y2, s2 = (position_to_int(self.plane2_position))
 
         self.start_animation(x1, y1, alt1, s1, x2, y2, alt2, s2)
 
@@ -621,9 +839,8 @@ class MainWindow(QMainWindow):
     def resizeEvent(self, event):
         """Handle window resize events"""
         super().resizeEvent(event)
-        # If we have a floating button, keep it in position
-        if hasattr(self, 'floating_button') and self.floating_button.isVisible():
-            self.floating_button.move(10, 10)
+        # Keep side tab in position relative to the overlay
+        self.update_side_tab_position()
 
 # Run the Qt Application
 if __name__ == "__main__":

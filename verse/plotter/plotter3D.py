@@ -11,13 +11,13 @@ import vtk
 vtk.vtkLogger.SetStderrVerbosity(vtk.vtkLogger.VERBOSITY_OFF)
 
 
-def plot3dReachtubeSingle(tube, x_dim, y_dim, z_dim, ax, color, edge=True):
+def plot3dReachtubeSingle(tube, x_dim, y_dim, z_dim, ax, colors, edge=True):
     
     for i, (lb, ub) in enumerate(tube):
         if(i%5 ==0 ):
             box = [[lb[x_dim]-1, lb[y_dim]-1, lb[z_dim]-1], [ub[x_dim]+1, ub[y_dim]+1, ub[z_dim]+1]]
             poly = pc.box2poly(np.array(box).T)
-            ax = plot_polytope_3d(poly.A, poly.b, ax=ax, color=color, edge=edge)
+            ax = plot_polytope_3d(poly.A, poly.b, ax=ax, color=colors[i], edge=edge)
 
     return ax
 

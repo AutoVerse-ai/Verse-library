@@ -77,6 +77,9 @@ def save_node(node):
         print("dumping")
         json.dump(data, file, indent=4)
 
+color_map = {}
+
+int_to_color = {1:'b', 2:'r', 3:'g'}
 
 
 class Verifier:
@@ -580,18 +583,25 @@ class Verifier:
                 for agent in node.agent:
                     node.trace[agent] = node.trace[agent][: (idx + 1)]
 
-            print("writing data")
+            #print("writing data")
             data = []
             ids = []
+            colors = []
             for agent_id in node.trace:
                 ids.append(agent_id)
+                if agent_id not in color_map:
+                    color_map[agent_id] = len(color_map) +1
 
             l  = len(node.trace[ids[0]])
             for i in range(0, l, 2):
                 for agent_id in ids:
                     trace = node.trace[agent_id]
                     data.append([trace[i], trace[i + 1]])
-            plot3dReachtubeSingle(data, 0, 1, 2, ax, 'b', edge=True)
+                    colors.append(int_to_color[color_map[agent_id]])
+            print("COLORS", colors)
+
+
+            plot3dReachtubeSingle(data, 0, 1, 2, ax, colors,  edge=True)
             #ax.render()
             return (
                 node.id,
@@ -714,18 +724,24 @@ class Verifier:
         #             file.write(json.dumps({ "id": node.id, "trace": node.trace['car'] }) + "\n")
         #         except json.JSONDecodeError:
         #             print("Error")
+        colors = []
 
         data = []
         ids = []
         for agent_id in node.trace:
             ids.append(agent_id)
+            if agent_id not in color_map:
+                color_map[agent_id] = len(color_map) +1
+
 
         l  = len(node.trace[ids[0]])
         for i in range(0, l, 2):
             for agent_id in ids:
                 trace = node.trace[agent_id]
                 data.append([trace[i], trace[i + 1]])
-        plot3dReachtubeSingle(data, 0, 1, 2, ax, 'b', edge=True)
+                colors.append(int_to_color[color_map[agent_id]])
+
+        plot3dReachtubeSingle(data, 0, 1, 2, ax, colors, edge=True)
         ax.render()
             
             #ax.show()
