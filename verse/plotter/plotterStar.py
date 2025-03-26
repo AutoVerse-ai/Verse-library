@@ -61,6 +61,9 @@ def reachtube_tree_single(root,agent_id,x_dim,y_dim, color):
                 #trace[i][1].show()
                 #print(trace[i][1])
                 x, y = np.array(trace[i][1].get_verts(x_dim, y_dim))
+                if len(set(x)) == 1 and len(set(y)) == 1:
+                    plt.scatter(x[0], y[0], s=1, color = color)
+                    continue
                 #print(verts)
                 #x=[verts[:,0]]
                 #print(x)
