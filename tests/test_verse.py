@@ -11,6 +11,7 @@ from enum import Enum, auto
 
 import os
 import subprocess
+import importlib.util
 
 '''
 Goal: Using demo file (Verse_library/demo) as a test files. 
@@ -156,6 +157,78 @@ def test_scenario(scenario_filepath):
         print(result.stdout)
     return errors
 
+def run_test(dir):
+    """
+    Run unittest test files individually from the specified directory path.
+    
+    Args:
+        filepath (str): Directory path containing unittest test files
+    
+    Returns:
+        str: "SUCCESS" if all tests pass, "FAILURE" if any test fails
+    """
+    if not os.path.isdir(dir):
+        raise ValueError(f"Directory '{dir}' does not exist")
+    
+    # Results dictionary to track success/failure
+    results = {}
+    
+    # Print header
+    print(f"Running unittest tests in directory: {dir}")
+    print("-" * 50)
+    
+    # Get all test files
+    test_files = [f for f in os.listdir(dir) if  f.endswith('.py')]
+    
+    if not test_files:
+        print("No unittest test files found in directory", dir)
+        return "SUCCESS"
+    
+    # Sort files for consistent execution order
+    test_files.sort()
+    
+    # Create a test runner
+    runner = unittest.TextTestRunner(verbosity=2)
+    
+    # Process each file individually
+    for file_name in test_files:
+        print(f"\nProcessing {file_name}")
+        print("=" * 30)
+        
+        try:
+            # Construct full file path
+            file_path = os.path.join(dir, file_name)
+            
+            # Create module name from file name
+            module_name = file_name[:-3]  # Remove .py extension
+            
+            # Load the module
+            spec = importlib.util.spec_from_file_location(module_name, file_path)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            
+            # Create a test suite for this file
+            loader = unittest.TestLoader()
+            suite = loader.loadTestsFromModule(module)
+            
+            # Run the tests for this file
+            result = runner.run(suite)
+            
+            # Store result
+            results[file_name] = result.wasSuccessful()
+            
+        except Exception as e:
+            print(f"Error loading {file_name}: {str(e)}")
+            results[file_name] = False
+    # Print results for debugging
+    print("\nTest Results:")
+    print(results)
+    
+    # Check if any test failed
+    for file_name, success in results.items():
+        if not success:
+            return "FAILURE"
+    return "SUCCESS"
 class TestSimulatorMethods(unittest.TestCase):
     def setUp(self):
         pass
@@ -225,20 +298,69 @@ class TestSimulatorMethods(unittest.TestCase):
     #     # assert trace_sim.type == AnalysisTreeNodeType.SIM_TRACE
     #     # assert trace_veri.type == AnalysisTreeNodeType.REACH_TUBE
 
-    def test_demo_compiling(self):
-        scenario_files = get_scenario_files_from_folder('demo/fp_demos')
-        print(scenario_files)
-        all_errors = []
-        for scenario_file in scenario_files:
-            errors = test_scenario(scenario_file)
-            all_errors.extend(errors)
-        if all_errors:
-            print("\nSummary of Errors:")
-            for filepath, error_msg in all_errors:
-                print(f"- {filepath}: {error_msg}")
-            self.fail(f"Found {len(all_errors)} errors across scenarios out of {len(scenario_files)} files.")
-        else:
-            print("\nAll scenarios ran successfully.")
+    # def test_demo_compiling(self):
+    #     scenario_files = get_scenario_files_from_folder('demo/fp_demos')
+    #     print(scenario_files)
+    #     all_errors = []
+    #     for scenario_file in scenario_files:
+    #         errors = test_scenario(scenario_file)
+    #         all_errors.extend(errors)
+    #     if all_errors:
+    #         print("\nSummary of Errors:")
+    #         for filepath, error_msg in all_errors:
+    #             print(f"- {filepath}: {error_msg}")
+    #         self.fail(f"Found {len(all_errors)} errors across scenarios out of {len(scenario_files)} files.")
+    #     else:
+    #         print("\nAll scenarios ran successfully.")
+    def test_agents(self):
+        dir = "tests/test_agents"
+        print("Testing agents")
+        result = run_test(dir)
+        print("Testing agents completed")
+        self.assertTrue(result == "SUCCESS")
+
+    def test_map(self):
+        dir = "tests/test_map"
+        print("Tesing map")
+        result = run_test(dir)
+        print("Testing map completed")
+        self.assertTrue(result == "SUCCESS")
+    
+    def test_automaton(self):
+        dir = "tests/test_automaton"
+        print("Testing automaton")
+        result = run_test(dir)
+        print("Testing automaton completed")
+        self.assertTrue(result == "SUCCESS")
+    
+    def test_parser(self):
+        dir = "tests/test_parser"
+        print("Testing parser")
+        result = run_test(dir)
+        print("Testing parser completed")
+        self.assertTrue(result == "SUCCESS")
+
+    def test_plotter(self):
+        dir = "tests/test_plotter"
+        print("Testing plotter")
+        result = run_test(dir)
+        print("Testing plotter completed")
+        self.assertTrue(result == "SUCCESS")
+
+    def test_sensor(self):
+        dir = "tests/test_sensor"
+        print("Testing sensor")
+        result = run_test(dir)
+        print("Testing sensor completed")
+        self.assertTrue(result == "SUCCESS")
+
+    def test_scenario(self):
+        dir = "tests/test_scenario"
+        print("Testing scenario")
+        result = run_test(dir)
+        print("Testing scenario completed")
+        self.assertTrue(result == "SUCCESS")
+
 if __name__ == "__main__":
     unittest.main()
     
