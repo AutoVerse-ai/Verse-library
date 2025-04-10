@@ -24,11 +24,6 @@ class TestBaseAgents(unittest.TestCase):
             self.assertTrue(dx > 0 and dy > 0)
         print("Test ball Passed")
 
-    def test_car(self):
-        car = CarAgent("car", "/Users/bachhoang/Verse-library/tests/./test_controller/example_controller5.py")
-        
-        pass
-
 if __name__ == "__main__":
     unittest.main()
 
