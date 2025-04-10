@@ -254,12 +254,16 @@ class CircularLane(AbstractLane):
         self.end_phase = end_phase
         self.clockwise = clockwise
         self.direction = -1 if clockwise else 1
-        self.width = width
-        self.line_types = line_types or [LineType.STRIPED, LineType.STRIPED]
-        self.forbidden = forbidden
-        self.length = radius * (end_phase - start_phase) * self.direction
+        self.width = width # assert width to be >= 0
+        self.line_types = line_types or [LineType.STRIPED, LineType.STRIPED] # Is is a typo ? There are two LineType.STRIPED in the list
+        self.forbidden = forbidden 
+        # What is 'forbidden' variable doing here?
+        # It seems that 'forbidden' does not attached to any functions inside the class
+        # When I searched through out the verse library, I did not see the use of forbidden
+        # Consider remove this variable from the class ?
+        self.length = radius * (end_phase - start_phase) * self.direction # Should be abs of them
         self.priority = priority
-        self.speed_limit = speed_limit
+        self.speed_limit = speed_limit # Assert this value of be >= 0
         self.type = "Circular"
         self.longitudinal_start = 0
 
