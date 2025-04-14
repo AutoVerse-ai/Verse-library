@@ -222,7 +222,7 @@ class Scenario:
             res_list.append(trace)
         return res_list
 
-    def simulate(self, time_horizon, time_step, max_height=None, seed=None) -> AnalysisTree:
+    def simulate(self, time_horizon, time_step, plotter, max_height=None, seed=None) -> AnalysisTree:
         '''Computes a single simulation trace of a scenario, starting from a single initial state.
             Parameters:
 
@@ -259,6 +259,7 @@ class Scenario:
             self.map,
             len(self.past_runs),
             self.past_runs,
+            plotter,
         )
         self.past_runs.append(tree)
         return tree
@@ -338,6 +339,7 @@ class Scenario:
         return tree
 
     def verify(self, time_horizon, time_step, ax, max_height=None, params={}) -> AnalysisTree:
+        
         '''Compute the set of reachable states, starting from a set of initial states states.'''
         _check_ray_init(self.config.parallel)
         self._check_init()

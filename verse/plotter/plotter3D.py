@@ -5,21 +5,139 @@ import polytope as pc
 import pyvista as pv
 
 from verse.analysis.analysis_tree import AnalysisTree, AnalysisTreeNode
-
+import ast
 import vtk
-
+import os
+import json
 vtk.vtkLogger.SetStderrVerbosity(vtk.vtkLogger.VERBOSITY_OFF)
 
 
-def plot3dReachtubeSingle(tube, x_dim, y_dim, z_dim, ax, colors, edge=True):
-    
-    for i, (lb, ub) in enumerate(tube):
-        if(i%5 ==0 ):
-            box = [[lb[x_dim]-1, lb[y_dim]-1, lb[z_dim]-1], [ub[x_dim]+1, ub[y_dim]+1, ub[z_dim]+1]]
-            poly = pc.box2poly(np.array(box).T)
-            ax = plot_polytope_3d(poly.A, poly.b, ax=ax, color=colors[i], edge=edge)
+int_to_color = {1:'b', 2:'r', 3:'g', 4: 'purple', 5:'orange'}
+color_map = {}
 
+def plot3dReachtubeSingle(tube, ax, x_dim=1, y_dim=2, z_dim=3, edge=True,  log_file="bounding_boxes.txt", save_to_file = True, step =1000):
+    if os.path.exists('plotter_config.json'):
+        with open('plotter_config.json', 'r') as f:
+            config = json.load(f)
+            x_dim = config['x_dim']
+            y_dim = config['y_dim']
+            z_dim = config['z_dim']
+            step = int(config['speed'])
+            save_to_file = bool(config['save'])
+            log_file = config['log_file']
+    if save_to_file:
+        # Open file in write mode ONCE to clear existing content
+        with open(log_file, "w") as f:
+            f.write("")  # Optional: just clears the file
+
+    
+    rects_dict = {}
+    length = len(tube[list(tube.keys())[0]])
+    for i in range(0, length, 2):
+
+        for agent_id in tube:
+            if agent_id not in color_map:
+                color_map[agent_id] = int_to_color[len(color_map) +1]
+            
+            trace = tube[agent_id]
+            lb = trace[i]
+            ub =  trace[i + 1]
+            box = [[lb[x_dim]-1, lb[y_dim]-1, lb[z_dim]-1], [ub[x_dim]+1, ub[y_dim]+1, ub[z_dim]+1]]
+            if(save_to_file):
+                with open(log_file, "a") as f:
+                    f.write(f"{box}, {color_map[agent_id]}\n")
+
+            if(agent_id not in rects_dict):
+                rects_dict[agent_id] = []
+            
+            rects_dict[agent_id].append(box)
+            if i % step == 0 or i >= length-2:
+                plotGrid(ax, color_map[agent_id] , rects=rects_dict[agent_id])
+                rects_dict[agent_id] = []
+
+           
+
+              
+
+                
+       
+
+
+def load_and_plot_boxes(ax, step=1000, log_file="boxes1.txt"):
+    try:
+        with open(log_file, "r") as f:
+            lines = f.readlines()
+
+        if not lines:
+            print("No bounding boxes found in the file.")
+            return ax
+        rect_dict = {}
+        for i, line in enumerate(lines):
+            # Extract the box and color from each line
+            box_str, color = line.rsplit(",", 1)  # Split into box and color
+            box = ast.literal_eval(box_str.strip())  # Convert box string to list
+            color = color.strip().strip("'\"")  # Clean up the color string
+            if( color not in rect_dict):
+                rect_dict[color] = []
+            rect_dict[color].append(box)
+
+            #poly = pc.box2poly(np.array(box).T)
+        for color, rects in rect_dict.items():
+            plotGrid(ax, color, rects)
+    except FileNotFoundError:
+        print(f"File {log_file} not found.")
+    
     return ax
+
+def plotGrid(ax,color, rects):
+    vertices = []
+    cell_indices = []
+
+    
+    
+    # Add vertices for each rectangle and track indices
+    for i in range(len(rects)):
+        lb = rects[i][0]
+        ub = rects[i][1]
+        
+        x0, x1 = lb[0], ub[0]
+        y0, y1 = lb[1], ub[1]
+        z0, z1 = lb[2], ub[2]
+        
+        corners = [
+            (x0, y0, z0),  # index 0
+            (x1, y0, z0),  # index 1
+            (x1, y1, z0),  # index 2
+            (x0, y1, z0),  # index 3
+            (x0, y0, z1),  # index 4
+            (x1, y0, z1),  # index 5
+            (x1, y1, z1),  # index 6
+            (x0, y1, z1),  # index 7
+        ]
+        
+        start_idx = len(vertices)
+        vertices.extend(corners)
+        
+        cell_indices.append([start_idx + j for j in range(8)])
+    
+    vertices = np.array(vertices)
+    
+    N = len(rects)
+    cells = np.zeros((N, 9), dtype=np.int64)
+    cells[:, 0] = 8  # 8 points per cell
+    
+    for i in range(N):
+        cells[i, 1:] = cell_indices[i]
+    
+    # Flatten cells array
+    cells = cells.ravel()
+    
+    # Define cell types
+    celltypes = np.full(N, pv.CellType.HEXAHEDRON, dtype=np.uint8)
+    
+    # Create and display the grid
+    grid = pv.UnstructuredGrid(cells, celltypes, vertices)
+    ax.add_mesh(grid, show_edges=True, color=color, opacity=0.5)
 
 
 def plot3dMap(lane_map, color="k", ax=None, width=0.1, num=20):
@@ -77,7 +195,7 @@ def plot3dReachtube(root, agent_id, x_dim, y_dim, z_dim, color="b", ax=None, edg
     #     plot_polytope_3d(poly.A, poly.b, ax = ax, color = '#b3de69')
 
 
-def plot_polytope_3d(A, b, ax=None, color="red", trans=0.2, edge=True):
+def plot_polytope_3d(A, b, ax=None, color="red", trans=0.2, edge=True, render = False):
     if ax is None:
         ax = pv.Plotter()
 
@@ -87,18 +205,66 @@ def plot_polytope_3d(A, b, ax=None, color="red", trans=0.2, edge=True):
     volume = cloud.delaunay_3d()
     shell = volume.extract_geometry()
     if len(shell.points) <= 0:
-        ax.reset_camera()
-
         return ax
-    ax.add_mesh(shell, opacity=trans, color=color)
+    ax.add_mesh(shell, opacity=trans, color=color, render= render)
     if edge:
         edges = shell.extract_feature_edges(20)
-        ax.add_mesh(edges, color="k", line_width=0.1, opacity=0.5)
-    ax.reset_camera()
+        ax.add_mesh(edges, color="k", line_width=0.1, opacity=0.5, render= render)
+        
+    return ax
 
+def plot3dSimulationSingle(tube, ax, line_width=5, step = 1000, x_dim=1, y_dim=2, z_dim=3, save_to_file = True, log_file = "simulate_points.txt" ):
+    if os.path.exists('plotter_config.json'):
+        with open('plotter_config.json', 'r') as f:
+            config = json.load(f)
+            x_dim = config['x_dim']
+            y_dim = config['y_dim']
+            z_dim = config['z_dim']
+            step = int(config['speed'])
+            save_to_file = bool(config['save'])
+            log_file = config['log_file']
+
+    
+    rects_dict = {}
+    for i in range(0, len(tube[list(tube.keys())[0]])-1):
+
+        for agent_id in tube:
+            if agent_id not in color_map:
+                color_map[agent_id] = int_to_color[len(color_map) +1]
+            
+            trace = tube[agent_id]
+            lb = trace[i]
+            point = [lb[x_dim]-1, lb[y_dim]-1, lb[z_dim]-1]
+            if(save_to_file):
+                with open(log_file, "a") as f:
+                    f.write(f"{point}, {color_map[agent_id]}\n")
+
+            if(agent_id not in rects_dict):
+                rects_dict[agent_id] = []
+            
+            rects_dict[agent_id].append(point)
+
+            if i % step == 0 or i == len(tube)-1:
+                plotPolyLine(rects_dict[agent_id], color_map[agent_id], ax)
+                rects_dict[agent_id] = [rects_dict[agent_id][-1]]
     return ax
 
 
+def plotPolyLine(points, color, ax):
+    n_points = len(points)
+    cells = np.full((n_points-1, 3), 2, dtype=np.int64)
+
+    # Set the point indices for each line segment
+    # Each line connects point i to point i+1
+    cells[:, 1] = np.arange(0, n_points-1)
+    cells[:, 2] = np.arange(1, n_points)
+    
+    # Flatten the cells array
+    cells = cells.ravel()
+    
+    # Create the polyline
+    poly_line = pv.PolyData(points, lines=cells)
+    ax.add_mesh(poly_line, color=color, line_width=5)
 def plot_line_3d(start, end, ax=None, color="blue", line_width=1):
     if ax is None:
         ax = pv.Plotter()
@@ -109,7 +275,9 @@ def plot_line_3d(start, end, ax=None, color="blue", line_width=1):
     # Preview how this line intersects this mesh
     line = pv.Line(a, b)
 
-    ax.add_mesh(line, color=color, line_width=line_width)
+    ax.add_mesh(line, color=color, line_width=line_width, render=False)
+    #ax.reset_camera()
+
     return ax
 
 

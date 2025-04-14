@@ -1,5 +1,4 @@
-from wsgiref.validate import PartialIteratorWrapper
-from mp0_p1 import VehicleAgent, PedestrianAgent, VehiclePedestrianSensor, eval_velocity, sample_init
+from mp0_p1 import VehicleAgent, PedestrianAgent, VehiclePedestrianSensor
 from verse import Scenario, ScenarioConfig
 from vehicle_controller import VehicleMode, PedestrianMode
 
@@ -11,280 +10,24 @@ import sys
 import numpy as np
 import os
 import threading
-import time
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QWidget, 
-    QPushButton, QSizePolicy, QStackedLayout, QSlider,
-    QLabel, QFrame
+    QSizePolicy, QLabel,QTextEdit, QLineEdit, QComboBox, QDoubleSpinBox, QSpinBox, QCheckBox
 )
-from PyQt6.QtCore import Qt, QPoint, QRect, QSize
-from PyQt6.QtGui import QPainter, QPixmap, QColor, QPalette, QFont, QPen, QPainterPath
-from PyQt6.QtSvg import QSvgRenderer
-import pyvistaqt as pvqt
+
+from PyQt6.QtCore import Qt
 from PyQt6.QtWebEngineWidgets import QWebEngineView
-from PyQt6.QtWidgets import QStyleOptionSlider
-from PyQt6.QtCore import QRectF
-from PyQt6.QtWidgets import QStyle
+from ui_components import StyledButton, StyledSlider, SvgPlaneSlider, OverlayTab, RightOverlayTab,RightInfoPanel
 
-class StyledSlider(QSlider):
-    """Custom styled slider with modern look"""
-    def __init__(self, orientation, parent=None):
-        super().__init__(orientation, parent)
-        self.setStyleSheet("""
-            QSlider::groove:vertical {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                          stop:0 #2c3e50, stop:1 #34495e);
-                width: 1px;
-                border-radius: 1px;
-            }
-            QSlider::handle:vertical {
-                background: #E1F4FF;
-                border: 2px solid #2980b9;
-                border-radius: 10px;
-                height: 20px;
-                width: 20px;
-                margin: -6px 0;
-            }
-            QSlider::handle:vertical:hover {
-                background: #2980b9;
-            }
-            QSlider::sub-page:vertical {
-                background: #E1F4FF;
-                border-radius: 4px;
-            }
-        """)
 
-class StyledButton(QPushButton):
-    """Custom styled button with modern look"""
-    def __init__(self, text, parent=None):
-        super().__init__(text, parent)
-        self.setStyleSheet("""
-            QPushButton {
-                background-color: #3498db;
-                color: white;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #2980b9;
-            }
-            QPushButton:pressed {
-                background-color: #2472a4;
-            }
-            QPushButton:disabled {
-                background-color: #bdc3c7;
-            }
-        """)
-class OverlayTab(QFrame):
-    """Side tab for showing/hiding overlay with rounded corners and smaller size"""
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setFixedSize(15, 100)  # Smaller size
-        self.setStyleSheet("""
-            QFrame {
-                background-color: #77B1D4;
-                border-top-right-radius: 15px;
-                border-bottom-right-radius: 15px;
-                border: none;
-            }
-            QFrame:hover {
-                background-color: #2980b9;
-            }
-        """)
-        self.setCursor(Qt.CursorShape.PointingHandCursor)
-        
-    def paintEvent(self, event):
-        super().paintEvent(event)
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        
-        # Save the current state
-        painter.save()
-        
-        # Set up the pen for drawing
-        painter.setPen(QPen(Qt.GlobalColor.black, 2))  # Using black color with thicker line
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        
-        # Get widget dimensions
-        width = self.width()
-        height = self.height()
-        
-        # Draw triangular line (two connected lines forming a triangle-like shape)
-        path = QPainterPath()
-        # Start from top right area
-        path.moveTo(width * 0.7, height * 0.2)
-        # Draw line to middle left
-        path.lineTo(width * 0.3, height * 0.5)
-        # Draw line to bottom right area
-        path.lineTo(width * 0.7, height * 0.8)
-        
-        painter.drawPath(path)
-        
-        # Restore the previous state
-        painter.restore()
+from PyQt6.QtWebEngineCore import QWebEnginePage, QWebEngineSettings
+import pyvistaqt as pvqt
 
-    def mousePressEvent(self, event):
-        # Call the callback function
-        if hasattr(self, 'on_click_callback') and self.on_click_callback:
-            self.on_click_callback()
-        super().mousePressEvent(event)
-
-class InfoPanel(QFrame):
-    """Information panel with modern styling"""
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setStyleSheet("""
-            QFrame {
-                background-color: rgba(44, 62, 80, 0.9);
-                border-radius: 8px;
-                padding: 10px;
-            }
-            QLabel {
-                color: white;
-                font-size: 12px;
-            }
-            QLabel#title {
-                font-size: 14px;
-                font-weight: bold;
-                color: #3498db;
-                margin-bottom: 5px;
-            }
-        """)
-        self.setup_ui()
-
-    def setup_ui(self):
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
-        
-        title = QLabel("Simulation Controls")
-        title.setObjectName("title")
-        layout.addWidget(title)
-        
-        self.status_label = QLabel("Ready to start simulation")
-        layout.addWidget(self.status_label)
-        
-        layout.addStretch()
-class SvgPlaneSlider(QSlider):
-    """Custom styled slider with plane icon handle and internal markers that match the webview style"""
-    def __init__(self, svg_file, parent=None):
-        super().__init__(Qt.Orientation.Vertical, parent)
-        self.svg_renderer = QSvgRenderer(svg_file)
-        self.setMinimum(0)
-        self.setMaximum(100)
-        self.setValue(50)
-        self.setFixedSize(30, 280)
-        self.setInvertedAppearance(True)
-        
-        # Create marker values (every 50 units to match webview)
-        self.marker_values = [0, 50, 100, 150, 200, 250, 300]
-        
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        
-        # First, clear the background with the same color as the webview
-        painter.fillRect(self.rect(), QColor("#E1F4FF"))
-        
-        # Draw the groove
-        option = QStyleOptionSlider()
-        self.initStyleOption(option)
-        
-        # Get groove dimensions
-        groove_rect = self.style().subControlRect(QStyle.ComplexControl.CC_Slider, option, QStyle.SubControl.SC_SliderGroove, self)
-        slider_length = groove_rect.height()
-        slider_start = groove_rect.top()
-        slider_center_x = groove_rect.center().x()
-        
-        # Draw vertical axis line that matches the webview blue color
-        #painter.setPen(QPen(QColor("#3498db"), 2))
-        #painter.drawLine(slider_center_x, slider_start, slider_center_x, slider_start + slider_length)
-        
-        # Add marker lines and text with the webview styling
-        font = painter.font()
-        font.setPointSize(8)
-        font.setBold(True)
-        painter.setFont(font)
-        
-        # Draw grid lines matching webview
-        painter.setPen(QPen(QColor("rgba(52, 152, 219, 0.15)"), 1))
-        line_width = 28
-        
-        # Draw horizontal grid lines
-        for value in self.marker_values:
-            if value == 0:
-                continue  # Skip the bottom line as we'll draw it separately
-                
-            # Calculate y position for the marker (inverted to match altitude)
-            normalized_value = 300 - value  # Invert to match altitude (0=bottom, 300=top)
-            y_pos = slider_start + int(slider_length * normalized_value / 300)
-            
-            # Draw grid line
-            painter.drawLine(2, y_pos, 28, y_pos)
-        
-        # Draw marker text and ticks with webview blue color
-        painter.setPen(QPen(QColor("#3498db"), 1))
-        
-        for i, value in enumerate(self.marker_values):
-            # Calculate y position for the marker (inverted to match altitude)
-            normalized_value = 300 - value  # Invert to match altitude (0=bottom, 300=top)
-            y_pos = slider_start + int(slider_length * normalized_value / 300)
-            
-            # Draw ticker mark
-            painter.drawLine(slider_center_x - 4, y_pos, slider_center_x + 4, y_pos)
-            
-            # Draw text with same style as webview
-            text = str(value)
-            text_rect = QRectF(2, y_pos - 13, 25, 16)
-            painter.drawText(text_rect, Qt.AlignmentFlag.AlignLeft, text)
-        
-        # Draw the SVG at the calculated position
-        handle_rect = self.style().subControlRect(
-            QStyle.ComplexControl.CC_Slider, option, QStyle.SubControl.SC_SliderHandle, self)
-        
-        # Use the plane SVG for the handle
-        self.svg_renderer.render(painter, QRectF(0, handle_rect.top(), 30, 30))
-        
-        painter.end()
-
-def setup_sliders(self):
-    """Setup the altitude sliders"""
-    self.slider_container = QWidget(self.overlay_container)
-    self.slider_container.setGeometry(370, 10, 100, 350)
-    
-    try:
-        self.blue_slider = SvgPlaneSlider("plane_blue.svg", self.slider_container)
-        self.blue_slider.setGeometry(5, 30, 30, 280)
-        self.blue_slider.setValue(50)
-
-        self.red_slider = SvgPlaneSlider("plane_red.svg", self.slider_container)
-        self.red_slider.setGeometry(55, 30, 30, 280)
-        self.red_slider.setValue(50)
-        
-        # Add labels
-        self.blue_label = QLabel("Altitude", self.slider_container)
-        self.blue_label.setGeometry(20, 3, 50, 20)
-        self.blue_label.setStyleSheet("color: white; font-weight: bold;")
-        
-    except Exception as e:
-        print(f"Error loading SVG sliders: {e}")
-        self.setup_fallback_sliders()
-
-def setup_fallback_sliders(self):
-    """Setup fallback sliders if SVG loading fails"""
-    self.blue_slider = StyledSlider(Qt.Orientation.Vertical, self.slider_container)
-    self.blue_slider.setGeometry(5, 30, 30, 280)
-    self.blue_slider.setValue(50)
-    
-    self.red_slider = StyledSlider(Qt.Orientation.Vertical, self.slider_container)
-    self.red_slider.setGeometry(55, 30, 30, 280)
-    self.red_slider.setValue(50)
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Traffic Signal Visualization")
+        self.setWindowTitle("Plane Visualization")
         self.setGeometry(100, 100, 1200, 800)
         
         # Initialize variables
@@ -292,24 +35,33 @@ class MainWindow(QMainWindow):
         self.plane2_position = 0
         self.thread = None
         self.overlay_visible = True
+        self.right_overlay_visible = True  # Add this line
         
         # Setup main UI
         self.setup_main_ui()
         
-        # Setup overlay
+        # Setup left overlay
         self.setup_overlay()
+        
+        # Setup right overlay
+        self.setup_right_overlay()  # Add this line
         
         # Setup web view
         self.setup_web_view()
         
-        # Setup side tab
+        # Setup side tabs
         self.setup_side_tab()
+        self.setup_right_tab()  # Add this line
         
-        # Make sure overlay is visible
+        # Make sure overlays are visible
         self.overlay_container.raise_()
         self.overlay_container.show()
         
+        self.right_overlay_container.raise_()  # Add this line
+        self.right_overlay_container.show()  # Add this line
+        
         self.side_tab.raise_()
+        self.right_side_tab.raise_()  # Add this line
 
 
     def setup_main_ui(self):
@@ -319,20 +71,43 @@ class MainWindow(QMainWindow):
         
         self.main_layout = QVBoxLayout(self.main_widget)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
-        
-        # Setup PyVista plotter
+
         self.plotter = pvqt.QtInteractor()
         self.plotter.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.main_layout.addWidget(self.plotter.interactor)
 
+        # cube = pv.Cube(center=(0, 0, 0), x_length=1, y_length=1, z_length=1)
+        # self.plotter.add_mesh(cube, show_edges=True, color='lightgreen', opacity=0.5)
+        
+
+    # In setup_overlay method - Add text field for file loading
     def setup_overlay(self):
         """Setup the overlay container and its components"""
         self.overlay_container = QWidget(self.main_widget)
-        self.overlay_container.setGeometry(0, 0, 480, 400)
+        self.overlay_container.setGeometry(0, 0, 480, 500)
         
         # Create info panel
-        self.info_panel = InfoPanel(self.overlay_container)
-        self.info_panel.setGeometry(10, 10, 350, 350)
+        # self.info_panel = InfoPanel(self.overlay_container)
+        # self.info_panel.setGeometry(10, 10, 350, 350)
+
+        # Add text field for file loading
+        self.file_label = QLabel("Load From File:", self.overlay_container)
+        self.file_label.setGeometry(10, 450, 100, 25)
+        self.file_label.setStyleSheet("color: white; font-weight: bold;")
+        
+        self.file_input = QLineEdit(self.overlay_container)
+        self.file_input.setGeometry(110, 450, 240, 25)
+        self.file_input.setStyleSheet("""
+            QLineEdit {
+                background-color: white;
+                border: 1px solid #3498db;
+                border-radius: 4px;
+                padding: 2px 4px;
+            }
+            QLineEdit:focus {
+                border: 2px solid #2980b9;
+            }
+        """)
         
         # Setup sliders
         self.setup_sliders()
@@ -347,6 +122,353 @@ class MainWindow(QMainWindow):
         # Instead of assigning to a 'clicked' attribute, set a callback function
         self.side_tab.on_click_callback = self.toggle_overlay
         self.update_side_tab_position()
+    def toggle_right_overlay(self):
+        """Toggle visibility of the right overlay"""
+        self.right_overlay_visible = not self.right_overlay_visible
+        
+        # Delete and recreate the tab with the new position
+        if hasattr(self, 'right_side_tab'):
+            self.right_side_tab.deleteLater()
+        
+        # Create new tab in the correct position
+        self.setup_right_tab()
+    
+        # Show/hide overlay as needed
+        if self.right_overlay_visible:
+            # Set position relative to the current window width
+            overlay_width = 380
+            self.right_overlay_container.setGeometry(self.width() - overlay_width, 0, overlay_width, 300)
+            self.right_overlay_container.show()
+            self.right_overlay_container.raise_()
+        else:
+            self.right_overlay_container.hide()
+    
+        self.right_side_tab.show()
+
+    def update_right_tab_position(self):
+        """Update the position of the right side tab based on overlay visibility"""
+        tab_width = 15
+        if self.right_overlay_visible:
+            # Position the tab next to the visible overlay
+            overlay_width = 380
+            self.right_side_tab.setGeometry(self.width() - overlay_width - tab_width, 150, tab_width, 100)
+        else:
+            # Position the tab at the edge of the screen when overlay is hidden
+            self.right_side_tab.setGeometry(self.width() - tab_width, 150, tab_width, 100)
+
+    def resizeEvent(self, event):
+        """Handle window resize events"""
+        super().resizeEvent(event)
+        
+        # Keep left side tab in position relative to the overlay
+        self.update_side_tab_position()
+        
+        # Keep right overlay correctly positioned relative to the current window edge
+        if hasattr(self, 'right_overlay_container') and self.right_overlay_visible:
+            overlay_width = 380
+            self.right_overlay_container.setGeometry(self.width() - overlay_width, 0, overlay_width, 300)
+        
+        # Update right tab position
+        if hasattr(self, 'right_side_tab'):
+            self.update_right_tab_position()
+
+    # Add to setup_right_overlay - Step size dropdown and time step input
+    def setup_right_overlay(self):
+        """Setup the right side overlay container and its components"""
+        self.right_overlay_container = QWidget(self.main_widget)
+        # Position relative to the current window width
+        overlay_width = 380
+        self.right_overlay_container.setGeometry(self.width() - overlay_width, 0, overlay_width, 400)
+        
+        # Create info panel
+        self.right_info_panel = RightInfoPanel(self.right_overlay_container)
+        self.right_info_panel.setGeometry(20, 10, 340, 340)  # Made this smaller to fit new controls
+        
+        # Add dimension controls
+        self.dimensions_label = QLabel("Dimensions:", self.right_overlay_container)
+        self.dimensions_label.setGeometry(30, 110, 80, 30)
+        self.dimensions_label.setStyleSheet("color: white; font-weight: bold;")
+        
+        # X dimension
+        self.x_dim_label = QLabel("X:", self.right_overlay_container)
+        self.x_dim_label.setGeometry(110, 110, 20, 30)
+        self.x_dim_label.setStyleSheet("color: white;")
+        
+        self.x_dim_input = QSpinBox(self.right_overlay_container)
+        self.x_dim_input.setGeometry(130, 110, 50, 30)
+        self.x_dim_input.setRange(0, 10)
+        self.x_dim_input.setValue(0)
+        self.x_dim_input.setStyleSheet("""
+            QSpinBox {
+                background-color: white;
+                border: 1px solid #D477B1;
+                border-radius: 4px;
+                padding: 2px 4px;
+            }
+            QSpinBox:focus {
+                border: 2px solid #b92980;
+            }
+        """)
+        
+        # Y dimension
+        self.y_dim_label = QLabel("Y:", self.right_overlay_container)
+        self.y_dim_label.setGeometry(190, 110, 20, 30)
+        self.y_dim_label.setStyleSheet("color: white;")
+        
+        self.y_dim_input = QSpinBox(self.right_overlay_container)
+        self.y_dim_input.setGeometry(210, 110, 50, 30)
+        self.y_dim_input.setRange(0, 9999)
+        self.y_dim_input.setValue(1)
+        self.y_dim_input.setStyleSheet("""
+            QSpinBox {
+                background-color: white;
+                border: 1px solid #D477B1;
+                border-radius: 4px;
+                padding: 2px 4px;
+            }
+            QSpinBox:focus {
+                border: 2px solid #b92980;
+            }
+        """)
+        
+        # Z dimension
+        self.z_dim_label = QLabel("Z:", self.right_overlay_container)
+        self.z_dim_label.setGeometry(270, 110, 20, 30)
+        self.z_dim_label.setStyleSheet("color: white;")
+        
+        self.z_dim_input = QSpinBox(self.right_overlay_container)
+        self.z_dim_input.setGeometry(290, 110, 50, 30)
+        self.z_dim_input.setRange(0, 9999)
+        self.z_dim_input.setValue(2)
+        self.z_dim_input.setStyleSheet("""
+            QSpinBox {
+                background-color: white;
+                border: 1px solid #D477B1;
+                border-radius: 4px;
+                padding: 2px 4px;
+            }
+            QSpinBox:focus {
+                border: 2px solid #b92980;
+            }
+        """)
+        
+        # Speed control
+        self.speed_label = QLabel("Plot Speed:", self.right_overlay_container)
+        self.speed_label.setGeometry(30, 150, 60, 30)
+        self.speed_label.setStyleSheet("color: white; font-weight: bold;")
+        
+        self.speed_input = QSpinBox(self.right_overlay_container)
+        self.speed_input.setGeometry(130, 150, 50, 30)
+        self.speed_input.setRange(1, 99999)
+        self.speed_input.setValue(100)
+        self.speed_input.setStyleSheet("""
+            QSpinBox {
+                background-color: white;
+                border: 1px solid #D477B1;
+                border-radius: 4px;
+                padding: 2px 4px;
+            }
+            QSpinBox:focus {
+                border: 2px solid #b92980;
+            }
+        """)
+        
+        # Add time step input field
+        self.time_step_label = QLabel("Time Step:", self.right_overlay_container)
+        self.time_step_label.setGeometry(30, 70, 100, 30)
+        self.time_step_label.setStyleSheet("color: white; font-weight: bold;")
+        
+        self.time_step_input = QDoubleSpinBox(self.right_overlay_container)
+        self.time_step_input.setGeometry(130, 70, 100, 30)
+        self.time_step_input.setRange(0.01, 10.0)
+        self.time_step_input.setValue(0.1)
+        self.time_step_input.setSingleStep(0.1)
+        self.time_step_input.setDecimals(2)
+        self.time_step_input.setStyleSheet("""
+            QDoubleSpinBox {
+                background-color: white;
+                border: 1px solid #D477B1;
+                border-radius: 4px;
+                padding: 2px 4px;
+            }
+            QDoubleSpinBox:focus {
+                border: 2px solid #b92980;
+            }
+        """)
+        
+        # Save to file checkbox
+        self.save_to_file_label = QLabel("Save to File:", self.right_overlay_container)
+        self.save_to_file_label.setGeometry(30, 180, 100, 30)
+        self.save_to_file_label.setStyleSheet("color: white; font-weight: bold;")
+        
+        self.save_to_file_checkbox = QCheckBox(self.right_overlay_container)
+        self.save_to_file_checkbox.setGeometry(130, 185, 20, 20)
+        self.save_to_file_checkbox.setStyleSheet("""
+            QCheckBox {
+                background-color: transparent;
+            }
+            QCheckBox::indicator {
+                width: 20px;
+                height: 20px;
+            }
+            QCheckBox::indicator:unchecked {
+                background-color: white;
+                border: 1px solid #D477B1;
+                border-radius: 4px;
+            }
+            QCheckBox::indicator:checked {
+                background-color: #D477B1;
+                border: 1px solid #D477B1;
+                border-radius: 4px;
+            }
+        """)
+        
+        # Log file path
+        self.log_file_label = QLabel("Log File:", self.right_overlay_container)
+        self.log_file_label.setGeometry(30, 225, 100, 30)
+        self.log_file_label.setStyleSheet("color: white; font-weight: bold;")
+        
+        self.log_file_input = QLineEdit(self.right_overlay_container)
+        self.log_file_input.setGeometry(130, 225, 160, 30)
+        self.log_file_input.setText("boxes.txt")
+        self.log_file_input.setStyleSheet("""
+            QLineEdit {
+                background-color: white;
+                border: 1px solid #D477B1;
+                border-radius: 4px;
+                padding: 2px 4px;
+            }
+            QLineEdit:focus {
+                border: 2px solid #b92980;
+            }
+        """)
+        
+        # Save config button
+        self.save_config_button = StyledButton("Save Config", self.right_overlay_container)
+        self.save_config_button.setGeometry(120, 263, 150, 30)
+        self.save_config_button.clicked.connect(self.save_config)
+        
+        # Load config on startup
+        self.load_config()
+        
+        # Initialize visibility
+        self.right_overlay_visible = True
+
+    def setup_right_tab(self):
+        """Setup the side tab for showing/hiding right overlay"""
+        self.right_side_tab = RightOverlayTab(self.main_widget)
+        self.right_side_tab.on_click_callback = self.toggle_right_overlay
+        self.update_right_tab_position()
+        self.right_side_tab.raise_()
+    def save_config(self):
+        """Save the current configuration to a JSON file"""
+        config = {
+            'x_dim': self.x_dim_input.value(),
+            'y_dim': self.y_dim_input.value(),
+            'z_dim': self.z_dim_input.value(),
+            'speed': self.speed_input.value(),
+            'save': self.save_to_file_checkbox.isChecked(),
+            'log_file': self.log_file_input.text()
+        }
+        
+        try:
+            with open('plotter_config.json', 'w') as f:
+                json.dump(config, f, indent=4)
+            # Show success message in the right info panel
+            if hasattr(self.right_info_panel, 'status_label'):
+                self.right_info_panel.status_label.setText("Configuration saved successfully!")
+        except Exception as e:
+            if hasattr(self.right_info_panel, 'status_label'):
+                self.right_info_panel.status_label.setText(f"Error saving config: {str(e)}")
+
+    def load_config(self):
+        """Load configuration from a JSON file if it exists"""
+        try:
+            if os.path.exists('plotter_config.json'):
+                with open('plotter_config.json', 'r') as f:
+                    config = json.load(f)
+                    
+                # Update UI elements with loaded values
+                self.x_dim_input.setValue(config.get('x_dim', 0))
+                self.y_dim_input.setValue(config.get('y_dim', 1))
+                self.z_dim_input.setValue(config.get('z_dim', 2))
+                self.speed_input.setValue(int(config.get('speed', 100)))
+                self.save_to_file_checkbox.setChecked(bool(config.get('save', False)))
+                self.log_file_input.setText(config.get('log_file', 'boxes.txt'))
+                
+                if hasattr(self.right_info_panel, 'status_label'):
+                    self.right_info_panel.status_label.setText("Configuration loaded!")
+        except Exception as e:
+            if hasattr(self.right_info_panel, 'status_label'):
+                self.right_info_panel.status_label.setText(f"Error loading config: {str(e)}")
+
+    def update_right_tab_position(self):
+        """Update the position of the right side tab based on overlay visibility"""
+        tab_width = 15
+        if self.right_overlay_visible:
+            # Position the tab next to the visible overlay
+            overlay_width = 380
+            self.right_side_tab.setGeometry(self.width() - overlay_width - tab_width, 150, tab_width, 100)
+        else:
+            # Position the tab at the edge of the screen when overlay is hidden
+            self.right_side_tab.setGeometry(self.width() - tab_width, 150, tab_width, 100)
+
+    # def setup_right_buttons(self):
+    #     """Setup the control buttons for right panel"""
+    #     self.load_boxes_button = StyledButton("Load Boxes", self.right_overlay_container)
+    #     self.load_boxes_button.setGeometry(20, 260, 340, 30)
+    #     self.load_boxes_button.clicked.connect(self.load_boxes_clicked)
+
+    def toggle_right_overlay(self):
+        """Toggle visibility of the right overlay"""
+        self.right_overlay_visible = not self.right_overlay_visible
+        
+        # Delete and recreate the tab with the new position
+        if hasattr(self, 'right_side_tab'):
+            self.right_side_tab.deleteLater()
+        
+        # Create new tab in the correct position
+        self.setup_right_tab()
+        
+        # Show/hide overlay as needed
+        if self.right_overlay_visible:
+            # Set position relative to the current window width
+            overlay_width = 380
+            self.right_overlay_container.setGeometry(self.width() - overlay_width, 0, overlay_width, 300)
+            self.right_overlay_container.show()
+            self.right_overlay_container.raise_()
+        else:
+            self.right_overlay_container.hide()
+        
+        self.right_side_tab.show()
+
+    # def load_boxes_clicked(self):
+    #     """Callback for the Load Boxes button"""
+    #     #self.right_info_panel.status_label.setText("Loading boxes...")
+
+    #     self.plotter.clear()
+    #     self.plotter.show_grid(all_edges=True, padding = 1.0)
+
+    #     load_and_plot_boxes(self.plotter, 1, log_file="boxes1.txt")         #Verse-library/demo/traffic_signalB/
+    #     # grid_bounds = [-2400, 300, -1100, 600, 0, 1100]
+    #     # self.plotter.show_grid(bounds=grid_bounds)
+
+    # Update resizeEvent to handle right panel resizing
+    def resizeEvent(self, event):
+        """Handle window resize events"""
+        super().resizeEvent(event)
+        
+        # Keep left side tab in position relative to the overlay
+        self.update_side_tab_position()
+        
+        # Keep right overlay correctly positioned relative to the current window edge
+        if hasattr(self, 'right_overlay_container') and self.right_overlay_visible:
+            overlay_width = 380
+            self.right_overlay_container.setGeometry(self.width() - overlay_width, 0, overlay_width, 300)
+        
+        # Update right tab position
+        if hasattr(self, 'right_side_tab'):
+            self.update_right_tab_position()
        
 
     def update_side_tab_position(self):
@@ -373,24 +495,14 @@ class MainWindow(QMainWindow):
         self.altitude_label.setGeometry(20, 3, 60, 20)
         self.altitude_label.setStyleSheet("color: #3498db; font-weight: bold;")
         
-        try:
-            self.blue_slider = SvgPlaneSlider("plane_blue.svg", self.slider_container)
-            self.blue_slider.setGeometry(5, 30, 30, 280)
-            self.blue_slider.setValue(50)
+        self.blue_slider = SvgPlaneSlider("plane_blue.svg", self.slider_container)
+        self.blue_slider.setGeometry(5, 30, 30, 280)
+        self.blue_slider.setValue(50)
 
-            self.red_slider = SvgPlaneSlider("plane_red.svg", self.slider_container)
-            self.red_slider.setGeometry(55, 30, 30, 280)
-            self.red_slider.setValue(50)
+        self.red_slider = SvgPlaneSlider("plane_red.svg", self.slider_container)
+        self.red_slider.setGeometry(55, 30, 30, 280)
+        self.red_slider.setValue(50)
             
-        except Exception as e:
-            print(f"Error loading SVG sliders: {e}")
-            self.setup_fallback_sliders()
-          
-            
-            #self.setup_slider_markers()
-        except Exception as e:
-            print(f"Error loading SVG sliders: {e}")
-            self.setup_fallback_sliders()
 
     def setup_slider_markers(self):
         """Setup markers for the sliders"""
@@ -426,14 +538,23 @@ class MainWindow(QMainWindow):
 
     def setup_buttons(self):
         """Setup the control buttons"""
-        self.run_button = StyledButton("Run", self.overlay_container)
-        self.run_button.setGeometry(10, 365, 350, 30)
+        button_width = 170  # Half the width of the original button
+    
+        self.run_button = StyledButton("Verify", self.overlay_container)
+        self.run_button.setGeometry(10, 365, button_width, 30)
         self.run_button.clicked.connect(self.run_button_clicked)
+        
+        self.run_simulate_button = StyledButton("Simulate", self.overlay_container)
+        self.run_simulate_button.setGeometry(10 + button_width + 10, 365, button_width, 30)  # Position next to first button with a small gap
+        self.run_simulate_button.clicked.connect(self.run_simulate_clicked)
+
 
     def setup_web_view(self):
-        """Setup the web view for the visualization"""
+        """Setup the web view for the visualization with console support"""
         self.web_view = QWebEngineView(self.overlay_container)
         self.web_view.setGeometry(10, 10, 350, 350)
+
+        
         self.web_view.setHtml(self.get_web_content())
 
     def get_web_content(self):
@@ -718,20 +839,20 @@ class MainWindow(QMainWindow):
                     <div class="marker origin-marker">0</div>
                     
                     <!-- X-Axis Markers -->
-                    <div class="marker x-marker" style="left: 50px;">50</div>
-                    <div class="marker x-marker" style="left: 100px;">100</div>
-                    <div class="marker x-marker" style="left: 150px;">150</div>
-                    <div class="marker x-marker" style="left: 200px;">200</div>
-                    <div class="marker x-marker" style="left: 250px;">250</div>
-                    <div class="marker x-marker" style="left: 300px;">300</div>
+                    <div class="marker x-marker" style="left: 50px;">300</div>
+                    <div class="marker x-marker" style="left: 100px;">600</div>
+                    <div class="marker x-marker" style="left: 150px;">900</div>
+                    <div class="marker x-marker" style="left: 200px;">1200</div>
+                    <div class="marker x-marker" style="left: 250px;">1500</div>
+                    <div class="marker x-marker" style="left: 300px;">1800</div>
 
                     <!-- Y-Axis Markers -->
-                    <div class="marker y-marker" style="top: 50px;">300</div>
-                    <div class="marker y-marker" style="top: 100px;">250</div>
-                    <div class="marker y-marker" style="top: 150px;">200</div>
-                    <div class="marker y-marker" style="top: 200px;">150</div>
-                    <div class="marker y-marker" style="top: 250px;">100</div>
-                    <div class="marker y-marker" style="top: 300px;">50</div>
+                    <div class="marker y-marker" style="top: 50px;">1800</div>
+                    <div class="marker y-marker" style="top: 100px;">1500</div>
+                    <div class="marker y-marker" style="top: 150px;">1200</div>
+                    <div class="marker y-marker" style="top: 200px;">900</div>
+                    <div class="marker y-marker" style="top: 250px;">600</div>
+                    <div class="marker y-marker" style="top: 300px;">300</div>
 
                     <div id="plane1" class="draggable" draggable="true" ondragstart="dragStart(event)">
                     <svg viewBox="0 0 24 24" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
@@ -766,81 +887,122 @@ class MainWindow(QMainWindow):
         self.side_tab.show()
 
 
-      
-        
-
     
-    def run_verse(self, x1, y1, z1, r1, x2, y2, z2, r2):
-        script_dir = os.path.realpath(os.path.dirname(__file__))
-        input_code_name = os.path.join(script_dir, "vehicle_controller.py")
-        vehicle = VehicleAgent('car', file_name=input_code_name)
-        pedestrian = PedestrianAgent('pedestrian')
-
+    
+    # Modify run_verse to use step size and time step values
+    def run_verse(self, initial_sets, agent_types, dls, verify):
         scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False))
 
-        scenario.add_agent(vehicle) 
-        scenario.add_agent(pedestrian)
+        # Get step size and time step values
+        #plot_frequency = 
+        time_step = self.time_step_input.value()
+
+        type_dict = {"dubins": VehicleAgent, "guam":VehicleAgent, "vehicle":VehicleAgent, "pedestrian":PedestrianAgent}
+        mode_dict = {"dubins":VehicleMode.Normal,"guam":VehicleMode.Normal, "vehicle":VehicleMode.Normal, "pedestrian":PedestrianMode.Normal}
+        script_dir = os.path.realpath(os.path.dirname(__file__))
+
+        for i in range(len(agent_types)):
+            if(dls[i] != "None"):
+                input_code_name = os.path.join(script_dir, dls[i])
+                plane = type_dict[agent_types[i]]('plane' +str(i), file_name=input_code_name)
+            else:
+                plane = type_dict[agent_types[i]]('plane' +str(i))
+
+            scenario.add_agent(plane) 
+
+            x,y,z,r = initial_sets[i]
+
+            init = [[x - r, y - r, 0, 8], [x + r, y + r, 0, 8]]
+            print(init)
+            scenario.set_init_single(
+                'plane' +str(i), init, (mode_dict[agent_types[i]],)
+            )
         scenario.set_sensor(VehiclePedestrianSensor())
+        self.plotter.show_grid(all_edges=True, n_xlabels = 6, n_ylabels = 6, n_zlabels = 6)
 
-        init_car = [[x1 - r1, y1 - r1, 0, 8], [x1 + r1, y1 + r1, 0, 8]]
-        init_pedestrian = [[x2 - r2, y2 - r2, 0, 3], [x2 + r2, y2 + r2, 0, 5]]
-
-        scenario.set_init_single(
-            'car', init_car, (VehicleMode.Normal,)
-        )
-        scenario.set_init_single(
-            'pedestrian', init_pedestrian, (PedestrianMode.Normal,)
-        )
-
-        self.plotter.show_grid()
-        traces = scenario.verify(80, 0.1, self.plotter)
+        if(verify):
+            _ = scenario.verify(300, time_step, self.plotter)
+        else:
+            _ = scenario.simulate(300, time_step, self.plotter)
+        
 
     def run_button_clicked(self):
-        self.web_view.page().runJavaScript("getPlanePositions();", self.handle_positions)
+        """Callback for the Run button (normal mode)"""
+        self.web_view.page().runJavaScript("getPlanePositions();", 
+                                        lambda positions: self.handle_positions(positions, True))
 
-    def start_animation(self, x1, y1, z1, r1, x2, y2, z2, r2):
-        """Starts a background thread to move the sphere."""
-        if hasattr(self, 'thread') and self.thread:
-            self.thread.join()
-        self.plotter.clear()
+    def run_simulate_clicked(self):
+        """Callback for the Run Simulate button (simulation mode)"""
+        self.web_view.page().runJavaScript("getPlanePositions();", 
+                                        lambda positions: self.handle_positions(positions, False))
 
-        self.thread = threading.Thread(target=self.run_verse, args=[x1, y1, z1, r1, x2, y2, z2, r2], daemon=True)
-        self.thread.start()
 
-    def handle_positions(self, positions, scaling=1):
-        def position_to_int(pos):
-            # Handle case where positions might be empty
-            try:
-                x = float(pos['x'].replace('px', ''))
-                y = float(pos['y'].replace('px', ''))
-                s = float(pos['size'].replace('px', ''))
-                return (x/scaling, y/scaling, s/scaling)
-            except (ValueError, KeyError):
-                return (0, 0, 0)
-                
-        alt1 = self.blue_slider.value() / 10  # Scale as needed
-        alt2 = self.red_slider.value() / 10  # Scale as needed
-        # positions is a JavaScript object containing the current positions of the planes
-        print("Positions of planes:", positions)
+    def handle_positions(self, positions, verify):
 
-        # Process the positions and use them in the 3D visualization or other tasks
-        self.plane1_position = positions['plane1']
-        self.plane2_position = positions['plane2']
+        # Check if file input has content
+        file_path = self.file_input.text().strip()
+        if file_path:
+            # If file specified, load boxes first
+            if hasattr(self, 'thread') and self.thread:
+                self.thread.join()
+            self.plotter.clear()
+            self.plotter.show_grid(all_edges=True, n_xlabels = 6, n_ylabels = 6, n_zlabels = 6)
+            load_and_plot_boxes(self.plotter, log_file=file_path)
+            #grid_bounds = [-2400, 300, -1100, 600, 0, 1100]
+            #self.plotter.show_grid(axes_ranges=grid_bounds)
+        else:
+            def position_to_int(pos):
+                # Handle case where positions might be empty
+                try:
+                    x = float(pos['x'].replace('px', ''))
+                    y = float(pos['y'].replace('px', ''))
+                    s = float(pos['size'].replace('px', ''))
+                    return ( 6*(x)+48 , 6*(350-y) - 48, s/.3)
+                except (ValueError, KeyError):
+                    return (0, 0, 0)
+                    
+            z1 = self.blue_slider.value() / 10  # Scale as needed
+            z2 = self.red_slider.value() / 10  # Scale as needed
+            # positions is a JavaScript object containing the current positions of the planes
+            print("Positions of planes:", positions)
 
-        x1, y1, s1 = (position_to_int(self.plane1_position))
-        x2, y2, s2 = (position_to_int(self.plane2_position))
+            # Process the positions and use them in the 3D visualization or other tasks
+            self.plane1_position = positions['plane1']
+            self.plane2_position = positions['plane2']
 
-        self.start_animation(x1, y1, alt1, s1, x2, y2, alt2, s2)
+            x1, y1, s1 = (position_to_int(self.plane1_position))
+            x2, y2, s2 = (position_to_int(self.plane2_position))
+
+            if hasattr(self, 'thread') and self.thread:
+                self.thread.join()
+            self.plotter.clear()
+
+            self.run_verse([[x1, y1, z1, s1], [x2, y2, z2, s2]], ["vehicle", "pedestrian"], ["vehicle_controller.py", "None"], verify )
+
+            # self.thread = threading.Thread(target=self.run_verse, args=[ [[x1, y1, z1, s1], [x2, y2, z2, s2]], ["vehicle", "pedestrian"], ["vehicle_controller.py", "None"], verify ], daemon=True)
+            # self.thread.start()
+
 
     def _set_python_bridge(self, result):
         """Sets the python bridge object in JS"""
         self.web_view.page().runJavaScript("window.pyQtApp = pyQtApp;", self._set_python_bridge)
 
-    def resizeEvent(self, event):
-        """Handle window resize events"""
-        super().resizeEvent(event)
-        # Keep side tab in position relative to the overlay
-        self.update_side_tab_position()
+def resizeEvent(self, event):
+    """Handle window resize events"""
+    super().resizeEvent(event)
+    
+    # Keep left side tab in position relative to the overlay
+    self.update_side_tab_position()
+    
+    # Keep right overlay at a fixed position regardless of window size
+    if hasattr(self, 'right_overlay_container'):
+        # Set position to a fixed coordinate rather than relative to window width
+        if self.right_overlay_visible:
+            self.right_overlay_container.setGeometry(self.width() - 380, 0, 380, 300)
+    
+    # Update right tab position
+    if hasattr(self, 'right_side_tab'):
+        self.update_right_tab_position()
 
 # Run the Qt Application
 if __name__ == "__main__":

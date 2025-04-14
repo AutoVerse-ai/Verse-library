@@ -77,9 +77,7 @@ def save_node(node):
         print("dumping")
         json.dump(data, file, indent=4)
 
-color_map = {}
 
-int_to_color = {1:'b', 2:'r', 3:'g'}
 
 
 class Verifier:
@@ -193,7 +191,7 @@ class Verifier:
         else:
             tube_length = res_tube.shape[0]
         #What is this and why does the same star set appear twice?    
-        print(missing_seg_idx_list)
+        #print(missing_seg_idx_list)
 
         for combine_seg_idx in missing_seg_idx_list:
             rect_seg = initial_set[combine_seg_idx : combine_seg_idx + combine_seg_length]
@@ -414,10 +412,11 @@ class Verifier:
         remain_time: float,
         consts: ReachConsts,
         max_height: int,
-        ax: pv.Plotter,
+        ax,
 
         params={},
     ) -> Tuple[int, int, List[AnalysisTreeNode], Dict[str, TraceType], list]:
+
         # t = timeit.default_timer()
         if config.print_level >= 1:
             print("=============================================================")
@@ -584,25 +583,9 @@ class Verifier:
                     node.trace[agent] = node.trace[agent][: (idx + 1)]
 
             #print("writing data")
-            data = []
-            ids = []
-            colors = []
-            for agent_id in node.trace:
-                ids.append(agent_id)
-                if agent_id not in color_map:
-                    color_map[agent_id] = len(color_map) +1
-
-            l  = len(node.trace[ids[0]])
-            for i in range(0, l, 2):
-                for agent_id in ids:
-                    trace = node.trace[agent_id]
-                    data.append([trace[i], trace[i + 1]])
-                    colors.append(int_to_color[color_map[agent_id]])
-            print("COLORS", colors)
-
-
-            plot3dReachtubeSingle(data, 0, 1, 2, ax, colors,  edge=True)
+          
             #ax.render()
+            plot3dReachtubeSingle(node.trace, ax )
             return (
                 node.id,
                 later,
@@ -724,30 +707,13 @@ class Verifier:
         #             file.write(json.dumps({ "id": node.id, "trace": node.trace['car'] }) + "\n")
         #         except json.JSONDecodeError:
         #             print("Error")
-        colors = []
-
-        data = []
-        ids = []
-        for agent_id in node.trace:
-            ids.append(agent_id)
-            if agent_id not in color_map:
-                color_map[agent_id] = len(color_map) +1
-
-
-        l  = len(node.trace[ids[0]])
-        for i in range(0, l, 2):
-            for agent_id in ids:
-                trace = node.trace[agent_id]
-                data.append([trace[i], trace[i + 1]])
-                colors.append(int_to_color[color_map[agent_id]])
-
-        plot3dReachtubeSingle(data, 0, 1, 2, ax, colors, edge=True)
-        ax.render()
+        
+        #ax.render()
             
             #ax.show()
 
 
-
+        plot3dReachtubeSingle(node.trace, ax )
        
 
         return (

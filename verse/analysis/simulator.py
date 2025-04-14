@@ -17,6 +17,8 @@ from verse.analysis.incremental import CachedSegment, SimTraceCache, convert_sim
 from verse.utils.utils import dedup
 from verse.map.lane_map import LaneMap
 from verse.parser.parser import ModePath, find, unparse
+from verse.plotter.plotter3D import *
+
 from verse.analysis.incremental import (
     CachedRTTrans,
     CachedSegment,
@@ -24,6 +26,7 @@ from verse.analysis.incremental import (
     reach_trans_suit,
     sim_trans_suit,
 )
+import pyvista as pv
 
 pp = functools.partial(pprint.pprint, compact=True, width=130)
 
@@ -201,6 +204,8 @@ class Simulator:
         later: int,
         remain_time: float,
         consts: SimConsts,
+        ax: pv.Plotter,
+
     ) -> Tuple[int, int, List[AnalysisTreeNode], Dict[str, TraceType], list]:
         if config.print_level >= 1:
             print("=============================================================")
@@ -284,6 +289,9 @@ class Simulator:
                         )
                 # print(red("no trans"))
                 # print(f"node {node.id} dur {timeit.default_timer() - t}")
+
+                
+                plot3dSimulationSingle(node.trace, ax)
                 return (node.id, later, [], node.trace, cache_updates)
 
             transit_agents = transitions.keys()
@@ -343,7 +351,12 @@ class Simulator:
                 next_nodes.append(tmp)
             # print(len(next_nodes))
             # print(f"node {node.id} dur {timeit.default_timer() - t}")
-            return (node.id, later, next_nodes, node.trace, cache_updates)
+
+
+        plot3dReachtubeSingle(node.trace, ax )
+
+
+        return (node.id, later, next_nodes, node.trace, cache_updates)
 
     def proc_result(self, id, later, next_nodes, traces, cache_updates):
         t = timeit.default_timer()
@@ -399,6 +412,7 @@ class Simulator:
         lane_map,
         run_num,
         past_runs,
+        plotter,
     ):
         # Setup the root of the simulation tree
         if max_height == None:
@@ -462,6 +476,7 @@ class Simulator:
                             later,
                             remain_time,
                             consts,
+                            plotter,
                         )
                     )
                     # print(f"node {node.id} dur {timeit.default_timer() - t}")
