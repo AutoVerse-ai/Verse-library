@@ -947,7 +947,7 @@ class MainWindow(QMainWindow):
                 self.thread.join()
             self.plotter.clear()
             self.plotter.show_grid(all_edges=True, n_xlabels = 6, n_ylabels = 6, n_zlabels = 6)
-            load_and_plot_boxes(self.plotter, log_file=file_path)
+            load_and_plot(self.plotter, log_file=file_path)
             #grid_bounds = [-2400, 300, -1100, 600, 0, 1100]
             #self.plotter.show_grid(axes_ranges=grid_bounds)
         else:

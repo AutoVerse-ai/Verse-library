@@ -59,33 +59,64 @@ def plot3dReachtubeSingle(tube, ax, x_dim=1, y_dim=2, z_dim=3, edge=True,  log_f
 
               
 
-                
-       
-
-
-def load_and_plot_boxes(ax, step=1000, log_file="boxes1.txt"):
+def load_and_plot(ax, step=None, log_file="boxes1.txt"):
     try:
         with open(log_file, "r") as f:
             lines = f.readlines()
-
-        if not lines:
-            print("No bounding boxes found in the file.")
-            return ax
-        rect_dict = {}
-        for i, line in enumerate(lines):
-            # Extract the box and color from each line
+            line = lines[0]
             box_str, color = line.rsplit(",", 1)  # Split into box and color
             box = ast.literal_eval(box_str.strip())  # Convert box string to list
-            color = color.strip().strip("'\"")  # Clean up the color string
-            if( color not in rect_dict):
-                rect_dict[color] = []
-            rect_dict[color].append(box)
+            print(box)
+            if( len(np.array(box).shape) !=2):
+                load_and_plot_simulations(ax,step, log_file)
+            else:
+                load_and_plot_boxes(ax,step, log_file )
 
-            #poly = pc.box2poly(np.array(box).T)
-        for color, rects in rect_dict.items():
-            plotGrid(ax, color, rects)
+        if not lines:
+            print("Nothing found in the file.")
+            return ax
     except FileNotFoundError:
         print(f"File {log_file} not found.")
+
+
+def load_and_plot_boxes(ax, step=1000, log_file="boxes1.txt"):
+    with open(log_file, "r") as f:
+        lines = f.readlines()
+    rect_dict = {}
+    for i, line in enumerate(lines):
+        # Extract the box and color from each line
+        box_str, color = line.rsplit(",", 1)  # Split into box and color
+        box = ast.literal_eval(box_str.strip())  # Convert box string to list
+        color = color.strip().strip("'\"")  # Clean up the color string
+        if( color not in rect_dict):
+            rect_dict[color] = []
+        rect_dict[color].append(box)
+
+        #poly = pc.box2poly(np.array(box).T)
+    for color, rects in rect_dict.items():
+        plotGrid(ax, color, rects)
+    
+    
+    return ax
+
+
+def load_and_plot_simulations(ax, step = None, log_file = "boxes1.txt"):
+    with open(log_file, "r") as f:
+        lines = f.readlines()
+    rect_dict = {}
+    for i, line in enumerate(lines):
+        # Extract the box and color from each line
+        box_str, color = line.rsplit(",", 1)  # Split into box and color
+        box = ast.literal_eval(box_str.strip())  # Convert box string to list
+        color = color.strip().strip("'\"")  # Clean up the color string
+        if( color not in rect_dict):
+            rect_dict[color] = []
+        rect_dict[color].append(box)
+
+        #poly = pc.box2poly(np.array(box).T)
+    for color, points in rect_dict.items():
+        plotPolyLine(points, color, ax)
+    
     
     return ax
 
@@ -213,7 +244,7 @@ def plot_polytope_3d(A, b, ax=None, color="red", trans=0.2, edge=True, render = 
         
     return ax
 
-def plot3dSimulationSingle(tube, ax, line_width=5, step = 1000, x_dim=1, y_dim=2, z_dim=3, save_to_file = True, log_file = "simulate_points.txt" ):
+def plot3dSimulationSingle(tube, ax, line_width=5, step = 1000, x_dim=1, y_dim=2, z_dim=3, save_to_file = True, log_file = "simulations.txt" ):
     if os.path.exists('plotter_config.json'):
         with open('plotter_config.json', 'r') as f:
             config = json.load(f)
@@ -224,10 +255,13 @@ def plot3dSimulationSingle(tube, ax, line_width=5, step = 1000, x_dim=1, y_dim=2
             save_to_file = bool(config['save'])
             log_file = config['log_file']
 
-    
+    if save_to_file:
+        with open(log_file, "w") as f:
+            f.write("")  # Optional: just clears the file
     rects_dict = {}
-    for i in range(0, len(tube[list(tube.keys())[0]])-1):
+    length = len(tube[list(tube.keys())[0]])-1
 
+    for i in range(0, length ):
         for agent_id in tube:
             if agent_id not in color_map:
                 color_map[agent_id] = int_to_color[len(color_map) +1]
@@ -244,7 +278,7 @@ def plot3dSimulationSingle(tube, ax, line_width=5, step = 1000, x_dim=1, y_dim=2
             
             rects_dict[agent_id].append(point)
 
-            if i % step == 0 or i == len(tube)-1:
+            if i % step == 0 or i >= length-1:
                 plotPolyLine(rects_dict[agent_id], color_map[agent_id], ax)
                 rects_dict[agent_id] = [rects_dict[agent_id][-1]]
     return ax
