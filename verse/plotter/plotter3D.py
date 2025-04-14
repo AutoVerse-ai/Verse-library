@@ -15,7 +15,7 @@ vtk.vtkLogger.SetStderrVerbosity(vtk.vtkLogger.VERBOSITY_OFF)
 int_to_color = {1:'b', 2:'r', 3:'g', 4: 'purple', 5:'orange'}
 color_map = {}
 
-def plot3dReachtubeSingle(tube, ax, x_dim=1, y_dim=2, z_dim=3, edge=True,  log_file="bounding_boxes.txt", save_to_file = True, step =1000):
+def plot3dReachtubeSingle(tube, ax, x_dim=1, y_dim=2, z_dim=3, edge=False,  log_file="bounding_boxes.txt", save_to_file = True, step =1000):
     if os.path.exists('plotter_config.json'):
         with open('plotter_config.json', 'r') as f:
             config = json.load(f)
@@ -168,7 +168,7 @@ def plotGrid(ax,color, rects):
     
     # Create and display the grid
     grid = pv.UnstructuredGrid(cells, celltypes, vertices)
-    ax.add_mesh(grid, show_edges=True, color=color, opacity=0.5)
+    ax.add_mesh(grid, show_edges=False, color=color, opacity=0.5)
 
 
 def plot3dMap(lane_map, color="k", ax=None, width=0.1, num=20):
@@ -190,7 +190,7 @@ def plot3dMap(lane_map, color="k", ax=None, width=0.1, num=20):
     return ax
 
 
-def plot3dReachtube(root, agent_id, x_dim, y_dim, z_dim, color="b", ax=None, edge=True):
+def plot3dReachtube(root, agent_id, x_dim, y_dim, z_dim, color="b", ax=None, edge=False):
     if isinstance(root, AnalysisTree):
         root = root.root
 
@@ -226,7 +226,7 @@ def plot3dReachtube(root, agent_id, x_dim, y_dim, z_dim, color="b", ax=None, edg
     #     plot_polytope_3d(poly.A, poly.b, ax = ax, color = '#b3de69')
 
 
-def plot_polytope_3d(A, b, ax=None, color="red", trans=0.2, edge=True, render = False):
+def plot_polytope_3d(A, b, ax=None, color="red", trans=0.2, edge=False, render = False):
     if ax is None:
         ax = pv.Plotter()
 
