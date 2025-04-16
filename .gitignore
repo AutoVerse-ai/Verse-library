@@ -26,3 +26,6 @@ gif/
 debug/
 build/
 .python-version
+*.pth
+*.csv
+requirements.txt

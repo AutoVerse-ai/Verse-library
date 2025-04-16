@@ -204,7 +204,7 @@ class Simulator:
         later: int,
         remain_time: float,
         consts: SimConsts,
-        ax: pv.Plotter,
+        ax: pv.Plotter = None,
 
     ) -> Tuple[int, int, List[AnalysisTreeNode], Dict[str, TraceType], list]:
         if config.print_level >= 1:
@@ -290,8 +290,8 @@ class Simulator:
                 # print(red("no trans"))
                 # print(f"node {node.id} dur {timeit.default_timer() - t}")
 
-                
-                plot3dSimulationSingle(node.trace, ax)
+                if ax is not None:
+                    plot3dSimulationSingle(node.trace, ax)
                 return (node.id, later, [], node.trace, cache_updates)
 
             transit_agents = transitions.keys()
@@ -352,8 +352,8 @@ class Simulator:
             # print(len(next_nodes))
             # print(f"node {node.id} dur {timeit.default_timer() - t}")
 
-
-        plot3dReachtubeSingle(node.trace, ax )
+        if ax is not None:
+            plot3dReachtubeSingle(node.trace, ax )
 
 
         return (node.id, later, next_nodes, node.trace, cache_updates)

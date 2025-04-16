@@ -42,6 +42,6 @@ if __name__ == "__main__":
     # scenario.config.pca = False
     scenario.set_sensor(BaseStarSensor())
 
-    trace = scenario.verify(7, 0.1)
+    trace = scenario.verify(3.5, 0.1)
     plot_reachtube_stars(trace)
     # fig.show()

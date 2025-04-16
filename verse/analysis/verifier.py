@@ -412,7 +412,7 @@ class Verifier:
         remain_time: float,
         consts: ReachConsts,
         max_height: int,
-        ax,
+        ax = None,
 
         params={},
     ) -> Tuple[int, int, List[AnalysisTreeNode], Dict[str, TraceType], list]:
@@ -585,7 +585,8 @@ class Verifier:
             #print("writing data")
           
             #ax.render()
-            plot3dReachtubeSingle(node.trace, ax )
+            if ax is not None:
+                plot3dReachtubeSingle(node.trace, ax )
             return (
                 node.id,
                 later,
@@ -712,8 +713,8 @@ class Verifier:
             
             #ax.show()
 
-
-        plot3dReachtubeSingle(node.trace, ax )
+        if ax is not None:
+            plot3dReachtubeSingle(node.trace, ax )
        
 
         return (
