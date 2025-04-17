@@ -31,13 +31,13 @@ class ThermoAgent(BaseAgent):
         super().__init__(id, code, file_name)
 
     @staticmethod
-    def dynamic_heat(t, state):
+    def dynamics_heat(t, state):
         x = state
         x_dot = 40-0.5*x
         return [x_dot]
     
     @staticmethod
-    def dynamic_cool(t, state):
+    def dynamics_cool(t, state):
         x = state
         x_dot = 30-0.5*x
         return [x_dot]
@@ -52,9 +52,9 @@ class ThermoAgent(BaseAgent):
         trace[0, 1:] = init
         for i in range(num_points):
             if mode[0]=="Heat":
-                r = ode(self.dynamic_heat)
+                r = ode(self.dynamics_heat)
             elif mode[0]=="Cool":
-                r = ode(self.dynamic_cool)
+                r = ode(self.dynamics_cool)
             else:
                 raise ValueError
             r.set_initial_value(init)

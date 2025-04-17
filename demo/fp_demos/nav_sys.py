@@ -31,28 +31,28 @@ class NavAgent(BaseAgent):
         super().__init__(id, code, file_name)
 
     @staticmethod
-    def dynamic_z1(t, state):
+    def dynamics_z1(t, state):
         x, y, vx, vy = state
         vx_dot = -1.2*vx+0.1*vy-0.1
         vy_dot = 0.1*vx-1.2*vy+1.2
         return [vx, vy, vx_dot, vy_dot]
 
     @staticmethod
-    def dynamic_z2(t, state):
+    def dynamics_z2(t, state):
         x, y, vx, vy = state
         vx_dot = -1.2*vx+0.1*vy-4.8
         vy_dot = 0.1*vx-1.2*vy+0.4
         return [vx, vy, vx_dot, vy_dot]
     
     @staticmethod
-    def dynamic_z3(t, state):
+    def dynamics_z3(t, state):
         x, y, vx, vy = state
         vx_dot = -1.2*vx+0.1*vy+2.4
         vy_dot = 0.1*vx-1.2*vy-0.2
         return [vx, vy, vx_dot, vy_dot]
     
     @staticmethod
-    def dynamic_z4(t, state):
+    def dynamics_z4(t, state):
         x, y, vx, vy = state
         vx_dot = -1.2*vx+0.1*vy+3.9
         vy_dot = 0.1*vx-1.2*vy-3.9
@@ -68,13 +68,13 @@ class NavAgent(BaseAgent):
         trace[0, 1:] = init
         for i in range(num_points):
             if mode[0]=="Zone1":
-                r = ode(self.dynamic_z1)
+                r = ode(self.dynamics_z1)
             elif mode[0]=="Zone2":
-                r = ode(self.dynamic_z2)
+                r = ode(self.dynamics_z2)
             elif mode[0]=="Zone3":
-                r = ode(self.dynamic_z3)
+                r = ode(self.dynamics_z3)
             elif mode[0]=="Zone4":
-                r = ode(self.dynamic_z4)
+                r = ode(self.dynamics_z4)
             else:
                 raise ValueError
             r.set_initial_value(init)

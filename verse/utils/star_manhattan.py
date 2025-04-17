@@ -136,7 +136,11 @@ def star_manhattan_distance(center, basis, C, g):
     constraints = LinearConstraint(A, bl, bu)
     bounds = Bounds(lb = lower, ub = upper)
     result = sop.milp(c=c, integrality=integrality, constraints=constraints, bounds=bounds)
-    return -1*result.fun
+    if result.status != 0:
+        print("diam_failed")
+        return 0, 0
+
+    return -1*result.fun, 1
 
 
 
