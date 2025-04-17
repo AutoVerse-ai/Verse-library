@@ -412,7 +412,7 @@ class Simulator:
         lane_map,
         run_num,
         past_runs,
-        plotter,
+        ax,
     ):
         # Setup the root of the simulation tree
         if max_height == None:
@@ -476,7 +476,7 @@ class Simulator:
                             later,
                             remain_time,
                             consts,
-                            plotter,
+                            ax,
                         )
                     )
                     # print(f"node {node.id} dur {timeit.default_timer() - t}")
@@ -506,6 +506,7 @@ class Simulator:
         # print("cached", self.num_cached)
         # pp(self.cache.get_cached_inits(3))
         self.simulation_tree = AnalysisTree(root)
+       
         return self.simulation_tree
 
     def simulate_simple(

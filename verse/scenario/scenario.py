@@ -174,8 +174,8 @@ class Scenario:
         assert (
             len(uncertain_param_list) == len(self.agent_dict) or len(uncertain_param_list) == 0
         ), "the length of uncertain_param_list not fit the number of agents or equal to 0"
-        print(init_mode_list)
-        print(type(init_mode_list))
+        #print(init_mode_list)
+        #print(type(init_mode_list))
         if not static_list:
             static_list = [[] for i in range(0, len(self.agent_dict))]
             # print(static_list)

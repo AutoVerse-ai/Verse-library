@@ -15,6 +15,11 @@ vtk.vtkLogger.SetStderrVerbosity(vtk.vtkLogger.VERBOSITY_OFF)
 int_to_color = {1:'b', 2:'r', 3:'g', 4: 'purple', 5:'orange'}
 color_map = {}
 
+node_rect_cache ={}
+node_idx = 0
+
+
+
 def plot3dReachtubeSingle(tube, ax, x_dim=1, y_dim=2, z_dim=3, edge=False,  log_file="bounding_boxes.txt", save_to_file = True, step =1000):
     if os.path.exists('plotter_config.json'):
         with open('plotter_config.json', 'r') as f:
@@ -66,7 +71,6 @@ def load_and_plot(ax, step=None, log_file="boxes1.txt"):
             line = lines[0]
             box_str, color = line.rsplit(",", 1)  # Split into box and color
             box = ast.literal_eval(box_str.strip())  # Convert box string to list
-            print(box)
             if( len(np.array(box).shape) !=2):
                 load_and_plot_simulations(ax,step, log_file)
             else:
@@ -254,7 +258,8 @@ def plot3dSimulationSingle(tube, ax, line_width=5, step = 1000, x_dim=1, y_dim=2
             step = int(config['speed'])
             save_to_file = bool(config['save'])
             log_file = config['log_file']
-
+            step_node = config['speed2']
+    global node_idx
     if save_to_file:
         with open(log_file, "w") as f:
             f.write("")  # Optional: just clears the file
@@ -273,15 +278,37 @@ def plot3dSimulationSingle(tube, ax, line_width=5, step = 1000, x_dim=1, y_dim=2
                 with open(log_file, "a") as f:
                     f.write(f"{point}, {color_map[agent_id]}\n")
 
+           
+            
             if(agent_id not in rects_dict):
                 rects_dict[agent_id] = []
-            
             rects_dict[agent_id].append(point)
 
-            if i % step == 0 or i >= length-1:
+            if step_node ==0 and (i % step == 0 or i >= length-1):
                 plotPolyLine(rects_dict[agent_id], color_map[agent_id], ax)
                 rects_dict[agent_id] = [rects_dict[agent_id][-1]]
+
+
+    for agent_id in tube:
+        if(agent_id not in node_rect_cache):
+
+            node_rect_cache[agent_id] = []
+        node_rect_cache[agent_id] += rects_dict[agent_id]
+
+    if( node_idx % step_node==0  ):
+
+        for agent_id in tube:
+
+            plotPolyLine(node_rect_cache[agent_id], color_map[agent_id], ax)
+            node_rect_cache[agent_id] = []
+
+    node_idx+=1
     return ax
+
+def plotRemaining(ax):
+    for agent_id, rects in  node_rect_cache.items():
+        if (len(rects) > 0 ):
+            plotPolyLine(rects, color_map[agent_id], ax)
 
 
 def plotPolyLine(points, color, ax):
