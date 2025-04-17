@@ -1028,7 +1028,8 @@ class Verifier:
             reduction_queue.reverse()
         else:
             trace_length = int(min(len(v) for v in node.trace.values()) // 2)
-            reduction_queue = [(0, trace_length, trace_length)]
+            reduction_queue = [(i, i+1, 1) for i in range(0, trace_length)]
+            reduction_queue.reverse()
         # for idx, end_idx,combine_len in reduction_queue:
         hits = []
         while reduction_queue:
