@@ -18,8 +18,6 @@ color_map = {}
 node_rect_cache ={}
 node_idx = 0
 
-
-
 def plot3dReachtubeSingle(tube, ax, x_dim=1, y_dim=2, z_dim=3, edge=False,  log_file="bounding_boxes.txt", save_to_file = True, step =1000):
     if os.path.exists('plotter_config.json'):
         with open('plotter_config.json', 'r') as f:
@@ -30,16 +28,12 @@ def plot3dReachtubeSingle(tube, ax, x_dim=1, y_dim=2, z_dim=3, edge=False,  log_
             step = int(config['speed'])
             save_to_file = bool(config['save'])
             log_file = config['log_file']
-    if save_to_file:
-        # Open file in write mode ONCE to clear existing content
-        with open(log_file, "w") as f:
-            f.write("")  # Optional: just clears the file
-
-    
+            node_batch = config['node_batch']
+    global node_idx
     rects_dict = {}
     length = len(tube[list(tube.keys())[0]])
-    for i in range(0, length, 2):
 
+    for i in range(0, length,2):
         for agent_id in tube:
             if agent_id not in color_map:
                 color_map[agent_id] = int_to_color[len(color_map) +1]
@@ -53,12 +47,70 @@ def plot3dReachtubeSingle(tube, ax, x_dim=1, y_dim=2, z_dim=3, edge=False,  log_
                     f.write(f"{box}, {color_map[agent_id]}\n")
 
             if(agent_id not in rects_dict):
-                rects_dict[agent_id] = []
+                 rects_dict[agent_id] = []
             
             rects_dict[agent_id].append(box)
-            if i % step == 0 or i >= length-2:
-                plotGrid(ax, color_map[agent_id] , rects=rects_dict[agent_id])
+
+            if not node_batch and (i % step == 0 or i >= length-2):
+                plotGrid(ax, color_map[agent_id], rects_dict[agent_id]  )
                 rects_dict[agent_id] = []
+
+
+    for agent_id in tube:
+        if(agent_id not in node_rect_cache):
+
+            node_rect_cache[agent_id] = []
+        node_rect_cache[agent_id] += rects_dict[agent_id]
+
+    if( node_batch and node_idx % step==0  ):
+
+        for agent_id in tube:
+
+            plotGrid(ax, color_map[agent_id], node_rect_cache[agent_id] )
+            node_rect_cache[agent_id] = []
+
+    node_idx+=1
+    return ax
+    
+    
+    # if os.path.exists('plotter_config.json'):
+    #     with open('plotter_config.json', 'r') as f:
+    #         config = json.load(f)
+    #         x_dim = config['x_dim']
+    #         y_dim = config['y_dim']
+    #         z_dim = config['z_dim']
+    #         step = int(config['speed'])
+    #         save_to_file = bool(config['save'])
+    #         log_file = config['log_file']
+    # if save_to_file:
+    #     # Open file in write mode ONCE to clear existing content
+    #     with open(log_file, "w") as f:
+    #         f.write("")  # Optional: just clears the file
+
+    
+    # rects_dict = {}
+    # length = len(tube[list(tube.keys())[0]])
+    # for i in range(0, length, 2):
+
+    #     for agent_id in tube:
+    #         if agent_id not in color_map:
+    #             color_map[agent_id] = int_to_color[len(color_map) +1]
+            
+    #         trace = tube[agent_id]
+    #         lb = trace[i]
+    #         ub =  trace[i + 1]
+    #         box = [[lb[x_dim]-1, lb[y_dim]-1, lb[z_dim]-1], [ub[x_dim]+1, ub[y_dim]+1, ub[z_dim]+1]]
+    #         if(save_to_file):
+    #             with open(log_file, "a") as f:
+    #                 f.write(f"{box}, {color_map[agent_id]}\n")
+
+    #         if(agent_id not in rects_dict):
+    #             rects_dict[agent_id] = []
+            
+    #         rects_dict[agent_id].append(box)
+    #         if i % step == 0 or i >= length-2:
+    #             plotGrid(ax, color_map[agent_id] , rects=rects_dict[agent_id])
+    #             rects_dict[agent_id] = []
 
            
 
@@ -258,11 +310,9 @@ def plot3dSimulationSingle(tube, ax, line_width=5, step = 1000, x_dim=1, y_dim=2
             step = int(config['speed'])
             save_to_file = bool(config['save'])
             log_file = config['log_file']
-            step_node = config['speed2']
+            node_batch = config['node_batch']
     global node_idx
-    if save_to_file:
-        with open(log_file, "w") as f:
-            f.write("")  # Optional: just clears the file
+
     rects_dict = {}
     length = len(tube[list(tube.keys())[0]])-1
 
@@ -284,7 +334,7 @@ def plot3dSimulationSingle(tube, ax, line_width=5, step = 1000, x_dim=1, y_dim=2
                 rects_dict[agent_id] = []
             rects_dict[agent_id].append(point)
 
-            if step_node ==0 and (i % step == 0 or i >= length-1):
+            if not node_batch and (i % step == 0 or i >= length-1):
                 plotPolyLine(rects_dict[agent_id], color_map[agent_id], ax)
                 rects_dict[agent_id] = [rects_dict[agent_id][-1]]
 
@@ -295,7 +345,7 @@ def plot3dSimulationSingle(tube, ax, line_width=5, step = 1000, x_dim=1, y_dim=2
             node_rect_cache[agent_id] = []
         node_rect_cache[agent_id] += rects_dict[agent_id]
 
-    if( node_idx % step_node==0  ):
+    if( node_batch and node_idx % step==0  ):
 
         for agent_id in tube:
 
@@ -305,10 +355,14 @@ def plot3dSimulationSingle(tube, ax, line_width=5, step = 1000, x_dim=1, y_dim=2
     node_idx+=1
     return ax
 
-def plotRemaining(ax):
+def plotRemaining(ax, verify):
     for agent_id, rects in  node_rect_cache.items():
         if (len(rects) > 0 ):
-            plotPolyLine(rects, color_map[agent_id], ax)
+            if(verify):
+                plotGrid(ax, color_map[agent_id], rects)
+            else:
+                plotPolyLine(rects, color_map[agent_id], ax)
+            
 
 
 def plotPolyLine(points, color, ax):
