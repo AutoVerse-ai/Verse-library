@@ -225,7 +225,7 @@ def plotGrid(ax,color, rects):
     
     # Create and display the grid
     grid = pv.UnstructuredGrid(cells, celltypes, vertices)
-    ax.add_mesh(grid, show_edges=False, color=color, opacity=0.5,reset_camera=False)
+    ax.add_mesh(grid, show_edges=False, color=color, opacity=0.5)
 
 
 def plot3dMap(lane_map, color="k", ax=None, width=0.1, num=20):
