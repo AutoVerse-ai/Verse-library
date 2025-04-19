@@ -12,7 +12,6 @@ import json
 vtk.vtkLogger.SetStderrVerbosity(vtk.vtkLogger.VERBOSITY_OFF)
 
 
-int_to_color = {1:'b', 2:'r', 3:'g', 4: 'purple', 5:'orange'}
 color_map = {}
 
 node_rect_cache ={}
@@ -36,7 +35,9 @@ def plot3dReachtubeSingle(tube, ax, x_dim=1, y_dim=2, z_dim=3, edge=False,  log_
     for i in range(0, length,2):
         for agent_id in tube:
             if agent_id not in color_map:
-                color_map[agent_id] = int_to_color[len(color_map) +1]
+                print("skjasksajka",agent_id)
+                color_map[agent_id] = agent_id.split('_')[1]
+
             
             trace = tube[agent_id]
             lb = trace[i]
@@ -224,7 +225,7 @@ def plotGrid(ax,color, rects):
     
     # Create and display the grid
     grid = pv.UnstructuredGrid(cells, celltypes, vertices)
-    ax.add_mesh(grid, show_edges=False, color=color, opacity=0.5)
+    ax.add_mesh(grid, show_edges=False, color=color, opacity=0.5,reset_camera=False)
 
 
 def plot3dMap(lane_map, color="k", ax=None, width=0.1, num=20):
@@ -319,7 +320,7 @@ def plot3dSimulationSingle(tube, ax, line_width=5, step = 1000, x_dim=1, y_dim=2
     for i in range(0, length ):
         for agent_id in tube:
             if agent_id not in color_map:
-                color_map[agent_id] = int_to_color[len(color_map) +1]
+                color_map[agent_id] = agent_id.split('_')[1]
             
             trace = tube[agent_id]
             lb = trace[i]
