@@ -35,7 +35,6 @@ def plot3dReachtubeSingle(tube, ax, x_dim=1, y_dim=2, z_dim=3, edge=False,  log_
     for i in range(0, length,2):
         for agent_id in tube:
             if agent_id not in color_map:
-                print("skjasksajka",agent_id)
                 color_map[agent_id] = agent_id.split('_')[1]
 
             
