@@ -13,7 +13,7 @@ class Lane:
         self.segment_list: List[AbstractLane] = seg_list
         self.speed_limit = speed_limit
         self._set_longitudinal_start()
-        self.lane_width = seg_list[0].width
+        self.lane_width = seg_list[0].width # "what about the seg_list is mixed between straight and circular ? "
 
     def _set_longitudinal_start(self):
         longitudinal_start = 0

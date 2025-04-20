@@ -14,16 +14,23 @@ INTERSECT_VIRT_LANE = re.compile(r"[A-Z]+_\d+_\d+")
 
 
 class LaneMap:
+    """
+    Description:
+
+    """
     def __init__(self, lane_seg_list: List[Lane] = []):
         self.lane_dict: Dict[str, Lane] = {}
         self.left_lane_dict: Dict[str, List[str]] = {}
         self.right_lane_dict: Dict[str, List[str]] = {}
-        self.h_dict = {}
+        self.h_dict = {} 
         for lane_seg in lane_seg_list:
             self.lane_dict[lane_seg.id] = lane_seg
             self.left_lane_dict[lane_seg.id] = []
             self.right_lane_dict[lane_seg.id] = []
 
+    # NOTE:
+    # I do not see any functions that use the variables left_lane_dict, right_lane_dict, and h_dict
+    # What do these variables do and what are the cases to update them ?
     def add_lanes(self, lane_seg_list: List[AbstractLane]):
         for lane_seg in lane_seg_list:
             self.lane_dict[lane_seg.id] = lane_seg
@@ -38,6 +45,10 @@ class LaneMap:
 
         # @staticmethod
         # def _get_phys_lane(lane):
+        """
+        Description:
+        Given a lane, in Lane type, 
+        """
         if isinstance(lane, Enum):
             lane = lane.name
         if VIRT_LANE.match(lane):
@@ -48,9 +59,14 @@ class LaneMap:
         #     return lane
         return lane
 
-    def lane_geometry(self, lane_idx):
+    # NOTE: 
+    # - lane_geometry is not defined in AbstractLane, StraightLane, CircularLane
+    # - lane_geometry is defined on LaneSegment class, but it seems this class is under development
+    def lane_geometry(self, lane_idx): 
         return self.lane_dict[LaneMap.get_phys_lane(lane_idx)].get_geometry()
 
+    # NOTE:
+    # - Add assertions about np.shape(position), make it inside the StraightLane and CircularLane class
     def get_longitudinal_position(self, lane_idx: str, position: np.ndarray) -> float:
         if not isinstance(position, np.ndarray):
             position = np.array(position)
@@ -58,6 +74,8 @@ class LaneMap:
         lane = self.lane_dict[LaneMap.get_phys_lane(lane_idx)]
         return lane.get_longitudinal_position(position)
 
+    # NOTE:
+    # - Add assertions about np.shape(position), make it inside the StraightLane and CircularLane class
     def get_lateral_distance(self, lane_idx: str, position: np.ndarray) -> float:
         if not isinstance(position, np.ndarray):
             position = np.array(position)
