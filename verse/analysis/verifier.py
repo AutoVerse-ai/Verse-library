@@ -586,7 +586,7 @@ class Verifier:
           
             #ax.render()
             if ax is not None:
-                plot3dReachtubeSingle(node.trace, ax )
+                plot3dReachtubeSingleLive(node.trace, ax )
             return (
                 node.id,
                 later,
@@ -714,7 +714,7 @@ class Verifier:
             #ax.show()
 
         if ax is not None:
-            plot3dReachtubeSingle(node.trace, ax )
+            plot3dReachtubeSingleLive(node.trace, ax )
        
 
         return (

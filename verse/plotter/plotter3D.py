@@ -10,14 +10,26 @@ import vtk
 import os
 import json
 vtk.vtkLogger.SetStderrVerbosity(vtk.vtkLogger.VERBOSITY_OFF)
-
+from collections import OrderedDict
 
 color_map = {}
 
 node_rect_cache ={}
 node_idx = 0
 
-def plot3dReachtubeSingle(tube, ax, x_dim=1, y_dim=2, z_dim=3, edge=False,  log_file="bounding_boxes.txt", save_to_file = True, step =1000):
+
+load_time=0
+#load_idx = 0
+
+
+plotted = []
+not_plotted = []
+
+offset = 0
+prev_time = 0
+
+
+def plot3dReachtubeSingleLive(tube, ax, x_dim=1, y_dim=2, z_dim=3, edge=False,  log_file="bounding_boxes.txt", save_to_file = True, step =1000):
     if os.path.exists('plotter_config.json'):
         with open('plotter_config.json', 'r') as f:
             config = json.load(f)
@@ -29,6 +41,8 @@ def plot3dReachtubeSingle(tube, ax, x_dim=1, y_dim=2, z_dim=3, edge=False,  log_
             log_file = config['log_file']
             node_batch = config['node_batch']
     global node_idx
+    global offset
+    global prev_time
     rects_dict = {}
     length = len(tube[list(tube.keys())[0]])
 
@@ -40,11 +54,17 @@ def plot3dReachtubeSingle(tube, ax, x_dim=1, y_dim=2, z_dim=3, edge=False,  log_
             
             trace = tube[agent_id]
             lb = trace[i]
+            if lb[0] ==0:
+                offset = prev_time
             ub =  trace[i + 1]
             box = [[lb[x_dim]-1, lb[y_dim]-1, lb[z_dim]-1], [ub[x_dim]+1, ub[y_dim]+1, ub[z_dim]+1]]
+
             if(save_to_file):
                 with open(log_file, "a") as f:
-                    f.write(f"{box}, {color_map[agent_id]}\n")
+    
+                    save_time = offset + ub[0]
+                    f.write(f"{box}, {color_map[agent_id]}, {save_time}\n")
+                    prev_time = save_time   
 
             if(agent_id not in rects_dict):
                  rects_dict[agent_id] = []
@@ -61,7 +81,6 @@ def plot3dReachtubeSingle(tube, ax, x_dim=1, y_dim=2, z_dim=3, edge=False,  log_
 
             node_rect_cache[agent_id] = []
         node_rect_cache[agent_id] += rects_dict[agent_id]
-
     if( node_batch and node_idx % step==0  ):
 
         for agent_id in tube:
@@ -72,118 +91,155 @@ def plot3dReachtubeSingle(tube, ax, x_dim=1, y_dim=2, z_dim=3, edge=False,  log_
     node_idx+=1
     return ax
     
-    
-    # if os.path.exists('plotter_config.json'):
-    #     with open('plotter_config.json', 'r') as f:
-    #         config = json.load(f)
-    #         x_dim = config['x_dim']
-    #         y_dim = config['y_dim']
-    #         z_dim = config['z_dim']
-    #         step = int(config['speed'])
-    #         save_to_file = bool(config['save'])
-    #         log_file = config['log_file']
-    # if save_to_file:
-    #     # Open file in write mode ONCE to clear existing content
-    #     with open(log_file, "w") as f:
-    #         f.write("")  # Optional: just clears the file
-
-    
-    # rects_dict = {}
-    # length = len(tube[list(tube.keys())[0]])
-    # for i in range(0, length, 2):
-
-    #     for agent_id in tube:
-    #         if agent_id not in color_map:
-    #             color_map[agent_id] = int_to_color[len(color_map) +1]
-            
-    #         trace = tube[agent_id]
-    #         lb = trace[i]
-    #         ub =  trace[i + 1]
-    #         box = [[lb[x_dim]-1, lb[y_dim]-1, lb[z_dim]-1], [ub[x_dim]+1, ub[y_dim]+1, ub[z_dim]+1]]
-    #         if(save_to_file):
-    #             with open(log_file, "a") as f:
-    #                 f.write(f"{box}, {color_map[agent_id]}\n")
-
-    #         if(agent_id not in rects_dict):
-    #             rects_dict[agent_id] = []
-            
-    #         rects_dict[agent_id].append(box)
-    #         if i % step == 0 or i >= length-2:
-    #             plotGrid(ax, color_map[agent_id] , rects=rects_dict[agent_id])
-    #             rects_dict[agent_id] = []
-
            
+def preprocess_file(ax, log_file="boxes1.txt"):
+   
+    with open(log_file, "r") as f:
+        lines = f.readlines()
+        line = lines[0]
 
-              
+        box_str, color,time = line.rsplit(",", 2)  # Split into box and color and time
+        box = ast.literal_eval(box_str.strip())  # Convert box string to list
+        if( len(np.array(box).shape) !=2):
+            verify = False
+        else:
+            verify = True
+    if os.path.exists('plotter_config.json'):
+        with open('plotter_config.json', 'r') as f:
+            config = json.load(f)
+            step = int(config['speed'])
 
-def load_and_plot(ax, step=None, log_file="boxes1.txt"):
-    try:
-        with open(log_file, "r") as f:
-            lines = f.readlines()
-            line = lines[0]
-            box_str, color = line.rsplit(",", 1)  # Split into box and color
-            box = ast.literal_eval(box_str.strip())  # Convert box string to list
-            if( len(np.array(box).shape) !=2):
-                load_and_plot_simulations(ax,step, log_file)
+    rect_dict = {}
+
+    for i, line in enumerate(lines):
+        # Extract the box and color from each line
+        box_str, color,time = line.rsplit(",", 2)  # Split into box and color
+        if(box_str == "END"):
+            rect_dict = {}
+            # for color, rects in rect_dict.items():
+            #     #plotted.append((plotPolyLine(rects, color, ax),  ))
+            #     rects = []
+            continue
+
+        box = ast.literal_eval(box_str.strip())  # Convert box string to list
+        color = color.strip().strip("'\"")  # Clean up the color string
+        if( color not in rect_dict):
+            rect_dict[color] = []
+        rect_dict[color].append(box)
+
+        if (len(rect_dict[color]) % step == 0 or i >= len(lines)-1):
+            if(verify):
+                plotted.append((plotGrid(ax, color, rect_dict[color]), float(time)))
+                rect_dict[color] = []
+
             else:
-                load_and_plot_boxes(ax,step, log_file )
+                plotted.append((   plotPolyLine(rect_dict[color], color, ax)   , float(time)))
+                rect_dict[color] = [rect_dict[color][-1]]
 
-        if not lines:
-            print("Nothing found in the file.")
-            return ax
-    except FileNotFoundError:
-        print(f"File {log_file} not found.")
+    plotted.sort(key=lambda x: x[1])
 
 
-def load_and_plot_boxes(ax, step=1000, log_file="boxes1.txt"):
-    with open(log_file, "r") as f:
-        lines = f.readlines()
-    rect_dict = {}
-    for i, line in enumerate(lines):
-        # Extract the box and color from each line
-        box_str, color = line.rsplit(",", 1)  # Split into box and color
-        box = ast.literal_eval(box_str.strip())  # Convert box string to list
-        color = color.strip().strip("'\"")  # Clean up the color string
-        if( color not in rect_dict):
-            rect_dict[color] = []
-        rect_dict[color].append(box)
+    # print("Plotted: ", len(plotted), plotted[0][1], plotted[-2][1], plotted[-1][1])
+    # print("Not Plotted: ", len(not_plotted))
+    
 
-        #poly = pc.box2poly(np.array(box).T)
-    for color, rects in rect_dict.items():
-        plotGrid(ax, color, rects)
+
+
+
+def load_and_plot(ax, target_time=0):
+    global load_time
+
+    if target_time > load_time:
+        while len(not_plotted):
+            actor, timestamp = not_plotted[-1]  # Peek (don't pop yet)
+            if timestamp > target_time:
+                break  # Stop if next frame is past target_time
+            actor, timestamp = not_plotted.pop()
+            ax.add_actor(actor, reset_camera=False)
+            plotted.append((actor, timestamp))
+            load_time = timestamp
+
+    elif target_time < load_time:
+        while len(plotted):
+            actor, timestamp = plotted[-1]  # Peek
+            if timestamp < target_time:
+                break  # Stop if next frame is earlier than target_time
+            actor, timestamp = plotted.pop()
+            ax.remove_actor(actor, reset_camera=False)
+            not_plotted.append((actor, timestamp))
+            load_time = timestamp
+
+
+
+    # try:
+    #     with open(log_file, "r") as f:
+    #         lines = f.readlines()
+    #         line = lines[0]
+    #         box_str, color,time = line.rsplit(",", 1)  # Split into box and color and time
+    #         box = ast.literal_eval(box_str.strip())  # Convert box string to list
+    #         if( len(np.array(box).shape) !=2):
+    #             #load_and_plot_simulations(ax, log_file, time =0 )
+                
+    #         else:
+    #             #load_and_plot_boxes(ax, log_file, time=0)
+
+    #     if not lines:
+    #         print("Nothing found in the file.")
+    #         return ax
+    # except FileNotFoundError:
+    #     print(f"File {log_file} not found.")
+
+
+# def load_and_plot_boxes(ax, log_file="boxes1.txt"):
+#     with open(log_file, "r") as f:
+#         lines = f.readlines()
+        
+#     rect_dict = {}
+#     for i, line in enumerate(lines):
+#         # Extract the box and color from each line
+#         box_str, color = line.rsplit(",", 1)  # Split into box and color
+#         box = ast.literal_eval(box_str.strip())  # Convert box string to list
+#         color = color.strip().strip("'\"")  # Clean up the color string
+#         if( color not in rect_dict):
+#             rect_dict[color] = []
+#         rect_dict[color].append(box)
+
+#         #poly = pc.box2poly(np.array(box).T)
+#     for color, rects in rect_dict.items():
+#         plotGrid(ax, color, rects)
     
     
-    return ax
+#    return ax
 
 
-def load_and_plot_simulations(ax, step = None, log_file = "boxes1.txt"):
-    with open(log_file, "r") as f:
-        lines = f.readlines()
-    rect_dict = {}
-    for i, line in enumerate(lines):
-        # Extract the box and color from each line
-        box_str, color = line.rsplit(",", 1)  # Split into box and color
-        box = ast.literal_eval(box_str.strip())  # Convert box string to list
-        color = color.strip().strip("'\"")  # Clean up the color string
-        if( color not in rect_dict):
-            rect_dict[color] = []
-        rect_dict[color].append(box)
+# def load_and_plot_simulations(ax, log_file = "boxes1.txt", time = 0):
+#     with open(log_file, "r") as f:
+#         lines = f.readlines()
+#     rect_dict = {}
+#     for i, line in enumerate(lines):
+#         # Extract the box and color from each line
+#         box_str, color = line.rsplit(",", 1)  # Split into box and color
+#         box = ast.literal_eval(box_str.strip())  # Convert box string to list
+#         color = color.strip().strip("'\"")  # Clean up the color string
+#         if( color not in rect_dict):
+#             rect_dict[color] = []
+#         rect_dict[color].append(box)
 
-        #poly = pc.box2poly(np.array(box).T)
-    for color, points in rect_dict.items():
-        plotPolyLine(points, color, ax)
+#         #poly = pc.box2poly(np.array(box).T)
+#     for color, points in rect_dict.items():
+#         plotPolyLine(points, color, ax, time)
     
     
-    return ax
+#     return ax
 
 def plotGrid(ax,color, rects):
     vertices = []
     cell_indices = []
-
     
     
     # Add vertices for each rectangle and track indices
     for i in range(len(rects)):
+
         lb = rects[i][0]
         ub = rects[i][1]
         
@@ -224,83 +280,11 @@ def plotGrid(ax,color, rects):
     
     # Create and display the grid
     grid = pv.UnstructuredGrid(cells, celltypes, vertices)
-    ax.add_mesh(grid, show_edges=False, color=color, opacity=0.5)
+    
+    return ax.add_mesh(grid, show_edges=False, color=color, opacity=0.5)
+     
 
-
-def plot3dMap(lane_map, color="k", ax=None, width=0.1, num=20):
-    if ax is None:
-        ax = pv.Plotter()
-    for lane_idx in lane_map.lane_dict:
-        lane = lane_map.lane_dict[lane_idx]
-        if lane.plotted:
-            for lane_seg in lane.segment_list:
-                # if lane_seg.type == 'Straight':
-                oc, oc_x, oc_y, oc_z = lane_seg.get_lane_center(num)
-                points = np.vstack((oc_x, oc_y, oc_z)).T
-                spline = pv.Spline(points, 400)
-                tube = spline.tube(radius=width)
-                ax.add_mesh(tube, color=color)
-                # elif lane_seg.type == 'Circular':
-                #     oc, oc_x, oc_y, oc_z = lane_seg.get_lane_center(num)
-
-    return ax
-
-
-def plot3dReachtube(root, agent_id, x_dim, y_dim, z_dim, color="b", ax=None, edge=False):
-    if isinstance(root, AnalysisTree):
-        root = root.root
-
-    if ax is None:
-        ax = pv.Plotter()
-
-    queue = [root]
-    idx = 0
-
-    while queue != []:
-        node = queue.pop(0)
-        traces = node.trace
-        trace = traces[agent_id]
-        data = []
-        for i in range(0, len(trace), 2):
-            data.append([trace[i], trace[i + 1]])
-        # for key in sorted(node.lower_bound):
-        #     lower_bound.append(node.lower_bound[key])
-        # for key in sorted(node.upper_bound):
-        #     upper_bound.append(node.upper_bound[key])
-        ax = plot3dReachtubeSingle(data, x_dim, y_dim, z_dim, ax, color, edge=edge)
-
-        queue += node.child
-        idx += 1
-
-    return ax
-    # for i in range(min(len(lower_bound), len(upper_bound))):
-    #     lb = list(map(float, lower_bound[i]))
-    #     ub = list(map(float, upper_bound[i]))
-
-    #     box = [[lb[x_dim], lb[y_dim], lb[z_dim]],[ub[x_dim], ub[y_dim], ub[z_dim]]]
-    #     poly = pc.box2poly(np.array(box).T)
-    #     plot_polytope_3d(poly.A, poly.b, ax = ax, color = '#b3de69')
-
-
-def plot_polytope_3d(A, b, ax=None, color="red", trans=0.2, edge=False, render = False):
-    if ax is None:
-        ax = pv.Plotter()
-
-    poly = pc.Polytope(A=A, b=b)
-    vertices = pc.extreme(poly)
-    cloud = pv.PolyData(vertices)
-    volume = cloud.delaunay_3d()
-    shell = volume.extract_geometry()
-    if len(shell.points) <= 0:
-        return ax
-    ax.add_mesh(shell, opacity=trans, color=color, render= render)
-    if edge:
-        edges = shell.extract_feature_edges(20)
-        ax.add_mesh(edges, color="k", line_width=0.1, opacity=0.5, render= render)
-        
-    return ax
-
-def plot3dSimulationSingle(tube, ax, line_width=5, step = 1000, x_dim=1, y_dim=2, z_dim=3, save_to_file = True, log_file = "simulations.txt" ):
+def plot3dSimulationSingleLive(tube, ax, line_width=3, step = 1000, x_dim=1, y_dim=2, z_dim=3, save_to_file = True, log_file = "simulations.txt" ):
     if os.path.exists('plotter_config.json'):
         with open('plotter_config.json', 'r') as f:
             config = json.load(f)
@@ -312,6 +296,8 @@ def plot3dSimulationSingle(tube, ax, line_width=5, step = 1000, x_dim=1, y_dim=2
             log_file = config['log_file']
             node_batch = config['node_batch']
     global node_idx
+    global offset
+    global prev_time
 
     rects_dict = {}
     length = len(tube[list(tube.keys())[0]])-1
@@ -323,10 +309,16 @@ def plot3dSimulationSingle(tube, ax, line_width=5, step = 1000, x_dim=1, y_dim=2
             
             trace = tube[agent_id]
             lb = trace[i]
+            if(lb[0] ==0):
+                offset = prev_time
+
+                
             point = [lb[x_dim]-1, lb[y_dim]-1, lb[z_dim]-1]
             if(save_to_file):
                 with open(log_file, "a") as f:
-                    f.write(f"{point}, {color_map[agent_id]}\n")
+                    save_time = offset + lb[0]
+                    f.write(f"{point}, {color_map[agent_id]}, {save_time}\n")
+                    prev_time = save_time   
 
            
             
@@ -350,24 +342,47 @@ def plot3dSimulationSingle(tube, ax, line_width=5, step = 1000, x_dim=1, y_dim=2
         for agent_id in tube:
 
             plotPolyLine(node_rect_cache[agent_id], color_map[agent_id], ax)
-            node_rect_cache[agent_id] = []
+            node_rect_cache[agent_id] = [node_rect_cache[agent_id][-1]]
 
     node_idx+=1
     return ax
 
 def plotRemaining(ax, verify):
+    global node_rect_cache
+
     for agent_id, rects in  node_rect_cache.items():
-        if (len(rects) > 0 ):
+        if (len(rects) > 0 ):   
             if(verify):
                 plotGrid(ax, color_map[agent_id], rects)
             else:
                 plotPolyLine(rects, color_map[agent_id], ax)
+    global offset
+    global prev_time
+    global node_idx
+            
+    node_rect_cache = {}
+    node_idx = 0
+
+    
+    offset = 0
+    prev_time = 0
+
+    if(not verify):
+        if os.path.exists('plotter_config.json'):
+            with open('plotter_config.json', 'r') as f:
+                config = json.load(f)
+                log_file = config['log_file']
+                save_to_file = bool(config['save'])
+        if(save_to_file):
+            with open(log_file, "a") as f:
+                f.write(f"END, placeholder, -1\n")
             
 
 
 def plotPolyLine(points, color, ax):
     n_points = len(points)
     cells = np.full((n_points-1, 3), 2, dtype=np.int64)
+    #print(points)
 
     # Set the point indices for each line segment
     # Each line connects point i to point i+1
@@ -379,7 +394,90 @@ def plotPolyLine(points, color, ax):
     
     # Create the polyline
     poly_line = pv.PolyData(points, lines=cells)
-    ax.add_mesh(poly_line, color=color, line_width=5)
+    return  (ax.add_mesh(poly_line, color=color, line_width=3   ))
+
+#OLD METHODS
+#==================================================================================================================
+
+def plot3dReachtubeSingle(tube, x_dim, y_dim, z_dim, ax, color, edge=True):
+    for lb, ub in tube:
+        box = [[lb[x_dim], lb[y_dim], lb[z_dim]], [ub[x_dim], ub[y_dim], ub[z_dim]]]
+        poly = pc.box2poly(np.array(box).T)
+        ax = plot_polytope_3d(poly.A, poly.b, ax=ax, color=color, edge=edge)
+    return ax
+
+
+def plot3dMap(lane_map, color="k", ax=None, width=0.1, num=20):
+    if ax is None:
+        ax = pv.Plotter()
+    for lane_idx in lane_map.lane_dict:
+        lane = lane_map.lane_dict[lane_idx]
+        if lane.plotted:
+            for lane_seg in lane.segment_list:
+                # if lane_seg.type == 'Straight':
+                oc, oc_x, oc_y, oc_z = lane_seg.get_lane_center(num)
+                points = np.vstack((oc_x, oc_y, oc_z)).T
+                spline = pv.Spline(points, 400)
+                tube = spline.tube(radius=width)
+                ax.add_mesh(tube, color=color)
+                # elif lane_seg.type == 'Circular':
+                #     oc, oc_x, oc_y, oc_z = lane_seg.get_lane_center(num)
+
+    return ax
+
+
+def plot3dReachtube(root, agent_id, x_dim, y_dim, z_dim, color="b", ax=None, edge=True):
+    if isinstance(root, AnalysisTree):
+        root = root.root
+
+    if ax is None:
+        ax = pv.Plotter()
+
+    queue = [root]
+    idx = 0
+    while queue != []:
+        node = queue.pop(0)
+        traces = node.trace
+        trace = traces[agent_id]
+        data = []
+        for i in range(0, len(trace), 2):
+            data.append([trace[i], trace[i + 1]])
+        # for key in sorted(node.lower_bound):
+        #     lower_bound.append(node.lower_bound[key])
+        # for key in sorted(node.upper_bound):
+        #     upper_bound.append(node.upper_bound[key])
+        ax = plot3dReachtubeSingle(data, x_dim, y_dim, z_dim, ax, color, edge=edge)
+        queue += node.child
+        idx += 1
+
+    return ax
+    # for i in range(min(len(lower_bound), len(upper_bound))):
+    #     lb = list(map(float, lower_bound[i]))
+    #     ub = list(map(float, upper_bound[i]))
+
+    #     box = [[lb[x_dim], lb[y_dim], lb[z_dim]],[ub[x_dim], ub[y_dim], ub[z_dim]]]
+    #     poly = pc.box2poly(np.array(box).T)
+    #     plot_polytope_3d(poly.A, poly.b, ax = ax, color = '#b3de69')
+
+
+def plot_polytope_3d(A, b, ax=None, color="red", trans=0.2, edge=True):
+    if ax is None:
+        ax = pv.Plotter()
+
+    poly = pc.Polytope(A=A, b=b)
+    vertices = pc.extreme(poly)
+    cloud = pv.PolyData(vertices)
+    volume = cloud.delaunay_3d()
+    shell = volume.extract_geometry()
+    if len(shell.points) <= 0:
+        return ax
+    ax.add_mesh(shell, opacity=trans, color=color)
+    if edge:
+        edges = shell.extract_feature_edges(20)
+        ax.add_mesh(edges, color="k", line_width=0.1, opacity=0.5)
+    return ax
+
+
 def plot_line_3d(start, end, ax=None, color="blue", line_width=1):
     if ax is None:
         ax = pv.Plotter()
@@ -390,9 +488,7 @@ def plot_line_3d(start, end, ax=None, color="blue", line_width=1):
     # Preview how this line intersects this mesh
     line = pv.Line(a, b)
 
-    ax.add_mesh(line, color=color, line_width=line_width, render=False)
-    #ax.reset_camera()
-
+    ax.add_mesh(line, color=color, line_width=line_width)
     return ax
 
 

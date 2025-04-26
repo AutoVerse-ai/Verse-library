@@ -291,7 +291,7 @@ class Simulator:
                 # print(f"node {node.id} dur {timeit.default_timer() - t}")
 
                 if ax is not None:
-                    plot3dSimulationSingle(node.trace, ax)
+                    plot3dSimulationSingleLive(node.trace, ax)
                 return (node.id, later, [], node.trace, cache_updates)
 
             transit_agents = transitions.keys()
@@ -353,7 +353,7 @@ class Simulator:
             # print(f"node {node.id} dur {timeit.default_timer() - t}")
 
         if ax is not None:
-            plot3dReachtubeSingle(node.trace, ax )
+            plot3dSimulationSingleLive(node.trace, ax )
 
 
         return (node.id, later, next_nodes, node.trace, cache_updates)

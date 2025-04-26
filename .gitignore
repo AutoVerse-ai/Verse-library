@@ -29,3 +29,4 @@ build/
 *.pth
 *.csv
 requirements.txt
+Verse-library\verse\analysis\pyvista_test.py
