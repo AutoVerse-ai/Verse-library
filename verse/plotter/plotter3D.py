@@ -116,9 +116,6 @@ def preprocess_file(ax, log_file="boxes1.txt"):
         box_str, color,time = line.rsplit(",", 2)  # Split into box and color
         if(box_str == "END"):
             rect_dict = {}
-            # for color, rects in rect_dict.items():
-            #     #plotted.append((plotPolyLine(rects, color, ax),  ))
-            #     rects = []
             continue
 
         box = ast.literal_eval(box_str.strip())  # Convert box string to list
@@ -136,7 +133,35 @@ def preprocess_file(ax, log_file="boxes1.txt"):
                 plotted.append((   plotPolyLine(rect_dict[color], color, ax)   , float(time)))
                 rect_dict[color] = [rect_dict[color][-1]]
 
+    def merge_actors_by_timestamp(ax, plotted):
+        # Extract and prepare meshes for merging
+        meshes = []
+        for actor, _ in plotted:
+            # Get the mesh directly from the actor
+            mesh = pv.wrap(actor.GetMapper().GetInput())
+            # Scale if needed
+            meshes.append(mesh)
+    
+        # Merge all meshes
+        if meshes:
+            merged_mesh = meshes[0].copy()
+            for mesh in meshes[1:]:
+                merged_mesh = merged_mesh.merge(mesh)
+            
+            # Add the merged mesh to the plotter
+            ax.add_mesh(merged_mesh, reset_camera=False, show_edges=False, opacity=0.0)
+            return merged_mesh
+        return None
+      
+        
+    
+   
+
     plotted.sort(key=lambda x: x[1])
+    print(len(plotted))
+    merge_actors_by_timestamp(ax, plotted)
+
+
 
 
     # print("Plotted: ", len(plotted), plotted[0][1], plotted[-2][1], plotted[-1][1])
