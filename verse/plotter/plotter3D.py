@@ -271,6 +271,15 @@ def plotGrid(ax,color, rects):
         x0, x1 = lb[0], ub[0]
         y0, y1 = lb[1], ub[1]
         z0, z1 = lb[2], ub[2]
+        if abs(x1-x0)<10:
+            x1+=5
+            x0-=5 
+        if abs(y1-y0)<10:
+            y1+=5
+            y0-=5
+        if abs(z1-z0)<10:
+            z1+=5
+            z0-=5
         
         corners = [
             (x0, y0, z0),  # index 0
