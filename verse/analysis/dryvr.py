@@ -12,13 +12,29 @@ GLOBAL = "GLOBAL"
 
 
 def all_sensitivities_calc(training_traces: np.ndarray, initial_radii: np.ndarray):
+    """
+    Computes the dimension-wise sensitivity over time for a set of system trajectories 
+
+    Parameters
+    -----------
+        training_traces : A 3D NumPy array of shape (num_traces, time_steps, num_dimensions) 
+                            representing simulated trajectories of a dynamical system.
+        initial_radii   : A 1D NumPy array of shape (num_dimensions - 1,) 
+                            representing normalization factors (radii) for each dimension except the first.
+
+    Returns
+    --------
+        y_points : A 2D array of shape (num_dimensions - 1, time_steps - 1), 
+        where each entry [d, t] stores the maximum normalized sensitivity in dimension d + 1 at time step t + 1
+    """
     num_traces: int
     trace_len: int
     ndims: int
-    num_traces, trace_len, ndims = training_traces.shape
+    num_traces, trace_len, ndims = training_traces.shape # This implies training_traces is a 3-D array
     normalizing_initial_set_radii: np.array = initial_radii.copy()
     y_points: np.array = np.zeros((normalizing_initial_set_radii.shape[0], trace_len - 1))
     normalizing_initial_set_radii[np.where(normalizing_initial_set_radii == 0)] = 1.0
+    print(normalizing_initial_set_radii)
     for cur_dim_ind in range(1, ndims):
         # keyi: move out of loop
         normalized_initial_points: np.array = (
@@ -35,7 +51,7 @@ def all_sensitivities_calc(training_traces: np.ndarray, initial_radii: np.ndarra
                             training_traces[:, cur_time_ind, cur_dim_ind],
                             (training_traces.shape[0], 1),
                         ),
-                        "chebychev",
+                        "chebychev",  #NOTE: In this function, 'chebychev' can be interpreted as "chebyshev"
                     )
                     / normalizing_initial_set_radii[cur_dim_ind - 1]
                 )
@@ -47,6 +63,32 @@ def all_sensitivities_calc(training_traces: np.ndarray, initial_radii: np.ndarra
 def get_reachtube_segment(
     training_traces: np.ndarray, initial_radii: np.ndarray, method="PWGlobal"
 ) -> np.array:
+    """
+    Constructs a reachtube segment (a conservative over-approximation of reachable states) from a set of training traces of a dynamical system. 
+
+    Parameters
+    ----------
+        training_traces (np.ndarray):
+        A 3D NumPy array of shape (num_traces, trace_len, ndims) representing multiple sampled trajectories of a system.
+
+        initial_radii (np.ndarray):
+        A 1D array of shape (ndims - 1,) specifying the radius of the initial uncertainty set in each state dimension (excluding time). 
+        It is used for normalizing sensitivity growth.
+
+        method (str, default="PWGlobal"):
+        The method used to compute discrepancy functions (df), which scale the uncertainty over time. Supported methods:
+            "PW": Piecewise linear discrepancy using raw sensitivities
+            "PWGlobal": Convex hull approximation in log-sensitivity space
+
+    Returns
+    -------
+        reachtube_segment (np.ndarray):
+        A 3D array of shape (trace_len - 1, 2, ndims) representing the lower and upper bounds of the reachtube.
+        The second dimension of size 2 represents:
+            0: lower bound
+            1: upper bound
+            Each entry [t, :, d] bounds the value of dimension d at time step t.
+    """
     num_traces: int = training_traces.shape[0]
     ndims: int = training_traces.shape[2]  # This includes time
     trace_len: int = training_traces.shape[1]
@@ -170,11 +212,13 @@ def calcCenterPoint(lower, upper):
     Calculate the center point between the lower and upper bound
     The function only supports list since we assue initial set is always list
 
-    Args:
+    Parameters
+    ----------
         lower (list): lowerbound.
         upper (list): upperbound.
 
-    Returns:
+    Returns
+    -------
         delta (list of float)
 
     """
@@ -191,11 +235,13 @@ def calcDelta(lower, upper):
     Calculate the delta value between the lower and upper bound
     The function only supports list since we assue initial set is always list
 
-    Args:
+    Parameters
+    ----------
         lower (list): lowerbound.
         upper (list): upperbound.
 
-    Returns:
+    Returns
+    -------
         delta (list of float)
 
     """
@@ -212,11 +258,13 @@ def randomPoint(lower, upper, seed=None):
     Pick a random point between lower and upper bound
     This function supports both int or list
 
-    Args:
+    Parameters
+    ----------
         lower (list or int or float): lower bound.
         upper (list or int or float): upper bound.
 
-    Returns:
+    Returns
+    -------
         random point (either float or list of float)
 
     """
@@ -236,9 +284,11 @@ def trimTraces(traces):
     """
     trim all traces to the same length
 
-    Args:
+    Parameters
+    ----------
         traces (list): list of traces generated by simulator
-    Returns:
+    Returns
+    -------
         traces (list) after trim to the same length
 
     """
@@ -261,9 +311,10 @@ def calc_bloated_tube(
     lane_map=None,
 ):
     """
-    This function calculate the reach tube for single given mode
+    This function calculates the reach tube for single given mode
 
-    Args:
+    Parameters
+    ----------
         mode_label (str): mode name
         initial_set (list): a list contains upper and lower bound of the initial set
         time_horizon (float): time horizon to simulate
@@ -274,7 +325,8 @@ def calc_bloated_tube(
         guard_checker (verse.core.guard.Guard or None): guard check object
         guard_str (str): guard string
 
-    Returns:
+    Returns
+    --------
         Bloated reach tube
 
     """
