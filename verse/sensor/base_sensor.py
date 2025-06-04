@@ -53,6 +53,7 @@ def add_states_3d(cont, disc, thing, val, cont_var, disc_var, stat_var):
 class BaseSensor:
     # The baseline sensor is omniscient. Each agent can get the state of all other agents
     def sense(self, agent: BaseAgent, state_dict, lane_map, simulate = True):
+        #NOTE: What is lane_map is doing here ? This param is not accessed in the whole function
         cont = {}
         disc = {}
         len_dict = {"others": len(state_dict) - 1}

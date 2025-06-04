@@ -6,6 +6,8 @@ from verse.agents.example_agent import NPCAgent, CarAgent
 import unittest
 import os
 
+# FIXME: THis function needs a fix
+# state_dict is defined as a dictionary between agent id and the list of agent's data including state, mode, static
 def initialize_agents_examples(mode : str) -> Dict[str, BaseAgent]:
     assert mode in ["mono", "multi"]
     if mode == "mono":
@@ -49,6 +51,9 @@ class TestSensorBasic(unittest.TestCase):
         args = agent.decision_logic.args[0]
         arg_type = args.typ
         thing = args.name
+        # print(agent.decision_logic.state_defs)
+        print(agent.decision_logic.paths)
+        # print(agent.decision_logic.args)
         cont_var = agent.decision_logic.state_defs[arg_type].cont
         disc_var = agent.decision_logic.state_defs[arg_type].disc
         stat_var = agent.decision_logic.state_defs[arg_type].static
