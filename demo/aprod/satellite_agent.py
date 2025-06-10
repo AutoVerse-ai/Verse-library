@@ -9,7 +9,7 @@ from verse.agents import BaseAgent
 import random 
 
 n = 0.00438138 # constant equal to (\mu/r_e^3)^{-3}
-omega_e = np.array([0, 0, n]).T # set angular momentum of chief to be constant pointing in the inertial z-axis
+omega_e = np.array([[0, 0, n]]).T # set angular momentum of chief to be constant pointing in the inertial z-axis
 J = np.diag([0.001, 0.001, 0.002]) # modeling a 1U cubesat
 K = np.linalg.inv(J)
 
@@ -51,12 +51,12 @@ class SatelliteAgent(BaseAgent):
         hq0_dot = (hrho.T @ om).item()/2
         hrho_dot = -((hq0*np.eye(3)-s_hrho) @ om)/2
 
-        om_dot = np.cross(om, omega_ed)-K@np.cross(om+omega_ed, J@(om+omega_ed))
+        om_dot = np.cross(om.flatten(), omega_ed.flatten())-K@np.cross((om+omega_ed).flatten(), (J@(om+omega_ed)).flatten())
 
         return [vx, vy, vz, vx_dot, vy_dot, vz_dot, # 0-5
                 hvx, hvy, hvz, hvx_dot, hvy_dot, hvz_dot, #6-11
-                q0_dot, rho_dot[0], rho_dot[1], rho_dot[2], #12-15
-                hq0_dot, hrho_dot[0], hrho_dot[1], hrho_dot[2], #16-19
+                q0_dot, rho_dot[0][0], rho_dot[1][0], rho_dot[2][0], #12-15
+                hq0_dot, hrho_dot[0][0], hrho_dot[1][0], hrho_dot[2][0], #16-19
                 om_dot[0], om_dot[1], om_dot[2] #20-22
                 ]
     
@@ -87,7 +87,7 @@ class SatelliteAgent(BaseAgent):
 
         # proximity sensor -- realistically should only be able some distance away from the chief/other objects, but assume always active for now
         hpos = [hx, hy, hz]
-        hpos = [h*random.uniform(0.99, 1.01) for h in hlat]
+        hpos = [h*random.uniform(0.99, 1.01) for h in hpos]
         
         hq_prox = SatelliteAgent.add_quat_noise([q1, q2, q3, q0]) # scalar last
         # hq_prox = [hq_prox[-1]] + hq_prox[:-1]
@@ -98,12 +98,12 @@ class SatelliteAgent(BaseAgent):
         hq_int = [hq_int[-1]] + hq_prox[:-1]
 
         # naively averaging positional estimates
-        hpos_int = (np.array(hlat[:3] + hpos)/2).tolist()
+        hpos_int = ((np.array(hlat[:3]) + np.array(hpos))/2).tolist()
 
         return [x, y, z, vx, vy, vz] + hpos_int + hlat[3:] + [q0, q1, q2, q3] + hq_int + [om_x, om_y, om_z]
 
     def TC_simulate(self, mode, initial_condition, time_horizon, time_step, map=None):
-        time_bound = float(time_bound)
+        time_horizon = float(time_horizon)
         number_points = int(np.ceil(time_horizon / time_step))
         t = [round(i * time_step, 10) for i in range(0, number_points)]
         init = initial_condition
