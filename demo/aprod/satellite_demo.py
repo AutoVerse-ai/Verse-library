@@ -85,7 +85,7 @@ if __name__ == "__main__":
     traces = []
     sim_traces = []
     for i in range(N):
-        trace = scenario.simulate(200, 0.1)
+        trace = scenario.simulate(2000, 0.1)
         traces.append(trace)
         sim_traces.append(get_trace(trace))
 
@@ -114,10 +114,10 @@ if __name__ == "__main__":
         # )
         if i>=5:
             continue
-        # fig: go.Figure = simulation_tree(trace, None, fig, true_dim_0, true_dim, [true_dim_0, true_dim], "lines", "trace", plot_color=[['#000000']])
-        # fig: go.Figure = simulation_tree(trace, None, fig, est_dim_0, est_dim, [est_dim_0, est_dim], "lines", "trace")
-        fig: go.Figure = simulation_tree(trace, None, fig, 0, true_dim, [true_dim_0, true_dim], "lines", "trace", plot_color=[['#000000']])
-        fig: go.Figure = simulation_tree(trace, None, fig, 0, est_dim, [est_dim_0, est_dim], "lines", "trace")
+        fig: go.Figure = simulation_tree(trace, None, fig, true_dim_0, true_dim, [true_dim_0, true_dim], "lines", "trace", plot_color=[['#000000']])
+        fig: go.Figure = simulation_tree(trace, None, fig, est_dim_0, est_dim, [est_dim_0, est_dim], "lines", "trace")
+        # fig: go.Figure = simulation_tree(trace, None, fig, 0, true_dim, [true_dim_0, true_dim], "lines", "trace", plot_color=[['#000000']])
+        # fig: go.Figure = simulation_tree(trace, None, fig, 0, est_dim, [est_dim_0, est_dim], "lines", "trace")
         i+=1
 
     fig.data[-2].name = 'Ground truth' # this only m
@@ -169,7 +169,7 @@ if __name__ == "__main__":
 
     fig.update_layout(
         legend_title_text="Trace types",
-        xaxis_title="time",
+        xaxis_title="x",
         yaxis_title="y"
     )
     fig.show()

@@ -95,7 +95,7 @@ class SatelliteAgent(BaseAgent):
         # naively interpolating between proximity and AO sensor measurements
         slerp = Slerp([0,1], R.from_quat([hq, hq_prox]))
         hq_int = slerp(0.5).as_quat() # interpolated value
-        hq_int = [hq_int[-1]] + hq_prox[:-1]
+        hq_int = [hq_int[-1]] + hq_int[:-1]
         """
         Visualizing all or even most q values is not straightforward due to nonlinearity in quaternion computations -- consider just doing a bunch of simulations and taking the extrema in each dimension
         """
@@ -116,7 +116,7 @@ class SatelliteAgent(BaseAgent):
         number_points = int(np.ceil(time_horizon / time_step))
         t = [round(i * time_step, 10) for i in range(0, number_points)]
         init = initial_condition
-        T_obs = 1 # observation interval
+        T_obs = 60 # observation interval
         last_obs = 0 # time of last observation
         init =  SatelliteAgent.apply_sensors(init, 0) # TODO: implement this
         trace = [[0]+list(init)]
@@ -140,7 +140,11 @@ class SatelliteAgent(BaseAgent):
             trace.append([t[i] + time_step] + init)
         return np.array(trace)
 
+
 class NoSensorSatelliteAgent(BaseAgent):
+    '''
+    Satellite agent that doesn't have an internal sensor
+    '''
     def __init__(self, id, code=None, file_name=None):
         super().__init__(id, code, file_name)
     
@@ -210,8 +214,10 @@ class NoSensorSatelliteAgent(BaseAgent):
             trace.append([t[i] + time_step] + init)
         return np.array(trace)
 
-# satellite agent without state estimation
 class GTSatelliteAgent(BaseAgent):
+    '''
+    Satellite agent with no internal state estimation
+    '''
     def __init__(self, id, code=None, file_name=None):
         super().__init__(id, code, file_name)
     
