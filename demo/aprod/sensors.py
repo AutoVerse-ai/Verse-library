@@ -20,6 +20,7 @@ class GroundSensor(GenericSensor):
         x, y, z, vx, vy, vz, hx, hy, hz, hvx, hvy, hvz, q0, q1, q2, q3, hq0, hq1, hq2, hq3, om_x, om_y, om_z = state
         true_lat = [x, y, z, vx, vy, vz] 
         hlat = [h*np.random.uniform(0.95, 1.05) for h in true_lat]
+        # hlat = true_lat
         return [x,y,z,vx,vy,vz] + hlat + [q0, q1, q2, q3, np.nan, np.nan, np.nan, np.nan, om_x, om_y, om_z]
 
 class AOSensor(GenericSensor):

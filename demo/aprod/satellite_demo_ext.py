@@ -56,8 +56,10 @@ if __name__ == "__main__":
     scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False))
 
     dep = NoSensorSatelliteAgent("deputy", file_name=input_code_name)
+    # obs = GTSatelliteAgent("obs1")
+
     scenario.add_agent(dep)
-    T = 2000
+    T = 1500
     dt = 0.1 
     dT = 60 # if less than dt, then update sensor, call controller every dt time
     dT = dt if dT < dt else dT
@@ -65,8 +67,10 @@ if __name__ == "__main__":
 
     scenario.set_init(
         [
-            [[0, -400, 0, 400*n, 0, 0, 0, -400, 0, 400*n, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0.5, 0, 0.05], 
-             [0, -400, 0, 400*n, 0, 0, 0, -400, 0, 400*n, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0.5, 0, 0.05]],
+            [[0, -400, 0, -200*n, 0, 0, 0, -400, 0, -200*n, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0.5, 0, 0.05], 
+             [0, -400, 0, -200*n, 0, 0, 0, -400, 0, -200*n, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0.5, 0, 0.05]],
+            # [[0, -400, 0, 400*n, 0, 0, 10, -390, 0, 400*n, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0.5, 0, 0.05], 
+            #  [0, -400, 0, 400*n, 0, 0, 10, -390, 0, 400*n, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0.5, 0, 0.05]],
         ],
         [(SatelliteMode.Passive,)],
     )
@@ -78,7 +82,9 @@ if __name__ == "__main__":
     while len(queue):
         cur_node = queue.popleft()
         own_state = get_final_states_sim(cur_node)
-        sensed_state = combine_sensors(own_state[1:]) # TODO: make own sensor class at some point that's separate from existing sensor class
+        # sensed_state = combine_sensors(own_state[1:])
+        # sensed_state = own_state[1:]
+        sensed_state = apply_sensor(own_state[1:], GroundSensor)
         scenario.set_init(
             [[sensed_state, sensed_state]], # this should eventually be a range 
             [(SatelliteMode.Passive,)]
@@ -97,8 +103,8 @@ if __name__ == "__main__":
     fig: go.Figure = simulation_tree(trace, None, fig, 1, 2, [1, 2], "lines", "trace")
     fig: go.Figure = simulation_tree(trace, None, fig, 7, 8, [7, 8], "lines", "trace", plot_color=colors)
 
-    fig.data[-2].name = 'Ground truth' 
-    fig.data[-1].name = 'Sampled traces'
+    fig.data[-2].name = 'True state' 
+    fig.data[-1].name = 'Estimated state'
     fig.data[-2].showlegend = True
     fig.data[-1].showlegend = True
 
