@@ -5,10 +5,11 @@ import numpy as np
 import cvxpy as cp
 from scipy.integrate import ode, solve_ivp
 from scipy.spatial.transform import Rotation as R, Slerp
-from scipy.linalg import expm
+from scipy.linalg import expm, solve_continuous_are
 
 from verse.agents import BaseAgent
 import random 
+import plotly.graph_objects as go
 
 n = 0.0012 # constant equal to (\mu/r_e^3)^{-3}
 omega_e = np.array([[0, 0, n]]).T # set angular momentum of chief to be constant pointing in the inertial z-axis
@@ -31,6 +32,9 @@ A = np.array([
         [0, 0, -n**2, 0, 0, 0]
         ])
 B = np.vstack([np.zeros((3, 3)), np.eye(3)/m])
+
+S = solve_continuous_are(A, B, Q, R)
+g = np.linalg.inv(R) @ B.T @ S # 3x3 x 3x6 x 6x6 -> 3x6 (g@(x_ref-x)+u_ref -- 3x6 x 6x6 + 3x3 good)
 
 class OrbitalAgent(BaseAgent):
     def __init__(self, id, code=None, file_name=None):
@@ -151,17 +155,21 @@ class OrbitalAgent(BaseAgent):
     @staticmethod
     def u_ref_fn(t: float, dt: float, u_sol: np.ndarray):
         k = int(t // dt) # assume t within [0, T]
+        if k>=len(u_sol):
+            u_sol[-1]
         return u_sol[k]
 
-    def simulate_tracking(K: np.ndarray, x0: np.ndarray, x_ref_fn: function, u_ref_fn: function, T: float, dt: float, x_ref: np.ndarray, u_ref: np.ndarray):
+    def simulate_tracking(x0: np.ndarray, x_ref_fn, u_ref_fn, T: float, dt: float, time_step: float, x_sol: np.ndarray, u_sol: np.ndarray):
         def ode(t, x):
+            true_x, hat_x = x[:6], x[6:]
             x_ref = x_ref_fn(t, dt, x_sol, u_sol)
             u_ref = u_ref_fn(t, dt, u_sol)
-            u = u_ref + K @ (x_ref - x)
-            dxdt = A @ x + B @ u
-            return dxdt
+            u = u_ref + g @ (x_ref - hat_x)
+            dot_x = A @ true_x + B @ u
+            dot_hat_x = A @ hat_x + B @ u
+            return np.concatenate([dot_x, dot_hat_x])
 
-        t_eval = np.arange(0, T + dt, dt)
+        t_eval = np.arange(0, T+time_step, time_step)
         sol = solve_ivp(ode, [0, T], x0, t_eval=t_eval, method='RK45')
         return sol.t, sol.y.T  # Return times and x(t)
 
@@ -180,5 +188,23 @@ class OrbitalAgent(BaseAgent):
         return np.array(trace)
     
 if __name__ == "__main__":
-    x_sol, u_sol = OrbitalAgent.compute_ref(20, np.zeros(6), 10)
-    print(x_sol, u_sol)
+    T = 1500
+    time_step = 1
+    N = 10 # this is a hyperparameter to determine the number of intervals to separate the continuous trajectory into
+    dt = T/N
+    x0 = np.zeros(12)
+    x_sol, u_sol = OrbitalAgent.compute_ref(dt, x0[6:], N) # compute based on estimated state
+    u_sol = np.vstack([u_sol, u_sol[-1]]) # holding last input 
+    x_ref_fn, u_ref_fn = OrbitalAgent.x_ref_fn, OrbitalAgent.u_ref_fn
+    ts, trace = OrbitalAgent.simulate_tracking(x0, x_ref_fn, u_ref_fn, T, dt, time_step, x_sol, u_sol)
+    # print(trace)
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=trace[:, 0],
+            y=trace[:,1],
+            mode="lines",
+            line_color="#0000CC",
+            showlegend=False,
+    ))
+    fig.show()
