@@ -85,7 +85,7 @@ if __name__ == "__main__":
     traces = []
     sim_traces = []
     for i in range(N):
-        trace = scenario.simulate(2000, 0.1)
+        trace = scenario.simulate(2000, .1)
         traces.append(trace)
         sim_traces.append(get_trace(trace))
 

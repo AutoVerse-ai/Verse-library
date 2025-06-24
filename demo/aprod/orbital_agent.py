@@ -9,6 +9,7 @@ from scipy.linalg import expm, solve_continuous_are
 import pickle
 
 from verse.agents import BaseAgent
+from verse.parser import ControllerIR
 import random 
 import plotly.graph_objects as go
 
@@ -203,6 +204,51 @@ class OrbitalAgent(BaseAgent):
         ts, trace = OrbitalAgent.simulate_tracking(x0, x_ref_fn, u_ref_fn, T, dt, time_step, x_sol, u_sol)
         timed_trace = np.concatenate((ts.reshape(-1, 1), trace), axis=1)
         return timed_trace
+
+class OpenOrbitalAgent(BaseAgent):
+    def __init__(self, id, code=None, file_name=None):
+        self.decision_logic: ControllerIR = ControllerIR.empty()
+        self.id = id
+        self.init_cont = None 
+        self.init_disc = None
+        self.static_parameters = None 
+        self.uncertain_parameters = None
+    
+    @staticmethod
+    def dynamics(t, state):
+        """
+        Just for reference, should not be used to generate trajectory
+        """
+        x, y, z, vx, vy, vz, hx, hy, hz, hvx, hvy, hvz = state
+        vx_dot = 3*(n**2)*x + 2*n*vy
+        vy_dot = -2*n*vx
+        vz_dot = -(n**2)*z
+        hvx_dot = 3*(n**2)*hx + 2*n*hvy
+        hvy_dot = -2*n*hvx
+        hvz_dot = -(n**2)*hz
+        # hvx_dot = 3*(n**2)*hx + 2*n*hvy
+        # hvy_dot = -2*n*hvx
+        # hvz_dot = -(n**2)*hz
+
+        return [vx, vy, vz, vx_dot, vy_dot, vz_dot, # 0-5
+                hvx, hvy, hvz, hvx_dot, hvy_dot, hvz_dot, #6-11
+                ]
+    
+    def TC_simulate(self, mode, initial_condition, time_horizon, time_step, map=None):
+        time_horizon = float(time_horizon)
+        number_points = int(np.ceil(time_horizon / time_step))
+        t = [round(i * time_step, 10) for i in range(0, number_points)]
+        init = initial_condition
+        trace = [[0]+list(init)]
+
+        for i in range(len(t)):
+            r = ode(self.dynamics)
+            r.set_initial_value(init)
+            res: np.ndarray = r.integrate(r.t + time_step) # pretty sure r.t is always 0 but confirm later
+            init = res.flatten().tolist()
+            trace.append([t[i] + time_step] + init)
+        
+        return np.array(trace)
 
 if __name__ == "__main__":
     T = 1500

@@ -1,4 +1,4 @@
-from orbital_agent import OrbitalAgent
+from orbital_agent import OrbitalAgent, OpenOrbitalAgent
 from verse import Scenario, ScenarioConfig
 from verse.analysis.verifier import ReachabilityMethod
 from verse.plotter.plotter2D import *
@@ -55,7 +55,8 @@ if __name__ == "__main__":
     # scenario.set_sensor(CraftSensor())
     # modify mode list input
     base = [10,20,0,1,2,0]
-    x0 = np.array(base + [np.random.rand()-0.5+base[i] for i in range(6)])
+    x0 = np.array(base + [np.random.rand()*5-2.5+base[i] for i in range(3)] + base[3:])
+    # x0 = np.array(base + [np.random.rand()*0.5-0.25+base[i] for i in range(6)])
     scenario.set_init(
         [
             [x0, 
@@ -90,6 +91,25 @@ if __name__ == "__main__":
     )
     fig.data[0].name = 'True State'
     fig.data[1].name = 'Est State'
+
+    final_state = get_trace(trace)[-1][1:]
+    open_scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False))
+    open_dep = OpenOrbitalAgent("deputy")
+    open_scenario.add_agent(open_dep)
+    open_scenario.set_init(
+        [[
+            final_state, final_state
+        ]],
+        [
+            (OrbitalMode.Passive,)
+        ]
+    )
+    open_trace = open_scenario.simulate(6000, 1)
+    fig = simulation_tree(open_trace, None, fig, 1, 2, [1,2], plot_color=[['#0000CC']])
+    fig = simulation_tree(open_trace, None, fig, 7, 8, [7,8])
+    fig.data[-2].name = 'True State (u=0)'
+    fig.data[-1].name = 'Est State (u=0)'
+    
     for trace in fig.data:
         trace.showlegend = True 
     fig.show()
