@@ -6,6 +6,7 @@ import cvxpy as cp
 from scipy.integrate import ode, solve_ivp
 from scipy.spatial.transform import Rotation as R, Slerp
 from scipy.linalg import expm, solve_continuous_are
+import pickle
 
 from verse.agents import BaseAgent
 import random 
@@ -113,7 +114,7 @@ class OrbitalAgent(BaseAgent):
             cp.sum(z) >= 1
         ]
 
-        objective = cp.Minimize(cp.sum([cp.norm1(u_k) for u_k in u]))
+        objective = cp.Minimize(cp.sum([cp.norm1(u_k) for u_k in u])) # this doesn't need to exist
         prob = cp.Problem(objective, constraints)
         prob.solve(solver=cp.HIGHS)
 
@@ -173,26 +174,46 @@ class OrbitalAgent(BaseAgent):
         sol = solve_ivp(ode, [0, T], x0, t_eval=t_eval, method='RK45')
         return sol.t, sol.y.T  # Return times and x(t)
 
-    def TC_simulate(self, mode, initial_condition, time_horizon, time_step, map=None):
-        time_horizon = float(time_horizon)
-        number_points = int(np.ceil(time_horizon / time_step))
-        t = [round(i * time_step, 10) for i in range(0, number_points)]
-        init = initial_condition
-        trace = [[0]+list(init)]
-        for i in range(len(t)):
-            r = ode(self.dynamics)
-            r.set_initial_value(init)
-            res: np.ndarray = r.integrate(r.t + time_step) # pretty sure r.t is always 0 but confirm later
-            init = res.flatten().tolist()
-            trace.append([t[i] + time_step] + init)
-        return np.array(trace)
+    # def TC_simulate(self, mode, initial_condition, time_horizon, time_step, map=None):
+    #     time_horizon = float(time_horizon)
+    #     number_points = int(np.ceil(time_horizon / time_step))
+    #     t = [round(i * time_step, 10) for i in range(0, number_points)]
+    #     init = initial_condition
+    #     trace = [[0]+list(init)]
+    #     for i in range(len(t)):
+    #         r = ode(self.dynamics)
+    #         r.set_initial_value(init)
+    #         res: np.ndarray = r.integrate(r.t + time_step) # pretty sure r.t is always 0 but confirm later
+    #         init = res.flatten().tolist()
+    #         trace.append([t[i] + time_step] + init)
+    #     return np.array(trace)
     
+    def TC_simulate(self, mode, initialSet, time_horizon, time_step, map=None):
+        x0 = initialSet
+        T = time_horizon
+        N = 10
+        dt = T/N
+        x_sol, u_sol = OrbitalAgent.compute_ref(dt, x0[6:], N)
+
+        with open('demo/aprod/ref_traj.pkl','wb') as f:
+            pickle.dump(x_sol, f)
+
+        u_sol = np.vstack([u_sol, u_sol[-1]]) # holding last input 
+        x_ref_fn, u_ref_fn = OrbitalAgent.x_ref_fn, OrbitalAgent.u_ref_fn
+        ts, trace = OrbitalAgent.simulate_tracking(x0, x_ref_fn, u_ref_fn, T, dt, time_step, x_sol, u_sol)
+        timed_trace = np.concatenate((ts.reshape(-1, 1), trace), axis=1)
+        return timed_trace
+
 if __name__ == "__main__":
     T = 1500
     time_step = 1
     N = 10 # this is a hyperparameter to determine the number of intervals to separate the continuous trajectory into
     dt = T/N
-    x0 = np.zeros(12)
+    # x0 = np.zeros(12)
+    base = [10,20,0,1,2,0]
+    # x0 = np.array([0 for _ in range(6)] + [np.random.rand()-0.5 for _ in range(6)])
+    # x0 = np.array(base+base)
+    x0 = np.array(base + [np.random.rand()-0.5+base[i] for i in range(6)])
     x_sol, u_sol = OrbitalAgent.compute_ref(dt, x0[6:], N) # compute based on estimated state
     u_sol = np.vstack([u_sol, u_sol[-1]]) # holding last input 
     x_ref_fn, u_ref_fn = OrbitalAgent.x_ref_fn, OrbitalAgent.u_ref_fn
@@ -205,6 +226,22 @@ if __name__ == "__main__":
             y=trace[:,1],
             mode="lines",
             line_color="#0000CC",
+            showlegend=False,
+    ))
+    fig.add_trace(
+        go.Scatter(
+            x=trace[:, 6],
+            y=trace[:,7],
+            mode="lines",
+            line_color="#CC0000",
+            showlegend=False,
+    ))
+    fig.add_trace(
+        go.Scatter(
+            x=x_sol[:, 0],
+            y=x_sol[:,1],
+            mode="lines",
+            line_color="#000000",
             showlegend=False,
     ))
     fig.show()
