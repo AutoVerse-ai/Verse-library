@@ -7,6 +7,7 @@ from scipy.integrate import ode, solve_ivp
 from scipy.spatial.transform import Rotation as R, Slerp
 from scipy.linalg import expm, solve_continuous_are
 import pickle
+import os
 
 from verse.agents import BaseAgent
 from verse.parser import ControllerIR
@@ -24,6 +25,9 @@ M = 1000  # for big-M disjunction
 u_max = 100 # to cap how large the input can be (note that due to the effect of mass, the actual input is limited to 0.01 m/s^2)
 Q = np.diag([100, 100, 100, 1, 1, 1])  # cost function for state -- high on positional error 
 R = 0.01 * np.eye(3) # try smaller penalty on control for tracking gain 
+ry = 75
+x0_nmt = np.array([0, ry, 0, n/2*ry, 0, 0])
+filename = "demo/aprod/refs.pkl"
 
 A = np.array([
         [0, 0, 0, 1, 0, 0],
@@ -71,7 +75,7 @@ class OrbitalAgent(BaseAgent):
         return exp_M[:6, :6], exp_M[:6, 6:] # A, B
     
     @staticmethod
-    def compute_ref(dt: float, x0: np.ndarray, N: int = 10) -> Tuple[np.ndarray, np.ndarray]:
+    def compute_ref(dt: float, x0: np.ndarray, N: int = 20) -> Tuple[np.ndarray, np.ndarray]:
         # need dt * N = T
         x = [cp.Variable(6) for _ in range(N + 1)]
         u = [cp.Variable(3) for _ in range(N)]
@@ -127,6 +131,18 @@ class OrbitalAgent(BaseAgent):
         else:
             # print("No feasible solution found.")
             raise Exception('No reference trajectory found')
+
+    @staticmethod
+    def compute_ref_nmt(dt: float, x0: np.ndarray = x0_nmt, N: int = 20) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Use a given NMT as a reference trajectory instead of solving for one
+        """
+        T = dt*N
+        t_eval = np.linspace(0, N*dt, N+1)
+        sol = solve_ivp((lambda t, x: A @ x), [0, T], x0, t_eval=t_eval, method='RK45')
+        x_ref = sol.y.T 
+        u_ref = np.zeros((N, 3))
+        return x_ref, u_ref
 
     @staticmethod
     def compute_x_ref_t(t: float, t_k: float, x_k: np.ndarray, u_k: np.ndarray) -> np.ndarray: # k is some index between [0, N-1]
@@ -192,17 +208,31 @@ class OrbitalAgent(BaseAgent):
     def TC_simulate(self, mode, initialSet, time_horizon, time_step, map=None):
         x0 = initialSet
         T = time_horizon
-        N = 10
-        dt = T/N
-        x_sol, u_sol = OrbitalAgent.compute_ref(dt, x0[6:], N)
+        dt = 10
+        N = int(np.ceil(T/dt))
+        start_time = initialSet[-1]
+        # N = 20
+        # dt = T/N
 
-        with open('demo/aprod/ref_traj.pkl','wb') as f:
-            pickle.dump(x_sol, f)
+        # x_sol, u_sol = OrbitalAgent.compute_ref(dt, x0[6:], N)
+
+        x_sol, u_sol = None, None
+        if os.path.exists(filename):
+            start_idx = int(start_time//dt) # may need to fine tune indexing
+            with open(filename, 'rb') as f:
+                full_x_sol, full_u_sol = pickle.load(f)
+                x_sol, u_sol = full_x_sol[start_idx:], full_u_sol[start_idx:] 
+        else:
+            x_sol, u_sol = OrbitalAgent.compute_ref_nmt(dt, N=N) # generates ref trajectory for entire run due to not doing MILP
+            with open(filename, 'wb') as f:
+                pickle.dump((x_sol, u_sol), f)
 
         u_sol = np.vstack([u_sol, u_sol[-1]]) # holding last input 
         x_ref_fn, u_ref_fn = OrbitalAgent.x_ref_fn, OrbitalAgent.u_ref_fn
-        ts, trace = OrbitalAgent.simulate_tracking(x0, x_ref_fn, u_ref_fn, T, dt, time_step, x_sol, u_sol)
-        timed_trace = np.concatenate((ts.reshape(-1, 1), trace), axis=1)
+        ts, trace = OrbitalAgent.simulate_tracking(x0[:12], x_ref_fn, u_ref_fn, T, dt, time_step, x_sol, u_sol)
+        # timed_trace = np.concatenate((ts.reshape(-1, 1), trace), axis=1)
+        timed_trace = np.concatenate((ts.reshape(-1, 1), trace, ts.reshape(-1, 1), ts.reshape(-1, 1)+start_time), axis=1)
+
         return timed_trace
 
 class OpenOrbitalAgent(BaseAgent):
