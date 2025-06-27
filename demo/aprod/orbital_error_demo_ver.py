@@ -1,9 +1,9 @@
-from orbital_agent import OrbitalAgent, OpenOrbitalAgent
+from orbital_error_agent import OrbitalAgent
 from verse import Scenario, ScenarioConfig
 from verse.analysis.verifier import ReachabilityMethod
 from verse.plotter.plotter2D import *
 from verse.plotter.plotter3D_new import *
-from orbital_sensor import OrbitalSensor
+from orbital_error_sensor import OrbitalErrorSensor
 
 import plotly.graph_objects as go
 from enum import Enum, auto
@@ -42,17 +42,17 @@ if __name__ == "__main__":
     if os.path.exists(filename):
         os.remove(filename)
 
-    input_code_name = "./demo/aprod/orbital_controller.py"
+    input_code_name = "./demo/aprod/orbital_error_controller.py"
     scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False))
     scenario.config.reachability_method = ReachabilityMethod.DRYVR_DISC
     dep = OrbitalAgent("deputy", file_name=input_code_name)
     scenario.add_agent(dep)
-    orbital_sensor = OrbitalSensor()
+    orbital_sensor = OrbitalErrorSensor()
     scenario.set_sensor(orbital_sensor)
     # modify mode list input
     base = [10,20,0,1,2,0]
-    x0_l = np.array(base + [base[i]-2.5 for i in range(3)] + base[3:] + [0,0])
-    x0_u = np.array(base + [base[i]+2.5 for i in range(3)] + base[3:] + [0,0])
+    x0_l = np.array(base + [-2.5 for _ in range(3)] + [0 for _ in range(5)])
+    x0_u = np.array(base + [2.5 for _ in range(3)] + [0 for _ in range(5)])
     # x0_l = np.array(base + base + [0,0])
     # x0_u = np.array(base + base + [0,0])
     scenario.set_init(
@@ -73,14 +73,16 @@ if __name__ == "__main__":
     fig.data[0].name = 'True State'
     fig.data[0].showlegend = True
 
-    fig = reachtube_tree(trace, None, fig, 7, 8, [7,8])
+    # fig = reachtube_tree(trace, None, fig, 7, 8, [7,8])
+    # fig.data[-1].name = 'Est State'
+    # fig.data[-1].showlegend = True
+
     fig.update_layout(
         xaxis_title='x (m)',
         yaxis_title='y (m)',
         legend_title='Trajectory Types',
     )
-    fig.data[-1].name = 'Est State'
-    fig.data[-1].showlegend = True
+
 
     if os.path.exists(filename):
         with open(filename, 'rb') as f:
