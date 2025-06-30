@@ -1,9 +1,9 @@
-from orbital_error_agent import OrbitalAgent
+from orbital_all_agent import OrbitalAgent
 from verse import Scenario, ScenarioConfig
 from verse.analysis.verifier import ReachabilityMethod
 from verse.plotter.plotter2D import *
 from verse.plotter.plotter3D_new import *
-from orbital_error_sensor import OrbitalErrorSensor
+from orbital_all_sensor import OrbitalAllSensor
 
 import plotly.graph_objects as go
 from enum import Enum, auto
@@ -42,17 +42,17 @@ if __name__ == "__main__":
     if os.path.exists(filename):
         os.remove(filename)
 
-    input_code_name = "./demo/aprod/orbital_error_controller.py"
+    input_code_name = "./demo/aprod/orbital_all_controller.py"
     scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False))
     scenario.config.reachability_method = ReachabilityMethod.DRYVR_DISC
     dep = OrbitalAgent("deputy", file_name=input_code_name)
     scenario.add_agent(dep)
-    orbital_sensor = OrbitalErrorSensor()
+    orbital_sensor = OrbitalAllSensor()
     scenario.set_sensor(orbital_sensor)
     # modify mode list input
     base = [10,20,0,1,2,0]
-    x0_l = np.array(base + [-2.5 for _ in range(3)] + [0 for _ in range(5)])
-    x0_u = np.array(base + [2.5 for _ in range(3)] + [0 for _ in range(5)])
+    x0_l = np.array(base + [base[i]-2.5 for i in range(6)] + [-2.5 for _ in range(3)] + [0 for _ in range(5)])
+    x0_u = np.array(base + [base[i]+2.5 for i in range(6)] + [2.5 for _ in range(3)] + [0 for _ in range(5)])
     # x0_l = np.array(base + base + [0,0])
     # x0_u = np.array(base + base + [0,0])
     scenario.set_init(
@@ -66,29 +66,32 @@ if __name__ == "__main__":
     )
 
     start = time.perf_counter()    
-    trace = scenario.verify(3000, 1)
+    trace = scenario.verify(1000, 1)
     print(f'Simulaion time: {time.perf_counter()-start:.3f}')
     fig = go.Figure()
-    fig = reachtube_tree(trace, None, fig, 0, 7)
+    fig = reachtube_tree(trace, None, fig, 0, 13)
     # fig = reachtube_tree(trace, None, fig, 1, 2, [1,2], plot_color=colors)
     # fig.data[0].name = 'True State'
     # fig.data[0].showlegend = True
 
-    # for node in trace.nodes:
-    #     ts = np.array(node.trace['deputy'])[:,1:]
-    #     hx = np.zeros(ts[:,:6].shape)
-    #     hx[::2] = ts[::2,:6] - ts[1::2,6:12]
-    #     hx[1::2] = ts[1::2,:6] - ts[::2,6:12]
-    #     fig.add_trace(go.Scatter(
-    #         x=hx[:,0],
-    #         y=hx[:,1],
-    #         mode='markers',
-    #         line_color = '#CC0000',
-    #         showlegend=False
-    #     ))
-
-    # fig.data[-1].name = 'True + Error State'
+    # fig = reachtube_tree(trace, None, fig, 7, 8, [7,8])
+    # fig.data[-1].name = 'Est State'
     # fig.data[-1].showlegend = True
+    # # for node in trace.nodes:
+    # #     ts = np.array(node.trace['deputy'])[:,1:]
+    # #     hx = np.zeros(ts[:,:6].shape)
+    # #     hx[::2] = ts[::2,:6] - ts[1::2,6:12]
+    # #     hx[1::2] = ts[1::2,:6] - ts[::2,6:12]
+    # #     fig.add_trace(go.Scatter(
+    # #         x=hx[:,0],
+    # #         y=hx[:,1],
+    # #         mode='markers',
+    # #         line_color = '#CC0000',
+    # #         showlegend=False
+    # #     ))
+
+    # # fig.data[-1].name = 'True + Error State'
+    # # fig.data[-1].showlegend = True
 
     # fig.update_layout(
     #     xaxis_title='x (m)',
@@ -97,10 +100,11 @@ if __name__ == "__main__":
     # )
 
 
-    # if os.path.exists(filename):
-    #     with open(filename, 'rb') as f:
-    #         x_sol, _ = pickle.load(f)
-    #     os.remove(filename)
+    if os.path.exists(filename):
+        with open(filename, 'rb') as f:
+            x_sol, u_sol = pickle.load(f)
+            u_sol = np.vstack([u_sol, u_sol[-1]])
+        os.remove(filename)
 
     # fig.add_trace(
     #     go.Scatter(

@@ -229,11 +229,11 @@ class OrbitalAgent(BaseAgent):
 
         u_sol = np.vstack([u_sol, u_sol[-1]]) # holding last input 
         x_ref_fn, u_ref_fn = OrbitalAgent.x_ref_fn, OrbitalAgent.u_ref_fn
-        hat_x = np.array(x0[:6]) - np.array(x0[6:12]) # using convention (e = x - hx, hx = x - e)
+        hat_x = np.array(x0[:6]) - np.array(x0[12:18]) # don't use hx directly, compute it from hx = x - e
         ts, trace = OrbitalAgent.simulate_tracking(np.concatenate((x0[:6], hat_x)), x_ref_fn, u_ref_fn, T, dt, time_step, x_sol, u_sol) # does it matter that I'm doing it like this (all at once) instead of iteratively (how TC_sim is traditionally done)
         # timed_trace = np.concatenate((ts.reshape(-1, 1), trace), axis=1)
-        trace[:,6:] = trace[:,6:] - trace[:,:6]
-        timed_trace = np.concatenate((ts.reshape(-1, 1), trace, ts.reshape(-1, 1), ts.reshape(-1, 1)+start_time), axis=1)
+        error = trace[:,6:] - trace[:,:6]
+        timed_trace = np.concatenate((ts.reshape(-1, 1), trace, error, ts.reshape(-1, 1), ts.reshape(-1, 1)+start_time), axis=1)
 
         return timed_trace
 
