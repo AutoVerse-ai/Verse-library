@@ -78,7 +78,9 @@ if __name__ == "__main__":
     # fig.data[-1].showlegend = True
     for node in trace.nodes:
         ts = np.array(node.trace['deputy'])[:,1:]
-        hx = ts[:,:6] + ts[:,6:12]
+        hx = np.zeros(ts[:,:6].shape)
+        hx[::2] = ts[::2,:6] - ts[1::2,6:12]
+        hx[1::2] = ts[1::2,:6] - ts[::2,6:12]
         fig.add_trace(go.Scatter(
             x=hx[:,0],
             y=hx[:,1],
