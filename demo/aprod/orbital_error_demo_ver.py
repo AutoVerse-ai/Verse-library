@@ -76,6 +76,19 @@ if __name__ == "__main__":
     # fig = reachtube_tree(trace, None, fig, 7, 8, [7,8])
     # fig.data[-1].name = 'Est State'
     # fig.data[-1].showlegend = True
+    for node in trace.nodes:
+        ts = np.array(node.trace['deputy'])[:,1:]
+        hx = ts[:,:6] + ts[:,6:12]
+        fig.add_trace(go.Scatter(
+            x=hx[:,0],
+            y=hx[:,1],
+            mode='markers',
+            line_color = '#CC0000',
+            showlegend=False
+        ))
+
+    fig.data[-1].name = 'True + Error State'
+    fig.data[-1].showlegend = True
 
     fig.update_layout(
         xaxis_title='x (m)',
