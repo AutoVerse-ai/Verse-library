@@ -17,6 +17,7 @@ filename = "demo/aprod/refs.pkl"
 class OrbitalMode(Enum):
     Passive = auto()
     GroundSensor = auto()
+    ProximitySensor = auto()
 
 colors = [
     # ["#CC0000", "#FF0000", "#FF3333", "#FF6666", "#FF9999", "#FFCCCC"],  # red
@@ -51,14 +52,14 @@ if __name__ == "__main__":
     scenario.set_sensor(orbital_sensor)
     # modify mode list input
     base = [10,20,0,1,2,0]
-    x0_l = np.array(base + [base[i]-2.5 for i in range(3)] + base[3:]+ [-2.5 for _ in range(3)] + [0 for _ in range(5)])
-    x0_u = np.array(base + [base[i]+2.5 for i in range(3)] + base[3:] + [2.5 for _ in range(3)] + [0 for _ in range(5)])
+    x0_l = np.array(base + [base[i]-2.5 for i in range(6)] + [-2.5 for _ in range(3)] + [0 for _ in range(5)])
+    # x0_u = np.array(base + [base[i]+2.5 for i in range(6)] + [2.5 for _ in range(3)] + [0 for _ in range(5)])
     # x0_l = np.array(base + base + [0,0])
     # x0_u = np.array(base + base + [0,0])
     scenario.set_init(
         [
             [x0_l.tolist(), 
-             x0_u.tolist()],
+             x0_l.tolist()],
         ],
         [
             (OrbitalMode.Passive,)
@@ -66,16 +67,16 @@ if __name__ == "__main__":
     )
 
     start = time.perf_counter()    
-    trace = scenario.verify(1500, 1)
+    trace = scenario.simulate(6000, 1)
     print(f'Simulaion time: {time.perf_counter()-start:.3f}')
     fig = go.Figure()
-    fig = reachtube_tree(trace, None, fig, 1, 2, [1,2], plot_color=colors)
-    fig.data[0].name = 'True State'
-    fig.data[0].showlegend = True
+    fig = simulation_tree(trace, None, fig, 1, 2, [1,2], plot_color=colors)
+    # fig.data[0].name = 'True State'
+    # fig.data[0].showlegend = True
 
-    fig = reachtube_tree(trace, None, fig, 7, 8, [7,8])
-    fig.data[-1].name = 'Est State'
-    fig.data[-1].showlegend = True
+    fig = simulation_tree(trace, None, fig, 7, 8, [7,8])
+    # fig.data[-1].name = 'Est State'
+    # fig.data[-1].showlegend = True
 
     if os.path.exists(filename):
         with open(filename, 'rb') as f:
@@ -97,68 +98,5 @@ if __name__ == "__main__":
         yaxis_title='y (m)',
         legend_title='Trajectory Types',
     )
-    # if os.path.exists(filename):
-    #     with open(filename, 'rb') as f:
-    #         x_sol, u_sol = pickle.load(f)
-    #         u_sol = np.vstack([u_sol, u_sol[-1]])
-    #     os.remove(filename)
-    
-    # fig = reachtube_tree(trace, None, fig, 0, 13)
-
-    # ground = np.zeros((3001, 2, 6)) # time horizon + 1 / ts, 2, all 6 states
-    # est = np.zeros((3001,2,6))
-    # refs = np.zeros((3001, 6))
-    # for node in trace.nodes:
-    #     tr = node.trace['deputy']
-    #     for i in range(0, len(tr), 2):
-    #         t = int(tr[i][0])
-    #         ground[t][0] = tr[i][1:7]
-    #         ground[t][1] = tr[i+1][1:7]
-    #         est[t][0] = tr[i][7:13]
-    #         est[t][1] = tr[i+1][7:13]
-    # for t in range(3001):
-    #     refs[t] = OrbitalAgent.x_ref_fn(t, 10, x_sol, u_sol)
-    
-    # ref_err_low = ground[:,0] - refs
-    # ref_err_high = ground[:,1] - refs
-    # ref_est_low = est[:,0] - refs
-    # ref_est_high = est[:,1] - refs
-
-    # fig.add_trace(
-    #     go.Scatter(
-    #         x=np.linspace(0, 3001, 3000),
-    #         y= ref_err_low[:,0],
-    #         mode = 'lines',
-    #         line_color='#000000',
-    #         showlegend=False
-    #     )
-    # )
-    # fig.add_trace(
-    #     go.Scatter(
-    #         x=np.linspace(0, 3001, 3000),
-    #         y= ref_err_high[:,0],
-    #         mode = 'lines',
-    #         line_color='#000000',
-    #         name='true-ref error'
-    #         )
-    # )
-    # fig.add_trace(
-    #     go.Scatter(
-    #         x=np.linspace(0, 3001, 3000),
-    #         y= ref_est_low[:,0],
-    #         mode = 'lines',
-    #         line_color='#0000CC',
-    #         showlegend=False
-    #     )
-    # )
-    # fig.add_trace(
-    #     go.Scatter(
-    #         x=np.linspace(0, 3001, 3000),
-    #         y= ref_est_high[:,0],
-    #         mode = 'lines',
-    #         line_color='#0000CC',
-    #         name='est-ref error'
-    #         )
-    # )
 
     fig.show()

@@ -27,7 +27,9 @@ Q = np.diag([100, 100, 100, 1, 1, 1])  # cost function for state -- high on posi
 R = 0.01 * np.eye(3) # try smaller penalty on control for tracking gain 
 ry = 75
 x0_nmt = np.array([0, ry, 0, n/2*ry, 0, 0])
+u_limit = 250
 filename = "demo/aprod/refs.pkl"
+
 
 A = np.array([
         [0, 0, 0, 1, 0, 0],
@@ -183,12 +185,17 @@ class OrbitalAgent(BaseAgent):
             x_ref = x_ref_fn(t, dt, x_sol, u_sol)
             u_ref = u_ref_fn(t, dt, u_sol)
             u = u_ref + g @ (x_ref - hat_x)
+
+            # u_mag = np.linalg.norm(u) # clamping input
+            # if u_mag > u_limit:
+            #     u = u * u_limit/u_mag
+
             dot_x = A @ true_x + B @ u
             dot_hat_x = A @ hat_x + B @ u
             return np.concatenate([dot_x, dot_hat_x])
 
         t_eval = np.arange(0, T+time_step, time_step)
-        sol = solve_ivp(ode, [0, T], x0, t_eval=t_eval, method='RK45')
+        sol = solve_ivp(ode, [0, T], x0, t_eval=t_eval, method='Radau')
         return sol.t, sol.y.T  # Return times and x(t)
 
     # def TC_simulate(self, mode, initial_condition, time_horizon, time_step, map=None):
