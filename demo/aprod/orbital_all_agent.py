@@ -27,7 +27,7 @@ Q = np.diag([100, 100, 100, 1, 1, 1])  # cost function for state -- high on posi
 R = 0.01 * np.eye(3) # try smaller penalty on control for tracking gain 
 ry = 75
 x0_nmt = np.array([0, ry, 0, n/2*ry, 0, 0])
-u_limit = 250
+u_limit = 25
 filename = "demo/aprod/refs.pkl"
 
 
@@ -186,9 +186,12 @@ class OrbitalAgent(BaseAgent):
             u_ref = u_ref_fn(t, dt, u_sol)
             u = u_ref + g @ (x_ref - hat_x)
 
-            # u_mag = np.linalg.norm(u) # clamping input
-            # if u_mag > u_limit:
-            #     u = u * u_limit/u_mag
+            u_mag = np.linalg.norm(u) # clamping input
+            try:
+                if u_mag > u_limit:
+                    u = u * u_limit/u_mag
+            except:
+                u_mag = np.inf
 
             dot_x = A @ true_x + B @ u
             dot_hat_x = A @ hat_x + B @ u

@@ -2,12 +2,14 @@ import numpy as np
 from scipy.optimize import minimize, OptimizeResult
 from prox_error_all_bounds import box_extreme_error
 
-epsilon = 2.5
+epsilon = 0.5
 epsilon_vel = 0.00001
 
 ep_rho = 2.5
-ep_angle = 0.03 # radians
-ep_rho_v = 0.00001
+# ep_angle = 0.006 # radians
+ep_angle = 0.01
+# ep_rho_v = 0.000001
+ep_rho_v = 1e-12
 class OrbitalAllSensor:
     def sense(self, agent, state_dict, lane_map = None, simulate = True):
         """

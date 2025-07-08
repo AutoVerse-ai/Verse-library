@@ -3,7 +3,24 @@ from scipy.optimize import differential_evolution
 
 def wrap_angle(angle):
     """Wrap to [-pi, pi]."""
-    return np.arctan2(np.sin(angle), np.cos(angle))
+    # return np.arctan2(np.sin(angle), np.cos(angle))
+    return (angle + np.pi) % (2 * np.pi) - np.pi
+
+def angle_in_wrapped_interval(angle, ang_min, ang_max):
+    """
+    Returns True if 'angle' ∈ [ang_min, ang_max] with wrap-around.
+    All angles should be in [-π, π).
+    """
+    angle = wrap_angle(angle)
+    ang_min = wrap_angle(ang_min)
+    ang_max = wrap_angle(ang_max)
+
+    if ang_min <= ang_max:
+        return ang_min <= angle <= ang_max
+    else:
+        # Interval crosses the branch cut
+        return angle >= ang_min or angle <= ang_max
+
 
 def projection_bounds_general(theta, psi, eps_theta, axis):
     """
@@ -14,19 +31,20 @@ def projection_bounds_general(theta, psi, eps_theta, axis):
     psi_max = wrap_angle(psi + eps_theta)
     psi_candidates = [psi_min, psi_max]
 
-    if psi_min > psi_max:
-        psi_min, psi_max = psi_max, psi_min
-
     # Critical points for cos(psi) or sin(psi)
     if axis in ("x", "y"):
-        if psi_min <= 0 <= psi_max:
+        # if psi_min <= 0 <= psi_max:
+        if angle_in_wrapped_interval(0.0, psi_min, psi_max):
             psi_candidates.append(0)  # cos(0)=1
-        if psi_min <= np.pi <= psi_max:
+        # if psi_min <= np.pi <= psi_max:
+        if angle_in_wrapped_interval(np.pi, psi_min, psi_max):
             psi_candidates.append(np.pi)  # cos(pi)=-1
     elif axis == "z":
-        if psi_min <= np.pi/2 <= psi_max:
+        # if psi_min <= np.pi/2 <= psi_max:
+        if angle_in_wrapped_interval(np.pi/2, psi_min, psi_max):
             psi_candidates.append(np.pi/2)  # sin(pi/2)=1
-        if psi_min <= -np.pi/2 <= psi_max:
+        # if psi_min <= -np.pi/2 <= psi_max:
+        if angle_in_wrapped_interval(-np.pi/2, psi_min, psi_max):
             psi_candidates.append(-np.pi/2)  # sin(-pi/2)=-1
 
     # works since cos, sin are monotonically increasing on intervals that disclude critical points
@@ -35,18 +53,19 @@ def projection_bounds_general(theta, psi, eps_theta, axis):
     theta_max = wrap_angle(theta + eps_theta)
     theta_candidates = [theta_min, theta_max]
 
-    if theta_min > theta_max:
-        theta_min, theta_max = theta_max, theta_min
-
     if axis in ("x", "y"):
-        if theta_min <= np.pi/2 <= theta_max:
+        # if theta_min <= np.pi/2 <= theta_max:
+        if angle_in_wrapped_interval(np.pi/2, theta_min, theta_max):
             theta_candidates.append(np.pi/2)
-        if theta_min <= -np.pi/2 <= theta_max:
+        # if theta_min <= -np.pi/2 <= theta_max:
+        if angle_in_wrapped_interval(-np.pi/2, theta_min, theta_max):
             theta_candidates.append(-np.pi/2)
         if axis == "x":
-            if theta_min <= 0 <= theta_max:
+            # if theta_min <= 0 <= theta_max:
+            if angle_in_wrapped_interval(0, theta_min, theta_max):
                 theta_candidates.append(0)
-            if theta_min <= np.pi <= theta_max:
+            # if theta_min <= np.pi <= theta_max:
+            if angle_in_wrapped_interval(np.pi, theta_min, theta_max):
                 theta_candidates.append(np.pi)
     else:
         # Z has no theta term

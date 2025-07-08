@@ -50,9 +50,11 @@ if __name__ == "__main__":
     orbital_sensor = OrbitalAllSensor()
     scenario.set_sensor(orbital_sensor)
     # modify mode list input
-    base = [10,20,0,1,2,0]
-    x0_l = np.array(base + [base[i]-2.5 for i in range(3)] + base[3:]+ [-2.5 for _ in range(3)] + [0 for _ in range(5)])
-    x0_u = np.array(base + [base[i]+2.5 for i in range(3)] + base[3:] + [2.5 for _ in range(3)] + [0 for _ in range(5)])
+    # base = [10,20,0,1,2,0]
+    ry = 75
+    base = [0, ry+10, 0, n/2*ry*.9, 0, 0]
+    x0_l = np.array(base + [base[i]-0.5 for i in range(3)] + base[3:]+ [-0.5 for _ in range(3)] + [0 for _ in range(5)])
+    x0_u = np.array(base + [base[i]+0.5 for i in range(3)] + base[3:] + [0.5 for _ in range(3)] + [0 for _ in range(5)])
     # x0_l = np.array(base + base + [0,0])
     # x0_u = np.array(base + base + [0,0])
     scenario.set_init(
@@ -66,16 +68,16 @@ if __name__ == "__main__":
     )
 
     start = time.perf_counter()    
-    trace = scenario.verify(1500, 1)
+    trace = scenario.verify(3000, 1)
     print(f'Simulaion time: {time.perf_counter()-start:.3f}')
     fig = go.Figure()
     fig = reachtube_tree(trace, None, fig, 1, 2, [1,2], plot_color=colors)
     fig.data[0].name = 'True State'
     fig.data[0].showlegend = True
 
-    fig = reachtube_tree(trace, None, fig, 7, 8, [7,8])
-    fig.data[-1].name = 'Est State'
-    fig.data[-1].showlegend = True
+    # fig = reachtube_tree(trace, None, fig, 7, 8, [7,8])
+    # fig.data[-1].name = 'Est State'
+    # fig.data[-1].showlegend = True
 
     if os.path.exists(filename):
         with open(filename, 'rb') as f:
