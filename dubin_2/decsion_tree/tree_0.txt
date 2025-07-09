@@ -1,0 +1,178 @@
+if rho <= 19904.14:
+    if rho <= 1047.59:
+        if psi <= 0.0 or psi2 <= 0.0:
+            next.agent_mode = AgentMode.SL
+            next.timer_DL = 0
+        if psi > 0.0 or psi2 > 0.0:
+            if theta <= 0.0 or theta2 <= 0.0:
+                next.agent_mode = AgentMode.SR
+                next.timer_DL = 0
+            if theta > 0.0 or theta2 > 0.0:
+                next.agent_mode = AgentMode.SR
+                next.timer_DL = 0
+    if rho > 1047.59:
+        if theta <= 0.0 or theta2 <= 0.0:
+            if psi <= 0.0 or psi2 <= 0.0:
+                if rho <= 5237.93:
+                    if theta <= -0.7 or theta2 <= -0.7:
+                        next.agent_mode = AgentMode.WL
+                        next.timer_DL = 0
+                    if theta > -0.7 or theta2 > -0.7:
+                        next.agent_mode = AgentMode.SL
+                        next.timer_DL = 0
+                if rho > 5237.93:
+                    if theta <= -0.7 or theta2 <= -0.7:
+                        next.agent_mode = AgentMode.COC
+                        next.timer_DL = 0
+                    if theta > -0.7 or theta2 > -0.7:
+                        next.agent_mode = AgentMode.WL
+                        next.timer_DL = 0
+            if psi > 0.0 or psi2 > 0.0:
+                if theta <= -1.4 or theta2 <= -1.4:
+                    if rho <= 5237.93:
+                        if psi <= 2.09 or psi2 <= 2.09:
+                            if theta <= -2.09 or theta2 <= -2.09:
+                                next.agent_mode = AgentMode.WR
+                                next.timer_DL = 0
+                            if theta > -2.09 or theta2 > -2.09:
+                                next.agent_mode = AgentMode.WL
+                                next.timer_DL = 0
+                        if psi > 2.09 or psi2 > 2.09:
+                            next.agent_mode = AgentMode.WL
+                            next.timer_DL = 0
+                    if rho > 5237.93:
+                        if psi <= 1.4 or psi2 <= 1.4:
+                            next.agent_mode = AgentMode.SL
+                            next.timer_DL = 0
+                        if psi > 1.4 or psi2 > 1.4:
+                            next.agent_mode = AgentMode.COC
+                            next.timer_DL = 0
+                if theta > -1.4 or theta2 > -1.4:
+                    if v_int <= 333.33:
+                        if rho <= 9428.28:
+                            next.agent_mode = AgentMode.SL
+                            next.timer_DL = 0
+                        if rho > 9428.28:
+                            next.agent_mode = AgentMode.WL
+                            next.timer_DL = 0
+                    if v_int > 333.33:
+                        if psi <= 2.79 or psi2 <= 2.79:
+                            if theta <= -0.7 or theta2 <= -0.7:
+                                next.agent_mode = AgentMode.SL
+                                next.timer_DL = 0
+                            if theta > -0.7 or theta2 > -0.7:
+                                if psi <= 2.09 or psi2 <= 2.09:
+                                    next.agent_mode = AgentMode.WR
+                                    next.timer_DL = 0
+                                if psi > 2.09 or psi2 > 2.09:
+                                    next.agent_mode = AgentMode.SR
+                                    next.timer_DL = 0
+                        if psi > 2.79 or psi2 > 2.79:
+                            next.agent_mode = AgentMode.SL
+                            next.timer_DL = 0
+        if theta > 0.0 or theta2 > 0.0:
+            if psi <= 0.0 or psi2 <= 0.0:
+                if theta <= 2.79 or theta2 <= 2.79:
+                    if theta <= 0.7 or theta2 <= 0.7:
+                        if rho <= 9428.28:
+                            if psi <= -2.79 or psi2 <= -2.79:
+                                next.agent_mode = AgentMode.SR
+                                next.timer_DL = 0
+                            if psi > -2.79 or psi2 > -2.79:
+                                if v_int <= 333.33:
+                                    next.agent_mode = AgentMode.SR
+                                    next.timer_DL = 0
+                                if v_int > 333.33:
+                                    next.agent_mode = AgentMode.SL
+                                    next.timer_DL = 0
+                        if rho > 9428.28:
+                            if psi <= -2.79 or psi2 <= -2.79:
+                                next.agent_mode = AgentMode.WR
+                                next.timer_DL = 0
+                            if psi > -2.79 or psi2 > -2.79:
+                                if v_int <= 200.0:
+                                    next.agent_mode = AgentMode.WR
+                                    next.timer_DL = 0
+                                if v_int > 200.0:
+                                    next.agent_mode = AgentMode.SL
+                                    next.timer_DL = 0
+                    if theta > 0.7 or theta2 > 0.7:
+                        next.agent_mode = AgentMode.WR
+                        next.timer_DL = 0
+                if theta > 2.79 or theta2 > 2.79:
+                    if rho <= 5237.93:
+                        next.agent_mode = AgentMode.WL
+                        next.timer_DL = 0
+                    if rho > 5237.93:
+                        next.agent_mode = AgentMode.COC
+                        next.timer_DL = 0
+            if psi > 0.0 or psi2 > 0.0:
+                if rho <= 5237.93:
+                    next.agent_mode = AgentMode.WR
+                    next.timer_DL = 0
+                if rho > 5237.93:
+                    if theta <= 0.7 or theta2 <= 0.7:
+                        next.agent_mode = AgentMode.WR
+                        next.timer_DL = 0
+                    if theta > 0.7 or theta2 > 0.7:
+                        next.agent_mode = AgentMode.COC
+                        next.timer_DL = 0
+if rho > 19904.14:
+    if theta <= 1.4 or theta2 <= 1.4:
+        if theta <= -0.7 or theta2 <= -0.7:
+            if psi <= 0.0 or psi2 <= 0.0:
+                next.agent_mode = AgentMode.COC
+                next.timer_DL = 0
+            if psi > 0.0 or psi2 > 0.0:
+                if psi <= 2.09 or psi2 <= 2.09:
+                    if v_int <= 466.67:
+                        next.agent_mode = AgentMode.COC
+                        next.timer_DL = 0
+                    if v_int > 466.67:
+                        if theta <= -2.79 or theta2 <= -2.79:
+                            next.agent_mode = AgentMode.COC
+                            next.timer_DL = 0
+                        if theta > -2.79 or theta2 > -2.79:
+                            next.agent_mode = AgentMode.WL
+                            next.timer_DL = 0
+                if psi > 2.09 or psi2 > 2.09:
+                    next.agent_mode = AgentMode.COC
+                    next.timer_DL = 0
+        if theta > -0.7 or theta2 > -0.7:
+            if rho <= 42951.04:
+                if psi <= -0.7 or psi2 <= -0.7:
+                    if theta <= 0.0 or theta2 <= 0.0:
+                        next.agent_mode = AgentMode.COC
+                        next.timer_DL = 0
+                    if theta > 0.0 or theta2 > 0.0:
+                        next.agent_mode = AgentMode.WR
+                        next.timer_DL = 0
+                if psi > -0.7 or psi2 > -0.7:
+                    if theta <= 0.0 or theta2 <= 0.0:
+                        next.agent_mode = AgentMode.WL
+                        next.timer_DL = 0
+                    if theta > 0.0 or theta2 > 0.0:
+                        next.agent_mode = AgentMode.COC
+                        next.timer_DL = 0
+            if rho > 42951.04:
+                if v_int <= 333.33:
+                    next.agent_mode = AgentMode.COC
+                    next.timer_DL = 0
+                if v_int > 333.33:
+                    next.agent_mode = AgentMode.COC
+                    next.timer_DL = 0
+    if theta > 1.4 or theta2 > 1.4:
+        if v_own <= 527.78:
+            if psi <= 0.0 or psi2 <= 0.0:
+                if psi <= -1.4 or psi2 <= -1.4:
+                    next.agent_mode = AgentMode.COC
+                    next.timer_DL = 0
+                if psi > -1.4 or psi2 > -1.4:
+                    next.agent_mode = AgentMode.WR
+                    next.timer_DL = 0
+            if psi > 0.0 or psi2 > 0.0:
+                next.agent_mode = AgentMode.COC
+                next.timer_DL = 0
+        if v_own > 527.78:
+            next.agent_mode = AgentMode.COC
+            next.timer_DL = 0
