@@ -248,7 +248,7 @@ class OrbitalAgent(BaseAgent):
         ts, trace = OrbitalAgent.simulate_tracking(np.concatenate((x0[:6], hat_x)), x_ref_fn, u_ref_fn, T, dt, time_step, x_sol, u_sol) # does it matter that I'm doing it like this (all at once) instead of iteratively (how TC_sim is traditionally done)
         # timed_trace = np.concatenate((ts.reshape(-1, 1), trace), axis=1)
         error = trace[:,6:] - trace[:,:6]
-        timed_trace = np.concatenate((ts.reshape(-1, 1), trace, error, ts.reshape(-1, 1)+timer_start_time, ts.reshape(-1, 1)+start_time), axis=1)
+        timed_trace = np.concatenate((ts.reshape(-1, 1), trace, error, ts.reshape(-1, 1)+int(timer_start_time), ts.reshape(-1, 1)+int(start_time)), axis=1)
 
         return timed_trace
 

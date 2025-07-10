@@ -80,5 +80,12 @@ def decisionLogic(ego: State, others: List[State]) -> State:
     if ego.hx >= -epsilon and ego.hx <= epsilon and ego.hy >= -75-epsilon and ego.hy <= -75+epsilon and ego.move_mode != MoveMode.Docking:
         output.move_mode = MoveMode.Docking
         # output.timer = ego.timer * 1
+        output.hx = ego.x - ego.ex
+        output.hy = ego.y - ego.ey
+        output.hz = ego.z - ego.ez
+
+        output.hvx = ego.vx - ego.evx
+        output.hvy = ego.vy - ego.evy
+        output.hvz = ego.vz - ego.evz
 
     return output
