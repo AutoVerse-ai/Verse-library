@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.optimize import minimize, OptimizeResult
 from prox_error_all_bounds import box_extreme_error
+from distance_bounds import dist_extrema
 
 epsilon = 0.5
 epsilon_vel = 0.00001
@@ -42,8 +43,9 @@ class OrbitalSensor:
                 cont['ego.evz'] = state_dict['deputy'][0][18]
                 cont['ego.timer'] = state_dict['deputy'][0][19]
                 cont['ego.time'] = state_dict['deputy'][0][20]
+                cont['ego.dist'] = np.inf
                 disc['ego.orbital_mode'] = state_dict['deputy'][1][0]
-                disc['ego.move_mode'] = state_dict['deputy'][1][1]
+                disc['ego.traj_mode'] = state_dict['deputy'][1][1]
 
                 if disc['ego.orbital_mode'] == 'GroundSensor':
                     # true_pos = np.array([state_dict['deputy'][0][i] for i in range(1,4)])
@@ -86,6 +88,12 @@ class OrbitalSensor:
                     cont['ego.evx'] = vel[0]-rho_v*np.cos(theta_v)*np.cos(psi_v) 
                     cont['ego.evy'] = vel[1]-rho_v*np.sin(theta_v)*np.cos(psi_v)
                     cont['ego.evz'] = vel[2]-rho_v*np.sin(psi_v)
+
+                    obstacle_cont = state_dict['obs'][0]
+                    obstacle_pos = np.array([obstacle_cont[i] for i in range(1,4)])
+                    dist = np.linalg.norm(pos-obstacle_pos) # assume deputy and obstacle are disjoint
+                    cont['ego.dist'] = dist + np.random.uniform(-1,1)*ep_rho
+
                 # cont['other.x'] = state_dict['car2'][0][1] # dummy assignments
                 # cont['other.y'] = state_dict['car2'][0][2]
                 # disc['other.track_mode'] = state_dict['car2'][1][1]
@@ -110,9 +118,10 @@ class OrbitalSensor:
                 cont['ego.evy'] = [state_dict['deputy'][0][0][17], state_dict['deputy'][0][1][17]]
                 cont['ego.evz'] = [state_dict['deputy'][0][0][18], state_dict['deputy'][0][1][18]]
                 cont['ego.timer'] = [state_dict['deputy'][0][0][19], state_dict['deputy'][0][1][19]]
-                cont['ego.time'] = [state_dict['deputy'][0][0][20], state_dict['deputy'][0][1][20]]
+                cont['ego.time'] = [state_dict['deputy'][0][0][20], state_dict['deputy'][0][1][20]] # unused here
+                cont['ego.dist'] = [np.inf, np.inf] # or any other zero-deviation large number
                 disc['ego.orbital_mode'] = state_dict['deputy'][1][0]
-                disc['ego.move_mode'] = state_dict['deputy'][1][1]
+                disc['ego.traj_mode'] = state_dict['deputy'][1][1]
 
                 if disc['ego.orbital_mode'] == 'GroundSensor':
                     cont['ego.hx'] = [cont['ego.x'][0]-epsilon, cont['ego.x'][1]+epsilon] # just need to be here to not mess up cur_delta
@@ -148,6 +157,12 @@ class OrbitalSensor:
                     cont['ego.evy'] = [-evy_min, -evy_max]
                     evz_min, evz_max = box_extreme_error(vel_bounds, ep_rho_v, ep_angle, 'z')
                     cont['ego.evz'] = [-evz_min, -evz_max]
+                    
+                    obstacle_cont = state_dict['obs'][0]
+                    obstacle_pos_min, obstacle_pos_max = np.array([obstacle_cont[0][i] for i in range(1,4)]), np.array([obstacle_cont[1][i] for i in range(1,4)])
+                    pos_bounds, obstacle_bounds = np.vstack([pos_max, pos_max]).T, np.vstack([obstacle_pos_min, obstacle_pos_max]).T
+                    dist_min, dist_max = dist_extrema(pos_bounds, obstacle_bounds)
+                    cont['ego.dist'] = [dist_min, dist_max]
 
                     cont['ego.hx'] = [cont['ego.x'][0]-ex_min, cont['ego.x'][1]-ex_max]
                     cont['ego.hy'] = [cont['ego.y'][0]-ey_min, cont['ego.y'][1]-ey_max]
