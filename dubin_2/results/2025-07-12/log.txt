@@ -1,0 +1,6 @@
+Name : initials_condition_5
+Initial sets are: 
+   car1 : [[-7000, -7000, -1.5707963267948966, 0, 0], [-6000, 4000, 1.5707963267948966, 200, 0]]
+   car2 : [[-3000, -5000, -1.5707963267948966, 200, 0], [-1000, 5000, 1.5707963267948966, 400, 0]]
+SUCCEED: This initial_state has finished in required time
+
