@@ -83,7 +83,7 @@ if __name__ == "__main__":
     )
 
     start = time.perf_counter()    
-    trace = scenario.verify(4000, 1)
+    trace = scenario.verify(4400, 1)
     print(f'Simulaion time: {time.perf_counter()-start:.3f}')
     fig = go.Figure()
     fig = reachtube_tree(trace, None, fig, 1, 2, [1,2], plot_color=colors)

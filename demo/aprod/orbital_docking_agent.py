@@ -28,6 +28,7 @@ R = 0.01 * np.eye(3) # try smaller penalty on control for tracking gain
 ry = 75
 x0_nmt = np.array([0, ry, 0, n/2*ry, 0, 0])
 u_limit = 25
+# u_limit = 50
 filename = "demo/aprod/refs.pkl"
 
 

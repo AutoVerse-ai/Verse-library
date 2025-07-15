@@ -48,7 +48,8 @@ if __name__ == "__main__":
     if os.path.exists(filename):
         os.remove(filename)
 
-    input_code_name = "./demo/aprod/orbital_docking_controller.py"
+    # input_code_name = "./demo/aprod/orbital_docking_controller.py"
+    input_code_name = "./demo/aprod/orbital_docking_controller_switch.py"
     scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False))
     scenario.config.reachability_method = ReachabilityMethod.DRYVR_DISC
     dep = OrbitalAgent("deputy", file_name=input_code_name)
@@ -85,20 +86,20 @@ if __name__ == "__main__":
     fig.data[-1].name = 'Est State'
     fig.data[-1].showlegend = True
 
-    # if os.path.exists(filename):
-    #     with open(filename, 'rb') as f:
-    #         x_sol, u_sol = pickle.load(f)
-    #         u_sol = np.vstack([u_sol, u_sol[-1]])
-    #     os.remove(filename)
+    if os.path.exists(filename):
+        with open(filename, 'rb') as f:
+            x_sol, u_sol = pickle.load(f)
+            u_sol = np.vstack([u_sol, u_sol[-1]])
+        os.remove(filename)
 
-    # fig.add_trace(
-    #     go.Scatter(
-    #         x=x_sol[:, 0],
-    #         y=x_sol[:,1],
-    #         mode="lines",
-    #         line_color="#000000",
-    #         name="Reference Trajectory"
-    # ))
+    fig.add_trace(
+        go.Scatter(
+            x=x_sol[:, 0],
+            y=x_sol[:,1],
+            mode="lines",
+            line_color="#000000",
+            name="Reference Trajectory"
+    ))
 
     fig.update_layout(
         xaxis_title='x (m)',

@@ -91,7 +91,7 @@ class OrbitalSensor:
 
                     obstacle_cont = state_dict['obs'][0]
                     obstacle_pos = np.array([obstacle_cont[i] for i in range(1,4)])
-                    dist = np.linalg.norm(pos-obstacle_pos) # assume deputy and obstacle are disjoint
+                    dist = np.linalg.norm(pos-obstacle_pos) 
                     cont['ego.dist'] = dist + np.random.uniform(-1,1)*ep_rho
 
                 # cont['other.x'] = state_dict['car2'][0][1] # dummy assignments

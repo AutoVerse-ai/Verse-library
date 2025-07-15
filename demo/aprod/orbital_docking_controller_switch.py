@@ -3,6 +3,7 @@ import copy
 from typing import List
 
 epsilon = 0.1
+prox_dist = 10
 
 class OrbitalMode(Enum):
     Passive = auto()
@@ -29,9 +30,14 @@ class State:
 
 def decisionLogic(ego: State, others: List[State]) -> State:
     output = copy.deepcopy(ego)
+    dist_sq = ego.x**2+ego.y**2+ego.z**2
     if ego.timer >= 900: # presumably going to add other conditions as well 
+        if dist_sq > prox_dist**2:
+            output.orbital_mode = OrbitalMode.GroundSensor
+        if dist_sq < prox_dist**2:
+            output.orbital_mode = OrbitalMode.ProximitySensor 
         # output.orbital_mode = OrbitalMode.GroundSensor
-        output.orbital_mode = OrbitalMode.ProximitySensor 
+        # output.orbital_mode = OrbitalMode.ProximitySensor 
         output.timer = 0
     
     if ego.orbital_mode == OrbitalMode.GroundSensor:

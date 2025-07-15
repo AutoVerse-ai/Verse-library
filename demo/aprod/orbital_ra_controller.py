@@ -2,7 +2,7 @@ from enum import Enum, auto
 import copy
 from typing import List
 
-rad_col = 100
+rad_col = 50
 
 class OrbitalMode(Enum):
     Passive = auto()
@@ -76,6 +76,6 @@ def decisionLogic(ego: State, others: List[State]) -> State:
         if ego.dist < rad_col and ego.traj_mode != TrajMode.Avoid:
             output.traj_mode = TrajMode.Avoid
 
-        if ego.dist > rad_col + 50 and ego.traj_mode != TrajMode.Normal:
+        if ego.dist > rad_col and ego.traj_mode != TrajMode.Normal:
             output.traj_mode = TrajMode.Normal
     return output

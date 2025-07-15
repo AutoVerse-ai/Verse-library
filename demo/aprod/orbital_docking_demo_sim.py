@@ -48,6 +48,7 @@ if __name__ == "__main__":
     if os.path.exists(filename):
         os.remove(filename)
 
+    # input_code_name = "./demo/aprod/orbital_docking_controller_switch.py"
     input_code_name = "./demo/aprod/orbital_docking_controller.py"
     scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False))
     dep = OrbitalAgent("deputy", file_name=input_code_name)
@@ -56,8 +57,10 @@ if __name__ == "__main__":
     scenario.set_sensor(orbital_sensor)
     # modify mode list input
     # base = [10,20,0,1,2,0]
-    ry = 75
-    base = [0, ry+10, 0, n/2*ry*.9, 0, 0]
+    # ry = 75
+    # base = [0, ry+10, 0, n/2*ry*.9, 0, 0]
+    base = [750, 200, 0, -0.8, -1.2, 0]
+    # base = [0, 0, 0, 0, 0, 0]
     x0_l = np.array(base + [base[i]-2.5 for i in range(6)] + [-2.5 for _ in range(3)] + [0 for _ in range(5)])
     # x0_u = np.array(base + [base[i]+2.5 for i in range(6)] + [2.5 for _ in range(3)] + [0 for _ in range(5)])
     # x0_l = np.array(base + base + [0,0])
@@ -74,7 +77,7 @@ if __name__ == "__main__":
     )
 
     start = time.perf_counter()    
-    trace = scenario.simulate(5000, 1)
+    trace = scenario.simulate(3000, 1)
     print(f'Simulaion time: {time.perf_counter()-start:.3f}')
     fig = go.Figure()
     fig = simulation_tree(trace, None, fig, 1, 2, [1,2], plot_color=colors)
@@ -85,20 +88,20 @@ if __name__ == "__main__":
     # fig.data[-1].name = 'Est State'
     # fig.data[-1].showlegend = True
 
-    # if os.path.exists(filename):
-    #     with open(filename, 'rb') as f:
-    #         x_sol, u_sol = pickle.load(f)
-    #         u_sol = np.vstack([u_sol, u_sol[-1]])
-    #     os.remove(filename)
+    if os.path.exists(filename):
+        with open(filename, 'rb') as f:
+            x_sol, u_sol = pickle.load(f)
+            u_sol = np.vstack([u_sol, u_sol[-1]])
+        os.remove(filename)
 
-    # fig.add_trace(
-    #     go.Scatter(
-    #         x=x_sol[:, 0],
-    #         y=x_sol[:,1],
-    #         mode="lines",
-    #         line_color="#000000",
-    #         name="Reference Trajectory"
-    # ))
+    fig.add_trace(
+        go.Scatter(
+            x=x_sol[:, 0],
+            y=x_sol[:,1],
+            mode="lines",
+            line_color="#000000",
+            name="Reference Trajectory"
+    ))
 
     fig.update_layout(
         xaxis_title='x (m)',
