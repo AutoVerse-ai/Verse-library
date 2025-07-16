@@ -160,7 +160,7 @@ class OrbitalSensor:
                     
                     obstacle_cont = state_dict['obs'][0]
                     obstacle_pos_min, obstacle_pos_max = np.array([obstacle_cont[0][i] for i in range(1,4)]), np.array([obstacle_cont[1][i] for i in range(1,4)])
-                    pos_bounds, obstacle_bounds = np.vstack([pos_max, pos_max]).T, np.vstack([obstacle_pos_min, obstacle_pos_max]).T
+                    pos_bounds, obstacle_bounds = np.vstack([pos_min, pos_max]).T, np.vstack([obstacle_pos_min, obstacle_pos_max]).T
                     dist_min, dist_max = dist_extrema(pos_bounds, obstacle_bounds)
                     cont['ego.dist'] = [dist_min, dist_max]
 

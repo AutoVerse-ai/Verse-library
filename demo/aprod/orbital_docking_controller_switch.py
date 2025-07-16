@@ -3,12 +3,14 @@ import copy
 from typing import List
 
 epsilon = 0.1
-prox_dist = 10
+# prox_dist = 40
+prox_dist = 4
 
 class OrbitalMode(Enum):
     Passive = auto()
     GroundSensor = auto()
     ProximitySensor = auto()
+    GPSensor = auto()
 
 class MoveMode(Enum):
     NMT = auto()

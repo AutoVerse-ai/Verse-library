@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.optimize import differential_evolution
+from typing import Tuple
 
 def wrap_angle(angle):
     """Wrap to [-pi, pi]."""
@@ -135,7 +136,7 @@ def error_min_obj(xyz, eps_r, eps_theta, axis):
     _, e_min = point_error_general(xyz, eps_r, eps_theta, axis)
     return e_min  # minimization: natural
 
-def box_extreme_error(bounds, eps_r, eps_theta, axis):
+def box_extreme_error(bounds, eps_r, eps_theta, axis) -> Tuple[float, float]:
     """
     returns: e-_max, e-_min
     bounds: [(x_min, x_max), (y_min, y_max), (z_min, z_max)]

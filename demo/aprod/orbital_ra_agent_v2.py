@@ -221,16 +221,21 @@ class OrbitalAgent(BaseAgent):
     
     def TC_simulate(self, mode, initialSet, time_horizon, time_step, map=None):
         x0 = initialSet
-        track_mode = mode[1]
+        track_mode = mode[-1]
         T = time_horizon
         dt = 10
         N = int(np.ceil(T/dt))
-        start_time = initialSet[-1]
-        timer_start_time = initialSet[-2]
+        
+        """
+        recall, last variable is a dummy variable, shift everything one to the left
+        """
+        start_time = initialSet[-2]
+        po_timer_start_time = initialSet[-3]
+        timer_start_time = initialSet[-4]
         # N = 20
         # dt = T/N
 
-        if mode[0] != 'Passive':
+        if mode[-3] == 'Active':
             pass
         # x_sol, u_sol = OrbitalAgent.compute_ref(dt, x0[6:], N)
 
@@ -264,7 +269,7 @@ class OrbitalAgent(BaseAgent):
         ts, trace = OrbitalAgent.simulate_tracking(np.concatenate((x0[:6], hat_x)), x_ref_fn, u_ref_fn, T, dt, time_step, x_sol, u_sol) # does it matter that I'm doing it like this (all at once) instead of iteratively (how TC_sim is traditionally done)
         # timed_trace = np.concatenate((ts.reshape(-1, 1), trace), axis=1)
         error = trace[:,6:] - trace[:,:6]
-        timed_trace = np.concatenate((ts.reshape(-1, 1), trace, error, ts.reshape(-1, 1)+int(timer_start_time), ts.reshape(-1, 1)+int(start_time)), axis=1)
+        timed_trace = np.concatenate((ts.reshape(-1, 1), trace, error, ts.reshape(-1, 1)+int(timer_start_time), ts.reshape(-1, 1)+int(po_timer_start_time), ts.reshape(-1, 1)+int(start_time), ts.reshape(-1, 1)), axis=1)
 
         return timed_trace
 
