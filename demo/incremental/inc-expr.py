@@ -69,8 +69,8 @@ def run(meas=False):
         traces.dump("tree2.json" if meas else "tree1.json")
 
     if bench.config.plot and meas:
-        traces.visualize_dot("/home/haoqing/inc-2-twopi", font="Iosevka Term")
-        traces.visualize_dot("/home/haoqing/inc-2-dot", engine="dot", font="Iosevka Term")
+        traces.visualize_dot("/Users/bachhoang/Verse-library/inc-2-twopi", font="Iosevka Term")
+        traces.visualize_dot("/Users/bachhoang/Verse-library/inc-2-dot", engine="dot", font="Iosevka Term")
         fig = go.Figure()
         if bench.config.sim:
             fig = simulation_tree(traces, bench.scenario.map, fig, 1, 2, print_dim_list=[1, 2])

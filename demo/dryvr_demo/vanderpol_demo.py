@@ -26,6 +26,7 @@ if __name__ == "__main__":
     scenario = Scenario(ScenarioConfig(parallel=False))
 
     car = vanderpol_agent("car1", file_name=input_code_name)
+    car2 = vanderpol_agent("car2", file_name=input_code_name)
     # car = vanderpol_agent('car2', file_name=input_code_name)
     # scenario.add_agent(car)
     # scenario.set_sensor(FakeSensor2())
@@ -46,8 +47,18 @@ if __name__ == "__main__":
             # tuple([AgentMode.Default]),
         ,
     )
+    car2.set_initial(
+            # [[1.25, 2.25], [1.25, 2.25]],
+            # [[1.55, 2.35], [1.55, 2.35]]
+            StarSet(center, np.array([[1, 0], [0, 1]]), C, g)
+        ,
+            tuple([AgentMode.Default])
+            # tuple([AgentMode.Default]),
+        ,
+    )
 
     scenario.add_agent(car)
+    scenario.add_agent(car2)
     scenario.config.reachability_method = ReachabilityMethod.STAR_SETS
     scenario.set_sensor(BaseStarSensor())
     traces = scenario.verify(7, 0.05)

@@ -47,14 +47,16 @@ def decisionLogic(ego: State):
 
 if __name__ == "__main__":
     pointPair = Scenario(ScenarioConfig(parallel=False))  # scenario too small, parallel too slow
-    CONTROLLER = "./demo/dryvr_demo/1d-motion.py"
+    CONTROLLER = "/Users/bachhoang/Verse-library/demo/dryvr_demo/1d-motion.py"
     pt1 = LineAgent("red-ball", file_name=CONTROLLER)
     pt2 = LineAgent("green-ball", file_name=CONTROLLER)
+    pt3 = LineAgent("white-ball", file_name=CONTROLLER)
     pointPair.add_agent(pt1)
     pointPair.add_agent(pt2)
+    pointPair.add_agent(pt3)
     pointPair.set_init(
-        [[[5, 1], [6, 1]], [[2, 1], [3, 1]]],
-        [(PointMode.RIGHT,), (PointMode.LEFT,)],
+        [[[5, 1], [6, 1]], [[2, 1], [3, 1]], [[3, 1], [6, 1]]],
+        [(PointMode.RIGHT,), (PointMode.LEFT,), (PointMode.STOPPED,)],
     )
     fig = go.Figure()
 

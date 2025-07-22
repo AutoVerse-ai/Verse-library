@@ -1,0 +1,30 @@
+Name : initials_condition_5
+Initial sets are: 
+   car1 : [[-7000, -7000, -1.5707963267948966, 0, 0], [-6000, 4000, 1.5707963267948966, 200, 0]]
+   car2 : [[-3000, -5000, -1.5707963267948966, 200, 0], [-1000, 5000, 1.5707963267948966, 400, 0]]
+SUCCEED: This initial_state has finished in required time
+
+Name : one_CL_3_y
+Initial sets are: 
+   car1 : [[0, 0, 1.5707963267948966, 200, 0], [0, 100, 1.5707963267948966, 200, 0]]
+   car2 : [[5000, 0, 2.0003963267948963, 400, 0], [5000, 0, 2.0003963267948963, 400, 0]]
+SUCCEED: This initial_state has finished in required time
+
+Name : one_CL_1_y
+Initial sets are: 
+   car1 : [[0, -100, 1.5707963267948966, 200, 0], [0, 100, 1.5707963267948966, 200, 0]]
+   car2 : [[-5000, 0, 1.1411963267948966, 400, 0], [-5000, 0, 1.1411963267948966, 400, 0]]
+SUCCEED: This initial_state has finished in required time
+
+Name : one_CL_3_y_long
+Initial sets are: 
+   car1 : [[-1000, 0, 1.5707963267948966, 200, 0], [1000, 100, 1.5707963267948966, 200, 0]]
+   car2 : [[5000, 0, 2.0003963267948963, 400, 0], [5000, 0, 2.0003963267948963, 400, 0]]
+FAILED: This initial_state is taking more than 2 hours 
+ 
+Name : one_CL_1_y_long
+Initial sets are: 
+   car1 : [[0, -1000, 1.5707963267948966, 200, 0], [0, 1000, 1.5707963267948966, 200, 0]]
+   car2 : [[-5000, 0, 1.1411963267948966, 400, 0], [-5000, 0, 1.1411963267948966, 400, 0]]
+SUCCEED: This initial_state has finished in required time
+

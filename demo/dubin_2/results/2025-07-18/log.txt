@@ -1,0 +1,96 @@
+Name : one_general_long_CL_2
+Initial sets are: 
+   car1 : [[-1, 0, 1.5707963267948966, 200, 0], [1, 0, 1.5707963267948966, 200, 0]]
+   car2 : [[0, -5000, 1.5707963267948966, 400, 0], [0, -5000, 1.5707963267948966, 400, 0]]
+SUCCEED: This initial_state has finished in required time
+
+Name : one_general_long_CL_2
+Initial sets are: 
+   car1 : [[-1, 0, 1.5707963267948966, 200, 0], [1, 0, 1.5707963267948966, 200, 0]]
+   car2 : [[0, -5000, 1.5707963267948966, 400, 0], [0, -5000, 1.5707963267948966, 400, 0]]
+SUCCEED: This initial_state has finished in required time
+
+Name : one_general_long_CL_2
+Initial sets are: 
+   car1 : [[-1, 0, 1.5707963267948966, 200, 0], [1, 0, 1.5707963267948966, 200, 0]]
+   car2 : [[0, -5000, 1.5707963267948966, 400, 0], [0, -5000, 1.5707963267948966, 400, 0]]
+SUCCEED: This initial_state has finished in required time
+
+Name : one_general_long_CL_2
+Initial sets are: 
+   car1 : [[-1, 0, 1.5707963267948966, 200, 0], [1, 0, 1.5707963267948966, 200, 0]]
+   car2 : [[0, -5000, 1.5707963267948966, 400, 0], [0, -5000, 1.5707963267948966, 400, 0]]
+SUCCEED: This initial_state has finished in required time
+
+Name : one_general_long_CL_2
+Initial sets are: 
+   car1 : [[-1, 0, 1.5707963267948966, 200, 0], [1, 0, 1.5707963267948966, 200, 0]]
+   car2 : [[0, -5000, 1.5707963267948966, 400, 0], [0, -5000, 1.5707963267948966, 400, 0]]
+SUCCEED: This initial_state has finished in required time
+
+Name : one_general_long_CL_2
+Initial sets are: 
+   car1 : [[-1, 0, 1.5707963267948966, 200, 0], [1, 0, 1.5707963267948966, 200, 0]]
+   car2 : [[0, -5000, 1.5707963267948966, 400, 0], [0, -5000, 1.5707963267948966, 400, 0]]
+SUCCEED: This initial_state has finished in required time
+
+Name : one_general_long_CL_2
+Initial sets are: 
+   car1 : [[-1000, 0, 1.5707963267948966, 200, 0], [1000, 0, 1.5707963267948966, 200, 0]]
+   car2 : [[0, -5000, 1.5707963267948966, 400, 0], [0, -5000, 1.5707963267948966, 400, 0]]
+SUCCEED: This initial_state has finished in required time
+
+Name : one_general_long_CL_2
+Initial sets are: 
+   car1 : [[-1000, 0, 1.5707963267948966, 200, 0], [1000, 0, 1.5707963267948966, 200, 0]]
+   car2 : [[0, -5000, 1.5707963267948966, 400, 0], [0, -5000, 1.5707963267948966, 400, 0]]
+SUCCEED: This initial_state has finished in required time
+
+Name : one_general_long_CL_2
+Initial sets are: 
+   car1 : [[-1000, 0, 1.5707963267948966, 200, 0], [1000, 0, 1.5707963267948966, 200, 0]]
+   car2 : [[0, -5000, 1.5707963267948966, 400, 0], [0, -5000, 1.5707963267948966, 400, 0]]
+SUCCEED: This initial_state has finished in required time
+
+Name : one_general_long_CL_2
+Initial sets are: 
+   car1 : [[-1000, 0, 1.5707963267948966, 462.6, 0], [1000, 0, 1.5707963267948966, 462.6, 0]]
+   car2 : [[0, -43736, 1.5707963267948966, 900, 0], [0, -43736, 1.5707963267948966, 900, 0]]
+SUCCEED: This initial_state has finished in required time
+
+Name : one_general_long_CL_2
+Initial sets are: 
+   car1 : [[-1000, 0, 1.5707963267948966, 462.6, 0], [1000, 0, 1.5707963267948966, 462.6, 0]]
+   car2 : [[0, -43736, 1.5707963267948966, 900, 0], [0, -43736, 1.5707963267948966, 900, 0]]
+SUCCEED: This initial_state has finished in required time
+
+Name : one_general_long_CL_2
+Initial sets are: 
+   car1 : [[-10, 0, 1.5707963267948966, 462.6, 0], [-10, 0, 1.5707963267948966, 462.6, 0]]
+   car2 : [[0, -43736, 1.5707963267948966, 900, 0], [0, -43736, 1.5707963267948966, 900, 0]]
+SUCCEED: This initial_state has finished in required time
+
+Name : one_general_long_CL_2
+Initial sets are: 
+   car1 : [[-10, 0, 1.5707963267948966, 462.6, 0], [-10, 0, 1.5707963267948966, 462.6, 0]]
+   car2 : [[0, -43736, 1.5707963267948966, 900, 0], [0, -43736, 1.5707963267948966, 900, 0]]
+SUCCEED: This initial_state has finished in required time
+
+Name : one_general_long_CL_2
+Initial sets are: 
+   car1 : [[-10, 0, 1.5707963267948966, 462.6, 0], [-10, 0, 1.5707963267948966, 462.6, 0]]
+   car2 : [[0, -43736, 1.5707963267948966, 900, 0], [0, -43736, 1.5707963267948966, 900, 0]]
+SUCCEED: This initial_state has finished in required time
+
+Name : one_general_long_CL_2
+Initial sets are: 
+   car1 : [[0, 0, 1.5707963267948966, 462.6, 0], [0, 0, 1.5707963267948966, 462.6, 0]]
+   car2 : [[0, -43736, 1.5707963267948966, 900, 0], [0, -43736, 1.5707963267948966, 900, 0]]
+SUCCEED: This initial_state has finished in required time
+
+Name : one_general_long_CL_2
+Initial sets are: 
+   car1 : [[-10, 0, 1.5707963267948966, 462.6, 0], [10, 0, 1.5707963267948966, 462.6, 0]]
+   car2 : [[0, -43736, 1.5707963267948966, 900, 0], [0, -43736, 1.5707963267948966, 900, 0]]
+SUCCEED: This initial_state has finished in required time
+

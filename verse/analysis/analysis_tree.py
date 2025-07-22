@@ -145,6 +145,8 @@ class AnalysisTreeNode:
             id=0,
         )
 
+    # NOTE:
+    #  Should the node returned from new_child() be added to the self.child ? 
     def new_child(
         self,
         init: Dict[str, Sequence[float]],
@@ -313,6 +315,7 @@ class AnalysisTree:
         return AnalysisTree(root)
 
     # TODO Generalize to different timesteps
+    # NOTE: This function not involved in the procedure for verification
     def contains(
         self, other: "AnalysisTree", strict: bool = True, tol: Optional[float] = None
     ) -> bool:
@@ -363,10 +366,26 @@ class AnalysisTree:
         else:  # Reachability
             cont_num = len(other.nodes[0].trace[min_agents[0]][0])
 
-            def collect_ranges(
-                n: AnalysisTreeNode,
-            ) -> Dict[str, List[List[portion.Interval]]]:
+            def collect_ranges(n: AnalysisTreeNode,) -> Dict[str, List[List[portion.Interval]]]:
+                '''
+                Description:
+
+                Input:
+                    n : an AnalysisTreeNode
+
+                Output:
+                    
+                '''
                 trace_len = len(n.trace[min_agents[0]])
+                # NOTE:
+                '''
+                cur = Dict()
+                for aid in min_agents:
+                    cur[aid] = list()
+                    for i in range(0, trace_len, 2):
+                        for j in range(cont_num):
+                            cur[aid].append(portion.closed(n.trace[aid][i][j], n.trace[aid][i + 1][j]))
+                '''
                 cur = {
                     aid: [
                         [
@@ -381,11 +400,12 @@ class AnalysisTree:
                     return {aid: cur[aid] for aid in other_agents}
                 else:
                     children = [collect_ranges(c) for c in n.child]
-                    child_num = len(children)
+                    child_num = len(children) # len(n.child)
+
                     time_step = round(
                         n.trace[min_agents[0]][-1][0] - n.trace[min_agents[0]][-2][0],
                         10,
-                    )
+                    ) # NOTE: Why -1 and -2 ?
                     start_time_list = [c.start_time for c in n.child]
                     min_start_time = min(start_time_list)
                     bias_list = [
@@ -415,6 +435,19 @@ class AnalysisTree:
                     overlap_len = round(
                         (n.trace[min_agents[0]][-1][0] - min_start_time) / time_step
                     )
+                    #NOTE:
+                    '''
+                    overlap = Dict()
+                    for aid in other_agents:
+                        overlap[aid] = list()
+                        for i in range(-overlap_len, 0):
+                            for j in range(cont_num):
+                                overlap[aid].append(
+                                    portion.Interval.union(
+                                        cur[aid][i][j], combined[aid][overlap_len + i][j]
+                                    )
+                                )
+                    '''
                     overlap = {
                         aid: [
                             [
@@ -432,7 +465,8 @@ class AnalysisTree:
                         for aid in other_agents
                     }
 
-            this_tree, other_tree = collect_ranges(self.root), collect_ranges(other.root)
+            this_tree = collect_ranges(self.root)
+            other_tree = collect_ranges(other.root)
             total_len = len(other_tree[min_agents[0]])
             assert total_len <= len(this_tree[min_agents[0]])
             # bloat and containment
@@ -519,6 +553,7 @@ class AnalysisTree:
             engine="twopi",
         )
 
+    # NOTE: This function not involved in the procedure for verification
     def is_equal(self, other: "AnalysisTree") -> bool:
         """Compares if 2 AnalysisTree's traces are close enough. For simulation, this simply
         compares if the point data are within a small range. For reachability, this checks if the

@@ -34,6 +34,7 @@ if __name__ == "__main__":
         ]
     )
     traces = scenario.verify(20, 0.01)
+    print(f"Scenario dict is {scenario.init_dict}")
 
     fig = go.Figure() 
     fig = reachtube_tree(traces, None, fig, 0, 4, [1,3], "lines", "trace")

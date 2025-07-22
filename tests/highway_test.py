@@ -53,7 +53,7 @@ class State:
 def highway_test():
     script_dir = os.path.realpath(os.path.dirname(__file__))
     input_code_name = os.path.join(script_dir, "./test_controller/example_controller5.py")
-
+    
     scenario = Scenario(ScenarioConfig(parallel=False))
     car = CarAgent("car1", file_name=input_code_name)
     scenario.add_agent(car)
@@ -85,7 +85,7 @@ def highway_test():
 if __name__ == "__main__":
     script_dir = os.path.realpath(os.path.dirname(__file__))
     input_code_name = os.path.join(script_dir, "./test_controller/example_controller5.py")
-
+    print(input_code_name)
     bench = Benchmark(sys.argv, init_seg_length=5)
     bench.agent_type = "C"
     bench.noisy_s = "No"

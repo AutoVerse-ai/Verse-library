@@ -53,6 +53,18 @@ def to_simulate(
     new_agents: Dict[str, BaseAgent],
     cached: Dict[str, CachedSegment],
 ) -> Tuple[Dict[str, CachedSegment], Any]:  # s/Any/PathDiffs/
+    """
+    Parameters
+    ----------
+        old_agents : A dictionary
+        new_agents : A dictionary
+        cached : A dictionary
+
+    Returns
+    -------
+        
+
+    """
     assert set(old_agents.keys()) == set(new_agents.keys())
     new_cache = {}
     total_added_paths = []
@@ -125,6 +137,7 @@ def combine_all(inits, stars=False):
         #breakpoint()
         while type(inits[0]) == list:
             #KB : todo: fix this weird workaround
+            # NOTE : What do you mean workaround ? Have you fixed it ? 
             inits = inits[0]
         return StarSet.combine_stars(inits)
     return [
@@ -142,6 +155,7 @@ def reach_trans_suit(
     a: Dict[str, List[List[List[float]]]], b: Dict[str, List[List[List[float]]]]
 ) -> bool:
     # FIXME include discrete stuff
+    # NOTE: What do you mean "stuff" ?
     assert set(a.keys()) == set(b.keys())
 
     def transp(a):
@@ -165,6 +179,12 @@ class CachedTube:
 
 
 class SimTraceCache:
+    """
+    Cache for simulation trace.
+    The cache is defined as a dictionary between
+        key (tuple): A tuple consisting an agent's id and its current mode
+        value (IntervalTree): A multi-dimentsional interval tree to collect continuous initial value of the agent
+    """
     def __init__(self):
         self.cache: DefaultDict[tuple, IntervalTree] = defaultdict(IntervalTree)
 
@@ -178,9 +198,25 @@ class SimTraceCache:
         trans_ind: int,
         run_num: int,
     ):
+        """
+        Storing a segment into the cache
+
+        Parameters
+        ----------
+        agent_id (str) : The id of the agent
+        node (AnalysisTreeNode) : The tree node that stores the agent's information #TODO: Need clearer description here
+        transition_agents (List[str]): The list of ids of all states that are reacheable using only one (or more? #TODO) transition
+        trace (nptyp.NDArray[np.double]) : The trace generated from the agent
+        transition : #TODO
+        trans_ind : The index of the transition
+        run_num : #TODO
+        Returns 
+        -------
+        None
+        """
         key = (agent_id,) + tuple(node.mode[agent_id])
         init = node.init[agent_id]
-        tree = self.cache[key]
+        tree = self.cache[key] #NOTE what if tree is None ?
         assert_hits = node.assert_hits or {}
         # pp(('add seg', agent_id, *node.mode[agent_id], *init))
         for i, val in enumerate(init):
