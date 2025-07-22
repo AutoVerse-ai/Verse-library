@@ -1,10 +1,10 @@
 # from orbital_all_agent import OrbitalAgent
-from orbital_docking_agent import OrbitalAgent
+from orbital_docking_agent_v2 import OrbitalAgent
 from verse import Scenario, ScenarioConfig
 from verse.analysis.verifier import ReachabilityMethod
 from verse.plotter.plotter2D import *
 from verse.plotter.plotter3D_new import *
-from orbital_docking_sensor import OrbitalSensor
+from orbital_docking_sensor_v2 import OrbitalSensor
 
 import plotly.graph_objects as go
 from enum import Enum, auto
@@ -15,11 +15,13 @@ import os
 n = 0.00438138 # constant equal to (\mu/r_e^3)^{-3}
 filename = "demo/aprod/refs.pkl"
 
-class OrbitalMode(Enum):
+class GOMode(Enum):
     Passive = auto()
-    GroundSensor = auto()
-    ProximitySensor = auto()
-    GPSensor = auto()
+    Active = auto()
+
+class POMode(Enum):
+    Passive = auto()
+    Active = auto()
 
 class MoveMode(Enum):
     NMT = auto()
@@ -50,7 +52,7 @@ if __name__ == "__main__":
         os.remove(filename)
 
     # input_code_name = "./demo/aprod/orbital_docking_controller.py"
-    input_code_name = "./demo/aprod/orbital_docking_controller_switch.py"
+    input_code_name = "./demo/aprod/orbital_docking_controller_v2.py"
     scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False))
     scenario.config.reachability_method = ReachabilityMethod.DRYVR_DISC
     dep = OrbitalAgent("deputy", file_name=input_code_name)
@@ -61,8 +63,8 @@ if __name__ == "__main__":
     # base = [10,20,0,1,2,0]
     ry = 75
     base = [0, ry+10, 0, n/2*ry*.9, 0, 0]
-    x0_l = np.array(base + [base[i]-2.5 for i in range(6)] + [-2.5 for _ in range(3)] + [0 for _ in range(5)])
-    x0_u = np.array(base + [base[i]+2.5 for i in range(6)] + [2.5 for _ in range(3)] + [0 for _ in range(5)])
+    x0_l = np.array(base + [base[i]-2.5 for i in range(6)] + [-2.5 for _ in range(3)] + [0 for _ in range(6)])
+    x0_u = np.array(base + [base[i]+2.5 for i in range(6)] + [2.5 for _ in range(3)] + [0 for _ in range(6)])
     # x0_l = np.array(base + base + [0,0])
     # x0_u = np.array(base + base + [0,0])
     scenario.set_init(
@@ -71,21 +73,21 @@ if __name__ == "__main__":
              x0_u.tolist()],
         ],
         [
-            (OrbitalMode.Passive, MoveMode.NMT)
+            (GOMode.Passive, POMode.Passive, MoveMode.NMT)
         ],
     )
 
     start = time.perf_counter()    
-    trace = scenario.verify(3000, 1)
+    trace = scenario.verify(3500, 1)
     print(f'Simulaion time: {time.perf_counter()-start:.3f}')
     fig = go.Figure()
     fig = reachtube_tree(trace, None, fig, 1, 2, [1,2], plot_color=colors)
     fig.data[0].name = 'True State'
     fig.data[0].showlegend = True
 
-    # fig = reachtube_tree(trace, None, fig, 7, 8, [7,8])
-    # fig.data[-1].name = 'Est State'
-    # fig.data[-1].showlegend = True
+    fig = reachtube_tree(trace, None, fig, 7, 8, [7,8])
+    fig.data[-1].name = 'Est State'
+    fig.data[-1].showlegend = True
 
     if os.path.exists(filename):
         with open(filename, 'rb') as f:

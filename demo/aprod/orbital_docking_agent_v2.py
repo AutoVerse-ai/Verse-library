@@ -26,13 +26,10 @@ u_max = 100 # to cap how large the input can be (note that due to the effect of 
 Q = np.diag([100, 100, 100, 1, 1, 1])  # cost function for state -- high on positional error 
 R = 0.01 * np.eye(3) # try smaller penalty on control for tracking gain 
 ry = 75
-r_safe = 50
-ry_avoid = ry + r_safe 
 x0_nmt = np.array([0, ry, 0, n/2*ry, 0, 0])
-x0_nmt_avoid = np.array([0, ry_avoid, 0, n/2*ry_avoid, 0, 0])
 u_limit = 25
+# u_limit = 50
 filename = "demo/aprod/refs.pkl"
-filename_ra = "demo/aprod/refs_ra.pkl"
 
 
 A = np.array([
@@ -220,52 +217,32 @@ class OrbitalAgent(BaseAgent):
     #     return np.array(trace)
     
     def TC_simulate(self, mode, initialSet, time_horizon, time_step, map=None):
-        # TODO: currently normal dryvr will error out due to increasing uncertainty in the timer parameters -- instead keep track of time using some gloabl instead based on time horizon
-        # specifically, issue is that start_idx based on start time can be less than T/dt
         x0 = initialSet
         track_mode = mode[-1]
         T = time_horizon
         dt = 10
         N = int(np.ceil(T/dt))
-        
-        """
-        recall, last variable is a dummy variable, shift everything one to the left
-        """
-        start_time = int(initialSet[-2])
-        po_timer_start_time = int(initialSet[-3])
-        timer_start_time = int(initialSet[-4])
+        start_time = initialSet[-1]
+        po_start_time = initialSet[-2]
+        timer_start_time = initialSet[-3]
         # N = 20
         # dt = T/N
 
-        if mode[-2] == 'OActive':
-            pass
         # x_sol, u_sol = OrbitalAgent.compute_ref(dt, x0[6:], N)
 
         x_sol, u_sol = None, None
-        if not os.path.exists(filename):
-            x_sol, u_sol = OrbitalAgent.compute_ref_nmt(dt, N=N) # generates ref trajectory for entire run due to not doing MILP
-            with open(filename, 'wb') as f:
-                pickle.dump((x_sol, u_sol), f)
-        if not os.path.exists(filename_ra):
-            x_sol, u_sol = OrbitalAgent.compute_ref_nmt(dt, x0_nmt_avoid, N=N) # generates ref trajectory for entire run due to not doing MILP
-            with open(filename_ra, 'wb') as f:
-                pickle.dump((x_sol, u_sol), f)
-        
-        if track_mode == 'Normal':
-            # start_idx = int(start_time//dt) # may need to fine tune indexing
-            start_idx = -int(T//dt)-1
+        if os.path.exists(filename):
+            start_idx = int(start_time//dt) # may need to fine tune indexing
             with open(filename, 'rb') as f:
                 full_x_sol, full_u_sol = pickle.load(f)
                 x_sol, u_sol = full_x_sol[start_idx:], full_u_sol[start_idx:] 
-        elif track_mode == 'Avoid':
-            # if in avoid mode, switch NMT that is being tracked
-            # start_idx = int(start_time//dt) 
-            start_idx = -int(T//dt)-1
-            with open(filename_ra, 'rb') as f:
-                full_x_sol, full_u_sol = pickle.load(f)
-                x_sol, u_sol = full_x_sol[start_idx:], full_u_sol[start_idx:] 
         else:
-            raise Exception(f"Unexpected mode: {track_mode}")
+            x_sol, u_sol = OrbitalAgent.compute_ref_nmt(dt, N=N) # generates ref trajectory for entire run due to not doing MILP
+            with open(filename, 'wb') as f:
+                pickle.dump((x_sol, u_sol), f)
+
+        if track_mode == 'Docking':
+            x_sol = np.zeros(x_sol.shape) # if docking, should try to head to \bar 0 
 
         u_sol = np.vstack([u_sol, u_sol[-1]]) # holding last input 
         x_ref_fn, u_ref_fn = OrbitalAgent.x_ref_fn, OrbitalAgent.u_ref_fn
@@ -273,7 +250,7 @@ class OrbitalAgent(BaseAgent):
         ts, trace = OrbitalAgent.simulate_tracking(np.concatenate((x0[:6], hat_x)), x_ref_fn, u_ref_fn, T, dt, time_step, x_sol, u_sol) # does it matter that I'm doing it like this (all at once) instead of iteratively (how TC_sim is traditionally done)
         # timed_trace = np.concatenate((ts.reshape(-1, 1), trace), axis=1)
         error = trace[:,6:] - trace[:,:6]
-        timed_trace = np.concatenate((ts.reshape(-1, 1), trace, error, ts.reshape(-1, 1)+int(timer_start_time), ts.reshape(-1, 1)+int(po_timer_start_time), ts.reshape(-1, 1)+int(start_time), ts.reshape(-1, 1)), axis=1)
+        timed_trace = np.concatenate((ts.reshape(-1, 1), trace, error, ts.reshape(-1, 1)+int(timer_start_time), ts.reshape(-1, 1)+int(po_start_time), ts.reshape(-1, 1)+int(start_time)), axis=1)
 
         return timed_trace
 
@@ -305,46 +282,6 @@ class OpenOrbitalAgent(BaseAgent):
         return [vx, vy, vz, vx_dot, vy_dot, vz_dot, # 0-5
                 hvx, hvy, hvz, hvx_dot, hvy_dot, hvz_dot, #6-11
                 ]
-    
-    def TC_simulate(self, mode, initial_condition, time_horizon, time_step, map=None):
-        time_horizon = float(time_horizon)
-        number_points = int(np.ceil(time_horizon / time_step))
-        t = [round(i * time_step, 10) for i in range(0, number_points)]
-        init = initial_condition
-        trace = [[0]+list(init)]
-
-        for i in range(len(t)):
-            r = ode(self.dynamics)
-            r.set_initial_value(init)
-            res: np.ndarray = r.integrate(r.t + time_step) # pretty sure r.t is always 0 but confirm later
-            init = res.flatten().tolist()
-            trace.append([t[i] + time_step] + init)
-        
-        return np.array(trace)
-
-class SimpleOrbtialAgent(BaseAgent):
-    def __init__(self, id, code=None, file_name=None):
-        self.decision_logic: ControllerIR = ControllerIR.empty()
-        self.id = id
-        self.init_cont = None 
-        self.init_disc = None
-        self.static_parameters = None 
-        self.uncertain_parameters = None
-    
-    @staticmethod
-    def dynamics(t, state):
-        """
-        Just for reference, should not be used to generate trajectory
-        """
-        x, y, z, vx, vy, vz = state
-        vx_dot = 3*(n**2)*x + 2*n*vy
-        vy_dot = -2*n*vx
-        vz_dot = -(n**2)*z
-        # hvx_dot = 3*(n**2)*hx + 2*n*hvy
-        # hvy_dot = -2*n*hvx
-        # hvz_dot = -(n**2)*hz
-
-        return [vx, vy, vz, vx_dot, vy_dot, vz_dot]
     
     def TC_simulate(self, mode, initial_condition, time_horizon, time_step, map=None):
         time_horizon = float(time_horizon)

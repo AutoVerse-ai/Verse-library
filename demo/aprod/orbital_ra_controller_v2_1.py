@@ -3,9 +3,9 @@ import copy
 from typing import List
 
 # rad_col = 5 # unsafe radius where we should begin to transition
-rad_col = 4.5
+rad_col = 2.5
 dist_prox = 5 # 5 km for proximity sensor to be active; fairly long range
-# dist_prox = 50 # testing
+# dist_prox = 3 # testing
 T_prox = 10 # 10 s period, exists to make sure some time passes before next sensor update, should be >= time step
 
 class GOMode(Enum):
@@ -53,14 +53,20 @@ def decisionLogic(ego: State, others: List[State]) -> State:
         # output.hdist = 0
 
     #TODO: add way to switch into O, C, and OC modes for prox observer
-    # may want to add a buffer if branching behavior not desired
+    # may want to add a buffer between active/passive distances if branching behavior not desired
     if ego.po_timer >= T_prox and ego.po_mode != POMode.OCActive and ego.dist < dist_prox and ego.x**2+ego.y**2+ego.z**2 < dist_prox**2:
         output.po_mode = POMode.OCActive
         output.po_timer = 0
 
-    if ego.po_timer >= T_prox and ego.po_mode != POMode.OActive and ego.dist < dist_prox and ego.x**2+ego.y**2+ego.z**2 > dist_prox**2 and ego.traj_mode != TrajMode.Avoid: 
+    if ego.po_mode == POMode.Passive and ego.dist < dist_prox and ego.x**2+ego.y**2+ego.z**2 > dist_prox**2 and ego.traj_mode != TrajMode.Avoid: 
+        output.hx = ego.x - ego.ex
+        output.hy = ego.y - ego.ey
+        output.hz = ego.z - ego.ez
+
+        output.hvx = ego.vx - ego.evx
+        output.hvy = ego.vy - ego.evy
+        output.hvz = ego.vz - ego.evz 
         output.po_mode = POMode.OActive
-        output.po_timer = 0
 
     if ego.po_timer >= T_prox and ego.po_mode != POMode.CActive and ego.dist > dist_prox and ego.x**2+ego.y**2+ego.z**2 < dist_prox**2: 
         output.po_mode = POMode.CActive
@@ -86,7 +92,8 @@ def decisionLogic(ego: State, others: List[State]) -> State:
         output.go_mode = GOMode.Passive
 
     # think I need to invent period for error/estimated state updating so that I don't have infinite updates; should be >= time step length
-    if ego.po_mode == POMode.OCActive or ego.po_mode == POMode.CActive: 
+    # if ego.po_mode == POMode.OCActive or ego.po_mode == POMode.CActive: 
+    if ego.po_mode == POMode.OCActive: 
         output.ex = ego.ex * 1
         output.ey = ego.ey * 1
         output.ez = ego.ez * 1
@@ -103,11 +110,28 @@ def decisionLogic(ego: State, others: List[State]) -> State:
         output.hvy = ego.hvy * 1
         output.hvz = ego.hvz * 1
 
+        output.po_mode = POMode.CActive 
+
+    if ego.po_mode == POMode.CActive: 
+        output.ex = ego.ex * 1
+        output.ey = ego.ey * 1
+        output.ez = ego.ez * 1
+
+        output.evx = ego.evx * 1
+        output.evy = ego.evy * 1
+        output.evz = ego.evz * 1
+
+        output.hx = ego.hx * 1
+        output.hy = ego.hy * 1
+        output.hz = ego.hz * 1
+
+        output.hvx = ego.hvx * 1
+        output.hvy = ego.hvy * 1
+        output.hvz = ego.hvz * 1
         output.po_mode = POMode.Passive 
 
-    if ego.po_mode == POMode.OCActive or ego.po_mode == POMode.OActive: 
-        if ego.hdist < rad_col and ego.traj_mode != TrajMode.Avoid:
-            output.traj_mode = TrajMode.Avoid
+    if (ego.po_mode == POMode.OCActive or ego.po_mode == POMode.OActive) and ego.hdist < rad_col and ego.traj_mode != TrajMode.Avoid: 
+        output.traj_mode = TrajMode.Avoid
         
         output.hx = ego.x - ego.ex
         output.hy = ego.y - ego.ey
@@ -116,10 +140,6 @@ def decisionLogic(ego: State, others: List[State]) -> State:
         output.hvx = ego.vx - ego.evx
         output.hvy = ego.vy - ego.evy
         output.hvz = ego.vz - ego.evz   
-        # unsure if I need to switch off modes here, may need to to prevent undesired branching
-        # ideally, I wouldn't have to, but start with this in place
-        output.po_mode = POMode.Passive 
 
-        # if ego.dist > rad_col and ego.traj_mode != TrajMode.Normal:
-        #     output.traj_mode = TrajMode.Normal
+    # TODO: add way to switch out of oactive
     return output

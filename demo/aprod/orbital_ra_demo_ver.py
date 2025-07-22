@@ -125,9 +125,10 @@ if __name__ == "__main__":
     ))
 
     fig.update_layout(
-        xaxis_title='x (m)',
-        yaxis_title='y (m)',
+        xaxis_title='x (km)',
+        yaxis_title='y (km)',
         legend_title='Trajectory Types',
+        title='NMT Avoid'
     )
     # if os.path.exists(filename):
     #     with open(filename, 'rb') as f:

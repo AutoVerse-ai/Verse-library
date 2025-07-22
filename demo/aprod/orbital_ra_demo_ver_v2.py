@@ -56,7 +56,8 @@ if __name__ == "__main__":
         if os.path.exists(f):
             os.remove(f)
 
-    input_code_name = "./demo/aprod/orbital_ra_controller_v2.py"
+    # input_code_name = "./demo/aprod/orbital_ra_controller_v2.py"
+    input_code_name = "./demo/aprod/orbital_ra_controller_v2_1.py"
     scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False))
     scenario.config.reachability_method = ReachabilityMethod.DRYVR_DISC
     dep = OrbitalAgent("deputy", file_name=input_code_name)
@@ -129,8 +130,8 @@ if __name__ == "__main__":
     ))
 
     fig.update_layout(
-        xaxis_title='x (m)',
-        yaxis_title='y (m)',
+        xaxis_title='x (km)',
+        yaxis_title='y (km)',
         legend_title='Trajectory Types',
     )
     # if os.path.exists(filename):
