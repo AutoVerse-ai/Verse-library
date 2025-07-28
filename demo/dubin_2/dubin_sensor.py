@@ -62,6 +62,18 @@ def get_extreme(rect1, rect2):
         )
     return dist_min, dist_max
 
+def isIntersect(rect1, rect2) -> bool:
+    lb11 = rect1[0]
+    lb12 = rect1[1]
+    ub11 = rect1[2]
+    ub12 = rect1[3]
+
+    lb21 = rect2[0]
+    lb22 = rect2[1]
+    ub21 = rect2[2]
+    ub22 = rect2[3]
+    return not (lb11 > ub21 or lb21 > ub11 or (lb12 > ub22) or (lb22 > ub22))
+
 class DubinSensor():
     def sense(self, agent: CarAgent, state_dict, lane_map, simulate = False):
         len_dict = {}
@@ -223,19 +235,21 @@ class DubinSensor():
                 #######
                 # New wrap angles
                 #######
-                arho_min = np.inf # does this make sense
-                arho_max = -np.inf
+                # arho_min = np.inf # does this make sense
+                # arho_max = -np.inf
                 
-                own_ext = [(curr_x_min, curr_y_min), (curr_x_max, curr_y_max), (curr_x_min, curr_y_max), (curr_x_max, curr_y_min)]
-                int_ext = [(obstacle_x_min, obstacle_y_min), (obstacle_x_max, obstacle_y_max), (obstacle_x_min, obstacle_y_max), (obstacle_x_max, obstacle_y_min)]
-                for own_vert in own_ext:
-                    for int_vert in int_ext:
-                        arho = np.arctan2(int_vert[1]-own_vert[1],int_vert[0]-own_vert[0]) % (2*np.pi)
-                        arho_max = max(arho_max, arho)
-                        arho_min = min(arho_min, arho)
+                # own_ext = [(curr_x_min, curr_y_min), (curr_x_max, curr_y_max), (curr_x_min, curr_y_max), (curr_x_max, curr_y_min)]
+                # int_ext = [(obstacle_x_min, obstacle_y_min), (obstacle_x_max, obstacle_y_max), (obstacle_x_min, obstacle_y_max), (obstacle_x_max, obstacle_y_min)]
+                # for own_vert in own_ext:
+                #     for int_vert in int_ext:
+                #         arho = np.arctan2(int_vert[1]-own_vert[1],int_vert[0]-own_vert[0]) % (2*np.pi)
+                #         arho_max = max(arho_max, arho)
+                #         arho_min = min(arho_min, arho)
                 
-                theta_min = wrap_to_pi((2*np.pi-curr_theta_max)+arho_min)
-                theta_max = wrap_to_pi((2*np.pi-curr_theta_min)+arho_max) 
+                # theta_min = wrap_to_pi((2*np.pi-curr_theta_max)+arho_min)
+                # theta_max = wrap_to_pi((2*np.pi-curr_theta_min)+arho_max) 
+
+                
 
                 if theta_max<theta_min: 
                     cont['ego.theta'] = [-np.pi, theta_min]

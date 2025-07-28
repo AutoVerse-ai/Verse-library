@@ -364,7 +364,7 @@ if __name__ == "__main__":
     # x_int = 30926
     # y_int = -30926
 
-    # # Phi_CL_4
+    # # # Phi_CL_4
     # v_own = 204.9
     # v_int = 600
     # psi   = -0.5415
@@ -399,7 +399,7 @@ if __name__ == "__main__":
     # x_int = 30926
     # y_int = 30926
 
-    # Phi_CL_9
+    # # Phi_CL_9
     # v_own = 497.4
     # v_int = 60
     # psi   = 0
@@ -407,17 +407,17 @@ if __name__ == "__main__":
     # y_int = 43736
 
     # Phi_CL_10
-    # v_own = 600
-    # v_int = 600
-    # psi   = np.pi
-    # x_int = 0
-    # y_int = 120000
+    v_own = 600
+    v_int = 600
+    psi   = np.pi
+    x_int = 0
+    y_int = 120000
 
 
 
     
     
-    initial_own_plane = [[-5000, 0, np.pi/2, v_own, 0], [5000, 0, np.pi/2, v_own, 0]]
+    initial_own_plane = [[-5000, -200, np.pi/2, v_own, 0], [5000, 200, np.pi/2, v_own, 0]]
     initial_int_plane = [[x_int, y_int, np.pi/2 + psi, v_int, 0], [x_int, y_int, np.pi/2 + psi, v_int, 0]]
     
     
@@ -458,7 +458,7 @@ if __name__ == "__main__":
     #             f.write("SUCCEED: This initial_state has finished in required time\n\n")
 
 
-
+    # scenario.config.reachability_method = ReachabilityMethod.DRYVR_DISC
     scenario.add_agent(car)
     scenario.add_agent(car2)
 
@@ -473,8 +473,17 @@ if __name__ == "__main__":
         start = time.perf_counter()
         fig2 = go.Figure()
         fig4 = go.Figure()
-        # for _ in range(10):
         trace = scenario.verify(200, 0.1)
+        for _ in range(10):
+        traces = []
+        fig = go.Figure()
+        n=100 
+        for i in range(n):
+            trace = scenario.simulate(200, 0.1)
+            traces.append(trace)
+            fig = simulation_tree_3d(trace, fig,\
+                                     1,'x',2,'y', 0,'time')
+        fig.show()
         # fig4 = simulation_anime(trace)
             # plotRemaining(fig4,  False)
         print(f'Verification runtime: {time.perf_counter()-start:.3f}s')
@@ -490,7 +499,8 @@ if __name__ == "__main__":
 
         # fig4 = simulation_tree_3d(trace, fig4, x_dim = 1, x_title= 'x', y_dim = 2, y_title = 'y', z_dim = 0, z_title = 'time')
         # fig4.show()
-
+        fig = reachtube_tree(trace)
+        fig.show()
         fig = simulation_tree(trace)
         fig.show()
         
