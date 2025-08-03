@@ -374,6 +374,8 @@ class Scenario:
             ax,
             params,
         )
+        self.verifier.loop_cache = set()
+
         self.past_runs.append(tree)
         return tree
 

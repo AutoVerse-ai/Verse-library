@@ -28,6 +28,8 @@ not_plotted = []
 offset = 0
 prev_time = 0
 
+#refine_cache = []
+
 
 def plot3dReachtubeSingleLive(tube, ax, x_dim=1, y_dim=2, z_dim=3, edge=False,  log_file="bounding_boxes.txt", save_to_file = True, step =1000):
     if os.path.exists('plotter_config.json'):
@@ -153,9 +155,6 @@ def preprocess_file(ax, log_file="boxes1.txt"):
             return merged_mesh
         return None
       
-        
-    
-   
 
     plotted.sort(key=lambda x: x[1])
     print(len(plotted))
@@ -167,8 +166,6 @@ def preprocess_file(ax, log_file="boxes1.txt"):
     # print("Plotted: ", len(plotted), plotted[0][1], plotted[-2][1], plotted[-1][1])
     # print("Not Plotted: ", len(not_plotted))
     
-
-
 
 
 def load_and_plot(ax, target_time=0):
@@ -195,118 +192,105 @@ def load_and_plot(ax, target_time=0):
             load_time = timestamp
 
 
+def plotPolyLine(points, color, ax):
+    n_points = len(points)
+    cells = np.full((n_points-1, 3), 2, dtype=np.int64)
+    #print(points)
 
-    # try:
-    #     with open(log_file, "r") as f:
-    #         lines = f.readlines()
-    #         line = lines[0]
-    #         box_str, color,time = line.rsplit(",", 1)  # Split into box and color and time
-    #         box = ast.literal_eval(box_str.strip())  # Convert box string to list
-    #         if( len(np.array(box).shape) !=2):
-    #             #load_and_plot_simulations(ax, log_file, time =0 )
-                
-    #         else:
-    #             #load_and_plot_boxes(ax, log_file, time=0)
-
-    #     if not lines:
-    #         print("Nothing found in the file.")
-    #         return ax
-    # except FileNotFoundError:
-    #     print(f"File {log_file} not found.")
-
-
-# def load_and_plot_boxes(ax, log_file="boxes1.txt"):
-#     with open(log_file, "r") as f:
-#         lines = f.readlines()
-        
-#     rect_dict = {}
-#     for i, line in enumerate(lines):
-#         # Extract the box and color from each line
-#         box_str, color = line.rsplit(",", 1)  # Split into box and color
-#         box = ast.literal_eval(box_str.strip())  # Convert box string to list
-#         color = color.strip().strip("'\"")  # Clean up the color string
-#         if( color not in rect_dict):
-#             rect_dict[color] = []
-#         rect_dict[color].append(box)
-
-#         #poly = pc.box2poly(np.array(box).T)
-#     for color, rects in rect_dict.items():
-#         plotGrid(ax, color, rects)
+    # Set the point indices for each line segment
+    # Each line connects point i to point i+1
+    cells[:, 1] = np.arange(0, n_points-1)
+    cells[:, 2] = np.arange(1, n_points)
     
+    # Flatten the cells array
+    cells = cells.ravel()
     
-#    return ax
+    # Create the polyline
+    poly_line = pv.PolyData(points, lines=cells)
+    return  (ax.add_mesh(poly_line, color=color, line_width=3   ))
 
 
-# def load_and_plot_simulations(ax, log_file = "boxes1.txt", time = 0):
-#     with open(log_file, "r") as f:
-#         lines = f.readlines()
-#     rect_dict = {}
-#     for i, line in enumerate(lines):
-#         # Extract the box and color from each line
-#         box_str, color = line.rsplit(",", 1)  # Split into box and color
-#         box = ast.literal_eval(box_str.strip())  # Convert box string to list
-#         color = color.strip().strip("'\"")  # Clean up the color string
-#         if( color not in rect_dict):
-#             rect_dict[color] = []
-#         rect_dict[color].append(box)
+last_plotted = {}  # color -> (center, actor)
 
-#         #poly = pc.box2poly(np.array(box).T)
-#     for color, points in rect_dict.items():
-#         plotPolyLine(points, color, ax, time)
+def plotGrid(ax, color, rects):
+    global last_plotted
     
-    
-#     return ax
-
-def plotGrid(ax,color, rects):
     vertices = []
     cell_indices = []
-    
-    
-    # Add vertices for each rectangle and track indices
-    for i in range(len(rects)):
 
+    for i in range(len(rects)):
         lb = rects[i][0]
         ub = rects[i][1]
-        
+
         x0, x1 = lb[0], ub[0]
         y0, y1 = lb[1], ub[1]
         z0, z1 = lb[2], ub[2]
-        
+
         corners = [
-            (x0, y0, z0),  # index 0
-            (x1, y0, z0),  # index 1
-            (x1, y1, z0),  # index 2
-            (x0, y1, z0),  # index 3
-            (x0, y0, z1),  # index 4
-            (x1, y0, z1),  # index 5
-            (x1, y1, z1),  # index 6
-            (x0, y1, z1),  # index 7
+            (x0, y0, z0), (x1, y0, z0), (x1, y1, z0), (x0, y1, z0),
+            (x0, y0, z1), (x1, y0, z1), (x1, y1, z1), (x0, y1, z1)
         ]
-        
+
         start_idx = len(vertices)
         vertices.extend(corners)
-        
         cell_indices.append([start_idx + j for j in range(8)])
-    
+
     vertices = np.array(vertices)
-    
     N = len(rects)
+
     cells = np.zeros((N, 9), dtype=np.int64)
     cells[:, 0] = 8  # 8 points per cell
-    
     for i in range(N):
         cells[i, 1:] = cell_indices[i]
-    
-    # Flatten cells array
     cells = cells.ravel()
-    
-    # Define cell types
+
     celltypes = np.full(N, pv.CellType.HEXAHEDRON, dtype=np.uint8)
-    
-    # Create and display the grid
     grid = pv.UnstructuredGrid(cells, celltypes, vertices)
-    
-    return ax.add_mesh(grid, show_edges=False, color=color, opacity=0.5)
+    ax.add_mesh(grid, show_edges=False, color=color, opacity=0.5)
+
+    # Plane placement for the last box only
+    new_lb, new_ub = rects[-1]
+    new_center = (np.array(new_lb) + np.array(new_ub)) / 2
+
+    # Remove old plane if exists
+    # if color in last_plotted and last_plotted[color][1] is not None:
+    #     ax.remove_actor(last_plotted[color][1])
+
+    # if color in last_plotted:
+    #     prev_center = last_plotted[color][0]
+    #     direction = new_center - prev_center
+    #     norm = np.linalg.norm(direction)
+    #     if norm > 1e-6:
+    #         direction /= norm
+    #     else:
+    #         direction = np.array([1, 0, 0])  # Default direction
+    # else:
+    #     direction = np.array([1, 0, 0])  # Default direction if first time
+
+    # Create a simple triangular plane icon
+    plane_size = np.linalg.norm(np.array(new_ub) - np.array(new_lb))
+    #plane_mesh = create_plane_icon(new_center, direction, size=plane_size)
+
+    # actor = ax.add_mesh(plane_mesh, color=color+"80", show_edges=True, line_width=1.5)
+    # last_plotted[color] = (new_center, actor)
+
+    # return actor
+
+def create_plane_icon(center, direction, size=1.0):
+    # Create a triangle representing the plane
+    perp1 = np.cross(direction, [0, 0, 1])
+    if np.linalg.norm(perp1) < 1e-3:
+        perp1 = np.cross(direction, [0, 1, 0])
+    perp1  = np.float64(perp1)/np.linalg.norm(perp1)
+    perp2 = np.cross(direction, perp1)
+
+    tip = center + direction * size
+    left = center - perp1 * (size * 0.5) - direction * (size * 0.5)
+    right = center + perp1 * (size * 0.5) - direction * (size * 0.5)
+
+    faces = [3, 0, 1, 2]  # Triangle face
+    points = np.array([tip, left, right])
+    return pv.PolyData(points, faces)
      
 
 def plot3dSimulationSingleLive(tube, ax, line_width=3, step = 1000, x_dim=1, y_dim=2, z_dim=3, save_to_file = True, log_file = "simulations.txt" ):
@@ -327,7 +311,7 @@ def plot3dSimulationSingleLive(tube, ax, line_width=3, step = 1000, x_dim=1, y_d
     rects_dict = {}
     length = len(tube[list(tube.keys())[0]])-1
 
-    for i in range(0, length ):
+    for i in range(length ):
         for agent_id in tube:
             if agent_id not in color_map:
                 color_map[agent_id] = agent_id.split('_')[1]
@@ -357,6 +341,8 @@ def plot3dSimulationSingleLive(tube, ax, line_width=3, step = 1000, x_dim=1, y_d
 
 
     for agent_id in tube:
+        if(agent_id not in rects_dict):
+                rects_dict[agent_id] = []
         if(agent_id not in node_rect_cache):
 
             node_rect_cache[agent_id] = []
@@ -387,7 +373,6 @@ def plotRemaining(ax, verify):
             
     node_rect_cache = {}
     node_idx = 0
-
     
     offset = 0
     prev_time = 0
@@ -404,22 +389,6 @@ def plotRemaining(ax, verify):
             
 
 
-def plotPolyLine(points, color, ax):
-    n_points = len(points)
-    cells = np.full((n_points-1, 3), 2, dtype=np.int64)
-    #print(points)
-
-    # Set the point indices for each line segment
-    # Each line connects point i to point i+1
-    cells[:, 1] = np.arange(0, n_points-1)
-    cells[:, 2] = np.arange(1, n_points)
-    
-    # Flatten the cells array
-    cells = cells.ravel()
-    
-    # Create the polyline
-    poly_line = pv.PolyData(points, lines=cells)
-    return  (ax.add_mesh(poly_line, color=color, line_width=3   ))
 
 #OLD METHODS
 #==================================================================================================================

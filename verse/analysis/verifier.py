@@ -34,6 +34,17 @@ pp = functools.partial(pprint.pprint, compact=True, width=130)
 PathDiffs = List[Tuple[BaseAgent, ModePath]]
 EGO, OTHERS = "ego", "others"
 
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    RED = '\033[31m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 
 class ReachabilityMethod(Enum):
     DRYVR = auto()
@@ -89,6 +100,7 @@ class Verifier:
         self.trans_cache_hits = (0, 0)
         self.config = config
         self.compute_full_reachtube_step_remote = ray.remote(Verifier.compute_full_reachtube_step)
+        self.loop_cache =set()
 
     def check_cache_bloated_tube_stars(
         self,
@@ -585,8 +597,9 @@ class Verifier:
             #print("writing data")
           
             #ax.render()
-            if ax is not None:
-                plot3dReachtubeSingleLive(node.trace, ax )
+            # if ax is not None:
+            #     refine_cache.append(node.trace)
+                
             return (
                 node.id,
                 later,
@@ -713,8 +726,9 @@ class Verifier:
             
             #ax.show()
 
-        if ax is not None:
-            plot3dReachtubeSingleLive(node.trace, ax )
+        # if ax is not None:
+        #     refine_cache.append(node.trace)
+            #plot3dReachtubeSingleLive(node.trace, ax )
        
 
         return (
@@ -836,6 +850,13 @@ class Verifier:
                 if node.height >= max_height-1:
                     print("max depth reached")
                     continue
+
+                if((tuple(node.mode.values()), node.start_time) in self.loop_cache):
+                    print(bcolors.RED+ "♾Infinite Loop Detected.♾"+ bcolors.ENDC)
+                    continue
+                else:
+                    self.loop_cache.add( (tuple(node.mode.values()), node.start_time))
+                
                 num_transitions += 1
                 # pp(("start ver", node.start_time, {a: (*node.mode[a], *node.init[a]) for a in node.mode}))
                 remain_time = round(time_horizon - node.start_time, 10)
