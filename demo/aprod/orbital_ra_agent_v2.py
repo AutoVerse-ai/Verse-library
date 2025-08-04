@@ -31,6 +31,7 @@ ry_avoid = ry + r_safe
 x0_nmt = np.array([0, ry, 0, n/2*ry, 0, 0])
 x0_nmt_avoid = np.array([0, ry_avoid, 0, n/2*ry_avoid, 0, 0])
 u_limit = 25
+# u_limit = 50
 filename = "demo/aprod/refs.pkl"
 filename_ra = "demo/aprod/refs_ra.pkl"
 

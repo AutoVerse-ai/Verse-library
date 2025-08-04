@@ -3,7 +3,7 @@ import copy
 from typing import List
 
 # rad_col = 5 # unsafe radius where we should begin to transition
-rad_col = 2.5
+rad_col = 4.5
 dist_prox = 5 # 5 km for proximity sensor to be active; fairly long range
 # dist_prox = 3 # testing
 T_prox = 10 # 10 s period, exists to make sure some time passes before next sensor update, should be >= time step
@@ -141,5 +141,15 @@ def decisionLogic(ego: State, others: List[State]) -> State:
         output.hvy = ego.vy - ego.evy
         output.hvz = ego.vz - ego.evz   
 
+    if (ego.po_mode == POMode.OCActive or ego.po_mode == POMode.OActive) and ego.hdist > rad_col + 100 and ego.traj_mode == TrajMode.Avoid:
+        output.traj_mode = TrajMode.Normal
+
+        output.hx = ego.x - ego.ex
+        output.hy = ego.y - ego.ey
+        output.hz = ego.z - ego.ez
+
+        output.hvx = ego.vx - ego.evx
+        output.hvy = ego.vy - ego.evy
+        output.hvz = ego.vz - ego.evz   
     # TODO: add way to switch out of oactive
     return output

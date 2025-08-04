@@ -25,14 +25,19 @@ M = 1000  # for big-M disjunction
 u_max = 100 # to cap how large the input can be (note that due to the effect of mass, the actual input is limited to 0.01 m/s^2)
 Q = np.diag([100, 100, 100, 1, 1, 1])  # cost function for state -- high on positional error 
 R = 0.01 * np.eye(3) # try smaller penalty on control for tracking gain 
-ry = 75
+ry: float = 75
 x0_nmt = np.array([0, ry, 0, n/2*ry, 0, 0])
-u_limit = 25
+u_limit: float = 25
 # u_limit = 50
 # u_limit = 200
 # u_limit = np.inf
 filename = "demo/aprod/refs.pkl"
 
+t_global = "demo/aprod/time.pkl" # write in the final time of current traj, check with initial set time
+sim_count = "demo/aprod/sim_count.pkl" # use in conjunction with base_final to read and write in final states of nominal trajs, reset once time_global is updated
+cache_base = "demo/aprod/cached_traj"
+last_mode = "demo/aprod/last_mode.pkl" # keep track of the last prox mode so strategy only used when going prox passive -> active and vice versa (keep ground sensor as is for time being)
+num_trajs = "demo/aprod/num_trajs.pkl"
 
 A = np.array([
         [0, 0, 0, 1, 0, 0],
@@ -219,6 +224,14 @@ class OrbitalAgent(BaseAgent):
     #     return np.array(trace)
     
     def TC_simulate(self, mode, initialSet, time_horizon, time_step, map=None):
+        def overwrite_file(val, filename: str) -> None:
+            with open(filename, 'wb') as f:
+                pickle.dump(val, f)
+                
+        def read_file(filename: str) -> object: # return type could be anything but shouldn't be None
+            with open(filename, 'rb') as f:
+                return pickle.load(f)
+
         x0 = initialSet
         track_mode = mode[-1]
         T = time_horizon
@@ -227,11 +240,36 @@ class OrbitalAgent(BaseAgent):
         start_time = initialSet[-1]
         po_start_time = initialSet[-2]
         timer_start_time = initialSet[-3]
+        
+        prox_mode: str = mode[1]
         # N = 20
         # dt = T/N
-
         # x_sol, u_sol = OrbitalAgent.compute_ref(dt, x0[6:], N)
-
+        # NOTE: be careful with loading and saving to and from files
+        # NOTE: unsure of if error is being propagated correctly when going from Active, Passive -> Passive, Passive
+        if mode[0] == 'Active': # skip processing if in transient ground sensor update mode
+            pass
+        elif os.path.exists(t_global):
+            t_g = read_file(t_global)
+            if t_g != int(start_time): # algorithm assumes that proxy sensors do not occur instanteously
+                t_g = int(start_time)
+                overwrite_file(int(start_time), t_global)
+                overwrite_file(0, sim_count)
+            d_last = read_file(last_mode)
+            cache_count = int(read_file(sim_count)) # should be an int so filename is something like 'cache_traj_N'
+            if d_last != prox_mode:
+                x_N: np.ndarray = read_file(f'{cache_base}/{cache_count}.pkl')
+                x_NT = x_N[x_N[:,-1].astype(int) == t_g][0][1:] # the first entry where t_g matches (t_g is time of reset), this may raise an exception if the entry does not exist
+                if prox_mode == "Active":
+                    x_NT[12:18] = np.zeros(6) # currently, assume proxy sensor is perfect -- later on, can consider clamping this to the error bounds of the sensor
+                x0 = x_NT # the shapes should match, but don't feel like I need to check
+        else: # this is the first ever TC_sim call
+            overwrite_file(int(start_time), t_global)
+            overwrite_file(prox_mode, last_mode)
+            overwrite_file(0, sim_count)
+            overwrite_file(0, num_trajs)
+            os.makedirs(cache_base, exist_ok=True)
+        
         x_sol, u_sol = None, None
         if os.path.exists(filename):
             start_idx = int(start_time//dt) # may need to fine tune indexing
@@ -253,6 +291,16 @@ class OrbitalAgent(BaseAgent):
         # timed_trace = np.concatenate((ts.reshape(-1, 1), trace), axis=1)
         error = trace[:,6:] - trace[:,:6]
         timed_trace = np.concatenate((ts.reshape(-1, 1), trace, error, ts.reshape(-1, 1)+int(timer_start_time), ts.reshape(-1, 1)+int(po_start_time), ts.reshape(-1, 1)+int(start_time)), axis=1)
+
+        if mode[0] != 'Active': # skip processing if in transient ground sensor update mode
+            t_g = read_file(t_global)
+            cache_count = int(read_file(sim_count))
+            if t_g == 0:
+                overwrite_file(read_file(num_trajs)+1, num_trajs)
+            overwrite_file(timed_trace, f'{cache_base}/{cache_count}.pkl')
+            overwrite_file(cache_count+1, sim_count)
+            if t_g != 0 and cache_count+1 == read_file(num_trajs):
+                overwrite_file(prox_mode, last_mode)
 
         return timed_trace
 

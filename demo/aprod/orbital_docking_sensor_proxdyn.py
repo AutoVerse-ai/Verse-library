@@ -94,28 +94,6 @@ class OrbitalSensor:
                     cont['ego.evy'] = err_vel[1]
                     cont['ego.evz'] = err_vel[2]
 
-                elif disc['ego.po_mode'] == 'Active':
-                    pos = np.array([state_dict['deputy'][0][i] for i in range(1,4)])
-                    rho = np.linalg.norm(pos) + ep_rho*(np.random.uniform(-1,1))
-                    rho = rho if rho > 0 else 0
-                    theta = np.arctan2(pos[1], pos[0]) # azimuth between ego and chief
-                    psi = np.arctan(pos[2]/(np.linalg.norm(pos[:2])))
-                    theta = theta + np.random.uniform(-1,1)*ep_angle
-                    psi = psi + np.random.uniform(-1,1)*ep_angle
-                    cont['ego.ex'] = pos[0]-rho*np.cos(theta)*np.cos(psi) 
-                    cont['ego.ey'] = pos[1]-rho*np.sin(theta)*np.cos(psi)
-                    cont['ego.ez'] = pos[2]-rho*np.sin(psi)
-
-                    vel = np.array([state_dict['deputy'][0][i] for i in range(4,7)])
-                    rho_v = np.linalg.norm(vel) + ep_rho_v*(np.random.uniform(-1,1))
-                    rho_v = rho_v if rho_v > 0 else 0
-                    theta_v = np.arctan2(vel[1], vel[0]) # azimuth between ego and chief
-                    psi_v = np.arctan(vel[2]/(np.linalg.norm(vel[:2])))
-                    theta_v = theta_v + np.random.uniform(-1,1)*ep_angle
-                    psi = psi_v + np.random.uniform(-1,1)*ep_angle
-                    cont['ego.evx'] = vel[0]-rho_v*np.cos(theta_v)*np.cos(psi_v) 
-                    cont['ego.evy'] = vel[1]-rho_v*np.sin(theta_v)*np.cos(psi_v)
-                    cont['ego.evz'] = vel[2]-rho_v*np.sin(psi_v)
                 # cont['other.x'] = state_dict['car2'][0][1] # dummy assignments
                 # cont['other.y'] = state_dict['car2'][0][2]
                 # disc['other.track_mode'] = state_dict['car2'][1][1]
@@ -146,38 +124,38 @@ class OrbitalSensor:
                 disc['ego.po_mode'] = state_dict['deputy'][1][1]
                 disc['ego.move_mode'] = state_dict['deputy'][1][2]
 
-                if disc['ego.go_mode'] == 'Active' and disc['ego.po_mode'] == 'Active':
-                    err_pos_min, err_pos_max = -epsilon, epsilon
-                    err_vel_min, err_vel_max = -epsilon_vel, -epsilon_vel
+                # if disc['ego.go_mode'] == 'Active' and disc['ego.po_mode'] != 'Active':
+                #     err_pos_min, err_pos_max = -epsilon, epsilon
+                #     err_vel_min, err_vel_max = -epsilon_vel, -epsilon_vel
 
-                    pos_min = np.array([state_dict['deputy'][0][0][i] for i in range(1,4)])
-                    pos_max = np.array([state_dict['deputy'][0][1][i] for i in range(1,4)])
-                    bounds = [(pos_min[i], pos_max[i]) for i in range(3)]
-                    ex_min, ex_max = box_extreme_error(bounds, ep_rho, ep_angle, 'x')
-                    ey_min, ey_max = box_extreme_error(bounds, ep_rho, ep_angle, 'y')
-                    ez_min, ez_max = box_extreme_error(bounds, ep_rho, ep_angle, 'z')
-                    cont['ego.ex'] = [(err_pos_min-ex_min)/2, (err_pos_max-ex_max)/2] # recall ex_min, ex_max is returned as positive and negative hx-x respectively, so negate to get min and max neg and pos x-hx
-                    cont['ego.ey'] = [(err_pos_min-ey_min)/2, (err_pos_max-ey_max)/2] 
-                    cont['ego.ez'] = [(err_pos_min-ez_min)/2, (err_pos_max-ez_max)/2] 
+                #     pos_min = np.array([state_dict['deputy'][0][0][i] for i in range(1,4)])
+                #     pos_max = np.array([state_dict['deputy'][0][1][i] for i in range(1,4)])
+                #     bounds = [(pos_min[i], pos_max[i]) for i in range(3)]
+                #     ex_min, ex_max = box_extreme_error(bounds, ep_rho, ep_angle, 'x')
+                #     ey_min, ey_max = box_extreme_error(bounds, ep_rho, ep_angle, 'y')
+                #     ez_min, ez_max = box_extreme_error(bounds, ep_rho, ep_angle, 'z')
+                #     cont['ego.ex'] = [(err_pos_min-ex_min)/2, (err_pos_max-ex_max)/2] # recall ex_min, ex_max is returned as positive and negative hx-x respectively, so negate to get min and max neg and pos x-hx
+                #     cont['ego.ey'] = [(err_pos_min-ey_min)/2, (err_pos_max-ey_max)/2] 
+                #     cont['ego.ez'] = [(err_pos_min-ez_min)/2, (err_pos_max-ez_max)/2] 
 
-                    vel_min = np.array([state_dict['deputy'][0][0][i] for i in range(4,7)])
-                    vel_max = np.array([state_dict['deputy'][0][1][i] for i in range(4,7)])
-                    vel_bounds = [(vel_min[i], vel_max[i]) for i in range(3)]
-                    evx_min, evx_max = box_extreme_error(vel_bounds, ep_rho_v, ep_angle, 'x') # for now, keep the same angular error as position, not necessary
-                    evy_min, evy_max = box_extreme_error(vel_bounds, ep_rho_v, ep_angle, 'y')
-                    evz_min, evz_max = box_extreme_error(vel_bounds, ep_rho_v, ep_angle, 'z')
-                    cont['ego.evx'] = [(err_vel_min-evx_min)/2, (err_vel_max-evx_max)/2] 
-                    cont['ego.evy'] = [(err_vel_min-evy_min)/2, (err_vel_max-evy_max)/2] 
-                    cont['ego.evz'] = [(err_vel_min-evz_min)/2, (err_vel_max-evz_max)/2] 
+                #     vel_min = np.array([state_dict['deputy'][0][0][i] for i in range(4,7)])
+                #     vel_max = np.array([state_dict['deputy'][0][1][i] for i in range(4,7)])
+                #     vel_bounds = [(vel_min[i], vel_max[i]) for i in range(3)]
+                #     evx_min, evx_max = box_extreme_error(vel_bounds, ep_rho_v, ep_angle, 'x') # for now, keep the same angular error as position, not necessary
+                #     evy_min, evy_max = box_extreme_error(vel_bounds, ep_rho_v, ep_angle, 'y')
+                #     evz_min, evz_max = box_extreme_error(vel_bounds, ep_rho_v, ep_angle, 'z')
+                #     cont['ego.evx'] = [(err_vel_min-evx_min)/2, (err_vel_max-evx_max)/2] 
+                #     cont['ego.evy'] = [(err_vel_min-evy_min)/2, (err_vel_max-evy_max)/2] 
+                #     cont['ego.evz'] = [(err_vel_min-evz_min)/2, (err_vel_max-evz_max)/2] 
 
-                    cont['ego.hx'] = [cont['ego.x'][0]+(err_pos_min-ex_min)/2, cont['ego.x'][1]+(err_pos_max-ex_max)/2]
-                    cont['ego.hy'] = [cont['ego.y'][0]+(err_pos_min-ey_min)/2, cont['ego.y'][1]+(err_pos_max-ey_max)/2]
-                    cont['ego.hz'] = [cont['ego.z'][0]+(err_pos_min-ez_min)/2, cont['ego.z'][1]+(err_pos_max-ez_max)/2]
-                    cont['ego.hvx'] = [cont['ego.vx'][0]+(err_vel_min-evx_min)/2, cont['ego.vx'][1]+(err_vel_max-evx_max)/2]
-                    cont['ego.hvy'] = [cont['ego.vy'][0]+(err_vel_min-evy_min)/2, cont['ego.vy'][1]+(err_vel_max-evy_max)/2]
-                    cont['ego.hvz'] = [cont['ego.vz'][0]+(err_vel_min-evz_min)/2, cont['ego.vz'][1]+(err_vel_max-evz_max)/2]
+                #     cont['ego.hx'] = [cont['ego.x'][0]+(err_pos_min-ex_min)/2, cont['ego.x'][1]+(err_pos_max-ex_max)/2]
+                #     cont['ego.hy'] = [cont['ego.y'][0]+(err_pos_min-ey_min)/2, cont['ego.y'][1]+(err_pos_max-ey_max)/2]
+                #     cont['ego.hz'] = [cont['ego.z'][0]+(err_pos_min-ez_min)/2, cont['ego.z'][1]+(err_pos_max-ez_max)/2]
+                #     cont['ego.hvx'] = [cont['ego.vx'][0]+(err_vel_min-evx_min)/2, cont['ego.vx'][1]+(err_vel_max-evx_max)/2]
+                #     cont['ego.hvy'] = [cont['ego.vy'][0]+(err_vel_min-evy_min)/2, cont['ego.vy'][1]+(err_vel_max-evy_max)/2]
+                #     cont['ego.hvz'] = [cont['ego.vz'][0]+(err_vel_min-evz_min)/2, cont['ego.vz'][1]+(err_vel_max-evz_max)/2]
 
-                elif disc['ego.go_mode'] == 'Active':
+                if disc['ego.go_mode'] == 'Active' and disc['ego.po_mode']!= 'Active': # if the proximity sensor is active, don't update away from it
                     cont['ego.hx'] = [cont['ego.x'][0]-epsilon, cont['ego.x'][1]+epsilon] # just need to be here to not mess up cur_delta
                     cont['ego.hy'] = [cont['ego.y'][0]-epsilon, cont['ego.y'][1]+epsilon]
                     cont['ego.hz'] = [cont['ego.z'][0]-epsilon, cont['ego.z'][1]+epsilon]
@@ -190,26 +168,25 @@ class OrbitalSensor:
                     cont['ego.evx'] = [-epsilon_vel, epsilon_vel]
                     cont['ego.evy'] = [-epsilon_vel, epsilon_vel]
                     cont['ego.evz'] = [-epsilon_vel, epsilon_vel]
-                
-                elif disc['ego.po_mode'] == 'Active':
+                elif disc['ego.po_mode'] == 'Active': # perfect sensor
                     pos_min = np.array([state_dict['deputy'][0][0][i] for i in range(1,4)])
                     pos_max = np.array([state_dict['deputy'][0][1][i] for i in range(1,4)])
                     bounds = [(pos_min[i], pos_max[i]) for i in range(3)]
-                    ex_min, ex_max = box_extreme_error(bounds, ep_rho, ep_angle, 'x') # returns e^-_max = max hx -x, which is the opposite of what I want
+                    ex_min, ex_max = 0, 0 # returns e^-_max = max hx -x, which is the opposite of what I want
                     cont['ego.ex'] = [-ex_min, -ex_max] # analogous to -epsilon, epsilon except no longer symmetric
-                    ey_min, ey_max = box_extreme_error(bounds, ep_rho, ep_angle, 'y')
+                    ey_min, ey_max = 0, 0
                     cont['ego.ey'] = [-ey_min, -ey_max]
-                    ez_min, ez_max = box_extreme_error(bounds, ep_rho, ep_angle, 'z')
+                    ez_min, ez_max = 0, 0
                     cont['ego.ez'] = [-ez_min, -ez_max]
 
                     vel_min = np.array([state_dict['deputy'][0][0][i] for i in range(4,7)])
                     vel_max = np.array([state_dict['deputy'][0][1][i] for i in range(4,7)])
                     vel_bounds = [(vel_min[i], vel_max[i]) for i in range(3)]
-                    evx_min, evx_max = box_extreme_error(vel_bounds, ep_rho_v, ep_angle, 'x') # for now, keep the same angular error as position, not necessary
+                    evx_min, evx_max = 0, 0 # for now, keep the same angular error as position, not necessary
                     cont['ego.evx'] = [-evx_min, -evx_max]
-                    evy_min, evy_max = box_extreme_error(vel_bounds, ep_rho_v, ep_angle, 'y')
+                    evy_min, evy_max = 0, 0
                     cont['ego.evy'] = [-evy_min, -evy_max]
-                    evz_min, evz_max = box_extreme_error(vel_bounds, ep_rho_v, ep_angle, 'z')
+                    evz_min, evz_max = 0, 0
                     cont['ego.evz'] = [-evz_min, -evz_max]
 
                     cont['ego.hx'] = [cont['ego.x'][0]-ex_min, cont['ego.x'][1]-ex_max]
@@ -218,7 +195,6 @@ class OrbitalSensor:
                     cont['ego.hvx'] = [cont['ego.vx'][0]-evx_min, cont['ego.vx'][1]-evx_max]
                     cont['ego.hvy'] = [cont['ego.vy'][0]-evy_min, cont['ego.vy'][1]-evy_max]
                     cont['ego.hvz'] = [cont['ego.vz'][0]-evz_min, cont['ego.vz'][1]-evz_max]
-                
                 # elif disc['ego.po_mode'] == 'Active':
                 #     """Testing to see why having proximity sensor active is increasing uncertainty"""
                 #     ex_min, ex_max = 0, 0

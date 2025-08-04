@@ -3,6 +3,7 @@ import copy
 from typing import List
 
 epsilon = 0.1
+epsilon_prox = 100
 prox_dist = 5
 T_prox = 100
 
@@ -39,10 +40,25 @@ def decisionLogic(ego: State, others: List[State]) -> State:
         # output.po_mode = POMode.Active
         output.timer = 0
     
-    if ego.x**2+ego.y**2+ego.z**2 < prox_dist**2 and ego.po_mode != POMode.Active and output.po_timer >= T_prox:
+    if ego.x**2+ego.y**2+ego.z**2 < prox_dist**2 and ego.po_mode != POMode.Active:
+        """Model the proximity sensor as perfect"""
         output.po_mode = POMode.Active
-        output.po_timer = 0
+        output.ex = 0
+        output.ey = 0
+        output.ez = 0
 
+        output.evx = 0
+        output.evy = 0
+        output.evz = 0
+        
+        output.hx = ego.x
+        output.hy = ego.y 
+        output.hz = ego.z 
+
+        output.hvx = ego.vx 
+        output.hvy = ego.vy 
+        output.hvz = ego.vz 
+        
     if ego.go_mode == GOMode.Active:
         output.ex = ego.ex * 1
         output.ey = ego.ey * 1
@@ -62,7 +78,9 @@ def decisionLogic(ego: State, others: List[State]) -> State:
 
         output.go_mode = GOMode.Passive 
 
-    if ego.po_mode == POMode.Active:
+    if ego.po_mode == POMode.Active and ego.x**2+ego.y**2+ego.z**2 > (prox_dist+epsilon_prox)**2:
+        output.po_mode = POMode.Passive
+
         output.ex = ego.ex * 1
         output.ey = ego.ey * 1
         output.ez = ego.ez * 1
@@ -78,9 +96,8 @@ def decisionLogic(ego: State, others: List[State]) -> State:
         output.hvx = ego.hvx * 1
         output.hvy = ego.hvy * 1
         output.hvz = ego.hvz * 1
+        # there should be no immediate changes/discontinuities in error/x hat
 
-        output.po_mode = POMode.Passive 
-    
     # for now, just consider the estimated state from any sensor
     # could also compute this just using ex and x by doing hx = x - ex
     if ego.hx >= -epsilon and ego.hx <= epsilon and ego.hy >= -75-epsilon and ego.hy <= -75+epsilon and ego.move_mode != MoveMode.Docking:

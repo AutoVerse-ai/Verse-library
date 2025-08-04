@@ -164,7 +164,8 @@ class OrbitalSensor:
                 cont['ego.evx'] = [state_dict['deputy'][0][0][16], state_dict['deputy'][0][1][16]]
                 cont['ego.evy'] = [state_dict['deputy'][0][0][17], state_dict['deputy'][0][1][17]]
                 cont['ego.evz'] = [state_dict['deputy'][0][0][18], state_dict['deputy'][0][1][18]]
-                cont['ego.timer'] = [state_dict['deputy'][0][0][19], state_dict['deputy'][0][1][19]]
+                # cont['ego.timer'] = [state_dict['deputy'][0][0][19], state_dict['deputy'][0][1][19]]
+                cont['ego.timer'] = [state_dict['deputy'][0][0][19], state_dict['deputy'][0][0][19]] # exclusively use lower bound for time
                 cont['ego.po_timer'] = [state_dict['deputy'][0][0][20], state_dict['deputy'][0][1][20]]
                 cont['ego.time'] = [state_dict['deputy'][0][0][21], state_dict['deputy'][0][1][21]] # unused here
 
@@ -263,6 +264,9 @@ class OrbitalSensor:
                     cont['ego.hvz'] = [cont['ego.vz'][0]-evz_min, cont['ego.vz'][1]-evz_max]
                 
                 # dist update
+                if disc['ego.po_mode']=='OActive' or disc['ego.po_mode']=='OCActive' and  state_dict['deputy'][1][2] == 'Avoid':
+                    pass
+
                 if disc['ego.po_mode']=='OActive' or disc['ego.po_mode']=='OCActive':
                     cont['ego.hdist'] = [dist_min-ep_rho, dist_max+ep_rho] 
                     # should instead be the true distance between ego and the object +- e_rho

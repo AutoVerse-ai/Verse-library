@@ -1,5 +1,5 @@
 # from orbital_all_agent import OrbitalAgent
-from orbital_docking_agent_v2 import OrbitalAgent
+from orbital_docking_agent_cache import OrbitalAgent
 from verse import Scenario, ScenarioConfig
 from verse.analysis.verifier import ReachabilityMethod
 from verse.plotter.plotter2D import *
@@ -11,10 +11,17 @@ import plotly.graph_objects as go
 from enum import Enum, auto
 import pickle
 import time
-import os 
+import os, shutil
 
 n = 0.00438138 # constant equal to (\mu/r_e^3)^{-3}
 filename = "demo/aprod/refs.pkl"
+t_global = "demo/aprod/time.pkl" # write in the final time of current traj, check with initial set time
+sim_count = "demo/aprod/sim_count.pkl" # use in conjunction with base_final to read and write in final states of nominal trajs, reset once time_global is updated
+cache_base = "demo/aprod/cached_traj"
+last_mode = "demo/aprod/last_mode.pkl" # keep track of the last prox mode so strategy only used when going prox passive -> active and vice versa (keep ground sensor as is for time being)
+num_trajs = "demo/aprod/num_trajs.pkl"
+
+files = [filename, t_global, sim_count, last_mode, num_trajs]
 
 class GOMode(Enum):
     Passive = auto()
@@ -49,8 +56,11 @@ def get_trace(trace: AnalysisTree) -> np.ndarray:
 
 
 if __name__ == "__main__":
-    if os.path.exists(filename):
-        os.remove(filename)
+    for f in files:
+        if os.path.exists(f):
+            os.remove(f)
+    if os.path.exists(cache_base):
+        shutil.rmtree(cache_base)
 
     # input_code_name = "./demo/aprod/orbital_docking_controller.py"
     # input_code_name = "./demo/aprod/orbital_docking_controller_v2.py"
@@ -63,7 +73,7 @@ if __name__ == "__main__":
     scenario.set_sensor(orbital_sensor)
     # modify mode list input
     # base = [10,20,0,1,2,0]
-    T = 3500
+    T = 5500
     ry = 75
     base = [0, ry+10, 0, n/2*ry*.9, 0, 0]
     x0_l = np.array(base + [base[i]-2.5 for i in range(6)] + [-2.5 for _ in range(3)] + [0 for _ in range(6)])
@@ -107,6 +117,12 @@ if __name__ == "__main__":
             x_sol, u_sol = pickle.load(f)
             u_sol = np.vstack([u_sol, u_sol[-1]])
         os.remove(filename)
+
+    for f in files:
+        if os.path.exists(f):
+            os.remove(f)
+    if os.path.exists(cache_base):
+        shutil.rmtree(cache_base)
 
     fig.add_trace(
         go.Scatter(
