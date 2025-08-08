@@ -51,8 +51,9 @@ def decisionLogic(ego: State, others: List[State]):
     v_int = ego.v_int
     v_own = ego.v_own
     
-    
     pi = 3.14
+
+    t = math.sqrt 
     
     acas_update_time = 1
     
@@ -63,28 +64,28 @@ def decisionLogic(ego: State, others: List[State]):
                 if rho <= 1047.59:
                     if psi <= 0.0:
                         next.agent_mode = AgentMode.SL
-                        next.timer_DL = 0
+                        # next.timer_DL = 0
                     if psi > 0.0:
                         next.agent_mode = AgentMode.SR
-                        next.timer_DL = 0
+                        # next.timer_DL = 0
                 if rho > 1047.59:
                     if theta <= 0.0:
                         next.agent_mode = AgentMode.WL
-                        next.timer_DL = 0
+                        # next.timer_DL = 0
                     if theta > 0.0:
                         next.agent_mode = AgentMode.WR
-                        next.timer_DL = 0
+                        # next.timer_DL = 0
             # if rho > 19904.14:
             #     if theta <= 1.4:
             #         if theta <= -0.7:
             #             next.agent_mode = AgentMode.COC
-            #             next.timer_DL = 0
+            #             # next.timer_DL = 0
             #         if theta > -0.7:
             #             next.agent_mode = AgentMode.COC
-            #             next.timer_DL = 0
+            #             # next.timer_DL = 0
             #     if theta > 1.4:
             #         next.agent_mode = AgentMode.COC
-            #         next.timer_DL = 0
+            #         # next.timer_DL = 0
 
 
         if ego.agent_mode == AgentMode.WL:
@@ -92,92 +93,92 @@ def decisionLogic(ego: State, others: List[State]):
                 if rho <= 7333.1:
                     if rho <= 1047.59:
                         next.agent_mode = AgentMode.SL
-                        next.timer_DL = 0
+                        # next.timer_DL = 0
                     if rho > 1047.59:
                         # if theta <= -1.4:
                         #     next.agent_mode = AgentMode.WL
-                        #     next.timer_DL = 0
+                        #     # next.timer_DL = 0
                         if theta > -1.4:
                             next.agent_mode = AgentMode.SR
-                            next.timer_DL = 0
+                            # next.timer_DL = 0
                 if rho > 7333.1:
                     if v_int <= 200.0:
                         next.agent_mode = AgentMode.WR
-                        next.timer_DL = 0
+                        # next.timer_DL = 0
                     if v_int > 200.0:
                         next.agent_mode = AgentMode.SR
-                        next.timer_DL = 0
+                        # next.timer_DL = 0
             if rho > 13618.62:
                 if theta <= 1.4:
                     if theta <= -1.4:
                         next.agent_mode = AgentMode.COC
-                        next.timer_DL = 0
+                        # next.timer_DL = 0
                     # if theta > -1.4:
                     #     next.agent_mode = AgentMode.WL
-                    #     next.timer_DL = 0
+                    #     # next.timer_DL = 0
                 if theta > 1.4:
                     next.agent_mode = AgentMode.COC
-                    next.timer_DL = 0
+                    # next.timer_DL = 0
 
         if ego.agent_mode == AgentMode.WR:
             if v_int <= 200.0:
                 if v_own <= 772.22:
                     if rho <= 11523.45:
                         next.agent_mode = AgentMode.SL
-                        next.timer_DL = 0
+                        # next.timer_DL = 0
                     if rho > 11523.45:
                         next.agent_mode = AgentMode.COC
-                        next.timer_DL = 0
+                        # next.timer_DL = 0
                 if v_own > 772.22:
                     if v_own <= 894.44:
                         next.agent_mode = AgentMode.WL
-                        next.timer_DL = 0
+                        # next.timer_DL = 0
                     if v_own > 894.44:
                         next.agent_mode = AgentMode.SL
-                        next.timer_DL = 0
+                        # next.timer_DL = 0
             if v_int > 200.0:
                 if rho <= 17808.96:
                     if rho <= 1047.59:
                         next.agent_mode = AgentMode.SR
-                        next.timer_DL = 0
+                        # next.timer_DL = 0
                     if rho > 1047.59:
                         # if rho <= 3142.76:
                         #     next.agent_mode = AgentMode.WR
-                        #     next.timer_DL = 0
+                        #     # next.timer_DL = 0
                         if rho > 3142.76:
                             next.agent_mode = AgentMode.SL
-                            next.timer_DL = 0
+                            # next.timer_DL = 0
                 if rho > 17808.96:
                     next.agent_mode = AgentMode.COC
-                    next.timer_DL = 0
+                    # next.timer_DL = 0
 
         if ego.agent_mode == AgentMode.SL:
             if v_int <= 66.67:
                 if rho <= 7333.1:
                     next.agent_mode = AgentMode.SR
-                    next.timer_DL = 0
+                    # next.timer_DL = 0
                 if rho > 7333.1:
                     if rho <= 11523.45:
                         next.agent_mode = AgentMode.WR
-                        next.timer_DL = 0
+                        # next.timer_DL = 0
                     if rho > 11523.45:
                         next.agent_mode = AgentMode.COC
-                        next.timer_DL = 0
+                        # next.timer_DL = 0
             if v_int > 66.67:
                 if rho <= 17808.96:
                     # if rho <= 3142.76:
                     #     next.agent_mode = AgentMode.SL
-                    #     next.timer_DL = 0
+                    #     # next.timer_DL = 0
                     if rho > 3142.76:
                         if theta <= 0.7:
                             next.agent_mode = AgentMode.SR
-                            next.timer_DL = 0
+                            # next.timer_DL = 0
                         if theta > 0.7:
                             next.agent_mode = AgentMode.WR
-                            next.timer_DL = 0
+                            # next.timer_DL = 0
                 if rho > 17808.96:
                     next.agent_mode = AgentMode.COC
-                    next.timer_DL = 0
+                    # next.timer_DL = 0
 
         
         if ego.agent_mode == AgentMode.SR:
@@ -185,41 +186,41 @@ def decisionLogic(ego: State, others: List[State]):
                 if rho <= 7333.1:
                     # if rho <= 1047.59:
                     #     next.agent_mode = AgentMode.SR
-                    #     next.timer_DL = 0
+                    #     # next.timer_DL = 0
                     if rho > 1047.59:
                         next.agent_mode = AgentMode.SL
-                        next.timer_DL = 0
+                        # next.timer_DL = 0
                 if rho > 7333.1:
                     if theta <= -0.7:
                         if theta <= -1.4:
                             next.agent_mode = AgentMode.COC
-                            next.timer_DL = 0
+                            # next.timer_DL = 0
                         if theta > -1.4:
                             if psi <= 0.7:
                                 next.agent_mode = AgentMode.WL
-                                next.timer_DL = 0
+                                # next.timer_DL = 0
                             if psi > 0.7:
                                 next.agent_mode = AgentMode.SL
-                                next.timer_DL = 0
+                                # next.timer_DL = 0
                     if theta > -0.7:
                         next.agent_mode = AgentMode.SL
-                        next.timer_DL = 0
+                        # next.timer_DL = 0
             if rho > 11523.45:
                 if theta <= 1.4:
                     if theta <= -1.4:
                         next.agent_mode = AgentMode.COC
-                        next.timer_DL = 0
+                        # next.timer_DL = 0
                     if theta > -1.4:
                         next.agent_mode = AgentMode.WR
-                        next.timer_DL = 0
+                        # next.timer_DL = 0
                 if theta > 1.4:
                     next.agent_mode = AgentMode.COC
-                    next.timer_DL = 0
+                    # next.timer_DL = 0
 
 
         
     # assert (ego.agent_mode == next.agent_mode) or (rho * np.sin(theta) >= 500 and rho * np.cos(theta) >= 100 )
-    assert rho > 500
+    assert rho > 500, "too close"
     return next
 
 
@@ -231,62 +232,62 @@ if rho <= 5000.0:
             if theta <= 0.0:
                 if v_own <= 350.0 and ego.agent_mode != AgentMode.SL:
                     next.agent_mode = AgentMode.SL
-                    next.timer_DL = 0
+                    # next.timer_DL = 0
                 if v_own > 350.0 and ego.agent_mode != AgentMode.SL:
                     next.agent_mode = AgentMode.SL
-                    next.timer_DL = 0
+                    # next.timer_DL = 0
             if theta > 0.0:
                 if psi <= 0.0:
                     if v_own <= 350.0 and ego.agent_mode != AgentMode.SL:
                         next.agent_mode = AgentMode.SL
-                        next.timer_DL = 0
+                        # next.timer_DL = 0
                     if v_own > 350.0 and ego.agent_mode != AgentMode.SR:
                         next.agent_mode = AgentMode.SR
-                        next.timer_DL = 0
+                        # next.timer_DL = 0
                 if psi > 0.0 and ego.agent_mode != AgentMode.SL:
                     next.agent_mode = AgentMode.SL
-                    next.timer_DL = 0
+                    # next.timer_DL = 0
         if rho > 1666.67:
             if theta <= 0.0:
                 if psi <= 0.0:
                     if v_own <= 450.0 and ego.agent_mode != AgentMode.WL:
                         next.agent_mode = AgentMode.WL
-                        next.timer_DL = 0
+                        # next.timer_DL = 0
                     if v_own > 450.0 and ego.agent_mode != AgentMode.SR:
                         next.agent_mode = AgentMode.SR
-                        next.timer_DL = 0
+                        # next.timer_DL = 0
                 if psi > 0.0:
                     if v_int <= 312.5:
                         if v_int <= 62.5 and ego.agent_mode != AgentMode.WL:
                             next.agent_mode = AgentMode.WL
-                            next.timer_DL = 0
+                            # next.timer_DL = 0
                         if v_int > 62.5:
                             if v_own <= 350.0 and ego.agent_mode != AgentMode.WR:
                                 next.agent_mode = AgentMode.WR
-                                next.timer_DL = 0
+                                # next.timer_DL = 0
                             if v_own > 350.0 and ego.agent_mode != AgentMode.WL:
                                 next.agent_mode = AgentMode.WL
-                                next.timer_DL = 0
+                                # next.timer_DL = 0
                     if v_int > 312.5 and ego.agent_mode != AgentMode.WL:
                         next.agent_mode = AgentMode.WL
-                        next.timer_DL = 0
+                        # next.timer_DL = 0
             if theta > 0.0:
                 if v_int <= 187.5 and ego.agent_mode != AgentMode.WR:
                     next.agent_mode = AgentMode.WR
-                    next.timer_DL = 0
+                    # next.timer_DL = 0
                 if v_int > 187.5:
                     if psi <= 0.0:
                         if v_own <= 450.0 and ego.agent_mode != AgentMode.WR:
                             next.agent_mode = AgentMode.WR
-                            next.timer_DL = 0
+                            # next.timer_DL = 0
                         if v_own > 450.0 and ego.agent_mode != AgentMode.WL:
                             next.agent_mode = AgentMode.WL
-                            next.timer_DL = 0
+                            # next.timer_DL = 0
                     if psi > 0.0 and ego.agent_mode != AgentMode.SR:
                         next.agent_mode = AgentMode.SR
-                        next.timer_DL = 0
+                        # next.timer_DL = 0
     if rho > 5000.0 and ego.agent_mode != AgentMode.COC:
         next.agent_mode = AgentMode.COC
-        next.timer_DL = 0
+        # next.timer_DL = 0
 
 '''

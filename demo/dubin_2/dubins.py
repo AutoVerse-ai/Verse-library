@@ -339,16 +339,17 @@ if __name__ == "__main__":
     script_dir = os.path.realpath(os.path.dirname(__file__))
     input_code_name = os.path.join(script_dir, "controller_v3.py") # Contains ACAS Xu Decision Logic
     car = CarAgent('car1', file_name=input_code_name)
-    car2 = NPCAgent('car2')
+    car2 = CarAgent('car2', file_name=input_code_name)
+    # car2 =  NPCAgent('car2')
     scenario = Scenario(ScenarioConfig(parallel=False))
     scenario.set_sensor(DubinSensor())
 
     # Phi_CL_1
-    v_own = 954.6
-    v_int = 1050
-    psi   = -0.4296
-    x_int = -43736
-    y_int = 0
+    # v_own = 954.6
+    # v_int = 1050
+    # psi   = -0.4296
+    # x_int = -43736
+    # y_int = 0
 
     # # Phi_CL_2
     # v_own = 462.6
@@ -379,11 +380,11 @@ if __name__ == "__main__":
     # y_int = 30933
 
     # # Phi_CL_6
-    # v_own = 609.3
-    # v_int = 750
-    # psi   = 0.6226
-    # x_int = 43736
-    # y_int = 0
+    v_own = 609.3
+    v_int = 750
+    psi   = 0.6226
+    x_int = 43736
+    y_int = 0
 
     # # Phi_CL_7
     # v_own = 1145.9
@@ -407,11 +408,11 @@ if __name__ == "__main__":
     # y_int = 43736
 
     # Phi_CL_10
-    v_own = 600
-    v_int = 600
-    psi   = np.pi
-    x_int = 0
-    y_int = 120000
+    # v_own = 600
+    # v_int = 600
+    # psi   = np.pi
+    # x_int = 0
+    # y_int = 120000
 
 
 
@@ -473,11 +474,10 @@ if __name__ == "__main__":
         start = time.perf_counter()
         fig2 = go.Figure()
         fig4 = go.Figure()
-        trace = scenario.verify(200, 0.1)
-        for _ in range(10):
+        trace = scenario.verify(100, 0.1)
         traces = []
         fig = go.Figure()
-        n=100 
+        n=10
         for i in range(n):
             trace = scenario.simulate(200, 0.1)
             traces.append(trace)
@@ -499,10 +499,10 @@ if __name__ == "__main__":
 
         # fig4 = simulation_tree_3d(trace, fig4, x_dim = 1, x_title= 'x', y_dim = 2, y_title = 'y', z_dim = 0, z_title = 'time')
         # fig4.show()
-        fig = reachtube_tree(trace)
-        fig.show()
-        fig = simulation_tree(trace)
-        fig.show()
+        # fig = reachtube_tree_3d(trace)
+        # fig.show()
+        # fig = simulation_tree_3d(trace)
+        # fig.show()
         
 
     except KeyboardInterrupt:
