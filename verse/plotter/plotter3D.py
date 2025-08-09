@@ -31,7 +31,7 @@ prev_time = 0
 #refine_cache = []
 
 
-def plot3dReachtubeSingleLive(tube, ax, x_dim=1, y_dim=2, z_dim=3, edge=False,  log_file="bounding_boxes.txt", save_to_file = True, step =1000):
+def plot3dReachtubeSingleLive(tube, ax, x_dim=1, y_dim=2, z_dim=3, edge=False,  log_file="bounding_boxes.txt", save_to_file = True, step =1000, assert_hits = None):
     if os.path.exists('plotter_config.json'):
         with open('plotter_config.json', 'r') as f:
             config = json.load(f)
@@ -47,6 +47,13 @@ def plot3dReachtubeSingleLive(tube, ax, x_dim=1, y_dim=2, z_dim=3, edge=False,  
     global prev_time
     rects_dict = {}
     length = len(tube[list(tube.keys())[0]])
+
+    if(assert_hits != None):
+        print("biiga bongo")
+        for agent_id in assert_hits:
+            last_point = np.array(tube[agent_id][-1][0:3])
+            second_last_point = np.array(tube[agent_id][-2][0:3])
+            ax.add_point_labels( (last_point+second_last_point)/2,  ["HIT:\n" + a for a in assert_hits[agent_id]], text_color="yellow", always_visible=True )
 
     for i in range(0, length,2):
         for agent_id in tube:
@@ -210,10 +217,8 @@ def plotPolyLine(points, color, ax):
     return  (ax.add_mesh(poly_line, color=color, line_width=3   ))
 
 
-last_plotted = {}  # color -> (center, actor)
 
 def plotGrid(ax, color, rects):
-    global last_plotted
     
     vertices = []
     cell_indices = []
@@ -246,35 +251,9 @@ def plotGrid(ax, color, rects):
 
     celltypes = np.full(N, pv.CellType.HEXAHEDRON, dtype=np.uint8)
     grid = pv.UnstructuredGrid(cells, celltypes, vertices)
-    ax.add_mesh(grid, show_edges=False, color=color, opacity=0.5)
+    ax.add_mesh(grid, show_edges=False, color=color, opacity=1)
 
-    # Plane placement for the last box only
-    new_lb, new_ub = rects[-1]
-    new_center = (np.array(new_lb) + np.array(new_ub)) / 2
-
-    # Remove old plane if exists
-    # if color in last_plotted and last_plotted[color][1] is not None:
-    #     ax.remove_actor(last_plotted[color][1])
-
-    # if color in last_plotted:
-    #     prev_center = last_plotted[color][0]
-    #     direction = new_center - prev_center
-    #     norm = np.linalg.norm(direction)
-    #     if norm > 1e-6:
-    #         direction /= norm
-    #     else:
-    #         direction = np.array([1, 0, 0])  # Default direction
-    # else:
-    #     direction = np.array([1, 0, 0])  # Default direction if first time
-
-    # Create a simple triangular plane icon
-    plane_size = np.linalg.norm(np.array(new_ub) - np.array(new_lb))
-    #plane_mesh = create_plane_icon(new_center, direction, size=plane_size)
-
-    # actor = ax.add_mesh(plane_mesh, color=color+"80", show_edges=True, line_width=1.5)
-    # last_plotted[color] = (new_center, actor)
-
-    # return actor
+    
 
 def create_plane_icon(center, direction, size=1.0):
     # Create a triangle representing the plane
@@ -293,7 +272,7 @@ def create_plane_icon(center, direction, size=1.0):
     return pv.PolyData(points, faces)
      
 
-def plot3dSimulationSingleLive(tube, ax, line_width=3, step = 1000, x_dim=1, y_dim=2, z_dim=3, save_to_file = True, log_file = "simulations.txt" ):
+def plot3dSimulationSingleLive(tube, ax, line_width=3, step = 1000, x_dim=1, y_dim=2, z_dim=3, save_to_file = True, log_file = "simulations.txt", assert_hits = None ):
     if os.path.exists('plotter_config.json'):
         with open('plotter_config.json', 'r') as f:
             config = json.load(f)
@@ -311,15 +290,24 @@ def plot3dSimulationSingleLive(tube, ax, line_width=3, step = 1000, x_dim=1, y_d
     rects_dict = {}
     length = len(tube[list(tube.keys())[0]])-1
 
+    for agent_id in tube:
+        if(assert_hits != None and agent_id in assert_hits):
+            last_point = tube[agent_id][-1][0:3]
+            ax.add_point_labels( last_point,  ["HIT:\n" + a for a in assert_hits[agent_id]], text_color="yellow", always_visible=True )
+
+
     for i in range(length ):
         for agent_id in tube:
+            
             if agent_id not in color_map:
                 color_map[agent_id] = agent_id.split('_')[1]
-            
+         
             trace = tube[agent_id]
             lb = trace[i]
             if(lb[0] ==0):
                 offset = prev_time
+
+          
 
                 
             point = [lb[x_dim]-1, lb[y_dim]-1, lb[z_dim]-1]
@@ -336,6 +324,9 @@ def plot3dSimulationSingleLive(tube, ax, line_width=3, step = 1000, x_dim=1, y_d
             rects_dict[agent_id].append(point)
 
             if not node_batch and (i % step == 0 or i >= length-1):
+
+                
+
                 plotPolyLine(rects_dict[agent_id], color_map[agent_id], ax)
                 rects_dict[agent_id] = [rects_dict[agent_id][-1]]
 
@@ -351,7 +342,6 @@ def plot3dSimulationSingleLive(tube, ax, line_width=3, step = 1000, x_dim=1, y_d
     if( node_batch and node_idx % step==0  ):
 
         for agent_id in tube:
-
             plotPolyLine(node_rect_cache[agent_id], color_map[agent_id], ax)
             node_rect_cache[agent_id] = [node_rect_cache[agent_id][-1]]
 

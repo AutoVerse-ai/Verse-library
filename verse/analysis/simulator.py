@@ -248,6 +248,8 @@ class Simulator:
             idx = transition_idx
             for agent in node.agent:
                 node.trace[agent] = node.trace[agent][:idx]
+            if ax is not None:
+                plot3dSimulationSingleLive(node.trace, ax, assert_hits=node.assert_hits)
             return (
                 node.id,
                 later,
@@ -268,6 +270,8 @@ class Simulator:
                 node.trace[agent_idx] = node.trace[agent_idx][: transition_idx + 1]
 
         if asserts != None:  # FIXME
+            if ax is not None:
+                plot3dSimulationSingleLive(node.trace, ax, assert_hits=node.assert_hits)
             return (node.id, later, [], node.trace, cache_updates)
             # print(transition_idx)
             # pp({a: len(t) for a, t in node.trace.items()})
@@ -291,7 +295,7 @@ class Simulator:
                 # print(f"node {node.id} dur {timeit.default_timer() - t}")
 
                 if ax is not None:
-                    plot3dSimulationSingleLive(node.trace, ax)
+                    plot3dSimulationSingleLive(node.trace, ax, assert_hits=node.assert_hits)
                 return (node.id, later, [], node.trace, cache_updates)
 
             transit_agents = transitions.keys()
@@ -353,7 +357,7 @@ class Simulator:
             # print(f"node {node.id} dur {timeit.default_timer() - t}")
 
         if ax is not None:
-            plot3dSimulationSingleLive(node.trace, ax )
+            plot3dSimulationSingleLive(node.trace, ax, assert_hits=node.assert_hits)
 
 
         return (node.id, later, next_nodes, node.trace, cache_updates)
