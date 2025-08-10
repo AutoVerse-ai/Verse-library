@@ -49,11 +49,13 @@ def plot3dReachtubeSingleLive(tube, ax, x_dim=1, y_dim=2, z_dim=3, edge=False,  
     length = len(tube[list(tube.keys())[0]])
 
     if(assert_hits != None):
-        print("biiga bongo")
         for agent_id in assert_hits:
             last_point = np.array(tube[agent_id][-1][0:3])
             second_last_point = np.array(tube[agent_id][-2][0:3])
-            ax.add_point_labels( (last_point+second_last_point)/2,  ["HIT:\n" + a for a in assert_hits[agent_id]], text_color="yellow", always_visible=True )
+            avg_point = ((last_point+second_last_point)/2).copy()
+            avg_point[0]*=100
+            print("biga bongo", avg_point)
+            ax.add_actor(pv.Label(  "HIT:\n" + assert_hits[agent_id][0], avg_point ))
 
     for i in range(0, length,2):
         for agent_id in tube:
@@ -292,8 +294,11 @@ def plot3dSimulationSingleLive(tube, ax, line_width=3, step = 1000, x_dim=1, y_d
 
     for agent_id in tube:
         if(assert_hits != None and agent_id in assert_hits):
-            last_point = tube[agent_id][-1][0:3]
-            ax.add_point_labels( last_point,  ["HIT:\n" + a for a in assert_hits[agent_id]], text_color="yellow", always_visible=True )
+            last_point = tube[agent_id][-1][0:3].copy()
+            last_point[0]*=100
+            print("bingo bongo", last_point)
+
+            ax.add_actor(pv.Label(  "HIT:\n" + assert_hits[agent_id][0], last_point ))
 
 
     for i in range(length ):
