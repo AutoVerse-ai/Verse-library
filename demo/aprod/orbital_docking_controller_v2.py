@@ -39,9 +39,9 @@ def decisionLogic(ego: State, others: List[State]) -> State:
         # output.po_mode = POMode.Active
         output.timer = 0
     
-    if ego.x**2+ego.y**2+ego.z**2 < prox_dist**2 and ego.po_mode != POMode.Active and output.po_timer >= T_prox:
-        output.po_mode = POMode.Active
-        output.po_timer = 0
+    # if ego.x**2+ego.y**2+ego.z**2 < prox_dist**2 and ego.po_mode != POMode.Active and output.po_timer >= T_prox:
+    #     output.po_mode = POMode.Active
+    #     output.po_timer = 0
 
     if ego.go_mode == GOMode.Active:
         output.ex = ego.ex * 1

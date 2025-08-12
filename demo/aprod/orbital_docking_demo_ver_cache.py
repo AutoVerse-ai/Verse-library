@@ -1,5 +1,6 @@
 # from orbital_all_agent import OrbitalAgent
-from orbital_docking_agent_cache import OrbitalAgent
+# from orbital_docking_agent_cache import OrbitalAgent
+from orbital_docking_agent_cache_mpc import OrbitalAgent
 from verse import Scenario, ScenarioConfig
 from verse.analysis.verifier import ReachabilityMethod
 from verse.plotter.plotter2D import *
@@ -73,7 +74,7 @@ if __name__ == "__main__":
     scenario.set_sensor(orbital_sensor)
     # modify mode list input
     # base = [10,20,0,1,2,0]
-    T = 5500
+    T = 3100
     ry = 75
     base = [0, ry+10, 0, n/2*ry*.9, 0, 0]
     x0_l = np.array(base + [base[i]-2.5 for i in range(6)] + [-2.5 for _ in range(3)] + [0 for _ in range(6)])
