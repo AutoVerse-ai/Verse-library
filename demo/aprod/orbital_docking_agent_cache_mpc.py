@@ -23,7 +23,8 @@ q = 200              # bounding boxes: inside
 r = 50               # outside
 M = 1000  # for big-M disjunction 
 # u_max = 100 # to cap how large the input can be (note that due to the effect of mass, the actual input is limited to 0.01 m/s^2)
-u_max = 25 # to cap how large the input can be (note that due to the effect of mass, the actual input is limited to 0.01 m/s^2)
+u_max = 25 
+# u_max = 2000
 Q = np.diag([100, 100, 100, 1, 1, 1])  # cost function for state -- high on positional error 
 R = 0.01 * np.eye(3) # try smaller penalty on control for tracking gain 
 ry: float = 75
@@ -32,7 +33,8 @@ u_limit: float = 25
 # u_limit = 50
 # u_limit = 200
 # u_limit = np.inf
-max_tol = 5 # maximum allowable deviation is 5 
+max_tol = 20 # maximum allowable deviation is 5 
+# max_tol = 0
 
 filename = "demo/aprod/refs.pkl"
 t_global = "demo/aprod/time.pkl" # write in the final time of current traj, check with initial set time
@@ -93,7 +95,7 @@ class OrbitalAgent(BaseAgent):
         u = [cp.Variable(3) for _ in range(N)]
 
         # Binary variables for square exclusion
-        z = cp.Variable(4, boolean=True)
+        # z = cp.Variable(4, boolean=True)
 
         constraints = []
 
@@ -102,9 +104,11 @@ class OrbitalAgent(BaseAgent):
 
         # Dynamics
         A_d, B_d = OrbitalAgent.discretize_dynamics(dt)
+        
         for k in range(N):
             constraints.append(x[k+1] == A_d @ x[k] + B_d @ u[k])
             constraints += [cp.abs(u[k]) <= u_max]  # Elementwise control constraint
+            # constraints += [cp.norm(u[k]) <= u_max] 
 
         # Terminal NMT constraint
         # constraints.append(x[N][4] + 2 * n * x[N][0] == 0)     # v_y + 2\eta r_x = 0
@@ -139,13 +143,23 @@ class OrbitalAgent(BaseAgent):
         # ]
 
         objective = cp.Minimize(cp.sum([cp.norm1(u_k) for u_k in u])) # this doesn't need to exist
+        # target_state = np.array([tol, tol, tol/100, tol/100, tol/100, tol/100])
+        # objective = cp.Minimize(cp.norm(x[N] - target_state, 2))
         prob = cp.Problem(objective, constraints)
         prob.solve(solver=cp.HIGHS)
+        # prob.solve(solver=cp.ECOS, abstol=1e-9, reltol=1e-9, feastol=1e-9)
 
         if prob.status in ["optimal", "optimal_inaccurate"]:
+        # if prob.status in ["optimal"]:
             # print("Found a feasible trajectory.")
             x_sol = np.array([xk.value for xk in x])
             u_sol = np.array([uk.value for uk in u])
+            # print("Status:", prob.status)
+            # print("Terminal state:", x[N].value)
+            # print("Terminal norm:", np.linalg.norm(x[N].value))
+            # print("First control:", u[0].value)
+            # print("Max control norm:", max(np.linalg.norm(u[k].value) for k in range(N)))
+
             return x_sol, u_sol
         else:
             # print("No feasible solution found.")
@@ -290,8 +304,9 @@ class OrbitalAgent(BaseAgent):
             x_sol, u_sol = OrbitalAgent.compute_ref_nmt(dt, N=N) # generates ref trajectory for entire run due to not doing MILP
             with open(filename, 'wb') as f:
                 pickle.dump((x_sol, u_sol), f)
-        if track_mode == 'Docking':
+        if track_mode == 'Docking' and mode[0] == 'Passive':
             # x_sol = np.zeros(x_sol.shape) # if docking, should try to head to \bar 0 
+            # x_sol, u_sol = None, None
             hat_x = np.array(x0[:6]) - np.array(x0[12:18]) # don't use hx directly, compute it from hx = x - e
 
             tol = 0

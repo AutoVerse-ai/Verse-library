@@ -22,12 +22,13 @@ m = 10000 # mass of satellite
 q = 200              # bounding boxes: inside
 r = 50               # outside
 M = 1000  # for big-M disjunction 
-u_max = 100 # to cap how large the input can be (note that due to the effect of mass, the actual input is limited to 0.01 m/s^2)
+u_max = 25 # to cap how large the input can be (note that due to the effect of mass, the actual input is limited to 0.01 m/s^2)
 Q = np.diag([100, 100, 100, 1, 1, 1])  # cost function for state -- high on positional error 
 R = 0.01 * np.eye(3) # try smaller penalty on control for tracking gain 
 ry = 75
 x0_nmt = np.array([0, ry, 0, n/2*ry, 0, 0])
 u_limit = 25
+max_tol = 5
 # u_limit = 50
 # u_limit = 200
 # u_limit = np.inf
@@ -80,7 +81,7 @@ class OrbitalAgent(BaseAgent):
         return exp_M[:6, :6], exp_M[:6, 6:] # A, B
     
     @staticmethod
-    def compute_ref(dt: float, x0: np.ndarray, N: int = 20) -> Tuple[np.ndarray, np.ndarray]:
+    def compute_ref(dt: float, x0: np.ndarray, N: int = 20, tol: float = 0) -> Tuple[np.ndarray, np.ndarray]:
         # need dt * N = T
         x = [cp.Variable(6) for _ in range(N + 1)]
         u = [cp.Variable(3) for _ in range(N)]
@@ -98,31 +99,39 @@ class OrbitalAgent(BaseAgent):
         for k in range(N):
             constraints.append(x[k+1] == A_d @ x[k] + B_d @ u[k])
             constraints += [cp.abs(u[k]) <= u_max]  # Elementwise control constraint
+            # constraints.append(cp.norm(u[k]) <= u_max) 
 
         # Terminal NMT constraint
-        constraints.append(x[N][4] + 2 * n * x[N][0] == 0)     # v_y + 2\eta r_x = 0
-        constraints.append(x[N][3] - (n / 2) * x[N][1] == 0)   # v_x - \eta /2 r_y = 0
+        # constraints.append(x[N][4] + 2 * n * x[N][0] == 0)     # v_y + 2\eta r_x = 0
+        # constraints.append(x[N][3] - (n / 2) * x[N][1] == 0)   # v_x - \eta /2 r_y = 0
+
+        for i in range(6):
+            if i//3 == 0:
+                constraints.append(x[N][i] == tol) 
+            else:
+                constraints.append(x[N][i] == tol/100)
+            # constraints.append(x[N][i] < EPSILON) # use if unable to fully steer towards 0  
 
         # Terminal position in square Q
-        constraints += [
-            x[N][0] <= q,
-            x[N][0] >= -q,
-            x[N][1] <= q,
-            x[N][1] >= -q,
-        ]
+        # constraints += [
+        #     x[N][0] <= q,
+        #     x[N][0] >= -q,
+        #     x[N][1] <= q,
+        #     x[N][1] >= -q,
+        # ]
 
-        # Exclude inner square R using big-M disjunction
-        # z[0] => r_x <= -r
-        # z[1] => r_x >=  r
-        # z[2] => r_y <= -r
-        # z[3] => r_y >=  r
-        constraints += [
-            x[N][0] <= -r + M * (1 - z[0]),
-            x[N][0] >=  r - M * (1 - z[1]),
-            x[N][1] <= -r + M * (1 - z[2]),
-            x[N][1] >=  r - M * (1 - z[3]),
-            cp.sum(z) >= 1
-        ]
+        # # Exclude inner square R using big-M disjunction
+        # # z[0] => r_x <= -r
+        # # z[1] => r_x >=  r
+        # # z[2] => r_y <= -r
+        # # z[3] => r_y >=  r
+        # constraints += [
+        #     x[N][0] <= -r + M * (1 - z[0]),
+        #     x[N][0] >=  r - M * (1 - z[1]),
+        #     x[N][1] <= -r + M * (1 - z[2]),
+        #     x[N][1] >=  r - M * (1 - z[3]),
+        #     cp.sum(z) >= 1
+        # ]
 
         objective = cp.Minimize(cp.sum([cp.norm1(u_k) for u_k in u])) # this doesn't need to exist
         prob = cp.Problem(objective, constraints)
@@ -243,8 +252,21 @@ class OrbitalAgent(BaseAgent):
             with open(filename, 'wb') as f:
                 pickle.dump((x_sol, u_sol), f)
 
-        if track_mode == 'Docking':
-            x_sol = np.zeros(x_sol.shape) # if docking, should try to head to \bar 0 
+        if track_mode == 'Docking' and mode[0] == 'Passive':
+            # x_sol = np.zeros(x_sol.shape) # if docking, should try to head to \bar 0 
+            # x_sol, u_sol = None, None
+            hat_x = np.array(x0[:6]) - np.array(x0[12:18]) # don't use hx directly, compute it from hx = x - e
+
+            tol = 0
+            while tol <= max_tol:
+                try: 
+                    x_sol, u_sol = OrbitalAgent.compute_ref(dt, hat_x, N)
+                    break
+                except:
+                    tol += 0.1
+                    # raise Exception('MPC unable to find solution')
+            if x_sol is None:
+                raise Exception('MPC unable to find solution')
 
         u_sol = np.vstack([u_sol, u_sol[-1]]) # holding last input 
         x_ref_fn, u_ref_fn = OrbitalAgent.x_ref_fn, OrbitalAgent.u_ref_fn

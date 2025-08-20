@@ -74,7 +74,7 @@ if __name__ == "__main__":
     scenario.set_sensor(orbital_sensor)
     # modify mode list input
     # base = [10,20,0,1,2,0]
-    T = 3100
+    T = 3000
     ry = 75
     base = [0, ry+10, 0, n/2*ry*.9, 0, 0]
     x0_l = np.array(base + [base[i]-2.5 for i in range(6)] + [-2.5 for _ in range(3)] + [0 for _ in range(6)])
