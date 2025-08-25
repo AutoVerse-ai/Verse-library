@@ -22,7 +22,8 @@ m = 10000 # mass of satellite
 q = 200              # bounding boxes: inside
 r = 50               # outside
 M = 1000  # for big-M disjunction 
-u_max = 100 # to cap how large the input can be (note that due to the effect of mass, the actual input is limited to 0.01 m/s^2)
+# u_max = 100 # to cap how large the input can be (note that due to the effect of mass, the actual input is limited to 0.01 m/s^2)
+u_max = 25
 Q = np.diag([100, 100, 100, 1, 1, 1])  # cost function for state -- high on positional error 
 R = 0.01 * np.eye(3) # try smaller penalty on control for tracking gain 
 ry = 75
@@ -34,7 +35,7 @@ u_limit = 25
 # u_limit = 50
 filename = "demo/aprod/refs.pkl"
 filename_ra = "demo/aprod/refs_ra.pkl"
-
+max_tol = 1
 
 A = np.array([
         [0, 0, 0, 1, 0, 0],
@@ -82,7 +83,10 @@ class OrbitalAgent(BaseAgent):
         return exp_M[:6, :6], exp_M[:6, 6:] # A, B
     
     @staticmethod
-    def compute_ref(dt: float, x0: np.ndarray, N: int = 20) -> Tuple[np.ndarray, np.ndarray]:
+    def compute_ref(dt: float, x0: np.ndarray, x_final: np.ndarray, N: int = 20, tol: float = 0) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        For time being, just tries to go to exact final state instead of somewhere on the outer parking orbit 
+        """
         # need dt * N = T
         x = [cp.Variable(6) for _ in range(N + 1)]
         u = [cp.Variable(3) for _ in range(N)]
@@ -95,36 +99,30 @@ class OrbitalAgent(BaseAgent):
         # Initial condition
         constraints.append(x[0] == x0)
 
+        # need dt * N = T
+        x = [cp.Variable(6) for _ in range(N + 1)]
+        u = [cp.Variable(3) for _ in range(N)]
+
+        constraints = []
+
+        # Initial condition
+        constraints.append(x[0] == x0)
+
         # Dynamics
         A_d, B_d = OrbitalAgent.discretize_dynamics(dt)
         for k in range(N):
             constraints.append(x[k+1] == A_d @ x[k] + B_d @ u[k])
             constraints += [cp.abs(u[k]) <= u_max]  # Elementwise control constraint
+            # constraints.append(cp.norm(u[k]) <= u_max) 
 
-        # Terminal NMT constraint
-        constraints.append(x[N][4] + 2 * n * x[N][0] == 0)     # v_y + 2\eta r_x = 0
-        constraints.append(x[N][3] - (n / 2) * x[N][1] == 0)   # v_x - \eta /2 r_y = 0
+        for i in range(6):
+            if i//3 == 0:
+                constraints.append(x[N][i] >= x_final[i]-tol) # use if unable to fully steer towards 0  
+                constraints.append(x[N][i] <= x_final[i]+tol) # use if unable to fully steer towards 0  
+            else:
+                constraints.append(x[N][i] >= x_final[i]-tol/100) # use if unable to fully steer towards 0  
+                constraints.append(x[N][i] <= x_final[i]+tol/100) # use if unable to fully steer towards 0  
 
-        # Terminal position in square Q
-        constraints += [
-            x[N][0] <= q,
-            x[N][0] >= -q,
-            x[N][1] <= q,
-            x[N][1] >= -q,
-        ]
-
-        # Exclude inner square R using big-M disjunction
-        # z[0] => r_x <= -r
-        # z[1] => r_x >=  r
-        # z[2] => r_y <= -r
-        # z[3] => r_y >=  r
-        constraints += [
-            x[N][0] <= -r + M * (1 - z[0]),
-            x[N][0] >=  r - M * (1 - z[1]),
-            x[N][1] <= -r + M * (1 - z[2]),
-            x[N][1] >=  r - M * (1 - z[3]),
-            cp.sum(z) >= 1
-        ]
 
         objective = cp.Minimize(cp.sum([cp.norm1(u_k) for u_k in u])) # this doesn't need to exist
         prob = cp.Problem(objective, constraints)
@@ -258,13 +256,26 @@ class OrbitalAgent(BaseAgent):
             with open(filename, 'rb') as f:
                 full_x_sol, full_u_sol = pickle.load(f)
                 x_sol, u_sol = full_x_sol[start_idx:], full_u_sol[start_idx:] 
-        elif track_mode == 'Avoid':
+        elif track_mode == 'Avoid': # figure out a way to do nothing while mode[0] isn't passive
             # if in avoid mode, switch NMT that is being tracked
             # start_idx = int(start_time//dt) 
             start_idx = -int(T//dt)-1
             with open(filename_ra, 'rb') as f:
                 full_x_sol, full_u_sol = pickle.load(f)
                 x_sol, u_sol = full_x_sol[start_idx:], full_u_sol[start_idx:] 
+                x_final = x_sol[-1]
+                x_sol, u_sol = None, None
+                hat_x = np.array(x0[:6]) - np.array(x0[12:18])
+                tol = 0
+                while tol <= max_tol:
+                    try: 
+                        x_sol, u_sol = OrbitalAgent.compute_ref(dt, hat_x, x_final, N)
+                        break
+                    except:
+                        tol += 0.1
+                        # raise Exception('MPC unable to find solution')
+                if x_sol is None:
+                    raise Exception('MPC unable to find solution')
         else:
             raise Exception(f"Unexpected mode: {track_mode}")
 

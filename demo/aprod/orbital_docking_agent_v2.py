@@ -107,9 +107,9 @@ class OrbitalAgent(BaseAgent):
 
         for i in range(6):
             if i//3 == 0:
-                constraints.append(x[N][i] == tol) 
+                constraints.append(x[N][i] <= tol) 
             else:
-                constraints.append(x[N][i] == tol/100)
+                constraints.append(x[N][i] <= tol/100)
             # constraints.append(x[N][i] < EPSILON) # use if unable to fully steer towards 0  
 
         # Terminal position in square Q
