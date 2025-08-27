@@ -22,18 +22,23 @@ m = 10000 # mass of satellite
 q = 200              # bounding boxes: inside
 r = 50               # outside
 M = 1000  # for big-M disjunction 
-u_max = 25 # to cap how large the input can be (note that due to the effect of mass, the actual input is limited to 0.01 m/s^2)
-# u_max = 10000
+# u_max = 100 # to cap how large the input can be (note that due to the effect of mass, the actual input is limited to 0.01 m/s^2)
+u_max = 25
 Q = np.diag([100, 100, 100, 1, 1, 1])  # cost function for state -- high on positional error 
 R = 0.01 * np.eye(3) # try smaller penalty on control for tracking gain 
 ry = 75
+r_inner = ry - 20 
 x0_nmt = np.array([0, ry, 0, n/2*ry, 0, 0])
+x0_inner = np.array([0, r_inner, 0, n/2*r_inner, 0, 0])
+x0_nmt_ahead = np.array([ 4.48926, 74.46068,  0.     ,  0.04468, -0.01077,  0.     ]) # these are both 10 seconds ahead
+x0_inner_ahead = np.array([ 3.29216658e+00,  5.46045355e+01,  0.00000000e+00,  3.27627213e-02, -7.90119980e-03,  0.00000000e+00])
 u_limit = 25
-max_tol = 5
 # u_limit = 50
-# u_limit = 200
-# u_limit = np.inf
 filename = "demo/aprod/refs.pkl"
+filename_ahead = "demo/aprod/refs_ahead.pkl"
+filename_inner = "demo/aprod/refs_ra.pkl"
+filename_ahead_inner = "demo/aprod/refs_ahead_ra.pkl"
+max_tol = 1
 
 
 A = np.array([
@@ -82,7 +87,10 @@ class OrbitalAgent(BaseAgent):
         return exp_M[:6, :6], exp_M[:6, 6:] # A, B
     
     @staticmethod
-    def compute_ref(dt: float, x0: np.ndarray, N: int = 20, tol: float = 0) -> Tuple[np.ndarray, np.ndarray]:
+    def compute_ref(dt: float, x0: np.ndarray, x_final: np.ndarray, N: int = 20, tol: float = 0) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        For time being, just tries to go to exact final state instead of somewhere on the outer parking orbit 
+        """
         # need dt * N = T
         x = [cp.Variable(6) for _ in range(N + 1)]
         u = [cp.Variable(3) for _ in range(N)]
@@ -95,52 +103,34 @@ class OrbitalAgent(BaseAgent):
         # Initial condition
         constraints.append(x[0] == x0)
 
+        # need dt * N = T
+        x = [cp.Variable(6) for _ in range(N + 1)]
+        u = [cp.Variable(3) for _ in range(N)]
+
+        constraints = []
+
+        # Initial condition
+        constraints.append(x[0] == x0)
+
         # Dynamics
         A_d, B_d = OrbitalAgent.discretize_dynamics(dt)
         for k in range(N):
             constraints.append(x[k+1] == A_d @ x[k] + B_d @ u[k])
             constraints += [cp.abs(u[k]) <= u_max]  # Elementwise control constraint
-            # constraints.append(cp.norm(u[k], 2) <= u_max) 
-
-        # Terminal NMT constraint
-        # constraints.append(x[N][4] + 2 * n * x[N][0] == 0)     # v_y + 2\eta r_x = 0
-        # constraints.append(x[N][3] - (n / 2) * x[N][1] == 0)   # v_x - \eta /2 r_y = 0
+            # constraints.append(cp.norm(u[k]) <= u_max) 
 
         for i in range(6):
             if i//3 == 0:
-                constraints.append(x[N][i] <= tol) 
-                constraints.append(x[N][i] >= -tol) 
+                constraints.append(x[N][i] >= x_final[i]-tol) # use if unable to fully steer towards 0  
+                constraints.append(x[N][i] <= x_final[i]+tol) # use if unable to fully steer towards 0  
             else:
-                constraints.append(x[N][i] <= tol/100)
-                constraints.append(x[N][i] >= -tol/100)
-            # constraints.append(x[N][i] < EPSILON) # use if unable to fully steer towards 0  
+                constraints.append(x[N][i] >= x_final[i]-tol/100) # use if unable to fully steer towards 0  
+                constraints.append(x[N][i] <= x_final[i]+tol/100) # use if unable to fully steer towards 0  
 
-        # Terminal position in square Q
-        # constraints += [
-        #     x[N][0] <= q,
-        #     x[N][0] >= -q,
-        #     x[N][1] <= q,
-        #     x[N][1] >= -q,
-        # ]
-
-        # # Exclude inner square R using big-M disjunction
-        # # z[0] => r_x <= -r
-        # # z[1] => r_x >=  r
-        # # z[2] => r_y <= -r
-        # # z[3] => r_y >=  r
-        # constraints += [
-        #     x[N][0] <= -r + M * (1 - z[0]),
-        #     x[N][0] >=  r - M * (1 - z[1]),
-        #     x[N][1] <= -r + M * (1 - z[2]),
-        #     x[N][1] >=  r - M * (1 - z[3]),
-        #     cp.sum(z) >= 1
-        # ]
 
         objective = cp.Minimize(cp.sum([cp.norm1(u_k) for u_k in u])) # this doesn't need to exist
         prob = cp.Problem(objective, constraints)
-
         prob.solve(solver=cp.HIGHS)
-        # prob.solve(solver=cp.ECOS, abstol=1e-9, reltol=1e-9, feastol=1e-9)
 
         if prob.status in ["optimal", "optimal_inaccurate"]:
             # print("Found a feasible trajectory.")
@@ -233,44 +223,74 @@ class OrbitalAgent(BaseAgent):
     #     return np.array(trace)
     
     def TC_simulate(self, mode, initialSet, time_horizon, time_step, map=None):
+        # TODO: currently normal dryvr will error out due to increasing uncertainty in the timer parameters -- instead keep track of time using some gloabl instead based on time horizon
+        # specifically, issue is that start_idx based on start time can be less than T/dt
         x0 = initialSet
         track_mode = mode[-1]
         T = time_horizon
         dt = 10
         N = int(np.ceil(T/dt))
-        start_time = initialSet[-1]
-        po_start_time = initialSet[-2]
-        timer_start_time = initialSet[-3]
+        
+        """
+        recall, last variable is a dummy variable, shift everything one to the left
+        """
+        start_time = int(initialSet[-2])
+        po_timer_start_time = int(initialSet[-3])
+        timer_start_time = int(initialSet[-4])
         # N = 20
         # dt = T/N
 
+        if mode[-2] == 'OActive':
+            pass
         # x_sol, u_sol = OrbitalAgent.compute_ref(dt, x0[6:], N)
 
         x_sol, u_sol = None, None
-        if os.path.exists(filename):
-            start_idx = int(start_time//dt) # may need to fine tune indexing
-            with open(filename, 'rb') as f:
-                full_x_sol, full_u_sol = pickle.load(f)
-                x_sol, u_sol = full_x_sol[start_idx:], full_u_sol[start_idx:] 
-        else:
+        if not os.path.exists(filename):
             x_sol, u_sol = OrbitalAgent.compute_ref_nmt(dt, N=N) # generates ref trajectory for entire run due to not doing MILP
             with open(filename, 'wb') as f:
                 pickle.dump((x_sol, u_sol), f)
+        if not os.path.exists(filename_inner):
+            x_sol, u_sol = OrbitalAgent.compute_ref_nmt(dt, x0_inner, N=N) # generates ref trajectory for entire run due to not doing MILP
+            with open(filename_inner, 'wb') as f:
+                pickle.dump((x_sol, u_sol), f)
 
-        if track_mode == 'Docking' and mode[0] == 'Passive':
-            # x_sol = np.zeros(x_sol.shape) # if docking, should try to head to \bar 0 
-            x_sol, u_sol = None, None
-            hat_x = np.array(x0[:6]) - np.array(x0[12:18]) # don't use hx directly, compute it from hx = x - e
+        if not os.path.exists(filename_ahead):
+            x_sol, u_sol = OrbitalAgent.compute_ref_nmt(dt, x0_nmt_ahead, N=N) # generates ref trajectory for entire run due to not doing MILP
+            with open(filename_ahead, 'wb') as f:
+                pickle.dump((x_sol, u_sol), f)
+        if not os.path.exists(filename_ahead_inner):
+            x_sol, u_sol = OrbitalAgent.compute_ref_nmt(dt, x0_inner_ahead, N=N) # generates ref trajectory for entire run due to not doing MILP
+            with open(filename_ahead_inner, 'wb') as f:
+                pickle.dump((x_sol, u_sol), f)
 
-            tol = 0
-            while tol <= max_tol:
-                try: 
-                    x_sol, u_sol = OrbitalAgent.compute_ref(dt, hat_x, N, tol)
-                    break
-                except:
-                    tol += 0.1
-            if x_sol is None:
-                raise Exception('MPC unable to find solution')
+        if track_mode == 'NMT':
+            # start_idx = int(start_time//dt) # may need to fine tune indexing
+            start_idx = -int(T//dt)-1
+            f = filename if self.id == 'deputy' else filename_ahead # will need a better solution going forward with arbitrary number of agents
+            with open(f, 'rb') as f:
+                full_x_sol, full_u_sol = pickle.load(f)
+                x_sol, u_sol = full_x_sol[start_idx:], full_u_sol[start_idx:] 
+        elif track_mode == 'Inner': # figure out a way to do nothing while mode[0] isn't passive
+            start_idx = -int(T//dt)-1
+            f_inner = filename_inner if self.id == 'deputy' else filename_ahead_inner
+            with open(f_inner, 'rb') as f:
+                full_x_sol, full_u_sol = pickle.load(f)
+                x_sol, u_sol = full_x_sol[start_idx:], full_u_sol[start_idx:] 
+                x_final = x_sol[-1]
+                x_sol, u_sol = None, None
+                hat_x = np.array(x0[:6]) - np.array(x0[12:18])
+                tol = 0
+                while tol <= max_tol:
+                    try: 
+                        x_sol, u_sol = OrbitalAgent.compute_ref(dt, hat_x, x_final, N)
+                        break
+                    except:
+                        tol += 0.1
+                        # raise Exception('MPC unable to find solution')
+                if x_sol is None:
+                    raise Exception('MPC unable to find solution')
+        else:
+            raise Exception(f"Unexpected mode: {track_mode}")
 
         u_sol = np.vstack([u_sol, u_sol[-1]]) # holding last input 
         x_ref_fn, u_ref_fn = OrbitalAgent.x_ref_fn, OrbitalAgent.u_ref_fn
@@ -278,7 +298,7 @@ class OrbitalAgent(BaseAgent):
         ts, trace = OrbitalAgent.simulate_tracking(np.concatenate((x0[:6], hat_x)), x_ref_fn, u_ref_fn, T, dt, time_step, x_sol, u_sol) # does it matter that I'm doing it like this (all at once) instead of iteratively (how TC_sim is traditionally done)
         # timed_trace = np.concatenate((ts.reshape(-1, 1), trace), axis=1)
         error = trace[:,6:] - trace[:,:6]
-        timed_trace = np.concatenate((ts.reshape(-1, 1), trace, error, ts.reshape(-1, 1)+int(timer_start_time), ts.reshape(-1, 1)+int(po_start_time), ts.reshape(-1, 1)+int(start_time)), axis=1)
+        timed_trace = np.concatenate((ts.reshape(-1, 1), trace, error, ts.reshape(-1, 1)+int(timer_start_time), ts.reshape(-1, 1)+int(po_timer_start_time), ts.reshape(-1, 1)+int(start_time)), axis=1)
 
         return timed_trace
 
@@ -310,6 +330,46 @@ class OpenOrbitalAgent(BaseAgent):
         return [vx, vy, vz, vx_dot, vy_dot, vz_dot, # 0-5
                 hvx, hvy, hvz, hvx_dot, hvy_dot, hvz_dot, #6-11
                 ]
+    
+    def TC_simulate(self, mode, initial_condition, time_horizon, time_step, map=None):
+        time_horizon = float(time_horizon)
+        number_points = int(np.ceil(time_horizon / time_step))
+        t = [round(i * time_step, 10) for i in range(0, number_points)]
+        init = initial_condition
+        trace = [[0]+list(init)]
+
+        for i in range(len(t)):
+            r = ode(self.dynamics)
+            r.set_initial_value(init)
+            res: np.ndarray = r.integrate(r.t + time_step) # pretty sure r.t is always 0 but confirm later
+            init = res.flatten().tolist()
+            trace.append([t[i] + time_step] + init)
+        
+        return np.array(trace)
+
+class SimpleOrbtialAgent(BaseAgent):
+    def __init__(self, id, code=None, file_name=None):
+        self.decision_logic: ControllerIR = ControllerIR.empty()
+        self.id = id
+        self.init_cont = None 
+        self.init_disc = None
+        self.static_parameters = None 
+        self.uncertain_parameters = None
+    
+    @staticmethod
+    def dynamics(t, state):
+        """
+        Just for reference, should not be used to generate trajectory
+        """
+        x, y, z, vx, vy, vz = state
+        vx_dot = 3*(n**2)*x + 2*n*vy
+        vy_dot = -2*n*vx
+        vz_dot = -(n**2)*z
+        # hvx_dot = 3*(n**2)*hx + 2*n*hvy
+        # hvy_dot = -2*n*hvx
+        # hvz_dot = -(n**2)*hz
+
+        return [vx, vy, vz, vx_dot, vy_dot, vz_dot]
     
     def TC_simulate(self, mode, initial_condition, time_horizon, time_step, map=None):
         time_horizon = float(time_horizon)
