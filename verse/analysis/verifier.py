@@ -1305,7 +1305,9 @@ class Verifier:
                         found = True
                         break
                 if not found:
-                    raise ValueError(f"Reset continuous variable {cts_variable} not found")
+                    # raise ValueError(f"Reset continuous variable {cts_variable} not found")
+                    # NOTE: propogate this fix to main branch
+                    raise ValueError(f"Reset continuous variable {lhs} not found")
                 # substituting low variables
 
                 symbols = []

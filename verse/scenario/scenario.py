@@ -134,6 +134,10 @@ class Scenario:
                 assert len(i) == len(
                     list(agent.decision_logic.state_defs.values())[0].cont
                 ), "the length of element in init not fit the number of continuous variables"
+            """
+            This check does not do what it's supposed to to
+            TODO: instead of checking with the number of variables in 
+            """
             # print(agent.decision_logic.mode_defs)
             assert len(init_mode) == len(
                 list(agent.decision_logic.state_defs.values())[0].disc
