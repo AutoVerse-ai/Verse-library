@@ -84,6 +84,8 @@ if __name__ == "__main__":
              [x0_l_ahead.tolist(), x0_u_ahead.tolist()]
         ],
         [
+            # assign each agent an addition mode and state to denote whether an update occurred and priority resp.
+            # actually just slightly stagger the timers 
             (GOMode.Passive, POMode.Passive, MoveMode.NMT),
             (GOMode.Passive, POMode.Passive, MoveMode.NMT),
             # (OrbitalMode.Passive,)
