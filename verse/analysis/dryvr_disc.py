@@ -19,7 +19,7 @@ def all_sensitivities_calc(training_traces: np.ndarray, initial_radii: np.ndarra
     y_points: np.array = np.zeros(
         (normalizing_initial_set_radii.shape[0], trace_len - 1))
     normalizing_initial_set_radii[np.where(
-        normalizing_initial_set_radii == 0)] = 1.0
+        normalizing_initial_set_radii < 1e-10)] = 1.0
     for cur_dim_ind in range(1, ndims):
         # keyi: move out of loop
         normalized_initial_points: np.array = training_traces[:,
@@ -143,7 +143,7 @@ def calcCenterPoint(lower, upper):
 def calcDelta(lower, upper):
     """
     Calculate the delta value between the lower and upper bound
-    The function only supports list since we assue initial set is always list
+    The function only supports list since we assume initial set is always list
 
     Args:
         lower (list): lowerbound.
@@ -183,6 +183,8 @@ def randomPoint(lower, upper, seed=None):
         assert len(lower) == len(upper), "Random Point List Range Error"
 
         return [random.uniform(lower[i], upper[i]) for i in range(len(lower))]
+
+    raise Exception(f"Unexpected initial set type: expected a list or instance of int or floats, got {type(lower)}")
 
 def trimTraces(traces):
     """
@@ -230,7 +232,6 @@ def calc_bloated_tube_dryvr(
         Bloated reach tube
 
     """
-    # print(initial_set)
     cur_center = calcCenterPoint(initial_set[0], initial_set[1])
     cur_delta = calcDelta(initial_set[0], initial_set[1])
     if traces is None:
@@ -249,7 +250,12 @@ def calc_bloated_tube_dryvr(
             max_idx = max(max_idx, ret_idx + 1)
         for i in range(len(traces)):
             traces[i] = traces[i][:max_idx]
-
+            
+    # if mode_label[1] == 'Active' or (int(cur_center[-1])==2700 and mode_label[0]=='Passive'):
+    # # if mode_label[1] == 'Active' or int(cur_center[-1])==2700:
+    # # if mode_label[1] == 'Active':
+    #     pass
+    
     # The major
     if bloating_method == GLOBAL:
         cur_reach_tube: np.ndarray = get_reachtube_segment(np.array(traces), np.array(cur_delta), "PWGlobal")
