@@ -27,6 +27,10 @@ class POMode(Enum):
     Passive = auto()
     Active = auto() # in this instance, there is no obstacle so only activity should be from being close to chief
 
+class PriorityMode(Enum):
+    First = auto()
+    Second = auto()
+
 class MoveMode(Enum):
     NMT = auto()
     Inner = auto()
@@ -67,14 +71,15 @@ if __name__ == "__main__":
     scenario.set_sensor(orbital_sensor)
     # modify mode list input
     # base = [10,20,0,1,2,0]
+    T = 6000
     ry = 75
     base = [0, ry+10, 0, n/2*ry*.9, 0, 0]
     x0_l = np.array(base + [base[i]-2.5 for i in range(6)] + [-2.5 for _ in range(3)] + [0 for _ in range(6)])
     x0_u = np.array(base + [base[i]+2.5 for i in range(6)] + [2.5 for _ in range(3)] + [0 for _ in range(6)])
     
-    base_ahead = [4.48926-10, 74.46068+10,  0.     ,  0.04468*.9, -0.01077*1.1,  0.     ]
-    x0_l_ahead = np.array(base_ahead + [base_ahead[i]-2.5 for i in range(6)] + [-2.5 for _ in range(3)] + [0 for _ in range(6)])
-    x0_u_ahead = np.array(base_ahead + [base_ahead[i]+2.5 for i in range(6)] + [2.5 for _ in range(3)] + [0 for _ in range(6)])
+    base_ahead = [ 8.91431-5, 72.85074+5,  0.     ,  0.04371, -0.02139,  0.     ]
+    x0_l_ahead = np.array(base_ahead + [base_ahead[i]-2.5 for i in range(3)] +[0 for _ in range(3)]+ [-2.5 for _ in range(3)] + [0 for _ in range(3)] + [1, 0, 0]) # desynchronizing the timers
+    x0_u_ahead = np.array(base_ahead + [base_ahead[i]+2.5 for i in range(3)] +[0 for _ in range(3)] + [2.5 for _ in range(3)] +  [0 for _ in range(3)] + [1, 0, 0])
 #   ahead should start by tracking: array([ 4.48926, 74.46068,  0.     ,  0.04468, -0.01077,  0.     ])
 
     scenario.set_init(
@@ -86,14 +91,14 @@ if __name__ == "__main__":
         [
             # assign each agent an addition mode and state to denote whether an update occurred and priority resp.
             # actually just slightly stagger the timers 
-            (GOMode.Passive, POMode.Passive, MoveMode.NMT),
-            (GOMode.Passive, POMode.Passive, MoveMode.NMT),
+            (GOMode.Passive, POMode.Passive, PriorityMode.First, MoveMode.NMT),
+            (GOMode.Passive, POMode.Passive, PriorityMode.Second, MoveMode.NMT),
             # (OrbitalMode.Passive,)
         ],
     )
 
     start = time.perf_counter()    
-    trace = scenario.verify(1000, 1)
+    trace = scenario.verify(T, 1)
     print(f'Simulaion time: {time.perf_counter()-start:.3f}')
     fig = go.Figure()
     fig = reachtube_tree(trace, None, fig, 1, 2, [1,2], plot_color=colors)

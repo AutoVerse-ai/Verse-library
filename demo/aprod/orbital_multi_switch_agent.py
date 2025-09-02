@@ -30,8 +30,8 @@ ry = 75
 r_inner = ry - 20 
 x0_nmt = np.array([0, ry, 0, n/2*ry, 0, 0])
 x0_inner = np.array([0, r_inner, 0, n/2*r_inner, 0, 0])
-x0_nmt_ahead = np.array([ 4.48926, 74.46068,  0.     ,  0.04468, -0.01077,  0.     ]) # these are both 10 seconds ahead
-x0_inner_ahead = np.array([ 3.29216658e+00,  5.46045355e+01,  0.00000000e+00,  3.27627213e-02, -7.90119980e-03,  0.00000000e+00])
+x0_nmt_ahead = np.array( [ 8.91431, 72.85074,  0.     ,  0.04371, -0.02139,  0.     ]) # these are both the same amount ahead [ 8.91431, 72.85074,  0.     ,  0.04371, -0.02139,  0.     ]
+x0_inner_ahead = np.array([ 6.53691, 53.42363,  0.     ,  0.03205, -0.01569,  0.     ]) # [ 6.53691, 53.42363,  0.     ,  0.03205, -0.01569,  0.     ]
 u_limit = 25
 # u_limit = 50
 filename = "demo/aprod/refs.pkl"
@@ -234,14 +234,11 @@ class OrbitalAgent(BaseAgent):
         """
         recall, last variable is a dummy variable, shift everything one to the left
         """
-        start_time = int(initialSet[-2])
-        po_timer_start_time = int(initialSet[-3])
-        timer_start_time = int(initialSet[-4])
+        start_time = int(initialSet[-1])
+        po_timer_start_time = int(initialSet[-2])
+        timer_start_time = int(initialSet[-3])
         # N = 20
         # dt = T/N
-
-        if mode[-2] == 'OActive':
-            pass
         # x_sol, u_sol = OrbitalAgent.compute_ref(dt, x0[6:], N)
 
         x_sol, u_sol = None, None
