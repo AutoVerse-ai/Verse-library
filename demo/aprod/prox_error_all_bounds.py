@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.optimize import differential_evolution
+from scipy.optimize import differential_evolution, minimize
 from typing import Tuple
 
 def wrap_angle(angle):
@@ -158,19 +158,64 @@ def box_extreme_error(bounds, eps_r, eps_theta, axis) -> Tuple[float, float]:
     return e_k_max, e_k_min
 
 
+# if __name__ == "__main__":
+#     # Example usage for all 3 axes:
+#     x, y, z = 2, 200, 2
+#     eps_r = 0.05
+#     eps_theta = np.deg2rad(2)
+
+#     for axis in ["x", "y", "z"]:
+#         # e_max, e_min = cartesian_error_bounds_at_point(x, y, z, eps_r, eps_theta, axis)
+#         e_max, e_min = point_error_general((x, y, z), eps_r, eps_theta, axis)
+#         print(f"{axis}-axis: Max +error: {e_max:.6f}, Max -error: {e_min:.6f}")
+
+#     bounds = [(1.0, 2.0), (1.0, 200), (1.0, 2.0)]
+#     print(f'Over bounds {bounds}')
+#     for axis in ["x", "y", "z"]:
+#         e_k_max, e_k_min = box_extreme_error(bounds, eps_r, eps_theta, axis)
+#         print(f"{axis}-axis: Max +error: {e_k_max:.6f}, Max -error: {e_k_min:.6f}")
+
+### angles-only error
+def angular_bounds_rectangle(x_bounds, y_bounds):
+    """
+    Angles point from rectangle to origin
+    """
+    x_min, x_max = x_bounds
+    y_min, y_max = y_bounds
+    x_min, x_max = -x_max, -x_min
+    y_min, y_max = -y_max, -y_min
+    
+    corners = [
+        (x_min, y_min),
+        (x_min, y_max),
+        (x_max, y_min),
+        (x_max, y_max)
+    ]
+    angles = np.array([np.arctan2(y, x) for x, y in corners])
+
+    # Case 1: rectangle contains origin
+    if x_min < 0 < x_max and y_min < 0 < y_max:
+        return -np.pi, np.pi
+
+    # Case 2: rectangle does not cross -pi/pi
+    if not (x_max < 0 and y_min < 0 < y_max):  # no 2nd/3rd quadrant wrap
+        theta_min = angles.min()
+        theta_max = angles.max()
+        return theta_min, theta_max
+
+    # Case 3: rectangle crosses -pi/pi (2nd/3rd quadrant)
+    angles_mod = np.mod(angles, 2*np.pi)
+    theta_min = angles_mod.min()
+    theta_max = angles_mod.max()
+    # map back to [-pi, pi]
+    theta_min = (theta_min + np.pi) % (2*np.pi) - np.pi
+    theta_max = (theta_max + np.pi) % (2*np.pi) - np.pi
+    return theta_min, theta_max
+
 if __name__ == "__main__":
-    # Example usage for all 3 axes:
-    x, y, z = 2, 200, 2
-    eps_r = 0.05
-    eps_theta = np.deg2rad(2)
 
-    for axis in ["x", "y", "z"]:
-        # e_max, e_min = cartesian_error_bounds_at_point(x, y, z, eps_r, eps_theta, axis)
-        e_max, e_min = point_error_general((x, y, z), eps_r, eps_theta, axis)
-        print(f"{axis}-axis: Max +error: {e_max:.6f}, Max -error: {e_min:.6f}")
-
-    bounds = [(1.0, 2.0), (1.0, 200), (1.0, 2.0)]
+    bounds = [(0.1, 1), (-1,0.1)]
     print(f'Over bounds {bounds}')
-    for axis in ["x", "y", "z"]:
-        e_k_max, e_k_min = box_extreme_error(bounds, eps_r, eps_theta, axis)
-        print(f"{axis}-axis: Max +error: {e_k_max:.6f}, Max -error: {e_k_min:.6f}")
+    # min_arc, max_arc = find_angle_bounds(bounds[0], bounds[1])
+    min_arc, max_arc = angular_bounds_rectangle(bounds[0], bounds[1])
+    print(f'Min angle {min_arc}, max angle: {max_arc}')

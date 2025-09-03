@@ -1,10 +1,10 @@
 # from orbital_all_agent import OrbitalAgent
-from orbital_docking_agent_v2 import OrbitalAgent
+from orbital_docking_agent_gpa import OrbitalAgent
 from verse import Scenario, ScenarioConfig
 from verse.analysis.verifier import ReachabilityMethod
 from verse.plotter.plotter2D import *
 from verse.plotter.plotter3D_new import *
-from orbital_docking_sensor_v2 import OrbitalSensor
+from orbital_docking_sensor_gpa import OrbitalSensor
 # from orbital_docking_sensor_proxdyn import OrbitalSensor
 
 import plotly.graph_objects as go
@@ -53,7 +53,7 @@ if __name__ == "__main__":
         os.remove(filename)
 
     # input_code_name = "./demo/aprod/orbital_docking_controller.py"
-    input_code_name = "./demo/aprod/orbital_docking_controller_v2.py"
+    input_code_name = "./demo/aprod/orbital_docking_controller_gpa.py"
     # input_code_name = "./demo/aprod/orbital_docking_controller_proxdyn.py"
     scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False))
     scenario.config.reachability_method = ReachabilityMethod.DRYVR_DISC # still works even with base dryvr
@@ -66,8 +66,8 @@ if __name__ == "__main__":
     T = 3000
     ry = 75
     base = [0, ry+10, 0, n/2*ry*.9, 0, 0]
-    x0_l = np.array(base + [base[i]-2.5 for i in range(6)] + [-2.5 for _ in range(3)] + [0 for _ in range(6)])
-    x0_u = np.array(base + [base[i]+2.5 for i in range(6)] + [2.5 for _ in range(3)] + [0 for _ in range(6)])
+    x0_l = np.array(base + [base[i]-2.5 for i in range(6)] + [-2.5 for _ in range(3)] + [0 for _ in range(7)])
+    x0_u = np.array(base + [base[i]+2.5 for i in range(6)] + [2.5 for _ in range(3)] + [0 for _ in range(7)])
     # x0_l = np.array(base + base + [0,0])
     # x0_u = np.array(base + base + [0,0])
     scenario.set_init(
