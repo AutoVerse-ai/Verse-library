@@ -212,10 +212,72 @@ def angular_bounds_rectangle(x_bounds, y_bounds):
     theta_max = (theta_max + np.pi) % (2*np.pi) - np.pi
     return theta_min, theta_max
 
+def rect_corners(xmin, xmax, ymin, ymax):
+    """Return the 4 corners of an axis-aligned rectangle."""
+    return np.array([
+        [xmin, ymin],
+        [xmin, ymax],
+        [xmax, ymin],
+        [xmax, ymax]
+    ])
+
+def angular_span_between_rects(rect1, rect2):
+    """
+    Expects arraylikes of from [xmin, xmax, ymin, ymax] -- can be obtained by doing np.array([xbounds, ybounds]).flatten
+    Returns angular span of vectors pointing from rect1 to rect2 as [theta_min, theta_max]
+    theta_max may be < theta_min in [-pi, pi] range if vectors spanned the pi/-pi wrapping point
+    """
+    x1min, x1max, y1min, y1max = rect1
+    x2min, x2max, y2min, y2max = rect2
+
+    # intersection → full circle
+    if not (x1max < x2min or x2max < x1min or y1max < y2min or y2max < y1min):
+        return -np.pi, np.pi
+
+    c1 = rect_corners(x1min, x1max, y1min, y1max)
+    c2 = rect_corners(x2min, x2max, y2min, y2max)
+
+    vecs = (c2[:, None, :] - c1[None, :, :]).reshape(-1, 2) # using broadcasting tricks to compute all vectors
+    angles = np.arctan2(vecs[:, 1], vecs[:, 0])
+
+    amin, amax = angles.min(), angles.max()
+
+    if amax - amin <= np.pi:
+        # no wrapping
+        return amin, amax
+    else:
+        # wrapping: shift into [0, 2π), recompute bounds
+        angles_mod = np.mod(angles, 2*np.pi)
+        amin, amax = angles_mod.min(), angles_mod.max()
+        # map back to [-π, π]
+        if amin > np.pi:
+            amin -= 2*np.pi
+        if amax > np.pi:
+            amax -= 2*np.pi
+        return amin, amax
+
+def angular_bounds_diff(theta, theta_ref) -> Tuple[float]: 
+    """
+    Assuming angles either span the entire interval [-pi,pi] or span at most pi
+    theta_max<theta_min only in cases where theta crosses the pi/-pi wrapping point
+    Returns the angular difference bound theta-theta_ref in the same format as above
+    """
+    theta_min, theta_max = theta 
+    theta_ref_min, theta_ref_max = theta_ref
+    if (theta_min == -np.pi and theta_max == np.pi) or (theta_ref_min == -np.pi and theta_ref_max == np.pi):
+        return -np.pi, np.pi # if either interval is the entire circle, just return the circle
+    theta_max = theta_max+2*np.pi if theta_max<theta_min else theta_max # wrap theta_max to [0,2pi] if < theta_min
+    theta_ref_max = theta_ref_max+2*np.pi if theta_ref_max<theta_ref_min else theta_ref_max # likewise for theta_ref
+    diff_min, diff_max = wrap_angle(theta_min-theta_ref_max), wrap_angle(theta_max-theta_ref_max)
+    return diff_min, diff_max
+
 if __name__ == "__main__":
 
     bounds = [(0.1, 1), (-1,0.1)]
+    # bounds = [0.1, 1, -1,0.1]
+    obs_bounds = [0,0, 0,0]
     print(f'Over bounds {bounds}')
     # min_arc, max_arc = find_angle_bounds(bounds[0], bounds[1])
-    min_arc, max_arc = angular_bounds_rectangle(bounds[0], bounds[1])
+    # min_arc, max_arc = angular_bounds_rectangle(bounds[0], bounds[1])
+    min_arc, max_arc = angular_span_between_rects(np.array(bounds).flatten(), obs_bounds)
     print(f'Min angle {min_arc}, max angle: {max_arc}')

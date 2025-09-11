@@ -113,4 +113,16 @@ def decisionLogic(ego: State, others: List[State]) -> State:
         output.hvy = ego.vy - ego.evy
         output.hvz = ego.vz - ego.evz        
 
+    # if half_pi*2-angle_bound< ego.angle_minus < half_pi*2 and -half_pi*2< ego.angle_plus < -half_pi*2+angle_bound and ego.move_mode != MoveMode.Docking:
+    # # if (half_pi*2-angle_bound< ego.angle_minus < half_pi*2 or -half_pi*2< ego.angle_plus < -half_pi*2+angle_bound) and ego.move_mode != MoveMode.Docking:        
+    #     output.move_mode = MoveMode.Docking
+    #     # output.timer = ego.timer * 1
+    #     output.hx = ego.x - ego.ex
+    #     output.hy = ego.y - ego.ey
+    #     output.hz = ego.z - ego.ez
+
+    #     output.hvx = ego.vx - ego.evx
+    #     output.hvy = ego.vy - ego.evy
+    #     output.hvz = ego.vz - ego.evz        
+
     return output
