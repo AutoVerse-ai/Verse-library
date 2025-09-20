@@ -199,7 +199,6 @@ class OrbitalSensor:
                 # else:
                 #     cont['ego.angle_minus'] = cont['ego.angle_plus'] = [theta_min-ep_ao, theta_max+ep_ao]
 
-
                 if disc['ego.go_mode'] == 'Active' and disc['ego.po_mode'] == 'Active':
                     err_pos_min, err_pos_max = -epsilon, epsilon
                     err_vel_min, err_vel_max = -epsilon_vel, -epsilon_vel

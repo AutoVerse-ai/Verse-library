@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.optimize import minimize, OptimizeResult
-from prox_error_all_bounds import box_extreme_error
+from prox_error_all_bounds import box_extreme_error, angular_span_between_rects, angular_bounds_diff
 from distance_bounds import dist_extrema
 
 epsilon = 0.5
@@ -14,6 +14,8 @@ ep_angle = 1e-6
 # ep_angle = 0.01
 # ep_rho_v = 0.000001
 ep_rho_v = 1e-8
+ep_ao = 0.006
+D = 1e+10 # basically infinite
 
 def prox_rand_error(pos: np.ndarray):
     # pos = np.array([state_dict[cur_agent][0][i] for i in range(1,4)])
@@ -56,11 +58,12 @@ class OrbitalSensor:
             cont['ego.evz'] = state_dict[cur_agent][0][18]
             cont['ego.timer'] = state_dict[cur_agent][0][19]
             cont['ego.po_timer'] = state_dict[cur_agent][0][20]
-            cont['ego.time'] = state_dict[cur_agent][0][21]
             disc['ego.go_mode'] = state_dict[cur_agent][1][0]
             disc['ego.po_mode'] = state_dict[cur_agent][1][1]
             disc['ego.priority_mode'] = state_dict[cur_agent][1][2]
             disc['ego.move_mode'] = state_dict[cur_agent][1][3]
+        
+
 
             if disc['ego.go_mode'] == 'Active' and disc['ego.po_mode'] == 'Active':
                 dir = np.random.normal(size=3)
@@ -159,9 +162,23 @@ class OrbitalSensor:
                     pos_bounds, obstacle_bounds = np.vstack([pos_min, pos_max]).T, np.vstack([obstacle_pos_min, obstacle_pos_max]).T
                     dist_min, dist_max = dist_extrema(pos_bounds, obstacle_bounds)
                     cont['ego.dist'] = [dist_min, dist_max]
-                    # cont['ego.hdist'] = [D, D] # or any other zero-deviation large number
+                    cont['ego.hdist'] = [D,D]
 
-                    if disc['ego.go_mode'] == 'Active':
+                    own_bounds = cont['ego.x'] + cont['ego.y']
+                    obs_bounds = [obstacle_cont[0][1]] + [obstacle_cont[1][1]] + [obstacle_cont[0][2]] + [obstacle_cont[1][2]]
+                    theta_min, theta_max = angular_span_between_rects(own_bounds, obs_bounds)
+
+                    vel_bounds = cont['ego.vx'] + cont['ego.vy']
+                    theta_v_min, theta_v_max = angular_span_between_rects(np.zeros(4), vel_bounds)
+                    diff_min, diff_max = angular_bounds_diff([theta_min, theta_max],[theta_v_min, theta_v_max])
+                    # TODO: fix way noise is being added, some weird things will occur in current naive implementation
+                    if diff_max < diff_min: # if 2nd/3rd quadrant were both crossed
+                        cont['ego.angle_minus'] = [diff_min-ep_ao, np.pi]
+                        cont['ego.angle_plus'] = [-np.pi, diff_max+ep_ao]
+                    else:
+                        cont['ego.angle_minus'] = cont['ego.angle_plus'] = [diff_min-ep_ao, diff_max+ep_ao]
+
+                    if disc['ego.go_mode'] == 'Active': # prop ground/linear sensor error
                         cont['ego.hx'] = [cont['ego.x'][0]-epsilon, cont['ego.x'][1]+epsilon] # just need to be here to not mess up cur_delta
                         cont['ego.hy'] = [cont['ego.y'][0]-epsilon, cont['ego.y'][1]+epsilon]
                         cont['ego.hz'] = [cont['ego.z'][0]-epsilon, cont['ego.z'][1]+epsilon]
@@ -174,7 +191,9 @@ class OrbitalSensor:
                         cont['ego.evx'] = [-epsilon_vel, epsilon_vel]
                         cont['ego.evy'] = [-epsilon_vel, epsilon_vel]
                         cont['ego.evz'] = [-epsilon_vel, epsilon_vel]
-                    
+                    if disc['ego.po_mode'] == 'Active':
+                        cont['ego.hdist'] = [max(dist_min-ep_rho, 0), dist_max+ep_rho]
+
                 else:
                     cont['other.x'] = [state_dict[cur_agent][0][0][1], state_dict[cur_agent][0][1][1]]
                     cont['other.y'] = [state_dict[cur_agent][0][0][2], state_dict[cur_agent][0][1][2]] 
