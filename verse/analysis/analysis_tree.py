@@ -208,17 +208,19 @@ class AnalysisTreeNode:
         return mode[track_mode_ind]
 
     def get_mode(self, agent_id: str, mode: Sequence[str]) -> Optional[Sequence[str]]:
-        """Filter out the agent mode(s) for a given agent"""
+        """Either trys to finds the AgentMode if TrackMode exists or returns mode"""
         state_defs = self.agent[agent_id].decision_logic.state_defs
         mode_def_names = next(iter(state_defs.values())).disc_type
         track_mode_ind = index_of(mode_def_names, "TrackMode")
+        agent_mode_ind = index_of(mode_def_names, "AgentMode")
         if track_mode_ind is None:
             if len(mode) == 1:
                 return mode[0]
             return mode
-        if len(mode_def_names) == 2:
-            return mode[1 - track_mode_ind]
-        return tuple(v for i, v in enumerate(mode) if i != track_mode_ind)
+        if agent_mode_ind is not None:
+            return mode[agent_mode_ind]
+        return None # no AgentMode found despite trackmode existing
+        # raise Exception("No \'AgentMode\' mode despite there existing a \'TrackMode\'")
 
     @staticmethod
     def _from_dict(data: Dict[str, Any]) -> "AnalysisTreeNode":
