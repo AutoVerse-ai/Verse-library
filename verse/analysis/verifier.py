@@ -1218,15 +1218,21 @@ class Verifier:
         for agent in reset_dict:
             for reset_idx in reset_dict[agent]:
                 for dest in reset_dict[agent][reset_idx]:
-                    #output.x output.vx
                     reset_data = tuple(map(list, zip(*reset_dict[agent][reset_idx][dest])))
                     paths = [r[-1] for r in reset_data[-1]]
                     transition = (agent, node.mode[agent], dest, *reset_data[:-1], paths)
-                    src_mode = node.get_mode(agent, node.mode[agent])
+                    src_mode = node.get_mode(agent, node.mode[agent]) # this is explicitly the AgentMode mode
                     src_track = node.get_track(agent, node.mode[agent])
                     dest_mode = node.get_mode(agent, dest)
                     dest_track = node.get_track(agent, dest)
-                    if dest_track == track_map.h(src_track, src_mode, dest_mode):
+                    map_modes = [[src_mode, src_track, dest_mode, dest_track]]
+
+                    # if a map transition is being initiated but the map does not permit the transition, don't add to transition list
+                    # a map transition for now is defined as any transition that changes either the trackmode or agentmode
+                    # could potentially change to be any transition that changes both trackmode and agentmode 
+                    if all(map_mode is not None for map_mode in map_modes) and (src_mode!=dest_mode or src_track!=dest_track) and dest_track != track_map.h(src_track, src_mode, dest_mode): 
+                        continue
+                    else:
                         if config.print_level >= 2:
                             print(count)
                         count += 1
