@@ -23,6 +23,7 @@ docs/source/_autosummary/
 **.tar.gz
 **.json
 **.pkl
+**.pth
 gif/
 debug/
 build/
