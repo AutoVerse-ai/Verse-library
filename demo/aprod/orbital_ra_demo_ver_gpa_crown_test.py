@@ -1,10 +1,9 @@
 # from orbital_all_agent import OrbitalAgent
-from orbital_multi_switch_agent_gpa import OrbitalAgent
+from orbital_ra_agent_gpa import OrbitalAgent, SimpleOrbtialAgent # at some point make all the different agents their own class
 from verse import Scenario, ScenarioConfig
 from verse.analysis.verifier import ReachabilityMethod
 from verse.plotter.plotter2D import *
-from verse.plotter.plotter3D_new import *
-from orbital_multi_switch_sensor_gpa_test import OrbitalSensor
+from orbital_ra_sensor_gpa_crown_test import OrbitalSensor
 
 import plotly.graph_objects as go
 from enum import Enum, auto
@@ -14,12 +13,8 @@ import os
 
 n = 0.00438138 # constant equal to (\mu/r_e^3)^{-3}
 filename = "demo/aprod/refs.pkl"
-filename_ahead = "demo/aprod/refs_ahead.pkl"
 filename_ra = "demo/aprod/refs_ra.pkl"
-filename_ahead_ra = "demo/aprod/refs_ahead_ra.pkl"
-cache = "demo/aprod/sensor_values.pkl"
-cache_ahead = "demo/aprod/sensor_values_ahead.pkl"
-filenames = [filename, filename_ra, filename_ahead, filename_ahead_ra, cache, cache_ahead]
+filenames = [filename, filename_ra]
 
 class GOMode(Enum):
     Passive = auto()
@@ -27,15 +22,13 @@ class GOMode(Enum):
 
 class POMode(Enum):
     Passive = auto()
-    Active = auto() # in this instance, there is no obstacle so only activity should be from being close to chief
+    OActive = auto()
+    CActive = auto()
+    OCActive = auto()
 
-class PriorityMode(Enum):
-    First = auto()
-    Second = auto()
-
-class MoveMode(Enum):
-    NMT = auto()
-    Inner = auto()
+class TrajMode(Enum):
+    Normal = auto()
+    Avoid = auto()
 
 colors = [
     # ["#CC0000", "#FF0000", "#FF3333", "#FF6666", "#FF9999", "#FFCCCC"],  # red
@@ -57,68 +50,54 @@ def get_trace(trace: AnalysisTree) -> np.ndarray:
     return np.array(trace.root.trace['deputy'])
 
 
-
 if __name__ == "__main__":
     for f in filenames:
         if os.path.exists(f):
             os.remove(f)
 
-    input_code_name = "./demo/aprod/orbital_multi_switch_controller_gpa.py"
+    # input_code_name = "./demo/aprod/orbital_ra_controller_v2.py"
+    input_code_name = "./demo/aprod/orbital_ra_controller_gpa.py"
     scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False))
     scenario.config.reachability_method = ReachabilityMethod.DRYVR_DISC
     dep = OrbitalAgent("deputy", file_name=input_code_name)
-    dep2 = OrbitalAgent('deputy_ahead', file_name=input_code_name)
+    obs = SimpleOrbtialAgent("obs")
     scenario.add_agent(dep)
-    scenario.add_agent(dep2)
+    scenario.add_agent(obs)
     orbital_sensor = OrbitalSensor()
     scenario.set_sensor(orbital_sensor)
     # modify mode list input
     # base = [10,20,0,1,2,0]
-    T = 3000 # 3000 for about half a cycle and around 5500 for a full cycle
-    ry = 75 
+    T = 3000
+    ry = 75
     base = [0, ry+10, 0, n/2*ry*.9, 0, 0]
     x0_l = np.array(base + [base[i]-2.5 for i in range(6)] + [-2.5 for _ in range(3)] + [0 for _ in range(9)])
     x0_u = np.array(base + [base[i]+2.5 for i in range(6)] + [2.5 for _ in range(3)] + [0 for _ in range(9)])
-    
-    base_ahead = [ 8.91431-5, 72.85074+5,  0.     ,  0.04371, -0.02139,  0.     ]
-    x0_l_ahead = np.array(base_ahead + [base_ahead[i]-2.5 for i in range(3)] +[0 for _ in range(3)]+ [-2.5 for _ in range(3)] + [0 for _ in range(3)] + [1, 0, 0, 0, 0, 0]) # desynchronizing the timers
-    x0_u_ahead = np.array(base_ahead + [base_ahead[i]+2.5 for i in range(3)] +[0 for _ in range(3)] + [2.5 for _ in range(3)] +  [0 for _ in range(3)] + [1, 0, 0, 0, 0 , 0])
-#   ahead should start by tracking: array([ 4.48926, 74.46068,  0.     ,  0.04468, -0.01077,  0.     ])
+    obs_base = [0, -ry, 0, 0, 0, 0]
 
     scenario.set_init(
         [
             [x0_l.tolist(), 
              x0_u.tolist()],
-             [x0_l_ahead.tolist(), x0_u_ahead.tolist()]
+             [obs_base, obs_base]
         ],
         [
-            # assign each agent an addition mode and state to denote whether an update occurred and priority resp.
-            # actually just slightly stagger the timers 
-            (GOMode.Passive, POMode.Passive, PriorityMode.First, MoveMode.NMT),
-            (GOMode.Passive, POMode.Passive, PriorityMode.Second, MoveMode.NMT),
+            (GOMode.Passive, POMode.Passive, TrajMode.Normal),
+            (GOMode.Passive,)
             # (OrbitalMode.Passive,)
         ],
     )
 
     start = time.perf_counter()    
-    trace = scenario.simulate(T, 1)
-    sensed, sensed_ahead = None, None
-    with open(cache, 'rb') as f:
-        sensed = pickle.load(f)
-    with open(cache_ahead, 'rb') as f:
-        sensed_ahead = pickle.load(f)
-
+    trace = scenario.verify(T, 1)
     print(f'Simulaion time: {time.perf_counter()-start:.3f}')
     fig = go.Figure()
-    key = 'v_rad'
-    plt.plot(sensed[key].keys(), sensed[key].values())
-    plt.xlabel('Time (s)')
-    plt.ylabel(f'{key}')
-    plt.title(f'Sensed {key} over time')
-    plt.show()
-    fig = simulation_tree(trace, None, fig, 1, 2, [1,2], plot_color=colors)
+    fig = reachtube_tree(trace, None, fig, 1, 2, [1,2], plot_color=colors)
     fig.data[0].name = 'True State'
     fig.data[0].showlegend = True
+
+    # fig = reachtube_tree(trace, None, fig, 7, 8, [7,8])
+    # fig.data[-1].name = 'Est State'
+    # fig.data[-1].showlegend = True
 
     if os.path.exists(filename):
         with open(filename, 'rb') as f:
@@ -155,5 +134,68 @@ if __name__ == "__main__":
         yaxis_title='y (km)',
         legend_title='Trajectory Types',
     )
+    # if os.path.exists(filename):
+    #     with open(filename, 'rb') as f:
+    #         x_sol, u_sol = pickle.load(f)
+    #         u_sol = np.vstack([u_sol, u_sol[-1]])
+    #     os.remove(filename)
+    
+    # fig = reachtube_tree(trace, None, fig, 0, 13)
+
+    # ground = np.zeros((3001, 2, 6)) # time horizon + 1 / ts, 2, all 6 states
+    # est = np.zeros((3001,2,6))
+    # refs = np.zeros((3001, 6))
+    # for node in trace.nodes:
+    #     tr = node.trace['deputy']
+    #     for i in range(0, len(tr), 2):
+    #         t = int(tr[i][0])
+    #         ground[t][0] = tr[i][1:7]
+    #         ground[t][1] = tr[i+1][1:7]
+    #         est[t][0] = tr[i][7:13]
+    #         est[t][1] = tr[i+1][7:13]
+    # for t in range(3001):
+    #     refs[t] = OrbitalAgent.x_ref_fn(t, 10, x_sol, u_sol)
+    
+    # ref_err_low = ground[:,0] - refs
+    # ref_err_high = ground[:,1] - refs
+    # ref_est_low = est[:,0] - refs
+    # ref_est_high = est[:,1] - refs
+
+    # fig.add_trace(
+    #     go.Scatter(
+    #         x=np.linspace(0, 3001, 3000),
+    #         y= ref_err_low[:,0],
+    #         mode = 'lines',
+    #         line_color='#000000',
+    #         showlegend=False
+    #     )
+    # )
+    # fig.add_trace(
+    #     go.Scatter(
+    #         x=np.linspace(0, 3001, 3000),
+    #         y= ref_err_high[:,0],
+    #         mode = 'lines',
+    #         line_color='#000000',
+    #         name='true-ref error'
+    #         )
+    # )
+    # fig.add_trace(
+    #     go.Scatter(
+    #         x=np.linspace(0, 3001, 3000),
+    #         y= ref_est_low[:,0],
+    #         mode = 'lines',
+    #         line_color='#0000CC',
+    #         showlegend=False
+    #     )
+    # )
+    # fig.add_trace(
+    #     go.Scatter(
+    #         x=np.linspace(0, 3001, 3000),
+    #         y= ref_est_high[:,0],
+    #         mode = 'lines',
+    #         line_color='#0000CC',
+    #         name='est-ref error'
+    #         )
+    # )
 
     fig.show()

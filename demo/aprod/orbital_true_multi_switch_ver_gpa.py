@@ -1,10 +1,10 @@
 # from orbital_all_agent import OrbitalAgent
-from orbital_multi_switch_agent_gpa import OrbitalAgent
+from orbital_true_multi_switch_agent_gpa import OrbitalAgent, SimpleTrackingOrbitalAgent
 from verse import Scenario, ScenarioConfig
 from verse.analysis.verifier import ReachabilityMethod
 from verse.plotter.plotter2D import *
 from verse.plotter.plotter3D_new import *
-from orbital_multi_switch_sensor_gpa_test import OrbitalSensor
+from orbital_true_multi_switch_sensor_gpa import OrbitalSensor
 
 import plotly.graph_objects as go
 from enum import Enum, auto
@@ -17,9 +17,9 @@ filename = "demo/aprod/refs.pkl"
 filename_ahead = "demo/aprod/refs_ahead.pkl"
 filename_ra = "demo/aprod/refs_ra.pkl"
 filename_ahead_ra = "demo/aprod/refs_ahead_ra.pkl"
-cache = "demo/aprod/sensor_values.pkl"
-cache_ahead = "demo/aprod/sensor_values_ahead.pkl"
-filenames = [filename, filename_ra, filename_ahead, filename_ahead_ra, cache, cache_ahead]
+filename_obs = "demo/aprod/refs_obs.pkl"
+filename_obs_inner = "demo/aprod/refs_obs_ra.pkl"
+filenames = [filename, filename_ra, filename_ahead, filename_ahead_ra, filename_obs, filename_obs_inner]
 
 class GOMode(Enum):
     Passive = auto()
@@ -57,25 +57,30 @@ def get_trace(trace: AnalysisTree) -> np.ndarray:
     return np.array(trace.root.trace['deputy'])
 
 
-
 if __name__ == "__main__":
     for f in filenames:
         if os.path.exists(f):
             os.remove(f)
 
-    input_code_name = "./demo/aprod/orbital_multi_switch_controller_gpa.py"
+    input_code_name = "./demo/aprod/orbital_true_multi_switch_controller_gpa.py"
     scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False))
     scenario.config.reachability_method = ReachabilityMethod.DRYVR_DISC
     dep = OrbitalAgent("deputy", file_name=input_code_name)
     dep2 = OrbitalAgent('deputy_ahead', file_name=input_code_name)
+    obs = SimpleTrackingOrbitalAgent('obs')
     scenario.add_agent(dep)
     scenario.add_agent(dep2)
+    scenario.add_agent(obs)
     orbital_sensor = OrbitalSensor()
     scenario.set_sensor(orbital_sensor)
     # modify mode list input
     # base = [10,20,0,1,2,0]
     T = 3000 # 3000 for about half a cycle and around 5500 for a full cycle
-    ry = 75 
+    ry = 75
+    r_inner = ry - 20 
+    x0_nmt = np.array([0, ry, 0, n/2*ry, 0, 0])
+    x0_inner = np.array([0, r_inner, 0, n/2*r_inner, 0, 0])
+
     base = [0, ry+10, 0, n/2*ry*.9, 0, 0]
     x0_l = np.array(base + [base[i]-2.5 for i in range(6)] + [-2.5 for _ in range(3)] + [0 for _ in range(9)])
     x0_u = np.array(base + [base[i]+2.5 for i in range(6)] + [2.5 for _ in range(3)] + [0 for _ in range(9)])
@@ -85,40 +90,35 @@ if __name__ == "__main__":
     x0_u_ahead = np.array(base_ahead + [base_ahead[i]+2.5 for i in range(3)] +[0 for _ in range(3)] + [2.5 for _ in range(3)] +  [0 for _ in range(3)] + [1, 0, 0, 0, 0 , 0])
 #   ahead should start by tracking: array([ 4.48926, 74.46068,  0.     ,  0.04468, -0.01077,  0.     ])
 
+    x0_obs = x0_inner
     scenario.set_init(
         [
             [x0_l.tolist(), 
              x0_u.tolist()],
-             [x0_l_ahead.tolist(), x0_u_ahead.tolist()]
+             [x0_l_ahead.tolist(), x0_u_ahead.tolist()],
+             [x0_inner.tolist(), x0_inner.tolist()]
         ],
         [
             # assign each agent an addition mode and state to denote whether an update occurred and priority resp.
             # actually just slightly stagger the timers 
             (GOMode.Passive, POMode.Passive, PriorityMode.First, MoveMode.NMT),
             (GOMode.Passive, POMode.Passive, PriorityMode.Second, MoveMode.NMT),
+            (MoveMode.Inner,),
             # (OrbitalMode.Passive,)
         ],
     )
 
     start = time.perf_counter()    
-    trace = scenario.simulate(T, 1)
-    sensed, sensed_ahead = None, None
-    with open(cache, 'rb') as f:
-        sensed = pickle.load(f)
-    with open(cache_ahead, 'rb') as f:
-        sensed_ahead = pickle.load(f)
-
+    trace = scenario.verify(T, 1)
     print(f'Simulaion time: {time.perf_counter()-start:.3f}')
     fig = go.Figure()
-    key = 'v_rad'
-    plt.plot(sensed[key].keys(), sensed[key].values())
-    plt.xlabel('Time (s)')
-    plt.ylabel(f'{key}')
-    plt.title(f'Sensed {key} over time')
-    plt.show()
-    fig = simulation_tree(trace, None, fig, 1, 2, [1,2], plot_color=colors)
+    fig = reachtube_tree(trace, None, fig, 1, 2, [1,2], plot_color=colors)
     fig.data[0].name = 'True State'
     fig.data[0].showlegend = True
+
+    # fig = reachtube_tree(trace, None, fig, 7, 8, [7,8])
+    # fig.data[-1].name = 'Est State'
+    # fig.data[-1].showlegend = True
 
     if os.path.exists(filename):
         with open(filename, 'rb') as f:

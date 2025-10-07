@@ -157,9 +157,14 @@ def rollout(actor, x0, x_goal, T=3000, dt=10, actor_u_max=25, true_u_max=25, p_e
     state = x0
     states, actions = [], []
     N = int(np.ceil(T/dt))
+    actor_q = torch.tensor([1/50, 1/50, 1/50,
+                          20, 20, 20],
+                         device=x0.device, dtype=x0.dtype) # normalization factor
+    
     for _ in range(N):
+        # consider using PID controller instead for expert actions
         mask = torch.bernoulli(torch.full((state.shape[0], 1), p_expert, dtype=state.dtype))
-        action = actor(state) * actor_u_max
+        action = actor(actor_q[None,:]*state) * actor_u_max
         action_expert = get_ref_action(np.zeros(6), np.zeros(3), state) # in the future u_ref and x_ref should be given as a parameter
         final_actions = mask * action_expert + (1 - mask) * action
         next_state = dynamics(state, final_actions, dt, true_u_max)
@@ -170,52 +175,124 @@ def rollout(actor, x0, x_goal, T=3000, dt=10, actor_u_max=25, true_u_max=25, p_e
     actions = torch.stack(actions, dim=1) # (batch, N, action_dim)
     return states, actions
 
-def loss_fn(states, actions, x_goal, w_traj=1.0, w_goal=1.0, w_ctrl=1e-2, schedule="linear"):
+# def loss_fn(states, actions, x_goal, w_traj=1.0, w_goal=1.0, w_ctrl=1e-2, schedule="linear"):
+#     """
+#     Compute loss for LVLH docking with time-varying trajectory weights and state weighting matrix Q.
+
+#     Args:
+#         states: [batch, N, 6]  trajectory of states
+#         actions: [batch, N, m]  trajectory of actions
+#         x_goal: [6]  goal state (usually zeros)
+#         w_traj: float, weight for trajectory loss
+#         w_goal: float, weight for terminal loss
+#         w_ctrl: float, weight for control loss
+#         schedule: str, weighting schedule for trajectory loss ("linear", "quadratic", "exponential")
+
+#     Returns:
+#         scalar loss
+#     """
+
+#     device = states.device
+#     B, N, d = states.shape
+#     assert d == 6, "Expected 6D LVLH state"
+
+#     # State weighting (Q matrix diag)
+#     # Typical scales: pos ~100, vel ~1, out-of-plane ~10x smaller
+#     q = torch.tensor([1/100**2, 1/100**2, 1/10**2,
+#                       1/1**2,   1/1**2,   1/0.1**2],
+#                       device=device, dtype=states.dtype)
+    
+#     # Time-varying trajectory weights
+#     if schedule == "linear":
+#         weights = torch.linspace(0.1, 1.0, N, device=device, dtype=states.dtype)
+#     elif schedule == "quadratic":
+#         weights = torch.linspace(0.1, 1.0, N, device=device, dtype=states.dtype) ** 2
+#     elif schedule == "exponential":
+#         weights = torch.logspace(-1, 0, N, base=10.0, device=device, dtype=states.dtype)
+#     else:
+#         raise ValueError(f"Unknown schedule {schedule}")
+    
+#     # Normalize so sum(weights)=1 -- not necessary but makes scaling w.r.t. goal easier
+#     weights = weights / weights.sum()
+
+#     traj_loss = torch.mean(torch.sum(weights[None, :, None] * q[None, None, :] * (states - x_goal[None, None, :])**2, dim=(1,2)))
+#     goal_loss = torch.mean(torch.sum(q[None, :] * (states[:, -1, :] - x_goal[None, :])**2, dim=1))
+#     ctrl_loss = torch.mean(torch.sum(actions**2, dim=(1,2)))
+
+#     loss = w_goal * goal_loss + w_traj * traj_loss + w_ctrl * ctrl_loss
+#     return loss
+
+def loss_fn(actor, states, x_goal, dynamics=dynamics, dt=10.0,
+                              H=15, w_ctrl=1e-2, actor_u_max=25, true_u_max=25, q=None, schedule="exponential"):
     """
-    Compute loss for LVLH docking with time-varying trajectory weights and state weighting matrix Q.
+    Compute predictive trajectory + control loss for the entire batch of trajectories.
 
     Args:
-        states: [batch, N, 6]  trajectory of states
-        actions: [batch, N, m]  trajectory of actions
-        x_goal: [6]  goal state (usually zeros)
-        w_traj: float, weight for trajectory loss
-        w_goal: float, weight for terminal loss
-        w_ctrl: float, weight for control loss
-        schedule: str, weighting schedule for trajectory loss ("linear", "quadratic", "exponential")
+        actor: nn.Module
+        states: [B, N, state_dim] observed states (trajectory)
+        x_goal: [state_dim] goal state
+        dynamics: callable (state, action, dt, u_max) -> next_state
+        dt: timestep
+        H: predictive horizon
+        w_ctrl: weight for control penalty
+        q: [state_dim] weighting of state deviation
+        schedule: "linear", "quadratic", or "exponential" for horizon weighting
 
     Returns:
         scalar loss
     """
-
     device = states.device
     B, N, d = states.shape
     assert d == 6, "Expected 6D LVLH state"
 
-    # State weighting (Q matrix diag)
-    # Typical scales: pos ~100, vel ~1, out-of-plane ~10x smaller
-    q = torch.tensor([1/100**2, 1/100**2, 1/10**2,
-                      1/1**2,   1/1**2,   1/0.1**2],
-                      device=device, dtype=states.dtype)
+    # Q matrix for state weighting
+    if q is None:
+        q = torch.tensor([1/100, 1/100, 1/100,
+                          1, 1, 1], # increase position weight if necessary
+                         device=device, dtype=states.dtype)
+    actor_q = torch.tensor([1/50, 1/50, 1/50,
+                          20, 20, 20],
+                         device=x0.device, dtype=x0.dtype) # normalization factor; the actor should see states between [-1,1]
     
-    # Time-varying trajectory weights
+    # Horizon weights
     if schedule == "linear":
-        weights = torch.linspace(0.1, 1.0, N, device=device, dtype=states.dtype)
+        weights = torch.linspace(0.1, 1.0, H, device=device, dtype=states.dtype)
     elif schedule == "quadratic":
-        weights = torch.linspace(0.1, 1.0, N, device=device, dtype=states.dtype) ** 2
+        weights = torch.linspace(0.1, 1.0, H, device=device, dtype=states.dtype) ** 2
     elif schedule == "exponential":
-        weights = torch.logspace(-1, 0, N, base=10.0, device=device, dtype=states.dtype)
+        weights = torch.logspace(-1, 0, H, base=10.0, device=device, dtype=states.dtype)
     else:
         raise ValueError(f"Unknown schedule {schedule}")
-    
-    # Normalize so sum(weights)=1 -- not necessary but makes scaling w.r.t. goal easier
     weights = weights / weights.sum()
 
-    traj_loss = torch.mean(torch.sum(weights[None, :, None] * q[None, None, :] * (states - x_goal[None, None, :])**2, dim=(1,2)))
-    goal_loss = torch.mean(torch.sum(q[None, :] * (states[:, -1, :] - x_goal[None, :])**2, dim=1))
-    ctrl_loss = torch.mean(torch.sum(actions**2, dim=(1,2)))
+    # Initialize losses
+    x_pred = states.reshape(B * N, d)  # [B*N, d]
+    all_state_losses = []
+    all_ctrl_losses = []
 
-    loss = w_goal * goal_loss + w_traj * traj_loss + w_ctrl * ctrl_loss
-    return loss
+    for h in range(H):
+        a_pred = actor(actor_q[None, :]*x_pred) * actor_u_max
+        x_pred = dynamics(x_pred, a_pred, dt, true_u_max)
+
+        state_loss = weights[h] * torch.sum(q[None, :] * (x_pred - x_goal[None, :])**2, dim=1)
+        ctrl_loss  = weights[h] * torch.sum((a_pred/actor_u_max)**2, dim=1)
+
+        all_state_losses.append(state_loss)
+        all_ctrl_losses.append(ctrl_loss)
+
+    all_state_losses = torch.stack(all_state_losses, dim=1)
+    all_ctrl_losses = torch.stack(all_ctrl_losses, dim=1)
+
+    traj_loss = torch.mean(all_state_losses)
+    ctrl_loss = w_ctrl * torch.mean(all_ctrl_losses)
+    # terminal velocity cost (normalized)
+    # K = torch.diag(torch.tensor([0,0,0,1,1,1], dtype=x_pred.dtype, device=x_pred.device))
+    # x_err = x_pred - x_goal
+    # final_loss_lqr = torch.mean((x_err @ K)**2)  # just squared velocities
+    # final_loss_lqr = final_loss_lqr / 3.0        # normalize by number of velocity dims
+
+    # return traj_loss + ctrl_loss + 0.5*final_loss_lqr
+    return traj_loss + ctrl_loss 
 
 def dagger_loss(actor, states, actions_expert):
     """
@@ -245,7 +322,7 @@ def sample_initial(lb: np.ndarray, ub: np.ndarray, batch_size: int = 32):
     samples = lb + (ub - lb) * rand
     return torch.tensor(samples, dtype=torch.float32) # may need to check if this data type is actually correct
 
-def epoch_schedule_prob(epoch, total_epochs, p_start=1.0, p_end=0.0, schedule="exp"): # for behavioral cloning
+def epoch_schedule_prob(epoch, total_epochs, p_start=1.0, p_end=0.0, schedule="linear"): # for behavioral cloning
     frac = epoch / max(1, total_epochs - 1)
     if schedule == "linear":
         return p_start + (p_end - p_start) * frac
@@ -254,18 +331,43 @@ def epoch_schedule_prob(epoch, total_epochs, p_start=1.0, p_end=0.0, schedule="e
         return p_start * ((p_end/p_start) ** (frac**2))
     else:
         return p_start + (p_end - p_start) * frac
-    
+
+def log_gradients(actor: SatelliteCTRL):
+    for name, param in actor.named_parameters():
+        if param.grad is not None:
+            grad_norm = param.grad.norm().item()
+            print(f"{name:15s} | grad norm: {grad_norm:.6f}")
+        else:
+            print(f"{name:15s} | grad: None")
+
+def log_policy_outputs(actor: SatelliteCTRL, sample_states, T):
+    with torch.no_grad():
+        first_half  = sample_states[:, :T//2, :].reshape(-1, 6)
+        second_half = sample_states[:, T//2:, :].reshape(-1, 6)
+        actions_first  = actor(first_half)
+        actions_second = actor(second_half)
+        # actions = actor(sample_states)
+        print(f"first half actions mean: {actions_first.mean().item():.4f}, "
+            f"std: {actions_first.std().item():.4f}, "
+            f"min: {actions_first.min().item():.4f}, "
+            f"max: {actions_first.max().item():.4f}")
+        
+        print(f"second half actions mean: {actions_second.mean().item():.4f}, "
+        f"std: {actions_second.std().item():.4f}, "
+        f"min: {actions_second.min().item():.4f}, "
+        f"max: {actions_second.max().item():.4f}")
+
 if __name__ == "__main__":
     T = 1500
-    # overwrite = False
-    overwrite = True
+    overwrite = False
+    # overwrite = True
     ts = 1
     dt = 1 # some time step >= ts
     N = int(np.ceil(T/dt))
     # this sample and lb, ub are from docking point in docking scenario
     x0 = np.array([  0.0624 , -75.01119,   0.     ,  -0.04506,  -0.00003,   0.     ])
     x_goal = torch.tensor([0.,0.,0.,0.,0.,0.]).unsqueeze(0)  # goal state for docking
-    num_epochs = 100
+    num_epochs = 175
     # lb, ub = [base[i]-2.5 for i in range(6)], [base[i]+2.5 for i in range(6)] 
     lb, ub = [ -1.10722, -75.82266,  -0.27715,  -0.04657,  -0.00163,  -0.0005 ], [  1.23202, -74.19972,   0.27715,  -0.04356,   0.00157,   0.0005 ]
     state_dim = 6  # e.g. 3D pos + 3D vel
@@ -275,7 +377,8 @@ if __name__ == "__main__":
     actor_umax_end   = 25 # actual u_max to be enforced
     # actor_umax_end   = 100 # actual u_max to be enforced
     actor_umax_start = actor_umax_end*2.5    # initial generous limit
-    loss_dagger_weight = 1
+    loss_dagger_weight = 2.5
+    torch.nn.utils.clip_grad_norm_(actor.parameters(), max_norm=10.0)
     # x_sol, u_sol = np.zeros((3001,6)), np.zeros((3000,3))
     # u_sol = np.vstack([u_sol, u_sol[-1]]) # holding last input 
     # ts, trace = simulate_tracking(x0, T, dt, ts, x_sol, u_sol, actor_umax_end) 
@@ -283,7 +386,8 @@ if __name__ == "__main__":
     # plt.show()
     # exit()
 
-    if overwrite or not os.path.exists("./demo/aprod/model_weights.pth"): # in the future filename should be associated with T and initial set -- figure out some hashing scheme
+    if overwrite or not os.path.exists(f"./demo/aprod/model_weights_{num_epochs}_T={T}s.pth"): # in the future filename should be associated with T and initial set -- figure out some hashing scheme
+    # if overwrite or not os.path.exists(f"./demo/aprod/model_weights_{num_epochs}.pth"): # in the future filename should be associated with T and initial set -- figure out some hashing scheme
         for epoch in tqdm(range(num_epochs)):
             frac = epoch / num_epochs
             actor_umax = actor_umax_start * (1 - frac) + actor_umax_end * frac
@@ -291,25 +395,48 @@ if __name__ == "__main__":
             x0 = sample_initial(np.array(lb), np.array(ub), batch_size=32)
             p_expert = epoch_schedule_prob(epoch, num_epochs, schedule='exp')
             states, actions = rollout(actor, x0, x_goal, T, dt, actor_u_max=actor_umax, true_u_max = actor_umax_end, p_expert=p_expert)
-            loss_traj = loss_fn(states, actions, x_goal)
+            # loss_traj = loss_fn(states, actions, x_goal, dynamics)
+            loss_traj = loss_fn(actor, states, x_goal, dynamics, actor_u_max= actor_umax, true_u_max=actor_umax_end)
             loss_dagger = dagger_loss(actor, states, get_ref_action_traj(states, x_ref=np.zeros(6,), u_ref=np.zeros(3,)))
             loss = total_loss = loss_traj + p_expert * loss_dagger * loss_dagger_weight 
+            # loss = loss_dagger
 
             opt.zero_grad()
             loss.backward()
+
+            if epoch % 20 == 0:
+                print(f"Epoch {epoch}, loss: {loss.item():.4f}")
+                log_gradients(actor)
+                log_policy_outputs(actor, states, T)
+
             opt.step()
 
             # if epoch % 100 == 0:
             #     print(f"Epoch {epoch}, Loss {loss.item():.4f}")
 
-        torch.save(actor.state_dict(), "./demo/aprod/model_weights.pth")
+        torch.save(actor.state_dict(), f"./demo/aprod/model_weights_{num_epochs}_T={T}s.pth")
     else:
-        trained_model = torch.load("./demo/aprod/model_weights.pth")
+        trained_model = torch.load(f"./demo/aprod/model_weights_{num_epochs}_T={T}s.pth")
         actor.load_state_dict(trained_model)
 
     actor.eval()
+    # for name, param in actor.named_parameters():
+    #     if param.grad is not None:
+    #         print(name, param.grad.norm())
+
+    x0 = torch.randn(32, 6)  # batch of fake states
+    out = actor(x0)
+    target = torch.zeros_like(out)  # e.g. want zero actions
+    loss = torch.nn.MSELoss()(out, target)
+
+    loss.backward()
+
+    for name, param in actor.named_parameters():
+        print(name, param.grad.norm().item())
+
     x0 = sample_initial(np.array(lb), np.array(ub), batch_size=1)
     state, actions = rollout(actor, x0, x_goal, T, dt, actor_umax_end)
     states = state[0].detach().numpy()
-    plt.plot(states[:,0], states[:,1])
+    # plt.plot(states[:,0], states[:,1])
+    plt.plot(states[:,3], states[:,4])
     plt.show()

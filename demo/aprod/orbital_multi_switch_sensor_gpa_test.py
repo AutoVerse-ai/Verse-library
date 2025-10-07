@@ -2,6 +2,8 @@ import numpy as np
 from scipy.optimize import minimize, OptimizeResult
 from prox_error_all_bounds import box_extreme_error, angular_span_between_rects, angular_bounds_diff
 from distance_bounds import dist_extrema
+import os
+import pickle
 
 epsilon = 0.5
 epsilon_vel = 0.00001
@@ -16,6 +18,9 @@ ep_angle = 1e-6
 ep_rho_v = 1e-8
 ep_ao = 0.006
 D = 1e+10 # basically infinite
+
+cache = "demo/aprod/sensor_values.pkl"
+cache_ahead = "demo/aprod/sensor_values_ahead.pkl"
 
 def prox_rand_error(pos: np.ndarray):
     # pos = np.array([state_dict[cur_agent][0][i] for i in range(1,4)])
@@ -75,12 +80,34 @@ class OrbitalSensor:
                     cont['ego.angle_minus'] = cont['ego.angle_plus'] = np.arctan2(other_pos[1]-ego_pos[1], other_pos[0]-ego_pos[0])
                     
                     ### other sensor measurements not native to this scenario
-                    # cont['ego.front'] = other_pos[1]-ego_pos[1] # how far the other agent is w.r.t. just y
-                    # cont['ego.energy'] = ego_pos.T @ np.diag([3,3,3]) @ ego_pos
-                    # cont['ego.ttlos'] = -(other_pos[2]-ego_pos[2])/(other_vel[2]-ego_vel[2]) # time til loss of separation
-
-
-                    # combining linear and distance noise
+                    front = other_pos[1]-ego_pos[1] # how far the other agent is w.r.t. just y
+                    energy = ego_pos.T @ np.diag([3,3,3]) @ ego_pos
+                    ttlos = -(other_pos[2]-ego_pos[2])/(other_vel[2]-ego_vel[2]) if other_vel[2]-ego_vel[2]!=0 else 1e6 # time til loss of separation
+                    planar_vel = ego_vel[:2]-other_vel[:2]
+                    LOS_vect = np.array([np.cos(cont['ego.angle_plus']), np.sin(cont['ego.angle_plus'])])
+                    rad_vel = np.dot(planar_vel, LOS_vect)
+                    tan_vel = np.linalg.norm(planar_vel)-rad_vel 
+                    #
+                    time = state_dict[cur_agent][0][21]
+                    cache_path = cache if agent.id == "deputy" else cache_ahead
+                    if not os.path.exists(cache_path):
+                        sensed = {
+                            'front': {time: front}, 'energy': {time: energy}, 'ttlos': {time: ttlos}, 
+                                  'angle': {time: cont['ego.angle_minus']},
+                                  'v_rad': {time: rad_vel}, 'v_tan': {time: tan_vel} 
+                                  }
+                        with open(cache_path, 'wb') as f:
+                            pickle.dump(sensed, f)
+                    else:
+                        sensed = None
+                        with open(cache_path, 'rb') as f:
+                            sensed = pickle.load(f)
+                        sensed['front'][time] = front; sensed['energy'][time] = energy; sensed['ttlos'][time] = ttlos
+                        sensed['angle'][time] = cont['ego.angle_minus']
+                        sensed['v_rad'][time] = rad_vel; sensed['v_tan'][time] = tan_vel
+                        with open(cache_path, 'wb') as f:
+                            pickle.dump(sensed, f)
+                        # combining linear and distance noise
                     if disc['ego.go_mode'] == 'Active' and disc['ego.po_mode'] == 'Active':
                         dir = np.random.normal(size=3)
                         dir /= np.linalg.norm(dir)
@@ -160,7 +187,7 @@ class OrbitalSensor:
                     cont['other.ez'] = state_dict[cur_agent][0][15]
                     cont['other.evx'] = state_dict[cur_agent][0][16]
                     cont['other.evy'] = state_dict[cur_agent][0][17]
-                    cont['other.evz'] = state_dict[cur_agent][0][18]
+                    cont['other.evz'] = state_dict[cur_agent][0][18] #
                     cont['other.timer'] = state_dict[cur_agent][0][19]
                     cont['other.po_timer'] = state_dict[cur_agent][0][20]
                     # cont['other.time'] = state_dict[cur_agent][0][0][21]

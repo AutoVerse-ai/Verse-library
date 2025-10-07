@@ -201,20 +201,6 @@ class OrbitalAgent(BaseAgent):
         t_eval = np.arange(0, T+time_step, time_step)
         sol = solve_ivp(ode, [0, T], x0, t_eval=t_eval, method='Radau')
         return sol.t, sol.y.T  # Return times and x(t)
-
-    # def TC_simulate(self, mode, initial_condition, time_horizon, time_step, map=None):
-    #     time_horizon = float(time_horizon)
-    #     number_points = int(np.ceil(time_horizon / time_step))
-    #     t = [round(i * time_step, 10) for i in range(0, number_points)]
-    #     init = initial_condition
-    #     trace = [[0]+list(init)]
-    #     for i in range(len(t)):
-    #         r = ode(self.dynamics)
-    #         r.set_initial_value(init)
-    #         res: np.ndarray = r.integrate(r.t + time_step) # pretty sure r.t is always 0 but confirm later
-    #         init = res.flatten().tolist()
-    #         trace.append([t[i] + time_step] + init)
-    #     return np.array(trace)
     
     def TC_simulate(self, mode, initialSet, time_horizon, time_step, map=None):
         x0 = initialSet
