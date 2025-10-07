@@ -22,6 +22,7 @@ docs/source/_autosummary/
 **.whl
 **.tar.gz
 **.json
+**.pkl
 gif/
 debug/
 build/
