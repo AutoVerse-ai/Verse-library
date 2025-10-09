@@ -16,7 +16,8 @@ ep_angle = 1e-6
 ep_rho_v = 1e-8
 ep_ao = 0.006
 D = 1e+10 # basically infinite
-prox_dist = 10 # for proximity sensor check
+prox_dist = 2.5 # for proximity sensor check
+buffer = 30 # to prevent too many transitions
 
 def prox_rand_error(pos: np.ndarray):
     # pos = np.array([state_dict[cur_agent][0][i] for i in range(1,4)])
@@ -28,11 +29,14 @@ def prox_rand_error(pos: np.ndarray):
     psi = psi + np.random.uniform(-1,1)*ep_angle
     return np.array([pos[0]-rho*np.cos(theta)*np.cos(psi), pos[1]-rho*np.sin(theta)*np.cos(psi), pos[2]-rho*np.sin(psi)])
 
-FILTER_PROX_MODES = {
-    0: [-1, -1], # define this as fully off
-    1: [-1, 0.5], # define this as transitioning from off to on 
-    2: [-0.5, 1], # define this as transitioning from on to off
-    3: [1, 1], # define this as fully on
+# NOTE: Do I need to distinguish between starting modes?
+FILTER_prox_m = {
+    0: [-1, -1], # define this as no transition, 0->0
+    1: [1, 1], # define this as complete transition 0->1
+    2: [-1, -1], # define this as no transition 1->1
+    3: [1, 1], # define this as complete transition 1->0
+    4: [-0.5, 0.5], # define this as partial transition 0->1
+    5: [-0.5, 0.5], # defint this as partial transition 1->0 
 }
 
 class OrbitalSensor:
@@ -166,7 +170,7 @@ class OrbitalSensor:
                     cont['ego.timer'] = [state_dict[cur_agent][0][0][19], state_dict[cur_agent][0][1][19]]
                     cont['ego.po_timer'] = [state_dict[cur_agent][0][0][20], state_dict[cur_agent][0][1][20]]
                     cont['ego.time'] = [state_dict[cur_agent][0][0][21], state_dict[cur_agent][0][1][21]]
-                    cont['ego.prox_modes'] = [state_dict[cur_agent][0][0][22], state_dict[cur_agent][0][0][22]] # in practice, this should always be a single value, but just to be sure 
+                    cont['ego.prox_m'] = [state_dict[cur_agent][0][0][22], state_dict[cur_agent][0][0][22]] # in practice, this should always be a single value, but just to be sure 
 
                     disc['ego.move_mode'] = state_dict[cur_agent][1][0]
 
@@ -219,14 +223,14 @@ class OrbitalSensor:
                     This assumes the state_dict maintains an ordering of keys across a whole scenario, which should be true
                     TODO: figure out way to force certain order of transitions. should 
                     """ 
-                    if 'prox' not in cont:# new DL dict key to potentially update prox_modes with
-                        cont['prox.index'] = [0,0] # indices start at 0 and go up incrementally, here 0 will correspond to the 1st digit/just taking remainder of raw prox_mode
+                    if 'prox' not in cont:# new DL dict key to potentially update prox_m with
+                        cont['prox.index'] = [[0,0]] # indices start at 0 and go up incrementally, here 0 will correspond to the 1st digit/just taking remainder of raw prox_mode
                     else:
                         last = cont['prox.index'][-1][0] # else extract the last index and add one
                         cont['prox.index'].append([last+1, last+1])
 
-                    index = cont['prox_index'][-1][0] # the last index is the one corresponding to cur_agent
-                    filter_prox_mode = state_dict[agent.id][0][0][22] # since cont['ego.prox_modes'] may note be defined yet
+                    index = cont['prox.index'][-1][0] # the last index is the one corresponding to cur_agent
+                    filter_prox_mode = state_dict[agent.id][0][0][22] # since cont['ego.prox_m'] may note be defined yet
                     for _ in range(index): # divide by base index amount of times. for now, let base = 10, 4 would also suffice I think
                         filter_prox_mode //= 2
                     perc_prox_mode = filter_prox_mode % 2 # get the remainder after index amount of divisions, we now have the perceived/last sensor mode; 0 for off, 1 for on
@@ -234,28 +238,49 @@ class OrbitalSensor:
                     if perc_prox_mode: # perc_prox_mode is what we care about
                         hdist = [max(dist_min-ep_rho, 0), dist_max+ep_rho]
 
-                    true_mode = 0 # by default, assume off
-                    if dist_max<prox_dist:
-                        true_mode = 1 # if max<prox_dist, then we know for sure that entire reachset now within sensor boundary 
-                    elif dist_min<prox_dist:
-                        true_mode = 2 # else, part of reachset in and part out
+                    true_mode = -1 # sentinel value
+                    if perc_prox_mode == 0: # currently in sensor off
+                        if dist_max < prox_dist:
+                            true_mode = 1 # entire reachset in sensor boundary
+                        elif dist_min < prox_dist:
+                            true_mode = 2 # part of reachset in sensor boundary, still some part out
+                        else:
+                            true_mode = 0
+                    else: # currently in sensor on
+                        if dist_min > prox_dist+buffer:
+                            true_mode = 0 # fully off
+                        elif dist_max > prox_dist+buffer:
+                            true_mode = 2 # some part out, some part still in
+                        else:
+                            true_mode = 1 # fully inside still
+
+                    if state_dict[cur_agent][0][0][21] == 84:
+                        pass
 
                     sensor_emit: int = -1 # sentinel value, should never stay like this
                     if true_mode == 0: # true mode is fully off
-                        sensor_emit = 0
-                    elif true_mode == 1: # true mode is fully on 
-                        sensor_emit = 3
-                    else: # true_mode is somewhere in between, so keep current prox mode but note that a transition should happen
-                        if perc_prox_mode: # current sensor mode is on, unsure if I really need to distinguish direction of transition
-                            sensor_emit = 2
-                        else: # going from off to off->on
-                            sensor_emit = 1
+                        if true_mode == perc_prox_mode:
+                            sensor_emit = 0 # no transition, 0 stays 0
+                        else:
+                            sensor_emit = 1 # full transition from 0 to 1
+                    elif true_mode == 1:
+                        if true_mode == perc_prox_mode:
+                            sensor_emit = 2 # no transition 1 stays 1
+                        else:
+                            sensor_emit = 3 # full transition from 1 to 0
+                    elif true_mode == 2:
+                        if perc_prox_mode == 0:
+                            sensor_emit = 4 # partial transition from 0 to 1 
+                        else:
+                            sensor_emit = 5 # partial transition from 1 to 0
+                    else:
+                        raise Exception(f'Unreachable true_mode: {true_mode}')
 
-                    # finally, build the prox.prox_modes using the true and perceived modes
-                    prox_modes = 0 if 'prox_modes' not in cont else cont['prox_modes'][-1][0] # either start with prox_modes = 0 or extract the last known value
-                    prox_modes += 2**index if sensor_emit == 3 or sensor_emit == 1 else 0 # for now, say new prox mode is on if fully on or going off->on and off else
+                    # finally, build the prox.prox_m using the true and perceived modes
+                    prox_m = 0 if 'prox_m' not in cont else cont['prox_m'][-1][0] # either start with prox_m = 0 or extract the last known value
+                    prox_m += 2**index if sensor_emit == 4 or sensor_emit == 2 or sensor_emit == 1 else 0 # for now, say new prox mode is on if fully on or going off->on and off else
                     
-                    cont['prox.prox_modes'] = [prox_modes, prox_modes] # since we wanna overwrite regardless, don't check if prox.prox_modes already exists
+                    cont['prox.prox_m'] = [prox_m, prox_m] # since we wanna overwrite regardless, don't check if prox.prox_m already exists
 
                     if 'others.x' not in cont:
                         '''
@@ -271,7 +296,7 @@ class OrbitalSensor:
                         cont['others.angle_plus'] = [angle_plus]
                         cont['others.dist'] = [dist]
                         cont['others.hdist'] = [hdist]
-                        cont['others.sensor_emit'] = [FILTER_PROX_MODES[sensor_emit]]
+                        cont['others.sensor_emit'] = [FILTER_prox_m[sensor_emit]]
 
                         disc['others.move_mode'] = [state_dict[cur_agent][1][0]]
                     else:
@@ -285,7 +310,7 @@ class OrbitalSensor:
                         cont['others.angle_plus'].append(angle_plus)
                         cont['others.dist'].append(dist)
                         cont['others.hdist'].append(hdist)
-                        cont['others.sensor_emit'].append(FILTER_PROX_MODES[sensor_emit])
+                        cont['others.sensor_emit'].append(FILTER_prox_m[sensor_emit])
 
                         disc['others.move_mode'].append(state_dict[cur_agent][1][0])
 

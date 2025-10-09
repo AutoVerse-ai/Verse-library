@@ -25,6 +25,7 @@ class State:
     ex: float; ey: float; ez: float
     evx: float; evy: float; evz: float
     timer: float; po_timer: float; time: float 
+    prox_m: float
     # dist: float; hdist: float # time is never needed, cut it right now so that num sensor variables match num agent variables
     # angle_minus: float; angle_plus: float
     # go_mode: GOMode = GOMode.Passive; po_mode: POMode = POMode.Passive; 
@@ -32,7 +33,7 @@ class State:
     move_mode: MoveMode = MoveMode.NMT; 
 
     def __init__(self, x, y, z, vx, vy, vz, hx, hy, hz, hvx, hvy, hvz, ex, ey, ez, evx, evy, evz, 
-                 timer, po_timer, time,
+                 timer, po_timer, time, prox_m,
                  move_mode: MoveMode,):
         pass
 
@@ -41,13 +42,19 @@ class OtherState:
     vx: float; vy: float; vz: float
     dist: float; hdist: float # time is never needed, cut it right now so that num sensor variables match num agent variables
     angle_minus: float; angle_plus: float
+    sensor_emit: float
     move_mode: MoveMode; 
 
     def __init__(self, x, y, z, vx, vy, vz,
                  dist, hdist, angle_minus, angle_plus, 
                  move_mode: MoveMode):
         pass 
+
+class SensorStates:
+    index: float; prox_m: float
     
+    def __init__(self, index, prox_m):
+        pass 
 # def vehicle_front(ego, others, track_map):
 #     res = any(
 #         (
@@ -83,7 +90,7 @@ def seems_unsafe(ego: State, others: List[OtherState]) -> bool:
     return res
 
 # def decisionLogic(ego: State, other: State, obs: MiniState) -> State:
-def decisionLogic(ego: State, others: List[OtherState]) -> State:
+def decisionLogic(ego: State, others: List[OtherState], prox: SensorStates) -> State:
     output = copy.deepcopy(ego)
     if ego.timer >= 900:
         output.ex = ego.ex * 1
@@ -104,6 +111,15 @@ def decisionLogic(ego: State, others: List[OtherState]) -> State:
         output.timer = 0
         # output.time = any((other.x < 10) for other in others)
 
+    if any((other.sensor_emit > 0) for other in others):
+        output.prox_m = prox.prox_m
+        output.ex = ego.ex * 1
+        output.ey = ego.ey * 1
+        output.ez = ego.ez * 1
+
+        output.evx = ego.evx * 1
+        output.evy = ego.evy * 1
+        output.evz = ego.evz * 1
     # for now, just consider the estimated state from any sensor
     # could also compute this just using ex and x by doing hx = x - ex
     # note this should be using hdist instead of dist
