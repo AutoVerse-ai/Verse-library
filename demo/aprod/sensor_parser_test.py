@@ -132,7 +132,7 @@ if __name__ == "__main__":
     lirpa_model = BoundedModule(model, (dummy_x, dummy_y, dummy_e_rho, dummy_e_theta), device="cpu")
 
     # Interval bounds for each input
-    xl, xu = x-0.1, x+0.1
+    xl, xu = x-0.5, x+0.5
     yl, yu = y, y
     e_rho_l, e_rho_u = e_rho, e_rho    # example
     e_theta_l, e_theta_u = e_theta, e_theta
