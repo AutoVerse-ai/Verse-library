@@ -1,5 +1,5 @@
 # from orbital_all_agent import OrbitalAgent
-from orbital_true_multi_switch_agent_gpa_v3 import OrbitalAgent, SimpleTrackingOrbitalAgent
+from orbital_true_multi_switch_agent_gpa_3dep import OrbitalAgent, SimpleTrackingOrbitalAgent
 from verse import Scenario, ScenarioConfig
 from verse.analysis.verifier import ReachabilityMethod
 from verse.plotter.plotter2D import *
@@ -19,7 +19,10 @@ filename_ra = "demo/aprod/refs_ra.pkl"
 filename_ahead_ra = "demo/aprod/refs_ahead_ra.pkl"
 filename_obs = "demo/aprod/refs_obs.pkl"
 filename_obs_inner = "demo/aprod/refs_obs_ra.pkl"
-filenames = [filename, filename_ra, filename_ahead, filename_ahead_ra, filename_obs, filename_obs_inner]
+filename_aheader = "demo/aprod/refs_aheader.pkl"
+filename_aheader_inner = "demo/aprod/refs_aheader_ra.pkl"
+
+filenames = [filename, filename_ra, filename_ahead, filename_ahead_ra, filename_aheader, filename_aheader_inner]
 
 class GOMode(Enum):
     Passive = auto()
@@ -67,18 +70,18 @@ if __name__ == "__main__":
     scenario.config.reachability_method = ReachabilityMethod.DRYVR_DISC
     dep = OrbitalAgent("deputy", file_name=input_code_name)
     dep2 = OrbitalAgent('deputy_ahead', file_name=input_code_name)
-    obs = SimpleTrackingOrbitalAgent('obs')
+    deper = OrbitalAgent('deputy_aheader', file_name=input_code_name)
     scenario.add_agent(dep)
     scenario.add_agent(dep2)
-    scenario.add_agent(obs)
+    scenario.add_agent(deper)
     orbital_sensor = OrbitalSensor()
     scenario.set_sensor(orbital_sensor)
     # modify mode list input
-    T = 3000 # 3000 for about half a cycle and around 5500 for a full cycle
+    T = 100 # 3000 for about half a cycle and around 5500 for a full cycle
     ry = 75
     r_inner = ry - 20 
     x0_nmt = np.array([0, ry, 0, n/2*ry, 0, 0])
-    x0_inner = np.array([0, r_inner, 0, n/2*r_inner, 0, 0])
+    x0_nmt_aheader = np.array([37.51233, -0.111  ,  0.     , -0.00007, -0.09003,  0.     ])
 
     base = [0, ry+10, 0, n/2*ry*.9, 0, 0]
     x0_l = np.array(base + [base[i]-2.5 for i in range(6)] + [-2.5 for _ in range(3)] + [0 for _ in range(8)])
@@ -89,20 +92,24 @@ if __name__ == "__main__":
     x0_u_ahead = np.array(base_ahead + [base_ahead[i]+2.5 for i in range(3)] +[0 for _ in range(3)] + [2.5 for _ in range(3)] +  [0 for _ in range(3)] + [1, 0, 0, 0, 1])
 #   ahead should start by tracking: array([ 4.48926, 74.46068,  0.     ,  0.04468, -0.01077,  0.     ])
 
-    x0_obs = x0_inner
+    x0_l_aheader = np.array(x0_nmt_aheader.tolist() + [x0_nmt_aheader[i]-2.5 for i in range(3)] +[0 for _ in range(3)]+ [-2.5 for _ in range(3)] + [0 for _ in range(3)] + [2, 0, 0, 0, 2]) # desynchronizing the timers
+    x0_u_aheader = np.array(x0_nmt_aheader.tolist() + [x0_nmt_aheader[i]+2.5 for i in range(3)] +[0 for _ in range(3)] + [2.5 for _ in range(3)] +  [0 for _ in range(3)] + [2, 0, 0, 0, 2])
+
+
     scenario.set_init(
         [
             [x0_l.tolist(), 
              x0_u.tolist()],
-             [x0_l_ahead.tolist(), x0_u_ahead.tolist()],
-             [x0_inner.tolist(), x0_inner.tolist()]
+            [x0_l_ahead.tolist(), x0_u_ahead.tolist()],
+            [x0_l_aheader.tolist(), x0_u_aheader.tolist()],
         ],
         [
             # assign each agent an addition mode and state to denote whether an update occurred and priority resp.
             # actually just slightly stagger the timers 
             (MoveMode.NMT,),
             (MoveMode.NMT,),
-            (MoveMode.Inner,),
+            # (MoveMode.Inner,),
+            (MoveMode.NMT,)
         ],
     )
 

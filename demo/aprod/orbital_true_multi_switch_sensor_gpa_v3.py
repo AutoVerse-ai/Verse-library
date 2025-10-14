@@ -137,6 +137,22 @@ class OrbitalSensor:
                 # cont['other.y'] = state_dict['car2'][0][2]
                 # disc['other.track_mode'] = state_dict['car2'][1][1]
         else:
+            ego_priority = state_dict[agent.id][0][0][23] # priority mode of ego
+            nominal_priorities = {}
+            passive_agents = []
+            max_priority = ego_priority + 1 # shouldn't matter
+            for cur_agent in state_dict:
+                if cur_agent == agent.id:
+                    continue
+                if len(state_dict[cur_agent][0][0]) < 23:
+                    passive_agents.append(cur_agent)
+                    continue
+                max_priority = max(max_priority, state_dict[cur_agent][0][0][23])
+
+            for pa in passive_agents:
+                nominal_priorities[pa] = max_priority
+                max_priority += 1
+
             for cur_agent in state_dict:
                 # if cur_agent == "obs":
                 #     cont['obs.x'] = [state_dict[cur_agent][0][0][1], state_dict[cur_agent][0][1][1]]
@@ -171,6 +187,7 @@ class OrbitalSensor:
                     cont['ego.po_timer'] = [state_dict[cur_agent][0][0][20], state_dict[cur_agent][0][1][20]]
                     cont['ego.time'] = [state_dict[cur_agent][0][0][21], state_dict[cur_agent][0][1][21]]
                     cont['ego.prox_m'] = [state_dict[cur_agent][0][0][22], state_dict[cur_agent][0][0][22]] # in practice, this should always be a single value, but just to be sure 
+                    # cont['ego.priority'] = [state_dict[cur_agent][0][0][23], state_dict[cur_agent][0][0][23]] 
 
                     disc['ego.move_mode'] = state_dict[cur_agent][1][0]
 
@@ -192,6 +209,7 @@ class OrbitalSensor:
                         cont['ego.evz'] = [-epsilon_vel, epsilon_vel]
 
                 else:                 
+
                     pos_min = np.array([state_dict[agent.id][0][0][i] for i in range(1,4)]) # the sensor agent's position
                     pos_max = np.array([state_dict[agent.id][0][1][i] for i in range(1,4)]) 
                     vel_min, vel_max = np.array([state_dict[agent.id][0][0][i] for i in range(4,7)]), np.array([state_dict[agent.id][0][1][i] for i in range(4,7)]) 
@@ -219,19 +237,15 @@ class OrbitalSensor:
                     else:
                         angle_minus = angle_plus = [diff_min-ep_ao, diff_max+ep_ao]
                                         
-                    """
-                    This assumes the state_dict maintains an ordering of keys across a whole scenario, which should be true
-                    TODO: figure out way to force certain order of transitions. should 
-                    """ 
-                    if 'prox' not in cont:# new DL dict key to potentially update prox_m with
-                        cont['prox.index'] = [[0,0]] # indices start at 0 and go up incrementally, here 0 will correspond to the 1st digit/just taking remainder of raw prox_mode
-                    else:
-                        last = cont['prox.index'][-1][0] # else extract the last index and add one
-                        cont['prox.index'].append([last+1, last+1])
+                    cur_priority = nominal_priorities[cur_agent] if cur_agent in passive_agents else state_dict[cur_agent][0][0][23] 
+                    cur_filter_mode =  0 if cur_agent in passive_agents else state_dict[cur_agent][0][0][22]
+                    for _ in range(int(ego_priority)):
+                        cur_filter_mode //=2
+                    cur_perc_prox_mode = cur_filter_mode % 2 # get perceived mode of cur_agent/other
 
-                    index = cont['prox.index'][-1][0] # the last index is the one corresponding to cur_agent
+                    index = cur_priority # use priority as the differentiator
                     filter_prox_mode = state_dict[agent.id][0][0][22] # since cont['ego.prox_m'] may note be defined yet
-                    for _ in range(index): # divide by base index amount of times. for now, let base = 10, 4 would also suffice I think
+                    for _ in range(int(index)): # divide by base index amount of times. for now, let base = 10, 4 would also suffice I think
                         filter_prox_mode //= 2
                     perc_prox_mode = filter_prox_mode % 2 # get the remainder after index amount of divisions, we now have the perceived/last sensor mode; 0 for off, 1 for on
 
@@ -254,32 +268,46 @@ class OrbitalSensor:
                         else:
                             true_mode = 1 # fully inside still
 
-                    if state_dict[cur_agent][0][0][21] == 84:
+                    allowed_switch = ego_priority<cur_priority or perc_prox_mode!=cur_perc_prox_mode # if other agent has transitioned sensor modes, then it's okay
+
+                    if cur_agent not in passive_agents and state_dict[cur_agent][0][0][21] == 84:
                         pass
 
                     sensor_emit: int = -1 # sentinel value, should never stay like this
                     if true_mode == 0: # true mode is fully off
-                        if true_mode == perc_prox_mode:
+                        if true_mode == perc_prox_mode or not allowed_switch:
                             sensor_emit = 0 # no transition, 0 stays 0
                         else:
                             sensor_emit = 1 # full transition from 0 to 1
                     elif true_mode == 1:
-                        if true_mode == perc_prox_mode:
+                        if true_mode == perc_prox_mode or not allowed_switch:
                             sensor_emit = 2 # no transition 1 stays 1
                         else:
                             sensor_emit = 3 # full transition from 1 to 0
-                    elif true_mode == 2:
+                    elif true_mode == 2 and allowed_switch:
                         if perc_prox_mode == 0:
                             sensor_emit = 4 # partial transition from 0 to 1 
                         else:
                             sensor_emit = 5 # partial transition from 1 to 0
+                    elif true_mode == 2 and not allowed_switch: # not allowed to switch, stay in perceived mode
+                        if perc_prox_mode == 0:
+                            sensor_emit = 0 
+                        else:
+                            sensor_emit = 2
                     else:
                         raise Exception(f'Unreachable true_mode: {true_mode}')
 
                     # finally, build the prox.prox_m using the true and perceived modes
-                    prox_m = 0 if 'prox_m' not in cont else cont['prox_m'][-1][0] # either start with prox_m = 0 or extract the last known value
+                    switching = sensor_emit != 0 and sensor_emit != 2
+
+
+                    prox_m = 0 if 'prox.prox_m' not in cont else cont['prox.prox_m'][0] # either start with prox_m = 0 or extract the last known value
                     prox_m += 2**index if sensor_emit == 4 or sensor_emit == 2 or sensor_emit == 1 else 0 # for now, say new prox mode is on if fully on or going off->on and off else
                     
+                    # if switching:
+                        # print(f'{agent.id} is switching under emit {sensor_emit} with other: {cur_agent} from perceived mode: {perc_prox_mode}\n with prox_m: {prox_m} and init prox mode: {state_dict[agent.id][0][0][22]}')
+
+
                     cont['prox.prox_m'] = [prox_m, prox_m] # since we wanna overwrite regardless, don't check if prox.prox_m already exists
 
                     if 'others.x' not in cont:

@@ -25,7 +25,8 @@ class State:
     ex: float; ey: float; ez: float
     evx: float; evy: float; evz: float
     timer: float; po_timer: float; time: float 
-    prox_m: float
+    prox_m: float; priority: float; # priority shouldn't be called here, already called in sensor
+
     # dist: float; hdist: float # time is never needed, cut it right now so that num sensor variables match num agent variables
     # angle_minus: float; angle_plus: float
     # go_mode: GOMode = GOMode.Passive; po_mode: POMode = POMode.Passive; 
@@ -33,7 +34,7 @@ class State:
     move_mode: MoveMode = MoveMode.NMT; 
 
     def __init__(self, x, y, z, vx, vy, vz, hx, hy, hz, hvx, hvy, hvz, ex, ey, ez, evx, evy, evz, 
-                 timer, po_timer, time, prox_m,
+                 timer, po_timer, time, prox_m, priority,
                  move_mode: MoveMode,):
         pass
 
@@ -43,10 +44,11 @@ class OtherState:
     dist: float; hdist: float # time is never needed, cut it right now so that num sensor variables match num agent variables
     angle_minus: float; angle_plus: float
     sensor_emit: float
+    priority: float; 
     move_mode: MoveMode; 
 
     def __init__(self, x, y, z, vx, vy, vz,
-                 dist, hdist, angle_minus, angle_plus, 
+                 dist, hdist, angle_minus, angle_plus, priority,
                  move_mode: MoveMode):
         pass 
 
@@ -68,12 +70,12 @@ class SensorStates:
 #     )
 #     return res
 
-# def has_priority(ego: State, others: List[State], desired_mode: POMode):
+# def has_priority(ego: State, others: List[OtherState]):
 #     '''
 #     returns whether ego can transition to desired state based on priority
 #     '''
 #     res = all(
-#     ((ego.id < other.id) or (ego.id>=other.id and other.po_mode == desired_mode)) for other in others
+#     ((ego.priority > other.priority) or (ego.priority < other.priority and other.sense_switch_intent<=0)) for other in others
 #     )
 #     return res
 

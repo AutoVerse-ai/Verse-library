@@ -258,7 +258,7 @@ class OrbitalAgent(BaseAgent):
                 pickle.dump((x_sol, u_sol), f)
 
         if track_mode == 'Docking' and mode[0] == 'Passive':
-            # x_sol = np.zeros(x_sol.shape) # if docking, should try to head to \bar 0 
+            x_sol_simple, u_sol_simple = np.zeros(x_sol.shape), np.zeros(u_sol.shape) # if docking, should try to head to \bar 0 
             x_sol, u_sol = None, None
             hat_x = np.array(x0[:6]) - np.array(x0[12:18]) # don't use hx directly, compute it from hx = x - e
 
@@ -270,7 +270,9 @@ class OrbitalAgent(BaseAgent):
                 except:
                     tol += 0.1
             if x_sol is None:
-                raise Exception('MPC unable to find solution')
+                print('MPC was unable to find a solution, reverting to simple LQR tracking')
+                x_sol, u_sol = x_sol_simple, u_sol_simple
+                # raise Exception('MPC unable to find solution')
 
         u_sol = np.vstack([u_sol, u_sol[-1]]) # holding last input 
         x_ref_fn, u_ref_fn = OrbitalAgent.x_ref_fn, OrbitalAgent.u_ref_fn

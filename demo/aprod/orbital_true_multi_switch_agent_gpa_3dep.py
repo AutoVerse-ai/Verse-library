@@ -43,8 +43,10 @@ filename_inner = "demo/aprod/refs_ra.pkl"
 filename_ahead_inner = "demo/aprod/refs_ahead_ra.pkl"
 filename_aheader = "demo/aprod/refs_aheader.pkl"
 filename_aheader_inner = "demo/aprod/refs_aheader_ra.pkl"
-# filename_start = {'deputy': filename, 'deputy_ahead': filename_ahead, 'deputy_aheader': filename_aheader}
-# filename_inner = {'deputy': filename_inner, 'deputy_ahead': filename_ahead_inner, 'deputy_aheader': filename_aheader_inner}
+filenames = {'deputy': filename, 'deputy_ahead': filename_ahead, 'deputy_aheader': filename_aheader}
+filename_inners = {'deputy': filename_inner, 'deputy_ahead': filename_ahead_inner, 'deputy_aheader': filename_aheader_inner}
+x0_nmts = {'deputy': x0_nmt, 'deputy_ahead': x0_nmt_ahead, 'deputy_aheader': x0_nmt_aheader}
+x0_inners = {'deputy': x0_inner, 'deputy_ahead': x0_inner_ahead, 'deputy_aheader': x0_inner_aheader}
 
 max_tol = 1
 
@@ -252,34 +254,26 @@ class OrbitalAgent(BaseAgent):
         # x_sol, u_sol = OrbitalAgent.compute_ref(dt, x0[6:], N)
 
         x_sol, u_sol = None, None
-        if not os.path.exists(filename):
-            x_sol, u_sol = OrbitalAgent.compute_ref_nmt(dt, N=N) # generates ref trajectory for entire run due to not doing MILP
-            with open(filename, 'wb') as f:
-                pickle.dump((x_sol, u_sol), f)
-        if not os.path.exists(filename_inner):
-            x_sol, u_sol = OrbitalAgent.compute_ref_nmt(dt, x0_inner, N=N) # generates ref trajectory for entire run due to not doing MILP
-            with open(filename_inner, 'wb') as f:
-                pickle.dump((x_sol, u_sol), f)
-
-        if not os.path.exists(filename_ahead):
-            x_sol, u_sol = OrbitalAgent.compute_ref_nmt(dt, x0_nmt_ahead, N=N) # generates ref trajectory for entire run due to not doing MILP
-            with open(filename_ahead, 'wb') as f:
-                pickle.dump((x_sol, u_sol), f)
-        if not os.path.exists(filename_ahead_inner):
-            x_sol, u_sol = OrbitalAgent.compute_ref_nmt(dt, x0_inner_ahead, N=N) # generates ref trajectory for entire run due to not doing MILP
-            with open(filename_ahead_inner, 'wb') as f:
-                pickle.dump((x_sol, u_sol), f)
+        for cur_agent in filenames: 
+            if not os.path.exists(filenames[cur_agent]):
+                x_sol, u_sol = OrbitalAgent.compute_ref_nmt(dt, x0_nmts[cur_agent], N=N)
+                with open(filenames[cur_agent], 'wb') as f:
+                    pickle.dump((x_sol, u_sol), f)
+            if not os.path.exists(filename_inners[cur_agent]):
+                x_sol, u_sol = OrbitalAgent.compute_ref_nmt(dt, x0_inners[cur_agent], N=N)
+                with open(filenames[cur_agent], 'wb') as f:
+                    pickle.dump((x_sol, u_sol), f)
 
         if track_mode == 'NMT':
             # start_idx = int(start_time//dt) # may need to fine tune indexing
             start_idx = -int(T//dt)-1
-            f = filename if self.id == 'deputy' else filename_ahead # will need a better solution going forward with arbitrary number of agents
+            f = filenames[self.id] # maybe put an exception here if agent id not in dict
             with open(f, 'rb') as f:
                 full_x_sol, full_u_sol = pickle.load(f)
                 x_sol, u_sol = full_x_sol[start_idx:], full_u_sol[start_idx:] 
         elif track_mode == 'Inner': # figure out a way to do nothing while mode[0] isn't passive
             start_idx = -int(T//dt)-1
-            f_inner = filename_inner if self.id == 'deputy' else filename_ahead_inner
+            f_inner = filename_inners[self.id]
             with open(f_inner, 'rb') as f:
                 full_x_sol, full_u_sol = pickle.load(f)
                 x_sol, u_sol = full_x_sol[start_idx:], full_u_sol[start_idx:] 
@@ -306,8 +300,8 @@ class OrbitalAgent(BaseAgent):
         # timed_trace = np.concatenate((ts.reshape(-1, 1), trace), axis=1)
         error = trace[:,6:] - trace[:,:6]
         timed_trace = np.concatenate((ts.reshape(-1, 1), trace, error, 
-                                      ts.reshape(-1, 1)+int(timer_start_time), ts.reshape(-1, 1)+int(po_timer_start_time), ts.reshape(-1, 1)+int(start_time), 
-                                      np.zeros((len(ts),1))+prox_modes, np.full((len(ts), 1), priority)), axis=1)
+                                ts.reshape(-1, 1)+int(timer_start_time), ts.reshape(-1, 1)+int(po_timer_start_time), ts.reshape(-1, 1)+int(start_time), 
+                                np.zeros((len(ts),1))+prox_modes, np.full((len(ts), 1), priority)), axis=1)
 
         return timed_trace
 
