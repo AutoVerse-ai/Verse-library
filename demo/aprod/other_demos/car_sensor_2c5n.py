@@ -8,6 +8,9 @@ epsilon = 0.05
 epsilon_vel = 0.005
 # epsilon_vel = 0
 
+ep_other_lin_pos = 0.1
+ep_other_lin_vel = 0.01
+
 # ep_rho = 2.5
 # ep_rho = 0.25
 ep_rho = 0.01
@@ -63,7 +66,7 @@ class CarSensor:
                     cont['ego.ey'] = [state_dict[cur_agent][0][0][10], state_dict[cur_agent][0][1][10]]
                     cont['ego.etheta'] = [state_dict[cur_agent][0][0][11], state_dict[cur_agent][0][1][11]]
                     cont['ego.ev'] = [state_dict[cur_agent][0][0][12], state_dict[cur_agent][0][1][12]]
-                    cont['ego.timer'] = [state_dict[cur_agent][0][0][13], state_dict[cur_agent][0][1][13]]
+                    cont['ego.timer'] = [state_dict[cur_agent][0][0][13], state_dict[cur_agent][0][0][13]]
                     
                     disc['ego.agent_mode'] = state_dict[cur_agent][1][0]
                     disc['ego.track_mode'] = state_dict[cur_agent][1][1]
