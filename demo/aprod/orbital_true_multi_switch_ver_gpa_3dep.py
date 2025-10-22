@@ -77,7 +77,7 @@ if __name__ == "__main__":
     orbital_sensor = OrbitalSensor()
     scenario.set_sensor(orbital_sensor)
     # modify mode list input
-    T = 100 # 3000 for about half a cycle and around 5500 for a full cycle
+    T = 3000 # 3000 for about half a cycle and around 5500 for a full cycle
     ry = 75
     r_inner = ry - 20 
     x0_nmt = np.array([0, ry, 0, n/2*ry, 0, 0])

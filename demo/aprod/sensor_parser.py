@@ -112,6 +112,26 @@ def atan2_crown(y, x):
     
     return theta + correction
 
+# def atan2_crown(y, x):
+#     """
+#     Ultra-simplified linear approximation of atan2.
+#     Avoids division by sqrt to prevent Auto-LiRPA's special case handling.
+#     """
+#     eps = 1e-6
+    
+#     # Instead of y/sqrt(x^2), compute y*x/sqrt(x^2 * x^2)
+#     x_sq = x * x
+#     numerator = y * x
+#     denom = torch.sqrt(x_sq * x_sq + eps)
+    
+#     # Basic ratio computation
+#     theta = numerator / denom
+    
+#     # Quadrant correction using relu
+#     x_is_neg = torch.relu(-x)
+    
+#     return theta + (x_is_neg * torch.pi)
+
 class TorchFuncModule(nn.Module):
     def __init__(self, fn):
         super().__init__()
@@ -240,7 +260,6 @@ if __name__ == "__main__":
         return x-nx, y-ny, z-nz
     
     # model = TorchFuncModule(noisy_sensor)
-    model = prox_error_ver
 
     # inputs = np.array([1,1,0,0])
     # out = parsed_sensor(noisy_sensor, inputs, sim=True)
@@ -248,7 +267,8 @@ if __name__ == "__main__":
 
     # input_bounds = [(.95,1.05), (1,1), (0,0), (0,0)]
     # input_bounds = np.array([[.95,1.05], [1,1], [0,0], [0,0], [0,0]])
-    input_bounds = np.array([[.95,1.05], [1,1], [0,0], [0,0], [0,0]])
+    # input_bounds = np.array([[-5,-3], [-2,-1], [0,0], [-0.01,0.01], [-1e-6,1e-6]])
+    input_bounds = np.array([[-5,-3], [-2,-1], [0,0], [0,0], [0,0]])
     lb, ub = parsed_sensor(prox_error_ver, input_bounds=input_bounds)
     print(lb, ub)
     exit()

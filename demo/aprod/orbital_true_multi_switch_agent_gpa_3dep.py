@@ -261,14 +261,14 @@ class OrbitalAgent(BaseAgent):
                     pickle.dump((x_sol, u_sol), f)
             if not os.path.exists(filename_inners[cur_agent]):
                 x_sol, u_sol = OrbitalAgent.compute_ref_nmt(dt, x0_inners[cur_agent], N=N)
-                with open(filenames[cur_agent], 'wb') as f:
+                with open(filename_inners[cur_agent], 'wb') as f:
                     pickle.dump((x_sol, u_sol), f)
 
         if track_mode == 'NMT':
             # start_idx = int(start_time//dt) # may need to fine tune indexing
             start_idx = -int(T//dt)-1
-            f = filenames[self.id] # maybe put an exception here if agent id not in dict
-            with open(f, 'rb') as f:
+            file = filenames[self.id] # maybe put an exception here if agent id not in dict
+            with open(file, 'rb') as f:
                 full_x_sol, full_u_sol = pickle.load(f)
                 x_sol, u_sol = full_x_sol[start_idx:], full_u_sol[start_idx:] 
         elif track_mode == 'Inner': # figure out a way to do nothing while mode[0] isn't passive

@@ -245,6 +245,28 @@ class OrbitalSensor:
                     cont['ego.evx'] = [ev_lb[0], ev_ub[0]]
                     cont['ego.evy'] = [ev_lb[1], ev_ub[1]]
                     cont['ego.evz'] = [ev_lb[2], ev_ub[2]]
+                    # err_pos_min, err_pos_max = -epsilon, epsilon
+                    # err_vel_min, err_vel_max = -epsilon_vel, -epsilon_vel
+
+                    # pos_min = np.array([state_dict['deputy'][0][0][i] for i in range(1,4)])
+                    # pos_max = np.array([state_dict['deputy'][0][1][i] for i in range(1,4)])
+                    # bounds = [(pos_min[i], pos_max[i]) for i in range(3)]
+                    # ex_min, ex_max = box_extreme_error(bounds, ep_rho, ep_angle, 'x')
+                    # ey_min, ey_max = box_extreme_error(bounds, ep_rho, ep_angle, 'y')
+                    # ez_min, ez_max = box_extreme_error(bounds, ep_rho, ep_angle, 'z')
+                    # cont['ego.ex'] = [ex_min, ex_max] # recall ex_min, ex_max is returned as positive and negative hx-x respectively, so negate to get min and max neg and pos x-hx
+                    # cont['ego.ey'] = [ey_min, ey_max] 
+                    # cont['ego.ez'] = [ez_min, ez_max] 
+
+                    # vel_min = np.array([state_dict['deputy'][0][0][i] for i in range(4,7)])
+                    # vel_max = np.array([state_dict['deputy'][0][1][i] for i in range(4,7)])
+                    # vel_bounds = [(vel_min[i], vel_max[i]) for i in range(3)]
+                    # evx_min, evx_max = box_extreme_error(vel_bounds, ep_rho_v, ep_angle, 'x') # for now, keep the same angular error as position, not necessary
+                    # evy_min, evy_max = box_extreme_error(vel_bounds, ep_rho_v, ep_angle, 'y')
+                    # evz_min, evz_max = box_extreme_error(vel_bounds, ep_rho_v, ep_angle, 'z')
+                    # cont['ego.evx'] = [evx_min, evx_max]
+                    # cont['ego.evy'] = [evy_min, evy_max]
+                    # cont['ego.evz'] = [evz_min, evz_max]
 
                     cont['ego.hx'] = [cont['ego.x'][0]-cont['ego.ex'][1], cont['ego.x'][1]-cont['ego.ex'][0]]
                     cont['ego.hy'] = [cont['ego.y'][0]-cont['ego.ey'][1], cont['ego.y'][1]-cont['ego.ey'][0]]
