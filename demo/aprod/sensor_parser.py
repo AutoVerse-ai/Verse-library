@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 from auto_LiRPA import BoundedModule, BoundedTensor, PerturbationLpNorm
 from prox_error_all_bounds import box_extreme_error
+import time
 
 FUNC_MAP = {
     "sin": "torch.sin",
@@ -12,30 +13,6 @@ FUNC_MAP = {
     "atan2": "atan2_crown",
     "norm": "norm",
 }
-
-# def norm(x, *args, **kwargs):
-#     """
-#     Wrapper around torch.norm that accepts either:
-#     - a tensor, or
-#     - a list/tuple of tensors (e.g. [x, y])
-#     """
-#     if isinstance(x, (list, tuple)):
-#         # stack into a tensor along a new dimension
-#         x = torch.stack(list(x))
-#     return torch.norm(x, *args, **kwargs)
-
-# def norm(x, *args, **kwargs):
-#     """
-#     Replacement for torch.norm that avoids ReduceL2 (unsupported in CROWN).
-#     Works for:
-#       - a single tensor
-#       - a list/tuple of tensors (like [x, y])
-#     """
-#     if isinstance(x, (list, tuple)):
-#         x = torch.stack(list(x), dim=-1)
-#     # manually compute L2 norm: sqrt(sum(x^2))
-#     # return torch.sqrt(torch.sum(x ** 2, dim=-1, keepdim=kwargs.get("keepdim", False)) + 1e-6)
-#     return torch.sqrt(torch.sum(x * x, dim=-1, keepdim=kwargs.get("keepdim", False)) + 1e-6)
 
 def norm(x, *args, **kwargs):
     """
@@ -52,42 +29,6 @@ def norm(x, *args, **kwargs):
     squared = torch.sum(x * x, dim=-1, keepdim=kwargs.get("keepdim", False))
     # Add small epsilon to prevent divide by zero in backward pass
     return torch.sqrt(squared + 1e-8)
-
-
-# def atan2_crown(y, x):
-#     eps = 1e-6 # some small number to keep things well-defined
-#     theta = torch.atan(y / (x + eps))
-
-#     # Approximate "x < 0" with relu
-#     x_neg = torch.relu(-x) / (torch.abs(x) + eps)  # ≈ 1 if x<0 else 0
-
-#     # Approximate "y < 0" with relu
-#     y_neg = torch.relu(-y) / (torch.abs(y) + eps)  # ≈ 1 if y<0 else 0
-
-#     # correction: +pi if x<0,y>=0 ; -pi if x<0,y<0
-#     correction = torch.pi * x_neg * (1 - 2*y_neg)
-
-#     return theta + correction
-
-# def atan2_crown(y, x):
-#     eps = 1e-6  # small number for numerical stability
-    
-#     # Add epsilon to denominator to ensure it's never exactly zero
-#     # This preserves gradient information better than using abs() 
-#     x_denom = x + torch.sign(x + 1e-12) * eps
-    
-#     theta = torch.atan(y / x_denom)
-
-#     # Approximate "x < 0" with relu using the original x
-#     x_neg = torch.relu(-x) / (torch.abs(x) + eps)  # ≈ 1 if x<0 else 0
-    
-#     # Approximate "y < 0" with relu
-#     y_neg = torch.relu(-y) / (torch.abs(y) + eps)  # ≈ 1 if y<0 else 0
-
-#     # correction: +pi if x<0,y>=0 ; -pi if x<0,y<0  
-#     correction = torch.pi * x_neg * (1 - 2*y_neg)
-
-#     return theta + correction
 
 def atan2_crown(y, x):
     """
@@ -112,7 +53,7 @@ def atan2_crown(y, x):
     
     return theta + correction
 
-# def atan2_crown(y, x):
+# def atan2_crown(y, x): # less accurate but more operations -> worse performance
 #     """
 #     Ultra-simplified linear approximation of atan2.
 #     Avoids division by sqrt to prevent Auto-LiRPA's special case handling.
@@ -183,9 +124,66 @@ class TorchFuncModule(nn.Module):
             return torch.concat(list(out), dim=-1) # shouldn't need list(out) but required due to torch quirks -- alternative above works without needing casting to list first 
         return out
 
-def parsed_sensor(sensor_function, inputs=None, input_bounds=None, device="cpu", sim: bool = False):
+# def parsed_sensor(sensor_function, inputs=None, input_bounds=None, device="cpu", sim: bool = False):
+#     """
+#     Process inputs through a sensor function using TorchFuncModule
+    
+#     Args:
+#         sensor_function: The sensor function to be processed
+#         inputs: For sim=True: numpy array of inputs. Ignored if sim=False.
+#         input_bounds: List of (lower, upper) bound tuples for each input. Required if sim=False
+#         device: Device to run computations on
+#         sim: If True, run in simulation mode. If False, compute bounds
+    
+#     Returns:
+#         If sim=True: Direct sensor output
+#         If sim=False: (lower bounds, upper bounds) of the sensor output
+#     """
+#     model = TorchFuncModule(sensor_function)
+    
+#     if sim:
+#         if inputs is None:
+#             raise ValueError("inputs required for simulation mode")
+#         # Convert numpy inputs to torch tensors
+#         torch_inputs = [torch.tensor([x], dtype=torch.float32) for x in inputs]
+#         return model(*torch_inputs).numpy()
+#     else:
+#         if input_bounds is None:
+#             raise ValueError("input_bounds required for bound computation mode")
+            
+#         # Create dummy inputs for CROWN model initialization
+#         dummy_inputs = tuple([torch.zeros(1, 1) for _ in input_bounds])
+        
+#         # Initialize CROWN model
+#         lirpa_model = BoundedModule(model, dummy_inputs, device=device)
+        
+#         # Create bounded tensors for each input
+#         bounded_inputs = []
+#         for lower, upper in input_bounds:
+#             # Convert to torch tensors if they're numpy arrays
+#             lower = torch.tensor(lower, dtype=torch.float32)
+#             upper = torch.tensor(upper, dtype=torch.float32)
+            
+#             # Calculate center as average of bounds
+#             center = ((lower + upper) / 2).unsqueeze(0)
+#             lower = lower.unsqueeze(0)
+#             upper = upper.unsqueeze(0)
+            
+#             # Create perturbation and bounded tensor
+#             perturb = PerturbationLpNorm(x_L=lower, x_U=upper)
+#             bounded_inputs.append(BoundedTensor(center, perturb))
+        
+#         # Compute bounds using CROWN
+#         lb, ub = lirpa_model.compute_bounds(
+#             x=tuple(bounded_inputs),
+#             method="CROWN"
+#         )
+        
+#         return lb.detach().numpy()[0], ub.detach().numpy()[0]
+
+def parsed_sensor(sensor_function, inputs=None, input_bounds=None, device="cpu", sim: bool = False, num_splits=2):
     """
-    Process inputs through a sensor function using TorchFuncModule
+    Process inputs through a sensor function using TorchFuncModule with domain splitting
     
     Args:
         sensor_function: The sensor function to be processed
@@ -193,52 +191,68 @@ def parsed_sensor(sensor_function, inputs=None, input_bounds=None, device="cpu",
         input_bounds: List of (lower, upper) bound tuples for each input. Required if sim=False
         device: Device to run computations on
         sim: If True, run in simulation mode. If False, compute bounds
-    
-    Returns:
-        If sim=True: Direct sensor output
-        If sim=False: (lower bounds, upper bounds) of the sensor output
+        num_splits: Number of splits per dimension (default=2)
     """
-    model = TorchFuncModule(sensor_function)
-    
     if sim:
+        # ... existing simulation code ...
         if inputs is None:
             raise ValueError("inputs required for simulation mode")
-        # Convert numpy inputs to torch tensors
         torch_inputs = [torch.tensor([x], dtype=torch.float32) for x in inputs]
         return model(*torch_inputs).numpy()
-    else:
-        if input_bounds is None:
-            raise ValueError("input_bounds required for bound computation mode")
-            
-        # Create dummy inputs for CROWN model initialization
-        dummy_inputs = tuple([torch.zeros(1, 1) for _ in input_bounds])
-        
-        # Initialize CROWN model
-        lirpa_model = BoundedModule(model, dummy_inputs, device=device)
-        
-        # Create bounded tensors for each input
+    
+    if input_bounds is None:
+        raise ValueError("input_bounds required for bound computation mode")
+    
+    model = TorchFuncModule(sensor_function)
+    dummy_inputs = tuple([torch.zeros(1, 1) for _ in input_bounds])
+    lirpa_model = BoundedModule(model, dummy_inputs, device=device)
+    
+    # Initialize bounds as None
+    global_lb = None
+    global_ub = None
+    
+    # Generate split points for each dimension
+    splits = []
+    for lower, upper in input_bounds:
+        if lower == upper:
+            # For unsplit dimensions, create a list with a single tuple
+            splits.append([(lower, lower)])
+        else:
+            split_points = np.linspace(lower, upper, num_splits+1)
+            # Create list of tuples for split points
+            splits.append(list(zip(split_points[:-1], split_points[1:])))
+    
+    # Compute cartesian product of splits
+    from itertools import product
+    for split_bounds in product(*splits):
+        # Create bounded tensors for this sub-domain
         bounded_inputs = []
-        for lower, upper in input_bounds:
-            # Convert to torch tensors if they're numpy arrays
+        for bounds in split_bounds:  # bounds is already a (lower, upper) tuple
+            lower, upper = bounds  # Unpack the tuple
             lower = torch.tensor(lower, dtype=torch.float32)
             upper = torch.tensor(upper, dtype=torch.float32)
-            
-            # Calculate center as average of bounds
             center = ((lower + upper) / 2).unsqueeze(0)
             lower = lower.unsqueeze(0)
             upper = upper.unsqueeze(0)
-            
-            # Create perturbation and bounded tensor
             perturb = PerturbationLpNorm(x_L=lower, x_U=upper)
             bounded_inputs.append(BoundedTensor(center, perturb))
         
-        # Compute bounds using CROWN
+        # Compute bounds for this sub-domain
         lb, ub = lirpa_model.compute_bounds(
             x=tuple(bounded_inputs),
             method="CROWN"
         )
         
-        return lb.detach().numpy()[0], ub.detach().numpy()[0]
+        # Update global bounds
+        lb, ub = lb.detach().numpy()[0], ub.detach().numpy()[0]
+        if global_lb is None:
+            global_lb = lb
+            global_ub = ub
+        else:
+            global_lb = np.minimum(global_lb, lb)
+            global_ub = np.maximum(global_ub, ub)
+    
+    return global_lb, global_ub
 
 if __name__ == "__main__":
     import numpy as np
@@ -264,13 +278,15 @@ if __name__ == "__main__":
     # inputs = np.array([1,1,0,0])
     # out = parsed_sensor(noisy_sensor, inputs, sim=True)
     # print(out)
+    
+    start = time.perf_counter()
 
     # input_bounds = [(.95,1.05), (1,1), (0,0), (0,0)]
     # input_bounds = np.array([[.95,1.05], [1,1], [0,0], [0,0], [0,0]])
-    # input_bounds = np.array([[-5,-3], [-2,-1], [0,0], [-0.01,0.01], [-1e-6,1e-6]])
-    input_bounds = np.array([[-5,-3], [-2,-1], [0,0], [0,0], [0,0]])
-    lb, ub = parsed_sensor(prox_error_ver, input_bounds=input_bounds)
-    print(lb, ub)
+    input_bounds = np.array([[-5,-3], [-2,-1], [0,0], [-0.01,0.01], [-1e-6,1e-6]])
+    # input_bounds = np.array([[-5,-3], [-2,-1], [0,0], [0,0], [0,0]])
+    lb, ub = parsed_sensor(prox_error_ver, input_bounds=input_bounds, num_splits=5)
+    print(lb, ub, f'Runtime: {time.perf_counter()-start:.2f} s')
     exit()
 
     x = torch.tensor([1.0])
@@ -323,4 +339,3 @@ if __name__ == "__main__":
     # note that what box_extreme_error is trying to do is find bounds on the error, not the estimate itself, so need to change function before doing this again
     # x_bounds_opt, y_bounds_opt = box_extreme_error([(x.item()-0.1, x.item()+0.1), (y.item(), y.item()), (0,0)], 0, 0, 'x'), box_extreme_error([(x.item()-0.1, x.item()+0.1), (y.item(), y.item()), (0,0)], 0, 0, 'y')
 
-    
