@@ -3,6 +3,7 @@ from scipy.optimize import minimize, OptimizeResult
 from prox_error_all_bounds import box_extreme_error, angular_bounds_rectangle
 from sensor_parser import parsed_sensor
 
+
 epsilon = 0.5
 epsilon_vel = 0.00001
 
@@ -233,7 +234,8 @@ class OrbitalSensor:
                     pos_max = np.array([state_dict['deputy'][0][1][i] for i in range(1,4)] + [ep_rho, ep_angle])
 
                     bounds = np.stack((pos_min, pos_max), axis=1)
-                    e_lb, e_ub = parsed_sensor(prox_error_ver, input_bounds=bounds)
+                    e_lb, e_ub = parsed_sensor(prox_error_ver, input_bounds=bounds, num_splits=3)
+                    print('Parsing successful')
                     cont['ego.ex'] = [e_lb[0], e_ub[0]]
                     cont['ego.ey'] = [e_lb[1], e_ub[1]]
                     cont['ego.ez'] = [e_lb[2], e_ub[2]]
@@ -241,7 +243,7 @@ class OrbitalSensor:
                     vel_min = np.array([state_dict['deputy'][0][0][i] for i in range(4,7)] + [-ep_rho, -ep_angle])
                     vel_max = np.array([state_dict['deputy'][0][1][i] for i in range(4,7)] + [ep_rho, ep_angle])
                     vel_bounds = np.stack((vel_min, vel_max), axis=1)
-                    ev_lb, ev_ub = parsed_sensor(prox_error_ver, input_bounds=vel_bounds)
+                    ev_lb, ev_ub = parsed_sensor(prox_error_ver, input_bounds=vel_bounds, num_splits=2)
                     cont['ego.evx'] = [ev_lb[0], ev_ub[0]]
                     cont['ego.evy'] = [ev_lb[1], ev_ub[1]]
                     cont['ego.evz'] = [ev_lb[2], ev_ub[2]]

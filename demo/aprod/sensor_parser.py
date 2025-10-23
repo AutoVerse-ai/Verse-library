@@ -5,6 +5,13 @@ import torch.nn as nn
 from auto_LiRPA import BoundedModule, BoundedTensor, PerturbationLpNorm
 from prox_error_all_bounds import box_extreme_error
 import time
+from multiprocessing import Pool
+from itertools import product
+import numpy as np
+import pickle
+import os
+from pathlib import Path
+import hashlib
 
 FUNC_MAP = {
     "sin": "torch.sin",
@@ -13,6 +20,19 @@ FUNC_MAP = {
     "atan2": "atan2_crown",
     "norm": "norm",
 }
+
+def get_cache_key(input_bounds):
+    """Generate a unique key for the input bounds"""
+    # Convert bounds to string and hash it
+    bounds_str = str(input_bounds.tolist())
+    return hashlib.md5(bounds_str.encode()).hexdigest()
+
+def clear_sensor_cache():
+    """Clear all cached sensor results"""
+    cache_dir = Path(__file__).parent / "sensor_cache"
+    if cache_dir.exists():
+        for f in cache_dir.glob("bounds_*.pkl"):
+            f.unlink()
 
 def norm(x, *args, **kwargs):
     """
@@ -181,6 +201,27 @@ class TorchFuncModule(nn.Module):
         
 #         return lb.detach().numpy()[0], ub.detach().numpy()[0]
 
+def compute_bounds_for_split(args):
+    """Helper function to compute bounds for a single split"""
+    split_bounds, sensor_function = args
+    
+    # Create model inside worker process
+    model = TorchFuncModule(sensor_function)
+    dummy_inputs = tuple([torch.zeros(1, 1) for _ in split_bounds])
+    lirpa_model = BoundedModule(model, dummy_inputs, device="cpu")
+    
+    bounded_inputs = []
+    for bounds in split_bounds:
+        lower, upper = bounds
+        lower = torch.tensor(lower, dtype=torch.float32)
+        upper = torch.tensor(upper, dtype=torch.float32)
+        center = ((lower + upper) / 2).unsqueeze(0)
+        perturb = PerturbationLpNorm(x_L=lower.unsqueeze(0), x_U=upper.unsqueeze(0))
+        bounded_inputs.append(BoundedTensor(center, perturb))
+    
+    lb, ub = lirpa_model.compute_bounds(x=tuple(bounded_inputs), method="CROWN")
+    return lb.detach().numpy()[0], ub.detach().numpy()[0]
+    
 def parsed_sensor(sensor_function, inputs=None, input_bounds=None, device="cpu", sim: bool = False, num_splits=2):
     """
     Process inputs through a sensor function using TorchFuncModule with domain splitting
@@ -193,6 +234,7 @@ def parsed_sensor(sensor_function, inputs=None, input_bounds=None, device="cpu",
         sim: If True, run in simulation mode. If False, compute bounds
         num_splits: Number of splits per dimension (default=2)
     """
+
     if sim:
         # ... existing simulation code ...
         if inputs is None:
@@ -203,6 +245,19 @@ def parsed_sensor(sensor_function, inputs=None, input_bounds=None, device="cpu",
     if input_bounds is None:
         raise ValueError("input_bounds required for bound computation mode")
     
+    # Create cache directory if it doesn't exist
+    cache_dir = Path(__file__).parent / "sensor_cache" # this creates the folder at aprod, can change later to just Path("--") if I'd rather create the folder in the working directory instead
+    cache_dir.mkdir(exist_ok=True)
+    
+    # Generate cache key from input bounds and num_splits
+    cache_key = get_cache_key(np.array(input_bounds))
+    cache_file = cache_dir / f"bounds_{cache_key}_splits_{num_splits}.pkl"
+    
+    # Check if cached result exists
+    if cache_file.exists():
+        with open(cache_file, 'rb') as f:
+            return pickle.load(f)
+        
     model = TorchFuncModule(sensor_function)
     dummy_inputs = tuple([torch.zeros(1, 1) for _ in input_bounds])
     lirpa_model = BoundedModule(model, dummy_inputs, device=device)
@@ -223,7 +278,6 @@ def parsed_sensor(sensor_function, inputs=None, input_bounds=None, device="cpu",
             splits.append(list(zip(split_points[:-1], split_points[1:])))
     
     # Compute cartesian product of splits
-    from itertools import product
     for split_bounds in product(*splits):
         # Create bounded tensors for this sub-domain
         bounded_inputs = []
@@ -251,6 +305,21 @@ def parsed_sensor(sensor_function, inputs=None, input_bounds=None, device="cpu",
         else:
             global_lb = np.minimum(global_lb, lb)
             global_ub = np.maximum(global_ub, ub)
+    
+    with open(cache_file, 'wb') as f:
+        pickle.dump((global_lb, global_ub), f)
+
+    return global_lb, global_ub
+    # all_splits = list(product(*splits))
+    
+    # # Create pool of workers
+    # with Pool() as pool:
+    #     results = pool.map(compute_bounds_for_split,
+    #                      [(split, sensor_function) for split in all_splits])
+    
+    # # Combine results
+    # global_lb = np.minimum.reduce([lb for lb, _ in results])
+    # global_ub = np.maximum.reduce([ub for _, ub in results])
     
     return global_lb, global_ub
 
@@ -285,7 +354,7 @@ if __name__ == "__main__":
     # input_bounds = np.array([[.95,1.05], [1,1], [0,0], [0,0], [0,0]])
     input_bounds = np.array([[-5,-3], [-2,-1], [0,0], [-0.01,0.01], [-1e-6,1e-6]])
     # input_bounds = np.array([[-5,-3], [-2,-1], [0,0], [0,0], [0,0]])
-    lb, ub = parsed_sensor(prox_error_ver, input_bounds=input_bounds, num_splits=5)
+    lb, ub = parsed_sensor(prox_error_ver, input_bounds=input_bounds, num_splits=2)
     print(lb, ub, f'Runtime: {time.perf_counter()-start:.2f} s')
     exit()
 
