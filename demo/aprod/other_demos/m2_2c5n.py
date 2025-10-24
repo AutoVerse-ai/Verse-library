@@ -65,14 +65,14 @@ if __name__ == "__main__":
     scenario.set_map(tmp_map)
     
     base_l, base_u = [0, -0.1, 0, 1.0], [0.0, 0.1, 0, 1.0]
-    init_err = [1,1,0,0]
+    init_err = [0.5,0.,0,0]
     no_err = [0,0,0,0]
     car1_l = base_l + [base_l[i]-init_err[i] for i in range(4)] + [-init_err[i] for i in range(4)] + [0]
     car1_u = base_u + [base_u[i]+init_err[i] for i in range(4)] + [init_err[i] for i in range(4)] + [0]
 
     base_3_l, base_3_u = [14.5, 2.9, 0, 0.6], [14.5, 3.1, 0, 0.6]
-    car3_l = base_3_l + [base_3_l[i]-init_err[i] for i in range(4)] + [-init_err[i] for i in range(4)] + [1]
-    car3_u = base_3_u + [base_3_u[i]+init_err[i] for i in range(4)] + [init_err[i] for i in range(4)] + [1] 
+    car3_l = base_3_l + [base_3_l[i]-init_err[i] for i in range(4)] + [-init_err[i] for i in range(4)] + [0.2]
+    car3_u = base_3_u + [base_3_u[i]+init_err[i] for i in range(4)] + [init_err[i] for i in range(4)] + [0.2] 
 
 
     scenario.set_init(
@@ -97,7 +97,7 @@ if __name__ == "__main__":
             (AgentMode.Normal, TrackMode.T3),
         ],
     )
-    time_step = 0.05
+    time_step = 0.2
 
     traces = scenario.verify(40, time_step)
     fig = go.Figure()
