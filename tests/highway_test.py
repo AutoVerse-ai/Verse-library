@@ -113,8 +113,10 @@ if __name__ == "__main__":
     if bench.config.compare:
         traces1, traces2 = bench.compare_run(40, time_step, params={"bloating_method": "GLOBAL"})
         exit(0)
-    traces = bench.run(40, time_step, params={"bloating_method": "GLOBAL"})
 
+    bench.config.sim = False
+
+    traces = bench.run(40, time_step, params={"bloating_method": "GLOBAL"})
     if bench.config.dump:
         traces.dump(os.path.join(script_dir, "output2_curve.json"))
     if bench.config.plot:

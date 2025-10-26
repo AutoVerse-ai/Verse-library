@@ -897,7 +897,8 @@ def proc(node: ast.AST, env: Env) -> Any:
                 return node
         if isinstance(node.func, ast.Name):
             name = node.func.id
-            if name not in ["any", "all"]:  # , "max", "min", "sum"]:      # TODO
+            # if name not in ["any", "all"]:  # , "max", "min", "sum"]:      # TODO
+            if name not in ["any", "all", "sum"]:  # , "max", "min"]:      # NOTE: TESTING
                 raise NotImplementedError(f'unknown function "{name}"')
             if len(node.args) != 1 or not isinstance(node.args[0], ast.GeneratorExp):
                 raise NotImplementedError("reduction on non-generators")
@@ -916,8 +917,13 @@ def proc(node: ast.AST, env: Env) -> Any:
             def cond_trans(e: ast.expr, c: ast.expr) -> ast.expr:
                 if op == ReductionType.Any:
                     return ast.BoolOp(ast.And(), [e, c])
-                else:
+                elif op == ReductionType.All:
                     return ast.BoolOp(ast.Or(), [e, ast.UnaryOp(ast.Not(), c)])
+                elif op == ReductionType.Sum: # NOTE: TESTING
+                    # e if c else 0
+                    return ast.IfExp(test=c, body=e, orelse=ast.Constant(value=0))
+                else:
+                    raise NotImplementedError(f"Reduction type {op} not supported in cond_trans")
 
             expr = proc(expr, env)
             expr = cond_trans(expr, ast.BoolOp(ast.And(), ifs)) if len(ifs) > 0 else expr

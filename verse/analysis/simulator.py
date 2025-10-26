@@ -744,7 +744,7 @@ class Simulator:
                 return all_asserts, dict(transitions), idx
             if len(satisfied_guard) > 0:
                 if print_level >= 1:
-                    print(len(satisfied_guard))
+                    print(f"Length of satisfied guard: {len(satisfied_guard)}")
                 for agent_idx, dest, next_init, paths in satisfied_guard:
                     assert isinstance(paths, list)
                     dest = tuple(dest)

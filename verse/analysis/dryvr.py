@@ -35,7 +35,7 @@ def all_sensitivities_calc(training_traces: np.ndarray, initial_radii: np.ndarra
                             training_traces[:, cur_time_ind, cur_dim_ind],
                             (training_traces.shape[0], 1),
                         ),
-                        "chebychev",
+                        "chebyshev",
                     )
                     / normalizing_initial_set_radii[cur_dim_ind - 1]
                 )

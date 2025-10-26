@@ -76,6 +76,9 @@ if __name__ == "__main__":
     if bench.config.compare:
         traces1, traces2 = bench.compare_run(40, time_step)
         exit(0)
+
+    bench.config.sim = False
+
     traces = bench.run(40, time_step)
     if bench.config.dump:
         traces.dump(os.path.join(script_dir, "output6_dryvr.json"))
