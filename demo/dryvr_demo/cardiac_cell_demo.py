@@ -33,28 +33,28 @@ if __name__ == "__main__":
     scenario.set_init_single(
         'cell', init_cell,(CellMode.On,)
     )
-
-
-    basis = np.array([[1, 0], [0, 1]]) * np.diag([0.01, 0.01]) # this doesn't actually make sense, but not sure how algorithm actually handles 1d polytopes
-    center = np.array([0, 0])
-    C = np.transpose(np.array([[1,-1,0,0],[0,0,1,-1]]))
-    g = np.array([1,1,1,1])
-
-    ### how do I instantiate a scenario with a starset instead of a hyperrectangle?
-
-    cell.set_initial(
-            # [[1.25, 2.25], [1.25, 2.25]],
-            # [[1.55, 2.35], [1.55, 2.35]]
-            StarSet(center, basis, C, g)
-        ,
-            tuple([CellMode.On])
-            # tuple([AgentMode.Default]),
-        ,
-    )
-
-    scenario.add_agent(cell)
-    scenario.config.reachability_method = ReachabilityMethod.STAR_SETS
-    scenario.set_sensor(BaseStarSensor())
-
     trace = scenario.verify(7, 0.01)
+
+    # basis = np.array([[1, 0], [0, 1]]) * np.diag([0.01, 0.01]) # this doesn't actually make sense, but not sure how algorithm actually handles 1d polytopes
+    # center = np.array([0, 0])
+    # C = np.transpose(np.array([[1,-1,0,0],[0,0,1,-1]]))
+    # g = np.array([1,1,1,1])
+
+    # ### how do I instantiate a scenario with a starset instead of a hyperrectangle?
+
+    # cell.set_initial(
+    #         # [[1.25, 2.25], [1.25, 2.25]],
+    #         # [[1.55, 2.35], [1.55, 2.35]]
+    #         StarSet(center, basis, C, g)
+    #     ,
+    #         tuple([CellMode.On])
+    #         # tuple([AgentMode.Default]),
+    #     ,
+    # )
+
+    # scenario.add_agent(cell)
+    # scenario.config.reachability_method = ReachabilityMethod.STAR_SETS
+    # scenario.set_sensor(BaseStarSensor())
+
+    # trace = scenario.verify(7, 0.01)
     ### this works, but takes around a minute

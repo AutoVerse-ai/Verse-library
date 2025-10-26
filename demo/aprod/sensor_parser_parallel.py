@@ -73,25 +73,25 @@ def atan2_crown(y, x):
     
     return theta + correction
 
-def atan2_crown(y, x): # less accurate but more operations -> worse performance
-    """
-    Ultra-simplified linear approximation of atan2.
-    Avoids division by sqrt to prevent Auto-LiRPA's special case handling.
-    """
-    eps = 1e-6
+# def atan2_crown(y, x): # less accurate but more operations -> worse performance
+#     """
+#     Ultra-simplified linear approximation of atan2.
+#     Avoids division by sqrt to prevent Auto-LiRPA's special case handling.
+#     """
+#     eps = 1e-6
     
-    # Instead of y/sqrt(x^2), compute y*x/sqrt(x^2 * x^2)
-    x_sq = x * x
-    numerator = y * x
-    denom = torch.sqrt(x_sq * x_sq + eps)
+#     # Instead of y/sqrt(x^2), compute y*x/sqrt(x^2 * x^2)
+#     x_sq = x * x
+#     numerator = y * x
+#     denom = torch.sqrt(x_sq * x_sq + eps)
     
-    # Basic ratio computation
-    theta = numerator / denom
+#     # Basic ratio computation
+#     theta = numerator / denom
     
-    # Quadrant correction using relu
-    x_is_neg = torch.relu(-x)
+#     # Quadrant correction using relu
+#     x_is_neg = torch.relu(-x)
     
-    return theta + (x_is_neg * torch.pi)
+#     return theta + (x_is_neg * torch.pi)
 
 class TorchFuncModule(nn.Module):
     def __init__(self, fn):
@@ -309,17 +309,20 @@ def parsed_sensor(sensor_function, inputs=None, input_bounds=None, device="cpu",
     with open(cache_file, 'wb') as f:
         pickle.dump((global_lb, global_ub), f)
 
-    return global_lb, global_ub
-    # all_splits = list(product(*splits))
+    # return global_lb, global_ub
+    all_splits = list(product(*splits))
     
-    # # Create pool of workers
-    # with Pool() as pool:
-    #     results = pool.map(compute_bounds_for_split,
-    #                      [(split, sensor_function) for split in all_splits])
+    # Create pool of workers
+    with Pool() as pool:
+        results = pool.map(compute_bounds_for_split,
+                         [(split, sensor_function) for split in all_splits])
     
-    # # Combine results
-    # global_lb = np.minimum.reduce([lb for lb, _ in results])
-    # global_ub = np.maximum.reduce([ub for _, ub in results])
+    # Combine results
+    global_lb = np.minimum.reduce([lb for lb, _ in results])
+    global_ub = np.maximum.reduce([ub for _, ub in results])
+    
+    with open(cache_file, 'wb') as f:
+        pickle.dump((global_lb, global_ub), f)
     
     return global_lb, global_ub
 

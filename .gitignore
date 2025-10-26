@@ -24,6 +24,7 @@ docs/source/_autosummary/
 **.json
 **.pkl
 **.pth
+**.csv
 gif/
 debug/
 build/

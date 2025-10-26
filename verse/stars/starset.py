@@ -7,7 +7,7 @@ from z3 import *
 from verse.plotter.plotterStar import *
 import polytope as pc
 from scipy.spatial import ConvexHull
-from sklearn.decomposition import PCA
+# from sklearn.decomposition import PCA
 from verse.utils.utils import sample_rect
 from typing_extensions import List, Callable
 

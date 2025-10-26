@@ -1,5 +1,5 @@
 from origin_agent import craft_agent
-from verse import Scenario
+from verse import Scenario, ScenarioConfig
 from verse.plotter.plotter2D import *
 from verse.sensor.example_sensor.craft_sensor import CraftSensor
 
@@ -15,7 +15,7 @@ class CraftMode(Enum):
 
 if __name__ == "__main__":
     input_code_name = "./demo/dryvr_demo/rendezvous_controller.py"
-    scenario = Scenario()
+    scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False))
 
     car = craft_agent("test", file_name=input_code_name)
     scenario.add_agent(car)

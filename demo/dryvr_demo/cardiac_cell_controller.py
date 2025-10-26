@@ -21,5 +21,7 @@ def decisionLogic(ego: State, other: State):
         output.agent_mode = CellMode.Off
     if ego.agent_mode==CellMode.Off and ego.u<=0:
         output.agent_mode = CellMode.On
+    elif ego.agent_mode==CellMode.Off and ego.u>0:
+        output.agent_mode = CellMode.On
 
     return output 

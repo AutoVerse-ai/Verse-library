@@ -1,4 +1,24 @@
+# import builtins
+# import traceback
+
+# original_print = builtins.print
+
+# def debug_print(*args, **kwargs):
+#     # Print the actual message
+#     original_print(*args, **kwargs)
+    
+#     # Capture the stack, then print it using original_print (not print!)
+#     stack = traceback.format_stack(limit=5)
+#     original_print("---- print() called from ----")
+#     for line in stack[:-1]:  # Exclude the line showing this debug_print call
+#         original_print(line.strip())
+#     original_print("----------------------------")
+
+# # Override built-in print
+# builtins.print = debug_print
+
 from verse import Scenario, ScenarioConfig
+from verse.analysis.verifier import ReachabilityMethod
 
 from verse.plotter.plotter2D import *
 from verse.plotter.plotter3D_new import *
@@ -21,6 +41,7 @@ if __name__ == "__main__":
     cell = CellAgent('cell', file_name=input_code_name)
 
     scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False))
+    scenario.config.reachability_method = ReachabilityMethod.DRYVR_DISC
 
     scenario.add_agent(cell) ### need to add breakpoint around here to check decision_logic of agents
 

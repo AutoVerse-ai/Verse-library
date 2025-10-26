@@ -357,6 +357,10 @@ def reachtube_tree_single_3d(
     while queue != []:
         node = queue.pop(0)
         traces = node.trace
+
+        if agent_id not in traces: # hack, figure out why some agent_ids are not appearing in some nodes
+            continue 
+
         trace = np.array(traces[agent_id])
         max_id = len(trace) - 1
         if combine_rect == None:

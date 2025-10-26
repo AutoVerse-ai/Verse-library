@@ -21,31 +21,36 @@ class NPCAgent(BaseAgent):
         self.set_uncertain_parameter(None)
 
     @staticmethod
-    def dynamics(t, state, u):
-        theta, v = state[2:4]
-        delta, a = u
-        x_dot = v * np.cos(theta + delta)
-        y_dot = v * np.sin(theta + delta)
-        theta_dot = v / 1.75 * np.sin(delta)
+    def dynamic(t, state, u):
+        theta, psi, v = state[3:6]
+        delta, a, p = u
+        x_dot = v * np.cos(theta + delta) * np.cos(psi)
+        y_dot = v * np.sin(theta + delta) * np.cos(psi)
+        z_dot = v * np.sin(psi)
+        theta_dot = v / 100 * np.sin(delta)
+        psi_dot = p
         v_dot = a
-        dots = [x_dot, y_dot, theta_dot, v_dot]
-        if len(state) == 4:
+        time_dot = 1
+        dots = [x_dot, y_dot, z_dot, theta_dot, psi_dot, v_dot, time_dot]
+        if len(state) == 7:
             return dots
         return dots + [1]
 
     def action_handler(self, mode, state, lane_map: LaneMap) -> Tuple[float, float]:
         """Computes steering and acceleration based on current lane, target lane and
         current state using a Stanley controller-like rule"""
-        x, y, theta, v = state[:4]
+        x, y, z, theta, psi, v = state[0:6]
         vehicle_mode = mode[0]
         vehicle_lane = mode[1]
         vehicle_pos = np.array([x, y])
-        d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
-        psi = lane_map.get_lane_heading(vehicle_lane, vehicle_pos) - theta
-        steering = psi + np.arctan2(0.45 * d, v)
-        steering = np.clip(steering, -0.61, 0.61)
+        # d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
+        # psi = lane_map.get_lane_heading(vehicle_lane, vehicle_pos) - theta
+        # steering = psi + np.arctan2(0.45 * d, v)
+        # steering = np.clip(steering, -0.61, 0.61)
+        steering = 0 # set this to zero for now
         a = 0
-        return steering, a
+        p = 0
+        return steering, p, a
 
     def TC_simulate(
         self, mode: Tuple[str], init, time_bound, time_step, lane_map: LaneMap = None
@@ -56,15 +61,16 @@ class NPCAgent(BaseAgent):
         trace[1:, 0] = [round(i * time_step, 10) for i in range(num_points)]
         trace[0, 1:] = init
         for i in range(num_points):
-            steering, a = self.action_handler(mode, init, lane_map)
-            r = ode(self.dynamics)
-            r.set_initial_value(init).set_f_params([steering, a])
+            steering, p, a = self.action_handler(mode, init, lane_map)
+            r = ode(self.dynamic)
+            r.set_initial_value(init).set_f_params([steering, p, a])
             res: np.ndarray = r.integrate(r.t + time_step)
             init = res.flatten()
             if init[3] < 0:
                 init[3] = 0
             trace[i + 1, 0] = time_step * (i + 1)
             trace[i + 1, 1:] = init
+            trace[i + 1, 7] = time_step * (i + 1)
         return trace
 
 
@@ -76,7 +82,7 @@ class CarAgent(BaseAgent):
         file_name=None,
         initial_state=None,
         initial_mode=None,
-        speed: float = 2,
+        speed: float = 2, # make these match the speed of an airplane
         accel: float = 1,
     ):
         super().__init__(
@@ -86,45 +92,57 @@ class CarAgent(BaseAgent):
         self.accel = accel
 
     @staticmethod
-    def dynamics(t, state, u):
-        x, y, theta, v, hx, hy, htheta, hv = state
-        delta, a = u
-        x_dot = v * np.cos(theta + delta)
-        y_dot = v * np.sin(theta + delta)
-        theta_dot = v / 1.75 * np.sin(delta)
+    def dynamic(t, state, u):
+        x, y, z, theta, psi, v = state[0:6]
+        delta, p, a = u
+        x_dot = v * np.cos(theta + delta) * np.cos(psi)
+        y_dot = v * np.sin(theta + delta) * np.cos(psi)
+        z_dot = v * np.sin(psi)
+        theta_dot = v / 100 * np.sin(delta)
+        psi_dot = p 
         v_dot = a
-        hx_dot = hv * np.cos(htheta + delta)
-        hy_dot = hv * np.sin(htheta + delta)
-        htheta_dot = hv / 1.75 * np.sin(delta)
-        hv_dot = a
-        return [x_dot, y_dot, theta_dot, v_dot,
-                hx_dot, hy_dot, htheta_dot, hv_dot]
+        time_dot = 1
+        return [x_dot, y_dot, z_dot, theta_dot, psi_dot, v_dot, time_dot]
 
     def action_handler(self, mode: List[str], state, lane_map: LaneMap) -> Tuple[float, float]:
-        x, y, theta, v, hx, hy, htheta, hv = state
-        vehicle_mode, vehicle_lane, _ = mode
-        vehicle_pos = np.array([hx, hy]) # using observed rather than true position
+        x, y, z, theta, psi, v = state[0:6]
+        vehicle_mode, vehicle_lane = mode
+        vehicle_pos = np.array([x, y])
         a = 0
-        lane_width = lane_map.get_lane_width(vehicle_lane)
-        d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
-        if vehicle_mode == "Normal" or vehicle_mode == "Stop":
-            pass
-        elif vehicle_mode == "SwitchLeft":
-            d += lane_width
-        elif vehicle_mode == "SwitchRight":
-            d -= lane_width
-        elif vehicle_mode == "Brake":
-            a = max(-self.accel, -hv) #using observed velocity
-        elif vehicle_mode == "Accel":
-            a = min(self.accel, self.speed - hv) # likewise using observed velocity
-        else:
-            raise ValueError(f"Invalid mode: {vehicle_mode}")
+        p = 0
+        # lane_width = lane_map.get_lane_width(vehicle_lane) 
+        # d = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos) # NoneType error here for some reason
+        # if vehicle_mode == "Normal" or vehicle_mode == "Stop":
+        #     pass
+        # elif vehicle_mode == "SwitchLeft":
+        #     d += lane_width
+        # elif vehicle_mode == "SwitchRight":
+        #     d -= lane_width
+        # elif vehicle_mode == "Brake":
+        #     a = max(-self.accel, -v)
+        # elif vehicle_mode == "Accel":
+        #     a = min(self.accel, self.speed - v)
+        # else:
+        #     raise ValueError(f"Invalid mode: {vehicle_mode}")
 
-        heading = lane_map.get_lane_heading(vehicle_lane, vehicle_pos)
-        psi = wrap_to_pi(heading - htheta) # using observed heading
-        steering = psi + np.arctan2(0.45 * d, hv) # using observed velocity
-        steering = np.clip(steering, -0.61, 0.61)
-        return steering, a
+        # heading = lane_map.get_lane_heading(vehicle_lane, vehicle_pos)
+        # psi = wrap_to_pi(heading - theta)
+        # steering = psi + np.arctan2(0.45 * d, v)
+
+        # steering = np.clip(steering, -0.61, 0.61)
+        deg_to_rad = np.pi/180
+        steering = 0
+        if vehicle_mode == "COC":
+            steering = 0 # in radians
+        elif vehicle_mode == "WL":
+            steering = 1.5*deg_to_rad
+        elif vehicle_mode == "WR":
+            steering = -1.5*deg_to_rad
+        elif vehicle_mode == "SL":
+            steering = 3*deg_to_rad
+        elif vehicle_mode == "SR":
+            steering = -3*deg_to_rad
+        return steering, p, a
 
     def TC_simulate(
         self, mode: List[str], init, time_bound, time_step, lane_map: LaneMap = None
@@ -134,19 +152,17 @@ class CarAgent(BaseAgent):
         trace = np.zeros((num_points + 1, 1 + len(init)))
         trace[1:, 0] = [round(i * time_step, 10) for i in range(num_points)]
         trace[0, 1:] = init
-        init = np.array(init)
-        timer_start = init[-1]
-        augmented_init = np.concatenate([init[:4], init[:4]-init[8:12]]) # [x,hx] -- note: never sample hx directly, it will introduce extra errors
         for i in range(num_points):
-            steering, a = self.action_handler(mode, augmented_init, lane_map)
-            r = ode(self.dynamics)
-            r.set_initial_value(augmented_init).set_f_params([steering, a])
+            steering, p, a = self.action_handler(mode, init, lane_map)
+            r = ode(self.dynamic)
+            r.set_initial_value(init).set_f_params([steering, p, a])
             res: np.ndarray = r.integrate(r.t + time_step)
-            augmented_init = res.flatten() # this init is [x,hx]
-            augmented_init[3] = 0 if augmented_init[3] < 0 else augmented_init[3]
-            augmented_init[7] = 0 if augmented_init[7] < 0 else augmented_init[7]
+            init = res.flatten()
+            if init[-1] < 0: # make sure velocity is non-negative
+                init[-1] = 0
             trace[i + 1, 0] = time_step * (i + 1)
-            trace[i + 1, 1:] = np.concatenate([augmented_init, augmented_init[:4]-augmented_init[4:8], [timer_start+time_step * (i + 1)]])
+            trace[i + 1, 1:] = init
+            trace[i + 1, 7] = time_step * (i + 1)
         return trace
 
 
@@ -197,8 +213,8 @@ class CarAgentDebounced(CarAgent):
         )
 
     @staticmethod
-    def dynamics(t, state, u):
-        return super(CarAgentDebounced, CarAgentDebounced).dynamics(t, state[:4], u) + [1]
+    def dynamic(t, state, u):
+        return super(CarAgentDebounced, CarAgentDebounced).dynamic(t, state[:4], u) + [1]
 
     def action_handler(self, mode: List[str], state, lane_map: LaneMap) -> Tuple[float, float]:
         return super(CarAgentDebounced, self).action_handler(
@@ -228,8 +244,8 @@ class CarAgentSwitch2(CarAgent):
         )
 
     @staticmethod
-    def dynamics(t, state, u):
-        return super(CarAgentSwitch2, CarAgentSwitch2).dynamics(t, state[:4], u) + [1]
+    def dynamic(t, state, u):
+        return super(CarAgentSwitch2, CarAgentSwitch2).dynamic(t, state[:4], u) + [1]
 
     def action_handler(self, mode: List[str], state, lane_map: LaneMap) -> Tuple[float, float]:
         x, y, theta, v, _ = state

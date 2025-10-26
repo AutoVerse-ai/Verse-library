@@ -67,6 +67,13 @@ class ValueSubstituter(ast.NodeTransformer):
             elif node.op == ReductionType.All:
                 self.generic_visit(node)
                 return ast.BoolOp(op=ast.And(), values=self.val)
+            elif node.op == ReductionType.Sum:
+                self.generic_visit(node) # NOTE: TESTING
+                return ast.Call(
+                    func=ast.Name(id="sum", ctx=ast.Load()),
+                    args=[ast.List(elts=self.val, ctx=ast.Load())],
+                    keywords=[]
+                )
         self.generic_visit(node)
         return node
 
