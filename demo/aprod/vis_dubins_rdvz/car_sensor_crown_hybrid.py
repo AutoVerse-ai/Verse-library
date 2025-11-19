@@ -4,7 +4,10 @@ from scipy.optimize import minimize, OptimizeResult
 # from distance_bounds import dist_extrema
 import pickle
 from pathlib import Path
-from distance_bounds import dist_extrema, psi_extrema
+from distance_bounds import dist_extrema, psi_extrema # psi_extrema is not current, prox_error_all_bounds has the correct version
+from prox_error_all_bounds import angular_span_between_rects, angular_bounds_diff
+from sensor_parser import parsed_sensor
+import torch
 
 epsilon = 0.05
 # epsilon = 0
@@ -21,6 +24,13 @@ ep_angle = 1e-6
 ep_rho_v = 1e-8
 ep_ao = 0.006
 D = 1e+10 # basically infinite
+
+region_map = {
+    0: -2,
+    1: -1,
+    2: 1,
+    3: 2
+}
 
 def prox_rand_error(pos: np.ndarray):
     # pos = np.array([state_dict[cur_agent][0][i] for i in range(1,4)])
@@ -62,6 +72,19 @@ def clear_sensor_cache():
     if cache_dir.exists():
         for f in cache_dir.glob("sensor_value_*.pkl"):
             f.unlink()
+
+def lin_obs(psi, phi):
+    # given |psi/phi|>1, out of view, 0<psi/phi <1 in left half view, and -1<psi/phi<0 in right half -- need to modify decision logic
+    return psi/phi 
+
+def obs_all(psi, phi):
+    K = 50
+    out_left = torch.sigmoid(K*(psi-phi)) # > 0 for any region implies that the sensor will output that value
+    right = torch.sigmoid(K*(psi+phi))*torch.sigmoid(-K*psi)
+    left = torch.sigmoid(K*psi)*torch.sigmoid(K*(phi-psi))
+    out_right = torch.sigmoid(-K*(phi+psi))
+
+    return out_left, left, right, out_right # 0, -1, 1, 0
 
 class CarSensor:
     def sense(self, agent, state_dict, lane_map = None, simulate = True):
@@ -198,27 +221,27 @@ class CarSensor:
                     cont['ego.dist'] = [dist_min, dist_max]
 
                     # psi = ((np.arctan2(rel_y, rel_x)-cont['ego.theta'] + np.pi) % (2*np.pi)) - np.pi  # corrected relative heading of the assigned agent 
-                    in_interval = lambda a,b,x: a <= x and x <= b 
-                    psi_min, psi_max = psi_extrema(pos_min, pos_max, obstacle_pos_min, obstacle_pos_max, cont['ego.theta'][0], cont['ego.theta'][1])
-                    if psi_min > phi or psi_max < -phi:
-                        cont['ego.cur_sense'] = [2, 2] # exclusively out of view -- change from 0 to -2 or 2 since intervals must be continuous but -1, 1 without 0 very possible
-                    elif (psi_min < -phi and psi_max > 0) or (psi_min < 0 and psi_max > psi_max):
-                        cont['ego.cur_sense'] = [-2, 1] # in all sensed regoins
-                    elif psi_min < - phi and in_interval(-phi, 0, psi_max): # right or out of view 
-                        cont['ego.cur_sense'] = [1, 2]
-                    elif in_interval(-phi, 0, psi_min) and in_interval(-phi, 0, psi_max): # exclusively right
-                        cont['ego.cur_sense'] = [1, 1]
-                    elif in_interval(-phi, 0, psi_min) and in_interval(0, phi, psi_max): # right or left
-                        cont['ego.cur_sense'] = [-1, 1]
-                    elif in_interval(0, phi, psi_min) and in_interval(0, phi, psi_max): # exclusively left
-                        cont['ego.cur_sense'] = [-1, -1]
-                    elif in_interval(0, phi, psi_min) and psi_max>phi: # left or out of view
-                        cont['ego.cur_sense'] = [-2, -1]
+                    ego_rect, other_rect = cont['ego.x']+cont['ego.y'], [obstacle_cont[0][1], obstacle_cont[1][1], obstacle_cont[0][2], obstacle_cont[1][2]]
+                    psi_min_true, psi_max_true = angular_span_between_rects(ego_rect, other_rect)
+                    psi_min, psi_max = angular_bounds_diff([psi_min_true, psi_max_true], cont['ego.theta'])
+                    in_region: np.ndarray = None
+                    if psi_max < psi_min:
+                        _, y_bounds_pos_max = parsed_sensor(obs_all, input_bounds=np.array([[psi_min, np.pi], [phi, phi]])) # the min side doesn't matter, we're just checking if indictator is active
+                        _, y_bounds_neg_max = parsed_sensor(obs_all, input_bounds=np.array([[-np.pi, psi_max], [phi, phi]]))
+                        y_bounds_pos_indicator, y_bounds_neg_indicator = y_bounds_pos_max > 0.9, y_bounds_neg_max > 0.9 # theorectically it should be = 0 but allow some slack
+                        y_bounds = y_bounds_pos_indicator | y_bounds_neg_indicator
+                        in_region = np.where(y_bounds[:-1])[0] # don't care about the last region, if we had a split, then we are already in out-left -- this should always have a size>0
                     else:
-                        raise Exception(f'Should be unreachable with min_heading: {psi_min}, max heading: {psi_max}, sensor range: {phi}')
+                        _, y_bounds_max = parsed_sensor(obs_all, input_bounds=np.array([[psi_min, psi_max], [phi, phi]]))
+                        y_bounds = y_bounds_max > 0.9
+                        in_region = np.where(y_bounds)[0] # don't care about the last region, if we had a split, then we are already in out-left -- this should always have a size>0
 
-                    cont['other.has_priority'] = [1,1] # sentinel value
-                    ### NOTE: what was I trying to do here that isn't being accomplished below?
+                    cont['ego.cur_sense'] = region_map[in_region[0]], region_map[in_region[-1]]
+
+                    if cur_agent == 'car2' and cont['ego.timer'][0] < 6.7 and cont['ego.timer'][0] > 6.5:
+                        pass
+
+                    cont['other.has_priority'] = [1, 1]
                     # if cont['ego.prev_sense'][0]==-2:
                     #     has_priority = 1
                     #     if state_dict[assigned_agent][0][0][18]==-2 and state_dict[assigned_agent][0][0][14]<cont['ego._id'][0]:

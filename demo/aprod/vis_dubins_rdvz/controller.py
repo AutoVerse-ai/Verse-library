@@ -72,22 +72,24 @@ def decisionLogic(ego: State, other: OtherState):
 
     if ego.prev_sense == -1 and (ego.cur_sense == -2 or ego.cur_sense == 2) and ego.assign_mode == AssignMode.Assigned and ego.agent_mode != AgentMode.Left and ego.timer >= 0.1 and other.has_priority == 1:
         output.agent_mode = AgentMode.Left
-        output.prev_sense = -2 # update our previous sensed value since y_past!=y_current -- need to update to singleton instead of set
+        # output.prev_sense = -2 # update our previous sensed value since y_past!=y_current -- need to update to singleton instead of set
+        output.prev_sense = ego.cur_sense
         output.timer = 0
 
     if (ego.prev_sense == -2 or ego.prev_sense == 2) and (ego.cur_sense == -1 or ego.cur_sense==-1) and ego.assign_mode == AssignMode.Assigned and ego.agent_mode != AgentMode.Normal and ego.timer >= 0.1 and other.has_priority == 1:
         output.agent_mode = AgentMode.Normal
-        if ego.cur_sense == -1:
-            output.prev_sense = -1
-        if ego.cur_sense == 1:
-            output.prev_sense = 1
+        # if ego.cur_sense == -1:
+        #     output.prev_sense = -1
+        # if ego.cur_sense == 1:
+        #     output.prev_sense = 1
+        output.prev_sense = ego.cur_sense
         output.timer = 0
 
 
     if ego.prev_sense == 1 and (ego.cur_sense == -2 or ego.cur_sense == 2) and ego.assign_mode == AssignMode.Assigned and ego.agent_mode != AgentMode.Right and ego.timer >= 0.1 and other.has_priority == 1:
         output.agent_mode = AgentMode.Right
-        # output.prev_sense = ego.cur_sense
-        output.prev_sense = 2
+        output.prev_sense = ego.cur_sense
+        # output.prev_sense = 2
         output.timer = 0
 
 
