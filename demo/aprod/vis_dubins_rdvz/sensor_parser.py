@@ -130,8 +130,9 @@ class TorchFuncModule(nn.Module):
     
     def _compile(self, fn):
         # get source code
-        src = inspect.getsource(fn)
-        src = textwrap.dedent(src) 
+        # src = inspect.getsource(fn)
+        # src = textwrap.dedent(src) 
+        src = fn # assume that we are grabbing directly from code
         tree = ast.parse(src)
 
         # function def is the first node
@@ -253,7 +254,7 @@ def compute_bounds_for_split(args):
     lb, ub = lirpa_model.compute_bounds(x=tuple(bounded_inputs), method="CROWN")
     return lb.detach().numpy()[0], ub.detach().numpy()[0]
     
-def parsed_sensor(sensor_function, inputs=None, input_bounds=None, device="cpu", sim: bool = False, num_splits=2):
+def parsed_sensor(sensor_function, inputs=None, input_bounds=None, device="cpu", sim: bool = False, num_splits=1):
     """
     Process inputs through a sensor function using TorchFuncModule with domain splitting
     
@@ -341,153 +342,66 @@ def parsed_sensor(sensor_function, inputs=None, input_bounds=None, device="cpu",
         pickle.dump((global_lb, global_ub), f)
 
     return global_lb, global_ub
-    # all_splits = list(product(*splits))
-    
-    # # Create pool of workers
-    # with Pool() as pool:
-    #     results = pool.map(compute_bounds_for_split,
-    #                      [(split, sensor_function) for split in all_splits])
-    
-    # # Combine results
-    # global_lb = np.minimum.reduce([lb for lb, _ in results])
-    # global_ub = np.maximum.reduce([ub for _, ub in results])
-    
-    return global_lb, global_ub
 
-def partition_for_atan2(input_bounds):
-    """
-    Partition input bounds such that x and y bounds don't cross zero.
-    Uses adaptive bias to avoid numerical issues near zero.
-    """
-    partitions = []
-    
-    # Convert to list if numpy array for easier manipulation
-    if isinstance(input_bounds, np.ndarray):
-        input_bounds = input_bounds.tolist()
-    
-    # Assume x is at index 0, y is at index 1
-    x_lower, x_upper = input_bounds[0]
-    y_lower, y_upper = input_bounds[1]
-    
-    # Adaptive bias based on bound magnitude
-    x_mag = max(abs(x_lower), abs(x_upper))
-    y_mag = max(abs(y_lower), abs(y_upper))
-    
-    # Use larger bias relative to magnitude, but at least 1e-6
-    x_bias = max(1e-6, x_mag * 0.01)  # 1% of magnitude
-    y_bias = max(1e-6, y_mag * 0.01)
-    
-    # Partition x bounds
-    x_parts = []
-    if x_lower < 0 < x_upper:
-        # Split at -bias and +bias, not at zero
-        x_parts = [(x_lower, -x_bias), (x_bias, x_upper)]
-    else:
-        x_parts = [(x_lower, x_upper)]
-    
-    # Partition y bounds
-    y_parts = []
-    if y_lower < 0 < y_upper:
-        y_parts = [(y_lower, -y_bias), (y_bias, y_upper)]
-    else:
-        y_parts = [(y_lower, y_upper)]
-    
-    # Create cartesian product of partitions
-    for x_part in x_parts:
-        for y_part in y_parts:
-            new_bounds = [x_part, y_part] + list(input_bounds[2:])
-            partitions.append(new_bounds)
-    
-    return partitions
-
-
-def parsed_sensor_with_atan2_partitioning(sensor_function, inputs=None, input_bounds=None, 
-                                          device="cpu", sim: bool = False, num_splits=2):
-    """
-    Extended parsed_sensor that automatically partitions bounds for atan2
-    """
-    if sim:
-        if inputs is None:
-            raise ValueError("inputs required for simulation mode")
-        model = TorchFuncModule(sensor_function)
-        torch_inputs = [torch.tensor([x], dtype=torch.float32) for x in inputs]
-        return model(*torch_inputs).numpy()
-    
+def parsed_sensor_expr(sensor_src, input_bounds, device = 'cpu', nonce='', num_splits=1):
     if input_bounds is None:
         raise ValueError("input_bounds required for bound computation mode")
+
+    # TODO: start caching only when nonce exists for each expression     
+    # # Create cache directory if it doesn't exist
+    # cache_dir = Path(__file__).parent / "sensor_cache" # this creates the folder at aprod, can change later to just Path("--") if I'd rather create the folder in the working directory instead
+    # cache_dir.mkdir(exist_ok=True)
     
-    # Check if function uses atan2
-    source_code = inspect.getsource(sensor_function)
-    uses_atan2 = 'atan2' in source_code
+    # # Generate cache key from input bounds and function name
+    # cache_key = get_cache_key(np.array(input_bounds), nonce)
+    # cache_file = cache_dir / f"bounds_{cache_key}_splits_{num_splits}.pkl"
     
-    # Partition bounds if atan2 is used
-    if uses_atan2:
-        partitions = partition_for_atan2(input_bounds)
-    else:
-        partitions = [input_bounds]
+    # # Check if cached result exists
+    # if cache_file.exists():
+    #     with open(cache_file, 'rb') as f:
+    #         return pickle.load(f)
+        
+    model = TorchFuncModule(sensor_src)
+    dummy_inputs = tuple([torch.zeros(1, 1) for _ in input_bounds])
+    lirpa_model = BoundedModule(model, dummy_inputs, device=device)
     
-    # Create cache directory
-    cache_dir = Path(__file__).parent / "sensor_cache"
-    cache_dir.mkdir(exist_ok=True)
-    
+    # Initialize bounds as None
     global_lb = None
     global_ub = None
     
-    # Process each partition
-    for partition_bounds in partitions:
-        cache_key = get_cache_key(np.array(partition_bounds), sensor_function.__name__)
-        cache_file = cache_dir / f"bounds_{cache_key}_splits_{num_splits}.pkl"
-        
-        if cache_file.exists():
-            with open(cache_file, 'rb') as f:
-                lb, ub = pickle.load(f)
+    # Generate split points for each dimension
+    splits = []
+    for lower, upper in input_bounds:
+        if lower == upper:
+            # For unsplit dimensions, create a list with a single tuple
+            splits.append([(lower, lower)])
         else:
-            # Process this partition with standard parsed_sensor logic
-            model = TorchFuncModule(sensor_function)
-            dummy_inputs = tuple([torch.zeros(1, 1) for _ in partition_bounds])
-            lirpa_model = BoundedModule(model, dummy_inputs, device=device)
-            
-            # Generate split points for this partition
-            splits = []
-            for lower, upper in partition_bounds:
-                if lower == upper:
-                    splits.append([(lower, lower)])
-                else:
-                    split_points = np.linspace(lower, upper, num_splits+1)
-                    splits.append(list(zip(split_points[:-1], split_points[1:])))
-            
-            # Compute bounds for this partition
-            partition_lb = None
-            partition_ub = None
-            
-            for split_bounds in product(*splits):
-                bounded_inputs = []
-                for bounds in split_bounds:
-                    lower, upper = bounds
-                    lower = torch.tensor(lower, dtype=torch.float32)
-                    upper = torch.tensor(upper, dtype=torch.float32)
-                    center = ((lower + upper) / 2).unsqueeze(0)
-                    lower = lower.unsqueeze(0)
-                    upper = upper.unsqueeze(0)
-                    perturb = PerturbationLpNorm(x_L=lower, x_U=upper)
-                    bounded_inputs.append(BoundedTensor(center, perturb))
-                
-                lb, ub = lirpa_model.compute_bounds(x=tuple(bounded_inputs), method="CROWN")
-                lb, ub = lb.detach().numpy()[0], ub.detach().numpy()[0]
-                
-                if partition_lb is None:
-                    partition_lb = lb
-                    partition_ub = ub
-                else:
-                    partition_lb = np.minimum(partition_lb, lb)
-                    partition_ub = np.maximum(partition_ub, ub)
-            
-            with open(cache_file, 'wb') as f:
-                pickle.dump((partition_lb, partition_ub), f)
-            
-            lb, ub = partition_lb, partition_ub
+            split_points = np.linspace(lower, upper, num_splits+1)
+            # Create list of tuples for split points
+            splits.append(list(zip(split_points[:-1], split_points[1:])))
+    
+    # Compute cartesian product of splits
+    for split_bounds in product(*splits):
+        # Create bounded tensors for this sub-domain
+        bounded_inputs = []
+        for bounds in split_bounds:  # bounds is already a (lower, upper) tuple
+            lower, upper = bounds  # Unpack the tuple
+            lower = torch.tensor(lower, dtype=torch.float32)
+            upper = torch.tensor(upper, dtype=torch.float32)
+            center = ((lower + upper) / 2).unsqueeze(0)
+            lower = lower.unsqueeze(0)
+            upper = upper.unsqueeze(0)
+            perturb = PerturbationLpNorm(x_L=lower, x_U=upper)
+            bounded_inputs.append(BoundedTensor(center, perturb))
         
-        # Combine results from all partitions
+        # Compute bounds for this sub-domain
+        lb, ub = lirpa_model.compute_bounds(
+            x=tuple(bounded_inputs),
+            method="CROWN"
+        )
+        
+        # Update global bounds
+        lb, ub = lb.detach().numpy()[0], ub.detach().numpy()[0]
         if global_lb is None:
             global_lb = lb
             global_ub = ub
@@ -495,7 +409,11 @@ def parsed_sensor_with_atan2_partitioning(sensor_function, inputs=None, input_bo
             global_lb = np.minimum(global_lb, lb)
             global_ub = np.maximum(global_ub, ub)
     
+    # with open(cache_file, 'wb') as f:
+    #     pickle.dump((global_lb, global_ub), f)
+
     return global_lb, global_ub
+
 
 if __name__ == "__main__":
     import numpy as np
