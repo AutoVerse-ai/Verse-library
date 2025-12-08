@@ -6,8 +6,10 @@ import numpy as np
 import torch
 import torch.nn as nn
 from sensor_parser import parsed_sensor_expr
+from wrapper_consts import ALIASES, ANGULAR_FUNCTIONS, MAP_FUNCTIONS
+from prox_error_all_bounds import angular_span_rect_parser
 
-def process_function_line_by_line(func: Callable, input_bounds: Dict[str, Tuple[float, float]]):
+def process_function_line_by_line(func: Callable, input_bounds: Dict[str, Tuple[float, float]], piecewise_functions: List[Callable] = None):
     """
     Process a function line-by-line, computing bounds at each step using parsed_sensor.
     
@@ -32,10 +34,11 @@ def process_function_line_by_line(func: Callable, input_bounds: Dict[str, Tuple[
     # Process each statement
     for stmt in func_def.body:
         if isinstance(stmt, ast.Return):
-            break
+            break # NOTE: done
         
         elif isinstance(stmt, ast.Assign):
             # Single assignment: var_name = expression
+            # NOTE: could eventually allow for more complex assignments, but this should be expressive enough for now
             if len(stmt.targets) != 1 or not isinstance(stmt.targets[0], ast.Name):
                 raise ValueError("Only simple assignments supported")
             
@@ -49,7 +52,8 @@ def process_function_line_by_line(func: Callable, input_bounds: Dict[str, Tuple[
             rhs_bounds = compute_expression_bounds_with_parsed_sensor(
                 rhs_code,
                 list(current_bounds.keys()),
-                current_bounds
+                current_bounds,
+                piecewise_functions
             )
             
             # Update variable bounds
@@ -59,13 +63,14 @@ def process_function_line_by_line(func: Callable, input_bounds: Dict[str, Tuple[
             print(f"After {var_name} = {rhs_code}")
             print(f"  {var_name} ∈ [{rhs_bounds[0]:.6f}, {rhs_bounds[1]:.6f}]")
     
-    return current_bounds, bounds_history
+    return current_bounds, bounds_history # TODO: should only return the variables actually called in the return output
 
 
 def compute_expression_bounds_with_parsed_sensor(
     expr_code: str,
     arg_names: List[str],
-    current_bounds: Dict[str, Tuple[float, float]]
+    current_bounds: Dict[str, Tuple[float, float]],
+    piecewise_functions: List[Callable]
 ) -> Tuple[float, float]:
     """
     Use parsed_sensor to compute bounds for an expression.
@@ -74,19 +79,46 @@ def compute_expression_bounds_with_parsed_sensor(
         expr_code: Expression as string, e.g., "x**2 + y**2"
         arg_names: List of argument names, e.g., ["x", "y"]
         current_bounds: Current variable bounds
-    
+            
     Returns:
         (lower_bound, upper_bound) tuple
+
+    NOTE: have not handled way to handle angular variables that could potentially have 2 bounds instead of 1
+    NOTE cont: the ideal way to handle this is to compute all combinations of bounds, then if the function if the function is angular, simply apply the angular bound combine function to get minimal representation
+    NOTE cont: and non-angular functions should just combine all outputs to a single bound     
     """
     
-    # Create the temporary function source code -- add nonce for caching
+    for alias, func_name in ALIASES.items(): # NOTE: may want to optimize this in the future
+        if alias in expr_code:
+            # Replace the alias with the actual function name
+            expr_code = expr_code.replace(alias, func_name)
+
+    if any(func in expr_code for func in ANGULAR_FUNCTIONS):
+        # Handle angular functions
+        func_name = [func for func in ANGULAR_FUNCTIONS if func in expr_code][0]
+        args = [arg for arg in current_bounds.keys() if arg in expr_code]
+        bounds = handle_angular_function(func_name, args, current_bounds)
+        return bounds
+    
+    elif piecewise_functions is not None and any(func.__name__ in expr_code for func in piecewise_functions):
+        # Handle piecewise functions
+        func = next(func for func in piecewise_functions if func.__name__ in expr_code)
+        bounds = handle_piecewise_function(func, args, current_bounds)
+        # TODO: Implement handling for piecewise functions
+        return bounds
+    # Check if the expression contains any map functions
+    elif any(func in expr_code for func in MAP_FUNCTIONS):
+        # Handle map functions
+        func_name = [func for func in MAP_FUNCTIONS if func in expr_code][0]
+        args = [arg for arg in current_bounds.keys() if arg in expr_code]
+        bounds = handle_map_function(func_name, args, current_bounds)
+        return bounds
+
+    # Create the temporary function source code -- add nonce for caching to temp_func name
     func_source = f"""
 def temp_func({', '.join(arg_names)}):
     return {expr_code}
 """
-    
-    # Create module from string
-    # module = TorchFuncModuleFromString(func_source, arg_names)
     
     # Convert bounds dict to list in the order of function arguments
     bounds_list = [current_bounds[name] for name in arg_names]
@@ -104,11 +136,63 @@ def temp_func({', '.join(arg_names)}):
         return (lb, ub)
     
     except Exception as e:
-        print(f"Error computing bounds: {e}")
-        raise
+        raise Exception(f"Error computing CROWN bounds: {e}")
 
-# TODO: I'm not sure how big of a deal this is, but for usability, it'd be I could extract and create lists, e.g., a, b = c; c = a,b
-# I think this is a little complex for now, however
+def handle_angular_function(func_name: str, args: List[str], current_bounds: Dict[str, Tuple[float, float]]) -> Tuple[float, float]:
+    """
+    Handle angular functions.
+    
+    Args:
+        func_name: Name of the angular function, e.g., "sin"
+        args: List of argument names, e.g., ["x"]
+        current_bounds: Current variable bounds
+    
+    Returns:
+        (lower_bound, upper_bound) tuple
+    """
+    func = globals()[func_name]
+    
+    # Call the function with the current bounds
+    bounds_list = [current_bounds[name] for name in args]
+    bounds = func(*bounds_list)
+    
+    return bounds
+
+
+def handle_map_function(func_name: str, args: List[str], current_bounds: Dict[str, Tuple[float, float]]) -> Tuple[float, float]:
+    """
+    Handle map functions.
+    
+    Args:
+        func_name: Name of the map function, e.g., "map_func1"
+        args: List of argument names, e.g., ["x"]
+        current_bounds: Current variable bounds as a dict of str argument names -> tuple bounds 
+    
+    Returns:
+        (lower_bound, upper_bound) tuple
+    """
+
+    # TODO: Implement handling for map functions
+    # TODO: add arguments for trackmode and map -- not sure if I want to do this for other functions yet
+    return (0.0, 1.0)
+
+def handle_piecewise_function(func: Callable, args: List[str], current_bounds: Dict[str, Tuple[float, float]]) -> Tuple[float, float]:
+    """
+    Handle map functions.
+    
+    Args:
+        func_name: Name of the map function, e.g., "map_func1"
+        args: List of argument names, e.g., ["x"]
+        current_bounds: Current variable bounds as a dict of str argument names -> tuple bounds 
+    
+    Returns:
+        (lower_bound, upper_bound) tuple
+    """
+    # TODO: implement this, preferably using parse_piecewise_function
+    # NOTE: may have to move functions from bounded_piecewise to this file since I need to run some form of compute_expression_bounded on the outputs of the piecewise functions 
+
+    return (0,1) 
+
 
 # Usage example:
 if __name__ == "__main__":
@@ -116,10 +200,14 @@ if __name__ == "__main__":
         z = x**2 + y**2
         z = torch.sqrt(z) + torch.sum(torch.stack([x,y], dim=-1), dim=-1) # this is the correct way to do sums
         # z = torch.sqrt(z) + x + y
-        return z
+        w = arctan2(x, y)
+        return z # currently this does nothing, a return function just needs to exist
     
+    # TODO: add a way to automatically create the input bounds given a list of bounds and the function header -- user shouldn't need to do this by hand
     input_bounds = {'x': (0, 1), 'y': (1, 2)}
+    # input_bounds = {'x': (-1, -0.5), 'y': (-1, 1)} # this will error out since I don't have a way to handle lists of tuples yet
     
+
     final_bounds, history = process_function_line_by_line(test_sensor, input_bounds)
     
     print("\nFinal bounds:")

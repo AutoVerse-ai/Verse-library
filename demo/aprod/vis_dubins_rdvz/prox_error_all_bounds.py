@@ -271,6 +271,19 @@ def angular_span_rect(rect, split: bool = False):
     else: # split and theta_min > theta_max
         return [(theta_min, np.pi), (-np.pi, theta_max)]
 
+def angular_span_rect_parser(x_bounds, y_bounds):
+    """
+    Essentially atan2 for an entire rectangle
+    
+    :param rect: arraylike of form [xmin, xmax, ymin, ymax]
+    """
+    rect = list(x_bounds) + list(y_bounds)
+    theta_min, theta_max =  angular_span_between_rects([0, 0, 0, 0], rect) # this is correct but not the most helpful way to think about atan2
+    if theta_min < theta_max:
+        return (theta_min, theta_max)
+    else: # TODO: note this is not handled yet -- will need to 
+        return [(theta_min, np.pi), (-np.pi, theta_max)]
+    
 def angular_bounds_diff(theta, theta_ref) -> Tuple[float]: # this function is shaky at best, need to revamp -- ex: [-pi/2, pi/2] - [0, pi]
     # TODO: the issue is that you can't just simply wrap both diff_min, diff_max to get the bounds, weird things will happen if bounds contain pi/-pi -- need to split 
     # can do this by just adding 2pi until diff_min > 0 and then checking if [diff_min + 2\pi n, diff_max + 2\pi n] contains \pi, then split
