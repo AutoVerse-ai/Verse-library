@@ -7,7 +7,6 @@ import torch
 import torch.nn as nn
 from sensor_parser import parsed_sensor_expr
 from wrapper_consts import ALIASES, ANGULAR_FUNCTIONS, MAP_FUNCTIONS
-# ,FUNC_DICT
 from prox_error_all_bounds import angular_span_rect_parser
 
 def process_function_line_by_line(func: Callable, input_bounds: Dict[str, Tuple[float, float]], piecewise_functions: List[Callable] = None):
@@ -120,10 +119,28 @@ def compute_expression_bounds_with_parsed_sensor(
 
     # Create the temporary function source code -- add nonce for caching to temp_func name
     # NOTE: using the raw arg_names isn't necessarily problematic but it does seem a bit inefficient
-    else:
-        bounds = handle_crown_function(expr_code, arg_names, current_bounds)
-        return bounds
-
+    func_source = f"""
+def temp_func({', '.join(arg_names)}):
+    return {expr_code}
+"""
+    
+    # Convert bounds dict to list in the order of function arguments
+    bounds_list = [current_bounds[name] for name in arg_names]
+    
+    # Use parsed_sensor to compute bounds
+    try:
+        lb, ub = parsed_sensor_expr(func_source, input_bounds=bounds_list)
+        
+        # Handle case where output is array
+        if isinstance(lb, np.ndarray):
+            lb = float(lb[0])
+        if isinstance(ub, np.ndarray):
+            ub = float(ub[0])
+        
+        return (lb, ub)
+    
+    except Exception as e:
+        raise Exception(f"Error computing CROWN bounds: {e}")
 
 def handle_angular_function(func_name: str, args: List[str], current_bounds: Dict[str, Tuple[float, float]]) -> Tuple[float, float]:
     """
@@ -138,7 +155,6 @@ def handle_angular_function(func_name: str, args: List[str], current_bounds: Dic
         (lower_bound, upper_bound) tuple
     """
     func = globals()[func_name]
-    # func = FUNC_DICT[func_name]
     
     # Call the function with the current bounds
     bounds_list = [current_bounds[name] for name in args]
@@ -181,41 +197,6 @@ def handle_piecewise_function(func: Callable, args: List[str], current_bounds: D
 
     return (0,1) 
 
-def handle_crown_function(func_code: str, args: List[str], current_bounds: Dict[str, Tuple[float, float]]) -> Tuple[float, float]:
-    """
-    Handle CROWN functions.
-    
-    Args:
-        func_code: code of the RHS expression
-        args: List of argument names, e.g., ["x"]
-        current_bounds: Current variable bounds as a dict of str argument names -> tuple bounds 
-    
-    Returns:
-        (lower_bound, upper_bound) tuple
-    """
-    arg_names = args # FIXME: this is inefficient, should extract the correct arguments 
-    func_source = f"""
-def temp_func({', '.join(arg_names)}):
-    return {func_code}
-"""
-    
-    # Convert bounds dict to list in the order of function arguments
-    bounds_list = [current_bounds[name] for name in arg_names]
-    
-    # Use parsed_sensor to compute bounds
-    try:
-        lb, ub = parsed_sensor_expr(func_source, input_bounds=bounds_list)
-        
-        # Handle case where output is array
-        if isinstance(lb, np.ndarray):
-            lb = float(lb[0])
-        if isinstance(ub, np.ndarray):
-            ub = float(ub[0])
-        
-        return (lb, ub)
-    
-    except Exception as e:
-        raise Exception(f"Error computing CROWN bounds: {e}")
 
 # Usage example:
 if __name__ == "__main__":
