@@ -1,8 +1,12 @@
-from typing import List
+from typing import List, Dict, Callable
+from prox_error_all_bounds import angular_span_rect_parser
+from bounded_map import get_heading_bounds_optimized, get_lateral_distance_bounds_optimized
 
 ALIASES = {
     "atan2": "angular_span_rect_parser",
     "arctan2": "angular_span_rect_parser",
+    "get_lane_heading": "get_heading_bounds_optimized",
+    "get_lateral_distance": "get_lateral_distance_bounds_optimized"
 }
 
 ANGULAR_FUNCTIONS = [
@@ -10,6 +14,14 @@ ANGULAR_FUNCTIONS = [
 ]
 
 MAP_FUNCTIONS: List[str] = [
-    # TODO: add relevant map functions -- assume mode and maps are passed in as constants
+    # NOTE: in parser_wrapper, assume that lane_idx and lane_map are constants passed in -- the first two arguments of these two functions should just be given
+    "get_heading_bounds_optimized",
+    "get_lateral_distance_bounds_optimized",
 ]
 
+# NOTE: don't know if I need this, but it could be useful if I don't want to keep using the 
+FUNC_DICT: Dict[str, Callable] = {
+    "angular_span_rect_parser": angular_span_rect_parser,
+    "get_heading_bounds_optimized": get_heading_bounds_optimized,
+    "get_lateral_distance_bounds_optimized": get_lateral_distance_bounds_optimized,
+}
