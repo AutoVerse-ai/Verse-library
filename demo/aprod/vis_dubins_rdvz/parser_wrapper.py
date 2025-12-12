@@ -11,6 +11,7 @@ from wrapper_consts import ALIASES, ANGULAR_FUNCTIONS, MAP_FUNCTIONS
 from prox_error_all_bounds import angular_span_rect_parser, combine_angular_bounds
 from bounded_map import get_heading_bounds_optimized, get_lateral_distance_bounds_optimized
 import itertools
+from bounded_piecewise import bounded_piecewise_z3, parse_piecewise_function
 
 
 def parse_function(func: Callable, input_bounds: Dict[str, List[Tuple[float, float]]], piecewise_functions: List[Callable] = None, track_mode = None, track_map = None):
@@ -79,9 +80,9 @@ def compute_expression_bounds_with_parsed_sensor(
     expr_code: str,
     arg_names: List[str],
     current_bounds: Dict[str, List[Tuple[float, float]]],
-    piecewise_functions: List[Callable],
-    track_mode,
-    track_map
+    piecewise_functions: List[Callable] = None,
+    track_mode = None,
+    track_map = None,
 ) -> Tuple[float, float]:
     """
     Use parsed_sensor to compute bounds for an expression.
@@ -210,7 +211,7 @@ def handle_map_function(func_name: str, args: List[str], current_bounds: Dict[st
     # func = FUNC_DICT[func_name]
     
     # Call the function with the current bounds
-    bounds_list = [current_bounds[name] for name in args] # NOTE: is this guaranteed to be in the right order?
+    bounds_list = [current_bounds[name] for name in args] # NOTE: guaranteed to be in right order if compute_expr_bounds is correct
     output_bounds = []
 
     for bounds_combination in itertools.product(*bounds_list):
@@ -238,8 +239,33 @@ def handle_piecewise_function(func: Callable, args: List[str], current_bounds: D
     """
     # TODO: implement this, preferably using parse_piecewise_function
     # NOTE: may have to move functions from bounded_piecewise to this file since I need to run some form of compute_expression_bounded on the outputs of the piecewise functions 
+    bounds_list = [current_bounds[name] for name in args] 
+    all_output_bounds = []
+    parsed_func = parse_piecewise_function(func)
 
-    return (0,1) 
+    for bounds_combination in itertools.product(*bounds_list):
+        # Use parsed_sensor to compute bounds
+        try:
+            bounds_dict = dict(zip(args, bounds_combination)) # NOTE: due to how bounds_list is set up, creating the dict like this should keep the ordering 
+            res = bounded_piecewise_z3(parsed_func, bounds_dict)
+            for i in range(len(res)):
+                output_function = str(res[i][1]) # NOTE: since res could be an int like 1
+                constrained_bounds = {arg: [res[i][0][arg]] for arg in res[i][0]} # NOTE: this seems complex but is just taking the constrained bounds and converting from tuple -> list of a tuple, think res[i][0] is equivalent to using args directly
+                output_bounds = compute_expression_bounds_with_parsed_sensor(
+                    output_function,
+                    args,
+                    constrained_bounds,
+                ) # NOTE: not allowing piecewise functions in piecewise functions, also not allowing map functions for time being
+                all_output_bounds.extend(output_bounds) 
+
+        except Exception as e:
+            raise Exception(f"Error computing piecewise function bounds: {e}")
+
+    # Compute the absolute minimum and maximum over the entire output_bounds list
+    min_bound = min(min(output_bound) for output_bound in all_output_bounds)
+    max_bound = max(max(output_bound) for output_bound in all_output_bounds)
+
+    return [(min_bound, max_bound)]
 
 def handle_crown_function(func_code: str, arg_names: List[str], current_bounds: Dict[str, List[Tuple[float, float]]]) -> Tuple[float, float]:
     """
@@ -285,7 +311,8 @@ def temp_func({', '.join(args)}):
         try:
             lb, ub = parsed_sensor_expr(func_source, input_bounds=bounds_combination)
             # Handle case where output is array
-            if isinstance(lb, np.ndarray):
+            # NOTE: is this necessary?
+            if isinstance(lb, np.ndarray): 
                 lb = float(lb[0])
             if isinstance(ub, np.ndarray):
                 ub = float(ub[0])
@@ -293,6 +320,15 @@ def temp_func({', '.join(args)}):
             lower_bounds.append(lb)
             upper_bounds.append(ub)
         except Exception as e:
+            # HACK: this is a slightly jank way to handle this and is possibly unsafe given that I'm just eval-ing directly on the func_code
+            # FIXME: make this less jank
+            if isinstance(e, TypeError) and ("Output of the model is expected to be a single torch.Tensor. Actual type: <class 'int'>" in str(e) or "Output of the model is expected to be a single torch.Tensor. Actual type: <class 'float'>" in str(e)):
+                try:
+                    result = eval(func_code, {"np": np, "torch": torch}) # NOTE: may need to add more modules as necessary
+                    return [(result, result)]
+                except Exception as e:
+                    raise Exception(f"Error computing CROWN bounds: {e}")
+        
             raise Exception(f"Error computing CROWN bounds: {e}")
     
     # Return the minimum and maximum bounds
@@ -300,6 +336,7 @@ def temp_func({', '.join(args)}):
 
 # Usage example:
 # NOTE: consider making this it's own file, don't really want to be testing stuff in this file
+# TODO: handle piecewise functions, may need to make some regularity assumptions (i.e., can't call pw function in a pw function) so that things make sense
 if __name__ == "__main__":
     from verse.map import opendrive_map
     from enum import Enum, auto
@@ -328,21 +365,39 @@ if __name__ == "__main__":
         return z # currently this does nothing, a return function just needs to exist
     
     def map_sensor(x,y):
-        z = get_lane_heading(x,y)
+        # z = get_lane_heading(x,y)
+        z = -2*np.pi
         return z
 
+    def vis_sensor_piecewise(psi, phi):
+        if psi >= 0 and psi <= phi:
+            return -1
+        elif psi < 0 and psi >= -phi:
+            return 1
+        elif psi > phi:
+            # return -2 
+            return -2-psi**2 # parser should be able to parse out arbitrary functions
+        else:
+            return 2
+    
+    def pw(psi, phi):
+        y = vis_sensor_piecewise(psi, phi)
+        return y
     # TODO: add a way to automatically create the input bounds given a list of bounds and the function header -- user shouldn't need to do this by hand
     # input_bounds = {'x': (0, 1), 'y': (1, 2)}
     # input_bounds = {'x': [(0, 1)], 'y': [(1, 2), (2,3)]}
     # input_bounds = {'x': [(-1, -0.5)], 'y': [(-1, 0.5)]} 
-    input_bounds = {'x': [(134, 134.01)], 'y': [(11.5, 11.51)]} # TODO: check to see if this is consistent with the stanley scenario
     
+    # input_bounds = {'x': [(134, 134.01)], 'y': [(11.5, 11.51)]} # TODO: check to see if this is consistent with the stanley scenario
+    # script_dir = os.path.realpath(os.path.dirname(__file__))
+    # tmp_map = opendrive_map(os.path.join(script_dir, "t1_triple.xodr"))
+    # final_bounds, history = parse_function(map_sensor, input_bounds, track_map=tmp_map, track_mode=TrackMode.T1)
 
-    script_dir = os.path.realpath(os.path.dirname(__file__))
-    tmp_map = opendrive_map(os.path.join(script_dir, "t1_triple.xodr"))
+    input_bounds = {'psi': [(-1.1, 2)], 'phi': [(1,1)]}
+    final_bounds, history = parse_function(pw, input_bounds, [vis_sensor_piecewise]) # NOTE: is this the best way to handle piecewise functions? it's easy, but slightly unintuitive
+
 
     # final_bounds, history = parse_function(test_sensor, input_bounds)
-    final_bounds, history = parse_function(map_sensor, input_bounds, track_map=tmp_map, track_mode=TrackMode.T1)
     
     print("\nFinal bounds:")
     for var, bounds in final_bounds.items():
