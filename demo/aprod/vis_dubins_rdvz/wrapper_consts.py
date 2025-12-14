@@ -1,16 +1,17 @@
 from typing import List, Dict, Callable
-from prox_error_all_bounds import angular_span_rect_parser
+from prox_error_all_bounds import angular_span_rect_parser, angular_bounds_diff_correct
 from bounded_map import get_heading_bounds_optimized, get_lateral_distance_bounds_optimized
 
 ALIASES = {
     "atan2": "angular_span_rect_parser",
     "arctan2": "angular_span_rect_parser",
     "get_lane_heading": "get_heading_bounds_optimized",
-    "get_lateral_distance": "get_lateral_distance_bounds_optimized"
+    "get_lateral_distance": "get_lateral_distance_bounds_optimized",
+    "minus_angular": "angular_bounds_diff_correct"
 }
 
 ANGULAR_FUNCTIONS = [
-    "angular_span_rect_parser",
+    "angular_span_rect_parser", "angular_bounds_diff_correct"
 ]
 
 MAP_FUNCTIONS: List[str] = [
@@ -24,4 +25,5 @@ FUNC_DICT: Dict[str, Callable] = {
     "angular_span_rect_parser": angular_span_rect_parser,
     "get_heading_bounds_optimized": get_heading_bounds_optimized,
     "get_lateral_distance_bounds_optimized": get_lateral_distance_bounds_optimized,
+    "angular_bounds_diff_correct": angular_bounds_diff_correct,
 }

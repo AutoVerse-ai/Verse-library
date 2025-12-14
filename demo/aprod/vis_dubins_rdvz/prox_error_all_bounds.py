@@ -336,7 +336,7 @@ def angular_bounds_diff_correct(theta, theta_ref) -> Tuple[float]:
         diff_min_wrapped = wrap_angle(diff_min)
         diff_max_wrapped = wrap_angle(diff_max)
         
-        # If wrapping causes inversion, handle it
+        # If wrapping causes inversion, handle it - NOTE: when would this happen? 
         if diff_min_wrapped > diff_max_wrapped:
             # Interval still wraps after wrapping
             return (diff_min_wrapped, np.pi), (-np.pi, diff_max_wrapped)
