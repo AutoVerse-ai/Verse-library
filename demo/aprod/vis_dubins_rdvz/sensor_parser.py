@@ -346,7 +346,7 @@ def parsed_sensor(sensor_function, inputs=None, input_bounds=None, device="cpu",
 def parsed_sensor_expr(sensor_src, input_bounds, device = 'cpu', nonce='', num_splits=1):
     if input_bounds is None:
         raise ValueError("input_bounds required for bound computation mode")
-
+        
     # TODO: start caching only when nonce exists for each expression     
     # # Create cache directory if it doesn't exist
     # cache_dir = Path(__file__).parent / "sensor_cache" # this creates the folder at aprod, can change later to just Path("--") if I'd rather create the folder in the working directory instead

@@ -1,5 +1,6 @@
 from scipy.optimize import differential_evolution
 
+# NOTE: this should work fairly well in practice given that the bounds are not too large, but unclear if these are actually guaranteed to be overapproximations or good approximations
 def get_heading_bounds_optimized(lane_map, lane_idx, x_bounds, y_bounds):
     """
     More precise bound computation using optimization
