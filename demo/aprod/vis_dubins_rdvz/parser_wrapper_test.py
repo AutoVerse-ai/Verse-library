@@ -27,9 +27,14 @@ def test_sensor(x, y):
     return z # currently this does nothing, a return function just needs to exist
 
 def map_sensor(x,y):
-    # z = get_lane_heading(x,y)
-    z = -2*np.pi
-    return z
+    heading = get_lane_heading(x,y)
+    d = get_lateral_distance(x,y)
+    psi = atan2(x,y)
+    theta_prime = atan2(y,x)
+    phi = 1
+    obs = vis_sensor_piecewise(psi, phi) # NOTE: this naming needs to be exact -- should I change this or just expect users to be okay with it
+    # z = -2*np.pi
+    return heading
 
 def vis_sensor_piecewise(psi, phi):
     if psi >= 0 and psi <= phi:
@@ -46,13 +51,20 @@ def pw(psi, phi):
     y = vis_sensor_piecewise(psi, phi)
     return y
 
-def vis_sensor(x,y,x_other,y_other,psi, phi, theta):
+def vis_sensor(x,y,x_other,y_other, phi, theta):
     rel_x = x_other - x
     rel_y = y_other - y
     eta = atan2(rel_x, rel_y) # FIXME: bounded_arctan2 has wrong form, this is equivalent to atan2(y,x)
-    psi = eta-theta
+    psi = minus_angular(eta,theta)
     obs = vis_sensor_piecewise(psi, phi)
     return obs
+
+def dist_sensor(x,y,x_other,y_other):
+    rel_x = x_other - x
+    rel_y = y_other - y
+    dist = torch.sqrt(rel_x**2+rel_y**2)
+    theta = atan2(rel_x, rel_y)
+    return dist, theta
 
 # TODO: add a way to automatically create the input bounds given a list of bounds and the function header -- user shouldn't need to do this by hand
 # input_bounds = {'x': (0, 1), 'y': (1, 2)}
@@ -61,19 +73,20 @@ def vis_sensor(x,y,x_other,y_other,psi, phi, theta):
 # final_bounds, history = parse_function(test_sensor, input_bounds)
 
 
-# input_bounds = {'x': [(134, 134.01)], 'y': [(11.5, 11.51)]} # TODO: check to see if this is consistent with the stanley scenario
-# script_dir = os.path.realpath(os.path.dirname(__file__))
-# tmp_map = opendrive_map(os.path.join(script_dir, "t1_triple.xodr"))
-# final_bounds, history = parse_function(map_sensor, input_bounds, track_map=tmp_map, track_mode=TrackMode.T1)
+input_bounds = {'x': [(134, 134.01)], 'y': [(11.5, 11.51)]} # TODO: check to see if this is consistent with the stanley scenario
+script_dir = os.path.realpath(os.path.dirname(__file__))
+tmp_map = opendrive_map(os.path.join(script_dir, "t1_triple.xodr"))
+final_bounds, history = parse_function(map_sensor, input_bounds, track_map=tmp_map, track_mode=TrackMode.T1, piecewise_functions=[vis_sensor_piecewise], cache=False)
 
 # input_bounds = {'psi': [(-0.9, 2)], 'phi': [(1,1)]}
 # final_bounds, history = parse_function(pw, input_bounds, [vis_sensor_piecewise]) # NOTE: is this the best way to handle piecewise functions? it's easy, but slightly unintuitive
 
 # TODO: create function that automatically converts list of bounds into a dict like below
-input_bounds = {'x':[(0,0)],'y':[(0.1,0.1)],'theta':[(0.1,0.1)],
-                'x_other':[(0.9,1.1)],'y_other':[(-1.1,1.5)], 'phi':[(1,1)]}
+# input_bounds = {'x':[(0,0)],'y':[(0.1,0.1)],'theta':[(0.1,0.1)],
+                # 'x_other':[(0.9,1.1)],'y_other':[(-1.1,1.5)], 'phi':[(1,1)]}
 
-final_bounds, history = parse_function(vis_sensor, input_bounds, [vis_sensor_piecewise])
+# final_bounds, history = parse_function(vis_sensor, input_bounds, [vis_sensor_piecewise])
+# final_bounds, history = parse_function(dist_sensor, input_bounds, [vis_sensor_piecewise])
 
 print("\nFinal bounds:")
 for var, bounds in final_bounds.items():

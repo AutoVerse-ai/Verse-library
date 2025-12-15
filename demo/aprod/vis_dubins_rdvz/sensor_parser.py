@@ -132,8 +132,16 @@ class TorchFuncModule(nn.Module):
         # get source code
         # src = inspect.getsource(fn)
         # src = textwrap.dedent(src) 
-        src = fn # assume that we are grabbing directly from code
+
+        src: str = None
+        if type(fn) is str:
+            src = fn # assume that we are grabbing directly from code
+        else: # FIXME: this should be an elif
+            src = inspect.getsource(fn)
+            src = textwrap.dedent(src) 
+
         tree = ast.parse(src)
+        
 
         # function def is the first node
         func_def = tree.body[0]
