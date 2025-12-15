@@ -1,6 +1,5 @@
 from car_agent import CarAgent, NPCAgent
-from car_sensor_crown_hybrid import CarSensor
-# from car_sensor_parser import CarSensor
+from car_sensor_parser import CarSensor
 from verse.map.example_map.map_tacas import M1
 from verse.scenario.scenario import Benchmark
 from verse.analysis.verifier import ReachabilityMethod
@@ -10,7 +9,7 @@ from verse import Scenario, ScenarioConfig
 
 import sys
 import plotly.graph_objects as go
-import time
+from parser_wrapper import clear_parse_cache
 
 class AgentMode(Enum):
     Normal = auto()
@@ -25,6 +24,7 @@ class AssignMode(Enum):
 if __name__ == "__main__":
     import os
 
+    clear_parse_cache()
     script_dir = os.path.realpath(os.path.dirname(__file__))
     input_code_name = os.path.join(script_dir, "controller.py")
     scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False))
@@ -61,9 +61,7 @@ if __name__ == "__main__":
     )
     time_step = 0.1
 
-    start = time.perf_counter()
     traces = scenario.verify(7.2, time_step)
-    print(f'Verification took {time.perf_counter()-start:.2f} s')
     fig = go.Figure()
     fig = reachtube_tree(traces, None, fig, 1, 2, [1, 2], "lines", "trace")
     # fig = reachtube_tree(traces, fig, 1, 2, [1, 2], "lines", "trace")

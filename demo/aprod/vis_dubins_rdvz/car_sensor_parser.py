@@ -75,11 +75,11 @@ def vis_sensor_piecewise(psi, phi):
     else:
         return 2
 
-def vis_sensor(x,y,x_other,y_other,psi, phi, theta):
+def vis_sensor(x,y,x_other,y_other, phi, theta):
     rel_x = x_other - x
     rel_y = y_other - y
     eta = atan2(rel_x, rel_y) # FIXME: bounded_arctan2 has wrong form, this is equivalent to atan2(y,x)
-    psi = eta-theta
+    psi = minus_angular(eta,theta) # eta-theta
     obs = vis_sensor_piecewise(psi, phi)
     return obs
 
@@ -217,25 +217,14 @@ class CarSensor:
                     dist_min, dist_max = dist_extrema(pos_bounds, obstacle_bounds)
                     cont['ego.dist'] = [dist_min, dist_max]
 
-                    # psi = ((np.arctan2(rel_y, rel_x)-cont['ego.theta'] + np.pi) % (2*np.pi)) - np.pi  # corrected relative heading of the assigned agent 
-                    in_interval = lambda a,b,x: a <= x and x <= b 
-                    psi_min, psi_max = psi_extrema(pos_min, pos_max, obstacle_pos_min, obstacle_pos_max, cont['ego.theta'][0], cont['ego.theta'][1])
-                    if psi_min > phi or psi_max < -phi:
-                        cont['ego.cur_sense'] = [2, 2] # exclusively out of view -- change from 0 to -2 or 2 since intervals must be continuous but -1, 1 without 0 very possible
-                    elif (psi_min < -phi and psi_max > 0) or (psi_min < 0 and psi_max > psi_max):
-                        cont['ego.cur_sense'] = [-2, 1] # in all sensed regoins
-                    elif psi_min < - phi and in_interval(-phi, 0, psi_max): # right or out of view 
-                        cont['ego.cur_sense'] = [1, 2]
-                    elif in_interval(-phi, 0, psi_min) and in_interval(-phi, 0, psi_max): # exclusively right
-                        cont['ego.cur_sense'] = [1, 1]
-                    elif in_interval(-phi, 0, psi_min) and in_interval(0, phi, psi_max): # right or left
-                        cont['ego.cur_sense'] = [-1, 1]
-                    elif in_interval(0, phi, psi_min) and in_interval(0, phi, psi_max): # exclusively left
-                        cont['ego.cur_sense'] = [-1, -1]
-                    elif in_interval(0, phi, psi_min) and psi_max>phi: # left or out of view
-                        cont['ego.cur_sense'] = [-2, -1]
-                    else:
-                        raise Exception(f'Should be unreachable with min_heading: {psi_min}, max heading: {psi_max}, sensor range: {phi}')
+                    x_other, y_other = (obstacle_cont[0][1], obstacle_cont[1][1]), (obstacle_cont[0][2], obstacle_cont[1][2])
+                    input_bounds = {'x': [tuple(cont['ego.x'])], 'y':[tuple(cont['ego.y'])], 
+                                    'x_other': [x_other], 'y_other':[y_other], 'phi':[(1,1)], 'theta':[tuple(cont['ego.theta'])]}
+                    output_bounds, _ = parse_function(vis_sensor, input_bounds, [vis_sensor_piecewise])
+                    cont['ego.cur_sense'] = list(output_bounds['obs'][0]) # since everything is a list of tuples
+
+                    if cur_agent == 'car2' and cont['ego.timer'][0] < 6.7 and cont['ego.timer'][0] > 6.5:
+                        pass
 
                     cont['other.has_priority'] = [1,1] # sentinel value
                     ### NOTE: what was I trying to do here that isn't being accomplished below?

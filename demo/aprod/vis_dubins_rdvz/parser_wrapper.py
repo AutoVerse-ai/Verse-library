@@ -8,13 +8,31 @@ import torch.nn as nn
 from sensor_parser import parsed_sensor_expr
 from wrapper_consts import ALIASES, ANGULAR_FUNCTIONS, MAP_FUNCTIONS
 # ,FUNC_DICT
-from prox_error_all_bounds import angular_span_rect_parser, combine_angular_bounds
+from prox_error_all_bounds import angular_span_rect_parser, angular_bounds_diff_correct, combine_angular_bounds
 from bounded_map import get_heading_bounds_optimized, get_lateral_distance_bounds_optimized
 import itertools
 from bounded_piecewise import bounded_piecewise_z3, parse_piecewise_function
+import pickle
+import os
+from pathlib import Path
+import hashlib
 
+# NOTE: same caching system as parsed_sensor -- use function name and input bounds to cache
+def get_cache_key(input_bounds, function_name):
+    """Generate a unique key for the input bounds and function name"""
+    # Convert bounds to string and combine with function name
+    bounds_str = str(input_bounds)
+    combined_str = f"{bounds_str}_{function_name}"
+    return hashlib.md5(combined_str.encode()).hexdigest()
 
-def parse_function(func: Callable, input_bounds: Dict[str, List[Tuple[float, float]]], piecewise_functions: List[Callable] = None, track_mode = None, track_map = None):
+def clear_parse_cache():
+    """Clear all cached parse_function results"""
+    cache_dir = Path(__file__).parent / "parse_cache"
+    if cache_dir.exists():
+        for f in cache_dir.glob("parse_*.pkl"):
+            f.unlink()
+
+def parse_function(func: Callable, input_bounds: Dict[str, List[Tuple[float, float]]], piecewise_functions: List[Callable] = None, track_mode = None, track_map = None, cache: bool = True):
     """
     Process a function line-by-line, computing bounds at each step using parsed_sensor.
     
@@ -26,6 +44,19 @@ def parse_function(func: Callable, input_bounds: Dict[str, List[Tuple[float, flo
         Dict mapping variable names to their bounds at each step
     """
     
+    # Create cache directory if it doesn't exist
+    cache_dir = Path(__file__).parent / "parse_cache"
+    cache_dir.mkdir(exist_ok=True)
+    
+    # Generate cache key from input bounds and function name
+    cache_key = get_cache_key(input_bounds, func.__name__)
+    cache_file = cache_dir / f"parse_{cache_key}.pkl"
+    
+    # Check if cached result exists
+    if cache_file.exists():
+        with open(cache_file, 'rb') as f:
+            return pickle.load(f)
+        
     # Parse the function AST
     source = inspect.getsource(func)
     source = textwrap.dedent(source)
@@ -73,6 +104,12 @@ def parse_function(func: Callable, input_bounds: Dict[str, List[Tuple[float, flo
 
         else:
             raise Exception(f'Line is of type {type(stmt)} instead of assign or return.')
+    
+    # NOTE: cache result if desired
+    if cache:
+        with open(cache_file, 'wb') as f:
+            pickle.dump((current_bounds, bounds_history), f)
+
     return current_bounds, bounds_history # TODO: should only return the variables actually called in the return output
 
 
