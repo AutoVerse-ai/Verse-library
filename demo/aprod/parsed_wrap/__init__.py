@@ -1,1 +1,1 @@
-from .parser_wrapper import parse_function, clear_parse_cache
+from .parser_wrapper import parse_function, parse_function_array, clear_parse_cache

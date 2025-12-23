@@ -32,9 +32,136 @@ def clear_parse_cache():
         for f in cache_dir.glob("parse_*.pkl"):
             f.unlink()
 
+# def parse_function_array(func: Callable, input_bounds: List[List[float]], piecewise_functions: List[Callable] = None, track_mode=None, track_map=None, cache: bool = True):
+#     """
+#     Wrapper for parse_function that accepts array-like bounds and converts them to the required dictionary format.
+    
+#     Args:
+#         func: Function to analyze (must contain only assignments and return)
+#         input_bounds: List of [min, max] pairs for each argument, e.g., [[min_x, max_x], [min_y, max_y], ...]
+#         piecewise_functions: List of piecewise functions (optional)
+#         track_mode: Track mode (optional)
+#         track_map: Track map (optional)
+#         cache: Whether to cache results (default True)
+    
+#     Returns:
+#         Same as parse_function: (current_bounds, bounds_history)
+#     """
+#     # Get argument names from the function signature
+#     sig = inspect.signature(func)
+#     arg_names = list(sig.parameters.keys())
+    
+#     # Validate that the number of bounds matches the number of arguments
+#     if len(input_bounds) != len(arg_names):
+#         raise ValueError(f"Number of bounds ({len(input_bounds)}) must match number of function arguments ({len(arg_names)})")
+    
+#     # Convert input_bounds to the required dictionary format
+#     parsed_input_bounds = {}
+#     for name, bounds in zip(arg_names, input_bounds):
+#         if len(bounds) != 2:
+#             raise ValueError(f"Each bound must be a [min, max] pair, got {bounds}")
+#         min_val, max_val = bounds
+#         # Verify that min_val is indeed greater than max_val
+#         if min_val > max_val:
+#             raise ValueError(f"For argument {name}, expected max_val to be greater than min_val, got {min_val} (min_val) > {max_val} (max_val)")
+#         parsed_input_bounds[name] = [(min_val, max_val)]
+    
+#     # Call the original parse_function with the converted bounds
+#     return parse_function(func, parsed_input_bounds, piecewise_functions, track_mode, track_map, cache)
+
+# NOTE: may need to make cache on this level instead of parse_function level
+def parse_function_array(func: Callable, input_bounds: List[List[float]], piecewise_functions: List[Callable] = None, track_mode=None, track_map=None, cache: bool = True, logging: bool = False, num_splits: int = 1):
+    """
+    Wrapper for parse_function that accepts array-like bounds and converts them to the required dictionary format.
+    Supports domain partitioning for tighter bounds.
+    
+    Args:
+        func: Function to analyze (must contain only assignments and return)
+        input_bounds: List of [min, max] pairs for each argument, e.g., [[min_x, max_x], [min_y, max_y], ...]
+        piecewise_functions: List of piecewise functions (optional)
+        track_mode: Track mode (optional)
+        track_map: Track map (optional)
+        cache: Whether to cache results (default True)
+        num_splits: Number of splits per dimension (default 1, no partitioning)
+    
+    Returns:
+        Same as parse_function: (current_bounds, bounds_history)
+    """
+    # Get argument names from the function signature
+    sig = inspect.signature(func)
+    arg_names = list(sig.parameters.keys())
+    
+    # Validate that the number of bounds matches the number of arguments
+    if len(input_bounds) != len(arg_names):
+        raise ValueError(f"Number of bounds ({len(input_bounds)}) must match number of function arguments ({len(arg_names)})")
+    
+    # Validate each bound
+    for i, bounds in enumerate(input_bounds):
+        if len(bounds) != 2:
+            raise ValueError(f"Each bound must be a [min, max] pair, got {bounds} for argument {arg_names[i]}")
+        min_val, max_val = bounds
+        if min_val > max_val:
+            raise ValueError(f"For argument {arg_names[i]}, expected max_val to be greater than min_val, got {min_val} (min_val) > {max_val} (max_val)")
+    
+    if num_splits == 1:
+        # No partitioning, proceed as before
+        parsed_input_bounds = {}
+        for name, bounds in zip(arg_names, input_bounds):
+            min_val, max_val = bounds
+            parsed_input_bounds[name] = [(min_val, max_val)]
+        return parse_function(func, parsed_input_bounds, piecewise_functions, track_mode, track_map, cache, logging)
+    
+    # Generate splits for each dimension
+    splits = []
+    for bounds in input_bounds:
+        min_val, max_val = bounds
+        if min_val == max_val:
+            # No variance, no split
+            splits.append([(min_val, max_val)])
+        else:
+            # Split into num_splits parts
+            split_points = np.linspace(min_val, max_val, num_splits + 1)
+            splits.append(list(zip(split_points[:-1], split_points[1:])))
+    
+    # Collect results from each sub-domain
+    all_current_bounds = []
+    all_bounds_histories = []
+    
+    # Iterate over all combinations of splits
+    for split_bounds in itertools.product(*splits):
+        # Convert split_bounds to dict
+        parsed_input_bounds = {}
+        for name, bounds in zip(arg_names, split_bounds):
+            parsed_input_bounds[name] = [(bounds[0], bounds[1])]
+        
+        # Run parse_function on this sub-domain
+        current_bounds, bounds_history = parse_function(func, parsed_input_bounds, piecewise_functions, track_mode, track_map, cache)
+        all_current_bounds.append(current_bounds)
+        all_bounds_histories.append(bounds_history)
+    
+    # Union the bounds
+    unioned_bounds = {}
+    for var in all_current_bounds[0].keys():
+        all_var_bounds = [cb[var] for cb in all_current_bounds]
+        
+        # Check if any has multiple intervals
+        has_multiple = any(len(bounds) > 1 for bounds in all_var_bounds)
+        
+        if has_multiple:
+            # Use combine_angular_bounds
+            unioned_bounds[var] = combine_angular_bounds(all_var_bounds)
+        else:
+            # Take min of mins and max of maxs
+            all_mins = [b[0][0] for b in all_var_bounds]
+            all_maxs = [b[0][1] for b in all_var_bounds]
+            unioned_bounds[var] = [(min(all_mins), max(all_maxs))]
+    
+    # NOTE: don't worry about bounds history
+    return unioned_bounds
+
 # TODO: add partitioning to this function analogous to sensor_parser -- see docking scenario for motivation
 # TODO: could probably just further add a parser that first splits the input bounds, calls parsed_function on each set of input_bounds, and then unions the outputs of each call
-def parse_function(func: Callable, input_bounds: Dict[str, List[Tuple[float, float]]], piecewise_functions: List[Callable] = None, track_mode = None, track_map = None, cache: bool = True):
+def parse_function(func: Callable, input_bounds: Dict[str, List[Tuple[float, float]]], piecewise_functions: List[Callable] = None, track_mode = None, track_map = None, cache: bool = True, logging: bool = False):
     """
     Process a function line-by-line, computing bounds at each step using parsed_sensor.
     
@@ -100,9 +227,10 @@ def parse_function(func: Callable, input_bounds: Dict[str, List[Tuple[float, flo
             current_bounds[var_name] = rhs_bounds
             bounds_history.append(dict(current_bounds))
             
-            print(f"After {var_name} = {rhs_code}")
-            for rhs_bound in rhs_bounds:
-                print(f"  {var_name} ∈ [{rhs_bound[0]:.6f}, {rhs_bound[-1]:.6f}]")
+            if logging: # NOTE: maybe want to have multiple log levels so that some level will just print the final result 
+                print(f"After {var_name} = {rhs_code}")
+                for rhs_bound in rhs_bounds:
+                    print(f"  {var_name} ∈ [{rhs_bound[0]:.6f}, {rhs_bound[-1]:.6f}]")
 
         else:
             raise Exception(f'Line is of type {type(stmt)} instead of assign or return.')
