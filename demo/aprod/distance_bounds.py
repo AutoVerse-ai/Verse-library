@@ -19,6 +19,54 @@ def dist_extrema(agent: np.ndarray, obstacle: np.ndarray) -> Tuple[float, float]
     res_max = minimize(neg_dist, guess, bounds=tuple_bounds)
     return res_min.fun, -res_max.fun
 
+def psi_extrema(pos_min, pos_max, obs_pos_min, obs_pos_max, theta_min, theta_max):
+    """
+    Compute bounds on psi angle for given position and heading bounds
+    
+    Args:
+        pos_min, pos_max: ego position bounds [x_min, y_min], [x_max, y_max]
+        obs_pos_min, obs_pos_max: obstacle position bounds  
+        theta_min, theta_max: ego heading bounds
+    
+    Returns:
+        (psi_min, psi_max): bounds on psi angle
+    """
+    
+    def psi_function(state):
+        ego_x, ego_y, other_x, other_y, theta = state
+        rel_x = other_x - ego_x
+        rel_y = other_y - ego_y
+        
+        # Compute psi with normalization
+        psi = ((np.arctan2(rel_y, rel_x) - theta + np.pi) % (2*np.pi)) - np.pi
+        return psi
+    
+    # Create bounds for all variables
+    bounds = [
+        (pos_min[0], pos_max[0]),  # ego_x
+        (pos_min[1], pos_max[1]),  # ego_y
+        (obs_pos_min[0], obs_pos_max[0]),  # other_x
+        (obs_pos_min[1], obs_pos_max[1]),  # other_y
+        (theta_min, theta_max)  # theta
+    ]
+    
+    # Use central point as initial guess
+    guess = np.array([
+        (pos_min[0] + pos_max[0]) / 2,
+        (pos_min[1] + pos_max[1]) / 2,
+        (obs_pos_min[0] + obs_pos_max[0]) / 2,
+        (obs_pos_min[1] + obs_pos_max[1]) / 2,
+        (theta_min + theta_max) / 2
+    ])
+    
+    # Find minimum and maximum psi
+    from scipy.optimize import minimize
+    
+    res_min = minimize(psi_function, guess, bounds=bounds)
+    res_max = minimize(lambda x: -psi_function(x), guess, bounds=bounds)
+    
+    return res_min.fun, -res_max.fun
+
 class SquaredNormDiff(torch.nn.Module):
     def forward(self, x, y):
         diff = x - y               # shape (batch, dim)
@@ -41,6 +89,8 @@ def dist_extrema_crown(agent: np.ndarray, obstacle: np.ndarray) -> Tuple[float, 
 
 if __name__ == '__main__':
     # bounds = np.array([[-1,1], [1, 2], [1,2]])
-    bounds = np.array([[0,1], [1, 2], [1,2]])
-    obstacle = np.zeros((3,2))
-    print(dist_extrema(bounds, obstacle))
+    # bounds = np.array([[0,1], [1, 2], [1,2]])
+    bounds = [np.array([0, 0]), np.array([0,0]), np.array([-1, -1]), np.array([-1,1]), 0, 0]
+    # obstacle = np.zeros((3,2))
+    # print(dist_extrema(bounds, obstacle))
+    print(psi_extrema(*bounds))

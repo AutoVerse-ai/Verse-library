@@ -8,7 +8,7 @@ import torch.nn as nn
 from sensor_parser import parsed_sensor_expr
 from wrapper_consts import ALIASES, ANGULAR_FUNCTIONS, MAP_FUNCTIONS
 # ,FUNC_DICT
-from prox_error_all_bounds import angular_span_rect_parser, angular_bounds_diff_correct, combine_angular_bounds
+from bounded_angular import angular_span_rect_parser, angular_bounds_diff_correct, combine_angular_bounds
 from bounded_map import get_heading_bounds_optimized, get_lateral_distance_bounds_optimized
 import itertools
 from bounded_piecewise import bounded_piecewise_z3, parse_piecewise_function

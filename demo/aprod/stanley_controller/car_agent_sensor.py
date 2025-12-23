@@ -118,8 +118,9 @@ class CarAgent(BaseAgent):
         a = 0
 
         # lane_width = lane_map.get_lane_width(vehicle_lane)
-        d_true = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
-        d = linear_clip(d_true, self.ep_d, d_sample)
+        # d_true = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
+        # d = linear_clip(d_true, self.ep_d, d_sample)
+        d = -d_sample
 
         # if vehicle_mode == "Normal" or vehicle_mode == "Stop":
         #     pass
@@ -134,12 +135,9 @@ class CarAgent(BaseAgent):
         # else:
         #     raise ValueError(f"Invalid mode: {vehicle_mode}")
 
-        heading_true = lane_map.get_lane_heading(vehicle_lane, vehicle_pos)
-        heading = linear_clip(heading_true, self.ep_psi, heading_sample)
-        psi = wrap_to_pi(heading - theta)
-
-        # d += e_d # noise components
-        # psi += e_psi
+        # heading_true = lane_map.get_lane_heading(vehicle_lane, vehicle_pos)
+        # heading = linear_clip(heading_true, self.ep_psi, heading_sample)
+        psi = wrap_to_pi(heading_sample - theta)
 
         steering = psi + np.arctan2(0.45 * d, v)
         steering = np.clip(steering, -0.61, 0.61)

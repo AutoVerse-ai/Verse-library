@@ -3,7 +3,7 @@ import inspect, textwrap
 import torch
 import torch.nn as nn
 from auto_LiRPA import BoundedModule, BoundedTensor, PerturbationLpNorm
-from prox_error_all_bounds import box_extreme_error
+from bounded_angular import box_extreme_error
 import time
 from multiprocessing import Pool
 from itertools import product

@@ -271,7 +271,7 @@ def angular_span_rect(rect, split: bool = False):
     else: # split and theta_min > theta_max
         return [(theta_min, np.pi), (-np.pi, theta_max)]
 
-def angular_span_rect_parser(x_bounds, y_bounds):
+def angular_span_rect_parser(y_bounds, x_bounds):
     """
     Essentially atan2 for an entire rectangle
     
@@ -283,23 +283,6 @@ def angular_span_rect_parser(x_bounds, y_bounds):
         return (theta_min, theta_max)
     else: # TODO: note this is not handled yet -- will need to 
         return [(theta_min, np.pi), (-np.pi, theta_max)]
-    
-def angular_bounds_diff(theta, theta_ref) -> Tuple[float]: # this function is shaky at best, need to revamp -- ex: [-pi/2, pi/2] - [0, pi]
-    # TODO: the issue is that you can't just simply wrap both diff_min, diff_max to get the bounds, weird things will happen if bounds contain pi/-pi -- need to split 
-    # can do this by just adding 2pi until diff_min > 0 and then checking if [diff_min + 2\pi n, diff_max + 2\pi n] contains \pi, then split
-    """
-    Assuming angles either span the entire interval [-pi,pi] or span at most pi
-    theta_max<theta_min only in cases where theta crosses the pi/-pi wrapping point
-    Returns the angular difference bound theta-theta_ref in the same format as above
-    """
-    theta_min, theta_max = theta 
-    theta_ref_min, theta_ref_max = theta_ref
-    if (theta_min == -np.pi and theta_max == np.pi) or (theta_ref_min == -np.pi and theta_ref_max == np.pi):
-        return -np.pi, np.pi # if either interval is the entire circle, just return the circle
-    theta_max = theta_max+2*np.pi if theta_max<theta_min else theta_max # wrap theta_max to [0,2pi] if < theta_min
-    theta_ref_max = theta_ref_max+2*np.pi if theta_ref_max<theta_ref_min else theta_ref_max # likewise for theta_ref
-    diff_min, diff_max = wrap_angle(theta_min-theta_ref_max), wrap_angle(theta_max-theta_ref_max)
-    return diff_min, diff_max
 
 def angular_bounds_diff_correct(theta, theta_ref) -> Tuple[float]:
     """

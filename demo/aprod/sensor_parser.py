@@ -17,15 +17,17 @@ FUNC_MAP = {
     "sin": "torch.sin",
     "cos": "torch.cos",
     # "atan2": "torch.atan2",
-    "atan2": "atan2_crown",
+    "atan2": "atan2_crown_safe",
+    # "atan2": "atan2_crown",
     "norm": "norm",
 }
 
-def get_cache_key(input_bounds):
-    """Generate a unique key for the input bounds"""
-    # Convert bounds to string and hash it
+def get_cache_key(input_bounds, function_name):
+    """Generate a unique key for the input bounds and function name"""
+    # Convert bounds to string and combine with function name
     bounds_str = str(input_bounds.tolist())
-    return hashlib.md5(bounds_str.encode()).hexdigest()
+    combined_str = f"{bounds_str}_{function_name}"
+    return hashlib.md5(combined_str.encode()).hexdigest()
 
 def clear_sensor_cache():
     """Clear all cached sensor results"""
@@ -58,7 +60,7 @@ def atan2_crown(y, x):
     eps = 1e-6  # small number for numerical stability
     
     # We can rearrange y/x into sign(x)*y / abs(x) to ensure denominator is positive
-    abs_x = torch.sqrt(x*x + eps)  # Using sqrt(x^2) instead of abs() for better gradients
+    abs_x = torch.abs(x)  #
     y_adj = y * torch.sign(x + eps)
     
     # Now compute arctan with guaranteed positive denominator
@@ -66,32 +68,59 @@ def atan2_crown(y, x):
 
     # Handle quadrants correctly
     x_neg = torch.relu(-x) / (abs_x + eps)  # ≈ 1 if x<0 else 0
-    y_neg = torch.relu(-y) / (torch.sqrt(y*y + eps))  # ≈ 1 if y<0 else 0
+    y_neg = torch.relu(-y) / (torch.abs(y)+eps)  # ≈ 1 if y<0 else 0
 
     # Quadrant corrections
     correction = torch.pi * x_neg * (1 - 2*y_neg)
     
     return theta + correction
 
-def atan2_crown(y, x): # less accurate but more operations -> worse performance
+def atan2_crown_safe(y, x):
     """
-    Ultra-simplified linear approximation of atan2.
-    Avoids division by sqrt to prevent Auto-LiRPA's special case handling.
+    Compute atan2 assuming x and y bounds don't cross zero.
     """
-    eps = 1e-6
+    eps = 1e-8
     
-    # Instead of y/sqrt(x^2), compute y*x/sqrt(x^2 * x^2)
-    x_sq = x * x
-    numerator = y * x
-    denom = torch.sqrt(x_sq * x_sq + eps)
+    abs_x = torch.abs(x)  #
+    y_adj = y * torch.sign(x + eps)
     
-    # Basic ratio computation
-    theta = numerator / denom
+    # Now compute arctan with guaranteed positive denominator
+    theta = torch.atan(y_adj / abs_x)
     
-    # Quadrant correction using relu
-    x_is_neg = torch.relu(-x)
+    # Correction using only sign(), constants, and arithmetic
+    # When x < 0: correction = π * sign(y)
+    # When x > 0: correction = 0
+    # 
+    # This can be written as:
+    # correction = π * (1 - sign(x)) / 2 * sign(y)
+    #
+    # Derivation:
+    # sign(x) = +1 if x > 0, -1 if x < 0
+    # (1 - sign(x))/2 = (1 - 1)/2 = 0 if x > 0
+    #                 = (1 - (-1))/2 = 1 if x < 0
+    correction = torch.pi * (1 - torch.sign(x)) / 2 * torch.sign(y)
     
-    return theta + (x_is_neg * torch.pi)
+    return theta + correction
+
+# def atan2_crown(y, x): # less accurate but more operations -> worse performance
+#     """
+#     Ultra-simplified linear approximation of atan2.
+#     Avoids division by sqrt to prevent Auto-LiRPA's special case handling.
+#     """
+#     eps = 1e-6
+    
+#     # Instead of y/sqrt(x^2), compute y*x/sqrt(x^2 * x^2)
+#     x_sq = x * x
+#     numerator = y * x
+#     denom = torch.sqrt(x_sq * x_sq + eps)
+    
+#     # Basic ratio computation
+#     theta = numerator / denom
+    
+#     # Quadrant correction using relu
+#     x_is_neg = torch.relu(-x)
+    
+#     return theta + (x_is_neg * torch.pi)
 
 class TorchFuncModule(nn.Module):
     def __init__(self, fn):
@@ -126,8 +155,10 @@ class TorchFuncModule(nn.Module):
 
         def wrapped(*args):
             local_env = {"torch": torch, 
+                         "np": np,
                          "norm": norm,
                          "atan2_crown": atan2_crown,
+                         "atan2_crown_safe": atan2_crown_safe,
                          }
             for name, val in zip(arg_names, args):
                 local_env[name] = val
@@ -249,8 +280,8 @@ def parsed_sensor(sensor_function, inputs=None, input_bounds=None, device="cpu",
     cache_dir = Path(__file__).parent / "sensor_cache" # this creates the folder at aprod, can change later to just Path("--") if I'd rather create the folder in the working directory instead
     cache_dir.mkdir(exist_ok=True)
     
-    # Generate cache key from input bounds and num_splits
-    cache_key = get_cache_key(np.array(input_bounds))
+    # Generate cache key from input bounds and function name
+    cache_key = get_cache_key(np.array(input_bounds), sensor_function.__name__)
     cache_file = cache_dir / f"bounds_{cache_key}_splits_{num_splits}.pkl"
     
     # Check if cached result exists
@@ -323,6 +354,149 @@ def parsed_sensor(sensor_function, inputs=None, input_bounds=None, device="cpu",
     
     return global_lb, global_ub
 
+def partition_for_atan2(input_bounds):
+    """
+    Partition input bounds such that x and y bounds don't cross zero.
+    Uses adaptive bias to avoid numerical issues near zero.
+    """
+    partitions = []
+    
+    # Convert to list if numpy array for easier manipulation
+    if isinstance(input_bounds, np.ndarray):
+        input_bounds = input_bounds.tolist()
+    
+    # Assume x is at index 0, y is at index 1
+    x_lower, x_upper = input_bounds[0]
+    y_lower, y_upper = input_bounds[1]
+    
+    # Adaptive bias based on bound magnitude
+    x_mag = max(abs(x_lower), abs(x_upper))
+    y_mag = max(abs(y_lower), abs(y_upper))
+    
+    # Use larger bias relative to magnitude, but at least 1e-6
+    x_bias = max(1e-6, x_mag * 0.01)  # 1% of magnitude
+    y_bias = max(1e-6, y_mag * 0.01)
+    
+    # Partition x bounds
+    x_parts = []
+    if x_lower < 0 < x_upper:
+        # Split at -bias and +bias, not at zero
+        x_parts = [(x_lower, -x_bias), (x_bias, x_upper)]
+    else:
+        x_parts = [(x_lower, x_upper)]
+    
+    # Partition y bounds
+    y_parts = []
+    if y_lower < 0 < y_upper:
+        y_parts = [(y_lower, -y_bias), (y_bias, y_upper)]
+    else:
+        y_parts = [(y_lower, y_upper)]
+    
+    # Create cartesian product of partitions
+    for x_part in x_parts:
+        for y_part in y_parts:
+            new_bounds = [x_part, y_part] + list(input_bounds[2:])
+            partitions.append(new_bounds)
+    
+    return partitions
+
+
+def parsed_sensor_with_atan2_partitioning(sensor_function, inputs=None, input_bounds=None, 
+                                          device="cpu", sim: bool = False, num_splits=2):
+    """
+    Extended parsed_sensor that automatically partitions bounds for atan2
+    """
+    if sim:
+        if inputs is None:
+            raise ValueError("inputs required for simulation mode")
+        model = TorchFuncModule(sensor_function)
+        torch_inputs = [torch.tensor([x], dtype=torch.float32) for x in inputs]
+        return model(*torch_inputs).numpy()
+    
+    if input_bounds is None:
+        raise ValueError("input_bounds required for bound computation mode")
+    
+    # Check if function uses atan2
+    source_code = inspect.getsource(sensor_function)
+    uses_atan2 = 'atan2' in source_code
+    
+    # Partition bounds if atan2 is used
+    if uses_atan2:
+        partitions = partition_for_atan2(input_bounds)
+    else:
+        partitions = [input_bounds]
+    
+    # Create cache directory
+    cache_dir = Path(__file__).parent / "sensor_cache"
+    cache_dir.mkdir(exist_ok=True)
+    
+    global_lb = None
+    global_ub = None
+    
+    # Process each partition
+    for partition_bounds in partitions:
+        cache_key = get_cache_key(np.array(partition_bounds), sensor_function.__name__)
+        cache_file = cache_dir / f"bounds_{cache_key}_splits_{num_splits}.pkl"
+        
+        if cache_file.exists():
+            with open(cache_file, 'rb') as f:
+                lb, ub = pickle.load(f)
+        else:
+            # Process this partition with standard parsed_sensor logic
+            model = TorchFuncModule(sensor_function)
+            dummy_inputs = tuple([torch.zeros(1, 1) for _ in partition_bounds])
+            lirpa_model = BoundedModule(model, dummy_inputs, device=device)
+            
+            # Generate split points for this partition
+            splits = []
+            for lower, upper in partition_bounds:
+                if lower == upper:
+                    splits.append([(lower, lower)])
+                else:
+                    split_points = np.linspace(lower, upper, num_splits+1)
+                    splits.append(list(zip(split_points[:-1], split_points[1:])))
+            
+            # Compute bounds for this partition
+            partition_lb = None
+            partition_ub = None
+            
+            for split_bounds in product(*splits):
+                bounded_inputs = []
+                for bounds in split_bounds:
+                    lower, upper = bounds
+                    lower = torch.tensor(lower, dtype=torch.float32)
+                    upper = torch.tensor(upper, dtype=torch.float32)
+                    center = ((lower + upper) / 2).unsqueeze(0)
+                    lower = lower.unsqueeze(0)
+                    upper = upper.unsqueeze(0)
+                    perturb = PerturbationLpNorm(x_L=lower, x_U=upper)
+                    bounded_inputs.append(BoundedTensor(center, perturb))
+                
+                lb, ub = lirpa_model.compute_bounds(x=tuple(bounded_inputs), method="CROWN")
+                lb, ub = lb.detach().numpy()[0], ub.detach().numpy()[0]
+                
+                if partition_lb is None:
+                    partition_lb = lb
+                    partition_ub = ub
+                else:
+                    partition_lb = np.minimum(partition_lb, lb)
+                    partition_ub = np.maximum(partition_ub, ub)
+            
+            with open(cache_file, 'wb') as f:
+                pickle.dump((partition_lb, partition_ub), f)
+            
+            lb, ub = partition_lb, partition_ub
+        
+        # Combine results from all partitions
+        if global_lb is None:
+            global_lb = lb
+            global_ub = ub
+        else:
+            global_lb = np.minimum(global_lb, lb)
+            global_ub = np.maximum(global_ub, ub)
+    
+    return global_lb, global_ub
+
 if __name__ == "__main__":
     import numpy as np
 
@@ -340,8 +514,70 @@ if __name__ == "__main__":
         psi = atan2(z, rho_plane)
         rho_p, theta_p, psi_p = rho+ep_r, theta+ep_ang, psi+ep_ang
         nx, ny, nz = rho_p*cos(theta_p)*cos(psi_p), rho_p*sin(theta_p)*cos(psi_p), rho_p*sin(psi_p)
-        return x-nx, y-ny, z-nz
+        return x-nx, y-ny, z-nz, cos(x)**1.33
     
+    def cur_sense_relu(x, y, other_x, other_y, theta, phi):
+        """
+        Convert conditional cur_sense logic to ReLU-based function
+        
+        Args:
+            rel_x, rel_y: relative position to assigned agent
+            theta: ego agent heading
+            phi: sensor field of view half-angle
+        
+        Returns:
+            cur_sense value: -2, -1, 1, or 2
+        """
+        # Step 1: Compute psi = normalized relative angle
+        rel_x, rel_y = other_x - x, other_y-y
+        psi = ((atan2(rel_y, rel_x) - theta + np.pi) % (2*np.pi)) - np.pi
+
+        eps = 1e-6
+
+        out_left = torch.relu(psi-phi+eps) # > 0 for any region implies that the sensor will output that value
+        right = (torch.relu(psi+phi)*torch.relu(-psi+eps))
+        left = (torch.relu(psi)*torch.relu(phi-psi))
+        # region3 = (torch.relu(psi)*torch.relu(phi-psi))
+        out_right = torch.relu(-phi-psi+eps)
+        # Combine regions with their output values
+        # cur_sense = -region3
+        # cur_sense = rel_x*0
+
+        return out_left, left, right, out_right, psi # Return both for debugging/validation
+        
+    def vis_sense_cont(x,y,other_x, other_y, theta, phi):
+        """
+        Outputs continuous y, if 0<y<1, then right, y>1 out right, -1<y<0 left, y<-1 out left -- can do this DL
+        Issues with discontinuity around pi/-pi -- but note that y>>0 in this case, can try to handle separately
+        """
+        rel_x, rel_y = other_x - x, other_y-y
+        # psi = ((atan2(rel_y, rel_x) - theta + np.pi) % (2*np.pi)) - np.pi
+        psi = atan2(rel_y, rel_x) - theta
+        return psi/phi
+
+    def atan2_test(x, y, other_x, other_y):
+        eps = 1e-6  # small number for numerical stability
+    
+        rel_x, rel_y = other_x-x, other_y-y
+        abs_x = torch.abs(rel_x)  #
+        y_adj = rel_y * torch.sign(rel_x + eps)
+        
+        # Now compute arctan with guaranteed positive denominator
+        theta = torch.atan(y_adj / (abs_x+eps))
+
+        # Handle quadrants correctly
+        # x_neg = torch.relu(-rel_x) / (abs_x + eps)  # ≈ 1 if x<0 else 0
+        x_neg = torch.sigmoid(-rel_x*100) 
+        # y_neg = torch.relu(-rel_y) / (torch.abs(rel_y)+eps)  # ≈ 1 if y<0 else 0
+        y_neg = torch.sigmoid(-rel_y*100)
+
+        # Quadrant corrections
+        correction = torch.pi * x_neg * (1 - 2*y_neg)
+        
+        return theta+correction
+    
+    def atan2_test_only(x,y):
+        return atan2(y, x)
     # model = TorchFuncModule(noisy_sensor)
 
     # inputs = np.array([1,1,0,0])
@@ -349,12 +585,27 @@ if __name__ == "__main__":
     # print(out)
     
     start = time.perf_counter()
+    clear_sensor_cache()
 
     # input_bounds = [(.95,1.05), (1,1), (0,0), (0,0)]
     # input_bounds = np.array([[.95,1.05], [1,1], [0,0], [0,0], [0,0]])
-    input_bounds = np.array([[-5,-3], [-2,-1], [0,0], [-0.01,0.01], [-1e-6,1e-6]])
+    # input_bounds = np.array([[-5,-3], [-2,-1], [0,0], [-0.01,0.01], [-1e-6,1e-6]])
     # input_bounds = np.array([[-5,-3], [-2,-1], [0,0], [0,0], [0,0]])
-    lb, ub = parsed_sensor(prox_error_ver, input_bounds=input_bounds, num_splits=2)
+    # lb, ub = parsed_sensor(prox_error_ver, input_bounds=input_bounds, num_splits=2)
+    
+    # input_bounds = np.array([[0, 0], [0,0], [-1,1], [1,1], [0,0], [1,1]]) # test out more combinations
+    # input_bounds = np.array([[0, 0], [0,0], [-10,-0.05], [1,1]]) # 
+    # lb, ub = parsed_sensor(atan2_test, input_bounds=input_bounds, num_splits=4)
+    # lb, ub = parsed_sensor(cur_sense_relu, input_bounds=input_bounds, num_splits=3)
+    # lb, ub = parsed_sensor(vis_sense_cont, input_bounds=input_bounds, num_splits=3)
+    
+    # input_bounds = np.array([[0, 0], [0,0], [-5, 5], [-2, 2], [0, 0], [1, 1]])
+    input_bounds = np.array([[-1,-1], [-1, 1]])
+    # input_bounds = np.array([[0,0], [0,0,], [0.001, 0.001], [1, 1]])
+    # lb, ub = parsed_sensor(atan2_test, input_bounds=input_bounds, num_splits=2)
+    lb, ub = parsed_sensor_with_atan2_partitioning(atan2_test_only, input_bounds=input_bounds, num_splits=2)
+    # lb, ub = parsed_sensor_with_atan2_partitioning(cur_sense_relu, input_bounds=input_bounds, num_splits=2)
+
     print(lb, ub, f'Runtime: {time.perf_counter()-start:.2f} s')
     exit()
 

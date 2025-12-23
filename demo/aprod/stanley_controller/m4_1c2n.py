@@ -89,7 +89,7 @@ if __name__ == "__main__":
         ],
     )
 
-    time_step, T = 0.1, 200
+    time_step, T = 0.1, 40
     start_time = time.perf_counter()    
     traces = scenario.verify(T, time_step)  # traces.dump('./output1.json')
     # traces = AnalysisTree.load('./output5.json')

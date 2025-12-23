@@ -1,5 +1,5 @@
 from typing import List, Dict, Callable
-from prox_error_all_bounds import angular_span_rect_parser, angular_bounds_diff_correct
+from bounded_angular import angular_span_rect_parser, angular_bounds_diff_correct
 from bounded_map import get_heading_bounds_optimized, get_lateral_distance_bounds_optimized
 
 ALIASES = {

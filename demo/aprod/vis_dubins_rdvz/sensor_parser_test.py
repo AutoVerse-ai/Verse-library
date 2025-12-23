@@ -3,7 +3,7 @@ import inspect, textwrap
 import torch
 import torch.nn as nn
 from auto_LiRPA import BoundedModule, BoundedTensor, PerturbationLpNorm
-from prox_error_all_bounds import box_extreme_error
+from demo.aprod.vis_dubins_rdvz.bounded_angular import box_extreme_error
 import time
 from multiprocessing import Pool
 from itertools import product
@@ -14,7 +14,7 @@ from pathlib import Path
 import hashlib
 
 from sensor_parser_hybrid import parsed_sensor
-from prox_error_all_bounds import angular_span_between_rects, angular_bounds_diff, angular_span_rect, angular_bounds_diff_correct, combine_angular_bounds
+from bounded_angular import angular_span_between_rects, angular_bounds_diff, angular_span_rect, angular_bounds_diff_correct, combine_angular_bounds
 
 
 def bounded_subtract(a, b):
