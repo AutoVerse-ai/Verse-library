@@ -107,7 +107,7 @@ def get_lateral_distance_bounds_optimized(lane_map, lane_idx, x_bounds, y_bounds
                       x0=[(x_bounds[0]+x_bounds[1])/2, (y_bounds[0]+y_bounds[1])/2],
                       bounds=[x_bounds, y_bounds])
     
-    return [res_min.fun, res_max.fun]
+    return [res_min.fun, -res_max.fun]
 
 class CarSensor:
     def __init__(
@@ -169,7 +169,7 @@ class CarSensor:
                         cont['ego.d'] = [d_min-self.ep_d, d_max+self.ep_d]
                         cont['ego.psi'] = [psi_min-self.ep_psi, psi_max+self.ep_psi] # technically just heading
                         cont['other.sensor_update'] = [1, 1]
-                    
+
                     else:
                         cont['other.sensor_update'] = [0,0]
 

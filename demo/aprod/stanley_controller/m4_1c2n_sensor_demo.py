@@ -52,8 +52,8 @@ if __name__ == "__main__":
 
     # bench = Benchmark(sys.argv, init_seg_length=1)
     # scenario.add_agent(CarAgent("car1", file_name=input_code_name))
-    ep_d, ep_psi = 0.5, np.pi/18
-    # ep_d, ep_psi = 0, 0
+    # ep_d, ep_psi = 0.5, np.pi/18
+    ep_d, ep_psi = 0, 0
     scenario.add_agent(CarAgent("car1", file_name=input_code_name, ep_d=ep_d, ep_psi=ep_psi))
     tmp_map = opendrive_map(os.path.join(script_dir, "t1_triple.xodr"))
     scenario.config.reachability_method = ReachabilityMethod.DRYVR_DISC
@@ -61,7 +61,8 @@ if __name__ == "__main__":
     car_sensor = CarSensor(ep_d=ep_d, ep_psi=ep_psi) # maybe add an argument for ts
     scenario.set_sensor(car_sensor)
 
-    base_l, base_u = [134, 11.5, 0, 5.0, 0, 0, 1], [136, 14.5, 0, 5.0, 0, 0, 1]
+    # base_l, base_u = [134, 11.5, 0, 5.0, 0, 0, 1], [136, 14.5, 0, 5.0, 0, 0, 1]
+    base_l, base_u = [134, 11.5, 0, 5.0, 0, 0, 1], [134.01, 11.51, 0, 5.0, 0, 0, 1]
     # base_l, base_u = [136, 14.5, 0, 5.0, 0, 0, 1], [136, 14.5, 0, 5.0, 0, 0, 1]
     # init_err = [0.5, 0.5, 0, 0]
     # no_err = [0, 0,0,0]
@@ -95,7 +96,7 @@ if __name__ == "__main__":
         ],
     )
 
-    time_step, T = 0.1, 40
+    time_step, T = 0.1, 20
     start_time = time.perf_counter()    
     traces = scenario.verify(T, time_step)  # traces.dump('./output1.json')
     # traces = AnalysisTree.load('./output5.json')

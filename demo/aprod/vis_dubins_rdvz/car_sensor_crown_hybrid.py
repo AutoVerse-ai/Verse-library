@@ -5,7 +5,7 @@ from scipy.optimize import minimize, OptimizeResult
 import pickle
 from pathlib import Path
 from distance_bounds import dist_extrema, psi_extrema # psi_extrema is not current, prox_error_all_bounds has the correct version
-from prox_error_all_bounds import angular_span_between_rects, angular_bounds_diff
+from bounded_angular import angular_span_between_rects, angular_bounds_diff
 from sensor_parser import parsed_sensor
 import torch
 

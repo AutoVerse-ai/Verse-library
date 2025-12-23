@@ -78,7 +78,7 @@ def vis_sensor_piecewise(psi, phi):
 def vis_sensor(x,y,x_other,y_other, phi, theta):
     rel_x = x_other - x
     rel_y = y_other - y
-    eta = atan2(rel_x, rel_y) # FIXME: bounded_arctan2 has wrong form, this is equivalent to atan2(y,x)
+    eta = atan2(rel_y, rel_x) # FIXME: bounded_arctan2 has wrong form, this is equivalent to atan2(y,x)
     psi = minus_angular(eta,theta) # eta-theta
     obs = vis_sensor_piecewise(psi, phi)
     return obs
