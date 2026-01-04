@@ -96,10 +96,10 @@ if __name__ == "__main__":
         ],
     )
 
-    time_step, T = 0.1, 10
+    time_step, T = 0.1, 20
     start_time = time.perf_counter()    
     traces = scenario.verify(T, time_step)  # traces.dump('./output1.json')
-    # traces = scenario.verify_partitioned(T, time_step, 2)  # traces.dump('./output1.json')
+    # traces = scenario.verify_partitioned(T, time_step, 4, partition_dims=[1,2])  # traces.dump('./output1.json')
     # traces = AnalysisTree.load('./output5.json')
     print(f'Runtime for T={T}, ts={time_step}: {time.perf_counter()-start_time:.2f}')
     fig = go.Figure()
