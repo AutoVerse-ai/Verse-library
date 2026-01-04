@@ -5,6 +5,7 @@ import time
 
 #import plotly.graph_objects as go
 from enum import Enum, auto
+import numpy as np 
 
 
 class AgentMode(Enum):
@@ -50,12 +51,31 @@ if __name__ == "__main__":
     # fig.show()
 
     run_time = time.time() - start_time
+
+    init = np.array([[1.25, 2.35, 1.25, 2.35,  1], [1.55, 2.45 , 1.55, 2.45, 3]])
+    ID = np.linalg.norm(init[1,:]-init[0,:], ord=1)
+
+    Frect = np.array(traces.nodes[-1].trace['car1'])[-2:,1:]
+    FD = np.linalg.norm(Frect[1,:]-Frect[0,:], ord=1)
+
+    num = 0
+    total_sum = 0
+    for node in traces.nodes:
+        trace = np.array(traces.nodes[-1].trace['car1'])[:,1:]
+        lb = trace[::2,:]
+        ub = trace[1::2,:]
+        trace_diag = np.linalg.norm(lb-ub, axis=1, ord=1)
+        num = num + len(trace_diag)
+        total_sum = total_sum + np.sum(trace_diag)
+
+    AD = total_sum/num
+
     print({
         "tool": "verse",
         "benchmark": "CVDP23",
         "setup": "",
         "result": "1",
         "time": run_time,
-        "metric2": "",
-        "metric3": "",
+        "metric2": str(FD/ID),
+        "metric3": str(AD/ID),
     })

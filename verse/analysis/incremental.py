@@ -21,7 +21,7 @@ class CachedTransition:
 
 @dataclass
 class CachedSegment:
-    trace: nptyp.NDArray[np.float_]
+    trace: nptyp.NDArray[np.float64]
     asserts: List[str]
     transitions: List[CachedTransition]
     node_ids: Set[Tuple[int, int]]
@@ -137,7 +137,7 @@ class SimTraceCache:
     def __init__(self):
         self.cache: DefaultDict[tuple, IntervalTree] = defaultdict(IntervalTree)
 
-    def add_segment(self, agent_id: str, node: AnalysisTreeNode, transit_agents: List[str], trace: nptyp.NDArray[np.float_], transition, trans_ind: int, run_num: int):
+    def add_segment(self, agent_id: str, node: AnalysisTreeNode, transit_agents: List[str], trace: nptyp.NDArray[np.float64], transition, trans_ind: int, run_num: int):
         key = (agent_id,) + tuple(node.mode[agent_id])
         init = node.init[agent_id]
         tree = self.cache[key]

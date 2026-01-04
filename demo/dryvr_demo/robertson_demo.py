@@ -48,9 +48,28 @@ if __name__ == "__main__":
     )
     start_time = time.time()
 
-    traces1 = scenario1.verify(40, .1)
-    traces1 = compute_xyz(traces1)
+    traces = scenario1.verify(40, .1)
     run_time = time.time() - start_time
+    traces = compute_xyz(traces)
+
+
+    init = np.array( [[1, 0, 0], [1, 0, 0]])
+    ID = np.linalg.norm(init[1,:]-init[0,:], ord=1)
+
+    Frect = np.array(traces.nodes[-1].trace['car1'])[-2:,1:]
+    FD = np.linalg.norm(Frect[1,:]-Frect[0,:], ord=1)
+
+    num = 0
+    total_sum = 0
+    for node in traces.nodes:
+        trace = np.array(traces.nodes[-1].trace['car1'])[:,1:]
+        lb = trace[::2,:]
+        ub = trace[1::2,:]
+        trace_diag = np.linalg.norm(lb-ub, axis=1, ord=1)
+        num = num + len(trace_diag)
+        total_sum = total_sum + np.sum(trace_diag)
+
+    AD = total_sum/num
 
     print({
         "tool": "verse",
@@ -58,11 +77,8 @@ if __name__ == "__main__":
         "setup": "B3G7",
         "result": "1",
         "time": run_time,
-        "metric2": 400,
-        "metric3": traces1.nodes[0].trace['car1'][-1][1] + traces1.nodes[0].trace['car1'][-1][2] +
-                   traces1.nodes[0].trace['car1'][-1][3] - (
-                           traces1.nodes[0].trace['car1'][-2][1] + traces1.nodes[0].trace['car1'][-2][2] +
-                           traces1.nodes[0].trace['car1'][-2][3]),
+        "metric2": str(FD/ID),
+        "metric3": str(AD/ID),
     })
     # fig = reachtube_tree(traces1, None, fig, 0, 4, [0, 1], 'lines', 'trace', combine_rect=3)
 

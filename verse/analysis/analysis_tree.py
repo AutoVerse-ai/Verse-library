@@ -10,7 +10,7 @@ from verse.analysis.dryvr import _EPSILON
 import networkx as nx
 import matplotlib.pyplot as plt
 
-TraceType = nptyp.NDArray[np.float_]
+TraceType = nptyp.NDArray[np.float64]
 
 class AnalysisTreeNode:
     """AnalysisTreeNode class

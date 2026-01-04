@@ -15,7 +15,7 @@ class CraftMode(Enum):
 
 if __name__ == "__main__":
     input_code_name = './demo/dryvr_demo/spacecraft_controller.py'
-    scenario = Scenario(ScenarioConfig(init_seg_length=10, parallel=False))
+    scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False))
 
     car = spacecraft_agent('test', file_name=input_code_name)
     scenario.add_agent(car)
@@ -39,8 +39,26 @@ if __name__ == "__main__":
 
     start_time = time.time()
 
-    traces = scenario.verify(200, 0.05)
+    traces = scenario.verify(200, 0.1)
     run_time = time.time() - start_time
+
+    init = np.array([[-925, -425, 0, 0, 0, 0], [-875, -375, 5, 5, 0, 0]])
+    ID = np.linalg.norm(init[1,:]-init[0,:], ord=1)
+
+    Frect = np.array(traces.nodes[-1].trace['test'])[-2:,1:]
+    FD = np.linalg.norm(Frect[1,:]-Frect[0,:], ord=1)
+
+    num = 0
+    total_sum = 0
+    for node in traces.nodes:
+        trace = np.array(traces.nodes[-1].trace['test'])[:,1:]
+        lb = trace[::2,:]
+        ub = trace[1::2,:]
+        trace_diag = np.linalg.norm(lb-ub, axis=1, ord=1)
+        num = num + len(trace_diag)
+        total_sum = total_sum + np.sum(trace_diag)
+
+    AD = total_sum/num
 
     print({
         "tool": "verse",
@@ -48,8 +66,8 @@ if __name__ == "__main__":
         "setup": "",
         "result": "1",
         "time": run_time,
-        "metric2": "",
-        "metric3": "",
+        "metric2": str(FD/ID),
+        "metric3": str(AD/ID),
     })
     # traces.dump('output.json')
     # fig = go.Figure()

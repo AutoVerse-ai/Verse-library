@@ -6,6 +6,9 @@ import numpy as np
 from scipy.integrate import ode
 from scipy.integrate import solve_ivp
 
+from diffrax import diffeqsolve, ODETerm, Dopri5, SaveAt
+import jax.numpy as jnp
+
 from verse.agents import BaseAgent
 from verse.map import LaneMap
 
@@ -74,6 +77,7 @@ class coupled_vanderpol_agent(BaseAgent):
             init = res.flatten().tolist()
             trace.append([t[i] + time_step] + init)
         return np.array(trace)
+
 class robertson_agent(BaseAgent):
     def __init__(self, id, beta, gamma, code=None, file_name=None):
         # Calling the constructor of tha base class
@@ -439,56 +443,91 @@ class gearbox_agent(BaseAgent):
         # Calling the constructor of tha base class
         super().__init__(id, code, file_name)
     @staticmethod
-    def dynamic_free(t, state):
+    def dynamic_free(t, state, args):
         px, py, vx, vy, i, trans, one = state
         vx_dot = Fs / ms
         vy_dot = -Rs * Tf / Jg2
         px_dot = vx
         py_dot = vy
         i_dot = 0
-        return [px_dot, py_dot, vx_dot, vy_dot, i_dot, 0, 0]
+        return jnp.array([px_dot, py_dot, vx_dot, vy_dot, i_dot, 0, 0])
 
     @staticmethod
-    def dynamic_meshed(t, state):
+    def dynamic_meshed(t, state, args):
         px, py, vx, vy, trans, one, i = state
         vx_dot = 0
         vy_dot = 0
         px_dot = vx
         py_dot = vy
         i_dot = 0
-        return [px_dot, py_dot, vx_dot, vy_dot, i_dot, 0, 0]
+        return jnp.array([px_dot, py_dot, vx_dot, vy_dot, i_dot, 0, 0])
 
     def TC_simulate(self, mode: List[str], initialCondition, time_bound, time_step,
                     track_map: LaneMap = None) -> np.ndarray:
-        # time_bound = float(time_bound)
-        # number_points = int(np.ceil(time_bound / time_step))
-        # t = [round(i * time_step, 10) for i in range(0, number_points)]
+        # # time_bound = float(time_bound)
+        # # number_points = int(np.ceil(time_bound / time_step))
+        # # t = [round(i * time_step, 10) for i in range(0, number_points)]
 
-        # init = initialCondition
-        # trace = [[0] + init]
-        # for i in range(len(t)):
-        #     if mode[0] == 'Free':
-        #         r = ode(self.dynamic_free)
-        #     elif mode[0] == 'Meshed':
-        #         r = ode(self.dynamic_meshed)
-        #     else:
-        #         raise ValueError
-        #     r.set_initial_value(init)
-        #     res: np.ndarray = r.integrate(r.t + time_step)
-        #     init = res.flatten().tolist()
-        #     trace.append([t[i] + time_step] + init)
-        time_bound = float(time_bound)
-        number_points = int(np.ceil(time_bound/time_step))
-        t = [round(i*time_step, 10) for i in range(0, number_points)]
-        t_span = [0, time_bound]
-        if  mode[0] == 'Free':
-            res = solve_ivp(self.dynamic_free, t_span = t_span, y0 = initialCondition, method='RK45', t_eval=t)
+        # # init = initialCondition
+        # # trace = [[0] + init]
+        # # for i in range(len(t)):
+        # #     if mode[0] == 'Free':
+        # #         r = ode(self.dynamic_free)
+        # #     elif mode[0] == 'Meshed':
+        # #         r = ode(self.dynamic_meshed)
+        # #     else:
+        # #         raise ValueError
+        # #     r.set_initial_value(init)
+        # #     res: np.ndarray = r.integrate(r.t + time_step)
+        # #     init = res.flatten().tolist()
+        # #     trace.append([t[i] + time_step] + init)
+        # time_bound = float(time_bound)
+        # number_points = int(np.ceil(time_bound/time_step))
+        # t = [round(i*time_step, 10) for i in range(0, number_points)]
+        # t_span = [0, time_bound]
+        # if  mode[0] == 'Free':
+        #     res = solve_ivp(self.dynamic_free, t_span = t_span, y0 = initialCondition, method='RK45', t_eval=t)
+        # elif mode[0] == 'Meshed':
+        #     res = solve_ivp(self.dynamic_meshed, t_span = t_span, y0 = initialCondition, method='RK45', t_eval=t)
+        # else:
+        #     raise ValueError
+        # trace = np.vstack((res.t, res.y)).T
+        # return trace
+        if mode[0] == 'Free':
+            term = ODETerm(self.dynamic_free)
+            y0 = jnp.array(initialCondition)
+            solver = Dopri5()
+            steps = np.arange(0, time_bound+time_step/2, time_step)
+            saveat = SaveAt(ts = steps)
+            solution = diffeqsolve(term, solver, t0=0, t1=np.round(time_bound, 7), dt0=time_step, y0=y0, saveat=saveat)
+            res = solution.ys
+            t = solution.ts 
+            # print(type(res))
+            res = np.array(res)
+            # print(type(t))
+            t = np.array(t)
+            # print(res.shape)
+            # print(t.shape)
+            res = np.hstack((t[:,None], res))
         elif mode[0] == 'Meshed':
-            res = solve_ivp(self.dynamic_meshed, t_span = t_span, y0 = initialCondition, method='RK45', t_eval=t)
+            term = ODETerm(self.dynamic_meshed)
+            y0 = jnp.array(initialCondition)
+            solver = Dopri5()
+            steps = np.arange(0, time_bound+time_step/2, time_step)
+            saveat = SaveAt(ts = steps)
+            solution = diffeqsolve(term, solver, t0=0, t1=np.round(time_bound, 7), dt0=time_step, y0=y0, saveat=saveat)
+            res = solution.ys
+            t = solution.ts 
+            # print(type(res))
+            res = np.array(res)
+            # print(type(t))
+            t = np.array(t)
+            # print(res.shape)
+            # print(t.shape)
+            res = np.hstack((t[:,None], res))
         else:
-            raise ValueError
-        trace = np.vstack((res.t, res.y)).T
-        return trace
+            raise ValueError 
+        return res 
 
 class powertrain_agent(BaseAgent):
     def __init__(self, id, code=None, file_name=None):
