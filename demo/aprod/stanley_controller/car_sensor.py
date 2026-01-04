@@ -5,6 +5,9 @@ from scipy.optimize import minimize, OptimizeResult
 import pickle
 from pathlib import Path
 from verse import LaneMap, Lane
+import sys
+sys.path.insert(0, r'c:\Users\alexy\git repos\Verse-library')  # Hacky: Add repo root to sys.path
+from demo.aprod.parsed_wrap import get_heading_bounds_optimized, get_lateral_distance_bounds_optimized
 
 epsilon = 0.05
 # epsilon = 0
@@ -65,7 +68,7 @@ def clear_sensor_cache():
         for f in cache_dir.glob("sensor_value_*.pkl"):
             f.unlink()
 
-def get_heading_bounds_optimized(lane_map, lane_idx, x_bounds, y_bounds):
+def get_heading_bounds_optimized_prev(lane_map, lane_idx, x_bounds, y_bounds):
     """
     More precise bound computation using optimization
     """
@@ -87,7 +90,7 @@ def get_heading_bounds_optimized(lane_map, lane_idx, x_bounds, y_bounds):
     
     return [res_min.fun, -res_max.fun]
 
-def get_lateral_distance_bounds_optimized(lane_map, lane_idx, x_bounds, y_bounds):
+def get_lateral_distance_bounds_optimized_prev(lane_map, lane_idx, x_bounds, y_bounds):
     """
     More precise bound computation using optimization
     """

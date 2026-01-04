@@ -68,8 +68,8 @@ def pack_env(
             else:
                 if arg.is_list:
                     env[other] = []
-                else:
-                    raise ValueError(f"Expected one {ego_ty_name} for {other}, got none")
+                # else:
+                    # raise ValueError(f"Expected one {ego_ty_name} for {other}, got none")
 
     return env
 
@@ -205,6 +205,7 @@ class Simulator:
         if config.print_level >= 1:
             print("=============================================================")
             print(f"node {node.id} start: {node.start_time}")
+            print(node.mode)
         # print(f"node id: {node.id}")
         cache_updates = []
         for agent_id in node.agent:

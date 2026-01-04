@@ -2,7 +2,7 @@ import numpy as np
 from scipy.optimize import minimize, OptimizeResult
 from prox_error_all_bounds import box_extreme_error, angular_bounds_rectangle
 from sensor_parser import parsed_sensor
-from parsed_wrap import parse_function
+from parsed_wrap import parse_function, parse_function_array
 
 epsilon = 0.5
 epsilon_vel = 0.00001
@@ -246,10 +246,10 @@ class OrbitalSensor:
                     cont['ego.evz'] = [-epsilon_vel, epsilon_vel]
                 
                 elif disc['ego.po_mode'] == 'Active':
-                    # pos_min = np.array([state_dict['deputy'][0][0][i] for i in range(1,4)] + [-ep_rho, -ep_angle])
-                    # pos_max = np.array([state_dict['deputy'][0][1][i] for i in range(1,4)] + [ep_rho, ep_angle])
+                    pos_min = np.array([state_dict['deputy'][0][0][i] for i in range(1,4)] + [-ep_rho, -ep_angle])
+                    pos_max = np.array([state_dict['deputy'][0][1][i] for i in range(1,4)] + [ep_rho, ep_angle])
 
-                    # bounds = np.stack((pos_min, pos_max), axis=1)
+                    bounds = np.stack((pos_min, pos_max), axis=1)
                     # e_lb, e_ub = parsed_sensor(prox_error_ver, input_bounds=bounds, num_splits=3)
                     # print('Parsing successful')
                     # cont['ego.ex'] = [e_lb[0], e_ub[0]]
@@ -264,21 +264,30 @@ class OrbitalSensor:
                     # cont['ego.evy'] = [ev_lb[1], ev_ub[1]]
                     # cont['ego.evz'] = [ev_lb[2], ev_ub[2]]
 
-                    input_bounds = {
-                        'x': [tuple(cont['ego.x'])], 'y':[tuple(cont['ego.y'])], 'z':[tuple(cont['ego.z'])],
-                        'ep_r':[(-ep_rho, ep_rho)], 'ep_ang':[(-ep_angle, ep_angle)]
-                    }
-                    output_bounds, _ = parse_function(prox_error_ver_wrap, input_bounds)
-        
+                    # input_bounds = {
+                    #     'x': [tuple(cont['ego.x'])], 'y':[tuple(cont['ego.y'])], 'z':[tuple(cont['ego.z'])],
+                    #     'ep_r':[(-ep_rho, ep_rho)], 'ep_ang':[(-ep_angle, ep_angle)]
+                    # }
+                    # output_bounds, _ = parse_function(prox_error_ver_wrap, input_bounds)
+                    output_bounds = parse_function_array(prox_error_ver_wrap, input_bounds=bounds, num_splits=3)
+                    # output_bounds = parse_function_array(prox_error_ver_wrap, input_bounds=bounds, num_splits=1)
+
                     cont['ego.ex'] = list(output_bounds['ex'][0])
                     cont['ego.ey'] = list(output_bounds['ey'][0])
                     cont['ego.ez'] = list(output_bounds['ez'][0])
 
-                    input_bounds_vel = {
-                        'x': [tuple(cont['ego.vx'])], 'y':[tuple(cont['ego.vy'])], 'z':[tuple(cont['ego.vz'])],
-                        'ep_r':[(-ep_rho, ep_rho)], 'ep_ang':[(-ep_angle, ep_angle)]
-                    }
-                    output_bounds_vel, _ = parse_function(prox_error_ver_wrap, input_bounds_vel)
+                    # input_bounds_vel = {
+                    #     'x': [tuple(cont['ego.vx'])], 'y':[tuple(cont['ego.vy'])], 'z':[tuple(cont['ego.vz'])],
+                    #     'ep_r':[(-ep_rho, ep_rho)], 'ep_ang':[(-ep_angle, ep_angle)]
+                    # }
+                    # output_bounds_vel, _ = parse_function(prox_error_ver_wrap, input_bounds_vel, num_splits = 2)
+                    
+                    vel_min = np.array([state_dict['deputy'][0][0][i] for i in range(4,7)] + [-ep_rho, -ep_angle])
+                    vel_max = np.array([state_dict['deputy'][0][1][i] for i in range(4,7)] + [ep_rho, ep_angle])
+                    vel_bounds = np.stack((vel_min, vel_max), axis=1)
+                    output_bounds_vel = parse_function_array(prox_error_ver_wrap, input_bounds=vel_bounds, num_splits=3)
+                    
+                    
                     cont['ego.evx'] = list(output_bounds_vel['ex'][0])
                     cont['ego.evy'] = list(output_bounds_vel['ey'][0])
                     cont['ego.evz'] = list(output_bounds_vel['ez'][0])
