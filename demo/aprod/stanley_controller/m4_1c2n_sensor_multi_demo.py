@@ -1,5 +1,5 @@
-from car_agent_sensor import CarAgent, NPCAgent
-from car_sensor import CarSensor
+from car_multi_agent import CarAgent, NPCAgent
+from car_multi_sensor import CarSensor
 from verse.map import opendrive_map
 from verse.scenario.scenario import Benchmark
 from verse.plotter.plotter2D import *
@@ -37,16 +37,16 @@ class TrackMode(Enum):
     M21 = auto()
     M10 = auto()
 
-class GPSMode(Enum):
-    Passive = auto()
-    Active = auto()
+class SensorMode(Enum):
+    Ready = auto()
+    Update = auto()
 
 if __name__ == "__main__":
     import os
 
     script_dir = os.path.realpath(os.path.dirname(__file__))
     # ctlr_src = "demo/vehicle/controller/intersection_car.py"
-    input_code_name = os.path.join(script_dir, "controller_sensor.py")
+    input_code_name = os.path.join(script_dir, "controller_sensor_multi.py")
     scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False))
     # car_sensor = CarSensor()
     # scenario.set_sensor(car_sensor)
@@ -56,16 +56,17 @@ if __name__ == "__main__":
     # ep_d, ep_psi = 0.5, np.pi/18
     ep_d, ep_psi = 0, 0
     scenario.add_agent(CarAgent("car1", file_name=input_code_name, ep_d=ep_d, ep_psi=ep_psi))
-    # scenario.add_agent(CarAgent("car2", file_name=input_code_name, ep_d=ep_d, ep_psi=ep_psi))
+    scenario.add_agent(CarAgent("car2", file_name=input_code_name, ep_d=ep_d, ep_psi=ep_psi))
     tmp_map = opendrive_map(os.path.join(script_dir, "t1_triple.xodr"))
     scenario.config.reachability_method = ReachabilityMethod.DRYVR_DISC
     scenario.set_map(tmp_map)
     car_sensor = CarSensor(ep_d=ep_d, ep_psi=ep_psi) # maybe add an argument for ts
     scenario.set_sensor(car_sensor)
 
-    base_l, base_u = [134, 11.5, 0, 5.0, 0, 0, 1], [136, 14.5, 0, 5.0, 0, 0, 1]
-    # base_l, base_u = [134, 11.5, 0, 5.0, 0, 0, 1], [135, 13, 0, 5.0, 0, 0, 1]
-    # base_l2, base_u2 = [144, 11.5, 0, 5.0, 0, 0, 1], [146, 14.5, 0, 5.0, 0, 0, 1]
+    base_l, base_u = [134, 11.5, 0, 5.0, 0, 0, 0, 0], [136, 14.5, 0, 5.0, 0, 0, 0, 0] # 4 real variables followed by 2 placeholders, timer, and priority
+    base_l2, base_u2 = [144, 11.5, 0, 5.0, 0, 0, 0, 1], [146, 14.5, 0, 5.0, 0, 0, 0, 1]
+    # base_l, base_u = [134, 11.5, 0, 5.0, 0, 0, 1], [134.01, 11.51, 0, 5.0, 0, 0, 1]
+    # base_l, base_u = [136, 14.5, 0, 5.0, 0, 0, 1], [136, 14.5, 0, 5.0, 0, 0, 1]
     # init_err = [0.5, 0.5, 0, 0]
     # no_err = [0, 0,0,0]
     # init_l = base_l + [base_l[i]-init_err[i] for i in range(4)] + [-init_err[i] for i in range(4)] + [0]
@@ -74,7 +75,7 @@ if __name__ == "__main__":
     scenario.set_init(
         [
             [base_l, base_u],
-            # [base_l2, base_u2],
+            [base_l2, base_u2],
             # [init_l, init_u],
             # [[179.5, 59.5, np.pi / 2, 2.5], [180.5, 62.5, np.pi / 2, 2.5]],
             # [[124.5, 87.5, np.pi, 2.0], [125.5, 90.5, np.pi, 2.0]],
@@ -86,13 +87,13 @@ if __name__ == "__main__":
             (
                 AgentMode.Normal,
                 TrackMode.T1,
-                # GPSMode.Passive,
+                SensorMode.Ready
             ),
-            # (
-            #     AgentMode.Normal,
-            #     TrackMode.T1,
-            #     # GPSMode.Passive,
-            # ),
+            (
+                AgentMode.Normal,
+                TrackMode.T1,
+                SensorMode.Ready,
+            ),
             # (
             #     AgentMode.Normal,
             #     TrackMode.T1,
@@ -104,10 +105,10 @@ if __name__ == "__main__":
         ],
     )
 
-    time_step, T = 0.1, 1
+    time_step, T = 0.1, 0.5
     start_time = time.perf_counter()    
-    # traces = scenario.verify(T, time_step)  # traces.dump('./output1.json')
-    traces = scenario.verify_partitioned(T, time_step, 4, partition_dims=[1,2])  # traces.dump('./output1.json')
+    traces = scenario.verify(T, time_step)  # traces.dump('./output1.json')
+    # traces = scenario.verify_partitioned(T, time_step, 4, partition_dims=[1,2])  # traces.dump('./output1.json')
     # traces = AnalysisTree.load('./output5.json')
     print(f'Runtime for T={T}, ts={time_step}: {time.perf_counter()-start_time:.2f}')
     diam = time_step_diameter_rect(traces, T, time_step)
