@@ -237,6 +237,7 @@ class CarSensor:
                     if cont['ego.cur_sense'][0]!=cont['ego.cur_sense'][1] or cont['ego.cur_sense'][0]!=cont['ego.prev_sense'][0]:
                         has_priority = 1 # 1 if we do have priority
                         if state_dict[assigned_agent][0][0][14]<cont['ego._id'][0] and state_dict[assigned_agent][1][0] == state_dict[cur_agent][1][0]: # or whatever way we compute priority 
+                            # NOTE: not sure this works in 3+ agent scenarios where symmetry breaks down -- maybe need to run through twice, once to see if which agents want to update, and another to determine which agent (at most 1) gets to update
                             has_priority = 0
 
                         if cur_agent == 'car2':

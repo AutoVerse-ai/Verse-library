@@ -279,7 +279,7 @@ def angular_span_rect_parser(y_bounds, x_bounds):
     """
     rect = list(x_bounds) + list(y_bounds)
     theta_min, theta_max =  angular_span_between_rects([0, 0, 0, 0], rect) # this is correct but not the most helpful way to think about atan2
-    if theta_min < theta_max:
+    if theta_min <= theta_max:
         return (theta_min, theta_max)
     else: # TODO: note this is not handled yet -- will need to 
         return [(theta_min, np.pi), (-np.pi, theta_max)]

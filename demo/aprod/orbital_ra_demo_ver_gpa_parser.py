@@ -4,6 +4,7 @@ from verse import Scenario, ScenarioConfig
 from verse.analysis.verifier import ReachabilityMethod
 from verse.plotter.plotter2D import *
 from orbital_ra_sensor_gpa_parser import OrbitalSensor
+from verse.utils.star_diams import time_step_diameter_rect, sim_traces_to_dict_composed, sim_traces_to_diameters
 
 import plotly.graph_objects as go
 from enum import Enum, auto
@@ -90,6 +91,13 @@ if __name__ == "__main__":
     start = time.perf_counter()    
     trace = scenario.verify(T, 1)
     print(f'Simulaion time: {time.perf_counter()-start:.3f}')
+
+    diam = time_step_diameter_rect(trace, T, 1)
+    diam_0, diam_f, diam_bar = 45, diam[-1], (sum(diam)+0.0)/len(diam) # NOTE: use correct diameter values
+    print(f'F/I: {diam_f/diam_0:.5f}, A/I: {diam_bar/diam_0:.5f}\n raw final: {diam_f:.5f}, raw average: {diam_bar:.5f}, raw initial: {diam_0:.5f}')
+    fig = go.Figure()
+    fig = reachtube_tree(trace, None, fig, 1, 2, [1, 2], "lines", "trace")
+
     fig = go.Figure()
     fig = reachtube_tree(trace, None, fig, 1, 2, [1,2], plot_color=colors)
     fig.data[0].name = 'True State'

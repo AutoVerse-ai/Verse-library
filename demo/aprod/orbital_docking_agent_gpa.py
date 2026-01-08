@@ -237,7 +237,7 @@ class OrbitalAgent(BaseAgent):
         track_mode = mode[-1]
         T = time_horizon
         dt = 10
-        N = int(np.ceil(T/dt))
+        N = int(T//dt) # NOTE: this needs to match start_idx and full_x_sol
         start_time = initialSet[-1] # aside from being used to index into ref orbits, also use as sentinel for angles from ao sensor
         po_start_time = initialSet[-3]
         timer_start_time = initialSet[-4]
@@ -248,7 +248,8 @@ class OrbitalAgent(BaseAgent):
 
         x_sol, u_sol = None, None
         if os.path.exists(filename):
-            start_idx = int(start_time//dt) # may need to fine tune indexing
+            # start_idx = int(start_time//dt) # may need to fine tune indexing
+            start_idx = -int(T//dt)-1
             with open(filename, 'rb') as f:
                 full_x_sol, full_u_sol = pickle.load(f)
                 x_sol, u_sol = full_x_sol[start_idx:], full_u_sol[start_idx:] 
@@ -257,7 +258,7 @@ class OrbitalAgent(BaseAgent):
             with open(filename, 'wb') as f:
                 pickle.dump((x_sol, u_sol), f)
 
-        if track_mode == 'Docking' and mode[0] == 'Passive':
+        if track_mode == 'Docking' and mode[0] == 'Passive' and mode[1] == 'Passive':
             x_sol_simple, u_sol_simple = np.zeros(x_sol.shape), np.zeros(u_sol.shape) # if docking, should try to head to \bar 0 
             x_sol, u_sol = None, None
             hat_x = np.array(x0[:6]) - np.array(x0[12:18]) # don't use hx directly, compute it from hx = x - e

@@ -6,6 +6,7 @@ from verse.plotter.plotter2D import *
 from verse.plotter.plotter3D_new import *
 from orbital_docking_sensor_gpa_parser_wrapper import OrbitalSensor
 from parsed_wrap import clear_parse_cache
+from verse.utils.star_diams import time_step_diameter_rect, sim_traces_to_dict_composed, sim_traces_to_diameters
 
 import plotly.graph_objects as go
 from enum import Enum, auto
@@ -52,13 +53,13 @@ if __name__ == "__main__":
     if os.path.exists(filename):
         os.remove(filename)
 
-    clear_parse_cache()
+    # clear_parse_cache()
 
     # input_code_name = "./demo/aprod/orbital_docking_controller.py"
     input_code_name = "./demo/aprod/orbital_docking_controller_gpa_parser.py"
     # input_code_name = "./demo/aprod/orbital_docking_controller_proxdyn.py"
     scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False))
-    scenario.config.reachability_method = ReachabilityMethod.DRYVR_DISC # still works even with base dryvr
+    # scenario.config.reachability_method = ReachabilityMethod.DRYVR_DISC # still works even with base dryvr
     dep = OrbitalAgent("deputy", file_name=input_code_name)
     scenario.add_agent(dep)
     orbital_sensor = OrbitalSensor()
@@ -92,17 +93,29 @@ if __name__ == "__main__":
     fig = reachtube_tree(trace, None, fig, 1, 2, [1,2], plot_color=colors)
     fig.data[0].name = 'True State'
     fig.data[0].showlegend = True
-
-    # N = 20
+    diam = time_step_diameter_rect(trace, T, 1)
+    diam_0, diam_f, diam_bar = 45, diam[-1], (sum(diam)+0.0)/len(diam) # NOTE: manually computing correct L1 diameter values
+    print(f'F/I: {diam_f/diam_0:.5f}, A/I: {diam_bar/diam_0:.5f}\n raw final: {diam_f:.5f}, raw average: {diam_bar:.5f}, raw initial: {diam_0:.5f}')
+    
+    # N = 25
+    # start_time = time.perf_counter()
     # sim_traces = []
-    # for _ in range(N):
-    #     sim_traces.append(scenario.simulate(T,1))
-    # for st in sim_traces:
-    #     fig = simulation_tree(st, None, fig, 1, 2, [1,2])
+    # for i in range(N):
+    #     sim_traces.append(scenario.simulate(T, 1))
+    #     if i != N-1 and os.path.exists(filename):
+    #         os.remove(filename)
 
-    # fig = reachtube_tree(trace, None, fig, 7, 8, [7,8])
-    # fig.data[-1].name = 'Est State'
-    # fig.data[-1].showlegend = True
+    # fig = go.Figure()
+    # for st in sim_traces:
+    #     fig = simulation_tree(st, None, fig, 1, 2, [1,2], 'lines', 'trace')
+
+    # print(f'Runtime for {N} sims, T={T}, ts={1}: {time.perf_counter()-start_time:.2f}')
+    # # sim_dict = sim_traces_to_dict_composed(sim_traces)
+    # diam_0 = 45
+    # diam_sim = sim_traces_to_diameters(sim_traces)
+    # diam_f_sim, diam_bar_sim = diam_sim[-1], (sum(diam_sim)+0.0)/len(diam_sim)
+    # print(f'Sim results: F/I: {diam_f_sim/diam_0:.5f}, A/I: {diam_bar_sim/diam_0:.5f}\n raw final: {diam_f_sim:.5f}, raw average: {diam_bar_sim:.5f}')
+
 
     if os.path.exists(filename):
         with open(filename, 'rb') as f:
@@ -124,68 +137,5 @@ if __name__ == "__main__":
         yaxis_title='y (km)',
         legend_title='Trajectory Types',
     )
-    # if os.path.exists(filename):
-    #     with open(filename, 'rb') as f:
-    #         x_sol, u_sol = pickle.load(f)
-    #         u_sol = np.vstack([u_sol, u_sol[-1]])
-    #     os.remove(filename)
-    
-    # fig = reachtube_tree(trace, None, fig, 0, 13)
-
-    # ground = np.zeros((3001, 2, 6)) # time horizon + 1 / ts, 2, all 6 states
-    # est = np.zeros((3001,2,6))
-    # refs = np.zeros((3001, 6))
-    # for node in trace.nodes:
-    #     tr = node.trace['deputy']
-    #     for i in range(0, len(tr), 2):
-    #         t = int(tr[i][0])
-    #         ground[t][0] = tr[i][1:7]
-    #         ground[t][1] = tr[i+1][1:7]
-    #         est[t][0] = tr[i][7:13]
-    #         est[t][1] = tr[i+1][7:13]
-    # for t in range(3001):
-    #     refs[t] = OrbitalAgent.x_ref_fn(t, 10, x_sol, u_sol)
-    
-    # ref_err_low = ground[:,0] - refs
-    # ref_err_high = ground[:,1] - refs
-    # ref_est_low = est[:,0] - refs
-    # ref_est_high = est[:,1] - refs
-
-    # fig.add_trace(
-    #     go.Scatter(
-    #         x=np.linspace(0, 3001, 3000),
-    #         y= ref_err_low[:,0],
-    #         mode = 'lines',
-    #         line_color='#000000',
-    #         showlegend=False
-    #     )
-    # )
-    # fig.add_trace(
-    #     go.Scatter(
-    #         x=np.linspace(0, 3001, 3000),
-    #         y= ref_err_high[:,0],
-    #         mode = 'lines',
-    #         line_color='#000000',
-    #         name='true-ref error'
-    #         )
-    # )
-    # fig.add_trace(
-    #     go.Scatter(
-    #         x=np.linspace(0, 3001, 3000),
-    #         y= ref_est_low[:,0],
-    #         mode = 'lines',
-    #         line_color='#0000CC',
-    #         showlegend=False
-    #     )
-    # )
-    # fig.add_trace(
-    #     go.Scatter(
-    #         x=np.linspace(0, 3001, 3000),
-    #         y= ref_est_high[:,0],
-    #         mode = 'lines',
-    #         line_color='#0000CC',
-    #         name='est-ref error'
-    #         )
-    # )
 
     fig.show()

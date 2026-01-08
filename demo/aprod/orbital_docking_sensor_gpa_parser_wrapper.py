@@ -3,6 +3,7 @@ from scipy.optimize import minimize, OptimizeResult
 from prox_error_all_bounds import box_extreme_error, angular_bounds_rectangle
 from sensor_parser import parsed_sensor
 from parsed_wrap import parse_function, parse_function_array
+from verse.utils.utils import wrap_to_pi
 
 epsilon = 0.5
 epsilon_vel = 0.00001
@@ -104,7 +105,8 @@ class OrbitalSensor:
                 disc['ego.po_mode'] = state_dict['deputy'][1][1]
                 disc['ego.move_mode'] = state_dict['deputy'][1][2]
 
-                cont['ego.angle'] = np.arctan2(cont['ego.y'], cont['ego.x']) # for this specific scenario, just care about relative angle b/t deputy and chief
+                # NOTE: by convention, angles-only sensor gets an angle from satellite to chief, not other way around
+                cont['ego.angle_minus'] = cont['ego.angle_plus'] = wrap_to_pi(np.arctan2(-cont['ego.y'], -cont['ego.x'])+np.random.uniform(-1, 1)*ep_ao) # for this specific scenario, just care about relative angle b/t deputy and chief
 
                 if disc['ego.go_mode'] == 'Active' and disc['ego.po_mode'] == 'Active':
                     dir = np.random.normal(size=3)
@@ -185,8 +187,8 @@ class OrbitalSensor:
                 cont['ego.evx'] = [state_dict['deputy'][0][0][16], state_dict['deputy'][0][1][16]]
                 cont['ego.evy'] = [state_dict['deputy'][0][0][17], state_dict['deputy'][0][1][17]]
                 cont['ego.evz'] = [state_dict['deputy'][0][0][18], state_dict['deputy'][0][1][18]]
-                cont['ego.timer'] = [state_dict['deputy'][0][0][19], state_dict['deputy'][0][1][19]]
-                cont['ego.po_timer'] = [state_dict['deputy'][0][0][20], state_dict['deputy'][0][1][20]]
+                cont['ego.timer'] = [state_dict['deputy'][0][0][19], state_dict['deputy'][0][0][19]]
+                cont['ego.po_timer'] = [state_dict['deputy'][0][0][20], state_dict['deputy'][0][0][20]]
                 # cont['ego.time'] = [state_dict['deputy'][0][0][21], state_dict['deputy'][0][1][21]] # unneeded
                 disc['ego.go_mode'] = state_dict['deputy'][1][0]
                 disc['ego.po_mode'] = state_dict['deputy'][1][1]
@@ -269,6 +271,7 @@ class OrbitalSensor:
                     #     'ep_r':[(-ep_rho, ep_rho)], 'ep_ang':[(-ep_angle, ep_angle)]
                     # }
                     # output_bounds, _ = parse_function(prox_error_ver_wrap, input_bounds)
+                    # NOTE: 3 isn't good enough with the fixed dryvr_disc, need more, but 5 splits takes 25 times longer without parallelism
                     output_bounds = parse_function_array(prox_error_ver_wrap, input_bounds=bounds, num_splits=3)
                     # output_bounds = parse_function_array(prox_error_ver_wrap, input_bounds=bounds, num_splits=1)
 
@@ -300,3 +303,8 @@ class OrbitalSensor:
                     cont['ego.hvz'] = [cont['ego.vz'][0]-cont['ego.evz'][1], cont['ego.vz'][1]-cont['ego.evz'][0]]
 
         return cont, disc, len_dict
+    
+if __name__ == "__main__":
+    test_l, test_u = np.ones(5), np.ones(5)
+    output_bounds = parse_function_array(prox_error_ver_wrap, input_bounds=np.stack((test_l, test_u), axis=1), num_splits=3, cache=False)
+    print(output_bounds)

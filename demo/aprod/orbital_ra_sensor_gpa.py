@@ -69,6 +69,11 @@ class OrbitalSensor:
                 disc['ego.po_mode'] = state_dict['deputy'][1][1]
                 disc['ego.traj_mode'] = state_dict['deputy'][1][2]
 
+                theta = np.arctan2(obstacle_pos[1]-cont['ego.y'], obstacle_pos[0]-cont['ego.x'])
+                theta_v = np.arctan2(cont['ego.vy'], cont['ego.vx'])
+                diff = theta-theta_v+np.random.uniform(-1,1)*ep_ao # NOTE: mirroring what I did for verification, just simplier for simulation
+                cont['ego.angle_minus'] = cont['ego.angle_plus'] = diff
+
                 # state updates
                 if disc['ego.go_mode'] == 'Active' and (disc['ego.po_mode'] == 'CActive' or disc['ego.po_mode']=='OCActive'):
                     dir = np.random.normal(size=3)
@@ -133,6 +138,7 @@ class OrbitalSensor:
                 # dist update
                 if disc['ego.po_mode']=='OActive' or disc['ego.po_mode']=='OCActive':
                     cont['ego.hdist'] = cont['ego.dist']+np.random.uniform(-1,1)*ep_rho
+                    pass
 
                     # obstacle_cont = state_dict['obs'][0]
                     # obstacle_pos = np.array([obstacle_cont[i] for i in range(1,4)])

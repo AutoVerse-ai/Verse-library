@@ -9,6 +9,7 @@ import sys
 sys.path.insert(0, r'c:\Users\alexy\git repos\Verse-library')  # Hacky: Add repo root to sys.path
 from demo.aprod.parsed_wrap import get_heading_bounds_optimized, get_lateral_distance_bounds_optimized
 
+
 epsilon = 0.05
 # epsilon = 0
 epsilon_vel = 0.005
@@ -129,9 +130,9 @@ class CarSensor:
         phi = min(np.pi/num_agents, np.arccos((num_agents-1)/(num_agents)))*0.9 # default value of (half) FOV of sensor, must be \in (0, min(.,.))
 
         if simulate: # just start with simulation 
-            all_agents = 0
-            for cur_agent in state_dict: # assuming all agents are active, otherwise do the same thing as before and give nominal ids to other agents
-                all_agents += 2**state_dict[cur_agent][0][14]
+            # all_agents = 0
+            # for cur_agent in state_dict: # assuming all agents are active, otherwise do the same thing as before and give nominal ids to other agents
+            #     all_agents += 2**state_dict[cur_agent][0][14]
 
             for cur_agent in state_dict:
                 if cur_agent == agent.id:
@@ -142,13 +143,23 @@ class CarSensor:
                     cont['ego.v'] = state_dict[cur_agent][0][4]
 
                     # auxillary states
-                    cont['ego.d'] = D
-                    cont['ego.psi'] = 0 # by default, do nothing
+                    cont['ego.d'] = state_dict[cur_agent][0][5]
+                    cont['ego.psi'] = state_dict[cur_agent][0][6]
                     cont['ego.timer'] = state_dict[cur_agent][0][7] # to trigger estimated state updates
                     
                     # discrete states
                     disc['ego.agent_mode'] = state_dict[cur_agent][1][0]
                     disc['ego.track_mode'] = state_dict[cur_agent][1][1] # should have modes assigned, waiting (possible also assigned_location_unknown if not currently in FOV, then transition to assigned if in FOV)
+
+                    if cont['ego.timer'] >= ts*0.9:
+                        pos = np.array([cont['ego.x'], cont['ego.y']])
+                        d, psi = lane_map.get_lateral_distance(disc['ego.track_mode'], pos), lane_map.get_lane_heading(disc['ego.track_mode'], pos)
+                        cont['ego.d'] = d+(np.random.rand()-0.5)*2*self.ep_d
+                        cont['ego.psi'] = psi+(np.random.rand()-0.5)*2*self.ep_psi
+                        cont['other.sensor_update'] = 1
+                    
+                    else:
+                        cont['other.sensor_update'] = 0
 
         else:                   
             for cur_agent in state_dict:

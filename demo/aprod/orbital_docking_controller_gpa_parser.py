@@ -9,7 +9,7 @@ import numpy as np
 epsilon = 0.1
 # prox_dist = 500
 prox_dist = 5
-T_prox = 100
+T_prox = 150
 angle_bound = 0.1
 half_pi = np.pi/2
 
@@ -51,25 +51,6 @@ def decisionLogic(ego: State, others: List[State]) -> State:
     if ego.x**2+ego.y**2+ego.z**2 < prox_dist**2 and ego.po_mode != POMode.Active and output.po_timer >= T_prox:
         output.po_mode = POMode.Active
         output.po_timer = 0
-
-    if ego.po_mode == POMode.Active: 
-        output.ex = ego.ex * 1
-        output.ey = ego.ey * 1
-        output.ez = ego.ez * 1
-
-        output.evx = ego.evx * 1
-        output.evy = ego.evy * 1
-        output.evz = ego.evz * 1
-
-        output.hx = ego.hx * 1
-        output.hy = ego.hy * 1
-        output.hz = ego.hz * 1
-
-        output.hvx = ego.hvx * 1
-        output.hvy = ego.hvy * 1
-        output.hvz = ego.hvz * 1
-
-        output.go_mode = POMode.Passive 
 
     if ego.go_mode == GOMode.Active:
         output.ex = ego.ex * 1

@@ -2,13 +2,13 @@ from enum import Enum, auto
 import copy
 from typing import List
 import numpy as np
-# rad_col = 5 # unsafe radius where we should begin to transition
-rad_col = 4.5
+rad_col = 5 # unsafe radius where we should begin to transition
+# rad_col = 4.5
 dist_prox = 5 # 5 km for proximity sensor to be active; fairly long range
 # dist_prox = 3 # testing
 T_prox = 10 # 10 s period, exists to make sure some time passes before next sensor update, should be >= time step
 pi = np.pi
-angle_bound = 0.001 # in radians, the amount of tolerance for whatever angle is being looked at 
+angle_bound = 0.2 # in radians, the amount of tolerance for whatever angle is being looked at 
 
 class GOMode(Enum):
     Passive = auto()

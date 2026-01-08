@@ -10,6 +10,7 @@ from enum import Enum, auto
 import pickle
 import time
 import os 
+from verse.utils.star_diams import time_step_diameter_rect, sim_traces_to_dict_composed, sim_traces_to_diameters
 
 n = 0.00438138 # constant equal to (\mu/r_e^3)^{-3}
 filename = "demo/aprod/refs.pkl"
@@ -87,17 +88,40 @@ if __name__ == "__main__":
         ],
     )
 
-    start = time.perf_counter()    
-    trace = scenario.verify(T, 1)
-    print(f'Simulaion time: {time.perf_counter()-start:.3f}')
-    fig = go.Figure()
-    fig = reachtube_tree(trace, None, fig, 1, 2, [1,2], plot_color=colors)
-    fig.data[0].name = 'True State'
-    fig.data[0].showlegend = True
+    # start = time.perf_counter()    
+    # trace = scenario.verify(T, 1)
+    # print(f'Simulaion time: {time.perf_counter()-start:.3f}')
+    # diam = time_step_diameter_rect(trace, T, 1)
+    # diam_0, diam_f, diam_bar = 45, diam[-1], (sum(diam)+0.0)/len(diam) # NOTE: use correct diameter values
+    # print(f'F/I: {diam_f/diam_0:.5f}, A/I: {diam_bar/diam_0:.5f}\n raw final: {diam_f:.5f}, raw average: {diam_bar:.5f}, raw initial: {diam_0:.5f}')
+    # fig = go.Figure()
+    # fig = reachtube_tree(trace, None, fig, 1, 2, [1, 2], "lines", "trace")
 
-    # fig = reachtube_tree(trace, None, fig, 7, 8, [7,8])
-    # fig.data[-1].name = 'Est State'
-    # fig.data[-1].showlegend = True
+    # fig = go.Figure()
+    # fig = reachtube_tree(trace, None, fig, 1, 2, [1,2], plot_color=colors)
+    # fig.data[0].name = 'True State'
+    # fig.data[0].showlegend = True
+
+    N = 25
+    start_time = time.perf_counter()
+    sim_traces = []
+    for i in range(N):
+        sim_traces.append(scenario.simulate(T, 1))
+        if i != N-1 and os.path.exists(filename):
+            os.remove(filename)
+        if i != N-1 and os.path.exists(filename_ra):
+            os.remove(filename_ra)
+
+    fig = go.Figure()
+    for st in sim_traces:
+        fig = simulation_tree(st, None, fig, 1, 2, [1,2], 'lines', 'trace')
+
+    print(f'Runtime for {N} sims, T={T}, ts={1}: {time.perf_counter()-start_time:.2f}')
+    # sim_dict = sim_traces_to_dict_composed(sim_traces)
+    diam_0 = 45
+    diam_sim = sim_traces_to_diameters(sim_traces)
+    diam_f_sim, diam_bar_sim = diam_sim[-1], (sum(diam_sim)+0.0)/len(diam_sim)
+    print(f'Sim results: F/I: {diam_f_sim/diam_0:.5f}, A/I: {diam_bar_sim/diam_0:.5f}\n raw final: {diam_f_sim:.5f}, raw average: {diam_bar_sim:.5f}')
 
     if os.path.exists(filename):
         with open(filename, 'rb') as f:

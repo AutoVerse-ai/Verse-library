@@ -87,6 +87,21 @@ def parse_function_array(func: Callable, input_bounds: List[List[float]], piecew
     Returns:
         Same as parse_function: (current_bounds, bounds_history)
     """
+
+    # Create cache directory if it doesn't exist
+    cache_dir = Path(__file__).parent / "parse_cache"
+    cache_dir.mkdir(exist_ok=True)
+    
+    # Generate cache key from input bounds and function name
+    cache_key = get_cache_key(input_bounds, func.__name__)
+    cache_file = cache_dir / f"parse_{cache_key}.pkl"
+    
+    # Check if cached result exists
+    if cache_file.exists():
+        with open(cache_file, 'rb') as f:
+            unioned_bounds, _ = pickle.load(f)
+            return unioned_bounds
+
     # Get argument names from the function signature
     sig = inspect.signature(func)
     arg_names = list(sig.parameters.keys())
@@ -135,7 +150,7 @@ def parse_function_array(func: Callable, input_bounds: List[List[float]], piecew
             parsed_input_bounds[name] = [(bounds[0], bounds[1])]
         
         # Run parse_function on this sub-domain
-        current_bounds, bounds_history = parse_function(func, parsed_input_bounds, piecewise_functions, track_mode, track_map, cache)
+        current_bounds, bounds_history = parse_function(func, parsed_input_bounds, piecewise_functions, track_mode, track_map, cache, parent_cache=True)
         all_current_bounds.append(current_bounds)
         all_bounds_histories.append(bounds_history)
     
@@ -156,12 +171,17 @@ def parse_function_array(func: Callable, input_bounds: List[List[float]], piecew
             all_maxs = [b[0][1] for b in all_var_bounds]
             unioned_bounds[var] = [(min(all_mins), max(all_maxs))]
     
+        # NOTE: cache result if desired
+    if cache:
+        with open(cache_file, 'wb') as f:
+            pickle.dump((unioned_bounds, None), f)
+
     # NOTE: don't worry about bounds history
     return unioned_bounds
 
 # TODO: add partitioning to this function analogous to sensor_parser -- see docking scenario for motivation
 # TODO: could probably just further add a parser that first splits the input bounds, calls parsed_function on each set of input_bounds, and then unions the outputs of each call
-def parse_function(func: Callable, input_bounds: Dict[str, List[Tuple[float, float]]], piecewise_functions: List[Callable] = None, track_mode = None, track_map = None, cache: bool = True, logging: bool = False):
+def parse_function(func: Callable, input_bounds: Dict[str, List[Tuple[float, float]]], piecewise_functions: List[Callable] = None, track_mode = None, track_map = None, cache: bool = True, logging: bool = False, parent_cache = False):
     """
     Process a function line-by-line, computing bounds at each step using parsed_sensor.
     
@@ -236,7 +256,8 @@ def parse_function(func: Callable, input_bounds: Dict[str, List[Tuple[float, flo
             raise Exception(f'Line is of type {type(stmt)} instead of assign or return.')
     
     # NOTE: cache result if desired
-    if cache:
+    # NOTE: don't cache if called by some superfunction
+    if cache and not parent_cache:
         with open(cache_file, 'wb') as f:
             pickle.dump((current_bounds, bounds_history), f)
 
