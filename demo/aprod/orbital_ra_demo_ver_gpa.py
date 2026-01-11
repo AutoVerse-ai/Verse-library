@@ -59,7 +59,7 @@ if __name__ == "__main__":
     # input_code_name = "./demo/aprod/orbital_ra_controller_v2.py"
     input_code_name = "./demo/aprod/orbital_ra_controller_gpa.py"
     scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False))
-    scenario.config.reachability_method = ReachabilityMethod.DRYVR_DISC
+    # scenario.config.reachability_method = ReachabilityMethod.DRYVR_DISC
     dep = OrbitalAgent("deputy", file_name=input_code_name)
     obs = SimpleOrbtialAgent("obs")
     scenario.add_agent(dep)
@@ -88,40 +88,40 @@ if __name__ == "__main__":
         ],
     )
 
-    # start = time.perf_counter()    
-    # trace = scenario.verify(T, 1)
-    # print(f'Simulaion time: {time.perf_counter()-start:.3f}')
-    # diam = time_step_diameter_rect(trace, T, 1)
-    # diam_0, diam_f, diam_bar = 45, diam[-1], (sum(diam)+0.0)/len(diam) # NOTE: use correct diameter values
-    # print(f'F/I: {diam_f/diam_0:.5f}, A/I: {diam_bar/diam_0:.5f}\n raw final: {diam_f:.5f}, raw average: {diam_bar:.5f}, raw initial: {diam_0:.5f}')
-    # fig = go.Figure()
-    # fig = reachtube_tree(trace, None, fig, 1, 2, [1, 2], "lines", "trace")
-
-    # fig = go.Figure()
-    # fig = reachtube_tree(trace, None, fig, 1, 2, [1,2], plot_color=colors)
-    # fig.data[0].name = 'True State'
-    # fig.data[0].showlegend = True
-
-    N = 25
-    start_time = time.perf_counter()
-    sim_traces = []
-    for i in range(N):
-        sim_traces.append(scenario.simulate(T, 1))
-        if i != N-1 and os.path.exists(filename):
-            os.remove(filename)
-        if i != N-1 and os.path.exists(filename_ra):
-            os.remove(filename_ra)
+    start = time.perf_counter()    
+    trace = scenario.verify(T, 1)
+    print(f'Simulaion time: {time.perf_counter()-start:.3f}')
+    diam = time_step_diameter_rect(trace, T, 1)
+    diam_0, diam_f, diam_bar = 45, diam[-1], (sum(diam)+0.0)/len(diam) # NOTE: use correct diameter values
+    print(f'F/I: {diam_f/diam_0:.5f}, A/I: {diam_bar/diam_0:.5f}\n raw final: {diam_f:.5f}, raw average: {diam_bar:.5f}, raw initial: {diam_0:.5f}')
+    fig = go.Figure()
+    fig = reachtube_tree(trace, None, fig, 1, 2, [1, 2], "lines", "trace")
 
     fig = go.Figure()
-    for st in sim_traces:
-        fig = simulation_tree(st, None, fig, 1, 2, [1,2], 'lines', 'trace')
+    fig = reachtube_tree(trace, None, fig, 1, 2, [1,2], plot_color=colors)
+    fig.data[0].name = 'True State'
+    fig.data[0].showlegend = True
 
-    print(f'Runtime for {N} sims, T={T}, ts={1}: {time.perf_counter()-start_time:.2f}')
-    # sim_dict = sim_traces_to_dict_composed(sim_traces)
-    diam_0 = 45
-    diam_sim = sim_traces_to_diameters(sim_traces)
-    diam_f_sim, diam_bar_sim = diam_sim[-1], (sum(diam_sim)+0.0)/len(diam_sim)
-    print(f'Sim results: F/I: {diam_f_sim/diam_0:.5f}, A/I: {diam_bar_sim/diam_0:.5f}\n raw final: {diam_f_sim:.5f}, raw average: {diam_bar_sim:.5f}')
+    # N = 25
+    # start_time = time.perf_counter()
+    # sim_traces = []
+    # for i in range(N):
+    #     sim_traces.append(scenario.simulate(T, 1))
+    #     if i != N-1 and os.path.exists(filename):
+    #         os.remove(filename)
+    #     if i != N-1 and os.path.exists(filename_ra):
+    #         os.remove(filename_ra)
+
+    # fig = go.Figure()
+    # for st in sim_traces:
+    #     fig = simulation_tree(st, None, fig, 1, 2, [1,2], 'lines', 'trace')
+
+    # print(f'Runtime for {N} sims, T={T}, ts={1}: {time.perf_counter()-start_time:.2f}')
+    # # sim_dict = sim_traces_to_dict_composed(sim_traces)
+    # diam_0 = 45
+    # diam_sim = sim_traces_to_diameters(sim_traces)
+    # diam_f_sim, diam_bar_sim = diam_sim[-1], (sum(diam_sim)+0.0)/len(diam_sim)
+    # print(f'Sim results: F/I: {diam_f_sim/diam_0:.5f}, A/I: {diam_bar_sim/diam_0:.5f}\n raw final: {diam_f_sim:.5f}, raw average: {diam_bar_sim:.5f}')
 
     if os.path.exists(filename):
         with open(filename, 'rb') as f:

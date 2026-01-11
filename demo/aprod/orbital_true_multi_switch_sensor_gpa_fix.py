@@ -39,16 +39,19 @@ class OrbitalSensor:
         len_dict = {"others": len(state_dict) - 1}
         if simulate:
             for cur_agent in state_dict: 
-                if cur_agent == "obs":
-                    cont['obs.x'] = state_dict[cur_agent][0][1]
-                    cont['obs.y'] = state_dict[cur_agent][0][2]
-                    cont['obs.z'] = state_dict[cur_agent][0][3]
-                    cont['obs.vx'] = state_dict[cur_agent][0][4]
-                    cont['obs.vy'] = state_dict[cur_agent][0][5]
-                    cont['obs.vz'] = state_dict[cur_agent][0][6]
-                    disc['obs.move_mode'] = state_dict[cur_agent][1][0]
-            
-                elif cur_agent == agent.id:
+                if agent.id == "deputy":
+                    obs_name = 'deputy_ahead' 
+                    obs2_name = 'deputy_aheader'
+                elif agent.id == "deputy_ahead":
+                    obs_name = 'deputy' 
+                    obs2_name = 'deputy_aheader'
+                elif agent.id == "deputy_aheader":
+                    obs_name = 'deputy' 
+                    obs2_name = 'deputy_ahead'
+                else:
+                    raise Exception(f"Currently unhandled agent name: {agent.id}")
+
+                if cur_agent == agent.id:
                     cont['ego.x'] = state_dict[cur_agent][0][1]
                     cont['ego.y'] = state_dict[cur_agent][0][2]
                     cont['ego.z'] = state_dict[cur_agent][0][3]
@@ -69,28 +72,33 @@ class OrbitalSensor:
                     cont['ego.evz'] = state_dict[cur_agent][0][18]
                     cont['ego.timer'] = state_dict[cur_agent][0][19]
                     cont['ego.po_timer'] = state_dict[cur_agent][0][20]
-                    disc['ego.go_mode'] = state_dict[cur_agent][1][0]
-                    if np.abs(cont['ego.po_timer']-1)<0.4 and agent.id == 'deputy_ahead':
-                        pass
+                    cont['ego.time'] = state_dict[cur_agent][0][21]
+                    cont['ego.prox_m'] = state_dict[cur_agent][0][22]
+                    cont['ego.priority'] = state_dict[cur_agent][0][23]
 
+
+                    disc['ego.go_mode'] = state_dict[cur_agent][1][0]
                     disc['ego.po_mode'] = state_dict[cur_agent][1][1]
-                    disc['ego.priority_mode'] = state_dict[cur_agent][1][2]
-                    disc['ego.move_mode'] = state_dict[cur_agent][1][3]
+                    disc['ego.po_two_mode'] = state_dict[cur_agent][1][2]
+                    disc['ego.priority_mode'] = state_dict[cur_agent][1][3]
+                    disc['ego.move_mode'] = state_dict[cur_agent][1][4]
 
                     pos = np.array([state_dict[cur_agent][0][i] for i in range(1,4)])
-                    obs_name = 'deputy_ahead' if agent.id == 'deputy' else 'deputy' # make this more generalizable in the future
                     obstacle_cont = state_dict[obs_name][0]                
                     obstacle_pos = np.array([obstacle_cont[i] for i in range(1,4)])
-                    cont['ego.dist'] = np.linalg.norm(pos-obstacle_pos) 
-                    cont['ego.hdist'] = D
+                    cont['other_one.dist'] = np.linalg.norm(pos-obstacle_pos) 
+                    cont['other_one.hdist'] = D
 
-                    if np.abs(cont['ego.po_timer']-2596)<0.4 and cur_agent=='deputy':
-                        pass
+                    obstacle_cont2 = state_dict[obs2_name][0]                
+                    obstacle_pos2 = np.array([obstacle_cont2[i] for i in range(1,4)])
+                    cont['other_two.dist'] = np.linalg.norm(pos-obstacle_pos2) 
+                    cont['other_two.hdist'] = D
 
                     theta = np.arctan2(obstacle_pos[1]-cont['ego.y'], obstacle_pos[0]-cont['ego.x'])
                     theta_v = np.arctan2(cont['ego.vy'], cont['ego.vx'])
                     diff = wrap_to_pi(theta-theta_v+np.random.uniform(-1,1)*ep_ao) # NOTE: mirroring what I did for verification, just simplier for simulation
-                    cont['ego.angle_minus'] = cont['ego.angle_plus'] = diff
+                    cont['other_one.angle_minus'] = cont['other_one.angle_plus'] = diff
+
 
                     if disc['ego.go_mode'] == 'Active':
                         # true_pos = np.array([state_dict[cur_agent][0][i] for i in range(1,4)])
@@ -112,51 +120,36 @@ class OrbitalSensor:
                         cont['ego.evz'] = err_vel[2]
 
                     if disc['ego.po_mode'] == 'Active':
-                        cont['ego.hdist'] = cont['ego.dist']+np.random.uniform(-1,1)*ep_rho
-                
-                else:
-                    cont['other.x'] = state_dict[cur_agent][0][1]
-                    cont['other.y'] = state_dict[cur_agent][0][2]
-                    cont['other.z'] = state_dict[cur_agent][0][3]
-                    cont['other.vx'] = state_dict[cur_agent][0][4]
-                    cont['other.vy'] = state_dict[cur_agent][0][5]
-                    cont['other.vz'] = state_dict[cur_agent][0][6]
-                    cont['other.hx'] = state_dict[cur_agent][0][7]
-                    cont['other.hy'] = state_dict[cur_agent][0][8]
-                    cont['other.hz'] = state_dict[cur_agent][0][9]
-                    cont['other.hvx'] = state_dict[cur_agent][0][10]
-                    cont['other.hvy'] = state_dict[cur_agent][0][11]
-                    cont['other.hvz'] = state_dict[cur_agent][0][12]
-                    cont['other.ex'] = state_dict[cur_agent][0][13]
-                    cont['other.ey'] = state_dict[cur_agent][0][14]
-                    cont['other.ez'] = state_dict[cur_agent][0][15]
-                    cont['other.evx'] = state_dict[cur_agent][0][16]
-                    cont['other.evy'] = state_dict[cur_agent][0][17]
-                    cont['other.evz'] = state_dict[cur_agent][0][18]
-                    cont['other.timer'] = state_dict[cur_agent][0][19]
-                    cont['other.po_timer'] = state_dict[cur_agent][0][20]
-                    cont['other.time'] = state_dict[cur_agent][0][21]
+                        cont['other_one.hdist'] = cont['other_one.dist']+np.random.uniform(-1,1)*ep_rho
                     
-                    disc['other.go_mode'] = state_dict[cur_agent][1][0]
-                    disc['other.po_mode'] = state_dict[cur_agent][1][1]
-                    disc['other.priority_mode'] = state_dict[cur_agent][1][2]
-                    disc['other.move_mode'] = state_dict[cur_agent][1][3]
+                    if disc['ego.po_two_mode'] == 'Active':
+                        cont['other_two.hdist'] = cont['other_two.dist']+np.random.uniform(-1,1)*ep_rho
 
-            if np.abs(cont['other.po_timer']-1)<0.4 and agent.id == 'deputy_ahead':
-                pass
+                    disc['other_one.po_mode'] = state_dict[obs_name][1][1]
+                    disc['other_one.po_two_mode'] = state_dict[obs_name][1][2]
+                    disc['other_one.priority_mode'] = state_dict[obs_name][1][3]
+                    disc['other_one.move_mode'] = state_dict[obs_name][1][4]
+
+                    disc['other_two.po_mode'] = state_dict[obs2_name][1][1]
+                    disc['other_two.po_two_mode'] = state_dict[obs2_name][1][2]
+                    disc['other_two.priority_mode'] = state_dict[obs2_name][1][3]
+                    disc['other_two.move_mode'] = state_dict[obs2_name][1][4]
 
         else:
             for cur_agent in state_dict:
-                if cur_agent == "obs":
-                    cont['obs.x'] = [state_dict[cur_agent][0][0][1], state_dict[cur_agent][0][1][1]]
-                    cont['obs.y'] = [state_dict[cur_agent][0][0][2], state_dict[cur_agent][0][1][2]] 
-                    cont['obs.z'] = [state_dict[cur_agent][0][0][3], state_dict[cur_agent][0][1][3]] 
-                    cont['obs.vx'] = [state_dict[cur_agent][0][0][4], state_dict[cur_agent][0][1][4]] 
-                    cont['obs.vy'] = [state_dict[cur_agent][0][0][5], state_dict[cur_agent][0][1][5]] 
-                    cont['obs.vz'] = [state_dict[cur_agent][0][0][6], state_dict[cur_agent][0][1][6]] 
-                    disc['obs.move_mode'] = state_dict[cur_agent][1][0]
+                if agent.id == "deputy":
+                    obs_name = 'deputy_ahead' 
+                    obs2_name = 'deputy_aheader'
+                elif agent.id == "deputy_ahead":
+                    obs_name = 'deputy' 
+                    obs2_name = 'deputy_aheader'
+                elif agent.id == "deputy_aheader":
+                    obs_name = 'deputy' 
+                    obs2_name = 'deputy_ahead'
+                else:
+                    raise Exception(f"Currently unhandled agent name: {agent.id}")
 
-                elif cur_agent == agent.id:
+                if cur_agent == agent.id:
                     cont['ego.x'] = [state_dict[cur_agent][0][0][1], state_dict[cur_agent][0][1][1]]
                     cont['ego.y'] = [state_dict[cur_agent][0][0][2], state_dict[cur_agent][0][1][2]] 
                     cont['ego.z'] = [state_dict[cur_agent][0][0][3], state_dict[cur_agent][0][1][3]] 
@@ -176,12 +169,16 @@ class OrbitalSensor:
                     cont['ego.evy'] = [state_dict[cur_agent][0][0][17], state_dict[cur_agent][0][1][17]]
                     cont['ego.evz'] = [state_dict[cur_agent][0][0][18], state_dict[cur_agent][0][1][18]]
                     cont['ego.timer'] = [state_dict[cur_agent][0][0][19], state_dict[cur_agent][0][0][19]]
-                    cont['ego.po_timer'] = [state_dict[cur_agent][0][0][20], state_dict[cur_agent][0][1][20]]
-                    # cont['ego.time'] = [state_dict[cur_agent][0][0][21], state_dict[cur_agent][0][1][21]]
+                    cont['ego.po_timer'] = [state_dict[cur_agent][0][0][20], state_dict[cur_agent][0][0][20]]
+                    cont['ego.time'] = [state_dict[cur_agent][0][0][21], state_dict[cur_agent][0][0][21]]
+                    cont['ego.prox_m'] = [state_dict[cur_agent][0][0][22], state_dict[cur_agent][0][1][22]]
+                    cont['ego.priority'] = [state_dict[cur_agent][0][0][23], state_dict[cur_agent][0][1][23]]
+
                     disc['ego.go_mode'] = state_dict[cur_agent][1][0]
                     disc['ego.po_mode'] = state_dict[cur_agent][1][1]
-                    disc['ego.priority_mode'] = state_dict[cur_agent][1][2]
-                    disc['ego.move_mode'] = state_dict[cur_agent][1][3]
+                    disc['ego.po_two_mode'] = state_dict[cur_agent][1][2]
+                    disc['ego.priority_mode'] = state_dict[cur_agent][1][3]
+                    disc['ego.move_mode'] = state_dict[cur_agent][1][4]
 
                     pos_min = np.array([state_dict[cur_agent][0][0][i] for i in range(1,4)])
                     pos_max = np.array([state_dict[cur_agent][0][1][i] for i in range(1,4)]) 
@@ -191,8 +188,15 @@ class OrbitalSensor:
                     obstacle_pos_min, obstacle_pos_max = np.array([obstacle_cont[0][i] for i in range(1,4)]), np.array([obstacle_cont[1][i] for i in range(1,4)])
                     pos_bounds, obstacle_bounds = np.vstack([pos_min, pos_max]).T, np.vstack([obstacle_pos_min, obstacle_pos_max]).T
                     dist_min, dist_max = dist_extrema(pos_bounds, obstacle_bounds)
-                    cont['ego.dist'] = [dist_min, dist_max]
-                    cont['ego.hdist'] = [D,D]
+                    cont['other_one.dist'] = [dist_min, dist_max]
+                    cont['other_one.hdist'] = [D,D]
+
+                    obstacle_cont2 = state_dict[obs2_name][0]
+                    obstacle_pos_min2, obstacle_pos_max2 = np.array([obstacle_cont2[0][i] for i in range(1,4)]), np.array([obstacle_cont2[1][i] for i in range(1,4)])
+                    pos_bounds, obstacle_bounds2 = np.vstack([pos_min, pos_max]).T, np.vstack([obstacle_pos_min2, obstacle_pos_max2]).T
+                    dist_min2, dist_max2 = dist_extrema(pos_bounds, obstacle_bounds2)
+                    cont['other_two.dist'] = [dist_min2, dist_max2]
+                    cont['other_two.hdist'] = [D,D]
 
                     own_bounds = cont['ego.x'] + cont['ego.y']
                     obs_bounds = [obstacle_cont[0][1]] + [obstacle_cont[1][1]] + [obstacle_cont[0][2]] + [obstacle_cont[1][2]]
@@ -203,10 +207,20 @@ class OrbitalSensor:
                     diff_min, diff_max = angular_bounds_diff([theta_min, theta_max],[theta_v_min, theta_v_max])
                     # TODO: fix way noise is being added, some weird things will occur in current naive implementation
                     if diff_max < diff_min: # if 2nd/3rd quadrant were both crossed
-                        cont['ego.angle_minus'] = [diff_min-ep_ao, np.pi]
-                        cont['ego.angle_plus'] = [-np.pi, diff_max+ep_ao]
+                        cont['other_one.angle_minus'] = [diff_min-ep_ao, np.pi]
+                        cont['other_one.angle_plus'] = [-np.pi, diff_max+ep_ao]
                     else:
-                        cont['ego.angle_minus'] = cont['ego.angle_plus'] = [diff_min-ep_ao, diff_max+ep_ao]
+                        cont['other_one.angle_minus'] = cont['other_one.angle_plus'] = [diff_min-ep_ao, diff_max+ep_ao]
+                    
+                    obs_bounds2 = [obstacle_cont2[0][1]] + [obstacle_cont2[1][1]] + [obstacle_cont2[0][2]] + [obstacle_cont2[1][2]]
+                    theta_min2, theta_max2 = angular_span_between_rects(own_bounds, obs_bounds2)
+                    diff_min2, diff_max2 = angular_bounds_diff([theta_min2, theta_max2],[theta_v_min, theta_v_max])
+                    if diff_max2 < diff_min2: # if 2nd/3rd quadrant were both crossed
+                        cont['other_two.angle_minus'] = [diff_min2-ep_ao, np.pi]
+                        cont['other_two.angle_plus'] = [-np.pi, diff_max2+ep_ao]
+                    else:
+                        cont['other_two.angle_minus'] = cont['other_one.angle_plus'] = [diff_min-ep_ao, diff_max+ep_ao]
+
 
                     if disc['ego.go_mode'] == 'Active': # prop ground/linear sensor error
                         cont['ego.hx'] = [cont['ego.x'][0]-epsilon, cont['ego.x'][1]+epsilon] # just need to be here to not mess up cur_delta
@@ -222,34 +236,24 @@ class OrbitalSensor:
                         cont['ego.evy'] = [-epsilon_vel, epsilon_vel]
                         cont['ego.evz'] = [-epsilon_vel, epsilon_vel]
                     if disc['ego.po_mode'] == 'Active':
-                        cont['ego.hdist'] = [max(dist_min-ep_rho, 0), dist_max+ep_rho]
+                        cont['other_one.hdist'] = [max(dist_min-ep_rho, 0), dist_max+ep_rho]
+                    if disc['ego.po_two_mode']=='Active':
+                        cont['other_two.hdist'] = [max(dist_min2-ep_rho, 0), dist_max2+ep_rho]
 
-                else:
-                    cont['other.x'] = [state_dict[cur_agent][0][0][1], state_dict[cur_agent][0][1][1]]
-                    cont['other.y'] = [state_dict[cur_agent][0][0][2], state_dict[cur_agent][0][1][2]] 
-                    cont['other.z'] = [state_dict[cur_agent][0][0][3], state_dict[cur_agent][0][1][3]] 
-                    cont['other.vx'] = [state_dict[cur_agent][0][0][4], state_dict[cur_agent][0][1][4]] 
-                    cont['other.vy'] = [state_dict[cur_agent][0][0][5], state_dict[cur_agent][0][1][5]] 
-                    cont['other.vz'] = [state_dict[cur_agent][0][0][6], state_dict[cur_agent][0][1][6]] 
-                    cont['other.hx'] = [state_dict[cur_agent][0][0][7], state_dict[cur_agent][0][1][7]]
-                    cont['other.hy'] = [state_dict[cur_agent][0][0][8], state_dict[cur_agent][0][1][8]]
-                    cont['other.hz'] = [state_dict[cur_agent][0][0][9], state_dict[cur_agent][0][1][9]]
-                    cont['other.hvx'] = [state_dict[cur_agent][0][0][10], state_dict[cur_agent][0][1][10]]
-                    cont['other.hvy'] = [state_dict[cur_agent][0][0][11], state_dict[cur_agent][0][1][11]]
-                    cont['other.hvz'] = [state_dict[cur_agent][0][0][12], state_dict[cur_agent][0][1][12]]
-                    cont['other.ex'] = [state_dict[cur_agent][0][0][13], state_dict[cur_agent][0][1][13]]
-                    cont['other.ey'] = [state_dict[cur_agent][0][0][14], state_dict[cur_agent][0][1][14]]
-                    cont['other.ez'] = [state_dict[cur_agent][0][0][15], state_dict[cur_agent][0][1][15]]
-                    cont['other.evx'] = [state_dict[cur_agent][0][0][16], state_dict[cur_agent][0][1][16]]
-                    cont['other.evy'] = [state_dict[cur_agent][0][0][17], state_dict[cur_agent][0][1][17]]
-                    cont['other.evz'] = [state_dict[cur_agent][0][0][18], state_dict[cur_agent][0][1][18]]
-                    cont['other.timer'] = [state_dict[cur_agent][0][0][19], state_dict[cur_agent][0][1][19]]
-                    cont['other.po_timer'] = [state_dict[cur_agent][0][0][20], state_dict[cur_agent][0][1][20]]
-                    cont['other.time'] = [state_dict[cur_agent][0][0][21], state_dict[cur_agent][0][1][21]]
-                    disc['other.go_mode'] = state_dict[cur_agent][1][0]
-                    disc['other.po_mode'] = state_dict[cur_agent][1][1]
-                    disc['other.priority_mode'] = state_dict[cur_agent][1][2]
-                    disc['other.move_mode'] = state_dict[cur_agent][1][3]
+                    disc['other_one.po_mode'] = state_dict[obs_name][1][1]
+                    disc['other_one.po_two_mode'] = state_dict[obs_name][1][2]
+                    disc['other_one.priority_mode'] = state_dict[obs_name][1][3]
+                    disc['other_one.move_mode'] = state_dict[obs_name][1][4]
+
+                    disc['other_two.po_mode'] = state_dict[obs2_name][1][1]
+                    disc['other_two.po_two_mode'] = state_dict[obs2_name][1][2]
+                    disc['other_two.priority_mode'] = state_dict[obs2_name][1][3]
+                    disc['other_two.move_mode'] = state_dict[obs2_name][1][4]
+
+                    if agent.id == 'deputy' and np.abs(cont['ego.time'][0]-2626)<0.4:
+                        print(f'At time t=2626: angle: {cont["other_one.angle_plus"]}') # NOTE: somehow angle was just outside, so I increased the unsafe range from 1 to 1.2
+                        print(f'Obs_name is {obs_name}')
+                        pass
                 # elif disc['ego.po_mode'] == 'Active':
                 #     """Testing to see why having proximity sensor active is increasing uncertainty"""
                 #     ex_min, ex_max = 0, 0

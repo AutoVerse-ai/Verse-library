@@ -53,7 +53,7 @@ if __name__ == "__main__":
     if os.path.exists(filename):
         os.remove(filename)
 
-    # clear_parse_cache()
+    clear_parse_cache()
 
     # input_code_name = "./demo/aprod/orbital_docking_controller.py"
     input_code_name = "./demo/aprod/orbital_docking_controller_gpa_parser.py"

@@ -2,12 +2,12 @@ from enum import Enum, auto
 import copy
 from typing import List
 
-epsilon = 0.1
-prox_dist = 2.5
+epsilon = 1 # originally 0.1
+prox_dist = 10 # 2.5 is standard for 2.5 init est state error -- revised to 10 to fit simulations better
 T_prox = 100
 buffer = 30
 unsafe_dist = 20
-angle_bound = 1
+angle_bound = 1 # used to be 1, increasing slightly 
 
 class GOMode(Enum):
     Passive = auto()
@@ -75,7 +75,8 @@ def has_priority(ego: State, others: List[State], desired_mode: POMode):
     return res
 
 # def decisionLogic(ego: State, other: State, obs: MiniState) -> State:
-def decisionLogic(ego: State, other: State, obs) -> State:
+# def decisionLogic(ego: State, other: State, obs) -> State:
+def decisionLogic(ego: State, other: State) -> State:
     output = copy.deepcopy(ego)
     if ego.timer >= 900 and ego.go_mode != GOMode.Active:
         output.go_mode = GOMode.Active 
@@ -135,16 +136,16 @@ def decisionLogic(ego: State, other: State, obs) -> State:
     # note this should be using hdist instead of dist
     if (ego.hx >= -epsilon and ego.hx <= epsilon and ego.hy >= -75-epsilon and ego.hy <= -75+epsilon and ego.move_mode != MoveMode.Inner) or (ego.hx >= -epsilon and ego.hx <= epsilon and ego.hy >= 75-epsilon and ego.hy <= 75+epsilon and ego.move_mode != MoveMode.Inner):
         # if not (ego.po_mode == POMode.Active and other.move_mode == MoveMode.Inner and ego.dist < unsafe_dist):
-        if not (ego.po_mode == POMode.Active and other.move_mode == MoveMode.Inner and -angle_bound< ego.angle_minus < angle_bound and -angle_bound < ego.angle_plus < angle_bound):
-            if not (obs.move_mode == MoveMode.Inner and (ego.x-obs.x)**2+(ego.y-obs.y)**2+(ego.z-obs.z)**2<unsafe_dist**2):
-                output.move_mode = MoveMode.Inner
-                # output.timer = ego.timer * 1
-                output.hx = ego.x - ego.ex
-                output.hy = ego.y - ego.ey
-                output.hz = ego.z - ego.ez
+        if not (ego.po_mode == POMode.Active and other.move_mode == MoveMode.Inner and (-angle_bound< ego.angle_minus < angle_bound or -angle_bound < ego.angle_plus < angle_bound)):
+            # if not (obs.move_mode == MoveMode.Inner and (ego.x-obs.x)**2+(ego.y-obs.y)**2+(ego.z-obs.z)**2<unsafe_dist**2):
+            output.move_mode = MoveMode.Inner
+            # output.timer = ego.timer * 1
+            output.hx = ego.x - ego.ex
+            output.hy = ego.y - ego.ey
+            output.hz = ego.z - ego.ez
 
-                output.hvx = ego.vx - ego.evx
-                output.hvy = ego.vy - ego.evy
-                output.hvz = ego.vz - ego.evz
+            output.hvx = ego.vx - ego.evx
+            output.hvy = ego.vy - ego.evy
+            output.hvz = ego.vz - ego.evz
 
     return output

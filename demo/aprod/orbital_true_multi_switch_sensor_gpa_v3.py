@@ -243,6 +243,7 @@ class OrbitalSensor:
                         cur_filter_mode //=2
                     cur_perc_prox_mode = cur_filter_mode % 2 # get perceived mode of cur_agent/other
 
+                    # NOTE: all of this is nearly impossible to parse and is unnecessary for the paper, redo everything like the original multi_switch or v1 of the true_multi_switch
                     index = cur_priority # use priority as the differentiator
                     filter_prox_mode = state_dict[agent.id][0][0][22] # since cont['ego.prox_m'] may note be defined yet
                     for _ in range(int(index)): # divide by base index amount of times. for now, let base = 10, 4 would also suffice I think

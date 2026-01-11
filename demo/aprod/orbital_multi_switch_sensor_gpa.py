@@ -37,93 +37,65 @@ class OrbitalSensor:
         disc = {}
         len_dict = {"others": len(state_dict) - 1}
         if simulate:
-            cur_agent = agent.id
-            cont['ego.x'] = state_dict[cur_agent][0][1]
-            cont['ego.y'] = state_dict[cur_agent][0][2]
-            cont['ego.z'] = state_dict[cur_agent][0][3]
-            cont['ego.vx'] = state_dict[cur_agent][0][4]
-            cont['ego.vy'] = state_dict[cur_agent][0][5]
-            cont['ego.vz'] = state_dict[cur_agent][0][6]
-            cont['ego.hx'] = state_dict[cur_agent][0][7]
-            cont['ego.hy'] = state_dict[cur_agent][0][8]
-            cont['ego.hz'] = state_dict[cur_agent][0][9]
-            cont['ego.hvx'] = state_dict[cur_agent][0][10]
-            cont['ego.hvy'] = state_dict[cur_agent][0][11]
-            cont['ego.hvz'] = state_dict[cur_agent][0][12]
-            cont['ego.ex'] = state_dict[cur_agent][0][13]
-            cont['ego.ey'] = state_dict[cur_agent][0][14]
-            cont['ego.ez'] = state_dict[cur_agent][0][15]
-            cont['ego.evx'] = state_dict[cur_agent][0][16]
-            cont['ego.evy'] = state_dict[cur_agent][0][17]
-            cont['ego.evz'] = state_dict[cur_agent][0][18]
-            cont['ego.timer'] = state_dict[cur_agent][0][19]
-            cont['ego.po_timer'] = state_dict[cur_agent][0][20]
-            disc['ego.go_mode'] = state_dict[cur_agent][1][0]
-            disc['ego.po_mode'] = state_dict[cur_agent][1][1]
-            disc['ego.priority_mode'] = state_dict[cur_agent][1][2]
-            disc['ego.move_mode'] = state_dict[cur_agent][1][3]
-        
+            for cur_agent in state_dict:
+                if cur_agent == agent.id:
+                    cont['ego.x'] = state_dict[cur_agent][0][1]
+                    cont['ego.y'] = state_dict[cur_agent][0][2]
+                    cont['ego.z'] = state_dict[cur_agent][0][3]
+                    cont['ego.vx'] = state_dict[cur_agent][0][4]
+                    cont['ego.vy'] = state_dict[cur_agent][0][5]
+                    cont['ego.vz'] = state_dict[cur_agent][0][6]
+                    cont['ego.hx'] = state_dict[cur_agent][0][7]
+                    cont['ego.hy'] = state_dict[cur_agent][0][8]
+                    cont['ego.hz'] = state_dict[cur_agent][0][9]
+                    cont['ego.hvx'] = state_dict[cur_agent][0][10]
+                    cont['ego.hvy'] = state_dict[cur_agent][0][11]
+                    cont['ego.hvz'] = state_dict[cur_agent][0][12]
+                    cont['ego.ex'] = state_dict[cur_agent][0][13]
+                    cont['ego.ey'] = state_dict[cur_agent][0][14]
+                    cont['ego.ez'] = state_dict[cur_agent][0][15]
+                    cont['ego.evx'] = state_dict[cur_agent][0][16]
+                    cont['ego.evy'] = state_dict[cur_agent][0][17]
+                    cont['ego.evz'] = state_dict[cur_agent][0][18]
+                    cont['ego.timer'] = state_dict[cur_agent][0][19]
+                    cont['ego.po_timer'] = state_dict[cur_agent][0][20]
+                    disc['ego.go_mode'] = state_dict[cur_agent][1][0]
+                    disc['ego.po_mode'] = state_dict[cur_agent][1][1]
+                    disc['ego.priority_mode'] = state_dict[cur_agent][1][2]
+                    disc['ego.move_mode'] = state_dict[cur_agent][1][3]
 
+                    pos = np.array([state_dict[cur_agent][0][i] for i in range(1,4)]) # NOTE: could probably just use list comp
+                    obs_name = 'deputy_ahead' if agent.id == 'deputy' else 'deputy' # make this more generalizable in the future
+                    obstacle_cont = state_dict[obs_name][0]
+                    obs_pos = np.array([obstacle_cont[i] for i in range(1,4)])
+                    cont['ego.dist'] = np.linalg.norm(pos-obstacle_bounds)
+                    theta = np.arctan2(obs_pos[1]-pos[1], obs_pos[0]-pos[0]) # mirroring verify -- theta is angle from own to other
+                    plane_vel = np.array(state_dict[cur_agent][0][4:6])
+                    theta_v = np.arctan2(plane_vel[1], plane_vel[0])
+                    cont['ego.angle_minus'] = cont['ego.angle_plus'] = theta-theta_v+np.random.uniform(-1,1)*ep_ao
 
-            if disc['ego.go_mode'] == 'Active' and disc['ego.po_mode'] == 'Active':
-                dir = np.random.normal(size=3)
-                dir /= np.linalg.norm(dir)
-                rad: float = epsilon * np.cbrt(np.random.uniform(0, 1)) # uniform sampling in volume apparently 
-                err_pos = rad*dir
-                err_pos_prox = prox_rand_error(np.array([state_dict[cur_agent][0][i] for i in range(1,4)]))
-                cont['ego.ex'], cont['ego.ey'], cont['ego.ez'] = np.mean([err_pos, err_pos_prox], axis=0)
+                    if disc['ego.go_mode'] == 'Active':
+                        # true_pos = np.array([state_dict[cur_agent][0][i] for i in range(1,4)])
+                        dir = np.random.normal(size=3)
+                        dir /= np.linalg.norm(dir)
+                        rad = epsilon * np.cbrt(np.random.uniform(0, 1)) # uniform sampling in volume apparently 
+                        err_pos = rad*dir
+                        cont['ego.ex'] = err_pos[0]
+                        cont['ego.ey'] = err_pos[1]
+                        cont['ego.ez'] = err_pos[2]
+                        
+                        # true_vel = np.array([state_dict[cur_agent][0][i] for i in range(4,7)])
+                        dir_vel = np.random.normal(size=3)
+                        dir_vel /= np.linalg.norm(dir_vel)
+                        rad_vel = epsilon_vel * np.cbrt(np.random.uniform(0, 1)) # uniform sampling in volume apparently 
+                        err_vel = rad_vel*dir_vel
+                        cont['ego.evx'] = err_vel[0]
+                        cont['ego.evy'] = err_vel[1]
+                        cont['ego.evz'] = err_vel[2]
 
-                dir_vel = np.random.normal(size=3)
-                dir_vel /= np.linalg.norm(dir_vel)
-                rad_vel = epsilon_vel * np.cbrt(np.random.uniform(0, 1)) # uniform sampling in volume apparently 
-                err_vel = rad_vel*dir_vel
-                err_vel_prox = prox_rand_error(np.array([state_dict[cur_agent][0][i] for i in range(4,7)]))
-                cont['ego.evx'], cont['ego.evy'], cont['ego.evz'] = np.mean([err_vel, err_vel_prox], axis=0)
+                    elif disc['ego.po_mode'] == 'Active':
+                        cont['ego.hdist'] = max(cont['ego.dist'] + np.random.uniform(-1,1)*ep_rho, 0)
 
-            elif disc['ego.go_mode'] == 'Active':
-                # true_pos = np.array([state_dict[cur_agent][0][i] for i in range(1,4)])
-                dir = np.random.normal(size=3)
-                dir /= np.linalg.norm(dir)
-                rad = epsilon * np.cbrt(np.random.uniform(0, 1)) # uniform sampling in volume apparently 
-                err_pos = rad*dir
-                cont['ego.ex'] = err_pos[0]
-                cont['ego.ey'] = err_pos[1]
-                cont['ego.ez'] = err_pos[2]
-                
-                # true_vel = np.array([state_dict[cur_agent][0][i] for i in range(4,7)])
-                dir_vel = np.random.normal(size=3)
-                dir_vel /= np.linalg.norm(dir_vel)
-                rad_vel = epsilon_vel * np.cbrt(np.random.uniform(0, 1)) # uniform sampling in volume apparently 
-                err_vel = rad_vel*dir_vel
-                cont['ego.evx'] = err_vel[0]
-                cont['ego.evy'] = err_vel[1]
-                cont['ego.evz'] = err_vel[2]
-
-            elif disc['ego.po_mode'] == 'Active':
-                pos = np.array([state_dict[cur_agent][0][i] for i in range(1,4)])
-                rho = np.linalg.norm(pos) + ep_rho*(np.random.uniform(-1,1))
-                rho = rho if rho > 0 else 0
-                theta = np.arctan2(pos[1], pos[0]) # azimuth between ego and chief
-                psi = np.arctan(pos[2]/(np.linalg.norm(pos[:2])))
-                theta = theta + np.random.uniform(-1,1)*ep_angle
-                psi = psi + np.random.uniform(-1,1)*ep_angle
-                cont['ego.ex'] = pos[0]-rho*np.cos(theta)*np.cos(psi) 
-                cont['ego.ey'] = pos[1]-rho*np.sin(theta)*np.cos(psi)
-                cont['ego.ez'] = pos[2]-rho*np.sin(psi)
-
-                vel = np.array([state_dict[cur_agent][0][i] for i in range(4,7)])
-                rho_v = np.linalg.norm(vel) + ep_rho_v*(np.random.uniform(-1,1))
-                rho_v = rho_v if rho_v > 0 else 0
-                theta_v = np.arctan2(vel[1], vel[0]) # azimuth between ego and chief
-                psi_v = np.arctan(vel[2]/(np.linalg.norm(vel[:2])))
-                theta_v = theta_v + np.random.uniform(-1,1)*ep_angle
-                psi = psi_v + np.random.uniform(-1,1)*ep_angle
-                cont['ego.evx'] = vel[0]-rho_v*np.cos(theta_v)*np.cos(psi_v) 
-                cont['ego.evy'] = vel[1]-rho_v*np.sin(theta_v)*np.cos(psi_v)
-                cont['ego.evz'] = vel[2]-rho_v*np.sin(psi_v)
-                # cont['other.x'] = state_dict['car2'][0][1] # dummy assignments
-                # cont['other.y'] = state_dict['car2'][0][2]
-                # disc['other.track_mode'] = state_dict['car2'][1][1]
         else:
             for cur_agent in state_dict:
                 if cur_agent == agent.id:
@@ -192,6 +164,12 @@ class OrbitalSensor:
                         cont['ego.evy'] = [-epsilon_vel, epsilon_vel]
                         cont['ego.evz'] = [-epsilon_vel, epsilon_vel]
                     if disc['ego.po_mode'] == 'Active':
+                        cont['ego.hx'] = [cont['ego.x'][0]-cont['ego.ex'][1], cont['ego.x'][1]-cont['ego.ex'][0]]
+                        cont['ego.hy'] = [cont['ego.y'][0]-cont['ego.ey'][1], cont['ego.y'][1]-cont['ego.ey'][0]]
+                        cont['ego.hz'] = [cont['ego.z'][0]-cont['ego.ez'][1], cont['ego.z'][1]-cont['ego.ez'][0]]
+                        cont['ego.hvx'] = [cont['ego.vx'][0]-cont['ego.evx'][1], cont['ego.vx'][1]-cont['ego.evx'][0]]
+                        cont['ego.hvy'] = [cont['ego.vy'][0]-cont['ego.evy'][1], cont['ego.vy'][1]-cont['ego.evy'][0]]
+                        cont['ego.hvz'] = [cont['ego.vz'][0]-cont['ego.evz'][1], cont['ego.vz'][1]-cont['ego.evz'][0]]
                         cont['ego.hdist'] = [max(dist_min-ep_rho, 0), dist_max+ep_rho]
 
                 else:

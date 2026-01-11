@@ -5,6 +5,7 @@ from verse.analysis.verifier import ReachabilityMethod
 from verse.plotter.plotter2D import *
 from verse.plotter.plotter3D_new import *
 from orbital_true_multi_switch_sensor_gpa import OrbitalSensor
+from verse.utils.star_diams import time_step_diameter_rect, sim_traces_to_dict_composed, sim_traces_to_diameters
 
 import plotly.graph_objects as go
 from enum import Enum, auto
@@ -64,13 +65,13 @@ if __name__ == "__main__":
 
     input_code_name = "./demo/aprod/orbital_true_multi_switch_controller_gpa.py"
     scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False))
-    scenario.config.reachability_method = ReachabilityMethod.DRYVR_DISC
+    # scenario.config.reachability_method = ReachabilityMethod.DRYVR_DISC
     dep = OrbitalAgent("deputy", file_name=input_code_name)
     dep2 = OrbitalAgent('deputy_ahead', file_name=input_code_name)
     obs = SimpleTrackingOrbitalAgent('obs')
     scenario.add_agent(dep)
     scenario.add_agent(dep2)
-    scenario.add_agent(obs)
+    # scenario.add_agent(obs)
     orbital_sensor = OrbitalSensor()
     scenario.set_sensor(orbital_sensor)
     # modify mode list input
@@ -82,12 +83,14 @@ if __name__ == "__main__":
     x0_inner = np.array([0, r_inner, 0, n/2*r_inner, 0, 0])
 
     base = [0, ry+10, 0, n/2*ry*.9, 0, 0]
-    x0_l = np.array(base + [base[i]-2.5 for i in range(6)] + [-2.5 for _ in range(3)] + [0 for _ in range(9)])
-    x0_u = np.array(base + [base[i]+2.5 for i in range(6)] + [2.5 for _ in range(3)] + [0 for _ in range(9)])
+    # old error used to be 2.5
+    init_error = 2.5
+    x0_l = np.array(base + [base[i]-init_error for i in range(6)] + [-init_error for _ in range(3)] + [0 for _ in range(9)])
+    x0_u = np.array(base + [base[i]+init_error for i in range(6)] + [init_error for _ in range(3)] + [0 for _ in range(9)])
     
     base_ahead = [ 8.91431-5, 72.85074+5,  0.     ,  0.04371, -0.02139,  0.     ]
-    x0_l_ahead = np.array(base_ahead + [base_ahead[i]-2.5 for i in range(3)] +[0 for _ in range(3)]+ [-2.5 for _ in range(3)] + [0 for _ in range(3)] + [1, 0, 0, 0, 0, 0]) # desynchronizing the timers
-    x0_u_ahead = np.array(base_ahead + [base_ahead[i]+2.5 for i in range(3)] +[0 for _ in range(3)] + [2.5 for _ in range(3)] +  [0 for _ in range(3)] + [1, 0, 0, 0, 0 , 0])
+    x0_l_ahead = np.array(base_ahead + [base_ahead[i]-init_error for i in range(3)] +[0 for _ in range(3)]+ [-init_error for _ in range(3)] + [0 for _ in range(3)] + [1, 0, 0, 0, 0, 0]) # desynchronizing the timers
+    x0_u_ahead = np.array(base_ahead + [base_ahead[i]+init_error for i in range(3)] +[0 for _ in range(3)] + [init_error for _ in range(3)] +  [0 for _ in range(3)] + [1, 0, 0, 0, 0 , 0])
 #   ahead should start by tracking: array([ 4.48926, 74.46068,  0.     ,  0.04468, -0.01077,  0.     ])
 
     x0_obs = x0_inner
@@ -96,29 +99,51 @@ if __name__ == "__main__":
             [x0_l.tolist(), 
              x0_u.tolist()],
              [x0_l_ahead.tolist(), x0_u_ahead.tolist()],
-             [x0_inner.tolist(), x0_inner.tolist()]
+            #  [x0_inner.tolist(), x0_inner.tolist()]
         ],
         [
             # assign each agent an addition mode and state to denote whether an update occurred and priority resp.
             # actually just slightly stagger the timers 
             (GOMode.Passive, POMode.Passive, PriorityMode.First, MoveMode.NMT),
             (GOMode.Passive, POMode.Passive, PriorityMode.Second, MoveMode.NMT),
-            (MoveMode.Inner,),
+            # (MoveMode.Inner,),
             # (OrbitalMode.Passive,)
         ],
     )
 
-    start = time.perf_counter()    
-    trace = scenario.verify(T, 1)
-    print(f'Simulaion time: {time.perf_counter()-start:.3f}')
+    # start = time.perf_counter()    
+    # trace = scenario.verify(T, 1)
+    # print(f'Simulaion time: {time.perf_counter()-start:.3f}')
+    # fig = go.Figure()
+    # fig = reachtube_tree(trace, None, fig, 1, 2, [1,2], plot_color=colors)
+    # fig.data[0].name = 'True State'
+    # fig.data[0].showlegend = True
+    # diam = time_step_diameter_rect(trace, T, 1)
+    # diam_0, diam_f, diam_bar = 75, diam[-1], (sum(diam)+0.0)/len(diam) # NOTE: manually computing correct L1 diameter values
+    # print(f'F/I: {diam_f/diam_0:.5f}, A/I: {diam_bar/diam_0:.5f}\n raw final: {diam_f:.5f}, raw average: {diam_bar:.5f}, raw initial: {diam_0:.5f}')
+
+    N = 25
+    start_time = time.perf_counter()
+    sim_traces = []
+    for i in range(N):
+        sim_traces.append(scenario.simulate(T, 1))
+        if i != N-1 and os.path.exists(f):
+            for f in filenames:
+                os.remove(f)
+
     fig = go.Figure()
-    fig = reachtube_tree(trace, None, fig, 1, 2, [1,2], plot_color=colors)
+    for st in sim_traces:
+        fig = simulation_tree(st, None, fig, 1, 2, [1,2], 'lines', 'trace')
+
+    print(f'Runtime for {N} sims, T={T}, ts={1}: {time.perf_counter()-start_time:.2f}')
+    # sim_dict = sim_traces_to_dict_composed(sim_traces)
+    diam_0 = 75
+    diam_sim = sim_traces_to_diameters(sim_traces)
+    diam_f_sim, diam_bar_sim = diam_sim[-1], (sum(diam_sim)+0.0)/len(diam_sim)
+    print(f'Sim results: F/I: {diam_f_sim/diam_0:.5f}, A/I: {diam_bar_sim/diam_0:.5f}\n raw final: {diam_f_sim:.5f}, raw average: {diam_bar_sim:.5f}')
+
     fig.data[0].name = 'True State'
     fig.data[0].showlegend = True
-
-    # fig = reachtube_tree(trace, None, fig, 7, 8, [7,8])
-    # fig.data[-1].name = 'Est State'
-    # fig.data[-1].showlegend = True
 
     if os.path.exists(filename):
         with open(filename, 'rb') as f:
