@@ -379,6 +379,7 @@ class Scenario:
         :param n: Number of partitions per dimension (used for over-approximation).
         :param max_height: Maximum discrete transitions.
         :param partition_initial: If True, partition initial set for over-approximation.
+        :param partition_dims: If given, partition only dims in list (1-indexed)
         :param params: Additional parameters.
         :return: AnalysisTree with branching preserved.
         '''

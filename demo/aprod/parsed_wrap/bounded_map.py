@@ -34,3 +34,20 @@ def get_lateral_distance_bounds_optimized(lane_map, lane_idx, x_bounds, y_bounds
     res_max = differential_evolution(neg_distance, bounds)
 
     return [res_min.fun, -res_max.fun]
+
+def get_long_pos_bounds_optimized(lane_map, lane_idx, x_bounds, y_bounds):
+    """
+    More precise bound computation using optimization
+    """
+    def neg_pos(pos):
+        return -lane_map.get_longitudinal_position(lane_idx, pos)
+    
+    def pos_pos(pos):
+        return lane_map.get_longitudinal_position(lane_idx, pos)
+    
+    bounds = [(x_bounds[0], x_bounds[1]), (y_bounds[0], y_bounds[1])]
+
+    res_min = differential_evolution(pos_pos, bounds)
+    res_max = differential_evolution(neg_pos, bounds)
+
+    return [res_min.fun, -res_max.fun]

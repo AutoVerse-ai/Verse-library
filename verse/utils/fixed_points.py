@@ -45,11 +45,16 @@ def reach_at_fix(tree: AnalysisTree, t_lower: float = None, t_upper: float = Non
 
             ### make error message for t_lower and t_upper
             if t_lower is not None and t_upper is not None: ### may want to seperate this out into a seperate function
-                for i in range(0, len(node.trace[agent]), 2): # just check the upper bound, time difference between lower and upper known to be time step of scenario
+                if agent not in node.trace: # NOTE: not all agents present in all modes -- is this desired? 
+                    continue 
+                loop_step = 1 if node.trace[agent][0][0] == node.trace[agent][1][0] else 2 # NOTE: so that 
+                # FIXME: the loop below only makes sense for dryvr, not dryvr_disc -- not important if solely using dryvr, but important to mention
+                for i in range(0, len(node.trace[agent])-1, loop_step): # just check the upper bound, time difference between lower and upper known to be time step of scenario
                     if node.trace[agent][i][0]<t_lower: # first, use the time of the lower bound to see if we can add current node
                         continue
                     if node.trace[agent][i+1][0]>t_upper: # then, use the time of the upper bound to do the same thing
                         break
+
                     lower = list(node.trace[agent][i][1:]) # now strip out time and add agent's mode(s)
                     upper = list(node.trace[agent][i+1][1:])
                     for mode in modes[agent]: # assume that size of modes[agent] doesn't change between nodes

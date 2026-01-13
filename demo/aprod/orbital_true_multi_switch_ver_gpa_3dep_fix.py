@@ -119,17 +119,38 @@ if __name__ == "__main__":
         ],
     )
 
-    start = time.perf_counter()    
-    trace = scenario.verify(T, 1)
-    print(f'Simulation time: {time.perf_counter()-start:.3f}')
+    # start = time.perf_counter()    
+    # trace = scenario.verify(T, 1)
+    # print(f'Simulation time: {time.perf_counter()-start:.3f}')
+    # fig = go.Figure()
+    # fig = reachtube_tree(trace, None, fig, 1, 2, [1,2], plot_color=colors)
+    # fig.data[0].name = 'True State'
+    # fig.data[0].showlegend = True
+    # diam = time_step_diameter_rect(trace, T, 1)
+    # diam_0, diam_f, diam_bar = 105, diam[-1], (sum(diam)+0.0)/len(diam) # NOTE: manually computing correct L1 diameter values
+    # print(f'F/I: {diam_f/diam_0:.5f}, A/I: {diam_bar/diam_0:.5f}\n raw final: {diam_f:.5f}, raw average: {diam_bar:.5f}, raw initial: {diam_0:.5f}')
+    # fig = reachtube_tree(trace, None, fig, 7, 8, [7,8])
+
+
+    N = 25
+    start_time = time.perf_counter()
+    sim_traces = []
+    for i in range(N):
+        sim_traces.append(scenario.simulate(T, 1))
+        if i != N-1 and os.path.exists(f):
+            for f in filenames:
+                os.remove(f)
+
     fig = go.Figure()
-    fig = reachtube_tree(trace, None, fig, 1, 2, [1,2], plot_color=colors)
-    fig.data[0].name = 'True State'
-    fig.data[0].showlegend = True
-    diam = time_step_diameter_rect(trace, T, 1)
-    diam_0, diam_f, diam_bar = 105, diam[-1], (sum(diam)+0.0)/len(diam) # NOTE: manually computing correct L1 diameter values
-    print(f'F/I: {diam_f/diam_0:.5f}, A/I: {diam_bar/diam_0:.5f}\n raw final: {diam_f:.5f}, raw average: {diam_bar:.5f}, raw initial: {diam_0:.5f}')
-    fig = reachtube_tree(trace, None, fig, 7, 8, [7,8])
+    for st in sim_traces:
+        fig = simulation_tree(st, None, fig, 1, 2, [1,2], 'lines', 'trace')
+
+    print(f'Runtime for {N} sims, T={T}, ts={1}: {time.perf_counter()-start_time:.2f}')
+    # sim_dict = sim_traces_to_dict_composed(sim_traces)
+    diam_0 = 105
+    diam_sim = sim_traces_to_diameters(sim_traces)
+    diam_f_sim, diam_bar_sim = diam_sim[-1], (sum(diam_sim)+0.0)/len(diam_sim)
+    print(f'Sim results: F/I: {diam_f_sim/diam_0:.5f}, A/I: {diam_bar_sim/diam_0:.5f}\n raw final: {diam_f_sim:.5f}, raw average: {diam_bar_sim:.5f}')
 
     if os.path.exists(filename):
         with open(filename, 'rb') as f:

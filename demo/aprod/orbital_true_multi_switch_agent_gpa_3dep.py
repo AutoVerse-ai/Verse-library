@@ -242,7 +242,7 @@ class OrbitalAgent(BaseAgent):
         N = int(np.ceil(T/dt))
         priority = initialSet[-1]
         prox_modes = initialSet[-2]
-
+        mode
         """
         recall, last variable is a dummy variable, shift everything one to the left
         """
@@ -274,9 +274,11 @@ class OrbitalAgent(BaseAgent):
         elif track_mode == 'Inner': # figure out a way to do nothing while mode[0] isn't passive
             start_idx = -int(T//dt)-1
             f_inner = filename_inners[self.id]
+            x_sample, u_sample = None, None
             with open(f_inner, 'rb') as f:
                 full_x_sol, full_u_sol = pickle.load(f)
                 x_sol, u_sol = full_x_sol[start_idx:], full_u_sol[start_idx:] 
+                x_sample, u_sample = x_sol, u_sol
                 x_final = x_sol[-1]
                 x_sol, u_sol = None, None
                 hat_x = np.array(x0[:6]) - np.array(x0[12:18])
@@ -289,7 +291,9 @@ class OrbitalAgent(BaseAgent):
                         tol += 0.1
                         # raise Exception('MPC unable to find solution')
                 if x_sol is None:
-                    raise Exception('MPC unable to find solution')
+                    print('MPC unable to find solution, revert to simple LQR')
+                    x_sol, u_sol = x_sample, u_sample
+                    # raise Exception('MPC unable to find solution')
         else:
             raise Exception(f"Unexpected mode: {track_mode}")
 

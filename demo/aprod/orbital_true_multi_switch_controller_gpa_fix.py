@@ -7,7 +7,7 @@ prox_dist = 10 # 2.5 is standard for 2.5 init est state error -- revised to 10
 T_prox = 100
 buffer = 30
 unsafe_dist = 20
-angle_bound = 1.5 # used to be 1, increasing slightly 
+angle_bound = 1.05 # used to be 1, increased slightly to 1.5 to prevent hitting too early 
 
 class GOMode(Enum):
     Passive = auto()

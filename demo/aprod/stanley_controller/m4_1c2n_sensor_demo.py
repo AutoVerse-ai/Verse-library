@@ -103,7 +103,7 @@ if __name__ == "__main__":
         ],
     )
 
-    time_step, T = 0.1, 5
+    time_step, T = 0.1, 10 # T should be 40 to get results
 
     start_time = time.perf_counter()    
     # traces = scenario.verify(T, time_step)  # traces.dump('./output1.json')
