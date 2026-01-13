@@ -93,13 +93,13 @@ class CarAgent(BaseAgent):
 
     @staticmethod
     def dynamics(t, state, u):
-        x, y, theta, v, d, heading, timer = state # the d and psi are possibly noisy
+        x, y, theta, v, d, heading, timer, prio = state # the d and psi are possibly noisy
         delta, a = u
         x_dot = v * np.cos(theta + delta)
         y_dot = v * np.sin(theta + delta)
         theta_dot = v / 1.75 * np.sin(delta)
         v_dot = a
-        return [x_dot, y_dot, theta_dot, v_dot, 0, 0, 1]
+        return [x_dot, y_dot, theta_dot, v_dot, 0, 0, 1, 0]
 
     def action_handler(self, mode: List[str], state, lane_map: LaneMap) -> Tuple[float, float]:
         def linear_clip(x, ep_x, sample_x): 
@@ -112,8 +112,8 @@ class CarAgent(BaseAgent):
                 return x-ep_x
             return sample_x
 
-        x, y, theta, v, d_sample, heading_sample, timer = state
-        vehicle_mode, vehicle_lane = mode
+        x, y, theta, v, d_sample, heading_sample, timer, prio = state
+        vehicle_mode, vehicle_lane, sensor_mode = mode
         vehicle_pos = np.array([x, y])
         a = 0
 
@@ -121,6 +121,9 @@ class CarAgent(BaseAgent):
         # d_true = -lane_map.get_lateral_distance(vehicle_lane, vehicle_pos)
         # d = linear_clip(d_true, self.ep_d, d_sample)
         d = -d_sample
+        
+        if vehicle_lane == 'T0':
+            pass
 
         if vehicle_mode == "Normal" or vehicle_mode == "Stop":
             pass
