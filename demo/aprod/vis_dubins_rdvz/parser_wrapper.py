@@ -97,10 +97,10 @@ def parse_function(func: Callable, input_bounds: Dict[str, List[Tuple[float, flo
             # Update variable bounds
             current_bounds[var_name] = rhs_bounds
             bounds_history.append(dict(current_bounds))
-            
-            print(f"After {var_name} = {rhs_code}")
-            for rhs_bound in rhs_bounds:
-                print(f"  {var_name} ∈ [{rhs_bound[0]:.6f}, {rhs_bound[-1]:.6f}]")
+
+            # print(f"After {var_name} = {rhs_code}")
+            # for rhs_bound in rhs_bounds:
+            #     print(f"  {var_name} ∈ [{rhs_bound[0]:.6f}, {rhs_bound[-1]:.6f}]")
 
         else:
             raise Exception(f'Line is of type {type(stmt)} instead of assign or return.')
