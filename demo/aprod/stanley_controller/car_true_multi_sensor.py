@@ -145,10 +145,13 @@ class CarSensor:
                     cont['ego.d'] = state_dict[cur_agent][0][5]
                     cont['ego.psi'] = state_dict[cur_agent][0][6]
                     cont['ego.timer'] = state_dict[cur_agent][0][7] # to trigger estimated state updates
-                    
+                    cont['ego.priority'] = state_dict[cur_agent][0][8]
+                    own_priority = cont['ego.priority']
+
                     # discrete states
                     disc['ego.agent_mode'] = state_dict[cur_agent][1][0]
                     disc['ego.track_mode'] = state_dict[cur_agent][1][1] # should have modes assigned, waiting (possible also assigned_location_unknown if not currently in FOV, then transition to assigned if in FOV)
+                    own_sensor_mode = disc['ego.sensor_mode'] = state_dict[cur_agent][1][2] 
 
                     has_priority = True # by default, agents have priority to update
                     for other_agent in state_dict:
@@ -176,7 +179,7 @@ class CarSensor:
                     if has_priority:
                         cont['extra.sensor_update'] = 1
                     else:
-                        cont['extra.sensor_update'] = [0,0]
+                        cont['extra.sensor_update'] = 0
                 
                 else:
                     if 'npc' not in agent.id:
@@ -187,10 +190,10 @@ class CarSensor:
                         other_track_mode = state_dict[cur_agent][1][1]
                         other_long = lane_map.get_longitudinal_position(other_track_mode, other_pos)
                         if 'others.x' not in cont: # for now just consider perfect other info scenario
-                            cont['others.long'] = [long] # guessing this is the proper format
+                            cont['others.long'] = [other_long] # guessing this is the proper format
                             disc['others.track_mode'] = [state_dict[cur_agent][1][1]]
                         else:
-                            cont['others.long'].append(long)
+                            cont['others.long'].append(other_long)
                             
                             disc['others.track_mode'].append(other_track_mode)
 

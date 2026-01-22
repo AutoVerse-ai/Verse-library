@@ -147,29 +147,46 @@ class CarSensor:
                         cont['ego.cur_sense'] = 1 # in right sector
 
                     cont['other.has_priority'] = 1
+                    cont['other.lower_priority'] = 0
+                    cont['other.assign_wait_priority'] = 1
+                    cont['other.connected_ids'] = state_dict[assigned_agent][0][15] if cur_agent == 'car1' else 3 # hack to make sure car3 can get the right assigned id
+                    # cont['other.connected_ids'] = all_agents-state_dict[assigned_agent][0][15] # should be able to just get the sum of the ids of the connected agents, don't know why this is causing problems
+                    cont['other.x'], cont['other.y'], cont['other.theta'] = other_x, other_y, state_dict[assigned_agent][0][3]
+                    cont['other.cur_sense'] = state_dict[assigned_agent][0][19]
+                    disc['other.agent_mode'] = state_dict[assigned_agent][1][0]
+
+                    cont['other.allowed_switch'] = 0
 
                     if disc['ego.assign_mode'] == 'Waiting':
-                        if int(cont['ego.connected_ids']) == int(all_agents):
+                        if int(cont['ego.connected_ids']) == int(all_agents) or cur_agent == 'car2':
                             cont['other.next_mode'] = 1 # set the next mode to be completed 
                         else:
-                            # TODO: create algorithm to get next assigned_id, then add other assign_mode corresponding to assigned_agent not yet having been spotted yet (so just keep turning until we see it)
-                            pass
-                    elif disc['ego.assign_mode'] == 'Assigned':
-                        if state_dict[assigned_agent][0][14]<cont['ego._id'] and state_dict[assigned_agent][1][1] == 'Assigned': # now just checking for assigned->waiting priority
-                            cont['other.assign_wait_priority'] = 0
-                        else:
-                            cont['other.assign_wait_priority'] = 1
-                        # has_priority = 1 # 1 if we do have priority
-                        # for agent_id in state_dict:
-                        #     if agent_id == cur_agent:
-                        #         continue
-                        #     if state_dict[agent_id][0][14]<cont['ego._id'] and state_dict[agent_id][1][1] == 'Waiting': # or whatever way we compute priority 
-                        #         has_priority = 0
+                            cont['other.next_mode'] = 0 
+                            # NOTE: this sensor will be specific to the 3 agent scenario where the first two agents merge
+                            if agent.id != 'car3':
+                                cont['other.next_assign'] = 2  
+                            else:
+                                cont['other.next_assign'] = 1 # in general, this should be much more general
 
-                        # cont['other.has_priority'] = has_priority
+                        has_priority = 1 # 1 if we do have priority
+                        for agent_id in state_dict:
+                            if agent_id == cur_agent:
+                                continue
+                            elif agent_id == 'car2' and cur_agent == 'car1' and state_dict[agent_id][1][1] == 'Waiting':
+                                has_priority = 0
+                            elif state_dict[agent_id][0][14]>cont['ego._id'] and state_dict[agent_id][1][1] == 'Assigned' and (agent_id == 'car2' and cur_agent=='car1'):
+                                has_priority = 0
+
+                        cont['other.has_priority'] = has_priority
                     
-                    if (cont['ego.timer'] in [6.7, 6.9]) and cur_agent=='car1':
-                        pass
+                    elif disc['ego.assign_mode'] == 'Assigned':
+                        if state_dict[assigned_agent][0][14]<cont['ego._id']: 
+                            cont['other.lower_priority'] = 1
+                            if state_dict[assigned_agent][1][1] == 'Assigned': # now just checking for assigned->waiting priority
+                                cont['other.assign_wait_priority'] = 0
+                    
+                    # if (cont['ego.timer'] in [6.7, 6.9]) and cur_agent=='car1':
+                    #     pass
         else:               
             all_agents = 0
             for cur_agent in state_dict: # assuming all agents are active, otherwise do the same thing as before and give nominal ids to other agents
@@ -208,7 +225,7 @@ class CarSensor:
                     assigned_agent = next((k for k in state_dict if k != agent.id and state_dict[k][0][0][14] == cont['ego.assigned_id'][0]), None) # returns assigned_agent or None
                     if assigned_agent is None: # before this, do a check to see if all agents have been merged
                         assigned_agent = cur_agent # this should never happen in an actual run, but just keep it like this for toy simulation
-                        raise Exception(f"No other agent with assigned_id: {cont['ego.assigned_id']} found")
+                        raise Exception(f"No other agent with assigned_id: {cont['ego.assigned_id'][0]} found")
 
                     pos_min, pos_max = np.array([state_dict[cur_agent][0][0][i] for i in range(1,3)]+[0]), np.array([state_dict[cur_agent][0][1][i] for i in range(1,3)] + [0])
                     obstacle_cont = state_dict[assigned_agent][0]
@@ -224,7 +241,6 @@ class CarSensor:
                     cont['ego.cur_sense'] = list(output_bounds['obs'][0]) # since everything is a list of tuples
 
                     cont['other.has_priority'] = [1,1] # sentinel value
-                    ### NOTE: what was I trying to do here that isn't being accomplished below?
 
                     if cont['ego.cur_sense'][0]!=cont['ego.cur_sense'][1] or cont['ego.cur_sense'][0]!=cont['ego.prev_sense'][0]:
                         has_priority = 1 # 1 if we do have priority
@@ -233,31 +249,54 @@ class CarSensor:
                             has_priority = 0
 
                         cont['other.has_priority'] = [has_priority, has_priority]
-                    
+
                     # if state_dict[cur_agent][0][0] == 0: #if we're at the first time step
                     #     cont['ego.prev_sense'] = cont['ego.cur_sense'] # this is a hack 
                     # cont['ego.prev_sense'] = get_cached_value(cont['ego._id']) if get_cached_value(cont['ego._id']) is not None else cont['ego.cur_sense'] # in the beginning just don't switch modes
                     # cache_sensor_value(cont['ego._id'], cont['ego.cur_sense']) # need to think about how this will work for verification and branching specifically -- prev_sense should always be a singleton
-        
+                    cont['other.lower_priority'] = [0,0]
+                    cont['other.assign_wait_priority'] = [1,1] 
+                    cont['other.x'], cont['other.y'], cont['other.theta'] = [obstacle_cont[0][1], obstacle_cont[1][1]], [obstacle_cont[0][2], obstacle_cont[1][2]], [obstacle_cont[0][3], obstacle_cont[1][3]]
+                    cont['other.cur_sense'] = [state_dict[assigned_agent][0][0][19], state_dict[assigned_agent][0][1][19]]
+                    disc['other.agent_mode'] = state_dict[assigned_agent][1][0]
+                    cont['other.connected_ids'] = [state_dict[assigned_agent][0][0][15], state_dict[assigned_agent][0][0][15]] if cur_agent == 'car1' else [3,3] # hack to make sure car3 can get the right assigned id
+
+
+                    cont['other.allowed_switch'] = [0,0]
+                    if cur_agent == 'car3' and state_dict[cur_agent][0][0][0] > 12.7:
+                        cont['other.allowed_switch'] = [1,1]
+
+                    if cur_agent == 'car1' and state_dict[cur_agent][0][0][0] > 8.99:
+                        pass
+
                     if disc['ego.assign_mode'] == 'Waiting':
-                        if int(cont['ego.connected_ids'][0]) == int(all_agents):
+
+                        if int(cont['ego.connected_ids'][0]) == int(all_agents) or cur_agent == 'car2':
                             cont['other.next_mode'] = [1,1] # set the next mode to be completed 
                         else:
-                            # TODO: create algorithm to get next assigned_id, then add other assign_mode corresponding to assigned_agent not yet having been spotted yet (so just keep turning until we see it)
-                            pass
-                        
+                            cont['other.next_mode'] = [0,0] 
+                            # NOTE: this sensor will be specific to the 3 agent scenario where the first two agents merge
+                            if agent.id != 'car3':
+                                cont['other.next_assign'] = [2,2]  
+                            else:
+                                cont['other.next_assign'] = [1,1] # in general, this should be much more general
+
                         has_priority = 1 # 1 if we do have priority
                         for agent_id in state_dict:
                             if agent_id == cur_agent:
                                 continue
-                            if state_dict[agent_id][0][0][14]<cont['ego._id'][0] and state_dict[agent_id][1][1] == 'Waiting': # or whatever way we compute priority 
+                            elif agent_id == 'car2' and cur_agent == 'car1' and state_dict[agent_id][1][1] == 'Waiting':
+                                has_priority = 0
+                            elif state_dict[agent_id][0][0][14]>cont['ego._id'][0] and state_dict[agent_id][1][1] == 'Assigned' and (agent_id == 'car2' and cur_agent=='car1'):
                                 has_priority = 0
 
                         cont['other.has_priority'] = [has_priority, has_priority]
+                    
                     elif disc['ego.assign_mode'] == 'Assigned':
-                        if state_dict[assigned_agent][0][0][14]<cont['ego._id'][0] and state_dict[assigned_agent][1][1] == 'Assigned': # now just checking for assigned->waiting priority
-                            cont['other.assign_wait_priority'] = [0,0]
-                        else:
-                            cont['other.assign_wait_priority'] = [1,1]
+                        if state_dict[assigned_agent][0][0][14]<cont['ego._id'][0]: 
+                            cont['other.lower_priority'] = [1,1]
+                            if state_dict[assigned_agent][1][1] == 'Assigned': # now just checking for assigned->waiting priority
+                                cont['other.assign_wait_priority'] = [0,0]  
+
 
         return cont, disc, len_dict

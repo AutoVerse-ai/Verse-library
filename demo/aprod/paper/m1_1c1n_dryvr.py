@@ -42,7 +42,8 @@ if __name__ == "__main__":
     car_sensor = CarSensor(ep_d=ep_d, ep_psi=ep_psi) # maybe add an argument for ts
     scenario.set_sensor(car_sensor)
     base_l, base_u = [0, -0.5, 0, 1.0, 0, 0, 0, 0], [0.01, 0.5, 0, 1.0, 0, 0, 0, 0] # 4 real variables; 2 placeholders, timer, and priority
-    base_l2, base_u2 = [15, -0.3, 0, 0.5, 0, 0, 0, 1], [15, 0.3, 0, 0.5, 0, 0, 0, 1] # this seems way too small consider changing later
+    # base_l, base_u = [10, -0.5, 0, 1.0, 0, 0, 0, 0], [10.51, 0.5, 0, 1.0, 0, 0, 0, 0] # don't use this init; only using for testing
+    base_l2, base_u2 = [15, -0.3, 0, 0.5, 0, 0, 0, 1], [15, 0.3, 0, 0.5, 0, 0, 0, 1]
     scenario.config.reachability_method = ReachabilityMethod.DRYVR_DISC
     
     scenario.add_agent(
@@ -68,31 +69,12 @@ if __name__ == "__main__":
     time_step, T = 1, 35 # T probably has to be at least 30 for a complete run, but check carefully
     # time_step, T = 1, 15 # T probably has to be at least 30 for a complete run, but check carefully
     
-    # start_time = time.perf_counter()    
-    # traces = scenario.verify_partitioned(T, time_step, 4, partition_dims=[1,2])
-    # print(f'Runtime for T={T}, ts={time_step}: {time.perf_counter()-start_time:.2f}')
-    # diam = time_step_diameter_rect(traces, T, time_step)
-    # diam_0, diam_f, diam_bar = 1.61, diam[-1], (sum(diam)+0.0)/len(diam) # NOTE: use correct diameter values
-    # print(f'F/I: {diam_f/diam_0:.5f}, A/I: {diam_bar/diam_0:.5f}\n raw final: {diam_f:.5f}, raw average: {diam_bar:.5f}, raw initial: {diam_0:.5f}')
-    # fig = go.Figure()
-    # fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], "lines", "trace")
-    # fig.show()
-
-    """
-    Simulations
-    """
-    diam_0 = 1.61
-    fig = go.Figure()
     start_time = time.perf_counter()    
-    N = 50
-    # NOTE: simulator has the same issue that verify_refine used to have -- using previous mode to compute info, either revert change in verify_refine and talk about it in paper or fix here too
-    sim_traces = scenario.simulate_multi(T, time_step, num_sims=N)
-    print(f'Runtime for {N} sims, T={T}, ts={time_step}: {time.perf_counter()-start_time:.2f}')
-    for sim_trace in sim_traces:
-        fig = simulation_tree(sim_trace, tmp_map, fig, 1, 2, [1,2], 'lines', 'trace')
-
-    # sim_dict = sim_traces_to_dict_composed(sim_traces)
-    diam_sim = sim_traces_to_diameters(sim_traces)
-    diam_f_sim, diam_bar_sim = diam_sim[-1], (sum(diam_sim)+0.0)/len(diam_sim)
-    print(f'Sim results: F/I: {diam_f_sim/diam_0:.5f}, A/I: {diam_bar_sim/diam_0:.5f}\n raw final: {diam_f_sim:.5f}, raw average: {diam_bar_sim:.5f}')
+    traces = scenario.verify_partitioned(T, time_step, 4, partition_dims=[1,2])
+    print(f'Runtime for T={T}, ts={time_step}: {time.perf_counter()-start_time:.2f}')
+    diam = time_step_diameter_rect(traces, T, time_step)
+    diam_0, diam_f, diam_bar = 1.61, diam[-1], (sum(diam)+0.0)/len(diam) # NOTE: use correct diameter values
+    print(f'F/I: {diam_f/diam_0:.5f}, A/I: {diam_bar/diam_0:.5f}\n raw final: {diam_f:.5f}, raw average: {diam_bar:.5f}, raw initial: {diam_0:.5f}')
+    fig = go.Figure()
+    fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], "lines", "trace")
     fig.show()
