@@ -107,7 +107,7 @@ if __name__ == "__main__":
 
     start_time = time.perf_counter()    
     # traces = scenario.verify(T, time_step)  # traces.dump('./output1.json')
-    traces = scenario.verify_partitioned(T, time_step, 4, partition_dims=[1,2])  # traces.dump('./output1.json')
+    traces = scenario.verify_partitioned(T, time_step, 3, partition_dims=[1,2])  # traces.dump('./output1.json')
     # traces = AnalysisTree.load('./output5.json')
     print(f'Runtime for T={T}, ts={time_step}: {time.perf_counter()-start_time:.2f}')
     diam = time_step_diameter_rect(traces, T, time_step)
@@ -115,7 +115,32 @@ if __name__ == "__main__":
     print(f'F/I: {diam_f/diam_0:.5f}, A/I: {diam_bar/diam_0:.5f}\n raw final: {diam_f:.5f}, raw average: {diam_bar:.5f}, raw initial: {diam_0:.5f}')
     fig = go.Figure()
     fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], "lines", "trace")
+    fig.update_layout(
+        xaxis_title="x (m)",
+        yaxis_title="y (m)"
+    )
 
+    AXIS_TICK_SIZE = 40
+    AXIS_TITLE_SIZE = 41
+
+    fig.update_xaxes(
+        tickfont=dict(size=AXIS_TICK_SIZE),
+        ticklen=10,
+        tickwidth=2,
+        title_font=dict(size=AXIS_TITLE_SIZE),
+        title_standoff=5
+    )
+
+    fig.update_yaxes(
+        tickfont=dict(size=AXIS_TICK_SIZE),
+        ticklen=10,
+        tickwidth=2,
+        title_font=dict(size=AXIS_TITLE_SIZE),
+        title_standoff=5
+    )
+
+
+    fig.show()
     """
     Simulations
     """

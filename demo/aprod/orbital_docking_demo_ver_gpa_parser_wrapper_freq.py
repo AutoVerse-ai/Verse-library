@@ -1,10 +1,10 @@
 # from orbital_all_agent import OrbitalAgent
-from orbital_docking_agent_simple_same_real import OrbitalAgent
+from orbital_docking_agent_gpa import OrbitalAgent # can also change controller so if within a certain radius of the chief, just stop docking altogether
 from verse import Scenario, ScenarioConfig
 from verse.analysis.verifier import ReachabilityMethod
 from verse.plotter.plotter2D import *
 from verse.plotter.plotter3D_new import *
-from orbital_docking_sensor_simple_same_real import OrbitalSensor
+from orbital_docking_sensor_gpa_parser_wrapper_freq import OrbitalSensor
 from parsed_wrap import clear_parse_cache
 from verse.utils.star_diams import time_step_diameter_rect, sim_traces_to_dict_composed, sim_traces_to_diameters
 
@@ -15,16 +15,20 @@ import time
 import os 
 
 n = 0.00438138 # constant equal to (\mu/r_e^3)^{-3}
-n_nmt = 0.0012 # constant equal to (\mu/r_e^3)^{-3}
 filename = "demo/aprod/refs.pkl"
 
 class GOMode(Enum):
     Passive = auto()
     Active = auto()
 
+class POMode(Enum):
+    Passive = auto()
+    Active = auto()
+
 class MoveMode(Enum):
     NMT = auto()
     Docking = auto()
+    Docked = auto()
 
 colors = [
     # ["#CC0000", "#FF0000", "#FF3333", "#FF6666", "#FF9999", "#FFCCCC"],  # red
@@ -53,7 +57,7 @@ if __name__ == "__main__":
     clear_parse_cache()
 
     # input_code_name = "./demo/aprod/orbital_docking_controller.py"
-    input_code_name = "./demo/aprod/orbital_docking_controller_simple_same_real.py"
+    input_code_name = "./demo/aprod/orbital_docking_controller_gpa_parser_freq.py"
     # input_code_name = "./demo/aprod/orbital_docking_controller_proxdyn.py"
     scenario = Scenario(ScenarioConfig(init_seg_length=1, parallel=False))
     # scenario.config.reachability_method = ReachabilityMethod.DRYVR_DISC # still works even with base dryvr
@@ -63,12 +67,12 @@ if __name__ == "__main__":
     scenario.set_sensor(orbital_sensor)
     # modify mode list input
     # base = [10,20,0,1,2,0]
-    T = 3600
+    # T = 3000
+    T = 3000 # note that promixity sensor is moving target due to MPC  
     ry = 75
-    base = [0, ry+10, 0, n_nmt/2*ry*.9, 0, 0]
-    x0_nmt = [0, ry, 0, n_nmt/2*ry, 0, 0]
-    x0_l = np.array(base + x0_nmt + [-2.5 for _ in range(3)] + [0 for _ in range(5)]) # true, ref, error, timers
-    x0_u = np.array(base + x0_nmt + [2.5 for _ in range(3)] + [0 for _ in range(5)])
+    base = [0, ry+10, 0, n/2*ry*.9, 0, 0]
+    x0_l = np.array(base + [base[i]-2.5 for i in range(6)] + [-2.5 for _ in range(3)] + [0 for _ in range(7)])
+    x0_u = np.array(base + [base[i]+2.5 for i in range(6)] + [2.5 for _ in range(3)] + [0 for _ in range(7)])
     # x0_l = np.array(base + base + [0,0])
     # x0_u = np.array(base + base + [0,0])
     scenario.set_init(
@@ -77,28 +81,24 @@ if __name__ == "__main__":
              x0_u.tolist()],
         ],
         [
-            (GOMode.Passive, MoveMode.NMT)
+            (GOMode.Passive, POMode.Passive, MoveMode.NMT)
         ],
     )
 
     start = time.perf_counter()    
-    # ts = 20
+    # trace = scenario.verify(T, 5)
     ts = 1
-    trace = scenario.verify(T, ts)
+    trace = scenario.verify(T, ts) # fastest for T = 3000, ts = 0.2 was around 3.5 minutes
     
 
     print(f'Ver/sim time: {time.perf_counter()-start:.3f}')
     fig = go.Figure()
     fig = reachtube_tree(trace, None, fig, 1, 2, [1,2], plot_color=colors)
     fig.data[0].name = 'True State'
-    fig.data[0].showlegend = False
-
-    fig = reachtube_tree(trace, None, fig, 7, 8, [7,8], plot_color=colors[1:])
-    fig.data[-1].name = 'Ref State'
-    fig.data[-1].showlegend = False
-
+    fig.data[0].showlegend = True
     diam = time_step_diameter_rect(trace, T, ts)
-    diam_0, diam_f, diam_bar = 15, diam[-1], (sum(diam)+0.0)/len(diam) # NOTE: manually computing correct L1 diameter values
+    print(diam)
+    diam_0, diam_f, diam_bar = 45, diam[-1], (sum(diam)+0.0)/len(diam) # NOTE: manually computing correct L1 diameter values
     print(f'F/I: {diam_f/diam_0:.5f}, A/I: {diam_bar/diam_0:.5f}\n raw final: {diam_f:.5f}, raw average: {diam_bar:.5f}, raw initial: {diam_0:.5f}')
     
     # N = 25
@@ -120,71 +120,26 @@ if __name__ == "__main__":
     # diam_f_sim, diam_bar_sim = diam_sim[-1], (sum(diam_sim)+0.0)/len(diam_sim)
     # print(f'Sim results: F/I: {diam_f_sim/diam_0:.5f}, A/I: {diam_bar_sim/diam_0:.5f}\n raw final: {diam_f_sim:.5f}, raw average: {diam_bar_sim:.5f}')
 
-    # if os.path.exists(filename):
-    #     with open(filename, 'rb') as f:
-    #         x_sol, u_sol = pickle.load(f)
-    #         u_sol = np.vstack([u_sol, u_sol[-1]])
-    #     os.remove(filename)
 
-    # fig.add_trace(
-    #     go.Scatter(
-    #         x=x_sol[:, 0],
-    #         y=x_sol[:,1],
-    #         mode="lines",
-    #         line_color="#000000",
-    #         name="Reference Trajectory"
-    # ))
+    if os.path.exists(filename):
+        with open(filename, 'rb') as f:
+            x_sol, u_sol = pickle.load(f)
+            u_sol = np.vstack([u_sol, u_sol[-1]])
+        os.remove(filename)
+
+    fig.add_trace(
+        go.Scatter(
+            x=x_sol[:, 0],
+            y=x_sol[:,1],
+            mode="lines",
+            line_color="#000000",
+            name="Reference Trajectory"
+    ))
 
     fig.update_layout(
-        width=1000,
-        height=550,
-        plot_bgcolor='white',
-        margin=dict(l=120, r=50, b=120, t=80),
-        
-        # X-AXIS
-        xaxis=dict(
-            title='x (km)',
-            title_font=dict(size=50, family='Arial, Bold', color='black'),
-            tickfont=dict(size=45, family='Arial', color='black'),
-            showline=True,
-            linewidth=4,
-            linecolor='black',
-            mirror=True,          # <--- COMPLETES THE BOX (TOP LINE)
-            ticks='outside',
-            tickwidth=4,
-            ticklen=18,
-            tickmode='array',
-            tickvals=[-10, 0, 10, 20, 30, 40, 50],
-            ticktext=["", "0", "10", "20", "30", "40", "50"],
-            showgrid=True,
-            gridwidth=1,
-            gridcolor='lightgray',
-            griddash='dash',
-            zeroline=False
-        ),
-        
-        # Y-AXIS
-        yaxis=dict(
-            title='y (km)',
-            title_font=dict(size=50, family='Arial, Bold', color='black'),
-            tickfont=dict(size=45, family='Arial', color='black'),
-            showline=True,
-            linewidth=4,
-            linecolor='black',
-            mirror=True,          # <--- COMPLETES THE BOX (RIGHT LINE)
-            ticks='outside',
-            tickwidth=4,
-            ticklen=18,
-            tickmode='array',
-            tickvals=[-50, 0, 50, 100],
-            ticktext=["", "0", "50", "100"],
-            title_standoff=30,
-            showgrid=True,
-            gridwidth=1,
-            gridcolor='lightgray',
-            griddash='dash',
-            zeroline=False
-        )
+        xaxis_title='x (km)',
+        yaxis_title='y (km)',
+        legend_title='Trajectory Types',
     )
 
     fig.show()

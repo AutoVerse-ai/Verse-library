@@ -5,23 +5,17 @@ import inspect
 import textwrap
 
 def z3num_to_float(x):
-    # Simplify expression (handles things like "-1 * epsilon")
-    x = simplify(x)
-
-    # Numeric types: Int, Rational, Algebraic
-    if isinstance(x, (IntNumRef, RatNumRef, AlgebraicNumRef)):
+    x = simplify(x) # handles expressions like "-1 * epsilon"
+    if isinstance(x, (IntNumRef, RatNumRef, AlgebraicNumRef)): # Numeric types: Int, Rational, Algebraic
         s = x.as_string().rstrip('?')
         if '/' in s:
             num, den = s.split('/')
             return float(num) / float(den)
         return float(s)
+    s = str(x).replace("epsilon", "0") # replace epsilon if necessary with 0
 
-    # Symbolic expressions involving epsilon → replace epsilon → 0
-    s = str(x).replace("epsilon", "0")
-
-    # The cleaned string may contain spaces/operators; extract the number:
-    try:
-        return float(eval(s))   # safe because s only contains 0, digits, +, -, *, /
+    try: 
+        return float(eval(s)) # try to evalute final expression: safe because s only contains 0, digits, +, -, *, /
     except:
         raise ValueError(f"Cannot parse Z3 numeric expression: {x}")
     
@@ -32,17 +26,11 @@ def bounded_piecewise_z3(conditions_outputs, input_bounds):
     
     results = []
     var_names = list(input_bounds.keys())
-    
-    # Create Z3 variables
     z3_vars = {name: Real(name) for name in var_names}
+    negated_conditions = [] # Track which conditions have been checked for "else" statement
     
-    # Track which conditions have been checked (for else clause)
-    negated_conditions = []
-    
-    for i, (condition, output_func) in enumerate(conditions_outputs):
-        # Determine the condition for this branch
-        if condition is None:
-            # Else clause: negate all previous conditions
+    for _, (condition, output_func) in enumerate(conditions_outputs):
+        if condition is None: # if "else"
             if negated_conditions:
                 branch_condition = And(negated_conditions)
             else:
@@ -51,9 +39,7 @@ def bounded_piecewise_z3(conditions_outputs, input_bounds):
             branch_condition = condition
             negated_conditions.append(Not(condition))
         
-        # Branch is satisfiable, now find constrained bounds
         constrained_bounds = {}
-        
         for name in var_names:
             # Find minimum value that satisfies both input bounds AND branch condition
             opt_min = Optimize()
@@ -109,13 +95,11 @@ def parse_piecewise_function(func: Callable) -> List[Tuple[Any, Any]]:
         where output_expr is either a constant or an AST expression string
     """
     
-    # Get the source code and parse it
-    source = inspect.getsource(func)
-    source = textwrap.dedent(source)  
+    source = inspect.getsource(func) # parsing
+    source = textwrap.dedent(source)  # remove whitespace
     tree = ast.parse(source)
-    
-    # Find the function definition
-    func_def = tree.body[0]
+
+    func_def = tree.body[0] # get function def
     if not isinstance(func_def, ast.FunctionDef):
         raise ValueError("Input must be a function definition")
     
@@ -138,19 +122,14 @@ def parse_piecewise_function(func: Callable) -> List[Tuple[Any, Any]]:
     # Process the if-elif-else chain
     current = if_stmt
     while current is not None:
-        # Parse the condition
-        condition_z3 = ast_to_z3_condition(current.test, z3_vars)
-        
-        # Parse the output (keep as expression, don't wrap in function)
-        output_expr = extract_return_value(current.body)
-        
+        condition_z3 = ast_to_z3_condition(current.test, z3_vars) # Parse the condition
+        output_expr = extract_return_value(current.body) # Parse the output (keep as expressio)
         conditions_outputs.append((condition_z3, output_expr))
         
         # Move to elif/else
         if len(current.orelse) == 1 and isinstance(current.orelse[0], ast.If):
             current = current.orelse[0]  # elif
-        elif len(current.orelse) > 0:
-            # else clause
+        elif len(current.orelse) > 0: # else
             output_expr = extract_return_value(current.orelse)
             conditions_outputs.append((None, output_expr))
             current = None
@@ -273,15 +252,13 @@ def create_output_func(output_expr: str, arg_names: List[str]) -> Callable:
     """
     Create a lambda function from an output expression string.
     """
-    # Create a function that takes a dict of variable bounds
-    def output_func(var_dict):
-        # Replace variable names with their values from var_dict
-        expr = output_expr
+    def output_func(var_dict): # Create a function that takes a dict of variable bounds to match parsed function bound type
+        expr = output_expr # Replace variable names with their values from var_dict
         for name in arg_names:
             if name in var_dict:
                 expr = expr.replace(name, str(var_dict[name]))
-        # Evaluate the expression
-        return eval(expr)
+        
+        return eval(expr) # Evaluate the expression
     
     return output_func
 

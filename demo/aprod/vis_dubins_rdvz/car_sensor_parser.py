@@ -3,9 +3,14 @@ from scipy.optimize import minimize, OptimizeResult
 # from prox_error_all_bounds import box_extreme_error, angular_span_between_rects, angular_bounds_diff # correct import paths
 # from distance_bounds import dist_extrema
 import pickle
+import sys
 from pathlib import Path
 from distance_bounds import dist_extrema, psi_extrema
-from parser_wrapper import parse_function
+# from parser_wrapper import parse_function
+# sys.path.append(str(Path(__file__).parent / 'parsed_wrap'))
+# from .parsed_wrap.parser_wrapper import parse_function
+sys.path.append(str(Path(__file__).parent.parent))  # add demo to path
+from parsed_wrap.parser_wrapper import parse_function
 
 epsilon = 0.05
 # epsilon = 0
