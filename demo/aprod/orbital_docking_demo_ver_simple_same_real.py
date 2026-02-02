@@ -137,52 +137,37 @@ if __name__ == "__main__":
 
     fig.update_layout(
         width=1000,
-        height=550,
+        height=500,  # Starting with a 2:1 canvas ratio
         plot_bgcolor='white',
-        margin=dict(l=120, r=50, b=120, t=80),
+        margin=dict(l=150, r=50, b=120, t=50),
         
-        # X-AXIS
+        # X-AXIS: Forced viewing window
         xaxis=dict(
             title='x (km)',
-            title_font=dict(size=50, family='Arial, Bold', color='black'),
-            tickfont=dict(size=45, family='Arial', color='black'),
-            showline=True,
-            linewidth=4,
-            linecolor='black',
-            mirror=True,          # <--- COMPLETES THE BOX (TOP LINE)
-            ticks='outside',
-            tickwidth=4,
-            ticklen=18,
+            range=[-10, 50],  # EXACT VIEWING WINDOW
             tickmode='array',
             tickvals=[-10, 0, 10, 20, 30, 40, 50],
-            ticktext=["", "0", "10", "20", "30", "40", "50"],
-            showgrid=True,
-            gridwidth=1,
-            gridcolor='lightgray',
-            griddash='dash',
+            constrain='domain',
+            title_font=dict(size=50, family='Arial, Bold', color='black'),
+            tickfont=dict(size=45, family='Arial', color='black'),
+            showline=True, linewidth=4, linecolor='black', mirror=True,
+            ticks='outside', tickwidth=4, ticklen=18,
+            showgrid=True, gridcolor='lightgray', griddash='dash',
             zeroline=False
         ),
         
-        # Y-AXIS
+        # Y-AXIS: Forced viewing window
         yaxis=dict(
             title='y (km)',
+            range=[-100, 100], # EXACT VIEWING WINDOW
+            tickmode='array',
+            tickvals=[-100, -50, 0, 50, 100],
             title_font=dict(size=50, family='Arial, Bold', color='black'),
             tickfont=dict(size=45, family='Arial', color='black'),
-            showline=True,
-            linewidth=4,
-            linecolor='black',
-            mirror=True,          # <--- COMPLETES THE BOX (RIGHT LINE)
-            ticks='outside',
-            tickwidth=4,
-            ticklen=18,
-            tickmode='array',
-            tickvals=[-50, 0, 50, 100],
-            ticktext=["", "0", "50", "100"],
+            showline=True, linewidth=4, linecolor='black', mirror=True,
+            ticks='outside', tickwidth=4, ticklen=18,
             title_standoff=30,
-            showgrid=True,
-            gridwidth=1,
-            gridcolor='lightgray',
-            griddash='dash',
+            showgrid=True, gridcolor='lightgray', griddash='dash',
             zeroline=False
         )
     )

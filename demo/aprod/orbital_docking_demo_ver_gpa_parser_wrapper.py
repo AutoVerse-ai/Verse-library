@@ -92,7 +92,7 @@ if __name__ == "__main__":
     fig = go.Figure()
     fig = reachtube_tree(trace, None, fig, 1, 2, [1,2], plot_color=colors)
     fig.data[0].name = 'True State'
-    fig.data[0].showlegend = True
+    # fig.data[0].showlegend = True
     diam = time_step_diameter_rect(trace, T, 1)
     diam_0, diam_f, diam_bar = 45, diam[-1], (sum(diam)+0.0)/len(diam) # NOTE: manually computing correct L1 diameter values
     print(f'F/I: {diam_f/diam_0:.5f}, A/I: {diam_bar/diam_0:.5f}\n raw final: {diam_f:.5f}, raw average: {diam_bar:.5f}, raw initial: {diam_0:.5f}')
@@ -123,19 +123,70 @@ if __name__ == "__main__":
             u_sol = np.vstack([u_sol, u_sol[-1]])
         os.remove(filename)
 
-    fig.add_trace(
-        go.Scatter(
-            x=x_sol[:, 0],
-            y=x_sol[:,1],
-            mode="lines",
-            line_color="#000000",
-            name="Reference Trajectory"
-    ))
+    # fig.add_trace(
+    #     go.Scatter(
+    #         x=x_sol[:, 0],
+    #         y=x_sol[:,1],
+    #         mode="lines",
+    #         line_color="#000000",
+    #         name="Reference Trajectory"
+    # ))
 
+    # fig.update_layout(
+    #     xaxis_title='x (km)',
+    #     yaxis_title='y (km)',
+    #     legend_title='Trajectory Types',
+    # )
     fig.update_layout(
-        xaxis_title='x (km)',
-        yaxis_title='y (km)',
-        legend_title='Trajectory Types',
+        width=1000,
+        height=550,
+        plot_bgcolor='white',
+        margin=dict(l=120, r=50, b=120, t=80),
+        
+        # X-AXIS
+        xaxis=dict(
+            title='x (km)',
+            title_font=dict(size=50, family='Arial, Bold', color='black'),
+            tickfont=dict(size=45, family='Arial', color='black'),
+            showline=True,
+            linewidth=4,
+            linecolor='black',
+            mirror=True,          # <--- COMPLETES THE BOX (TOP LINE)
+            ticks='outside',
+            tickwidth=4,
+            ticklen=18,
+            tickmode='array',
+            tickvals=[-10, 0, 10, 20, 30, 40, 50],
+            ticktext=["", "0", "10", "20", "30", "40", "50"],
+            showgrid=True,
+            gridwidth=1,
+            gridcolor='lightgray',
+            griddash='dash',
+            zeroline=False
+        ),
+        
+        # Y-AXIS
+        yaxis=dict(
+            title='y (km)',
+            title_font=dict(size=50, family='Arial, Bold', color='black'),
+            tickfont=dict(size=45, family='Arial', color='black'),
+            showline=True,
+            linewidth=4,
+            linecolor='black',
+            mirror=True,          # <--- COMPLETES THE BOX (RIGHT LINE)
+            ticks='outside',
+            tickwidth=4,
+            ticklen=18,
+            tickmode='array',
+            tickvals=[-50, 0, 50, 100],
+            ticktext=["", "0", "50", "100"],
+            title_standoff=30,
+            showgrid=True,
+            gridwidth=1,
+            gridcolor='lightgray',
+            griddash='dash',
+            zeroline=False
+        )
     )
-
+    
     fig.show()

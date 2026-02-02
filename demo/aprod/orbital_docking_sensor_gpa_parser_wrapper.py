@@ -67,7 +67,7 @@ def prox_error_ver_wrap(x,y,z,ep_r, ep_ang):
     ex = x-nx
     ey = y-ny
     ez = z-nz
-    return 
+    return ex, ey, ez
 
 class OrbitalSensor:
     def sense(self, agent, state_dict, lane_map = None, simulate = True):

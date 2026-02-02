@@ -117,7 +117,8 @@ def get_reachtube_segment(training_traces: np.ndarray, initial_radii: np.ndarray
     for trace_ind in range(training_traces.shape[0]):
         if not (np.all(reachtube_segment[:, 0, :] <= training_traces[trace_ind, :, :]) and np.all(reachtube_segment[:, 1, :] >= training_traces[trace_ind, :, :])):
             # assert np.any(np.abs(training_traces[trace_ind, 0, 1:]-center_trace[0, 1:]) > initial_radii), 
-            print(f"Warning: Trace #{trace_ind}", "of this initial set is sampled outside of the initial set because of floating point error and is not contained in the initial set")
+            # print(f"Warning: Trace #{trace_ind}", "of this initial set is sampled outside of the initial set because of floating point error and is not contained in the initial set")
+            pass
     return reachtube_segment
 
 def calcCenterPoint(lower, upper):
@@ -250,12 +251,7 @@ def calc_bloated_tube_dryvr(
             max_idx = max(max_idx, ret_idx + 1)
         for i in range(len(traces)):
             traces[i] = traces[i][:max_idx]
-            
-    # if mode_label[1] == 'Active' or (int(cur_center[-1])==2700 and mode_label[0]=='Passive'):
-    # # if mode_label[1] == 'Active' or int(cur_center[-1])==2700:
-    # # if mode_label[1] == 'Active':
-    #     pass
-    
+                
     # The major
     if bloating_method == GLOBAL:
         cur_reach_tube: np.ndarray = get_reachtube_segment(np.array(traces), np.array(cur_delta), "PWGlobal")

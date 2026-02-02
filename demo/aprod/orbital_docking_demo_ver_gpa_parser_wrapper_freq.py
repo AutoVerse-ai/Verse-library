@@ -95,7 +95,7 @@ if __name__ == "__main__":
     fig = go.Figure()
     fig = reachtube_tree(trace, None, fig, 1, 2, [1,2], plot_color=colors)
     fig.data[0].name = 'True State'
-    fig.data[0].showlegend = True
+    # fig.data[0].showlegend = True
     diam = time_step_diameter_rect(trace, T, ts)
     print(diam)
     diam_0, diam_f, diam_bar = 45, diam[-1], (sum(diam)+0.0)/len(diam) # NOTE: manually computing correct L1 diameter values
@@ -127,19 +127,56 @@ if __name__ == "__main__":
             u_sol = np.vstack([u_sol, u_sol[-1]])
         os.remove(filename)
 
-    fig.add_trace(
-        go.Scatter(
-            x=x_sol[:, 0],
-            y=x_sol[:,1],
-            mode="lines",
-            line_color="#000000",
-            name="Reference Trajectory"
-    ))
+    # fig.add_trace(
+    #     go.Scatter(
+    #         x=x_sol[:, 0],
+    #         y=x_sol[:,1],
+    #         mode="lines",
+    #         line_color="#000000",
+    #         name="Reference Trajectory"
+    # ))
+
+    # fig.update_layout(
+    #     xaxis_title='x (km)',
+    #     yaxis_title='y (km)',
+    #     legend_title='Trajectory Types',
+    # )
 
     fig.update_layout(
-        xaxis_title='x (km)',
-        yaxis_title='y (km)',
-        legend_title='Trajectory Types',
+        width=1000,
+        height=500,  # Starting with a 2:1 canvas ratio
+        plot_bgcolor='white',
+        margin=dict(l=150, r=50, b=120, t=50),
+        
+        # X-AXIS: Forced viewing window
+        xaxis=dict(
+            title='x (km)',
+            range=[-10, 50],  # EXACT VIEWING WINDOW
+            tickmode='array',
+            tickvals=[-10, 0, 10, 20, 30, 40, 50],
+            constrain='domain',
+            title_font=dict(size=50, family='Arial, Bold', color='black'),
+            tickfont=dict(size=45, family='Arial', color='black'),
+            showline=True, linewidth=4, linecolor='black', mirror=True,
+            ticks='outside', tickwidth=4, ticklen=18,
+            showgrid=True, gridcolor='lightgray', griddash='dash',
+            zeroline=False
+        ),
+        
+        # Y-AXIS: Forced viewing window
+        yaxis=dict(
+            title='y (km)',
+            range=[-100, 100], # EXACT VIEWING WINDOW
+            tickmode='array',
+            tickvals=[-100, -50, 0, 50, 100],
+            title_font=dict(size=50, family='Arial, Bold', color='black'),
+            tickfont=dict(size=45, family='Arial', color='black'),
+            showline=True, linewidth=4, linecolor='black', mirror=True,
+            ticks='outside', tickwidth=4, ticklen=18,
+            title_standoff=30,
+            showgrid=True, gridcolor='lightgray', griddash='dash',
+            zeroline=False
+        )
     )
 
     fig.show()
