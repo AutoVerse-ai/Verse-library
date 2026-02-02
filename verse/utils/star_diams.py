@@ -155,10 +155,17 @@ def sim_traces_to_diameters(sim_traces: List[AnalysisTreeNode]) -> List[float]:
     # NOTE: use the hist_dict from the previous function, and go in order to compute the tighest hyperrectangle and l1 distance of that rectangle
     for hist in hist_dict: # essentially for each node
         for time in hist_dict[hist]:
-            if np.abs(time-9.9)<=0.05:
-                pass
-            states = np.array(hist_dict[hist][time])
-            min_rect, max_rect = states.min(axis=0), states.max(axis=0) # NOTE: I could just keep the dict structure and just put these in place of the states to get the tighest hyperrectangle given the states for each node
-            diams.append(manhattan(min_rect, max_rect))
+            # states = np.array(hist_dict[hist][time])
+            # min_rect, max_rect = states.min(axis=0), states.max(axis=0) # NOTE: I could just keep the dict structure and just put these in place of the states to get the tighest hyperrectangle given the states for each node
+            # diams.append(manhattan(min_rect, max_rect))
     
+            states = hist_dict[hist][time]
+            # Filter out states with different dimensions
+            max_dim = max(len(state) for state in states)
+            filtered_states = [state for state in states if len(state) == max_dim]
+            if filtered_states:
+                states_array = np.array(filtered_states)
+                min_rect, max_rect = states_array.min(axis=0), states_array.max(axis=0) 
+                diams.append(manhattan(min_rect, max_rect))
+
     return diams
