@@ -1691,7 +1691,7 @@ class Verifier:
                 # NOTE: is this correct, or do I need indices from start to end as well 
                 start_idx = idx[0]  # Use start_idx as the hitting index, end_idx = idx[1] exists sometimes
                 
-                # Get the hitting state at start_idx
+                # Get the hitting set at start_idx
                 hitting_rect = combine_rect([node.trace[transit_agent_idx][start_idx * 2], node.trace[transit_agent_idx][start_idx * 2 + 1]])
                 
                 # Partition the hitting rect -- NOTE: fixing partitioning of time (0th dim always) and adding option to only partition a select number of partitions 
@@ -1709,6 +1709,8 @@ class Verifier:
                     
                     # Re-sense for the partition
                     temp_dict = state_dict
+
+                    # I think commenting this if block and the one below should revert the behavior to before
                     if src_mode != dest_mode:
                         future_state_dict = copy.deepcopy(state_dict)
                         future_state_dict[transit_agent_idx] = (future_state_dict[transit_agent_idx][0], dest_mode, future_state_dict[transit_agent_idx][2])
@@ -1766,7 +1768,7 @@ class Verifier:
                 )
                 next_nodes.append(tmp)
 
-        # Truncate trace if transitions occurred
+        # As with normal verify, truncate trace if transitions occurred
         if all_possible_transitions:
             max_end_idx = max(idx[-1] for _, _, _, _, idx, _ in all_possible_transitions)
             for agent_idx in node.agent:

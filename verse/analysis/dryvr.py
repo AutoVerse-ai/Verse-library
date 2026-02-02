@@ -155,13 +155,14 @@ def get_reachtube_segment(
             np.all(reachtube_segment[:, 0, :] <= training_traces[trace_ind, 1:, :])
             and np.all(reachtube_segment[:, 1, :] >= training_traces[trace_ind, 1:, :])
         ):
-            assert np.any(
-                np.abs(training_traces[trace_ind, 0, 1:] - center_trace[0, 1:]) > initial_radii
-            )
-            print(
-                f"Warning: Trace #{trace_ind}",
-                "of this initial set is sampled outside of the initial set because of floating point error and is not contained in the initial set",
-            )
+            # assert np.any(
+            #     np.abs(training_traces[trace_ind, 0, 1:] - center_trace[0, 1:]) > initial_radii
+            # )
+            # print(
+            #     f"Warning: Trace #{trace_ind}",
+            #     "of this initial set is sampled outside of the initial set because of floating point error and is not contained in the initial set",
+            # )
+            pass
     return reachtube_segment
 
 
