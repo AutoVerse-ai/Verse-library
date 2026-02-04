@@ -1,0 +1,7 @@
+.venv/
+.git/
+**/__pycache__/
+*.pyc
+*.pyd
+*.so
+libs/auto_LiRPA/.git/
