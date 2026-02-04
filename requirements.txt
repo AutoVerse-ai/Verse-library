@@ -1,6 +1,8 @@
 # ray~=2.4.0
 ray
 astunparse~=1.6.3
+dash
+cvxpy>=1.4.0
 beautifulsoup4~=4.11.1
 intervaltree~=3.1.0
 lxml~=4.9.1
