@@ -10,6 +10,7 @@ from typing import List, Tuple, Union
 from plotly.graph_objs.scatter import Marker
 from verse.analysis.analysis_tree import AnalysisTree, AnalysisTreeNode
 from verse.map.lane_map import LaneMap
+import os
 
 colors = [
     ["#CC0000", "#FF0000", "#FF3333", "#FF6666", "#FF9999", "#FFCCCC"],  # red
@@ -152,34 +153,6 @@ def simulation_tree(
                         showlegend=False,
                     )
                 )
-            # if label_mode != "None":
-            #     if previous_mode[agent_id] != node.mode[agent_id]:
-            #         text_pos, text = get_text_pos(node.mode[agent_id][0])
-            #         texts = [f"{agent_id}: {text}" for _ in trace]
-            #         mark_colors = [mode_point_color for _ in trace]
-            #         mark_sizes = [0 for _ in trace]
-            #         if node.assert_hits != None and agent_id in node.assert_hits:
-            #             mark_colors[-1] = "black"
-            #             mark_sizes[-1] = 10
-            #             texts[-1] = "BOOM!!!\nAssertions hit:\n" + "\n".join(
-            #                 "  " + a for a in node.assert_hits[agent_id]
-            #             )
-            #         marker = Marker(color=mark_colors, size=mark_sizes)
-            #         fig.add_trace(
-            #             go.Scatter(
-            #                 x=[trace[0, x_dim]],
-            #                 y=[trace[0, y_dim]],
-            #                 mode="markers+lines",
-            #                 line_color=mode_point_color,
-            #                 opacity=0.5,
-            #                 text=texts,
-            #                 marker=marker,
-            #                 textposition=text_pos,
-            #                 textfont=dict(size=text_size, color=mode_text_color),
-            #                 showlegend=False,
-            #             )
-            #         )
-            #         previous_mode[agent_id] = node.mode[agent_id]
         queue += node.child
     if scale_type == "trace":
         fig.update_xaxes(
@@ -465,22 +438,18 @@ def simulation_anime(
                         )
                     )
                     previous_mode[agent_id] = node.mode[agent_id]
-            if node.assert_hits != None and agent_id in node.assert_hits:
-                fig.add_trace(
-                    go.Scatter(
-                        x=[trace[-1, x_dim]],
-                        y=[trace[-1, y_dim]],
-                        mode="markers+text",
-                        text=["HIT:\n" + a for a in node.assert_hits[agent_id]],
-                        # textfont={"color": "grey"},
-                        marker={"size": marker_size, "color": "black"},
-                        #  legendgroup=agent_id,
-                        #  legendgrouptitle_text=agent_id,
-                        #  name=str(round(start[0], 2))+'-'+str(round(end[0], 2)) +
-                        #  '-'+str(count_dict[time])+'hit',
-                        showlegend=False,
+                if node.assert_hits != None and agent_id in node.assert_hits:
+                    fig.add_trace(
+                        go.Scatter(
+                            x=[trace[-1, x_dim]],
+                            y=[trace[-1, y_dim]],
+                            mode="markers+text",
+                            text=["HIT:\n" + a for a in node.assert_hits[agent_id]],
+                            # textfont={"color": "grey"},
+                            marker={"size": marker_size, "color": "black"},
+                            showlegend=False,
+                        )
                     )
-                )
         queue += node.child
     if scale_type == "trace":
         fig.update_xaxes(
@@ -791,6 +760,346 @@ def reachtube_anime(
     return fig
 
 
+def reachtube_tree_video(
+    root: Union[AnalysisTree, AnalysisTreeNode],
+    map=None,
+    fig=go.Figure(),
+    x_dim: int = 1,
+    y_dim: int = 2,
+    print_dim_list=None,
+    map_type="lines",
+    scale_type="trace",
+    label_mode="None",
+    sample_rate=1,
+    combine_rect=1,
+    plot_color=None,
+    time_step=None,
+    speed_rate=1,
+    output_path=None,
+    max_slider_steps=100,
+):
+    """Build a reachtube animation that can be paused, rewound, and stopped at any time.
+
+    What
+    ----
+    Parses every node in the tree and, at each time slice, collects each agent's
+    reachset (axis-aligned rect). Frames are cumulative: the frame at time t
+    shows all reachsets from time 0 through t, so the animation is the reachtube
+    being built over time. Returns a Plotly figure with a time slider so you can
+    pause, rewind, or seek to any time. Optionally writes HTML (interactive),
+    GIF, or MP4 to output_path.
+
+    Why
+    ---
+    - Cumulative frames (instead of one frame per time with only that time's
+      rects) make it easy to see how the full tube is constructed and to stop
+      at a specific "construction step."
+    - Plotly's slider gives parsable control (pause/seek) without writing video;
+      HTML is the default way to get that. GIF/MP4 are provided for embedding
+      or playback in tools that don't support interactive HTML.
+    - kaleido is used only for GIF/MP4 export (Plotly's to_image); imageio
+      encodes the image sequence. Both are optional; see _export_animation_video.
+
+    Technical justification (cumulative frames)
+    -----------------------------------------
+    The verification tree has multiple nodes (e.g. branching from nondeterminism).
+    Each node has traces per agent; each trace is a sequence of [lower, upper]
+    state pairs at consecutive times. We key by rounded time and aggregate
+    (agent_id, rect) across all nodes so that "time t" means "all rects at that
+    time from any branch." Cumulative frame k = union of rects at times 0..k
+    gives a single, deterministic construction order for the animation.
+
+    Performance
+    -----------
+    Memory: cumulative_rects stores O(num_frames * rects_per_frame) rects;
+    for large trees or fine time steps, consider increasing time_step or
+    sample_rate to reduce the number of time points.
+
+    Parameters
+    ----------
+    root : AnalysisTree or AnalysisTreeNode
+        Verification tree root.
+    map, fig, x_dim, y_dim, print_dim_list, map_type, scale_type, label_mode,
+    sample_rate, combine_rect, plot_color
+        Same as reachtube_tree().
+    time_step : float or None
+        Time rounding for frame keys; None uses 3 decimal digits.
+    speed_rate : float
+        Playback speed (higher = faster).
+    output_path : str or None
+        If set, write output to file:
+        - ".html" -> interactive HTML (pause/seek via slider).
+        - ".gif" -> GIF (requires kaleido and imageio).
+        - ".mp4" -> MP4 (requires kaleido and imageio with ffmpeg).
+    max_slider_steps : int or None
+        Maximum number of slider steps to display. If None, shows all timesteps.
+        Default is 100 for reduced granularity in slider navigation. Uniformly
+        samples timesteps if total exceeds this limit.
+
+    Returns
+    -------
+    fig : go.Figure
+        Plotly figure with frames and slider.
+
+    Note (maintainability)
+    ---------------------
+    Slider step "name" and "label" must match the frame name (str(time_point))
+    for Plotly's animation to sync; changing one requires changing the other.
+    """
+    # --- Step 1: Normalize root, time rounding, and sample the tree ---
+    if plot_color is None:
+        plot_color = colors
+    if isinstance(root, AnalysisTree):
+        root = root.root
+    if time_step is not None:
+        num_digit = num_digits(time_step)
+        if num_digit is False:
+            num_digit = 3
+    else:
+        num_digit = 3
+    root = sample_trace(root, sample_rate)
+    agent_list = list(root.agent.keys())
+    num_dim = np.array(root.trace[agent_list[0]]).shape[1]
+    check_dim(num_dim, x_dim, y_dim, print_dim_list)
+    if print_dim_list is None:
+        print_dim_list = range(0, num_dim)
+
+    # --- Step 2: Build time -> [(agent_id, rect), ...] and axis bounds ---
+    # Each rect is [lower_state, upper_state]; we store (agent_id, rect) so we
+    # can assign per-agent colors when building frames.
+    timed_point_dict = {}
+    queue = [root]
+    x_min, x_max = float("inf"), -float("inf")
+    y_min, y_max = float("inf"), -float("inf")
+    nodes_visited = 0
+    traces_skipped_len = 0
+
+    while queue:
+        node = queue.pop(0)
+        nodes_visited += 1
+        traces = node.trace
+        for agent_id in traces:
+            trace = np.array(traces[agent_id]) # slightly confusing, may rename for clarity
+            if len(trace) < 2: # this check makes sense for current reachset structure, may change in future
+                traces_skipped_len += 1
+                continue
+            for i in range(0, len(trace) - 1, 2):
+                # TODO: enforce min/max ordering and raise exceiption if trace[i+1][dim]<trace[i][dim] because something has definitely gone wrong
+                x_min = min(x_min, trace[i][x_dim], trace[i + 1][x_dim])
+                x_max = max(x_max, trace[i][x_dim], trace[i + 1][x_dim])
+                y_min = min(y_min, trace[i][y_dim], trace[i + 1][y_dim])
+                y_max = max(y_max, trace[i][y_dim], trace[i + 1][y_dim])
+                time_point = round(trace[i][0], num_digit)
+                rect = [trace[i][0:].tolist(), trace[i + 1][0:].tolist()]
+                if time_point not in timed_point_dict:
+                    timed_point_dict[time_point] = []
+                timed_point_dict[time_point].append((agent_id, rect))
+        queue += node.child
+
+    # Debug: report what we collected -- remove this after this works
+    num_time_points = len(timed_point_dict)
+    total_rects = sum(len(v) for v in timed_point_dict.values())
+    print(f"[reachtube_tree_video] nodes_visited={nodes_visited}, traces_skipped(len<2)={traces_skipped_len}, "
+          f"num_time_points={num_time_points}, total_rects={total_rects}")
+    if nodes_visited > 0 and total_rects == 0 and traces_skipped_len > 0:
+        print(f"[reachtube_tree_video] all traces were skipped (len<2). Check trace shape per node (expect pairs of rows).")
+    if total_rects > 0 and agent_list:
+        first_trace = np.array(root.trace[agent_list[0]])
+        print(f"[reachtube_tree_video] root trace shape for agent {agent_list[0]!r}: {first_trace.shape} (expect (N, dims) with N>=2, rows in pairs).")
+
+    sorted_times = sorted(timed_point_dict.keys())
+    if not sorted_times: # NOTE: early exit if no reachtube data can be shown, maybe throw exception instead
+        print(f"[reachtube_tree_video] early return: no time points, returning figure with map only (no frames).")
+        fig = draw_map(map=map, fig=fig, fill_type=map_type)
+        fig = update_style(fig)
+        return fig
+
+    num_points = len(sorted_times)
+    
+    # --- SLIDER GRANULARITY: Sample timesteps to max_slider_steps (default 100) ---
+    # Technical Justification:
+    # When verification produces many timesteps (1000+), creating a slider step for
+    # every timestep creates UI clutter and memory bloat. Uniform sampling reduces
+    # slider granularity while preserving frame animation smoothness. Cumulative frame
+    # structure ensures all rects from times 0..t_sampled are included, maintaining
+    # visual continuity.
+    if max_slider_steps is None:
+        sampled_times = sorted_times
+    elif len(sorted_times) > max_slider_steps:
+        # Uniformly sample indices across the time range
+        indices = np.linspace(0, len(sorted_times) - 1, max_slider_steps, dtype=int)
+        sampled_times = [sorted_times[i] for i in indices]
+    else:
+        sampled_times = sorted_times
+    
+    duration = max(1, int(5000 / len(sampled_times) / speed_rate))
+    fig_dict, sliders_dict = create_anime_dict(duration)
+
+    # --- Step 3 & 4: DRASTIC FIX: Use scatter traces instead of layout shapes ---
+    # Technical Justification: Plotly's animation system was designed to animate traces (data),
+    # not layout elements. Using visible arrays on traces allows proper backward/forward animation.
+    # Each rectangle is a scatter trace with mode='lines' forming a closed polygon. Per-frame
+    # visibility is controlled via the "visible" array in frame["data"]. This is how Plotly's
+    # animation engine actually works, so backward slider movement now functions correctly.
+    
+    # Build all unique rects as scatter traces upfront
+    all_rects_data = []
+    rect_to_trace_idx = {}  # Map (time_point, agent_id, rect_idx) -> trace_idx
+    
+    for time_point in sorted_times:
+        for rect_idx, (agent_id, rect) in enumerate(timed_point_dict[time_point]):
+            color_idx = agent_list.index(agent_id) % len(plot_color)
+            linecolor = plot_color[color_idx][0]
+            fillcolor = plot_color[color_idx][1]
+            
+            # Create rectangle polygon: [x0,x1,x1,x0,x0], [y0,y0,y1,y1,y0]
+            # CRITICAL: start with visible: False; frame updates will control visibility
+            rect_trace = {
+                "x": [rect[0][x_dim], rect[1][x_dim], rect[1][x_dim], rect[0][x_dim], rect[0][x_dim]],
+                "y": [rect[0][y_dim], rect[0][y_dim], rect[1][y_dim], rect[1][y_dim], rect[0][y_dim]],
+                "mode": "lines",
+                "fill": "toself",
+                "fillcolor": fillcolor,
+                "line": {"color": linecolor, "width": 2},
+                "visible": False,  # Start hidden; frames will show them
+                "showlegend": False,
+                "hoverinfo": "none"
+            }
+            trace_idx = len(all_rects_data)
+            all_rects_data.append(rect_trace)
+            rect_to_trace_idx[(time_point, agent_id, rect_idx)] = trace_idx
+    
+    fig_dict["data"] = all_rects_data
+    print(f"[reachtube_tree_video] Created {len(all_rects_data)} rect traces")
+    
+    # Build frames with visibility arrays
+    for frame_idx, time_point in enumerate(sampled_times):
+        # For this frame, show all rects with time <= time_point, hide others
+        visible = [False] * len(all_rects_data)
+        for t in sorted_times:
+            if t <= time_point:
+                for rect_idx, (agent_id, rect) in enumerate(timed_point_dict[t]):
+                    trace_idx = rect_to_trace_idx[(t, agent_id, rect_idx)]
+                    visible[trace_idx] = True
+        
+        # Each frame["data"] element updates one trace; visible is a boolean per trace
+        frame_data = [{"visible": v} for v in visible]
+        frame = {
+            "data": frame_data,
+            "name": str(time_point)
+        }
+        fig_dict["frames"].append(frame)
+        num_visible = sum(visible)
+        print(f"[reachtube_tree_video] Frame {frame_idx}: time_point={time_point}, visible rects={num_visible}")
+        
+        slider_step = {
+            "args": [
+                [str(time_point)],
+                {
+                    "frame": {"duration": duration, "redraw": True},
+                    "mode": "immediate",
+                    "transition": {"duration": duration},
+                },
+            ],
+            "label": str(time_point),
+            "method": "animate",
+        }
+        sliders_dict["steps"].append(slider_step)
+        print(f"[reachtube_tree_video] Slider step {len(sliders_dict['steps'])-1}: targeting frame name '{str(time_point)}'")
+
+    print(f"[reachtube_tree_video] built {len(fig_dict['frames'])} frames (from {num_time_points} timesteps, sampled to max {max_slider_steps or 'all'}).")
+    print(f"[reachtube_tree_video] Frame names: {[f['name'] for f in fig_dict['frames']]}")
+    print(f"[reachtube_tree_video] Slider step targets: {[step['args'][0][0] for step in sliders_dict['steps']]}")
+
+    # --- Step 5: Assemble figure, map, axes, and optional file export ---
+    fig_dict["layout"]["sliders"] = [sliders_dict]
+    
+    print(f"[reachtube_tree_video] Setting slider active index to: {sliders_dict['active']}")
+    print(f"[reachtube_tree_video] Total data traces: {len(fig_dict['data'])}")
+    if fig_dict['frames']:
+        first_frame_visible = sum(1 for item in fig_dict['frames'][0]['data'] if item.get('visible', True))
+        last_frame_visible = sum(1 for item in fig_dict['frames'][-1]['data'] if item.get('visible', True))
+        print(f"[reachtube_tree_video] First frame visible count: {first_frame_visible}")
+        print(f"[reachtube_tree_video] Last frame visible count: {last_frame_visible}")
+    
+    fig = go.Figure(fig_dict)
+    fig = draw_map(map=map, fig=fig, fill_type=map_type)
+    if scale_type == "trace":
+        fig.update_xaxes(
+            range=[x_min - scale_factor * (x_max - x_min), x_max + scale_factor * (x_max - x_min)]
+        )
+        fig.update_yaxes(
+            range=[y_min - scale_factor * (y_max - y_min), y_max + scale_factor * (y_max - y_min)]
+        )
+    fig = update_style(fig)
+
+    if output_path:
+        output_path = str(output_path)
+        if output_path.lower().endswith(".html"):
+            fig.write_html(output_path)
+        elif output_path.lower().endswith(".gif") or output_path.lower().endswith(".mp4"):
+            _export_animation_video(fig, output_path, duration, num_points)
+
+    return fig
+
+
+def _export_animation_video(fig, output_path: str, duration: int, num_frames: int):
+    """Export a Plotly animated figure to GIF or MP4 by rendering each frame to PNG then encoding.
+
+    What
+    ----
+    Iterates over fig.frames, builds a standalone figure for each frame (map +
+    that frame's shapes), renders it to PNG via Plotly's to_image(), then
+    concatenates the images into a GIF or MP4 using imageio.
+
+    Why
+    ----
+    Plotly does not export animations directly to video. kaleido is the
+    recommended engine for to_image() (see
+    https://plotly.com/python/static-image-export/). imageio provides a
+    simple API for writing image sequences to GIF/MP4
+    (https://imageio.readthedocs.io/en/stable/format_list.html). MP4 uses
+    libx264 and typically requires ffmpeg on the system.
+
+    Note (maintainability)
+    ---------------------
+    Each frame figure is built by deepcopying fig.data and fig.layout then
+    overwriting layout.shapes with the frame's shapes. If the main figure
+    later stores per-frame state in layout beyond shapes/annotations, this
+    function must be updated to copy that state as well.
+    """
+    try:
+        import imageio
+    except ImportError:
+        raise ImportError("GIF/MP4 export requires imageio. Install with: pip install imageio")
+    try:
+        import kaleido  # noqa: F401  -- used by plotly's to_image()
+    except ImportError:
+        raise ImportError("GIF/MP4 export requires kaleido. Install with: pip install kaleido")
+
+    ext = output_path.lower().split(".")[-1]
+    frame_duration_sec = duration / 1000.0  # Plotly duration is in ms
+    images = []
+
+    for i, frame in enumerate(fig.frames):
+        # One figure per frame: base layout + data (map) from main fig, shapes from this frame
+        frame_fig = go.Figure(data=copy.deepcopy(fig.data), layout=copy.deepcopy(fig.layout))
+        frame_fig.layout.shapes = frame.layout.get("shapes", [])
+        frame_fig.layout.annotations = frame.layout.get("annotations", [])
+        img_bytes = frame_fig.to_image(format="png", scale=2)
+        buf = np.frombuffer(img_bytes, dtype=np.uint8)
+        img = imageio.imread(buf)
+        images.append(img)
+
+    if ext == "gif":
+        imageio.mimsave(output_path, images, duration=frame_duration_sec, loop=0)
+    elif ext == "mp4":
+        fps = 1.0 / frame_duration_sec if frame_duration_sec > 0 else 10
+        imageio.mimsave(output_path, images, fps=fps, codec="libx264")
+    else:
+        raise ValueError("output_path must end with .gif or .mp4 for video export.")
+
+
 """Functions below are low-level functions and usually are not called outside this file."""
 
 
@@ -821,6 +1130,8 @@ def reachtube_tree_single(
     while queue != []:
         node = queue.pop(0)
         traces = node.trace
+        if agent_id not in traces:
+            break
         trace = np.array(traces[agent_id])
         max_id = len(trace) - 1
         if (
@@ -1804,3 +2115,39 @@ def reachtube_tree_single_slice(
                     )
         queue += node.child
     return fig
+
+def display_figure(fig: go.Figure):
+    if os.path.exists('/.dockerenv'):
+        try:
+            import dash
+            from dash import dcc, html
+            print("\n" + "="*40)
+            print("DOCKER VISUALIZATION STARTING")
+            print("URL: http://localhost:8050")
+            print("="*40 + "\n")
+            
+            app = dash.Dash(__name__)
+            
+            # Setup the layout to be full-screen
+            app.layout = html.Div([
+                dcc.Graph(
+                    figure=fig, 
+                    style={'height': '98vh', 'width': '100%'}
+                )
+            ], style={'margin': '0', 'padding': '0', 'backgroundColor': '#f0f0f0'})
+            
+            # This will "hold" the terminal until you Ctrl+C
+            # host='0.0.0.0' is required to map to your Windows host
+            # The modern way to start the server
+            app.run(
+                host='0.0.0.0', 
+                port=8050, 
+                debug=False,            # Disables reloader and dev tools by default
+                dev_tools_ui=False,     # Hides the blue Dash debug button
+                dev_tools_hot_reload=False # The direct analogue to use_reloader=False
+            )
+        except ImportError:
+            print("\n[!] Dash not found. Saving to HTML instead.")
+            fig.write_html("docking_results.html")
+    else:
+        fig.show()

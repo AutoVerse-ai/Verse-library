@@ -5,82 +5,67 @@ import inspect
 import textwrap
 
 def z3num_to_float(x):
-    x = simplify(x) # handles expressions like "-1 * epsilon"
-    if isinstance(x, (IntNumRef, RatNumRef, AlgebraicNumRef)): # Numeric types: Int, Rational, Algebraic
+    """Convert Z3 numeric expressions to Python float, handling rationals and epsilon terms."""
+    x = simplify(x)
+    if isinstance(x, (IntNumRef, RatNumRef, AlgebraicNumRef)):
         s = x.as_string().rstrip('?')
         if '/' in s:
             num, den = s.split('/')
             return float(num) / float(den)
         return float(s)
-    s = str(x).replace("epsilon", "0") # replace epsilon if necessary with 0
+    s = str(x).replace("epsilon", "0")
 
     try: 
-        return float(eval(s)) # try to evalute final expression: safe because s only contains 0, digits, +, -, *, /
+        return float(eval(s))
     except:
         raise ValueError(f"Cannot parse Z3 numeric expression: {x}")
     
 def bounded_piecewise_z3(conditions_outputs, input_bounds):
     """
     Evaluate a piecewise function over bounded inputs using Z3.
+    For each branch, finds the tightest input bounds satisfying that branch's condition.
     """
-    
     results = []
     var_names = list(input_bounds.keys())
     z3_vars = {name: Real(name) for name in var_names}
-    negated_conditions = [] # Track which conditions have been checked for "else" statement
+    negated_conditions = []
     
     for _, (condition, output_func) in enumerate(conditions_outputs):
-        if condition is None: # if "else"
-            if negated_conditions:
-                branch_condition = And(negated_conditions)
-            else:
-                branch_condition = BoolVal(True)
+        if condition is None:
+            branch_condition = And(negated_conditions) if negated_conditions else BoolVal(True)
         else:
             branch_condition = condition
             negated_conditions.append(Not(condition))
         
         constrained_bounds = {}
         for name in var_names:
-            # Find minimum value that satisfies both input bounds AND branch condition
             opt_min = Optimize()
             for bound_name, (min_val, max_val) in input_bounds.items():
                 opt_min.add(z3_vars[bound_name] >= min_val)
                 opt_min.add(z3_vars[bound_name] <= max_val)
             opt_min.add(branch_condition)
-            # opt_min.minimize(z3_vars[name])
             obj = opt_min.minimize(z3_vars[name])
 
             min_val = None
             if opt_min.check() == sat:
-            #     model = opt_min.model()
-            #     min_val_expr = model[z3_vars[name]]
-            #     min_val = float(min_val_expr.as_decimal(10))
-                # Extract INFIMUM of the objective
-                inf = opt_min.lower(obj)       # <-- This is the correct API for Optimize
+                inf = opt_min.lower(obj)
                 min_val = z3num_to_float(inf)
 
-            # Find maximum value that satisfies both input bounds AND branch condition
             opt_max = Optimize()
             for bound_name, (min_val_b, max_val_b) in input_bounds.items():
                 opt_max.add(z3_vars[bound_name] >= min_val_b)
                 opt_max.add(z3_vars[bound_name] <= max_val_b)
             opt_max.add(branch_condition)
-            # opt_max.maximize(z3_vars[name])
             obj = opt_max.maximize(z3_vars[name])
-            
 
             max_val = None
             if opt_max.check() == sat:
-                sup = opt_max.upper(obj)       # <-- This is the correct API for Optimize
+                sup = opt_max.upper(obj)
                 max_val = z3num_to_float(sup)
-                # model = opt_max.model()
-                # max_val_expr = model[z3_vars[name]]
-                # max_val = float(max_val_expr.as_decimal(10))
             
             if min_val is not None and max_val is not None:
                 constrained_bounds[name] = (min_val, max_val)
         
-        # Add result if we got bounds for all variables
         if len(constrained_bounds) == len(var_names):
             results.append((constrained_bounds, output_func))
     
@@ -94,16 +79,14 @@ def parse_piecewise_function(func: Callable) -> List[Tuple[Any, Any]]:
         List of (condition_z3_expr, output_expr) tuples
         where output_expr is either a constant or an AST expression string
     """
-    
-    source = inspect.getsource(func) # parsing
-    source = textwrap.dedent(source)  # remove whitespace
+    source = inspect.getsource(func)
+    source = textwrap.dedent(source)
     tree = ast.parse(source)
 
-    func_def = tree.body[0] # get function def
+    func_def = tree.body[0]
     if not isinstance(func_def, ast.FunctionDef):
         raise ValueError("Input must be a function definition")
     
-    # Extract the if-elif-else chain from the function body
     if_stmt = None
     for node in func_def.body:
         if isinstance(node, ast.If):
@@ -113,23 +96,20 @@ def parse_piecewise_function(func: Callable) -> List[Tuple[Any, Any]]:
     if if_stmt is None:
         raise ValueError("Function must contain an if statement")
     
-    # Get function arguments for variable mapping
     arg_names = [arg.arg for arg in func_def.args.args]
     z3_vars = {name: Real(name) for name in arg_names}
     
     conditions_outputs = []
     
-    # Process the if-elif-else chain
     current = if_stmt
     while current is not None:
-        condition_z3 = ast_to_z3_condition(current.test, z3_vars) # Parse the condition
-        output_expr = extract_return_value(current.body) # Parse the output (keep as expressio)
+        condition_z3 = ast_to_z3_condition(current.test, z3_vars)
+        output_expr = extract_return_value(current.body)
         conditions_outputs.append((condition_z3, output_expr))
         
-        # Move to elif/else
         if len(current.orelse) == 1 and isinstance(current.orelse[0], ast.If):
-            current = current.orelse[0]  # elif
-        elif len(current.orelse) > 0: # else
+            current = current.orelse[0]
+        elif len(current.orelse) > 0:
             output_expr = extract_return_value(current.orelse)
             conditions_outputs.append((None, output_expr))
             current = None
@@ -199,7 +179,8 @@ def ast_to_z3_expr(node: ast.expr, z3_vars: Dict[str, Any]) -> Any:
     elif isinstance(node, ast.Constant):
         return node.value
     
-    elif isinstance(node, ast.Num):  # Python < 3.8 -- may be deprecated
+    elif isinstance(node, ast.Num):
+        # NOTE: Python < 3.8 compatibility - ast.Num is deprecated in favor of ast.Constant
         return node.n
     
     elif isinstance(node, ast.UnaryOp):
@@ -234,15 +215,16 @@ def ast_to_z3_expr(node: ast.expr, z3_vars: Dict[str, Any]) -> Any:
 def extract_return_value(body: List[ast.stmt]) -> Any:
     """
     Extract the return value from a function body.
+    Returns either a constant value or unparsed AST expression string.
     """
     for node in body:
         if isinstance(node, ast.Return):
             if isinstance(node.value, ast.Constant):
                 return node.value.value
-            elif isinstance(node.value, ast.Num):  # Python < 3.8
+            elif isinstance(node.value, ast.Num):
+                # NOTE: Python < 3.8 compatibility
                 return node.value.n
             else:
-                # Return the AST node for complex expressions
                 return ast.unparse(node.value)
     
     raise ValueError("No return statement found")
@@ -251,36 +233,32 @@ def extract_return_value(body: List[ast.stmt]) -> Any:
 def create_output_func(output_expr: str, arg_names: List[str]) -> Callable:
     """
     Create a lambda function from an output expression string.
+    Takes a dict of variable bounds and evaluates the expression.
     """
-    def output_func(var_dict): # Create a function that takes a dict of variable bounds to match parsed function bound type
-        expr = output_expr # Replace variable names with their values from var_dict
+    def output_func(var_dict):
+        expr = output_expr
         for name in arg_names:
             if name in var_dict:
                 expr = expr.replace(name, str(var_dict[name]))
         
-        return eval(expr) # Evaluate the expression
+        return eval(expr)
     
     return output_func
 
 if __name__ == "__main__":
-
-    # vis example:
     def vis_sensor_piecewise(psi, phi):
+        """Example piecewise function for visibility sensor."""
         if psi >= 0 and psi <= phi:
             return -1
         elif psi < 0 and psi >= -phi:
             return 1
         elif psi > phi:
-            # return -2 
-            return something(psi, 2) # parser should be able to parse out arbitrary functions
+            return something(psi, 2)
         else:
             return 2
 
-    # Parsing
     conditions_outputs = parse_piecewise_function(vis_sensor_piecewise)
 
-    # print(conditions_outputs)
-    # Checking
     input_bounds = {
         'psi': [-1.1, 2],
         'phi': [1, 1]
@@ -292,3 +270,10 @@ if __name__ == "__main__":
     for constrained_bounds, output_func in results:
         print(f"Constrained bounds: {constrained_bounds}")
         print(f"Output function: {output_func}")
+
+""" 
+    NOTE: The most complex part requiring some attention is the Z3 optimization loop in
+    bounded_piecewise_z3(). The function creates separate Optimize() instances for min/max
+    per variable per branch, which can be slow for complex conditions or many variables.
+    Consider caching or refactoring if performance becomes an issue. 
+"""

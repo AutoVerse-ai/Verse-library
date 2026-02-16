@@ -93,4 +93,5 @@ if __name__ == "__main__":
     diam_sim = sim_traces_to_diameters(sim_traces)
     diam_f_sim, diam_bar_sim = diam_sim[-1], (sum(diam_sim)+0.0)/len(diam_sim)
     print(f'Sim results: F/I: {diam_f_sim/diam_0:.5f}, A/I: {diam_bar_sim/diam_0:.5f}\n raw final: {diam_f_sim:.5f}, raw average: {diam_bar_sim:.5f}')
-    fig.show()
+    # fig.show()
+    display_figure(fig)

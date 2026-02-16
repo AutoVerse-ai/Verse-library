@@ -107,7 +107,8 @@ if __name__ == "__main__":
         fig = simulation_tree(sim_trace, None, fig, 1, 2, [0,1,2], 'lines', 'trace')
 
     # sim_dict = sim_traces_to_dict_composed(sim_traces)
-    fig.show()
+    # fig.show()
+    display_figure(fig)
     diam_0 = 0.04
     diam_sim = sim_traces_to_diameters(sim_traces)
     diam_f_sim, diam_bar_sim = diam_sim[-1], (sum(diam_sim)+0.0)/len(diam_sim)
