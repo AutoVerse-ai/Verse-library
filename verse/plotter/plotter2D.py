@@ -196,7 +196,7 @@ def simulation_anime(
         num_digit = 3
     org_root = copy.deepcopy(root)
     root = sample_trace(root, sample_rate)
-    timed_point_dict = {}
+    timed_agent_reach_dict = {}
     queue = [root]
     x_min, x_max = float("inf"), -float("inf")
     y_min, y_max = float("inf"), -float("inf")
@@ -219,19 +219,19 @@ def simulation_anime(
                 y_max = max(y_max, trace[i][y_dim])
                 time_point = round(trace[i][0], num_digit)
                 tmp_trace = trace[i][0:].tolist()
-                if time_point not in timed_point_dict:
+                if time_point not in timed_agent_reach_dict:
                     num_points += 1
-                    timed_point_dict[time_point] = {agent_id: [tmp_trace]}
+                    timed_agent_reach_dict[time_point] = {agent_id: [tmp_trace]}
                 else:
-                    if agent_id not in timed_point_dict[time_point].keys():
-                        timed_point_dict[time_point][agent_id] = [tmp_trace]
-                    elif tmp_trace not in timed_point_dict[time_point][agent_id]:
-                        timed_point_dict[time_point][agent_id].append(tmp_trace)
+                    if agent_id not in timed_agent_reach_dict[time_point].keys():
+                        timed_agent_reach_dict[time_point][agent_id] = [tmp_trace]
+                    elif tmp_trace not in timed_agent_reach_dict[time_point][agent_id]:
+                        timed_agent_reach_dict[time_point][agent_id].append(tmp_trace)
         queue += node.child
     duration = int(5000 / num_points / speed_rate)
     fig_dict, sliders_dict = create_anime_dict(duration)
     # used for trail mode
-    time_list = list(timed_point_dict.keys())
+    time_list = list(timed_agent_reach_dict.keys())
     agent_list = list(root.agent.keys())
     trail_limit = min(10, len(time_list))
     trail_len = trail_limit
@@ -242,7 +242,7 @@ def simulation_anime(
 
     if anime_mode == "normal":
         # make data
-        trace_dict = timed_point_dict[0]
+        trace_dict = timed_agent_reach_dict[0]
         for agent_id, trace_list in trace_dict.items():
             color = colors[agent_list.index(agent_id) % num_theme][1]
             x_list = []
@@ -269,9 +269,9 @@ def simulation_anime(
             }
             fig_dict["data"].append(data_dict)
         # make frames
-        for time_point in timed_point_dict:
+        for time_point in timed_agent_reach_dict:
             frame = {"data": [], "layout": {"annotations": []}, "name": time_point}
-            point_list = timed_point_dict[time_point]
+            point_list = timed_agent_reach_dict[time_point]
             for agent_id, trace_list in point_list.items():
                 color = colors[agent_list.index(agent_id) % num_theme][1]
                 x_list = []
@@ -316,9 +316,9 @@ def simulation_anime(
         fig_dict["layout"]["sliders"] = [sliders_dict]
     else:
         # make data
-        trace_dict = timed_point_dict[0]
-        for time_point in list(timed_point_dict.keys())[0 : int(trail_limit / step)]:
-            trace_dict = timed_point_dict[time_point]
+        trace_dict = timed_agent_reach_dict[0]
+        for time_point in list(timed_agent_reach_dict.keys())[0 : int(trail_limit / step)]:
+            trace_dict = timed_agent_reach_dict[time_point]
             for agent_id, point_list in trace_dict.items():
                 x_list = []
                 y_list = []
@@ -345,7 +345,7 @@ def simulation_anime(
             for agent_id in agent_list:
                 color = colors[agent_list.index(agent_id) % num_theme][1]
                 for id in range(0, trail_len, step):
-                    tmp_point_list = timed_point_dict[time_list[time_point_id - id]][agent_id]
+                    tmp_point_list = timed_agent_reach_dict[time_list[time_point_id - id]][agent_id]
                     trace_x = []
                     trace_y = []
                     text_list = []
@@ -610,7 +610,7 @@ def reachtube_anime(
         num_digit = 3
     root = sample_trace(root, sample_rate)
     agent_list = list(root.agent.keys())
-    timed_point_dict = {}
+    timed_agent_reach_dict = {}
     queue = [root]
     x_min, x_max = float("inf"), -float("inf")
     y_min, y_max = float("inf"), -float("inf")
@@ -635,21 +635,21 @@ def reachtube_anime(
                 y_max = max(y_max, trace[i][y_dim])
                 time_point = round(trace[i][0], num_digit)
                 rect = [trace[i][0:].tolist(), trace[i + 1][0:].tolist()]
-                if time_point not in timed_point_dict:
+                if time_point not in timed_agent_reach_dict:
                     num_points += 1
-                    timed_point_dict[time_point] = {agent_id: [rect]}
+                    timed_agent_reach_dict[time_point] = {agent_id: [rect]}
                 else:
-                    if agent_id in timed_point_dict[time_point].keys():
-                        timed_point_dict[time_point][agent_id].append(rect)
+                    if agent_id in timed_agent_reach_dict[time_point].keys():
+                        timed_agent_reach_dict[time_point][agent_id].append(rect)
                     else:
-                        timed_point_dict[time_point][agent_id] = [rect]
+                        timed_agent_reach_dict[time_point][agent_id] = [rect]
 
         queue += node.child
     duration = int(5000 / num_points / speed_rate)
     fig_dict, sliders_dict = create_anime_dict(duration)
-    for time_point in timed_point_dict:
+    for time_point in timed_agent_reach_dict:
         frame = {"data": [], "layout": {"annotations": [], "shapes": []}, "name": time_point}
-        agent_dict = timed_point_dict[time_point]
+        agent_dict = timed_agent_reach_dict[time_point]
         for agent_id, rect_list in agent_dict.items():
             for rect in rect_list:
                 shape_dict = {
@@ -862,9 +862,9 @@ def reachtube_tree_video(
         print_dim_list = range(0, num_dim)
 
     output_ext = ""
-    output_path = output_path.strip()
     if output_path:
         output_path = str(output_path)
+        output_path = output_path.strip()
         output_ext = os.path.splitext(output_path)[1].lower()
 
     effective_max_frame_steps = max_frame_steps
@@ -872,9 +872,8 @@ def reachtube_tree_video(
         effective_max_frame_steps = 150
 
     # NOTE: Build time -> [(agent_id, rect), ...] and axis bounds 
-    # Each rect is [lower_state, upper_state]; we store (agent_id, rect) so we
-    # can assign per-agent colors when building frames.
-    timed_point_dict = {}
+    # Each rect is [lower_state, upper_state]; we store (agent_id, rect) so we can assign per-agent colors when building frames.
+    timed_agent_reach_dict = {}
     queue = [root]
     x_min, x_max = float("inf"), -float("inf")
     y_min, y_max = float("inf"), -float("inf")
@@ -892,13 +891,13 @@ def reachtube_tree_video(
                 y_max = max(y_max, trace[i][y_dim], trace[i + 1][y_dim])
                 time_point = round(trace[i][0], num_digit)
                 rect = [trace[i][0:].tolist(), trace[i + 1][0:].tolist()]
-                if time_point not in timed_point_dict:
-                    timed_point_dict[time_point] = []
-                timed_point_dict[time_point].append((agent_id, rect))
+                if time_point not in timed_agent_reach_dict:
+                    timed_agent_reach_dict[time_point] = []
+                timed_agent_reach_dict[time_point].append((agent_id, rect))
         queue += node.child
 
-    sorted_times = sorted(timed_point_dict.keys())
-    if not sorted_times: # FIXME: this should go after _export* call for efficiency 
+    sorted_times = sorted(timed_agent_reach_dict.keys())
+    if not sorted_times: # NOTE: early return
         fig = draw_map(map=map, fig=fig, fill_type=map_type)
         fig = update_style(fig)
         return fig
@@ -919,11 +918,12 @@ def reachtube_tree_video(
     else:
         slider_times = frame_times
 
+    speed_rate = min(speed_rate, 1) # NOTE: fix to whatever min speed_rate is reasonable
     duration = max(1, int(5000 / len(frame_times) / speed_rate))
 
     if output_ext in [".gif", ".mp4"]:
         _export_reachtube_video_direct(
-            timed_point_dict=timed_point_dict,
+            timed_agent_reach_dict=timed_agent_reach_dict,
             sorted_times=sorted_times,
             frame_times=frame_times,
             agent_list=agent_list,
@@ -954,7 +954,7 @@ def reachtube_tree_video(
     for time_point in sorted_times:
         if time_point not in time_to_trace_indices:
             time_to_trace_indices[time_point] = []
-        for _, (agent_id, rect) in enumerate(timed_point_dict[time_point]):
+        for _, (agent_id, rect) in enumerate(timed_agent_reach_dict[time_point]):
             color_idx = agent_list.index(agent_id) % len(plot_color)
             linecolor = plot_color[color_idx][0]
             fillcolor = plot_color[color_idx][1]
@@ -1099,7 +1099,7 @@ def _apply_video_config_to_plotly_fig(fig, video_config):
     return fig
 
 def _export_reachtube_video_direct(
-    timed_point_dict,
+    timed_agent_reach_dict,
     sorted_times,
     frame_times,
     agent_list,
@@ -1333,7 +1333,7 @@ def _export_reachtube_video_direct(
     for time_point in sorted_times:
         if time_point not in time_to_trace_indices:
             time_to_trace_indices[time_point] = []
-        for agent_id, rect in timed_point_dict[time_point]:
+        for agent_id, rect in timed_agent_reach_dict[time_point]:
             color_idx = agent_idx[agent_id] % len(plot_color)
             # TODO: add in legend hook
             linecolor = plot_color[color_idx][0]
