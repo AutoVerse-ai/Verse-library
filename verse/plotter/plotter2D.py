@@ -918,7 +918,7 @@ def reachtube_tree_video(
     else:
         slider_times = frame_times
 
-    speed_rate = min(speed_rate, 1) # NOTE: fix to whatever min speed_rate is reasonable
+    speed_rate = max(speed_rate, 1) # NOTE: fix to whatever min speed_rate is reasonable
     duration = max(1, int(5000 / len(frame_times) / speed_rate))
 
     if output_ext in [".gif", ".mp4"]:
