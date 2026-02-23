@@ -4,9 +4,11 @@
 
 from __future__ import annotations
 import copy
+import time
 import numpy as np
 import plotly.graph_objects as go
 from typing import List, Tuple, Union
+import numbers
 from plotly.graph_objs.scatter import Marker
 from verse.analysis.analysis_tree import AnalysisTree, AnalysisTreeNode
 from verse.map.lane_map import LaneMap
@@ -775,45 +777,16 @@ def reachtube_tree_video(
     plot_color=None,
     time_step=None,
     speed_rate=1,
-    output_path=None,
+    output_path="reachtube_animation.html",
     max_slider_steps=100,
+    max_frame_steps=None,
+    video_config=None,
 ):
-    """Build a reachtube animation that can be paused, rewound, and stopped at any time.
+    """Build an export-oriented reachtube animation.
 
-    What
-    ----
-    Parses every node in the tree and, at each time slice, collects each agent's
-    reachset (axis-aligned rect). Frames are cumulative: the frame at time t
-    shows all reachsets from time 0 through t, so the animation is the reachtube
-    being built over time. Returns a Plotly figure with a time slider so you can
-    pause, rewind, or seek to any time. Optionally writes HTML (interactive),
-    GIF, or MP4 to output_path.
-
-    Why
-    ---
-    - Cumulative frames (instead of one frame per time with only that time's
-      rects) make it easy to see how the full tube is constructed and to stop
-      at a specific "construction step."
-    - Plotly's slider gives parsable control (pause/seek) without writing video;
-      HTML is the default way to get that. GIF/MP4 are provided for embedding
-      or playback in tools that don't support interactive HTML.
-    - kaleido is used only for GIF/MP4 export (Plotly's to_image); imageio
-      encodes the image sequence. Both are optional; see _export_animation_video.
-
-    Technical justification (cumulative frames)
-    -----------------------------------------
-    The verification tree has multiple nodes (e.g. branching from nondeterminism).
-    Each node has traces per agent; each trace is a sequence of [lower, upper]
-    state pairs at consecutive times. We key by rounded time and aggregate
-    (agent_id, rect) across all nodes so that "time t" means "all rects at that
-    time from any branch." Cumulative frame k = union of rects at times 0..k
-    gives a single, deterministic construction order for the animation.
-
-    Performance
-    -----------
-    Memory: cumulative_rects stores O(num_frames * rects_per_frame) rects;
-    for large trees or fine time steps, consider increasing time_step or
-    sample_rate to reduce the number of time points.
+    This function aggregates reachsets across all tree nodes by rounded
+    time and creates cumulative shape frames (frame at time ``t`` contains all rects
+    for times ``<= t``). The resulting figure can be exported to HTML, GIF, or MP4.
 
     Parameters
     ----------
@@ -823,30 +796,41 @@ def reachtube_tree_video(
     sample_rate, combine_rect, plot_color
         Same as reachtube_tree().
     time_step : float or None
-        Time rounding for frame keys; None uses 3 decimal digits.
+        Time rounding precision source; None uses 3 decimal digits.
     speed_rate : float
-        Playback speed (higher = faster).
+        Playback speed factor (higher is faster).
     output_path : str or None
-        If set, write output to file:
-        - ".html" -> interactive HTML (pause/seek via slider).
-        - ".gif" -> GIF (requires kaleido and imageio).
-        - ".mp4" -> MP4 (requires kaleido and imageio with ffmpeg).
+        Output path. Defaults to ``reachtube_animation.html``.
+        ``.html`` writes an animation page; ``.gif``/``.mp4`` export rendered frames.
     max_slider_steps : int or None
-        Maximum number of slider steps to display. If None, shows all timesteps.
-        Default is 100 for reduced granularity in slider navigation. Uniformly
-        samples timesteps if total exceeds this limit.
+        Maximum slider labels shown.
+    max_frame_steps : int or None
+        Optional cap on animation frame count. If None, HTML defaults to 150
+        frames for faster browser loading, while GIF/MP4 keep all timesteps.
+    video_config : dict or None
+                Optional styling overrides for export output.
+
+                For ``.html`` output:
+                - ``layout`` (dict): passed to ``fig.update_layout(**layout)``.
+                - ``xaxis``/``xaxes``/``x_axis``/``x_axes`` (dict): passed to Plotly x-axis layout.
+                - ``yaxis``/``yaxes``/``y_axis``/``y_axes`` (dict): passed to Plotly y-axis layout.
+                - top-level ``paper_bgcolor``, ``plot_bgcolor``, ``width``, ``height``,
+                    ``margin``, ``font``: passed to ``fig.update_layout``.
+
+                For ``.gif``/``.mp4`` direct export:
+                - ``layout`` plus axis aliases above are read and interpreted by the rasterizer.
+                - supported visual keys: ``paper_bgcolor``, ``plot_bgcolor``, ``width``,
+                    ``height``, ``margin``, ``font.size``, ``xaxis.title``, ``yaxis.title``,
+                    ``xaxis.range``, ``yaxis.range``, ``xaxis/yaxis.showline``, ``linewidth``,
+                    ``linecolor``, ``showgrid``, ``gridwidth``, ``gridcolor``.
+                - unsupported keys are ignored in direct export.
 
     Returns
     -------
-    fig : go.Figure
-        Plotly figure with frames and slider.
-
-    Note (maintainability)
-    ---------------------
-    Slider step "name" and "label" must match the frame name (str(time_point))
-    for Plotly's animation to sync; changing one requires changing the other.
+    go.Figure
+        Figure with cumulative animation frames.
     """
-    # --- Step 1: Normalize root, time rounding, and sample the tree ---
+    # NOTE: Normalize root, time rounding, and sample the tree 
     if plot_color is None:
         plot_color = colors
     if isinstance(root, AnalysisTree):
@@ -864,28 +848,32 @@ def reachtube_tree_video(
     if print_dim_list is None:
         print_dim_list = range(0, num_dim)
 
-    # --- Step 2: Build time -> [(agent_id, rect), ...] and axis bounds ---
+    output_ext = ""
+    output_path = output_path.strip()
+    if output_path:
+        output_path = str(output_path)
+        output_ext = os.path.splitext(output_path)[1].lower()
+
+    effective_max_frame_steps = max_frame_steps
+    if effective_max_frame_steps is None and output_ext == ".html":
+        effective_max_frame_steps = 150
+
+    # NOTE: Build time -> [(agent_id, rect), ...] and axis bounds 
     # Each rect is [lower_state, upper_state]; we store (agent_id, rect) so we
     # can assign per-agent colors when building frames.
     timed_point_dict = {}
     queue = [root]
     x_min, x_max = float("inf"), -float("inf")
     y_min, y_max = float("inf"), -float("inf")
-    nodes_visited = 0
-    traces_skipped_len = 0
-
     while queue:
         node = queue.pop(0)
-        nodes_visited += 1
         traces = node.trace
         for agent_id in traces:
-            trace = np.array(traces[agent_id]) # slightly confusing, may rename for clarity
-            if len(trace) < 2: # this check makes sense for current reachset structure, may change in future
-                traces_skipped_len += 1
+            trace = np.array(traces[agent_id])
+            if len(trace) < 2:
                 continue
             for i in range(0, len(trace) - 1, 2):
-                # TODO: enforce min/max ordering and raise exceiption if trace[i+1][dim]<trace[i][dim] because something has definitely gone wrong
-                x_min = min(x_min, trace[i][x_dim], trace[i + 1][x_dim])
+                x_min = min(x_min, trace[i][x_dim], trace[i + 1][x_dim]) # FIXME: bad code pattern from past plotting functions -- should instead make sure that reachtube format is correct so that even entries always min and odd entries always max
                 x_max = max(x_max, trace[i][x_dim], trace[i + 1][x_dim])
                 y_min = min(y_min, trace[i][y_dim], trace[i + 1][y_dim])
                 y_max = max(y_max, trace[i][y_dim], trace[i + 1][y_dim])
@@ -896,102 +884,101 @@ def reachtube_tree_video(
                 timed_point_dict[time_point].append((agent_id, rect))
         queue += node.child
 
-    # Debug: report what we collected -- remove this after this works
-    num_time_points = len(timed_point_dict)
-    total_rects = sum(len(v) for v in timed_point_dict.values())
-    print(f"[reachtube_tree_video] nodes_visited={nodes_visited}, traces_skipped(len<2)={traces_skipped_len}, "
-          f"num_time_points={num_time_points}, total_rects={total_rects}")
-    if nodes_visited > 0 and total_rects == 0 and traces_skipped_len > 0:
-        print(f"[reachtube_tree_video] all traces were skipped (len<2). Check trace shape per node (expect pairs of rows).")
-    if total_rects > 0 and agent_list:
-        first_trace = np.array(root.trace[agent_list[0]])
-        print(f"[reachtube_tree_video] root trace shape for agent {agent_list[0]!r}: {first_trace.shape} (expect (N, dims) with N>=2, rows in pairs).")
-
     sorted_times = sorted(timed_point_dict.keys())
-    if not sorted_times: # NOTE: early exit if no reachtube data can be shown, maybe throw exception instead
-        print(f"[reachtube_tree_video] early return: no time points, returning figure with map only (no frames).")
+    if not sorted_times:
         fig = draw_map(map=map, fig=fig, fill_type=map_type)
         fig = update_style(fig)
         return fig
 
-    num_points = len(sorted_times)
-    
-    # --- SLIDER GRANULARITY: Sample timesteps to max_slider_steps (default 100) ---
-    # Technical Justification:
-    # When verification produces many timesteps (1000+), creating a slider step for
-    # every timestep creates UI clutter and memory bloat. Uniform sampling reduces
-    # slider granularity while preserving frame animation smoothness. Cumulative frame
-    # structure ensures all rects from times 0..t_sampled are included, maintaining
-    # visual continuity.
-    if max_slider_steps is None:
-        sampled_times = sorted_times
-    elif len(sorted_times) > max_slider_steps:
-        # Uniformly sample indices across the time range
-        indices = np.linspace(0, len(sorted_times) - 1, max_slider_steps, dtype=int)
-        sampled_times = [sorted_times[i] for i in indices]
+    if effective_max_frame_steps is None:
+        frame_times = sorted_times
+    elif len(sorted_times) > effective_max_frame_steps:
+        indices = np.linspace(0, len(sorted_times) - 1, effective_max_frame_steps, dtype=int)
+        frame_times = [sorted_times[i] for i in indices]
     else:
-        sampled_times = sorted_times
-    
-    duration = max(1, int(5000 / len(sampled_times) / speed_rate))
+        frame_times = sorted_times
+
+    if max_slider_steps is None:
+        slider_times = frame_times
+    elif len(frame_times) > max_slider_steps:
+        indices = np.linspace(0, len(frame_times) - 1, max_slider_steps, dtype=int)
+        slider_times = [frame_times[i] for i in indices]
+    else:
+        slider_times = frame_times
+
+    duration = max(1, int(5000 / len(frame_times) / speed_rate))
+
+    if output_ext in [".gif", ".mp4"]:
+        _export_reachtube_video_direct(
+            timed_point_dict=timed_point_dict,
+            sorted_times=sorted_times,
+            frame_times=frame_times,
+            agent_list=agent_list,
+            plot_color=plot_color,
+            map=map,
+            map_type=map_type,
+            scale_type=scale_type,
+            x_min=x_min,
+            x_max=x_max,
+            y_min=y_min,
+            y_max=y_max,
+            x_dim=x_dim,
+            y_dim=y_dim,
+            output_path=output_path,
+            duration=duration,
+            video_config=video_config,
+        )
+        return fig # NOTE: fig is not modified by reachtube_tree_video in this instance
+
     fig_dict, sliders_dict = create_anime_dict(duration)
 
-    # --- Step 3 & 4: DRASTIC FIX: Use scatter traces instead of layout shapes ---
-    # Technical Justification: Plotly's animation system was designed to animate traces (data),
-    # not layout elements. Using visible arrays on traces allows proper backward/forward animation.
-    # Each rectangle is a scatter trace with mode='lines' forming a closed polygon. Per-frame
-    # visibility is controlled via the "visible" array in frame["data"]. This is how Plotly's
-    # animation engine actually works, so backward slider movement now functions correctly.
-    
-    # Build all unique rects as scatter traces upfront
     all_rects_data = []
-    rect_to_trace_idx = {}  # Map (time_point, agent_id, rect_idx) -> trace_idx
-    
+    time_to_trace_indices = {}
+
     for time_point in sorted_times:
-        for rect_idx, (agent_id, rect) in enumerate(timed_point_dict[time_point]):
+        if time_point not in time_to_trace_indices:
+            time_to_trace_indices[time_point] = []
+        for _, (agent_id, rect) in enumerate(timed_point_dict[time_point]):
             color_idx = agent_list.index(agent_id) % len(plot_color)
             linecolor = plot_color[color_idx][0]
             fillcolor = plot_color[color_idx][1]
-            
-            # Create rectangle polygon: [x0,x1,x1,x0,x0], [y0,y0,y1,y1,y0]
-            # CRITICAL: start with visible: False; frame updates will control visibility
+
             rect_trace = {
                 "x": [rect[0][x_dim], rect[1][x_dim], rect[1][x_dim], rect[0][x_dim], rect[0][x_dim]],
                 "y": [rect[0][y_dim], rect[0][y_dim], rect[1][y_dim], rect[1][y_dim], rect[0][y_dim]],
                 "mode": "lines",
                 "fill": "toself",
                 "fillcolor": fillcolor,
-                "line": {"color": linecolor, "width": 2},
-                "visible": False,  # Start hidden; frames will show them
+                "line": {"color": linecolor, "width": 1},
+                "visible": False,
                 "showlegend": False,
-                "hoverinfo": "none"
+                "hoverinfo": "none",
             }
             trace_idx = len(all_rects_data)
             all_rects_data.append(rect_trace)
-            rect_to_trace_idx[(time_point, agent_id, rect_idx)] = trace_idx
-    
+            time_to_trace_indices[time_point].append(trace_idx)
+
     fig_dict["data"] = all_rects_data
-    print(f"[reachtube_tree_video] Created {len(all_rects_data)} rect traces")
-    
-    # Build frames with visibility arrays
-    for frame_idx, time_point in enumerate(sampled_times):
-        # For this frame, show all rects with time <= time_point, hide others
-        visible = [False] * len(all_rects_data)
-        for t in sorted_times:
-            if t <= time_point:
-                for rect_idx, (agent_id, rect) in enumerate(timed_point_dict[t]):
-                    trace_idx = rect_to_trace_idx[(t, agent_id, rect_idx)]
-                    visible[trace_idx] = True
-        
-        # Each frame["data"] element updates one trace; visible is a boolean per trace
+
+    visible = [False] * len(all_rects_data)
+    cursor = 0
+    for time_point in frame_times:
+        while cursor < len(sorted_times) and sorted_times[cursor] <= time_point:
+            for trace_idx in time_to_trace_indices[sorted_times[cursor]]:
+                visible[trace_idx] = True
+            cursor += 1
+
         frame_data = [{"visible": v} for v in visible]
         frame = {
             "data": frame_data,
             "name": str(time_point)
         }
         fig_dict["frames"].append(frame)
-        num_visible = sum(visible)
-        print(f"[reachtube_tree_video] Frame {frame_idx}: time_point={time_point}, visible rects={num_visible}")
-        
+
+    slider_time_set = set(slider_times)
+    for time_point in frame_times:
+        if time_point not in slider_time_set:
+            continue
         slider_step = {
             "args": [
                 [str(time_point)],
@@ -1005,23 +992,14 @@ def reachtube_tree_video(
             "method": "animate",
         }
         sliders_dict["steps"].append(slider_step)
-        print(f"[reachtube_tree_video] Slider step {len(sliders_dict['steps'])-1}: targeting frame name '{str(time_point)}'")
 
-    print(f"[reachtube_tree_video] built {len(fig_dict['frames'])} frames (from {num_time_points} timesteps, sampled to max {max_slider_steps or 'all'}).")
-    print(f"[reachtube_tree_video] Frame names: {[f['name'] for f in fig_dict['frames']]}")
-    print(f"[reachtube_tree_video] Slider step targets: {[step['args'][0][0] for step in sliders_dict['steps']]}")
-
-    # --- Step 5: Assemble figure, map, axes, and optional file export ---
     fig_dict["layout"]["sliders"] = [sliders_dict]
-    
-    print(f"[reachtube_tree_video] Setting slider active index to: {sliders_dict['active']}")
-    print(f"[reachtube_tree_video] Total data traces: {len(fig_dict['data'])}")
-    if fig_dict['frames']:
-        first_frame_visible = sum(1 for item in fig_dict['frames'][0]['data'] if item.get('visible', True))
-        last_frame_visible = sum(1 for item in fig_dict['frames'][-1]['data'] if item.get('visible', True))
-        print(f"[reachtube_tree_video] First frame visible count: {first_frame_visible}")
-        print(f"[reachtube_tree_video] Last frame visible count: {last_frame_visible}")
-    
+
+    if fig_dict["frames"]:
+        first_frame_data = fig_dict["frames"][0]["data"]
+        for idx, vis_update in enumerate(first_frame_data):
+            fig_dict["data"][idx]["visible"] = vis_update.get("visible", False)
+
     fig = go.Figure(fig_dict)
     fig = draw_map(map=map, fig=fig, fill_type=map_type)
     if scale_type == "trace":
@@ -1032,72 +1010,516 @@ def reachtube_tree_video(
             range=[y_min - scale_factor * (y_max - y_min), y_max + scale_factor * (y_max - y_min)]
         )
     fig = update_style(fig)
+    fig = _apply_video_config_to_plotly_fig(fig, video_config)
 
     if output_path:
         output_path = str(output_path)
         if output_path.lower().endswith(".html"):
-            fig.write_html(output_path)
-        elif output_path.lower().endswith(".gif") or output_path.lower().endswith(".mp4"):
-            _export_animation_video(fig, output_path, duration, num_points)
+            fig.write_html(output_path, auto_open=not os.path.exists('/.dockerenv'))
+        # elif output_path.lower().endswith(".gif") or output_path.lower().endswith(".mp4"): # should never be hit
+        #     _export_animation_video(fig, output_path, duration, len(frame_times))
+        else:
+            raise Exception(f'Unexpected output extension: {output_path.lower().split(".")[-1]}')
 
     return fig
 
 
-def _export_animation_video(fig, output_path: str, duration: int, num_frames: int):
-    """Export a Plotly animated figure to GIF or MP4 by rendering each frame to PNG then encoding.
+def _apply_video_config_to_plotly_fig(fig, video_config):
+    if not isinstance(video_config, dict):
+        return fig
 
-    What
-    ----
-    Iterates over fig.frames, builds a standalone figure for each frame (map +
-    that frame's shapes), renders it to PNG via Plotly's to_image(), then
-    concatenates the images into a GIF or MP4 using imageio.
+    layout_cfg = video_config.get("layout")
+    if isinstance(layout_cfg, dict):
+        fig.update_layout(**layout_cfg)
 
-    Why
-    ----
-    Plotly does not export animations directly to video. kaleido is the
-    recommended engine for to_image() (see
-    https://plotly.com/python/static-image-export/). imageio provides a
-    simple API for writing image sequences to GIF/MP4
-    (https://imageio.readthedocs.io/en/stable/format_list.html). MP4 uses
-    libx264 and typically requires ffmpeg on the system.
+    xaxis_cfg = None
+    for x_key in ["xaxis", "xaxes", "x_axis", "x_axes"]:
+        if x_key in video_config:
+            xaxis_cfg = video_config[x_key]
+            break
+    if isinstance(xaxis_cfg, dict):
+        fig.update_layout(xaxis=xaxis_cfg)
 
-    Note (maintainability)
-    ---------------------
-    Each frame figure is built by deepcopying fig.data and fig.layout then
-    overwriting layout.shapes with the frame's shapes. If the main figure
-    later stores per-frame state in layout beyond shapes/annotations, this
-    function must be updated to copy that state as well.
+    yaxis_cfg = None
+    for y_key in ["yaxis", "yaxes", "y_axis", "y_axes"]:
+        if y_key in video_config:
+            yaxis_cfg = video_config[y_key]
+            break
+    if isinstance(yaxis_cfg, dict):
+        fig.update_layout(yaxis=yaxis_cfg)
+
+    top_layout_overrides = {}
+    for top_key in ["paper_bgcolor", "plot_bgcolor", "width", "height", "margin", "font"]:
+        if top_key in video_config:
+            top_layout_overrides[top_key] = video_config[top_key]
+    if top_layout_overrides:
+        fig.update_layout(**top_layout_overrides)
+
+    return fig
+
+def _export_reachtube_video_direct(
+    timed_point_dict,
+    sorted_times,
+    frame_times,
+    agent_list,
+    plot_color,
+    map,
+    map_type,
+    scale_type,
+    x_min,
+    x_max,
+    y_min,
+    y_max,
+    x_dim,
+    y_dim,
+    output_path,
+    duration,
+    video_config=None,
+):
+    """Export reachtube animation directly to GIF/MP4 without Plotly frame rendering.
+
+    This path rasterizes map/axes/rectangles directly and writes frames incrementally,
+    avoiding Plotly/Kaleido ``to_image`` per-frame overhead.
     """
     try:
-        import imageio
+        import imageio.v2 as imageio
     except ImportError:
         raise ImportError("GIF/MP4 export requires imageio. Install with: pip install imageio")
     try:
-        import kaleido  # noqa: F401  -- used by plotly's to_image()
+        from PIL import Image, ImageDraw, ImageFont
     except ImportError:
-        raise ImportError("GIF/MP4 export requires kaleido. Install with: pip install kaleido")
+        raise ImportError("Direct GIF/MP4 export requires Pillow. Install with: pip install pillow")
 
     ext = output_path.lower().split(".")[-1]
-    frame_duration_sec = duration / 1000.0  # Plotly duration is in ms
-    images = []
+    frame_duration_sec = duration / 1000.0
+    total_frames = len(frame_times)
+    if total_frames == 0:
+        return
+    export_start = time.perf_counter()
+    print(
+        f"[export] start direct export: times={len(sorted_times)} sampled_frames={total_frames}"
+    )
 
-    for i, frame in enumerate(fig.frames):
-        # One figure per frame: base layout + data (map) from main fig, shapes from this frame
-        frame_fig = go.Figure(data=copy.deepcopy(fig.data), layout=copy.deepcopy(fig.layout))
-        frame_fig.layout.shapes = frame.layout.get("shapes", [])
-        frame_fig.layout.annotations = frame.layout.get("annotations", [])
-        img_bytes = frame_fig.to_image(format="png", scale=2)
-        buf = np.frombuffer(img_bytes, dtype=np.uint8)
-        img = imageio.imread(buf)
-        images.append(img)
+    rect_specs = []
+    time_to_trace_indices = {}
+    agent_idx = {agent_id: idx for idx, agent_id in enumerate(agent_list)}
+
+    def _hex_to_rgb(color: str):
+        value = color.strip().lstrip("#")
+        if len(value) != 6:
+            return (0, 0, 255)
+        return (int(value[0:2], 16), int(value[2:4], 16), int(value[4:6], 16))
+
+    def _to_px(x_val, y_val, x_lo, x_hi, y_lo, y_hi, left, top, plot_w, plot_h):
+        x_den = (x_hi - x_lo) if (x_hi - x_lo) != 0 else 1.0
+        y_den = (y_hi - y_lo) if (y_hi - y_lo) != 0 else 1.0
+        px = left + (x_val - x_lo) * (plot_w - 1) / x_den
+        py = top + (plot_h - 1) - (y_val - y_lo) * (plot_h - 1) / y_den
+        return int(round(px)), int(round(py))
+
+    def _get_cfg(cfg, *keys, default=None):
+        if not isinstance(cfg, dict):
+            return default
+        for key in keys:
+            if key in cfg:
+                return cfg[key]
+        return default
+
+    def _normalize_axis_title(title_cfg, fallback):
+        if isinstance(title_cfg, str):
+            return title_cfg
+        if isinstance(title_cfg, dict):
+            title_text = title_cfg.get("text")
+            if title_text is not None:
+                return str(title_text)
+        return fallback
+
+    def _coerce_int(value, default):
+        if isinstance(value, numbers.Real):
+            try:
+                return int(value)
+            except Exception:
+                return default
+        return default
+
+    def _coerce_bool(value, default):
+        if isinstance(value, bool):
+            return value
+        return default
+
+    def _merge_style(default_style, overrides):
+        merged = dict(default_style)
+        for key, value in overrides.items():
+            if isinstance(value, dict) and isinstance(merged.get(key), dict):
+                merged[key] = _merge_style(merged[key], value)
+            else:
+                merged[key] = value
+        return merged
+
+    style_defaults = {
+        "width": 1280,
+        "height": 720,
+        "margin": {"l": 100, "r": 40, "t": 40, "b": 80},
+        "paper_bgcolor": "rgba(255,255,255,1)",
+        "plot_bgcolor": "rgba(255,255,255,1)",
+        "font": {"size": 32},
+        "xaxis": {
+            "title": "x position",
+            "showline": True,
+            "linewidth": 4,
+            "linecolor": "Gray",
+            "showgrid": False,
+            "gridwidth": 2,
+            "gridcolor": "LightGrey",
+        },
+        "yaxis": {
+            "title": "y position",
+            "showline": True,
+            "linewidth": 4,
+            "linecolor": "Gray",
+            "showgrid": False,
+            "gridwidth": 2,
+            "gridcolor": "LightGrey",
+        },
+    }
+
+    user_style = {}
+    if isinstance(video_config, dict):
+        layout_cfg = _get_cfg(video_config, "layout", default={})
+        if isinstance(layout_cfg, dict):
+            user_style = _merge_style(user_style, layout_cfg)
+
+        xaxis_cfg = _get_cfg(video_config, "xaxis", "xaxes", "x_axis", "x_axes", default=None)
+        yaxis_cfg = _get_cfg(video_config, "yaxis", "yaxes", "y_axis", "y_axes", default=None)
+        if isinstance(xaxis_cfg, dict):
+            user_style["xaxis"] = _merge_style(user_style.get("xaxis", {}), xaxis_cfg)
+        if isinstance(yaxis_cfg, dict):
+            user_style["yaxis"] = _merge_style(user_style.get("yaxis", {}), yaxis_cfg)
+
+        for top_key in ["paper_bgcolor", "plot_bgcolor", "width", "height", "margin", "font"]:
+            if top_key in video_config:
+                user_style[top_key] = video_config[top_key]
+
+    style = _merge_style(style_defaults, user_style)
+
+    for time_point in sorted_times:
+        if time_point not in time_to_trace_indices:
+            time_to_trace_indices[time_point] = []
+        for agent_id, rect in timed_point_dict[time_point]:
+            color_idx = agent_idx[agent_id] % len(plot_color)
+            linecolor = plot_color[color_idx][0]
+            fillcolor = plot_color[color_idx][1]
+
+            trace_idx = len(rect_specs)
+            rect_specs.append(
+                {
+                    "x0": min(rect[0][x_dim], rect[1][x_dim]),
+                    "y0": min(rect[0][y_dim], rect[1][y_dim]),
+                    "x1": max(rect[0][x_dim], rect[1][x_dim]),
+                    "y1": max(rect[0][y_dim], rect[1][y_dim]),
+                    "line_rgb": _hex_to_rgb(linecolor),
+                    "fill_rgb": _hex_to_rgb(fillcolor),
+                }
+            )
+            time_to_trace_indices[time_point].append(trace_idx)
+
+    prep_rects_time = time.perf_counter()
+    print(
+        f"[export] prepared traces: count={len(rect_specs)} "
+        f"elapsed={prep_rects_time - export_start:.2f}s"
+    )
+
+    frame_new_trace_indices = []
+    cursor = 0
+    for time_point in frame_times:
+        new_indices = []
+        while cursor < len(sorted_times) and sorted_times[cursor] <= time_point:
+            new_indices.extend(time_to_trace_indices[sorted_times[cursor]])
+            cursor += 1
+        frame_new_trace_indices.append(new_indices)
+
+    prep_frames_time = time.perf_counter()
+    print(
+        f"[export] prepared frame deltas: elapsed={prep_frames_time - prep_rects_time:.2f}s"
+    )
+
+    width = _coerce_int(style.get("width"), 1280)
+    height = _coerce_int(style.get("height"), 720)
+    margin_cfg = style.get("margin", {}) if isinstance(style.get("margin"), dict) else {}
+    left_pad = _coerce_int(margin_cfg.get("l", margin_cfg.get("left", 100)), 100)
+    right_pad = _coerce_int(margin_cfg.get("r", margin_cfg.get("right", 40)), 40)
+    top_pad = _coerce_int(margin_cfg.get("t", margin_cfg.get("top", 40)), 40)
+    bottom_pad = _coerce_int(margin_cfg.get("b", margin_cfg.get("bottom", 80)), 80)
+    plot_w = width - left_pad - right_pad
+    plot_h = height - top_pad - bottom_pad
+
+    if scale_type == "trace":
+        x_lo = x_min - scale_factor * (x_max - x_min)
+        x_hi = x_max + scale_factor * (x_max - x_min)
+        y_lo = y_min - scale_factor * (y_max - y_min)
+        y_hi = y_max + scale_factor * (y_max - y_min)
+    else:
+        x_lo, x_hi, y_lo, y_hi = x_min, x_max, y_min, y_max
+
+    xaxis_cfg = style.get("xaxis", {}) if isinstance(style.get("xaxis"), dict) else {}
+    yaxis_cfg = style.get("yaxis", {}) if isinstance(style.get("yaxis"), dict) else {}
+
+    x_range = xaxis_cfg.get("range")
+    y_range = yaxis_cfg.get("range")
+    if isinstance(x_range, (list, tuple)) and len(x_range) == 2:
+        x_lo, x_hi = float(x_range[0]), float(x_range[1])
+    if isinstance(y_range, (list, tuple)) and len(y_range) == 2:
+        y_lo, y_hi = float(y_range[0]), float(y_range[1])
+
+    if x_hi == x_lo:
+        x_hi = x_lo + 1.0
+    if y_hi == y_lo:
+        y_hi = y_lo + 1.0
+
+    from PIL import ImageColor
+
+    def _to_rgba(color_value, default_rgba=(255, 255, 255, 255)):
+        if color_value is None:
+            return default_rgba
+        if isinstance(color_value, (tuple, list)):
+            if len(color_value) == 4:
+                return tuple(int(c) for c in color_value)
+            if len(color_value) == 3:
+                return (int(color_value[0]), int(color_value[1]), int(color_value[2]), 255)
+        if isinstance(color_value, str):
+            color_str = color_value.strip()
+            if color_str.startswith("rgba"):
+                vals = color_str[color_str.find("(") + 1 : color_str.find(")")].split(",")
+                if len(vals) == 4:
+                    try:
+                        r = int(float(vals[0]))
+                        g = int(float(vals[1]))
+                        b = int(float(vals[2]))
+                        a_raw = float(vals[3])
+                        a = int(255 * a_raw) if a_raw <= 1 else int(a_raw)
+                        return (max(0, min(255, r)), max(0, min(255, g)), max(0, min(255, b)), max(0, min(255, a)))
+                    except Exception:
+                        return default_rgba
+            if color_str.startswith("rgb"):
+                vals = color_str[color_str.find("(") + 1 : color_str.find(")")].split(",")
+                if len(vals) == 3:
+                    try:
+                        r = int(float(vals[0]))
+                        g = int(float(vals[1]))
+                        b = int(float(vals[2]))
+                        return (max(0, min(255, r)), max(0, min(255, g)), max(0, min(255, b)), 255)
+                    except Exception:
+                        return default_rgba
+            try:
+                rgb = ImageColor.getrgb(color_str)
+                if isinstance(rgb, tuple) and len(rgb) == 3:
+                    return (rgb[0], rgb[1], rgb[2], 255)
+            except Exception:
+                return default_rgba
+        return default_rgba
+
+    paper_bg = _to_rgba(style.get("paper_bgcolor"), default_rgba=(255, 255, 255, 255))
+    plot_bg = _to_rgba(style.get("plot_bgcolor"), default_rgba=(255, 255, 255, 255))
+    x_line_color = _to_rgba(xaxis_cfg.get("linecolor", "Gray"), default_rgba=(128, 128, 128, 255))
+    y_line_color = _to_rgba(yaxis_cfg.get("linecolor", "Gray"), default_rgba=(128, 128, 128, 255))
+    x_grid_color = _to_rgba(xaxis_cfg.get("gridcolor", "LightGrey"), default_rgba=(211, 211, 211, 255))
+    y_grid_color = _to_rgba(yaxis_cfg.get("gridcolor", "LightGrey"), default_rgba=(211, 211, 211, 255))
+
+    font_cfg = style.get("font", {}) if isinstance(style.get("font"), dict) else {}
+    base_font_size = max(12, _coerce_int(font_cfg.get("size", 32), 32))
+    tick_font_size = max(14, int(round(base_font_size * 0.6)))
+    axis_title_font_size = max(16, int(round(base_font_size * 0.9)))
+
+    def _load_font(size):
+        for font_name in ["arial.ttf", "segoeui.ttf", "DejaVuSans.ttf"]:
+            try:
+                return ImageFont.truetype(font_name, size)
+            except Exception:
+                continue
+        return ImageFont.load_default()
+
+    tick_font = _load_font(tick_font_size)
+    axis_font = _load_font(axis_title_font_size)
+
+    def _text_size(draw_obj, text, font_obj):
+        bbox = draw_obj.textbbox((0, 0), str(text), font=font_obj)
+        return bbox[2] - bbox[0], bbox[3] - bbox[1]
+
+    bg = Image.new("RGBA", (width, height), paper_bg)
+    bg_draw = ImageDraw.Draw(bg, "RGBA")
+    bg_draw.rectangle(
+        [left_pad, top_pad, left_pad + plot_w, top_pad + plot_h],
+        fill=plot_bg,
+    )
+
+    x_show_grid = _coerce_bool(xaxis_cfg.get("showgrid"), False)
+    y_show_grid = _coerce_bool(yaxis_cfg.get("showgrid"), False)
+    x_grid_width = max(1, _coerce_int(xaxis_cfg.get("gridwidth", 2), 2))
+    y_grid_width = max(1, _coerce_int(yaxis_cfg.get("gridwidth", 2), 2))
+    num_ticks = 6
+    if x_show_grid:
+        for tidx in range(1, num_ticks - 1):
+            xv = left_pad + int(round(tidx * plot_w / (num_ticks - 1)))
+            bg_draw.line([(xv, top_pad), (xv, top_pad + plot_h)], fill=x_grid_color, width=x_grid_width)
+    if y_show_grid:
+        for tidx in range(1, num_ticks - 1):
+            yv = top_pad + int(round(tidx * plot_h / (num_ticks - 1)))
+            bg_draw.line([(left_pad, yv), (left_pad + plot_w, yv)], fill=y_grid_color, width=y_grid_width)
+
+    x_show_line = _coerce_bool(xaxis_cfg.get("showline"), True)
+    y_show_line = _coerce_bool(yaxis_cfg.get("showline"), True)
+    x_line_width = max(1, _coerce_int(xaxis_cfg.get("linewidth", 4), 4))
+    y_line_width = max(1, _coerce_int(yaxis_cfg.get("linewidth", 4), 4))
+    if x_show_line:
+        bg_draw.line(
+            [(left_pad, top_pad + plot_h), (left_pad + plot_w, top_pad + plot_h)],
+            fill=x_line_color,
+            width=x_line_width,
+        )
+    if y_show_line:
+        bg_draw.line(
+            [(left_pad, top_pad), (left_pad, top_pad + plot_h)],
+            fill=y_line_color,
+            width=y_line_width,
+        )
+
+    tick_color = _to_rgba("black", default_rgba=(0, 0, 0, 255))
+    for tidx in range(num_ticks):
+        xv = left_pad + int(round(tidx * plot_w / (num_ticks - 1)))
+        xval = x_lo + (x_hi - x_lo) * tidx / (num_ticks - 1)
+        xlbl = str(int(round(xval)))
+        xlbl_w, xlbl_h = _text_size(bg_draw, xlbl, tick_font)
+        bg_draw.line([(xv, top_pad + plot_h), (xv, top_pad + plot_h + 8)], fill=tick_color, width=1)
+        bg_draw.text(
+            (xv - xlbl_w / 2, top_pad + plot_h + 12),
+            xlbl,
+            fill=tick_color,
+            font=tick_font,
+        )
+
+    for tidx in range(num_ticks):
+        yv = top_pad + int(round(tidx * plot_h / (num_ticks - 1)))
+        yval = y_hi - (y_hi - y_lo) * tidx / (num_ticks - 1)
+        ylbl = str(int(round(yval)))
+        ylbl_w, ylbl_h = _text_size(bg_draw, ylbl, tick_font)
+        bg_draw.line([(left_pad - 8, yv), (left_pad, yv)], fill=tick_color, width=1)
+        bg_draw.text(
+            (left_pad - 12 - ylbl_w, yv - ylbl_h / 2),
+            ylbl,
+            fill=tick_color,
+            font=tick_font,
+        )
+
+    x_title = _normalize_axis_title(xaxis_cfg.get("title"), "x position")
+    y_title = _normalize_axis_title(yaxis_cfg.get("title"), "y position")
+    if x_title:
+        x_title_w, x_title_h = _text_size(bg_draw, str(x_title), axis_font)
+        x_title_x = left_pad + (plot_w - x_title_w) / 2
+        x_title_y = min(height - x_title_h - 4, top_pad + plot_h + 40)
+        bg_draw.text((x_title_x, x_title_y), str(x_title), fill=tick_color, font=axis_font)
+    if y_title:
+        y_title_text = str(y_title)
+        y_title_w, y_title_h = _text_size(bg_draw, y_title_text, axis_font)
+        y_title_img = Image.new("RGBA", (y_title_w + 2, y_title_h + 2), (0, 0, 0, 0))
+        y_title_draw = ImageDraw.Draw(y_title_img, "RGBA")
+        y_title_draw.text((0, 0), y_title_text, fill=tick_color, font=axis_font)
+        y_title_img = y_title_img.rotate(90, expand=True)
+        y_title_x = max(2, left_pad - 70)
+        y_title_y = top_pad + (plot_h - y_title_img.height) // 2
+        bg.alpha_composite(y_title_img, (int(y_title_x), int(y_title_y)))
+
+    bg_draw.rectangle(
+        [left_pad, top_pad, left_pad + plot_w, top_pad + plot_h],
+        outline=x_line_color,
+        width=max(1, x_line_width),
+    )
+
+    if map is not None:
+        for lane_idx in map.lane_dict:
+            lane = map.lane_dict[lane_idx]
+            for lane_seg in lane.segment_list:
+                if lane_seg.type == "Straight":
+                    start1 = lane_seg.start + lane_seg.width / 2 * lane_seg.direction_lateral
+                    end1 = lane_seg.end + lane_seg.width / 2 * lane_seg.direction_lateral
+                    start2 = lane_seg.start - lane_seg.width / 2 * lane_seg.direction_lateral
+                    end2 = lane_seg.end - lane_seg.width / 2 * lane_seg.direction_lateral
+                    trace_x = [start1[0], end1[0], end2[0], start2[0], start1[0]]
+                    trace_y = [start1[1], end1[1], end2[1], start2[1], start1[1]]
+                elif lane_seg.type == "Circular":
+                    phase_array = np.linspace(
+                        start=lane_seg.start_phase, stop=lane_seg.end_phase, num=100
+                    )
+                    r1 = lane_seg.radius - lane_seg.width / 2
+                    x1 = (np.cos(phase_array) * r1 + lane_seg.center[0]).tolist()
+                    y1 = (np.sin(phase_array) * r1 + lane_seg.center[1]).tolist()
+                    r2 = lane_seg.radius + lane_seg.width / 2
+                    x2 = (np.cos(phase_array) * r2 + lane_seg.center[0]).tolist()[::-1]
+                    y2 = (np.sin(phase_array) * r2 + lane_seg.center[1]).tolist()[::-1]
+                    trace_x = x1 + x2 + [x1[0]]
+                    trace_y = y1 + y2 + [y1[0]]
+                else:
+                    continue
+                points = [
+                    _to_px(xp, yp, x_lo, x_hi, y_lo, y_hi, left_pad, top_pad, plot_w, plot_h)
+                    for xp, yp in zip(trace_x, trace_y)
+                ]
+                if len(points) > 1:
+                    bg_draw.line(points, fill=(0, 0, 0, 90), width=1)
+
+    bg_setup_time = time.perf_counter()
+    print(f"[export] raster background setup elapsed={bg_setup_time - prep_frames_time:.2f}s")
+
+    rect_pixels = []
+    for spec in rect_specs:
+        p0 = _to_px(spec["x0"], spec["y0"], x_lo, x_hi, y_lo, y_hi, left_pad, top_pad, plot_w, plot_h)
+        p1 = _to_px(spec["x1"], spec["y1"], x_lo, x_hi, y_lo, y_hi, left_pad, top_pad, plot_w, plot_h)
+        x0p, x1p = min(p0[0], p1[0]), max(p0[0], p1[0])
+        y0p, y1p = min(p0[1], p1[1]), max(p0[1], p1[1])
+        rect_pixels.append((x0p, y0p, x1p, y1p, spec["line_rgb"], spec["fill_rgb"]))
+
+    pix_prep_time = time.perf_counter()
+    print(f"[export] pixel projection setup elapsed={pix_prep_time - bg_setup_time:.2f}s")
+
+    print(f"[export] writing {ext.upper()} to {output_path} ({total_frames} frames)")
 
     if ext == "gif":
-        imageio.mimsave(output_path, images, duration=frame_duration_sec, loop=0)
+        writer = imageio.get_writer(output_path, mode="I", duration=frame_duration_sec, loop=0)
     elif ext == "mp4":
         fps = 1.0 / frame_duration_sec if frame_duration_sec > 0 else 10
-        imageio.mimsave(output_path, images, fps=fps, codec="libx264")
+        writer = imageio.get_writer(output_path, fps=fps, codec="libx264")
     else:
         raise ValueError("output_path must end with .gif or .mp4 for video export.")
+
+    progress_every = max(1, total_frames // 20)
+    overlay = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    overlay_draw = ImageDraw.Draw(overlay, "RGBA")
+    visible_count = 0
+    try:
+        for idx, new_indices in enumerate(frame_new_trace_indices, start=1):
+            for trace_idx in new_indices:
+                x0p, y0p, x1p, y1p, line_rgb, fill_rgb = rect_pixels[trace_idx]
+                overlay_draw.rectangle(
+                    [x0p, y0p, x1p, y1p],
+                    fill=(fill_rgb[0], fill_rgb[1], fill_rgb[2], 120),
+                    outline=(line_rgb[0], line_rgb[1], line_rgb[2], 220),
+                    width=1,
+                )
+            visible_count += len(new_indices)
+
+            frame_img = Image.alpha_composite(bg, overlay).convert("RGB")
+            writer.append_data(np.array(frame_img, dtype=np.uint8))
+
+            if idx % progress_every == 0 or idx == total_frames:
+                elapsed = time.perf_counter() - export_start
+                print(
+                    f"[export] frame {idx}/{total_frames} "
+                    f"visible={visible_count}/{len(rect_specs)} elapsed={elapsed:.2f}s"
+                )
+    finally:
+        writer.close()
+
+    total_elapsed = time.perf_counter() - export_start
+    print(f"[export] finished {output_path} total_elapsed={total_elapsed:.2f}s")
 
 
 """Functions below are low-level functions and usually are not called outside this file."""
