@@ -165,7 +165,7 @@ def simulation_tree(
         )
     # fig.update_xaxes(title='x')
     # fig.update_yaxes(title='y')
-    fig.update_layout(legend_title_text="Agent list")
+    fig.update_layout(legend_title_text="Trajectory Types")
     fig = update_style(fig)
     return fig
 
@@ -460,7 +460,7 @@ def simulation_anime(
         fig.update_yaxes(
             range=[y_min - scale_factor * (y_max - y_min), y_max + scale_factor * (y_max - y_min)]
         )
-    fig.update_layout(legend_title_text="Agent list")
+    fig.update_layout(legend_title_text="Trajectory Types")
     if full_trace == True:
         fig = simulation_tree(
             org_root,
@@ -781,6 +781,9 @@ def reachtube_tree_video(
     max_slider_steps=100,
     max_frame_steps=None,
     video_config=None,
+    print_level=0,
+    show_legend: bool = False,
+    extra_traces=None,
 ):
     """Build an export-oriented reachtube animation.
 
@@ -824,7 +827,17 @@ def reachtube_tree_video(
                     ``xaxis.range``, ``yaxis.range``, ``xaxis/yaxis.showline``, ``linewidth``,
                     ``linecolor``, ``showgrid``, ``gridwidth``, ``gridcolor``.
                 - unsupported keys are ignored in direct export.
-
+    print_level : int
+        Determines which debug statements are shown, if any, while creating the GIF or MP4 video.
+    show_legend : bool
+        If True, adds one legend entry per agent using the agent color mapping.
+        For HTML output this uses Plotly legend items. For GIF/MP4 direct export,
+        this draws a static legend box into each frame.
+    extra_traces : list or None
+        Optional additional traces to overlay on top of the reachtube animation.
+        For HTML output, each entry is passed to ``fig.add_trace`` (dict entries are
+        interpreted as ``go.Scatter`` kwargs). For GIF/MP4 direct export, only
+        scatter-like line/marker traces are supported.
     Returns
     -------
     go.Figure
@@ -885,7 +898,7 @@ def reachtube_tree_video(
         queue += node.child
 
     sorted_times = sorted(timed_point_dict.keys())
-    if not sorted_times:
+    if not sorted_times: # FIXME: this should go after _export* call for efficiency 
         fig = draw_map(map=map, fig=fig, fill_type=map_type)
         fig = update_style(fig)
         return fig
@@ -927,6 +940,9 @@ def reachtube_tree_video(
             output_path=output_path,
             duration=duration,
             video_config=video_config,
+            print_level=print_level,
+            show_legend=show_legend,
+            extra_traces=extra_traces,
         )
         return fig # NOTE: fig is not modified by reachtube_tree_video in this instance
 
@@ -1001,7 +1017,23 @@ def reachtube_tree_video(
             fig_dict["data"][idx]["visible"] = vis_update.get("visible", False)
 
     fig = go.Figure(fig_dict)
-    fig = draw_map(map=map, fig=fig, fill_type=map_type)
+    if show_legend:
+        for agent_id in agent_list:
+            color_idx = agent_list.index(agent_id) % len(plot_color)
+            linecolor = plot_color[color_idx][0]
+            fig.add_trace(
+                go.Scatter(
+                    x=[None],
+                    y=[None],
+                    mode="lines",
+                    line={"color": linecolor, "width": 3},
+                    name=str(agent_id),
+                    showlegend=True,
+                    hoverinfo="none",
+                )
+            )
+        fig.update_layout(legend_title_text="Trajectory Types")
+    fig: go.Figure = draw_map(map=map, fig=fig, fill_type=map_type)
     if scale_type == "trace":
         fig.update_xaxes(
             range=[x_min - scale_factor * (x_max - x_min), x_max + scale_factor * (x_max - x_min)]
@@ -1009,8 +1041,17 @@ def reachtube_tree_video(
         fig.update_yaxes(
             range=[y_min - scale_factor * (y_max - y_min), y_max + scale_factor * (y_max - y_min)]
         )
-    fig = update_style(fig)
+    fig = update_style(fig) # NOTE: relevance? 
     fig = _apply_video_config_to_plotly_fig(fig, video_config)
+
+    if isinstance(extra_traces, (list, tuple)):
+        for extra_trace in extra_traces:
+            if extra_trace is None:
+                continue
+            if isinstance(extra_trace, dict):
+                fig.add_trace(go.Scatter(**extra_trace))
+            else:
+                fig.add_trace(extra_trace)
 
     if output_path:
         output_path = str(output_path)
@@ -1075,6 +1116,9 @@ def _export_reachtube_video_direct(
     output_path,
     duration,
     video_config=None,
+    print_level=0,
+    show_legend: bool = False,
+    extra_traces=None,
 ):
     """Export reachtube animation directly to GIF/MP4 without Plotly frame rendering.
 
@@ -1156,6 +1200,90 @@ def _export_reachtube_video_direct(
                 merged[key] = value
         return merged
 
+    def _coerce_float(value, default):
+        if isinstance(value, numbers.Real):
+            return float(value)
+        return default
+
+    def _extract_scatter_trace(trace_obj):
+        if trace_obj is None:
+            return None
+        if isinstance(trace_obj, dict):
+            trace_type = str(trace_obj.get("type", "scatter")).lower()
+            if trace_type not in ["scatter", "scattergl"]:
+                return None
+            mode = str(trace_obj.get("mode", "lines")).lower()
+            x_vals = trace_obj.get("x")
+            y_vals = trace_obj.get("y")
+            line_dict = trace_obj.get("line", {}) if isinstance(trace_obj.get("line", {}), dict) else {}
+            marker_dict = trace_obj.get("marker", {}) if isinstance(trace_obj.get("marker", {}), dict) else {}
+            trace_name = trace_obj.get("name")
+            trace_showlegend = trace_obj.get("showlegend", True)
+        elif isinstance(trace_obj, go.Scatter):
+            mode = str(trace_obj.mode if trace_obj.mode is not None else "lines").lower()
+            x_vals = trace_obj.x
+            y_vals = trace_obj.y
+            line_dict = trace_obj.line.to_plotly_json() if trace_obj.line is not None else {}
+            marker_dict = trace_obj.marker.to_plotly_json() if trace_obj.marker is not None else {}
+            trace_name = trace_obj.name
+            trace_showlegend = trace_obj.showlegend if trace_obj.showlegend is not None else True
+        else:
+            return None
+
+        if x_vals is None or y_vals is None:
+            return None
+
+        try:
+            x_list = list(x_vals)
+            y_list = list(y_vals)
+        except Exception:
+            return None
+
+        if len(x_list) != len(y_list) or len(x_list) == 0:
+            return None
+
+        points = []
+        for x_val, y_val in zip(x_list, y_list):
+            if x_val is None or y_val is None:
+                continue
+            try:
+                points.append((float(x_val), float(y_val)))
+            except Exception:
+                continue
+
+        if not points:
+            return None
+
+        draw_lines = "lines" in mode
+        draw_markers = "markers" in mode
+        if not draw_lines and not draw_markers:
+            return None
+
+        line_color = line_dict.get("color", "black") if isinstance(line_dict, dict) else "black"
+        line_width = _coerce_float(line_dict.get("width", 2), 2) if isinstance(line_dict, dict) else 2
+        marker_color = (
+            marker_dict.get("color", line_color)
+            if isinstance(marker_dict, dict)
+            else line_color
+        )
+        marker_size = (
+            _coerce_float(marker_dict.get("size", 6), 6)
+            if isinstance(marker_dict, dict)
+            else 6
+        )
+
+        return {
+            "points": points,
+            "draw_lines": draw_lines,
+            "draw_markers": draw_markers,
+            "line_color": line_color,
+            "line_width": max(1, int(round(line_width))),
+            "marker_color": marker_color,
+            "marker_size": max(2, int(round(marker_size))),
+            "name": str(trace_name) if trace_name is not None else None,
+            "showlegend": bool(trace_showlegend),
+        }
+
     style_defaults = {
         "width": 1280,
         "height": 720,
@@ -1207,6 +1335,7 @@ def _export_reachtube_video_direct(
             time_to_trace_indices[time_point] = []
         for agent_id, rect in timed_point_dict[time_point]:
             color_idx = agent_idx[agent_id] % len(plot_color)
+            # TODO: add in legend hook
             linecolor = plot_color[color_idx][0]
             fillcolor = plot_color[color_idx][1]
 
@@ -1224,7 +1353,7 @@ def _export_reachtube_video_direct(
             time_to_trace_indices[time_point].append(trace_idx)
 
     prep_rects_time = time.perf_counter()
-    print(
+    if print_level>=2: print(
         f"[export] prepared traces: count={len(rect_specs)} "
         f"elapsed={prep_rects_time - export_start:.2f}s"
     )
@@ -1239,7 +1368,7 @@ def _export_reachtube_video_direct(
         frame_new_trace_indices.append(new_indices)
 
     prep_frames_time = time.perf_counter()
-    print(
+    if print_level>=2: print(
         f"[export] prepared frame deltas: elapsed={prep_frames_time - prep_rects_time:.2f}s"
     )
 
@@ -1384,10 +1513,17 @@ def _export_reachtube_video_direct(
         )
 
     tick_color = _to_rgba("black", default_rgba=(0, 0, 0, 255))
+
+    def _format_tick_label(value):
+        rounded = round(float(value), 2)
+        if abs(rounded) < 1e-9:
+            rounded = 0.0
+        return f"{rounded:.1f}"
+
     for tidx in range(num_ticks):
         xv = left_pad + int(round(tidx * plot_w / (num_ticks - 1)))
         xval = x_lo + (x_hi - x_lo) * tidx / (num_ticks - 1)
-        xlbl = str(int(round(xval)))
+        xlbl = _format_tick_label(xval)
         xlbl_w, xlbl_h = _text_size(bg_draw, xlbl, tick_font)
         bg_draw.line([(xv, top_pad + plot_h), (xv, top_pad + plot_h + 8)], fill=tick_color, width=1)
         bg_draw.text(
@@ -1400,7 +1536,7 @@ def _export_reachtube_video_direct(
     for tidx in range(num_ticks):
         yv = top_pad + int(round(tidx * plot_h / (num_ticks - 1)))
         yval = y_hi - (y_hi - y_lo) * tidx / (num_ticks - 1)
-        ylbl = str(int(round(yval)))
+        ylbl = _format_tick_label(yval)
         ylbl_w, ylbl_h = _text_size(bg_draw, ylbl, tick_font)
         bg_draw.line([(left_pad - 8, yv), (left_pad, yv)], fill=tick_color, width=1)
         bg_draw.text(
@@ -1428,13 +1564,108 @@ def _export_reachtube_video_direct(
         y_title_y = top_pad + (plot_h - y_title_img.height) // 2
         bg.alpha_composite(y_title_img, (int(y_title_x), int(y_title_y)))
 
+    extra_trace_specs = []
+    if isinstance(extra_traces, (list, tuple)):
+        for extra_trace in extra_traces:
+            trace_spec = _extract_scatter_trace(extra_trace)
+            if trace_spec is None:
+                if print_level >= 1:
+                    print("[export] skipped unsupported extra trace (direct export supports only scatter lines/markers)")
+                continue
+            trace_spec["line_rgba"] = _to_rgba(trace_spec["line_color"], default_rgba=(0, 0, 0, 255))
+            trace_spec["marker_rgba"] = _to_rgba(trace_spec["marker_color"], default_rgba=(0, 0, 0, 255))
+            extra_trace_specs.append(trace_spec)
+
+    if show_legend:
+        legend_cfg = _get_cfg(video_config, "legend", default={}) if isinstance(video_config, dict) else {}
+        legend_title = "Trajectory Types"
+        if isinstance(legend_cfg, dict):
+            legend_title_cfg = legend_cfg.get("title")
+            if isinstance(legend_title_cfg, dict) and legend_title_cfg.get("text") is not None:
+                legend_title = str(legend_title_cfg.get("text"))
+            elif isinstance(legend_title_cfg, str):
+                legend_title = legend_title_cfg
+
+        legend_font_size = tick_font_size
+        if isinstance(legend_cfg, dict) and isinstance(legend_cfg.get("font"), dict):
+            legend_font_size = max(12, _coerce_int(legend_cfg["font"].get("size", tick_font_size), tick_font_size))
+        legend_font = _load_font(legend_font_size)
+
+        legend_entries = []
+        for agent_id in agent_list:
+            color_idx = agent_idx[agent_id] % len(plot_color)
+            legend_entries.append(
+                (
+                    str(agent_id),
+                    _hex_to_rgb(plot_color[color_idx][0]),
+                    _hex_to_rgb(plot_color[color_idx][1]),
+                )
+            )
+
+        for trace_spec in extra_trace_specs:
+            if trace_spec.get("showlegend") and trace_spec.get("name"):
+                line_rgba = trace_spec["line_rgba"]
+                legend_entries.append(
+                    (
+                        trace_spec["name"],
+                        (line_rgba[0], line_rgba[1], line_rgba[2]),
+                        (line_rgba[0], line_rgba[1], line_rgba[2]),
+                    )
+                )
+
+        if legend_entries:
+            swatch_size = max(10, int(legend_font_size * 0.75))
+            pad = 8
+            line_gap = max(6, int(legend_font_size * 0.35))
+            title_w, title_h = _text_size(bg_draw, legend_title, axis_font)
+            max_text_w = 0
+            for label, _, _ in legend_entries:
+                label_w, _ = _text_size(bg_draw, label, legend_font)
+                max_text_w = max(max_text_w, label_w)
+
+            legend_w = int(max(title_w, swatch_size + 8 + max_text_w) + 2 * pad)
+            legend_h = int(pad + title_h + line_gap + len(legend_entries) * (swatch_size + line_gap) + pad)
+
+            legend_x1 = left_pad + plot_w - 10
+            legend_x0 = max(left_pad + 5, legend_x1 - legend_w)
+            legend_y0 = top_pad + 10
+            legend_y1 = legend_y0 + legend_h
+
+            bg_draw.rectangle(
+                [legend_x0, legend_y0, legend_x1, legend_y1],
+                fill=(255, 255, 255, 230),
+                outline=(120, 120, 120, 255),
+                width=1,
+            )
+            bg_draw.text((legend_x0 + pad, legend_y0 + pad), legend_title, fill=tick_color, font=axis_font)
+
+            cursor_y = legend_y0 + pad + title_h + line_gap
+            for label, line_rgb, fill_rgb in legend_entries:
+                swatch_y0 = int(cursor_y)
+                swatch_y1 = swatch_y0 + swatch_size
+                swatch_x0 = legend_x0 + pad
+                swatch_x1 = swatch_x0 + swatch_size
+                bg_draw.rectangle(
+                    [swatch_x0, swatch_y0, swatch_x1, swatch_y1],
+                    fill=(fill_rgb[0], fill_rgb[1], fill_rgb[2], 180),
+                    outline=(line_rgb[0], line_rgb[1], line_rgb[2], 255),
+                    width=1,
+                )
+                bg_draw.text(
+                    (swatch_x1 + 8, swatch_y0 - 1),
+                    label,
+                    fill=tick_color,
+                    font=legend_font,
+                )
+                cursor_y += swatch_size + line_gap
+
     bg_draw.rectangle(
         [left_pad, top_pad, left_pad + plot_w, top_pad + plot_h],
         outline=x_line_color,
         width=max(1, x_line_width),
     )
 
-    if map is not None:
+    if map is not None: # NOTE: analogous to draw_map function
         for lane_idx in map.lane_dict:
             lane = map.lane_dict[lane_idx]
             for lane_seg in lane.segment_list:
@@ -1466,8 +1697,32 @@ def _export_reachtube_video_direct(
                 if len(points) > 1:
                     bg_draw.line(points, fill=(0, 0, 0, 90), width=1)
 
+    extra_overlay = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    extra_draw = ImageDraw.Draw(extra_overlay, "RGBA")
+    for trace_spec in extra_trace_specs:
+        pixel_points = [
+            _to_px(x_val, y_val, x_lo, x_hi, y_lo, y_hi, left_pad, top_pad, plot_w, plot_h)
+            for x_val, y_val in trace_spec["points"]
+        ]
+
+        if trace_spec["draw_lines"] and len(pixel_points) > 1:
+            extra_draw.line(
+                pixel_points,
+                fill=trace_spec["line_rgba"],
+                width=trace_spec["line_width"],
+            )
+
+        if trace_spec["draw_markers"]:
+            marker_r = max(1, trace_spec["marker_size"] // 2)
+            for px, py in pixel_points:
+                extra_draw.ellipse(
+                    [px - marker_r, py - marker_r, px + marker_r, py + marker_r],
+                    fill=trace_spec["marker_rgba"],
+                    outline=trace_spec["marker_rgba"],
+                )
+
     bg_setup_time = time.perf_counter()
-    print(f"[export] raster background setup elapsed={bg_setup_time - prep_frames_time:.2f}s")
+    if print_level>=2: print(f"[export] raster background setup elapsed={bg_setup_time - prep_frames_time:.2f}s")
 
     rect_pixels = []
     for spec in rect_specs:
@@ -1478,9 +1733,9 @@ def _export_reachtube_video_direct(
         rect_pixels.append((x0p, y0p, x1p, y1p, spec["line_rgb"], spec["fill_rgb"]))
 
     pix_prep_time = time.perf_counter()
-    print(f"[export] pixel projection setup elapsed={pix_prep_time - bg_setup_time:.2f}s")
+    if print_level>=2: print(f"[export] pixel projection setup elapsed={pix_prep_time - bg_setup_time:.2f}s")
 
-    print(f"[export] writing {ext.upper()} to {output_path} ({total_frames} frames)")
+    if print_level>=2: print(f"[export] writing {ext.upper()} to {output_path} ({total_frames} frames)")
 
     if ext == "gif":
         writer = imageio.get_writer(output_path, mode="I", duration=frame_duration_sec, loop=0)
@@ -1507,11 +1762,13 @@ def _export_reachtube_video_direct(
             visible_count += len(new_indices)
 
             frame_img = Image.alpha_composite(bg, overlay).convert("RGB")
+            if extra_trace_specs:
+                frame_img = Image.alpha_composite(frame_img.convert("RGBA"), extra_overlay).convert("RGB")
             writer.append_data(np.array(frame_img, dtype=np.uint8))
 
             if idx % progress_every == 0 or idx == total_frames:
                 elapsed = time.perf_counter() - export_start
-                print(
+                if print_level>=2: print(
                     f"[export] frame {idx}/{total_frames} "
                     f"visible={visible_count}/{len(rect_specs)} elapsed={elapsed:.2f}s"
                 )
@@ -1519,7 +1776,7 @@ def _export_reachtube_video_direct(
         writer.close()
 
     total_elapsed = time.perf_counter() - export_start
-    print(f"[export] finished {output_path} total_elapsed={total_elapsed:.2f}s")
+    if print_level>=0: print(f"[export] finished {output_path} total_elapsed={total_elapsed:.2f}s") # NOTE: play around with print levels here
 
 
 """Functions below are low-level functions and usually are not called outside this file."""
