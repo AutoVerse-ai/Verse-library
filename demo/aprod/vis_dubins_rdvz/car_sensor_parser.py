@@ -10,7 +10,7 @@ from distance_bounds import dist_extrema, psi_extrema
 # sys.path.append(str(Path(__file__).parent / 'parsed_wrap'))
 # from .parsed_wrap.parser_wrapper import parse_function
 sys.path.append(str(Path(__file__).parent.parent))  # add demo to path
-from parsed_wrap.parser_wrapper import parse_function
+from verse.analysis.parsed_wrap.parser_wrapper import parse_function
 
 epsilon = 0.05
 # epsilon = 0
