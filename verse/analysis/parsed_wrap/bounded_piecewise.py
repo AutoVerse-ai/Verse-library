@@ -76,7 +76,7 @@ def parse_piecewise_function(func: Callable) -> List[Tuple[Any, Any]]:
     Parse a Python piecewise function (if-elif-else) into conditions_outputs format.
     
     Returns:
-        List of (condition_z3_expr, output_expr) tuples
+        List of (condition_z3_expr, output_expr) Tuples
         where output_expr is either a constant or an AST expression string
     """
     source = inspect.getsource(func)

@@ -303,7 +303,7 @@ def combine_angular_bounds(bounds_list):
         Combined bounds in the same format, merged where possible
 
     Note:
-        Current implementation is suboptimal w.r.t. both sorting--why sort both negative and positive--and list merging. 
+        Current implementation is suboptimal w.r.t. both sorting, why sort both negative and positive, and list merging. 
     """
     
     if not bounds_list:

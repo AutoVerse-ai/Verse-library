@@ -6,7 +6,6 @@ import pickle
 from pathlib import Path
 from verse import LaneMap, Lane
 import sys
-sys.path.insert(0, r'c:\Users\alexy\git repos\Verse-library')  # Hacky: Add repo root to sys.path
 from verse.analysis.parsed_wrap import get_heading_bounds_optimized, get_lateral_distance_bounds_optimized
 
 epsilon = 0.05

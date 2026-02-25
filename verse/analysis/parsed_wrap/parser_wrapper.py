@@ -16,64 +16,26 @@ import os
 from pathlib import Path
 import hashlib
 
-# Global cache statistics
-_cache_stats = {"hits": 0, "misses": 0, "entries": {}}
-
-def normalize_bounds(input_bounds, tolerance=1e-9):
-    """
-    Normalize bounds to avoid floating-point representation issues.
-    Rounds all bounds to a reasonable precision.
-    
-    Args:
-        input_bounds: Dict mapping variable names to list of (min, max) tuples
-        tolerance: Rounding precision (default 1e-9)
-    
-    Returns:
-        Normalized bounds dict with rounded values
-    """
-    normalized = {}
-    for var, bounds_list in input_bounds.items():
-        normalized[var] = [
-            (round(min_val / tolerance) * tolerance, round(max_val / tolerance) * tolerance)
-            for min_val, max_val in bounds_list
-        ]
-    return normalized
-
-def get_cache_key(input_bounds, function_name, tolerance=1e-9):
-    """
-    Generate a unique key for the input bounds and function name using MD5 hash.
-    Normalizes bounds to avoid floating-point representation issues.
-    """
-    normalized_bounds = normalize_bounds(input_bounds, tolerance)
-    bounds_str = str(normalized_bounds)
+def get_cache_key(input_bounds, function_name):
+    """Generate a unique key for the input bounds and function name using MD5 hash."""
+    bounds_str = str(input_bounds)
     combined_str = f"{bounds_str}_{function_name}"
     return hashlib.md5(combined_str.encode()).hexdigest()
 
-def get_cache_stats():
-    """Get cache hit/miss statistics."""
-    return _cache_stats.copy()
-
-def reset_cache_stats():
-    """Reset cache statistics."""
-    global _cache_stats
-    _cache_stats = {"hits": 0, "misses": 0, "entries": {}}
-
-def clear_parse_cache(keep_stats=False):
+def clear_parse_cache():
     """Clear all cached parse_function results."""
     cache_dir = Path(__file__).parent / "parse_cache"
     if cache_dir.exists():
         for f in cache_dir.glob("parse_*.pkl"):
             f.unlink()
-    if not keep_stats:
-        reset_cache_stats()
 
 def parse_function_array(func: Callable, input_bounds: List[List[float]], piecewise_functions: List[Callable] = None, track_mode=None, track_map=None, cache: bool = True, logging: bool = False, num_splits: int = 1):
     """
-    Wrapper for parse_function that accepts array-like bounds and converts them to the required dictionary format.
+    Wrapper for parse_function that accepts array-like bounds and converts them to the required dictionary format before processing using `parse_function`.
     Supports domain partitioning for tighter bounds.
     
     Args:
-        func: Function to analyze (must contain only assignments and return)
+        func: Function to parse (must contain only assignments and return)
         input_bounds: List of [min, max] pairs for each argument, e.g., [[min_x, max_x], [min_y, max_y], ...]
         piecewise_functions: List of piecewise functions (optional)
         track_mode: Track mode (optional)
@@ -82,21 +44,28 @@ def parse_function_array(func: Callable, input_bounds: List[List[float]], piecew
         num_splits: Number of splits per dimension (default 1, no partitioning)
     
     Returns:
-        Same as parse_function: (current_bounds, bounds_history)
+        unioned_bounds: dict of arg_name-bound pairs
+    
+    Notes
+    -----
+        Caching is enabled by default because `verify` typically calls sense many times with the same arguments. 
+        
     """
-    global _cache_stats
 
-    # Create cache directory if it doesn't exist
+    # NOTE: Create cache directory if it doesn't exist in the verse/analysis/parsed_wrap directory
+    # NOTE: Consider allow users to specify path as well
     cache_dir = Path(__file__).parent / "parse_cache"
     cache_dir.mkdir(exist_ok=True)
     
-    # Convert input_bounds to dict format for cache key generation
+    # NOTE: Extracting arg names for later
     sig = inspect.signature(func)
     arg_names = list(sig.parameters.keys())
     
+    # NOTE: bound-argument size validation
     if len(input_bounds) != len(arg_names):
         raise ValueError(f"Number of bounds ({len(input_bounds)}) must match number of function arguments ({len(arg_names)})")
     
+    # NOTE: bound validation
     for i, bounds in enumerate(input_bounds):
         if len(bounds) != 2:
             raise ValueError(f"Each bound must be a [min, max] pair, got {bounds} for argument {arg_names[i]}")
@@ -104,33 +73,20 @@ def parse_function_array(func: Callable, input_bounds: List[List[float]], piecew
         if min_val > max_val:
             raise ValueError(f"For argument {arg_names[i]}, expected max_val to be greater than min_val, got {min_val} (min_val) > {max_val} (max_val)")
     
-    # Create dict format for cache key
+    # NOTE: Create dict format for cache key
     parsed_input_bounds_for_key = {}
     for name, bounds in zip(arg_names, input_bounds):
         parsed_input_bounds_for_key[name] = [(bounds[0], bounds[1])]
     
-    # Generate cache key from input bounds and function name
+    # NOTE: Generate cache key from input bounds and function name
     cache_key = get_cache_key(parsed_input_bounds_for_key, func.__name__)
     cache_file = cache_dir / f"parse_{cache_key}.pkl"
     
-    # Check if cached result exists
+    # NOTE: Check if cached result exists
     if cache_file.exists():
-        _cache_stats["hits"] += 1
-        if func.__name__ not in _cache_stats["entries"]:
-            _cache_stats["entries"][func.__name__] = {"hits": 0, "misses": 0}
-        _cache_stats["entries"][func.__name__]["hits"] += 1
-        
         with open(cache_file, 'rb') as f:
             unioned_bounds, _ = pickle.load(f)
-            if logging:
-                print(f"[CACHE HIT] {func.__name__} with bounds: {parsed_input_bounds_for_key}")
             return unioned_bounds
-    
-    # Cache miss - track statistics
-    _cache_stats["misses"] += 1
-    if func.__name__ not in _cache_stats["entries"]:
-        _cache_stats["entries"][func.__name__] = {"hits": 0, "misses": 0}
-    _cache_stats["entries"][func.__name__]["misses"] += 1
     
     if num_splits == 1:
         parsed_input_bounds = {}
@@ -139,7 +95,7 @@ def parse_function_array(func: Callable, input_bounds: List[List[float]], piecew
             parsed_input_bounds[name] = [(min_val, max_val)]
         return parse_function(func, parsed_input_bounds, piecewise_functions, track_mode, track_map, cache, logging)
     
-    # NOTE: Domain partitioning: generate splits for each dimension
+    # NOTE: Domain partitioning: generate splits for each dimension if bounds are non-trivial
     splits = []
     for bounds in input_bounds:
         min_val, max_val = bounds
@@ -147,16 +103,16 @@ def parse_function_array(func: Callable, input_bounds: List[List[float]], piecew
             splits.append([(min_val, max_val)])
         else:
             split_points = np.linspace(min_val, max_val, num_splits + 1)
-            splits.append(list(zip(split_points[:-1], split_points[1:])))
+            splits.append(list(zip(split_points[:-1], split_points[1:]))) # NOTE: Cleverly creating split bounds
     
     all_current_bounds = []
+    # FIXME: Consider getting rid of all_bounds_history in this case or handle it better -- currently is worthless
     all_bounds_histories = []
     
     for split_bounds in itertools.product(*splits):
         parsed_input_bounds = {}
         for name, bounds in zip(arg_names, split_bounds):
             parsed_input_bounds[name] = [(bounds[0], bounds[1])]
-        
         current_bounds, bounds_history = parse_function(func, parsed_input_bounds, piecewise_functions, track_mode, track_map, cache, parent_cache=True)
         all_current_bounds.append(current_bounds)
         all_bounds_histories.append(bounds_history)
@@ -164,9 +120,8 @@ def parse_function_array(func: Callable, input_bounds: List[List[float]], piecew
     unioned_bounds = {}
     for var in all_current_bounds[0].keys():
         all_var_bounds = [cb[var] for cb in all_current_bounds]
-        
         has_multiple = any(len(bounds) > 1 for bounds in all_var_bounds)
-        
+        # NOTE: Currently considering any variable with multiple bounds necessarily an angular bound
         if has_multiple:
             unioned_bounds[var] = combine_angular_bounds(all_var_bounds)
         else:
@@ -182,17 +137,15 @@ def parse_function_array(func: Callable, input_bounds: List[List[float]], piecew
 
 def parse_function(func: Callable, input_bounds: Dict[str, List[Tuple[float, float]]], piecewise_functions: List[Callable] = None, track_mode = None, track_map = None, cache: bool = True, logging: bool = False, parent_cache = False):
     """
-    Process a function line-by-line, computing bounds at each step using parsed_sensor.
+    Process a function line-by-line, computing bounds at each step using parsed_sensor. Typically called as a helper function by `parsed_function_array`.
     
     Args:
         func: Function to analyze (must contain only assignments and return)
         input_bounds: Dict mapping variable names to (min, max) tuples
     
     Returns:
-        (current_bounds, bounds_history) tuple
+        (current_bounds, bounds_history): Tuple of current bounds 
     """
-    global _cache_stats
-    
     cache_dir = Path(__file__).parent / "parse_cache"
     cache_dir.mkdir(exist_ok=True)
     
@@ -200,21 +153,8 @@ def parse_function(func: Callable, input_bounds: Dict[str, List[Tuple[float, flo
     cache_file = cache_dir / f"parse_{cache_key}.pkl"
     
     if cache_file.exists():
-        _cache_stats["hits"] += 1
-        if func.__name__ not in _cache_stats["entries"]:
-            _cache_stats["entries"][func.__name__] = {"hits": 0, "misses": 0}
-        _cache_stats["entries"][func.__name__]["hits"] += 1
-        
         with open(cache_file, 'rb') as f:
-            if logging:
-                print(f"[CACHE HIT] {func.__name__} with bounds: {input_bounds}")
             return pickle.load(f)
-    
-    # Cache miss
-    _cache_stats["misses"] += 1
-    if func.__name__ not in _cache_stats["entries"]:
-        _cache_stats["entries"][func.__name__] = {"hits": 0, "misses": 0}
-    _cache_stats["entries"][func.__name__]["misses"] += 1
         
     source = inspect.getsource(func)
     source = textwrap.dedent(source)
@@ -225,10 +165,13 @@ def parse_function(func: Callable, input_bounds: Dict[str, List[Tuple[float, flo
     bounds_history = [dict(input_bounds)]
     
     for stmt in func_def.body:
+        # NOTE: Currently returns don't do anything aside from just ending the parse loop
         if isinstance(stmt, ast.Return):
             break
         
         elif isinstance(stmt, ast.Assign):
+            # NOTE: Currently only handling single variable assignments in functions
+            # TODO: Consider adding support for lists and list decomposition
             if len(stmt.targets) != 1 or not isinstance(stmt.targets[0], ast.Name):
                 raise ValueError("Only simple assignments supported")
             
@@ -281,6 +224,10 @@ def compute_expression_bounds_with_parsed_sensor(
             
     Returns:
         List of (lower_bound, upper_bound) tuples
+    
+    Notes
+    -----
+
     """
     for alias, func_name in ALIASES.items():
         if alias in expr_code:
@@ -294,7 +241,8 @@ def compute_expression_bounds_with_parsed_sensor(
         if isinstance(node, ast.Call):
             args = [arg.id for arg in node.args if isinstance(arg, ast.Name) and arg.id in arg_names]
             break
-
+    
+    # NOTE: Currently checking type of function using function name exclusively
     if any(func in expr_code for func in ANGULAR_FUNCTIONS):
         func_name = [func for func in ANGULAR_FUNCTIONS if func in expr_code][0]
         bounds = handle_angular_function(func_name, args, current_bounds)
@@ -310,6 +258,7 @@ def compute_expression_bounds_with_parsed_sensor(
         bounds = handle_map_function(func_name, args, current_bounds, track_map, track_mode)
         return bounds
     else:
+        # NOTE: If no match to handle function in a special way, default to handling function as a CROWN function.
         bounds = handle_crown_function(expr_code, arg_names, current_bounds)
         return bounds
 
@@ -383,6 +332,7 @@ def handle_piecewise_function(func: Callable, args: List[str], current_bounds: D
     """
     bounds_list = [current_bounds[name] for name in args] 
     all_output_bounds = []
+    # NOTE: Use helper to first convert piecewise function to (z3 expression, output expression) pairs 
     parsed_func = parse_piecewise_function(func)
 
     for bounds_combination in itertools.product(*bounds_list):
@@ -391,7 +341,9 @@ def handle_piecewise_function(func: Callable, args: List[str], current_bounds: D
             res = bounded_piecewise_z3(parsed_func, bounds_dict)
             for i in range(len(res)):
                 output_function = str(res[i][1])
+                # NOTE: Using constrained bounds so that if only part of the argument's bounds satisfy an expression, only that part will be used
                 constrained_bounds = {arg: [res[i][0][arg]] for arg in res[i][0]}
+                # NOTE: Assuming piecewise functions don't recursively call piecewise functions.
                 output_bounds = compute_expression_bounds_with_parsed_sensor(
                     output_function,
                     args,

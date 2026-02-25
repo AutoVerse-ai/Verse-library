@@ -31,7 +31,7 @@ def clear_parse_cache():
 
 def parse_function_array(func: Callable, input_bounds: List[List[float]], piecewise_functions: List[Callable] = None, track_mode=None, track_map=None, cache: bool = True, logging: bool = False, num_splits: int = 1):
     """
-    Wrapper for parse_function that accepts array-like bounds and converts them to the required dictionary format.
+    Wrapper for parse_function that accepts arraylike bounds and converts them to the required dictionary format before applying parse_function.
     Supports domain partitioning for tighter bounds.
     
     Args:
