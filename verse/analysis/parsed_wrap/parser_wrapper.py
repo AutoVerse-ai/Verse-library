@@ -144,7 +144,7 @@ def parse_function(func: Callable, input_bounds: Dict[str, List[Tuple[float, flo
         input_bounds: Dict mapping variable names to (min, max) tuples
     
     Returns:
-        (current_bounds, bounds_history): Tuple of current bounds 
+        (current_bounds, bounds_history): Tuple where current_bounds is a dict mapping arg_names to bounds, which is a list of bounds, and bounds_history, which is a list that contains the entire revision history of current_bounds.
     """
     cache_dir = Path(__file__).parent / "parse_cache"
     cache_dir.mkdir(exist_ok=True)

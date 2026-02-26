@@ -22,8 +22,15 @@ def z3num_to_float(x):
     
 def bounded_piecewise_z3(conditions_outputs, input_bounds):
     """
-    Evaluate a piecewise function over bounded inputs using Z3.
+    Evaluate a piecewise function over bounded inputs using Z3 optimization.
     For each branch, finds the tightest input bounds satisfying that branch's condition.
+    
+    Note
+    -----
+    Current implementation evaluates each elif condition independently without adding negations of earlier conditions. 
+    This is sound for mutually exclusive branches like the one given in this file but overapproximates for overlapping elif conditions. 
+    For Python semantics (first true branch wins), each elif should be conjoint with `and not [earlier conditions]`
+    This limitation is acceptable for disjoint conditions but should be fixed for general correctness.
     """
     results = []
     var_names = list(input_bounds.keys())
@@ -34,6 +41,9 @@ def bounded_piecewise_z3(conditions_outputs, input_bounds):
         if condition is None:
             branch_condition = And(negated_conditions) if negated_conditions else BoolVal(True)
         else:
+            # NOTE: For mutually exclusive conditions, this is correct.
+            # TODO: For overlapping elif conditions, conjoin with negated_conditions:
+            # branch_condition = And(condition, *negated_conditions) if negated_conditions else condition
             branch_condition = condition
             negated_conditions.append(Not(condition))
         
@@ -84,6 +94,7 @@ def parse_piecewise_function(func: Callable) -> List[Tuple[Any, Any]]:
     tree = ast.parse(source)
 
     func_def = tree.body[0]
+    # NOTE: Verify that func is a funcion
     if not isinstance(func_def, ast.FunctionDef):
         raise ValueError("Input must be a function definition")
     
@@ -93,6 +104,7 @@ def parse_piecewise_function(func: Callable) -> List[Tuple[Any, Any]]:
             if_stmt = node
             break
     
+    # NOTE: Verify that func has an if statement. This does not necessarily mean that it is piecewise, so consider adding further checks.
     if if_stmt is None:
         raise ValueError("Function must contain an if statement")
     
@@ -101,6 +113,7 @@ def parse_piecewise_function(func: Callable) -> List[Tuple[Any, Any]]:
     
     conditions_outputs = []
     
+    # NOTE: Start loop at the first (should be only) `if`
     current = if_stmt
     while current is not None:
         condition_z3 = ast_to_z3_condition(current.test, z3_vars)
@@ -114,6 +127,7 @@ def parse_piecewise_function(func: Callable) -> List[Tuple[Any, Any]]:
             conditions_outputs.append((None, output_expr))
             current = None
         else:
+            # print(f'Warning, no else detected in piecewise function.')
             current = None
     
     return conditions_outputs
@@ -263,6 +277,7 @@ if __name__ == "__main__":
         'psi': [-1.1, 2],
         'phi': [1, 1]
     }
+    print(f'Condtions-outputs pairs: {conditions_outputs}')
 
     z3_vars = {'psi': Real('psi'), 'phi': Real('phi')}
     results = bounded_piecewise_z3(conditions_outputs, input_bounds)
