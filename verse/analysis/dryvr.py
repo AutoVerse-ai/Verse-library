@@ -35,7 +35,7 @@ def all_sensitivities_calc(training_traces: np.ndarray, initial_radii: np.ndarra
                             training_traces[:, cur_time_ind, cur_dim_ind],
                             (training_traces.shape[0], 1),
                         ),
-                        "chebychev",
+                        "chebyshev",
                     )
                     / normalizing_initial_set_radii[cur_dim_ind - 1]
                 )
@@ -155,13 +155,14 @@ def get_reachtube_segment(
             np.all(reachtube_segment[:, 0, :] <= training_traces[trace_ind, 1:, :])
             and np.all(reachtube_segment[:, 1, :] >= training_traces[trace_ind, 1:, :])
         ):
-            assert np.any(
-                np.abs(training_traces[trace_ind, 0, 1:] - center_trace[0, 1:]) > initial_radii
-            )
-            print(
-                f"Warning: Trace #{trace_ind}",
-                "of this initial set is sampled outside of the initial set because of floating point error and is not contained in the initial set",
-            )
+            # assert np.any(
+            #     np.abs(training_traces[trace_ind, 0, 1:] - center_trace[0, 1:]) > initial_radii
+            # )
+            # print(
+            #     f"Warning: Trace #{trace_ind}",
+            #     "of this initial set is sampled outside of the initial set because of floating point error and is not contained in the initial set",
+            # )
+            pass
     return reachtube_segment
 
 

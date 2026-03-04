@@ -21,7 +21,7 @@ class NPCAgent(BaseAgent):
         self.set_uncertain_parameter(None)
 
     @staticmethod
-    def dynamic(t, state, u):
+    def dynamics(t, state, u):
         theta, v = state[2:4]
         delta, a = u
         x_dot = v * np.cos(theta + delta)
@@ -57,7 +57,7 @@ class NPCAgent(BaseAgent):
         trace[0, 1:] = init
         for i in range(num_points):
             steering, a = self.action_handler(mode, init, lane_map)
-            r = ode(self.dynamic)
+            r = ode(self.dynamics)
             r.set_initial_value(init).set_f_params([steering, a])
             res: np.ndarray = r.integrate(r.t + time_step)
             init = res.flatten()
@@ -86,7 +86,7 @@ class CarAgent(BaseAgent):
         self.accel = accel
 
     @staticmethod
-    def dynamic(t, state, u):
+    def dynamics(t, state, u):
         x, y, theta, v = state
         delta, a = u
         x_dot = v * np.cos(theta + delta)
@@ -131,7 +131,7 @@ class CarAgent(BaseAgent):
         trace[0, 1:] = init
         for i in range(num_points):
             steering, a = self.action_handler(mode, init, lane_map)
-            r = ode(self.dynamic)
+            r = ode(self.dynamics)
             r.set_initial_value(init).set_f_params([steering, a])
             res: np.ndarray = r.integrate(r.t + time_step)
             init = res.flatten()
@@ -189,8 +189,8 @@ class CarAgentDebounced(CarAgent):
         )
 
     @staticmethod
-    def dynamic(t, state, u):
-        return super(CarAgentDebounced, CarAgentDebounced).dynamic(t, state[:4], u) + [1]
+    def dynamics(t, state, u):
+        return super(CarAgentDebounced, CarAgentDebounced).dynamics(t, state[:4], u) + [1]
 
     def action_handler(self, mode: List[str], state, lane_map: LaneMap) -> Tuple[float, float]:
         return super(CarAgentDebounced, self).action_handler(
@@ -220,8 +220,8 @@ class CarAgentSwitch2(CarAgent):
         )
 
     @staticmethod
-    def dynamic(t, state, u):
-        return super(CarAgentSwitch2, CarAgentSwitch2).dynamic(t, state[:4], u) + [1]
+    def dynamics(t, state, u):
+        return super(CarAgentSwitch2, CarAgentSwitch2).dynamics(t, state[:4], u) + [1]
 
     def action_handler(self, mode: List[str], state, lane_map: LaneMap) -> Tuple[float, float]:
         x, y, theta, v, _ = state

@@ -31,7 +31,7 @@ class CarAgent(BaseAgent):
         self.accel = accel
 
     @staticmethod
-    def dynamic(t, state, u):
+    def dynamics(t, state, u):
         x, y, theta, v = state
         delta, a = u
         x_dot = v * np.cos(theta + delta)
@@ -76,7 +76,7 @@ class CarAgent(BaseAgent):
         trace[0, 1:] = init
         for i in range(num_points):
             steering, a = self.action_handler(mode, init, lane_map)
-            r = ode(self.dynamic)
+            r = ode(self.dynamics)
             r.set_initial_value(init).set_f_params([steering, a])
             res: np.ndarray = r.integrate(r.t + time_step)
             init = res.flatten()
@@ -107,7 +107,7 @@ class DroneAgent(BaseAgent):
         self.box_side = box_side
 
     @staticmethod
-    def dynamic(t, state, u):
+    def dynamics(t, state, u):
         u1, u2, u3, bx, by, bz, sc, ddf = u  # len 7
         vx, vy, vz = state[6:]  # len 9
         sc = -1 * sc
@@ -177,7 +177,7 @@ class DroneAgent(BaseAgent):
         ]
         init = initalCondition
         trajectory = [init]
-        r = ode(self.dynamic)
+        r = ode(self.dynamics)
         # r.set_initial_value(init)
         ex_list = []
         ey_list = []
@@ -223,7 +223,7 @@ class DroneAgent(BaseAgent):
 
             u = u + [df]
             init = trajectory[i]  # len 9
-            r = ode(self.dynamic)
+            r = ode(self.dynamics)
             r.set_initial_value(init)
             r.set_f_params(u)
             val = r.integrate(r.t + time_step)

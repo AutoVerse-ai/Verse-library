@@ -112,3 +112,60 @@ def reach_star(traces, t_l: float = 0, t_u: float = None) -> Dict[str, List[Star
                 reach[agent].append(cur[1]) # just store the star set
     
     return reach
+
+def sim_traces_to_dict_composed(sim_traces: List[AnalysisTreeNode]) -> Dict:
+    hist_dict = {}
+    for sim_trace in sim_traces:
+        queue = []
+        queue.append((sim_trace.root, None)) # NOTE: format of each thing on the queue is Node, history as hash
+        while len(queue):
+            cur_node: AnalysisTreeNode
+            cur_node, hist = queue.pop(0)
+            # Composing modes together
+            comp_modes = " | ".join(
+                "".join(seq) for seq in cur_node.mode.values()
+            )
+            new_hist = hash(str(hist)+comp_modes)
+            # Adding node in form of hashed mode + history of modes
+            if new_hist not in hist_dict:
+                hist_dict[new_hist] = {}
+            # Use temp_dict since I just want a single composed state per mode
+            temp_dict: Dict[float, List[float]] = {}
+            # Now, looping through each agent and time step, composing together agents but not distinct sim_traces
+            for agent in cur_node.trace:
+                for time_state in cur_node.trace[agent]:
+                    t, state = time_state[0], time_state[1:].tolist()
+                    if t not in temp_dict:
+                        temp_dict[t] = []
+                    temp_dict[t] += state
+
+            for time in temp_dict:
+                if time not in hist_dict[new_hist]:
+                    hist_dict[new_hist][time] = [] # NOTE: want a **list** of composed states, not just a single supercomposed state
+                hist_dict[new_hist][time].append(temp_dict[time])
+
+            for kid in cur_node.child:
+                queue.append((kid, new_hist))
+        
+    return hist_dict
+
+def sim_traces_to_diameters(sim_traces: List[AnalysisTreeNode]) -> List[float]:
+    hist_dict = sim_traces_to_dict_composed(sim_traces)
+    diams = []
+    # NOTE: use the hist_dict from the previous function, and go in order to compute the tighest hyperrectangle and l1 distance of that rectangle
+    for hist in hist_dict: # essentially for each node
+        for time in hist_dict[hist]:
+            # states = np.array(hist_dict[hist][time])
+            # min_rect, max_rect = states.min(axis=0), states.max(axis=0) # NOTE: I could just keep the dict structure and just put these in place of the states to get the tighest hyperrectangle given the states for each node
+            # diams.append(manhattan(min_rect, max_rect))
+    
+            states = hist_dict[hist][time]
+            # Filter out states with different dimensions
+            max_dim = max(len(state) for state in states)
+            filtered_states = [state for state in states if len(state) == max_dim]
+            if filtered_states:
+                states_array = np.array(filtered_states)
+                min_rect, max_rect = states_array.min(axis=0), states_array.max(axis=0) 
+                diams.append(manhattan(min_rect, max_rect))
+
+    return diamsA

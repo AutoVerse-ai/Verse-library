@@ -12,7 +12,7 @@ class RobotAgent(BaseAgent):
         super().__init__(id, code, file_name)
 
     @staticmethod
-    def dynamic(t, state):
+    def dynamics(t, state):
         x_dot = 1
         return [x_dot]
 
@@ -28,7 +28,7 @@ class RobotAgent(BaseAgent):
         init = initialCondition
         trace = [[0] + init]
         for i in range(len(t)):
-            r = ode(self.dynamic)
+            r = ode(self.dynamics)
             r.set_initial_value(init)
             res: np.ndarray = r.integrate(r.t + time_step)
             init = res.flatten().tolist()

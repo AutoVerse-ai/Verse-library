@@ -31,7 +31,7 @@ class TMAgent(BaseAgent):
         super().__init__(id, code, file_name)
 
     @staticmethod
-    def dynamic_sd(t, state):
+    def dynamics_sd(t, state):
         sx, vx, ax, vy, omega, sy = state
         vx_dot = 0.1*ax
         sx_dot = vx-2.5
@@ -42,7 +42,7 @@ class TMAgent(BaseAgent):
         return [sx_dot, vx_dot, ax_dot, vy_dot, omega_dot, sy_dot]
 
     @staticmethod
-    def dynamic_st1(t, state):
+    def dynamics_st1(t, state):
         sx, vx, ax, vy, omega, sy = state
         vx_dot = 0.1*ax
         sx_dot = vx-2.5
@@ -53,7 +53,7 @@ class TMAgent(BaseAgent):
         return [sx_dot, vx_dot, ax_dot, vy_dot, omega_dot, sy_dot]
     
     @staticmethod
-    def dynamic_et1(t, state):
+    def dynamics_et1(t, state):
         sx, vx, ax, vy, omega, sy = state
         vx_dot = 0.1*ax
         sx_dot = vx-2.5
@@ -64,7 +64,7 @@ class TMAgent(BaseAgent):
         return [sx_dot, vx_dot, ax_dot, vy_dot, omega_dot, sy_dot]
     
     @staticmethod
-    def dynamic_et2(t, state):
+    def dynamics_et2(t, state):
         sx, vx, ax, vy, omega, sy = state
         vx_dot = 0.1*ax
         sx_dot = vx-2.5
@@ -75,7 +75,7 @@ class TMAgent(BaseAgent):
         return [sx_dot, vx_dot, ax_dot, vy_dot, omega_dot, sy_dot]
 
     @staticmethod
-    def dynamic_st2(t, state):
+    def dynamics_st2(t, state):
         sx, vx, ax, vy, omega, sy = state
         vx_dot = 0.1*ax
         sx_dot = vx-2.5
@@ -86,7 +86,7 @@ class TMAgent(BaseAgent):
         return [sx_dot, vx_dot, ax_dot, vy_dot, omega_dot, sy_dot]
     
     @staticmethod
-    def dynamic_su(t, state):
+    def dynamics_su(t, state):
         sx, vx, ax, vy, omega, sy = state
         vx_dot = 0.1*ax
         sx_dot = vx-2.5
@@ -97,7 +97,7 @@ class TMAgent(BaseAgent):
         return [sx_dot, vx_dot, ax_dot, vy_dot, omega_dot, sy_dot]
     
     @staticmethod
-    def dynamic_cont(t, state):
+    def dynamics_cont(t, state):
         sx, vx, ax, vy, omega, sy = state
         vx_dot = 0.1*ax
         sx_dot = vx-2.5
@@ -117,19 +117,19 @@ class TMAgent(BaseAgent):
         trace[0, 1:] = init
         for i in range(num_points):
             if mode[0]=="SlowDown":
-                r = ode(self.dynamic_sd)
+                r = ode(self.dynamics_sd)
             elif mode[0]=="StartTurn1":
-                r = ode(self.dynamic_st1)
+                r = ode(self.dynamics_st1)
             elif mode[0]=="EndTurn1":
-                r = ode(self.dynamic_et1)
+                r = ode(self.dynamics_et1)
             elif mode[0]=="EndTurn2":
-                r = ode(self.dynamic_et2)
+                r = ode(self.dynamics_et2)
             elif mode[0]=="StartTurn2":
-                r = ode(self.dynamic_st2)
+                r = ode(self.dynamics_st2)
             elif mode[0]=="SpeedUp":
-                r = ode(self.dynamic_su)
+                r = ode(self.dynamics_su)
             elif mode[0]=="Continue":
-                r = ode(self.dynamic_cont)
+                r = ode(self.dynamics_cont)
             else:
                 raise ValueError
             r.set_initial_value(init)

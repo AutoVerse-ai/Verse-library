@@ -78,6 +78,9 @@ if __name__ == "__main__":
     if bench.config.compare:
         traces1, traces2 = bench.compare_run(40, time_step)
         exit(0)
+
+    bench.config.sim = False
+
     traces = bench.run(40, time_step)
     diams = time_step_diameter_rect(traces, 40, time_step)
     print(f'Initial diameter: {diams[0]}\n Final: {diams[-1]}\n Average: {sum(diams)/len(diams)}')

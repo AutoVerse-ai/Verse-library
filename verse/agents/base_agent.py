@@ -61,7 +61,7 @@ class BaseAgent:
         self.uncertain_parameters = copy.deepcopy(uncertain_param)
 
     @staticmethod
-    def dynamic(t, state, u):
+    def dynamics(t, state, u):
         raise NotImplementedError()
 
     def TC_simulate(self, mode, initialSet, time_horizon, time_step, map=None):

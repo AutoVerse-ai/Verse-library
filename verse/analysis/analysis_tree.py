@@ -11,7 +11,7 @@ import graphviz
 from verse.analysis.dryvr import _EPSILON
 from verse.agents.base_agent import BaseAgent
 
-TraceType = nptyp.NDArray[np.float_]
+TraceType = nptyp.NDArray[np.double]
 
 _T = TypeVar("_T")
 
@@ -208,7 +208,7 @@ class AnalysisTreeNode:
         return mode[track_mode_ind]
 
     def get_mode(self, agent_id: str, mode: Sequence[str]) -> Optional[Sequence[str]]:
-        """Filter out the agent mode(s) for a given agent"""
+        """Either tries to find the AgentMode (or any non-TrackMode) if TrackMode exists or returns mode"""
         state_defs = self.agent[agent_id].decision_logic.state_defs
         mode_def_names = next(iter(state_defs.values())).disc_type
         track_mode_ind = index_of(mode_def_names, "TrackMode")
@@ -216,9 +216,12 @@ class AnalysisTreeNode:
             if len(mode) == 1:
                 return mode[0]
             return mode
-        if len(mode_def_names) == 2:
-            return mode[1 - track_mode_ind]
-        return tuple(v for i, v in enumerate(mode) if i != track_mode_ind)
+        # NOTE: TrackMode exists, find first discrete mode variable
+        for i in range(len(mode_def_names)):
+            if i != track_mode_ind:
+                return mode[i]
+        # NOTE: Only TrackMode exists, no other modes -- this should never be reached if scenario is created properly
+        return None
 
     @staticmethod
     def _from_dict(data: Dict[str, Any]) -> "AnalysisTreeNode":

@@ -139,6 +139,10 @@ class Scenario:
                 assert len(i) == len(
                     list(agent.decision_logic.state_defs.values())[0].cont
                 ), "the length of element in init not fit the number of continuous variables"
+            """
+            This check does not do what it's supposed to to
+            TODO: instead of checking with the number of variables in 
+            """
             # print(agent.decision_logic.mode_defs)
             assert len(init_mode) == len(
                 list(agent.decision_logic.state_defs.values())[0].disc
@@ -220,13 +224,6 @@ class Scenario:
                         uncertain_parameters = agent.uncertain_parameters
                     self.set_init_single(agent_id, init_cont, init_disc, static_parameters, uncertain_parameters)  
 
-    def simulate_multi(self, time_horizon, time_step, max_height=None, num_sim=3):
-        res_list = []
-        for i in range(num_sim):
-            trace = self.simulate(time_horizon, time_step,max_height)
-            res_list.append(trace)
-        return res_list
-
     def simulate(self, time_horizon, time_step, max_height=None, seed=None) -> AnalysisTree:
         '''Computes a single simulation trace of a scenario, starting from a single initial state.
             Parameters:
@@ -268,7 +265,7 @@ class Scenario:
         self.past_runs.append(tree)
         return tree
 
-    def simulate_multi(self, time_horizon, time_step, init_dict_list=None, max_height=None, seed=None):
+    def simulate_multi(self, time_horizon, time_step, init_dict_list=None, max_height=None, seed=None, num_sims=10):
         '''Computes multiple simulation traces of a scenario, starting from multiple initial states.
             `seed`: the random seed for sampling a point in the region specified by the initial
             conditions
@@ -278,8 +275,8 @@ class Scenario:
         self._check_init()
         tree_list = []
         if init_dict_list is None:
-            for i in range(10):
-                tree_list.append(self.simulate(time_horizon, time_step, max_height, seed))
+            for i in range(num_sims):
+                tree_list.append(self.simulate(time_horizon, time_step, max_height, (seed + i) if seed is not None else None))
         else:
             for init_dict in init_dict_list:
                 root = AnalysisTreeNode.root_from_inits(
@@ -379,6 +376,54 @@ class Scenario:
         self.past_runs.append(tree)
         return tree
 
+    def verify_partitioned(self, time_horizon, time_step, n, max_height=None, partition_initial=False, partition_dims:List=None, params={}) -> AnalysisTree:
+        '''Compute the set of reachable states with optional partitioning for over-approximation, preserving branching.
+        
+        :param time_horizon: Time limit for verification.
+        :param time_step: Sampling period.
+        :param n: Number of partitions per dimension (used for over-approximation).
+        :param max_height: Maximum discrete transitions.
+        :param partition_initial: If True, partition initial set for over-approximation.
+        :param partition_dims: If given, partition only dims in list (1-indexed)
+        :param params: Additional parameters.
+        :return: AnalysisTree with branching preserved.
+        '''
+        _check_ray_init(self.config.parallel)
+        self._check_init()
+        root = AnalysisTreeNode.root_from_inits(
+            init={
+                aid: [init]
+                for aid, init in self.init_dict.items()
+            },
+            mode={
+                aid: tuple(elem if isinstance(elem, str) else elem.name for elem in modes)
+                for aid, modes in self.init_mode_dict.items()
+            },
+            static={aid: [elem.name for elem in modes] for aid, modes in self.static_dict.items()},
+            uncertain_param=self.uncertain_param_dict,
+            agent=self.agent_dict,
+            type=AnalysisTreeNodeType.REACH_TUBE,
+            ndigits=10,
+        )
+
+        tree = self.verifier.compute_full_reachtube_partitioned(
+            root,
+            self.sensor,
+            time_horizon,
+            time_step,
+            max_height,
+            self.map,
+            self.config.init_seg_length,
+            self.config.reachability_method,
+            len(self.past_runs),
+            self.past_runs,
+            n,
+            partition_initial,
+            partition_dims,
+            params,
+        )
+        self.past_runs.append(tree)
+        return tree
 
 @dataclass
 class ExprConfig:

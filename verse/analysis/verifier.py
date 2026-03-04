@@ -24,6 +24,7 @@ from verse.map.lane_map import LaneMap
 from verse.parser.parser import find, ModePath, unparse
 from verse.agents.base_agent import BaseAgent
 from verse.automaton import GuardExpressionAst, ResetExpression
+from tqdm import tqdm
 
 # from verse.scenario import ScenarioConfig
 
@@ -344,7 +345,9 @@ class Verifier:
             tube_length = 0
         else:
             tube_length = res_tube.shape[0]
-        for combine_seg_idx in missing_seg_idx_list:
+        # print(f'{len(missing_seg_idx_list)} inits to combine')
+        # for combine_seg_idx in tqdm(missing_seg_idx_list): # NOTE: is it possible to parallelize this
+        for combine_seg_idx in missing_seg_idx_list: # NOTE: is it possible to parallelize this
             rect_seg = initial_set[combine_seg_idx : combine_seg_idx + combine_seg_length]
             combined_rect = None
             for rect in rect_seg:
@@ -478,7 +481,8 @@ class Verifier:
                         sim_trace_num = params['sim_trace_num']
                     else:
                         sim_trace_num = SIMTRACENUM              
-                    init = inits[0]
+
+                    init = inits[0] # FIXME: this makes no sense, should instead mirror what regular dryvr does; assuming this was put here as a placeholder
                     if isinstance(init, np.ndarray):
                         init = init.tolist()
                     cur_bloated_tube = calc_bloated_tube_dryvr(
@@ -495,6 +499,30 @@ class Verifier:
                     )
                     if isinstance(cur_bloated_tube, np.ndarray):
                         cur_bloated_tube = cur_bloated_tube.tolist()
+
+                    # NOTE: fixing the issue listed above, current solution is the tighest but also slowest and has no compatibility with the combine_seg_length parameter
+                    # TODO: add compatibility with init_combine_seg or whatever
+                    # combined_inits = []
+                    # print(f'{len(inits)} traces to combine')
+                    # for init in inits:
+                    #     if isinstance(init, np.ndarray):
+                    #         init = init.tolist()
+                    #     combined_inits.append(init)
+
+                    # partitioned_traces = []
+                    # # TODO: parallelize this
+                    # for init in combined_inits:
+                    #     cur_bloated_tube = calc_bloated_tube_dryvr(
+                    #         mode, init, remain_time, consts.time_step, node.agent[agent_id].TC_simulate, 
+                    #         bloating_method, 100, sim_trace_num, lane_map=consts.lane_map, traces=traces
+                    #     )
+                    #     if isinstance(cur_bloated_tube, np.ndarray):
+                    #         cur_bloated_tube = cur_bloated_tube.tolist()
+                    #     partitioned_traces.append(cur_bloated_tube)
+                    
+                    # # Combine the results together
+                    # cur_bloated_tube = Verifier._union_traces(partitioned_traces, consts.reachability_method)
+
                 elif consts.reachability_method == ReachabilityMethod.NEU_REACH:
                     # pylint: disable=E0401
                     from verse.analysis.NeuReach.NeuReach_onestep_rect import postCont
@@ -552,6 +580,7 @@ class Verifier:
                 # pp(("to sim", new_cache.keys(), len(paths_to_sim)))
 
         # Get all possible transitions to next mode
+        # FIXME: weird bug using new dryvr_disc where length of next_init is 4096 even though all inits are the same
         asserts, all_possible_transitions = Verifier.get_transition_verify_opt(
             config, new_cache, paths_to_sim, node, consts.lane_map, consts.sensor
         )
@@ -1044,7 +1073,8 @@ class Verifier:
             reduction_queue.reverse()
         else:
             trace_length = int(min(len(v) for v in node.trace.values()) // 2)
-            reduction_queue = [(0, trace_length, trace_length)]
+            reduction_queue = [(i, i+1, 1) for i in range(0, trace_length)]
+            reduction_queue.reverse()
         # for idx, end_idx,combine_len in reduction_queue:
         hits = []
         while reduction_queue:
@@ -1223,7 +1253,8 @@ class Verifier:
                     if dest not in reset_dict[agent_id][reset_idx]:
                         reset_dict[agent_id][reset_idx][dest] = []
                     reset_dict[agent_id][reset_idx][dest].append(
-                        (reset_rect, hit_idx, reset_list[-1])
+                        # (reset_rect, hit_idx, reset_list[-1])
+                        (reset_rect, hit_idx, reset_list)
                     )
 
         possible_transitions = []
@@ -1233,15 +1264,22 @@ class Verifier:
         for agent in reset_dict:
             for reset_idx in reset_dict[agent]:
                 for dest in reset_dict[agent][reset_idx]:
-                    #output.x output.vx
                     reset_data = tuple(map(list, zip(*reset_dict[agent][reset_idx][dest])))
-                    paths = [r[-1] for r in reset_data[-1]]
+                    # paths = [r[-1] for r in reset_data[-1]]
+                    paths = [r[-1] for r in reset_data[-1][0]]
                     transition = (agent, node.mode[agent], dest, *reset_data[:-1], paths)
-                    src_mode = node.get_mode(agent, node.mode[agent])
+                    src_mode = node.get_mode(agent, node.mode[agent]) # this is explicitly the AgentMode mode
                     src_track = node.get_track(agent, node.mode[agent])
                     dest_mode = node.get_mode(agent, dest)
                     dest_track = node.get_track(agent, dest)
-                    if dest_track == track_map.h(src_track, src_mode, dest_mode):
+                    map_modes = [[src_mode, src_track, dest_mode, dest_track]]
+
+                    # if a map transition is being initiated but the map does not permit the transition, don't add to transition list
+                    # a map transition for now is defined as any transition that changes either the trackmode or agentmode
+                    # could potentially change to be any transition that changes both trackmode and agentmode 
+                    if all(map_mode is not None for map_mode in map_modes) and (src_mode!=dest_mode or src_track!=dest_track) and dest_track != track_map.h(src_track, src_mode, dest_mode): 
+                        continue
+                    else:
                         if config.print_level >= 2:
                             print(count)
                         count += 1
@@ -1320,7 +1358,9 @@ class Verifier:
                         found = True
                         break
                 if not found:
-                    raise ValueError(f"Reset continuous variable {cts_variable} not found")
+                    # raise ValueError(f"Reset continuous variable {cts_variable} not found")
+                    # NOTE: propogate this fix to main branch
+                    raise ValueError(f"Reset continuous variable {lhs} not found")
                 # substituting low variables
 
                 symbols = []
@@ -1485,6 +1525,368 @@ class Verifier:
         comb_list = list(itertools.product(*data_list))
         return comb_list
 
+    """
+    Testing out new partitioning method for verify -- should work better on 
+    """
+    def compute_full_reachtube_partitioned(
+        self,
+        root: AnalysisTreeNode,
+        sensor,
+        time_horizon,
+        time_step,
+        max_height,
+        lane_map,
+        init_seg_length,
+        reachability_method,
+        run_num,
+        past_runs,
+        n,
+        partition_initial,
+        partition_dims: List, 
+        params={}, # NOTE: pretty sure this parameter is superfluous given the existance of 
+    ):
+        if max_height == None:
+            max_height = float("inf")
+
+        self.verification_queue: List[Tuple[AnalysisTreeNode, int]] = [(root, 0)]
+        self.result_refs = []
+        self.nodes = [root]
+        self.num_cached = 0
+        num_calls = 0
+        num_transitions = 0
+        consts = ReachConsts(
+            time_step,
+            lane_map,
+            init_seg_length,
+            reachability_method,
+            run_num,
+            past_runs,
+            sensor,
+            root.agent,
+        )
+        if self.config.parallel: # NOTE: not sure I'm going to bother with this at this stage
+            consts_ref = ray.put(consts)
+        while True:
+            wait = False
+            if len(self.verification_queue) > 0:
+                node, later = self.verification_queue.pop(0)
+                if node.height >= max_height - 1:
+                    print("max depth reached")
+                    continue
+                num_transitions += 1
+                remain_time = round(time_horizon - node.start_time, 10)
+                if remain_time <= 0:
+                    continue
+                # Use the new step function
+                self.proc_result(
+                    *self.compute_full_reachtube_step_partitioned(
+                        self.config,
+                        # NOTE: not worrying about caching right now
+                        {},  # cached_trans_tubes (simplified) 
+                        {},  # cached_tubes
+                        node,
+                        None,  # old_node_id
+                        later,
+                        remain_time,
+                        consts,
+                        max_height,
+                        n,
+                        partition_initial,
+                        partition_dims,
+                        params,
+                    ),
+                    max_height,
+                )
+                if len(self.result_refs) >= self.config.parallel_ver_ahead:
+                    wait = True
+            elif len(self.result_refs) > 0:
+                wait = True
+            else:
+                break
+            if wait:
+                [res], self.result_refs = ray.wait(self.result_refs)
+                (
+                    id,
+                    later,
+                    next_nodes,
+                    traces,
+                    assert_hits,
+                    cache_tube_updates,
+                    cache_trans_tube_updates,
+                ) = ray.get(res)
+                self.proc_result(
+                    id,
+                    later,
+                    next_nodes,
+                    traces,
+                    assert_hits,
+                    cache_tube_updates,
+                    cache_trans_tube_updates,
+                    max_height,
+                )
+        self.reachtube_tree = AnalysisTree(root)
+        self.num_transitions = num_transitions
+        return self.reachtube_tree
+
+    @staticmethod
+    def compute_full_reachtube_step_partitioned(
+        config: "ScenarioConfig",
+        cached_trans_tubes: Dict[str, CachedRTTrans],
+        cached_tubes: Dict[str, Tuple],
+        node: AnalysisTreeNode,
+        old_node_id: Optional[Tuple[int, int]],
+        later: int,
+        remain_time: float,
+        consts: ReachConsts,
+        max_height: int,
+        n: int,
+        partition_initial: bool,
+        partition_dims: List,
+        params={},
+    ) -> Tuple[int, int, List[AnalysisTreeNode], Dict[str, TraceType], list]:
+        if config.print_level >= 1:
+            print("=============================================================")
+            print(f"node {node.id} start: {node.start_time}")
+            print(node.mode)
+        
+        cache_trans_tube_updates = []
+        cache_tube_updates = []
+        next_nodes = []
+        
+        # Compute trace for each agent, handling multiple inits by propagating each and unioning
+        for agent_id in node.agent:
+            mode = node.mode[agent_id]
+            inits = node.init[agent_id]  # List of rects (may have multiple from partitioning)
+
+            if agent_id not in node.trace:
+                if len(inits) == 1:
+                    # Single init: compute as before
+                    cur_bloated_tube = Verifier._compute_trace_for_partition(
+                        mode, inits, remain_time, consts.time_step, node.agent[agent_id].TC_simulate, params, consts.reachability_method, consts.lane_map
+                    )
+                else:
+                    # Multiple inits: propagate each and union
+                    # TODO: parallelize/speed this up as much as possible -- I'm guessing this is the bottleneck (along with the sensor calls, but not much I can do about that)
+                    partitioned_traces = []
+                    for init_rect in inits:
+                        cur_bloated_tube = Verifier._compute_trace_for_partition(
+                            mode, [init_rect], remain_time, consts.time_step, node.agent[agent_id].TC_simulate, params, consts.reachability_method, consts.lane_map
+                        )
+                        partitioned_traces.append(cur_bloated_tube)
+                    cur_bloated_tube = Verifier._union_traces(partitioned_traces, consts.reachability_method)
+            
+                trace = np.array(cur_bloated_tube)
+                trace[:, 0] += node.start_time
+                node.trace[agent_id] = trace.tolist()
+    
+        # Check guards once (no loop)
+        asserts, all_possible_transitions = Verifier.get_transition_verify_opt(
+            config, {}, [], node, consts.lane_map, consts.sensor
+        )
+        node.assert_hits = asserts
+
+        if not config.unsafe_continue and asserts != None:
+            asserts, idx = asserts
+            for agent in node.agent:
+                node.trace[agent] = node.trace[agent][: (idx + 1) * 2]
+            return (
+                node.id,
+                later,
+                next_nodes,
+                node.trace,
+                asserts,
+                cache_tube_updates,
+                cache_trans_tube_updates,
+            )
+
+        # If guards hit, partition next_init for each transition and create children
+        if all_possible_transitions:
+            for transition in all_possible_transitions:
+                transit_agent_idx, src_mode, dest_mode, next_init, idx, path = transition
+
+                # NOTE: is this correct, or do I need indices from start to end as well 
+                start_idx = idx[0]  # Use start_idx as the hitting index, end_idx = idx[1] exists sometimes
+                
+                # Get the hitting set at start_idx
+                hitting_rect = combine_rect([node.trace[transit_agent_idx][start_idx * 2], node.trace[transit_agent_idx][start_idx * 2 + 1]])
+                
+                # Partition the hitting rect -- NOTE: fixing partitioning of time (0th dim always) and adding option to only partition a select number of partitions 
+                partitions = Verifier._partition_rect(hitting_rect, n, partition_dims)
+                
+                partitioned_inits = []
+                # TODO: possible to parallelize this too? 
+                for part in partitions:
+                    # Update state_dict with the partition for transit_agent_idx
+                    state_dict = {
+                        aid: (node.trace[aid][start_idx * 2 : start_idx * 2 + 2], node.mode[aid], node.static.get(aid, []))
+                        for aid in node.agent
+                    }
+                    state_dict[transit_agent_idx] = ([part[0], part[1]], node.mode[transit_agent_idx], node.static.get(transit_agent_idx, []))
+                    
+                    # Re-sense for the partition
+                    temp_dict = state_dict
+
+                    # I think commenting this if block and the one below should revert the behavior to before
+                    if src_mode != dest_mode:
+                        future_state_dict = copy.deepcopy(state_dict)
+                        future_state_dict[transit_agent_idx] = (future_state_dict[transit_agent_idx][0], dest_mode, future_state_dict[transit_agent_idx][2])
+                        temp_dict = future_state_dict
+
+                    cont_vars, disc_vars, len_dict = consts.sensor.sense(node.agent[transit_agent_idx], temp_dict, consts.lane_map, False)
+                    
+                    if src_mode != dest_mode: # NOTE: fixing disc_vars to how they were before the transition -- this seems pretty inefficient
+                        _, disc_vars, _ = consts.sensor.sense(node.agent[transit_agent_idx], state_dict, consts.lane_map, False)
+
+                    # Build reset_tuples for each path in the list
+                    reset_tuples = []
+                    for p in path:  # path is now a list of ModePath
+                        reset_expr = ResetExpression((p.var, p.val_veri))
+                        reset_tuple = (reset_expr, disc_vars, cont_vars, 0, p)  # guard_idx = 0 as placeholder
+                        reset_tuples.append(reset_tuple)
+                    
+                    # Reapply resets to get the rect for this partition
+                    dest_list, reset_rect = Verifier.apply_reset(
+                        node.agent[transit_agent_idx], reset_tuples, state_dict, consts.lane_map
+                    )
+                    # Assuming dest_list matches dest_mode, add the reset_rect
+                    partitioned_inits.append(reset_rect)
+                
+                # Create child node with partitioned inits
+                truncated_trace = {}
+                for agent_idx in node.agent:
+                    truncated_trace[agent_idx] = node.trace[agent_idx][start_idx * 2 :]
+                
+                next_node_mode = copy.deepcopy(node.mode)
+                next_node_static = node.static
+                next_node_uncertain_param = node.uncertain_param
+                next_node_mode[transit_agent_idx] = dest_mode
+                next_node_agent = node.agent
+                next_node_start_time = list(truncated_trace.values())[0][0][0]
+                next_node_init = {}
+                next_node_trace = {}
+                for agent_idx in next_node_agent:
+                    if agent_idx == transit_agent_idx:
+                        next_node_init[agent_idx] = partitioned_inits  # List of partitioned rects
+                    else:
+                        # TODO: verify that this actually works; haven't tested on multi-agent scenarios yet. if it doesn't, just copy what works from the original verify/compute_full_reachtube_step
+                        # NOTE: tested on toy example, should be fine, still verify more on more complex
+                        next_node_init[agent_idx] = [
+                            [truncated_trace[agent_idx][0][1:], truncated_trace[agent_idx][1][1:]]
+                        ]
+                        next_node_trace[agent_idx] = truncated_trace[agent_idx]
+
+                tmp = node.new_child(
+                    trace=next_node_trace,
+                    init=next_node_init,
+                    mode=next_node_mode,
+                    start_time=round(next_node_start_time, 10),
+                    id=-1,
+                )
+                next_nodes.append(tmp)
+
+        # As with normal verify, truncate trace if transitions occurred
+        if all_possible_transitions:
+            max_end_idx = max(idx[-1] for _, _, _, _, idx, _ in all_possible_transitions)
+            for agent_idx in node.agent:
+                node.trace[agent_idx] = node.trace[agent_idx][: (max_end_idx + 1) * 2]
+        
+        return (
+            node.id,
+            later,
+            next_nodes,
+            node.trace,
+            asserts,
+            cache_tube_updates,
+            cache_trans_tube_updates,
+        )
+
+    @staticmethod
+    def _partition_rect(rect: List, n: int, partition_dims: List = None):
+        """
+        Partition a rectangle [lb, ub] into sub-rectangles, only splitting along specified dimensions.
+        If partition_dims is None, partition all except dim 0 (time).
+        
+        NOTE: right now, partition_dims starts at 1 instead of 0; is this fine or is this unintuitive?
+        """
+        lb, ub = rect
+        d = len(lb)
+        
+        # Default: partition all dims except 0 (time)
+        if partition_dims is None:
+            partition_dims = [i for i in range(1, d)]  # Exclude 0
+        
+        # Ensure dim 0 is never partitioned
+        partition_dims = [dim for dim in partition_dims if dim != 0]
+        
+        # Identify varying dimensions among partition_dims
+        varying_dims = [i for i in partition_dims if lb[i] != ub[i]]
+        k = len(varying_dims)
+        if k == 0:
+            # No varying dims to partition: return the original rect
+            return [rect]
+        
+        partitions = []
+        for indices in itertools.product(range(n), repeat=k):
+            sub_lb = lb.copy()
+            sub_ub = ub.copy()
+            for idx, dim in enumerate(varying_dims):
+                step = (ub[dim] - lb[dim]) / n
+                sub_lb[dim] = lb[dim] + indices[idx] * step
+                sub_ub[dim] = lb[dim] + (indices[idx] + 1) * step
+            partitions.append([sub_lb, sub_ub])
+        return partitions
+
+    @staticmethod
+    def _compute_trace_for_partition(mode, inits, remain_time, time_step, sim_func, params, reachability_method, lane_map=None):
+        # Compute TC_simulate for a partition (reuse existing logic)
+        if reachability_method == ReachabilityMethod.DRYVR:
+            return Verifier.calculate_full_bloated_tube_simple(
+                None, None, False, mode, inits, remain_time, time_step, sim_func, params, 100, SIMTRACENUM, 1000, None, "", lane_map=lane_map
+            )[0]
+        elif reachability_method == ReachabilityMethod.DRYVR_DISC:
+            from verse.analysis.dryvr_disc import calc_bloated_tube_dryvr
+            bloating_method = 'PW'
+            if 'bloating_method' in params:
+                bloating_method = params['bloating_method']
+            traces = None
+            if 'traces' in params:
+                traces = params['traces']     
+            sim_trace_num = SIMTRACENUM
+            if 'sim_trace_num' in params:
+                sim_trace_num = params['sim_trace_num']
+            init = inits[0]
+            if isinstance(init, np.ndarray):
+                init = init.tolist()
+            cur_bloated_tube = calc_bloated_tube_dryvr(
+                mode,
+                init,
+                remain_time,
+                time_step,
+                sim_func,
+                bloating_method, 
+                100,
+                sim_trace_num,
+                lane_map=lane_map,
+                traces=traces
+            )
+            if isinstance(cur_bloated_tube, np.ndarray):
+                cur_bloated_tube = cur_bloated_tube.tolist()
+            return cur_bloated_tube
+        # Add cases for other methods as needed
+        else:
+            raise NotImplementedError(f"Partitioning not implemented for {reachability_method}")
+
+    @staticmethod
+    def _union_traces(traces, reachability_method):
+        # Union traces (list of lists of rectangles)
+        if not traces:
+            return []
+        unioned = []
+        for i in range(0, len(traces[0]), 2):
+            lb = np.minimum.reduce([t[i] for t in traces])
+            ub = np.maximum.reduce([t[i+1] for t in traces])
+            unioned.extend([lb.tolist(), ub.tolist()])
+        return unioned
 
 def combine_rect(trace):
     """

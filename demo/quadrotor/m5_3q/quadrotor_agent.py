@@ -32,7 +32,7 @@ class QuadrotorAgent(BaseAgent):
         self.box_side = box_side
 
     @staticmethod
-    def dynamic(t, state, u):
+    def dynamics(t, state, u):
         u1, u2, u3, bx, by, bz, sc, ddf = u  # len 7
         vx, vy, vz = state[6:]  # len 9
         sc = -1 * sc
@@ -101,7 +101,7 @@ class QuadrotorAgent(BaseAgent):
         ]
         init = initalCondition
         trajectory = [init]
-        r = ode(self.dynamic)
+        r = ode(self.dynamics)
         # r.set_initial_value(init)
         ex_list = []
         ey_list = []
@@ -147,7 +147,7 @@ class QuadrotorAgent(BaseAgent):
 
             u = u + [df]
             init = trajectory[i]  # len 9
-            r = ode(self.dynamic)
+            r = ode(self.dynamics)
             r.set_initial_value(init)
             r.set_f_params(u)
             val = r.integrate(r.t + time_step)
