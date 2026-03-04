@@ -22,7 +22,12 @@ docs/source/_autosummary/
 **.whl
 **.tar.gz
 **.json
+**.pkl
+**.pth
+**.csv
 gif/
 debug/
 build/
 .python-version
+.mp4
+.html

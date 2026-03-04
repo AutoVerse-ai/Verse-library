@@ -11,6 +11,7 @@ import warnings
 import types
 import sys
 from enum import Enum
+import numpy as np
 
 from verse.agents.base_agent import BaseAgent
 from verse.analysis.incremental import CachedSegment, SimTraceCache, convert_sim_trans, to_simulate
@@ -68,8 +69,8 @@ def pack_env(
             else:
                 if arg.is_list:
                     env[other] = []
-                else:
-                    raise ValueError(f"Expected one {ego_ty_name} for {other}, got none")
+                # else:
+                    # raise ValueError(f"Expected one {ego_ty_name} for {other}, got none")
 
     return env
 
@@ -94,6 +95,8 @@ def check_sim_transitions(agent: BaseAgent, guards: List[Tuple], cont, disc, map
 
     all_resets = defaultdict(list)
     env = pack_env(agent, ego_ty_name, cont, disc, map)  # TODO: diff disc -> disc_vars?
+    env['np'] = np # FIXME: error occured along the lines of "name np not defined" -- why is this a bug in simulate but not verify and how to fix without this hack?
+
     for path, disc_vars in guards:
         # Collect all the hit guards for this agent at this time step
         if eval(path.cond, env):
@@ -205,6 +208,7 @@ class Simulator:
         if config.print_level >= 1:
             print("=============================================================")
             print(f"node {node.id} start: {node.start_time}")
+            print(node.mode)
         # print(f"node id: {node.id}")
         cache_updates = []
         for agent_id in node.agent:
@@ -744,7 +748,7 @@ class Simulator:
                 return all_asserts, dict(transitions), idx
             if len(satisfied_guard) > 0:
                 if print_level >= 1:
-                    print(len(satisfied_guard))
+                    print(f"Length of satisfied guard: {len(satisfied_guard)}")
                 for agent_idx, dest, next_init, paths in satisfied_guard:
                     assert isinstance(paths, list)
                     dest = tuple(dest)
@@ -752,7 +756,14 @@ class Simulator:
                     src_track = node.get_track(agent_idx, node.mode[agent_idx])
                     dest_mode = node.get_mode(agent_idx, dest)
                     dest_track = node.get_track(agent_idx, dest)
-                    if dest_track == track_map.h(src_track, src_mode, dest_mode):
+                    map_modes = [[src_mode, src_track, dest_mode, dest_track]]
+
+                    # NOTE: propagating change from get_transition_verify_opt from verifier to allow transitions that aren't necessarily map transitions to be allowed
+                    # NOTE CONT: as before, want to make sure that map transitions are valid with the 'dest_track != track_map.h(src_track, src_mode, dest_mode)' line,
+                    # NOTE CONT: but also make sure that the transition occuring is actually a map transitions by checking that all map modes are defined, and we at least have a change in the Track or Agent mode
+                    if all(map_mode is not None for map_mode in map_modes) and (src_mode!=dest_mode or src_track!=dest_track) and dest_track != track_map.h(src_track, src_mode, dest_mode): 
+                        continue
+                    else:
                         if print_level >= 2 and len(paths) > 0:
                             print(agent, src_mode, src_track, "->", dest_mode, dest_track)
                             print("start_time: ", node.start_time)
