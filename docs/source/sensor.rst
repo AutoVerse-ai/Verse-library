@@ -11,11 +11,20 @@ to realistic limited-range or noisy perception.
 Summary
 -------
 
-- A Verse sensor reads raw simulation/verification data from each agent.
-- It converts that raw data into three dictionaries: ``cont``, ``disc``, and ``len_dict``.
-- Your decision logic reads those dictionaries through argument prefixes like ``ego.*`` and ``others.*``.
-- In simulation, values are points.
-- In verification, values are intervals ``[low, high]`` to represent uncertainty.
+**What a sensor does:** Transform ``state_dict`` (raw agent states) into three dictionaries 
+(``cont``, ``disc``, ``len_dict``) that your decision logic uses.
+
+**Key constraint:** Dictionary key prefixes must match your decision logic's argument names and variable names.
+
+- ``cont['ego.x']``, ``cont['ego.y']`` → passed to the ``ego`` parameter
+- ``cont['others.x']``, ``cont['others.y']`` → passed to the ``others`` parameter
+- Output only what your decision logic requests
+
+**Common pitfalls:**
+
+- Time is always stored at index 0; actual continuous state variables start at index 1
+- Store mode names as strings (e.g., ``"Accelerating"``), not enums or integers
+- Simulation: scalars; verification: intervals ``[low, high]``
 
 Default Behavior: ``BaseSensor``
 --------------------------------
@@ -343,7 +352,7 @@ noise modeling, and handling both simulation and verification modes.
             
             cont = {}
             disc = {}
-            # len_dict = {"others": len(state_dict)-1}  # Uncomment if populating all other agents
+            # len_dict = {"others": len(state_dict)-1}  # Typical use case; uncomment if populating all other agents
             noise = self.noise
 
             if simulate:
