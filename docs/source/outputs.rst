@@ -1,7 +1,10 @@
 Analysis
-~~~~~~~~
+========
 
 Verse provides several functions for analyzing hybrid systems defined by scenarios. 
+
+Simulation
+----------
 
 The ``simulate()`` function generates simulation traces of scenarios. The results of simulation can be visualized 
 using :ref:`Visualization` functions or stored as a json file using the ``dump()`` function in the following format::
@@ -34,7 +37,7 @@ Each trace in the list of traces is of the form::
 	}
 
 Reachtubes
-~~~~~~~~~~
+----------
 
 Verse likewise provides the `verify()` function to compute reachtubes (i.e., over-approximations of the set of reachable sets of a time interval).
 Verification (reachtube) results are stored in the same dump-style JSON tree used for simulation outputs, but nodes contain reachsets (reachtubes) for each agent over time. 
@@ -74,10 +77,10 @@ Notes:
 - ``agent``: mapping of agent names to their class identifiers.
 - ``init`` / ``mode`` / ``static``: initial sets, modes, and static parameters for each agent.
 - ``trace``: the reachtube data for each agent. Each entry is a list of vectors of the form ``[time, x1, x2, ...]`` representing the reachset/interval at that sample.
-- This section uses the highway demo found at `demo/highway/m1_1c1n/m1_1c1n_dryvr_ver.py` as a running example. The demo sets up two agents (`car1`, `car2`) with interval initial states and modes, assigns the map `M1()`, uses a time step of 0.05 s, and invokes verification via `scenario.verify(40, 0.05)`. See [demo/highway/m1_1c1n/m1_1c1n_dryvr_ver.py](demo/highway/m1_1c1n/m1_1c1n_dryvr_ver.py#L1) for the full script.
+- This section uses the highway demo found at ``demo/highway/m1_1c1n/m1_1c1n_dryvr_ver.py`` as a running example. The demo sets up two agents (`car1`, `car2`) with interval initial states and modes, assigns the map ``M1()``, uses a time step of 0.05 s, and invokes verification via ``scenario.verify(40, 0.05)``. See the demo script here: `demo/highway/m1_1c1n/m1_1c1n_dryvr_ver.py <https://github.com/AutoVerse-ai/Verse-library/blob/main/demo/highway/m1_1c1n/m1_1c1n_dryvr_ver.py>`_ for the full script.
 
 Accessing a reachtube in code
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Given a verification call such as::
 
@@ -90,7 +93,7 @@ you can access the reachtube (trace) for the first node and an agent named ``car
 This returns the list of time-tagged reachset vectors shown above.
 
 Hyperrectangle ordering and repeated times
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Note: reachtube outputs that return hyperrectangles use an alternating ordering of lower/upper corner vectors. By convention the even-indexed entries (indices where `i % 2 == 0`) are the lower bounds and the immediately following odd entries (`i + 1`) are the corresponding upper bounds. Consequently, for every even index `i` and every dimension `j`:
 
@@ -103,7 +106,7 @@ Because entries are stored as paired hyperrectangles per sample, the time field 
 In the example above the two `0.05` entries are the lower and upper corners for the same sample time.
 
 Quick code pattern
-~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^
 
 To iterate the per-sample hyperrectangles and access lower/upper corners use::
 

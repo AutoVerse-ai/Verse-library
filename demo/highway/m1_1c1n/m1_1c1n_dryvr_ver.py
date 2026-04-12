@@ -53,7 +53,7 @@ if __name__ == "__main__":
     time_step = 0.05
 
     traces = scenario.verify(40, time_step)
-    traces.dump('dump_test')
+    traces.dump('dump_test.json')
     pass
     # fig = go.Figure()
     # fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], "lines", "trace")
