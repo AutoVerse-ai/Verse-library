@@ -4,6 +4,8 @@ from verse import BaseAgent
 from verse.agents.example_agent import BallAgent, NPCAgent, CarAgent
 import matplotlib.pyplot as plt
 import numpy as np
+import os 
+
 class TestBaseAgents(unittest.TestCase):
 
     def test_initializing_ball(self):
@@ -25,9 +27,9 @@ class TestBaseAgents(unittest.TestCase):
         print("Test ball Passed")
 
     def test_car(self):
-        car = CarAgent("car", "/Users/bachhoang/Verse-library/tests/./test_controller/example_controller5.py")
-        
-        pass
+        script_dir = os.path.dirname(__file__)
+        input_code_name = os.path.abspath(os.path.join(script_dir, '..', 'test_controller', 'example_controller5.py'))
+        car = CarAgent("car", file_name=input_code_name)
 
 if __name__ == "__main__":
     unittest.main()

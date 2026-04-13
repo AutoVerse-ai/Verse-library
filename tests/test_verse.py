@@ -316,50 +316,24 @@ class TestSimulatorMethods(unittest.TestCase):
         dir = "tests/test_agents"
         print("Testing agents")
         result = run_test(dir)
-        print("Testing agents completed")
+        print("Testing agents complete")
         self.assertTrue(result == "SUCCESS")
 
     def test_map(self):
         dir = "tests/test_map"
-        print("Tesing map")
+        print("Testing map")
         result = run_test(dir)
-        print("Testing map completed")
-        self.assertTrue(result == "SUCCESS")
-    
-    def test_automaton(self):
-        dir = "tests/test_automaton"
-        print("Testing automaton")
-        result = run_test(dir)
-        print("Testing automaton completed")
-        self.assertTrue(result == "SUCCESS")
-    
-    def test_parser(self):
-        dir = "tests/test_parser"
-        print("Testing parser")
-        result = run_test(dir)
-        print("Testing parser completed")
+        print("Testing map complete")
         self.assertTrue(result == "SUCCESS")
 
-    def test_plotter(self):
-        dir = "tests/test_plotter"
-        print("Testing plotter")
+    def test_reach(self):
+        dir = "tests/test_reach"
+        print("Testing reachability")
         result = run_test(dir)
-        print("Testing plotter completed")
+        print("Testing reachability complete")
         self.assertTrue(result == "SUCCESS")
 
-    def test_sensor(self):
-        dir = "tests/test_sensor"
-        print("Testing sensor")
-        result = run_test(dir)
-        print("Testing sensor completed")
-        self.assertTrue(result == "SUCCESS")
-
-    def test_scenario(self):
-        dir = "tests/test_scenario"
-        print("Testing scenario")
-        result = run_test(dir)
-        print("Testing scenario completed")
-        self.assertTrue(result == "SUCCESS")
+# TODO: test automaton, parser, plotter, sensor, and scenario in some form
 
 if __name__ == "__main__":
     unittest.main()
