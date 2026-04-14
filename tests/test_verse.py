@@ -157,7 +157,7 @@ def test_scenario(scenario_filepath):
         print(result.stdout)
     return errors
 
-def run_test(dir):
+def run_test(dir, excludes=None):
     """
     Run unittest test files individually from the specified directory path.
     
@@ -178,7 +178,8 @@ def run_test(dir):
     print("-" * 50)
     
     # Get all test files
-    test_files = [f for f in os.listdir(dir) if  f.endswith('.py')]
+    excludes_set = set(excludes) if excludes else set()
+    test_files = [f for f in os.listdir(dir) if f.endswith('.py') and f not in excludes_set]
     
     if not test_files:
         print("No unittest test files found in directory", dir)
@@ -229,6 +230,7 @@ def run_test(dir):
         if not success:
             return "FAILURE"
     return "SUCCESS"
+
 class TestSimulatorMethods(unittest.TestCase):
     def setUp(self):
         pass
@@ -329,7 +331,8 @@ class TestSimulatorMethods(unittest.TestCase):
     def test_reach(self):
         dir = "tests/test_reach"
         print("Testing reachability")
-        result = run_test(dir)
+        # exclude helper/control files that are not unittest modules
+        result = run_test(dir, excludes=["compare_json.py", "example_controller4.py"])
         print("Testing reachability complete")
         self.assertTrue(result == "SUCCESS")
 

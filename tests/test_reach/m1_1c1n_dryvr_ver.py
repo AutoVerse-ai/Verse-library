@@ -11,7 +11,7 @@ import os
 import unittest
 import json
 import hashlib
-from typing import Any
+from typing import Any, Optional
 
 class AgentMode(Enum):
     Normal = auto()
@@ -29,7 +29,7 @@ class TrackMode(Enum):
     M21 = auto()
     M10 = auto()
 
-def normalize(obj: Any, float_precision: int | None = None):
+def normalize(obj: Any, float_precision: Optional[int] = None):
     if isinstance(obj, dict):
         return {k: normalize(v, float_precision) for k, v in obj.items()}
     if isinstance(obj, list):
@@ -38,25 +38,10 @@ def normalize(obj: Any, float_precision: int | None = None):
         return round(obj, float_precision)
     return obj
 
-def canonical_json_bytes(obj: Any, float_precision: int | None = None) -> bytes:
+def canonical_json_bytes(obj: Any, float_precision: Optional[int] = None) -> bytes:
     norm = normalize(obj, float_precision)
     s = json.dumps(norm, sort_keys=True, separators=(',', ':'), ensure_ascii=False)
     return s.encode('utf-8')
-
-def file_hash(path: str, float_precision: int | None = None) -> str:
-    with open(path, 'r', encoding='utf-8') as f:
-        obj = json.load(f)
-    b = canonical_json_bytes(obj, float_precision)
-    return hashlib.sha256(b).hexdigest()
-
-def compare_files(path_a: str, path_b: str, float_precision: int | None = None) -> bool:
-    return file_hash(path_a, float_precision) == file_hash(path_b, float_precision)
-
-if __name__ == '__main__':
-    import sys
-    a, b = sys.argv[1], sys.argv[2]
-    equal = compare_files(a, b, float_precision=None)  # set precision if desired
-    print('IDENTICAL' if equal else 'DIFFER')
 
 class TestVerify(unittest.TestCase):
 
@@ -86,20 +71,32 @@ class TestVerify(unittest.TestCase):
         time_step = 0.05
 
         traces = scenario.verify(40, time_step)
-        dump_test_path = f'{script_dir}/1c1n_dump_test.json'
-        
-        if os.path.exists(dump_test_path):
-            os.remove(dump_test_path) # NOTE: this deletion and later writing may lead to a race condition
 
-        traces.dump(dump_test_path)
-        self.assertTrue(compare_files(f'{script_dir}/1c1n_dump_test.json', f'{script_dir}/1c1n_dump_control.json'))
-        # pass
+        # NOTE: Compare live: convert the generated AnalysisTree to the same dict structure used by AnalysisTree.dump, and compare canonical json bytes
+        def analysis_tree_to_dict(tree):
+            res_dict = {}
+            converted_node = tree.root._to_dict()
+            res_dict[tree.root.id] = converted_node
+            queue = [tree.root]
+            while queue:
+                parent_node = queue.pop(0)
+                for child_node in parent_node.child:
+                    node_dict = child_node._to_dict()
+                    node_dict["parent"] = parent_node.id
+                    res_dict[child_node.id] = node_dict
+                    res_dict[parent_node.id]["child"].append(child_node.id)
+                    queue.append(child_node)
+            return res_dict
+
+        live_dict = analysis_tree_to_dict(traces)
+        control_path = os.path.join(script_dir, '1c1n_dump_control.json')
+        with open(control_path, 'r', encoding='utf-8') as f:
+            control_dict = json.load(f)
+
+        live_bytes = canonical_json_bytes(live_dict, float_precision=None)
+        control_bytes = canonical_json_bytes(control_dict, float_precision=None)
+        self.assertEqual(hashlib.sha256(live_bytes).hexdigest(), hashlib.sha256(control_bytes).hexdigest())
         print("Highway (1c1n, straight, 3 lane) verification test Passed")
-        # fig = go.Figure()
-        # fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], "lines", "trace")
-        # fig = reachtube_tree_video(traces, None, fig, 1, 2, [1, 2], plot_color=colors, output_path="test.mp4", show_legend=True)
-        # fig = reachtube_tree_video(traces, None, fig, 1, 2, [1, 2], plot_color=colors, show_legend=True)
-        # fig.show()
 
 if __name__ == "__main__":
     unittest.main()
