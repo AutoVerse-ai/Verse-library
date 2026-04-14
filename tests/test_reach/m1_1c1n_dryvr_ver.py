@@ -93,9 +93,19 @@ class TestVerify(unittest.TestCase):
         with open(control_path, 'r', encoding='utf-8') as f:
             control_dict = json.load(f)
 
-        live_bytes = canonical_json_bytes(live_dict, float_precision=None)
-        control_bytes = canonical_json_bytes(control_dict, float_precision=None)
-        self.assertEqual(hashlib.sha256(live_bytes).hexdigest(), hashlib.sha256(control_bytes).hexdigest())
+        prec = 10
+        live_text = canonical_json_bytes(live_dict, float_precision=prec).decode('utf-8')
+        control_text = canonical_json_bytes(control_dict, float_precision=prec).decode('utf-8')
+        live_hash = hashlib.sha256(live_text.encode('utf-8')).hexdigest()
+        control_hash = hashlib.sha256(control_text.encode('utf-8')).hexdigest()
+
+        if live_hash != control_hash:
+            # NOTE: debugging
+            import difflib
+
+            diff = '\n'.join(difflib.unified_diff(control_text.splitlines(), live_text.splitlines(), fromfile='control', tofile='live', lineterm=''))
+            print(f'Live:  {live_hash}\nControl: {control_hash}\nDiff:\n{diff}')
+        self.assertEqual(live_hash, control_hash)
         print("Highway (1c1n, straight, 3 lane) verification test Passed")
 
 if __name__ == "__main__":
