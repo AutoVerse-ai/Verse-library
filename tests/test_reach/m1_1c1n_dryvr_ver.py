@@ -108,7 +108,8 @@ class TestVerify(unittest.TestCase):
                 if type(a) != type(b):
                     return [(path or "/", a, b)]
                 if isinstance(a, dict):
-                    keys = sorted(set(a.keys()) | set(b.keys()))
+                    # NOTE: keys may be mixed types (int/str) across versions; sort by string representation for a comparable order
+                    keys = sorted(set(a.keys()) | set(b.keys()), key=lambda x: str(x))
                     for k in keys:
                         av = a.get(k, "<MISSING>")
                         bv = b.get(k, "<MISSING>")
