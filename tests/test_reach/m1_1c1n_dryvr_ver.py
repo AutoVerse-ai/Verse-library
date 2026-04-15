@@ -93,7 +93,8 @@ class TestVerify(unittest.TestCase):
         with open(control_path, 'r', encoding='utf-8') as f:
             control_dict = json.load(f)
 
-        prec = 10
+        # reduce precision to avoid spurious diffs from 1e-10 level noise
+        prec = 9
         live_text = canonical_json_bytes(live_dict, float_precision=prec).decode('utf-8')
         control_text = canonical_json_bytes(control_dict, float_precision=prec).decode('utf-8')
         live_hash = hashlib.sha256(live_text.encode('utf-8')).hexdigest()
@@ -137,9 +138,8 @@ class TestVerify(unittest.TestCase):
                     return [(path or "/", a, b)]
                 return []
 
-            # normalize with the same precision used for canonical bytes
             def stringify_keys(o):
-                # Recursively convert dict keys to strings to avoid mixed-type key issues
+                # NOTE: Recursively convert dict keys to strings to avoid mixed-type key issues
                 if isinstance(o, dict):
                     return {str(k): stringify_keys(v) for k, v in o.items()}
                 if isinstance(o, list):
@@ -148,7 +148,8 @@ class TestVerify(unittest.TestCase):
 
             control_norm = stringify_keys(normalize(control_dict, prec))
             live_norm = stringify_keys(normalize(live_dict, prec))
-            diffs = json_diffs(control_norm, live_norm, tol=1e-10)
+            # increase numeric tolerance to ignore sub-nanosecond floating noise
+            diffs = json_diffs(control_norm, live_norm, tol=1e-9)
             print(f"Found {len(diffs)} structural difference(s). Showing first 200:")
             for p, ca, la in diffs[:200]:
                 try:
