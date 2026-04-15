@@ -100,11 +100,76 @@ class TestVerify(unittest.TestCase):
         control_hash = hashlib.sha256(control_text.encode('utf-8')).hexdigest()
 
         if live_hash != control_hash:
-            # NOTE: debugging
-            import difflib
+            # NOTE: structured JSON diff for precise path-level differences
+            def json_diffs(a, b, tol=0.0, path=""):
+                import math
 
-            diff = '\n'.join(difflib.unified_diff(control_text.splitlines(), live_text.splitlines(), fromfile='control', tofile='live', lineterm=''))
-            print(f'Live:  {live_hash}\nControl: {control_hash}\nDiff:\n{diff}')
+                diffs = []
+                if type(a) != type(b):
+                    return [(path or "/", a, b)]
+                if isinstance(a, dict):
+                    keys = sorted(set(a.keys()) | set(b.keys()))
+                    for k in keys:
+                        av = a.get(k, "<MISSING>")
+                        bv = b.get(k, "<MISSING>")
+                        diffs.extend(json_diffs(av, bv, tol, f"{path}/{k}" if path else f"/{k}"))
+                    return diffs
+                if isinstance(a, list):
+                    n = max(len(a), len(b))
+                    for i in range(n):
+                        av = a[i] if i < len(a) else "<MISSING>"
+                        bv = b[i] if i < len(b) else "<MISSING>"
+                        diffs.extend(json_diffs(av, bv, tol, f"{path}[{i}]"))
+                    return diffs
+                # NOTE: numeric tolerance for floats/ints
+                if isinstance(a, (int, float)) or isinstance(b, (int, float)):
+                    try:
+                        af = float(a)
+                        bf = float(b)
+                        if math.isfinite(af) and math.isfinite(bf):
+                            if abs(af - bf) > tol:
+                                return [(path or "/", a, b)]
+                            return []
+                    except Exception:
+                        pass
+                if a != b:
+                    return [(path or "/", a, b)]
+                return []
+
+            # normalize with the same precision used for canonical bytes
+            control_norm = normalize(control_dict, prec)
+            live_norm = normalize(live_dict, prec)
+            diffs = json_diffs(control_norm, live_norm, tol=1e-10)
+            print(f"Found {len(diffs)} structural difference(s). Showing first 200:")
+            for p, ca, la in diffs[:200]:
+                try:
+                    # numeric delta when both sides are numeric
+                    if isinstance(ca, (int, float)) and isinstance(la, (int, float)):
+                        delta = float(la) - float(ca)
+                        rel = None
+                        try:
+                            rel = delta / float(ca) if float(ca) != 0 else None
+                        except Exception:
+                            rel = None
+                        if rel is not None:
+                            print(f"{p}: control={ca!r}  live={la!r}  delta={delta}  rel={rel}")
+                        else:
+                            print(f"{p}: control={ca!r}  live={la!r}  delta={delta}")
+                        continue
+                except Exception:
+                    pass
+                # for long strings/lists, print truncated preview
+                def preview(x):
+                    try:
+                        s = json.dumps(x, ensure_ascii=False)
+                    except Exception:
+                        s = str(x)
+                    if len(s) > 200:
+                        return s[:200] + '...'
+                    return s
+
+                print(f"{p}: control={preview(ca)!r}  live={preview(la)!r}")
+            print(f"Total diffs: {len(diffs)}")
         self.assertEqual(live_hash, control_hash)
         print("Highway (1c1n, straight, 3 lane) verification test Passed")
 
