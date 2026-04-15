@@ -138,8 +138,16 @@ class TestVerify(unittest.TestCase):
                 return []
 
             # normalize with the same precision used for canonical bytes
-            control_norm = normalize(control_dict, prec)
-            live_norm = normalize(live_dict, prec)
+            def stringify_keys(o):
+                # Recursively convert dict keys to strings to avoid mixed-type key issues
+                if isinstance(o, dict):
+                    return {str(k): stringify_keys(v) for k, v in o.items()}
+                if isinstance(o, list):
+                    return [stringify_keys(v) for v in o]
+                return o
+
+            control_norm = stringify_keys(normalize(control_dict, prec))
+            live_norm = stringify_keys(normalize(live_dict, prec))
             diffs = json_diffs(control_norm, live_norm, tol=1e-10)
             print(f"Found {len(diffs)} structural difference(s). Showing first 200:")
             for p, ca, la in diffs[:200]:
