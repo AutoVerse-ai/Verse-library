@@ -1,7 +1,4 @@
-# Introducing unittests for Verse development process
-# Read more from https://docs.python.org/3/library/unittest.html
-# Call the demo scenario
-# A scenario is created for testing
+# NOTE: Use unittests for Verse CI/CD process — see https://docs.python.org/3/library/unittest.html for more
 import unittest
 from ball_bounce_test import ball_bounce_test
 from highway_test import highway_test
@@ -12,19 +9,14 @@ from enum import Enum, auto
 import os
 import subprocess
 import importlib.util
+import sys
 
-'''
-Goal: Using demo file (Verse_library/demo) as a test files. 
-Observation: 
-- Verse_library/demo contains many different models, in different folders
-- In each of these folders, there is a file for simulate the scenarios
-Problem
-- The Verse team may add more folders or change current folders for other different scenarios in the future. 
-Questions:
+TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(TESTS_DIR)
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
 
-'''
-
-def is_python_file(filepath):
+def is_python_file(filepath) -> bool:
     '''
     Helper function. Check if the filepath is pointing to a Python file
     Input: The filepath.
@@ -232,88 +224,7 @@ def run_test(dir, excludes=None):
     return "SUCCESS"
 
 class TestSimulatorMethods(unittest.TestCase):
-    def setUp(self):
-        pass
 
-    # def test_m2_2c5n(self):
-    #     trace = m2_2c5n_test()
-    #     root = trace.root
-    #     '''
-    #     Test the max height
-    #     '''
-    #     max_height = 33
-    #     assert trace.height(root) <= max_height
-    #     print("Max height test passed!")
-    #
-    #
-    #     '''
-    #     Test the number of nodes
-    #     '''
-    #     assert len(trace.nodes) == 33
-    #     print("Nodes number test passed!")
-    # def testBallBounce(self):
-    #     '''
-    #     Test basic ball bounce scenario
-    #     Test plotter
-    #     '''
-    #     trace, _ = ball_bounce_test()
-    #     '''
-    #     Test properties of root node
-    #     '''
-    #     root = trace.root
-    #     baseAgent = BaseAgent.__init__()
-    #     assert root.agent == baseAgent
-    #     assert root.mode == ""
-    #     assert root.start_time == 0
-    #     print("Root test passed!")
-    #
-    #     '''
-    #     Test the max height
-    #     '''
-    #     max_height = 15
-    #     assert trace.height(root) <= max_height
-    #     print("Max height test passed!")
-    #
-    #     '''
-    #     Test properties of leaf node
-    #     '''
-    #     # leafs = self.get_leaf_nodes(root)
-    #     # for leave in leafs:
-    #     #     assert leave.agent == baseAgent
-    #     #     assert leave.mode == ""
-    #     #     assert leave.start_time == 0
-    #     # print("Leave node test passed!")
-    #
-    #     '''
-    #     Test the number of nodes
-    #     '''
-    #     #assert len(trace.nodes) == 10
-    #     #print("Nodes number test passed!")
-
-    # def testHighWay(self):
-    #     '''
-    #     Test highway scenario
-    #     Test both simulation and verification function
-    #     '''
-    #     trace_sim, trace_veri = highway_test()
-
-    #     # assert trace_sim.type == AnalysisTreeNodeType.SIM_TRACE
-    #     # assert trace_veri.type == AnalysisTreeNodeType.REACH_TUBE
-
-    # def test_demo_compiling(self):
-    #     scenario_files = get_scenario_files_from_folder('demo/fp_demos')
-    #     print(scenario_files)
-    #     all_errors = []
-    #     for scenario_file in scenario_files:
-    #         errors = test_scenario(scenario_file)
-    #         all_errors.extend(errors)
-    #     if all_errors:
-    #         print("\nSummary of Errors:")
-    #         for filepath, error_msg in all_errors:
-    #             print(f"- {filepath}: {error_msg}")
-    #         self.fail(f"Found {len(all_errors)} errors across scenarios out of {len(scenario_files)} files.")
-    #     else:
-    #         print("\nAll scenarios ran successfully.")
     def test_agents(self):
         dir = "tests/test_agents"
         print("Testing agents")
