@@ -242,7 +242,7 @@ class TestSimulatorMethods(unittest.TestCase):
     def test_reach(self):
         dir = "tests/test_reach"
         print("Testing reachability")
-        # exclude helper/control files that are not unittest modules
+        # NOTE: exclude helper/control files that are not unittest modules
         result = run_test(dir, excludes=["compare_json.py", "example_controller4.py"])
         print("Testing reachability complete")
         self.assertTrue(result == "SUCCESS")
@@ -251,4 +251,3 @@ class TestSimulatorMethods(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-    
