@@ -1,8 +1,9 @@
 name: Pylint
 
 on:
-  push:
-    paths: '**.py'
+#   push:
+#     paths: '**.py'
+    workflow_dispatch: # until linting is standardized make this optional
 
 jobs:
   build:

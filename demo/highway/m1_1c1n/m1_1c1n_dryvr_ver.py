@@ -53,8 +53,10 @@ if __name__ == "__main__":
     time_step = 0.05
 
     traces = scenario.verify(40, time_step)
-    fig = go.Figure()
+    traces.dump('dump_test.json')
+    pass
+    # fig = go.Figure()
     # fig = reachtube_tree(traces, tmp_map, fig, 1, 2, [1, 2], "lines", "trace")
     # fig = reachtube_tree_video(traces, None, fig, 1, 2, [1, 2], plot_color=colors, output_path="test.mp4", show_legend=True)
-    fig = reachtube_tree_video(traces, None, fig, 1, 2, [1, 2], plot_color=colors, show_legend=True)
-    fig.show()
+    # fig = reachtube_tree_video(traces, None, fig, 1, 2, [1, 2], plot_color=colors, show_legend=True)
+    # fig.show()

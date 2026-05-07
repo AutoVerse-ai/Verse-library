@@ -1,7 +1,7 @@
 """""""""""""""""
 Visualization
 """""""""""""""""
-Verse has two different sets of visualization functions for generating plots and animations. Functions for 2D plots use `Plotly Open Source Graphing Library for Python <https://plotly.com/python/>`_.
+Verse has two different sets of visualization functions for generating plots and animations. Functions use `Plotly Open Source Graphing Library for Python <https://plotly.com/python/>`_.
 
 
 .. contents:: Function list
@@ -118,3 +118,64 @@ Parameters not occurred in ``simulation_tree``:
 ===================
 3D Visualization
 ===================
+
+------------------
+simulation_tree_3d
+------------------
+Shows simulation traces in 3D.
+
+Usage::
+
+   from verse.plotter.plotter3D import simulation_tree_3d
+   import plotly.graph_objects as go
+
+   fig = go.Figure()
+   fig = simulation_tree_3d(root, fig=fig, x_dim=1, y_dim=2, z_dim=3)
+   fig.show()
+
+Parameters:
+
+* ``root``: an ``AnalysisTree`` or ``AnalysisTreeNode`` (typically returned by ``Scenario.simulate()``).
+* ``fig``: a ``plotly.graph_objects.Figure`` to draw into (returned by the function).
+* ``x_dim, y_dim, z_dim``: integer indices selecting which trace columns map to x/y/z axes. The 0th column is time; spatial dimensions are typically 1..n.
+* ``print_dim_list``: list of dimensions to include in hover text.
+* ``map``: optional map object to draw as background.
+* ``map_type``: how to render the map (e.g. ``"outline"``).
+* ``sample_rate``: downsampling factor for long traces.
+* ``xrange, yrange, zrange``: optional axis ranges (list/tuple of two numbers).
+
+Returns: updated ``plotly.graph_objects.Figure`` with 3D traces.
+
+------------------
+reachtube_tree_3d
+------------------
+Shows 3D reachtubes (verification results).
+
+Usage::
+
+    from verse.plotter.plotter3D import reachtube_tree_3d
+    import plotly.graph_objects as go
+
+    fig = go.Figure()
+    fig = reachtube_tree_3d(root, fig=fig, x_dim=1, y_dim=2, z_dim=3, combine_rect=None)
+    fig.show()
+
+Parameters:
+
+* ``root``: an ``AnalysisTree`` or ``AnalysisTreeNode`` containing reachtube data (typically from ``Scenario.verify()``).
+* ``fig``: a ``plotly.graph_objects.Figure`` to draw into.
+* ``x_dim, y_dim, z_dim``: integer indices selecting which trace columns map to x/y/z axes.
+* ``sample_rate``: sampling/downsampling factor. For reachtubes the plotter preserves lower/upper pairs when sampling.
+* ``map`` / ``map_type``: optional map background and render mode.
+
+Parameters not occurred in ``simulation_tree_3d`` (3D):
+
+* ``combine_rect``: controls how hyperrectangles are grouped for rendering. If ``None`` each pair of lower/upper
+   vectors is rendered as an individual box/mesh; other integer values change grouping/combination behavior.
+
+.. Notes
+.. -----
+
+.. * Both 3D plotters accept the same ``root`` tree structures used elsewhere in Verse.
+.. * Reachtube traces store alternating lower/upper corner vectors; the 3D reachtube plotter interprets each even/odd pair as the opposing corners of a box (mesh) and renders them accordingly.
+
