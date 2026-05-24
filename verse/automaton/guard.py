@@ -179,7 +179,7 @@ class GuardExpressionAst:
         #        breakpoint()
         return agent_vars
 
-    def evaluate_guard_cont(self, agent, continuous_variable_dict, track_map, stars):
+    def evaluate_guard_cont(self, agent, continuous_variable_dict, track_map, stars = False):
         res = False
         is_contained = False
 
@@ -353,7 +353,7 @@ class GuardExpressionAst:
             return expr
 
     def evaluate_guard_hybrid(
-        self, agent, discrete_variable_dict, continuous_variable_dict, track_map: LaneMap, stars
+        self, agent, discrete_variable_dict, continuous_variable_dict, track_map: LaneMap, stars = False
     ):
         """
         Handle guard atomics that contains both continuous and hybrid variables

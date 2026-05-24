@@ -16,7 +16,7 @@ import pyvista as pv
 
 from verse.agents.base_agent import BaseAgent
 from verse.analysis.incremental import CachedSegment, SimTraceCache, convert_sim_trans, to_simulate
-from verse.analysis.utils import dedup
+from verse.utils.utils import dedup
 from verse.map.lane_map import LaneMap
 from verse.parser.parser import ModePath, find, unparse
 from verse.analysis.incremental import (
