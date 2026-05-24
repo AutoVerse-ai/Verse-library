@@ -5,11 +5,388 @@ import polytope as pc
 import pyvista as pv
 
 from verse.analysis.analysis_tree import AnalysisTree, AnalysisTreeNode
-
+import ast
 import vtk
-
+import os
+import json
 vtk.vtkLogger.SetStderrVerbosity(vtk.vtkLogger.VERBOSITY_OFF)
+from collections import OrderedDict
 
+color_map = {}
+
+node_rect_cache ={}
+node_idx = 0
+
+
+load_time=0
+#load_idx = 0
+
+
+plotted = []
+not_plotted = []
+
+offset = 0
+prev_time = 0
+
+#refine_cache = []
+
+
+def plot3dReachtubeSingleLive(tube, ax, x_dim=1, y_dim=2, z_dim=3, edge=False,  log_file="bounding_boxes.txt", save_to_file = True, step =1000, assert_hits = None):
+    if os.path.exists('plotter_config.json'):
+        with open('plotter_config.json', 'r') as f:
+            config = json.load(f)
+            x_dim = config['x_dim']
+            y_dim = config['y_dim']
+            z_dim = config['z_dim']
+            step = int(config['speed'])
+            save_to_file = bool(config['save'])
+            log_file = config['log_file']
+            node_batch = config['node_batch']
+    global node_idx
+    global offset
+    global prev_time
+    rects_dict = {}
+    length = len(tube[list(tube.keys())[0]])
+
+    if(assert_hits != None):
+        for agent_id in assert_hits:
+            last_point = np.array(tube[agent_id][-1][0:3])
+            second_last_point = np.array(tube[agent_id][-2][0:3])
+            avg_point = ((last_point+second_last_point)/2).copy()
+            avg_point[0]*=100
+            #print("biga bongo", avg_point)
+            ax.add_actor(pv.Label(  "HIT:\n" + assert_hits[agent_id][0], avg_point ))
+
+    for i in range(0, length,2):
+        for agent_id in tube:
+            if agent_id not in color_map:
+                color_map[agent_id] = agent_id.split('_')[1]
+
+            
+            trace = tube[agent_id]
+            lb = trace[i]
+            if lb[0] ==0:
+                offset = prev_time
+            ub =  trace[i + 1]
+            box = [[lb[x_dim]-1, lb[y_dim]-1, lb[z_dim]-1], [ub[x_dim]+1, ub[y_dim]+1, ub[z_dim]+1]]
+
+            if(save_to_file):
+                with open(log_file, "a") as f:
+    
+                    save_time = offset + ub[0]
+                    f.write(f"{box}, {color_map[agent_id]}, {save_time}\n")
+                    prev_time = save_time   
+
+            if(agent_id not in rects_dict):
+                 rects_dict[agent_id] = []
+            
+            rects_dict[agent_id].append(box)
+
+            if not node_batch and (i % step == 0 or i >= length-2):
+                plotGrid(ax, color_map[agent_id], rects_dict[agent_id]  )
+                rects_dict[agent_id] = []
+
+
+    for agent_id in tube:
+        if(agent_id not in node_rect_cache):
+
+            node_rect_cache[agent_id] = []
+        node_rect_cache[agent_id] += rects_dict[agent_id]
+    if( node_batch and node_idx % step==0  ):
+
+        for agent_id in tube:
+
+            plotGrid(ax, color_map[agent_id], node_rect_cache[agent_id] )
+            node_rect_cache[agent_id] = []
+
+    node_idx+=1
+    return ax
+    
+           
+def preprocess_file(ax, log_file="boxes1.txt"):
+   
+    with open(log_file, "r") as f:
+        lines = f.readlines()
+        line = lines[0]
+
+        box_str, color,time = line.rsplit(",", 2)  # Split into box and color and time
+        box = ast.literal_eval(box_str.strip())  # Convert box string to list
+        if( len(np.array(box).shape) !=2):
+            verify = False
+        else:
+            verify = True
+    if os.path.exists('plotter_config.json'):
+        with open('plotter_config.json', 'r') as f:
+            config = json.load(f)
+            step = int(config['speed'])
+
+    rect_dict = {}
+
+    for i, line in enumerate(lines):
+        # Extract the box and color from each line
+        box_str, color,time = line.rsplit(",", 2)  # Split into box and color
+        if(box_str == "END"):
+            rect_dict = {}
+            continue
+
+        box = ast.literal_eval(box_str.strip())  # Convert box string to list
+        color = color.strip().strip("'\"")  # Clean up the color string
+        if( color not in rect_dict):
+            rect_dict[color] = []
+        rect_dict[color].append(box)
+
+        if (len(rect_dict[color]) % step == 0 or i >= len(lines)-1):
+            if(verify):
+                plotted.append((plotGrid(ax, color, rect_dict[color]), float(time)))
+                rect_dict[color] = []
+
+            else:
+                plotted.append((   plotPolyLine(rect_dict[color], color, ax)   , float(time)))
+                rect_dict[color] = [rect_dict[color][-1]]
+
+    def merge_actors_by_timestamp(ax, plotted):
+        # Extract and prepare meshes for merging
+        meshes = []
+        for actor, _ in plotted:
+            # Get the mesh directly from the actor
+            mesh = pv.wrap(actor.GetMapper().GetInput())
+            # Scale if needed
+            meshes.append(mesh)
+    
+        # Merge all meshes
+        if meshes:
+            merged_mesh = meshes[0].copy()
+            for mesh in meshes[1:]:
+                merged_mesh = merged_mesh.merge(mesh)
+            
+            # Add the merged mesh to the plotter
+            ax.add_mesh(merged_mesh, reset_camera=False, show_edges=False, opacity=0.0)
+            return merged_mesh
+        return None
+      
+
+    plotted.sort(key=lambda x: x[1])
+    print(len(plotted))
+    merge_actors_by_timestamp(ax, plotted)
+
+
+
+
+    # print("Plotted: ", len(plotted), plotted[0][1], plotted[-2][1], plotted[-1][1])
+    # print("Not Plotted: ", len(not_plotted))
+    
+
+
+def load_and_plot(ax, target_time=0):
+    global load_time
+
+    if target_time > load_time:
+        while len(not_plotted):
+            actor, timestamp = not_plotted[-1]  # Peek (don't pop yet)
+            if timestamp > target_time:
+                break  # Stop if next frame is past target_time
+            actor, timestamp = not_plotted.pop()
+            ax.add_actor(actor, reset_camera=False)
+            plotted.append((actor, timestamp))
+            load_time = timestamp
+
+    elif target_time < load_time:
+        while len(plotted):
+            actor, timestamp = plotted[-1]  # Peek
+            if timestamp < target_time:
+                break  # Stop if next frame is earlier than target_time
+            actor, timestamp = plotted.pop()
+            ax.remove_actor(actor, reset_camera=False)
+            not_plotted.append((actor, timestamp))
+            load_time = timestamp
+
+
+def plotPolyLine(points, color, ax):
+    n_points = len(points)
+    cells = np.full((n_points-1, 3), 2, dtype=np.int64)
+    #print(points)
+
+    # Set the point indices for each line segment
+    # Each line connects point i to point i+1
+    cells[:, 1] = np.arange(0, n_points-1)
+    cells[:, 2] = np.arange(1, n_points)
+    
+    # Flatten the cells array
+    cells = cells.ravel()
+    
+    # Create the polyline
+    poly_line = pv.PolyData(points, lines=cells)
+    return  (ax.add_mesh(poly_line, color=color, line_width=3   ))
+
+
+
+def plotGrid(ax, color, rects):
+    
+    vertices = []
+    cell_indices = []
+
+    for i in range(len(rects)):
+        lb = rects[i][0]
+        ub = rects[i][1]
+
+        x0, x1 = lb[0], ub[0]
+        y0, y1 = lb[1], ub[1]
+        z0, z1 = lb[2], ub[2]
+
+        corners = [
+            (x0, y0, z0), (x1, y0, z0), (x1, y1, z0), (x0, y1, z0),
+            (x0, y0, z1), (x1, y0, z1), (x1, y1, z1), (x0, y1, z1)
+        ]
+
+        start_idx = len(vertices)
+        vertices.extend(corners)
+        cell_indices.append([start_idx + j for j in range(8)])
+
+    vertices = np.array(vertices)
+    N = len(rects)
+
+    cells = np.zeros((N, 9), dtype=np.int64)
+    cells[:, 0] = 8  # 8 points per cell
+    for i in range(N):
+        cells[i, 1:] = cell_indices[i]
+    cells = cells.ravel()
+
+    celltypes = np.full(N, pv.CellType.HEXAHEDRON, dtype=np.uint8)
+    grid = pv.UnstructuredGrid(cells, celltypes, vertices)
+    ax.add_mesh(grid, show_edges=False, color=color, opacity=1)
+
+    
+
+def create_plane_icon(center, direction, size=1.0):
+    # Create a triangle representing the plane
+    perp1 = np.cross(direction, [0, 0, 1])
+    if np.linalg.norm(perp1) < 1e-3:
+        perp1 = np.cross(direction, [0, 1, 0])
+    perp1  = np.float64(perp1)/np.linalg.norm(perp1)
+    perp2 = np.cross(direction, perp1)
+
+    tip = center + direction * size
+    left = center - perp1 * (size * 0.5) - direction * (size * 0.5)
+    right = center + perp1 * (size * 0.5) - direction * (size * 0.5)
+
+    faces = [3, 0, 1, 2]  # Triangle face
+    points = np.array([tip, left, right])
+    return pv.PolyData(points, faces)
+     
+
+def plot3dSimulationSingleLive(tube, ax, line_width=3, step = 1000, x_dim=1, y_dim=2, z_dim=3, save_to_file = True, log_file = "simulations.txt", assert_hits = None ):
+    if os.path.exists('plotter_config.json'):
+        with open('plotter_config.json', 'r') as f:
+            config = json.load(f)
+            x_dim = config['x_dim']
+            y_dim = config['y_dim']
+            z_dim = config['z_dim']
+            step = int(config['speed'])
+            save_to_file = bool(config['save'])
+            log_file = config['log_file']
+            node_batch = config['node_batch']
+    global node_idx
+    global offset
+    global prev_time
+
+    rects_dict = {}
+    length = len(tube[list(tube.keys())[0]])-1
+
+    for agent_id in tube:
+        if(assert_hits != None and agent_id in assert_hits):
+            last_point = tube[agent_id][-1][0:3].copy()
+            last_point[0]*=100
+            # print("bingo bongo", last_point)
+
+            ax.add_actor(pv.Label(  "HIT:\n" + assert_hits[agent_id][0], last_point ))
+
+
+    for i in range(length ):
+        for agent_id in tube:
+            
+            if agent_id not in color_map:
+                color_map[agent_id] = agent_id.split('_')[1]
+         
+            trace = tube[agent_id]
+            lb = trace[i]
+            if(lb[0] ==0):
+                offset = prev_time
+
+          
+
+                
+            point = [lb[x_dim]-1, lb[y_dim]-1, lb[z_dim]-1]
+            if(save_to_file):
+                with open(log_file, "a") as f:
+                    save_time = offset + lb[0]
+                    f.write(f"{point}, {color_map[agent_id]}, {save_time}\n")
+                    prev_time = save_time   
+
+           
+            
+            if(agent_id not in rects_dict):
+                rects_dict[agent_id] = []
+            rects_dict[agent_id].append(point)
+
+            if not node_batch and (i % step == 0 or i >= length-1):
+
+                
+
+                plotPolyLine(rects_dict[agent_id], color_map[agent_id], ax)
+                rects_dict[agent_id] = [rects_dict[agent_id][-1]]
+
+
+    for agent_id in tube:
+        if(agent_id not in rects_dict):
+                rects_dict[agent_id] = []
+        if(agent_id not in node_rect_cache):
+
+            node_rect_cache[agent_id] = []
+        node_rect_cache[agent_id] += rects_dict[agent_id]
+
+    if( node_batch and node_idx % step==0  ):
+
+        for agent_id in tube:
+            plotPolyLine(node_rect_cache[agent_id], color_map[agent_id], ax)
+            node_rect_cache[agent_id] = [node_rect_cache[agent_id][-1]]
+
+    node_idx+=1
+    return ax
+
+def plotRemaining(ax, verify):
+    global node_rect_cache
+
+    for agent_id, rects in  node_rect_cache.items():
+        if (len(rects) > 0 ):   
+            if(verify):
+                plotGrid(ax, color_map[agent_id], rects)
+            else:
+                plotPolyLine(rects, color_map[agent_id], ax)
+    global offset
+    global prev_time
+    global node_idx
+            
+    node_rect_cache = {}
+    node_idx = 0
+    
+    offset = 0
+    prev_time = 0
+
+    if(not verify):
+        if os.path.exists('plotter_config.json'):
+            with open('plotter_config.json', 'r') as f:
+                config = json.load(f)
+                log_file = config['log_file']
+                save_to_file = bool(config['save'])
+        if(save_to_file):
+            with open(log_file, "a") as f:
+                f.write(f"END, placeholder, -1\n")
+            
+
+
+
+#OLD METHODS
+#==================================================================================================================
 
 def plot3dReachtubeSingle(tube, x_dim, y_dim, z_dim, ax, color, edge=True):
     for lb, ub in tube:
@@ -119,3 +496,4 @@ if __name__ == "__main__":
     fig = plot_polytope_3d(A, b, ax=fig, color="red")
     fig = plot_polytope_3d(A, b2, ax=fig, color="green")
     fig.show()
+    

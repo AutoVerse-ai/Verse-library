@@ -11,11 +11,12 @@ import warnings
 import types
 import sys
 from enum import Enum
-import numpy as np
+from verse.plotter.plotter3D import *
+import pyvista as pv
 
 from verse.agents.base_agent import BaseAgent
 from verse.analysis.incremental import CachedSegment, SimTraceCache, convert_sim_trans, to_simulate
-from verse.utils.utils import dedup
+from verse.analysis.utils import dedup
 from verse.map.lane_map import LaneMap
 from verse.parser.parser import ModePath, find, unparse
 from verse.analysis.incremental import (
@@ -35,7 +36,17 @@ PathDiffs = List[Tuple[BaseAgent, ModePath]]
 
 EGO, OTHERS = "ego", "others"
 
-
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    RED = '\033[31m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 def red(s):
     return "\x1b[31m" + s + "\x1b[0m"  # ]]
 
@@ -69,8 +80,8 @@ def pack_env(
             else:
                 if arg.is_list:
                     env[other] = []
-                # else:
-                    # raise ValueError(f"Expected one {ego_ty_name} for {other}, got none")
+                else:
+                    raise ValueError(f"Expected one {ego_ty_name} for {other}, got none")
 
     return env
 
@@ -88,15 +99,13 @@ def check_sim_transitions(agent: BaseAgent, guards: List[Tuple], cont, disc, map
         if eval(assertion.pre, packed_env):
             if not eval(assertion.cond, packed_env):
                 del packed_env["__builtins__"]
-                print(f'assert hit for {agent_id}: "{assertion.label}" @ {packed_env}')
+                print(bcolors.RED +  f'Assert Hit for {agent_id}: "{assertion.label}" at {packed_env} 😢'+ bcolors.ENDC)
                 asserts.append(assertion.label)
     if len(asserts) != 0:
         return asserts, satisfied_guard
 
     all_resets = defaultdict(list)
     env = pack_env(agent, ego_ty_name, cont, disc, map)  # TODO: diff disc -> disc_vars?
-    env['np'] = np # FIXME: error occured along the lines of "name np not defined" -- why is this a bug in simulate but not verify and how to fix without this hack?
-
     for path, disc_vars in guards:
         # Collect all the hit guards for this agent at this time step
         if eval(path.cond, env):
@@ -145,15 +154,18 @@ def check_sim_transitions(agent: BaseAgent, guards: List[Tuple], cont, disc, map
     return None, satisfied_guard
 
 
-def convertStrToEnum(inp, agent: BaseAgent, dl):
+def convertStrToEnum(inp, agents: List[BaseAgent], dl):
     res = inp
+    if type(agents) != list:
+        agents = [agents]
     for field in res.__dict__:
-        for state_def_name in agent.decision_logic.state_defs:
-            if field in agent.decision_logic.state_defs[state_def_name].disc:
-                idx = agent.decision_logic.state_defs[state_def_name].disc.index(field)
-                field_type = agent.decision_logic.state_defs[state_def_name].disc_type[idx]
-                enum_class = getattr(dl, field_type)
-                setattr(res, field, enum_class[getattr(res, field)])
+        for agent in agents:
+            for state_def_name in agent.decision_logic.state_defs:
+                if field in agent.decision_logic.state_defs[state_def_name].disc:
+                    idx = agent.decision_logic.state_defs[state_def_name].disc.index(field)
+                    field_type = agent.decision_logic.state_defs[state_def_name].disc_type[idx]
+                    enum_class = getattr(dl, field_type)
+                    setattr(res, field, enum_class[getattr(res, field)])
     return res
 
 
@@ -190,6 +202,7 @@ class Simulator:
         self.cache = SimTraceCache()
         self.config = config
         self.cache_hits = (0, 0)
+        self.loop_cache = []
         if self.config.parallel:
             import ray
 
@@ -204,11 +217,13 @@ class Simulator:
         later: int,
         remain_time: float,
         consts: SimConsts,
+        ax: pv.Plotter = None,
     ) -> Tuple[int, int, List[AnalysisTreeNode], Dict[str, TraceType], list]:
         if config.print_level >= 1:
             print("=============================================================")
-            print(f"node {node.id} start: {node.start_time}")
-            print(node.mode)
+            print(f"Node Id: {node.id} Time: {node.start_time}")
+            print("Current Mode of All Agents: ", node.mode)
+
         # print(f"node id: {node.id}")
         cache_updates = []
         for agent_id in node.agent:
@@ -223,7 +238,7 @@ class Simulator:
                     trace = node.agent[agent_id].TC_simulate(
                         mode, init, remain_time, consts.time_step, consts.lane_map
                     )
-                    trace[:, 0] += node.start_time ### breakpoints here
+                    trace[:, 0] += node.start_time
                     node.trace[agent_id] = trace
         # pp(("cached_segments", cached_segments.keys()))
         # TODO: for now, make sure all the segments comes from the same node; maybe we can do
@@ -247,6 +262,7 @@ class Simulator:
             idx = transition_idx
             for agent in node.agent:
                 node.trace[agent] = node.trace[agent][:idx]
+            if ax is not None: plot3dSimulationSingleLive(node.trace, ax, assert_hits=node.assert_hits)
             return (
                 node.id,
                 later,
@@ -267,6 +283,7 @@ class Simulator:
                 node.trace[agent_idx] = node.trace[agent_idx][: transition_idx + 1]
 
         if asserts != None:  # FIXME
+            if ax is not None: plot3dSimulationSingleLive(node.trace, ax, assert_hits=node.assert_hits)
             return (node.id, later, [], node.trace, cache_updates)
             # print(transition_idx)
             # pp({a: len(t) for a, t in node.trace.items()})
@@ -288,6 +305,7 @@ class Simulator:
                         )
                 # print(red("no trans"))
                 # print(f"node {node.id} dur {timeit.default_timer() - t}")
+                if ax is not None:plot3dSimulationSingleLive(node.trace, ax, assert_hits=node.assert_hits)
                 return (node.id, later, [], node.trace, cache_updates)
 
             transit_agents = transitions.keys()
@@ -347,6 +365,7 @@ class Simulator:
                 next_nodes.append(tmp)
             # print(len(next_nodes))
             # print(f"node {node.id} dur {timeit.default_timer() - t}")
+            if ax is not None: plot3dSimulationSingleLive(node.trace, ax, assert_hits=node.assert_hits)
             return (node.id, later, next_nodes, node.trace, cache_updates)
 
     def proc_result(self, id, later, next_nodes, traces, cache_updates):
@@ -403,6 +422,7 @@ class Simulator:
         lane_map,
         run_num,
         past_runs,
+        ax,
     ):
         # Setup the root of the simulation tree
         if max_height == None:
@@ -425,8 +445,15 @@ class Simulator:
                 node, later = self.simulation_queue.pop(0)
                 # Check height
                 if node.height >= max_height-1:
-                    print("max depth reached")
+                    print("Max Tree Depth Reached")
                     continue
+                if(len(self.loop_cache)>=3):
+                    self.loop_cache.pop(0)
+                self.loop_cache.append(node.start_time)
+                if(len(self.loop_cache) ==3):
+                    if(self.loop_cache[2] == self.loop_cache[1] ==  self.loop_cache[0]):
+                        print(bcolors.RED+ "♾Infinite Loop Detected.♾ See troubleshooting page"+ bcolors.ENDC)
+                        continue
                 # pp(("start sim", node.start_time, {a: (*node.mode[a], *node.init[a]) for a in node.mode}))
                 remain_time = round(time_horizon - node.start_time, 10)
                 if remain_time <= 0:
@@ -466,6 +493,7 @@ class Simulator:
                             later,
                             remain_time,
                             consts,
+                            ax,
                         )
                     )
                     # print(f"node {node.id} dur {timeit.default_timer() - t}")
@@ -495,6 +523,12 @@ class Simulator:
         # print("cached", self.num_cached)
         # pp(self.cache.get_cached_inits(3))
         self.simulation_tree = AnalysisTree(root)
+        unsafe = False
+        for node in self.simulation_tree.nodes:
+            if node.assert_hits is not None:
+                unsafe = True
+        if(not unsafe):
+            print(bcolors.OKGREEN + "Simulation is SAFE" + bcolors.ENDC)
         return self.simulation_tree
 
     def simulate_simple(
@@ -515,20 +549,24 @@ class Simulator:
         simulation_queue = []
         simulation_queue.append(root)
         # Perform BFS through the simulation tree to loop through all possible transitions
+        print("STARTING NEW SIMULATION")
         while simulation_queue != []:
             node: AnalysisTreeNode = simulation_queue.pop(0)
             if node.height >= max_height-1:
-                print("max depth reached")
+                print("Max Tree Depth Reached")
                 continue
             # continue if we are at the depth limit
+            print("=============================================================")
+            print(f"Time: {node.start_time}")
+            print("Current Mode of All Agents: ", node.mode)
 
-            pp(
-                (
-                    "start sim",
-                    node.start_time,
-                    {a: (*node.mode[a], *node.init[a]) for a in node.mode},
-                )
-            )
+            # pp(
+            #     (
+            #         "Start Sim at Time: ",
+            #         node.start_time,
+            #         {a: (*node.mode[a], *node.init[a]) for a in node.mode},
+            #     )
+            # )
             remain_time = round(time_horizon - node.start_time, 10)
             if remain_time <= 0:
                 continue
@@ -550,7 +588,7 @@ class Simulator:
             asserts, transitions, transition_idx = Simulator.get_transition_simulate_simple(
                 node, lane_map, sensor
             )
-            # pp(("transitions:", transition_idx, transitions))
+            #pp(("transitions:", transition_idx, transitions))
 
             node.assert_hits = asserts
             # pp(("next init:", {a: trace[transition_idx] for a, trace in node.trace.items()}))
@@ -687,7 +725,7 @@ class Simulator:
                         lambda i: (i.var, i.cond, i.val),
                     )
                     cont_var_dict_template, discrete_variable_dict, len_dict = sensor.sense(
-                        agent, state_dict, track_map
+                        agent, state_dict, track_map, True
                     )
                     for path in agent_paths:
                         cached_guards[agent_id].append(
@@ -704,7 +742,7 @@ class Simulator:
                 aid: (node.trace[aid][0], node.mode[aid], node.static[aid]) for aid in node.agent
             }
             cont_var_dict_template, discrete_variable_dict, len_dict = sensor.sense(
-                agent, state_dict, track_map
+                agent, state_dict, track_map, True
             )
             agent_guard_dict[agent_id].append((path, discrete_variable_dict))
 
@@ -724,7 +762,7 @@ class Simulator:
                 agent_state, agent_mode, agent_static = state_dict[agent_id]
                 agent_state = agent_state[1:]
                 continuous_variable_dict, orig_disc_vars, _ = sensor.sense(
-                    agent, state_dict, track_map
+                    agent, state_dict, track_map, True
                 )
                 unchecked_cache_guards = [
                     g[:2] for g in cached_guards[agent_id] if g[2] < idx
@@ -747,8 +785,8 @@ class Simulator:
             if len(all_asserts) > 0:
                 return all_asserts, dict(transitions), idx
             if len(satisfied_guard) > 0:
-                if print_level >= 1:
-                    print(f"Length of satisfied guard: {len(satisfied_guard)}")
+                # if print_level >= 1:
+                #     print(len(satisfied_guard))
                 for agent_idx, dest, next_init, paths in satisfied_guard:
                     assert isinstance(paths, list)
                     dest = tuple(dest)
@@ -756,19 +794,12 @@ class Simulator:
                     src_track = node.get_track(agent_idx, node.mode[agent_idx])
                     dest_mode = node.get_mode(agent_idx, dest)
                     dest_track = node.get_track(agent_idx, dest)
-                    map_modes = [[src_mode, src_track, dest_mode, dest_track]]
-
-                    # NOTE: propagating change from get_transition_verify_opt from verifier to allow transitions that aren't necessarily map transitions to be allowed
-                    # NOTE CONT: as before, want to make sure that map transitions are valid with the 'dest_track != track_map.h(src_track, src_mode, dest_mode)' line,
-                    # NOTE CONT: but also make sure that the transition occuring is actually a map transitions by checking that all map modes are defined, and we at least have a change in the Track or Agent mode
-                    if all(map_mode is not None for map_mode in map_modes) and (src_mode!=dest_mode or src_track!=dest_track) and dest_track != track_map.h(src_track, src_mode, dest_mode): 
-                        continue
-                    else:
-                        if print_level >= 2 and len(paths) > 0:
-                            print(agent, src_mode, src_track, "->", dest_mode, dest_track)
-                            print("start_time: ", node.start_time)
-                            print("cond_veri", unparse(paths[0].cond_veri))
-                            print("val_veri", unparse(paths[0].val_veri))
+                    if dest_track == track_map.h(src_track, src_mode, dest_mode):
+                        if print_level >= 1 and len(paths) > 0:
+                            #print(agent, src_mode, src_track, "->", dest_mode, dest_track)
+                            #print("start_time: ", node.start_time)
+                            print("Mode Transition has Ocurred because of: ", unparse(paths[0].cond_veri))
+                            #print("val_veri", unparse(paths[0].val_veri))
                         transitions[agent_idx].append((agent_idx, dest, next_init, paths))
                 break
         transitions = {aid: dedup(v, lambda p: p[1]) for aid, v in transitions.items()}
@@ -798,7 +829,7 @@ class Simulator:
                 aid: (node.trace[aid][0], node.mode[aid], node.static[aid]) for aid in node.agent
             }
             cont_var_dict_template, discrete_variable_dict, len_dict = sensor.sense(
-                agent, state_dict, track_map
+                agent, state_dict, track_map, True
             )
             agent_guard_dict[agent_id].append((path, discrete_variable_dict))
 
@@ -820,7 +851,7 @@ class Simulator:
                 # Get the input arguments for the controller function
                 # Pack the environment (create ego and others list)
                 continuous_variable_dict, orig_disc_vars, _ = sensor.sense(
-                    agent, state_dict, track_map
+                    agent, state_dict, track_map, True
                 )
                 arg_list = []
                 env = pack_env(agent, EGO, continuous_variable_dict, orig_disc_vars, track_map)

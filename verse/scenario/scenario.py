@@ -6,7 +6,7 @@ import numpy as np
 from verse.agents.base_agent import BaseAgent
 from verse.analysis import Simulator, Verifier, AnalysisTreeNode, AnalysisTree, ReachabilityMethod
 from verse.analysis.analysis_tree import AnalysisTreeNodeType
-from verse.utils.utils import sample_rect
+from verse.analysis.utils import sample_rect
 from verse.parser.parser import ControllerIR
 from verse.sensor.base_sensor import BaseSensor
 from verse.map.lane_map import LaneMap
@@ -21,8 +21,18 @@ def _check_ray_init(parallel: bool) -> None:
         if not ray.is_initialized():
             ray.init()
 
-
-@dataclass()
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    RED = '\033[33m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+@dataclass(frozen=True)
 class ScenarioConfig:
     """Configuration for how simulation/verification is performed for a scenario. Properties are
     immutable so that incremental verification works correctly."""
@@ -32,7 +42,7 @@ class ScenarioConfig:
     speed up experiments. Result is undefined when the map, agent dynamics and sensor are changed."""
     unsafe_continue: bool = False
     """Continue exploring the branch when an unsafe condition occurs."""
-    init_seg_length: int = 1000
+    init_seg_length: int = 1
     reachability_method: ReachabilityMethod = ReachabilityMethod.DRYVR
     """Method of performing reachability. Can be DryVR, NeuReach, MixMonoCont and MixMonoDisc."""
     parallel_sim_ahead: int = 8
@@ -45,8 +55,6 @@ class ScenarioConfig:
     """Heuristic. When enabled, try to use the local thread when some results are cached."""
     print_level: int = 1
     """Adjust print_level from 0 - 2 to print different information."""
-    pca: bool = True
-    """If true, uses the PCA algorithm to generate the starsets, otherwise, uses DryVR and rectangular overapproximations"""
 
 
 class Scenario:
@@ -134,10 +142,6 @@ class Scenario:
                 assert len(i) == len(
                     list(agent.decision_logic.state_defs.values())[0].cont
                 ), "the length of element in init not fit the number of continuous variables"
-            """
-            This check does not do what it's supposed to to
-            TODO: instead of checking with the number of variables in 
-            """
             # print(agent.decision_logic.mode_defs)
             assert len(init_mode) == len(
                 list(agent.decision_logic.state_defs.values())[0].disc
@@ -159,10 +163,6 @@ class Scenario:
             self.uncertain_param_dict[agent_id] = []
         return
 
-    '''
-    overload this function to work for star sets -- not a priority, behind technical aspects if this is complex
-    currently, star sets need to be initialized using set_initial on agents
-    '''
     def set_init(self, init_list, init_mode_list, static_list=[], uncertain_param_list=[]):
         """Sets the initial conditions for all agents. The order will be the same as the order in
         which the agents are added."""
@@ -219,20 +219,13 @@ class Scenario:
                         uncertain_parameters = agent.uncertain_parameters
                     self.set_init_single(agent_id, init_cont, init_disc, static_parameters, uncertain_parameters)  
 
-    def simulate(self, time_horizon, time_step, max_height=None, seed=None) -> AnalysisTree:
+    def simulate(self,ownship_aircraft_init, intruder_aircraft_init, time_horizon, time_step, max_height=None, seed=None, ax=None) -> AnalysisTree:
         '''Computes a single simulation trace of a scenario, starting from a single initial state.
-            Parameters:
-
-                time_horizon (float): Time limit of simulation. Positive float.
-                time_step (float): \delta, the sampling period for continuous evolution.
-                max_height (int): Maximum number of discrete transitions
-                seed (int): Seed for sampling initial state if a initial region is given.
-
-            Result:
-
-                tree (AnalysisTree): Simulation tree contrining possibly multiple simulations   
+            `seed`: the random seed for sampling a point in the region specified by the initial
+            conditions
         '''
-        _check_ray_init(self.config.parallel)
+        self.set_init_single('air1_#007BFF', ownship_aircraft_init,("COC",))
+        self.set_init_single('air2_#FF0000', intruder_aircraft_init, ("COC",))
         self._get_init_from_agent()
         self._check_init()
         root = AnalysisTreeNode.root_from_inits(
@@ -256,22 +249,26 @@ class Scenario:
             self.map,
             len(self.past_runs),
             self.past_runs,
+            ax=ax
         )
+        self.simulator.loop_cache = []
+        
         self.past_runs.append(tree)
         return tree
 
-    def simulate_multi(self, time_horizon, time_step, init_dict_list=None, max_height=None, seed=None, num_sims=10):
+    def simulate_multi(self,  ownship_aircraft_init, intruder_aircraft_init, time_horizon, time_step, init_dict_list=None, max_height=None, seed=None, ax=None):
         '''Computes multiple simulation traces of a scenario, starting from multiple initial states.
             `seed`: the random seed for sampling a point in the region specified by the initial
             conditions
         '''
-        _check_ray_init(self.config.parallel)
+        self.set_init_single('air1_#007BFF', ownship_aircraft_init,("COC",))
+        self.set_init_single('air2_#FF0000', intruder_aircraft_init, ("COC",))
+
         self._get_init_from_agent()
         self._check_init()
         tree_list = []
         if init_dict_list is None:
-            for i in range(num_sims):
-                tree_list.append(self.simulate(time_horizon, time_step, max_height, (seed + i) if seed is not None else None))
+            raise Exception
         else:
             for init_dict in init_dict_list:
                 root = AnalysisTreeNode.root_from_inits(
@@ -295,12 +292,14 @@ class Scenario:
                     self.map,
                     len(self.past_runs),
                     self.past_runs,
+                    ax=ax
                 )
+                self.simulator.loop_cache = []
                 self.past_runs.append(tree)
                 tree_list.append(tree)            
         return tree_list
 
-    def simulate_simple(self, time_horizon, time_step, max_height=None, seed=None) -> AnalysisTree:
+    def simulate_simple(self, time_horizon, time_step, init_dict_list=None, max_height=None, seed=None) -> AnalysisTree:
         '''Computes a simulation trace of the scenario, starting from a single initial state. Evaluates the decision
             logic code directly using Python interpreter (does not use the internal Verse parser and generate
             nondeterministic transitions). Use the simulate() function for using the Verse interpreted decision logic.
@@ -309,39 +308,75 @@ class Scenario:
         '''
         self._get_init_from_agent()
         self._check_init()
-        root = AnalysisTreeNode.root_from_inits(
-            init={aid: sample_rect(init, seed) for aid, init in self.init_dict.items()},
-            mode={
-                aid: tuple(elem if isinstance(elem, str) else elem.name for elem in modes)
-                for aid, modes in self.init_mode_dict.items()
-            },
-            static={aid: [elem.name for elem in modes] for aid, modes in self.static_dict.items()},
-            uncertain_param=self.uncertain_param_dict,
-            agent=self.agent_dict,
-            type=AnalysisTreeNodeType.SIM_TRACE,
-            ndigits=10,
-        )
-        tree = self.simulator.simulate_simple(
-            root,
-            time_horizon,
-            time_step,
-            max_height,
-            self.map,
-            self.sensor,
-            len(self.past_runs),
-            self.past_runs,
-        )
-        self.past_runs.append(tree)
-        return tree
 
-    def verify(self, time_horizon, time_step, max_height=None, params={}) -> AnalysisTree:
+        if init_dict_list is None:
+
+            root = AnalysisTreeNode.root_from_inits(
+                init={aid: sample_rect(init, seed) for aid, init in self.init_dict.items()},
+                mode={
+                    aid: tuple(elem if isinstance(elem, str) else elem.name for elem in modes)
+                    for aid, modes in self.init_mode_dict.items()
+                },
+                static={aid: [elem.name for elem in modes] for aid, modes in self.static_dict.items()},
+                uncertain_param=self.uncertain_param_dict,
+                agent=self.agent_dict,
+                type=AnalysisTreeNodeType.SIM_TRACE,
+                ndigits=10,
+            )
+            tree = self.simulator.simulate_simple(
+                root,
+                time_horizon,
+                time_step,
+                max_height,
+                self.map,
+                self.sensor,
+                len(self.past_runs),
+                self.past_runs,
+            )
+            self.past_runs.append(tree)
+            self.simulator.loop_cache = []
+
+            return tree
+        else:
+            tree_list = []
+            for init_dict in init_dict_list:
+                root = AnalysisTreeNode.root_from_inits(
+                    init=init_dict,
+                    mode={
+                        aid: tuple(elem if isinstance(elem, str) else elem.name for elem in modes)
+                        for aid, modes in self.init_mode_dict.items()
+                    },
+                    static={aid: [elem.name for elem in modes] for aid, modes in self.static_dict.items()},
+                    uncertain_param=self.uncertain_param_dict,
+                    agent=self.agent_dict,
+                    type=AnalysisTreeNodeType.SIM_TRACE,
+                    ndigits=10,
+                )
+                tree = self.simulator.simulate_simple(
+                root,
+                time_horizon,
+                time_step,
+                max_height,
+                self.map,
+                self.sensor,
+                len(self.past_runs),
+                self.past_runs,
+                )
+                self.past_runs.append(tree)
+                tree_list.append(tree)            
+
+            self.simulator.loop_cache = []
+            return tree_list
+
+
+    def verify(self, ownship_aircraft_init, intruder_aircraft_init, time_horizon, time_step, max_height=None, params={}, ax=None) -> AnalysisTree:
         '''Compute the set of reachable states, starting from a set of initial states states.'''
-        _check_ray_init(self.config.parallel)
+        self.set_init_single('air1_#007BFF', ownship_aircraft_init,("COC",))
+        self.set_init_single('air2_#FF0000', intruder_aircraft_init, ("COC",))
         self._check_init()
         root = AnalysisTreeNode.root_from_inits(
             init={
-                #KB: todo: must fix this!!!
-                aid: [init] #[[init, init] if np.array(init).ndim < 2 else init]
+                aid: [[init, init] if np.array(init).ndim < 2 else init]
                 for aid, init in self.init_dict.items()
             },
             mode={
@@ -367,58 +402,12 @@ class Scenario:
             len(self.past_runs),
             self.past_runs,
             params,
+            ax=ax
         )
+        self.verifier.loop_cache = set()
         self.past_runs.append(tree)
         return tree
 
-    def verify_partitioned(self, time_horizon, time_step, n, max_height=None, partition_initial=False, partition_dims:List=None, params={}) -> AnalysisTree:
-        '''Compute the set of reachable states with optional partitioning for over-approximation, preserving branching.
-        
-        :param time_horizon: Time limit for verification.
-        :param time_step: Sampling period.
-        :param n: Number of partitions per dimension (used for over-approximation).
-        :param max_height: Maximum discrete transitions.
-        :param partition_initial: If True, partition initial set for over-approximation.
-        :param partition_dims: If given, partition only dims in list (1-indexed)
-        :param params: Additional parameters.
-        :return: AnalysisTree with branching preserved.
-        '''
-        _check_ray_init(self.config.parallel)
-        self._check_init()
-        root = AnalysisTreeNode.root_from_inits(
-            init={
-                aid: [init]
-                for aid, init in self.init_dict.items()
-            },
-            mode={
-                aid: tuple(elem if isinstance(elem, str) else elem.name for elem in modes)
-                for aid, modes in self.init_mode_dict.items()
-            },
-            static={aid: [elem.name for elem in modes] for aid, modes in self.static_dict.items()},
-            uncertain_param=self.uncertain_param_dict,
-            agent=self.agent_dict,
-            type=AnalysisTreeNodeType.REACH_TUBE,
-            ndigits=10,
-        )
-
-        tree = self.verifier.compute_full_reachtube_partitioned(
-            root,
-            self.sensor,
-            time_horizon,
-            time_step,
-            max_height,
-            self.map,
-            self.config.init_seg_length,
-            self.config.reachability_method,
-            len(self.past_runs),
-            self.past_runs,
-            n,
-            partition_initial,
-            partition_dims,
-            params,
-        )
-        self.past_runs.append(tree)
-        return tree
 
 @dataclass
 class ExprConfig:
