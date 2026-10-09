@@ -14,8 +14,9 @@ pip install -e .
 ### Docker
 
 The included Dockerfile builds a Linux environment with Python 3.11.9, CUDA-enabled
-PyTorch 2.3.1, Verse, and the modified `auto_LiRPA` commit used by this project.
-Docker must be installed, and GPU execution requires the NVIDIA Container Toolkit.
+PyTorch 2.3.1 (shouldn't be necessary for the satellite models), 
+Verse, and the modified `auto_LiRPA` commit used by this project.
+Docker must be installed, and GPU execution requires the NVIDIA Container Toolkit (again, shouldn't be relevant for ).
 
 Build the image from the repository root:
 
@@ -23,16 +24,17 @@ Build the image from the repository root:
 docker build -t verse-library .
 ```
 
-Run a Python shell with GPU access:
+Run a Python shell with bash: 
 
 ```sh
-docker run --rm -it --gpus all verse-library
+docker run --rm -it verse-library bash
 ```
 
-To build from a different `auto_LiRPA` commit, pass its full Git commit hash:
-
+For local edits to be reflected immediately, run this command instead:
 ```sh
-docker build --build-arg AUTO_LIRPA_REF=<commit> -t verse-library .
+docker run --rm -it `
+  -v "${PWD}:/workspace/Verse-library" `
+  verse-library bash 
 ```
 
 To update the dependencies in case anything is missing, requirements.txt can be used.
