@@ -132,7 +132,7 @@ if __name__ == "__main__":
     # fig = reachtube_tree(trace, None, fig, 7, 8, [7,8])
 
 
-    N = 25
+    N = 5
     start_time = time.perf_counter()
     sim_traces = []
     for i in range(N):

@@ -10,6 +10,31 @@ The package requires python 3.8+. The package can be installed using pip with al
 ```sh
 pip install -e .
 ```
+
+### Docker
+
+The included Dockerfile builds a Linux environment with Python 3.11.9, CUDA-enabled
+PyTorch 2.3.1, Verse, and the modified `auto_LiRPA` commit used by this project.
+Docker must be installed, and GPU execution requires the NVIDIA Container Toolkit.
+
+Build the image from the repository root:
+
+```sh
+docker build -t verse-library .
+```
+
+Run a Python shell with GPU access:
+
+```sh
+docker run --rm -it --gpus all verse-library
+```
+
+To build from a different `auto_LiRPA` commit, pass its full Git commit hash:
+
+```sh
+docker build --build-arg AUTO_LIRPA_REF=<commit> -t verse-library .
+```
+
 To update the dependencies in case anything is missing, requirements.txt can be used.
 
 ```sh

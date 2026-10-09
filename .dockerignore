@@ -1,0 +1,12 @@
+.git
+.venv
+__pycache__
+*.pyc
+*.ipynb_checkpoints
+docs/build
+dist
+build
+*.whl
+*.json
+*.csv
+*.gif
